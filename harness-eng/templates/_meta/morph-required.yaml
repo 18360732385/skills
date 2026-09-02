@@ -1,0 +1,102 @@
+# Morph template_completeness required checks (0.3.8+)
+# Loaded by fill-score.mjs. kind: re | named
+# - re: RegExp from pattern (+ optional flags)
+# - named: resolve via NAMED_TESTS in fill-score (JS hooks; still code to add)
+version: "0.3.8"
+
+domains:
+  api:
+    - id: req-desc
+      kind: re
+      pattern: '\*\*功能描述[：:]?\*\*|功能描述[：:]'
+    - id: req-path
+      kind: named
+      name: hasRealApiPath
+    - id: req-method
+      kind: named
+      name: hasHttpMethod
+    - id: req-evidence
+      kind: re
+      pattern: 'evidence\s*[：:]|`[^`]+\.(java|kt|ts|js|go|py)`'
+      flags: i
+    - id: req-logic
+      kind: re
+      pattern: '#{2,3}\s*功能逻辑|功能逻辑'
+    - id: req-params
+      kind: re
+      pattern: '#{2,3}\s*请求参数|请求参数'
+    - id: req-response
+      kind: re
+      pattern: '#{2,3}\s*响应参数|响应参数'
+    - id: dens-examples
+      kind: named
+      name: dens-examples
+
+  func:
+    - id: req-service
+      kind: re
+      pattern: '#{2,3}\s*服务类|服务类说明'
+    - id: req-methods
+      kind: re
+      pattern: '#{2,3}\s*方法清单|方法功能|入参|出参|\|\s*方法\s*\|'
+    - id: req-links
+      kind: re
+      pattern: '关联\s*(API|接口|表)|相关表|关联接口'
+    - id: dens-method-desc
+      kind: named
+      name: dens-method-desc
+
+  db:
+    - id: req-ddl
+      kind: named
+      name: req-ddl
+    - id: req-fields
+      kind: named
+      name: hasDbFieldEvidence
+    - id: req-business
+      kind: re
+      pattern: '业务说明|表说明|用途[：:]|表级'
+    - id: dens-comment
+      kind: named
+      name: dens-comment
+
+  redis:
+    - id: req-prefix
+      kind: re
+      pattern: '##\s*Key 模式|前缀|key\s*pattern'
+      flags: i
+    - id: req-value-type
+      kind: re
+      pattern: '##\s*Value|valueType|Value\s*结构|值类型'
+      flags: i
+    - id: req-ttl
+      kind: re
+      pattern: '##\s*TTL|TTL\s*策略|过期'
+      flags: i
+    - id: dens-ttl
+      kind: named
+      name: dens-ttl
+    - id: dens-example
+      kind: named
+      name: dens-example
+
+  jobs:
+    - id: req-task-code
+      kind: re
+      pattern: 'task_code|任务码|##\s*标识'
+      flags: i
+    - id: req-cron
+      kind: re
+      pattern: '##\s*Cron|cronConfigKey|默认表达式'
+      flags: i
+    - id: req-scheduler
+      kind: re
+      pattern: 'Scheduler|调度入口|@Scheduled'
+      flags: i
+    - id: req-anchors
+      kind: re
+      pattern: '##\s*代码锚点|Registry|SyncTaskCode|MetadataRegistry'
+      flags: i
+    - id: forbid-openapi-dump
+      kind: named
+      name: forbid-openapi-dump

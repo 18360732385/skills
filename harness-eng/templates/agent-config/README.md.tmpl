@@ -1,0 +1,22 @@
+# docs/agent-config — AI 工具配置 SSOT
+
+本目录是 rules / hooks / MCP / settings / skills 的**单一真相源**；`.cursor/` `.qoder/` `.claude/` `.trae/` `.codebuddy/`、`CLAUDE.md`、`.mcp.json` 均为生成物。
+
+## 纪律
+
+- **勿手改生成物**（带 GENERATED 标记）；手改会被下次 sync 覆盖
+- 改配置只改本目录，改完必跑：`node scripts/agent-config/sync.mjs`
+- CI / 提交前校验漂移：`node scripts/agent-config/sync.mjs --check`（有差异退出码 1）
+- 生成物以外的运行时数据（如 `.cursor/harness-meta.yaml`、`mcp.local.json`）不受管理
+
+## 布局
+
+| 路径 | 说明 |
+|---|---|
+| `rules/*.mdc` | Cursor 原生 frontmatter 规则；其他工具生成时自动 strip / 降级 |
+| `hooks/hooks.config.json` | hook 资产与各工具事件映射；无等价事件机制的工具不生成、不降级模拟 |
+| `hooks/*.js` | 统一 Cursor 协议脚本；Claude 经 `claude-adapter.js` 双向翻译 |
+| `mcp/servers.json` | （可选）MCP server SSOT；**含密即 vendored_shared 团队约定**，example_only 仓勿建 |
+| `mcp/servers.example.json` | 无密示例 |
+| `settings.json` | （可选）`.cursor/` `.qoder/` settings.json 的 SSOT |
+| `skills/` | （可选）vendored skills，分发到各工具 `skills/` 目录 |

@@ -1,0 +1,52 @@
+# {{REPO_NAME}} — AGENTS.md
+
+> AI 协作总入口。分册约定见各模块 `AGENTS.md`；契约真相见 `docs/func|api|db|redis|jobs`（按已启用域）。
+
+## Critical
+
+TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必须在仓库根执行某工具）。
+
+## Commands
+
+| Task | Command |
+|---|---|
+| TODO | TODO(harness-eng): 填真实命令 |
+
+## Repo structure
+
+```text
+{{REPO_NAME}}/
+├── {{MODULE_DIRS}}          # 见分册 AGENTS
+├── docs/func|api|db|redis|jobs/  # 契约：索引 + 真相（按已启用域）
+├── docs/agent-kb/           # architecture / pitfalls / accepted-gaps
+├── docs/releases/           # 发版过程域（非契约 SSOT；若启用）
+└── docs/superpowers/        # 规划语料（非 SSOT；若启用 L3）
+```
+
+## 给智能体的文档优先级
+
+1. 本文件 — 命令与红线
+2. 分册 `**/AGENTS.md`（按改动路径）
+3. `.cursor/rules/` — 同步与行为约束
+4. `docs/func` → `docs/api` → `docs/db` → `docs/redis` → `docs/jobs`（先索引再真相；按已启用域）
+5. `docs/agent-kb/` — 定向与踩坑回流（非契约 SSOT）
+6. `docs/superpowers/README.md` — 仅进行中；不覆盖上列 SSOT
+7. `docs/releases/` — 发版过程域（若启用；非契约 SSOT）
+
+> **冲突裁决**：分册 AGENTS / 契约真相以**磁盘最新文件**为准；动手前 Read 重读，勿沿用会话早期摘要。
+
+## 协作约定
+
+- Commit / MR 标题与描述优先中文（可夹杂 `fix` / `docs` 等意图词）
+- `docs/agent-kb/**` 文件名固定英文；规划文档文件名尽量中文
+
+## Never do
+
+- Commit API keys、生产密码、含密配置
+- TODO(harness-eng): 追加本仓域红线（鉴权、迁移、SSOT 边界等）— **勿抄他仓业务条**
+
+## Cursor rules
+
+**alwaysApply：** `00-project-docs-overview` · `karpathy-guidelines`
+
+**path-scoped：** 见 `.cursor/rules/`（func/api/db/redis/jobs sync、agent-kb、superpowers 等，按已安装阶梯）。

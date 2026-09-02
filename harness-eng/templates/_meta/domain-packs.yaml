@@ -1,0 +1,154 @@
+# L1 contract domain file packs (0.3.7+)
+# SSOT for land/render of contract domains. Selected via params.domains.
+# Non-domain ladder files (L0/L2/L3/L4) stay in manifest.yaml.
+
+version: "0.3.8"
+
+func:
+  - id: func-index
+    ladder: L1
+    domain: func
+    template: docs/func/func.md.tmpl
+    target: docs/func/func.md
+    placeholders: [REPO_NAME, REPO_DESC]
+  - id: func-modules-readme
+    ladder: L1
+    domain: func
+    template: docs/func/modules/README.md
+    target: docs/func/modules/README.md
+  - id: func-tmpl
+    ladder: L1
+    domain: func
+    template: docs/func/templates/func-template.md
+    target: docs/func/templates/func-template.md
+    placeholders: [BASE_PACKAGE]
+  - id: func-index-tmpl
+    ladder: L1
+    domain: func
+    template: docs/func/templates/func-index-template.md
+    target: docs/func/templates/func-index-template.md
+    placeholders: [REPO_NAME]
+  - id: rule-11
+    ladder: L1
+    domain: func
+    template: rules/11-func-sync.mdc.tmpl
+    target: .cursor/rules/11-func-sync-rules.mdc
+    placeholders: [GLOB_FUNC]
+
+api:
+  - id: api-index
+    ladder: L1
+    domain: api
+    template: docs/api/api.md.tmpl
+    target: docs/api/api.md
+    placeholders: [REPO_NAME]
+  - id: api-modules-readme
+    ladder: L1
+    domain: api
+    template: docs/api/modules/README.md
+    target: docs/api/modules/README.md
+  - id: api-doc-tmpl
+    ladder: L1
+    domain: api
+    template: docs/api/templates/api-doc-template.md
+    target: docs/api/templates/api-doc-template.md
+    placeholders: [REPO_NAME]
+  - id: api-index-tmpl
+    ladder: L1
+    domain: api
+    template: docs/api/templates/api-index-template.md
+    target: docs/api/templates/api-index-template.md
+    placeholders: [REPO_NAME]
+  - id: rule-12
+    ladder: L1
+    domain: api
+    template: rules/12-api-doc-sync.mdc.tmpl
+    target: .cursor/rules/12-api-doc-sync-rules.mdc
+    placeholders: [GLOB_API]
+
+db:
+  - id: db-index
+    ladder: L1
+    domain: db
+    template: docs/db/db.md.tmpl
+    target: docs/db/db.md
+    placeholders: [REPO_NAME]
+  - id: db-table-readme
+    ladder: L1
+    domain: db
+    template: docs/db/table/README.md
+    target: docs/db/table/README.md
+  - id: db-table-tmpl
+    ladder: L1
+    domain: db
+    template: docs/db/templates/db-table-template.md
+    target: docs/db/templates/db-table-template.md
+  - id: db-index-tmpl
+    ladder: L1
+    domain: db
+    template: docs/db/templates/db-index-template.md
+    target: docs/db/templates/db-index-template.md
+  - id: rule-13
+    ladder: L1
+    domain: db
+    template: rules/13-db-doc-sync.mdc.tmpl
+    target: .cursor/rules/13-db-doc-sync-rules.mdc
+    placeholders: [GLOB_DB]
+
+redis:
+  - id: redis-index
+    ladder: L1
+    domain: redis
+    template: docs/redis/redis.md.tmpl
+    target: docs/redis/redis.md
+    placeholders: [REPO_NAME]
+  - id: redis-keys-readme
+    ladder: L1
+    domain: redis
+    template: docs/redis/keys/README.md
+    target: docs/redis/keys/README.md
+  - id: redis-key-tmpl
+    ladder: L1
+    domain: redis
+    template: docs/redis/templates/redis-key-template.md
+    target: docs/redis/templates/redis-key-template.md
+  - id: redis-index-tmpl
+    ladder: L1
+    domain: redis
+    template: docs/redis/templates/redis-index-template.md
+    target: docs/redis/templates/redis-index-template.md
+  - id: rule-16
+    ladder: L1
+    domain: redis
+    template: rules/16-redis-doc-sync.mdc.tmpl
+    target: .cursor/rules/16-redis-doc-sync-rules.mdc
+    placeholders: [GLOB_REDIS]
+
+jobs:
+  - id: jobs-index
+    ladder: L1
+    domain: jobs
+    template: docs/jobs/jobs.md.tmpl
+    target: docs/jobs/jobs.md
+    placeholders: [REPO_NAME, DATE]
+  - id: jobs-tasks-readme
+    ladder: L1
+    domain: jobs
+    template: docs/jobs/tasks/README.md
+    target: docs/jobs/tasks/README.md
+  - id: jobs-tmpl
+    ladder: L1
+    domain: jobs
+    template: docs/jobs/templates/job-template.md
+    target: docs/jobs/templates/job-template.md
+  - id: jobs-index-tmpl
+    ladder: L1
+    domain: jobs
+    template: docs/jobs/templates/jobs-index-template.md
+    target: docs/jobs/templates/jobs-index-template.md
+  - id: rule-20
+    ladder: L1
+    domain: jobs
+    template: rules/20-jobs-doc-sync.mdc.tmpl
+    target: .cursor/rules/20-jobs-doc-sync.mdc
+    placeholders: [GLOB_JOBS]

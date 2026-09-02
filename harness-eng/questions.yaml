@@ -1,0 +1,443 @@
+# questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
+# Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
+
+version: "0.5.0"
+
+all_recommend_phrases:
+  - 全部推荐
+  - 全用推荐
+  - 全部选择推荐选项
+
+batches:
+  - id: batch-0-global
+    when: always
+    max: 5
+    questions:
+      - id: Q_TARGET_ROOT
+        text: 目标仓库根路径？（多工作区必问）
+        type: choice
+        required_when: multi_workspace
+        options:
+          - { value: auto-detect, label: 推断根 }
+      - id: Q_MODE
+        text: 本轮要做什么？
+        type: choice
+        required: true
+        options:
+          - { value: land, label: 落地, recommended_when: "!large_repo && (type == NEW_CODE_NO_HARNESS || type == NEW_EMPTY)" }
+          - { value: resume, label: 续跑, recommended_when: "!large_repo && type == PARTIAL" }
+          - { value: pipeline, label: 流水线, recommended_when: "large_repo && (type == NEW_CODE_NO_HARNESS || type == NEW_EMPTY || type == PARTIAL)" }
+          - { value: audit, label: 审计, recommended_when: "type == MATURE" }
+          - { value: upgrade, label: 升阶 }
+          - { value: seed-truths, label: 补空壳真相 }
+          - { value: fill-score, label: 完整度打分（双轴） }
+          - { value: fill-morph, label: 形态诊断 }
+          - { value: fill-gate, label: 开干闸 }
+          - { value: fill-plan, label: 填充任务计划 }
+          - { value: fill-truths, label: 契约填充 }
+          - { value: fill-truths-agents, label: 多Agent精填 }
+          - { value: fill-mcp, label: MCP装配 }
+      - id: Q_LADDER
+        text: 目标成熟度阶梯？（land/resume/upgrade）
+        type: choice
+        when_mode: [land, resume, upgrade]
+        options:
+          - { value: L0, label: L0 协作入口 }
+          - { value: L1, label: L1 契约骨架 }
+          - { value: L2, label: L2 知识回流 }
+          - { value: L3, label: L3 规划与软门禁 }
+          - { value: L4, label: L4 工具连接样例, recommended_when: "large_repo || mode == pipeline || mode == land" }
+          - { value: L5, label: L5 配置 SSOT 管线（多工具仓推荐）, recommended_when: "S_MULTI_TOOL" }
+      - id: Q_CONTRACT
+        text: 启用哪些契约域？（L1+）
+        type: multi
+        when_ladder_min: L1
+        options:
+          - { value: func, label: func }
+          - { value: api, label: api }
+          - { value: db, label: db }
+          - { value: redis, label: redis }
+          - { value: jobs, label: jobs（Cron/Scheduler）, recommended_when: "S_JOBS" }
+
+  - id: batch-1-new
+    when: "type == NEW_EMPTY || type == NEW_CODE_NO_HARNESS"
+    when_mode: [land, resume]
+    max: 5
+    questions:
+      - id: Q_NAME
+        text: 仓库短名？
+        type: text
+        recommended_from: fingerprint.repo_name
+      - id: Q_DESC
+        text: 一句话职责？
+        type: text
+        recommended_from: fingerprint.repo_desc
+      - id: Q_MODULES
+        text: AGENTS 分册？
+        type: choice
+        # 0.2.19: variant mapping — solo→agents_variant=solo, few→agents_variant=modules(subset), all→agents_variant=modules(all)
+        # The mapping is handled internally by render.mjs: few/all both produce agents_variant=modules,
+        # the difference is whether module_dirs is a subset (few) or full list (all).
+        options:
+          - { value: solo, label: 仅根, meta: agents_variant=solo }
+          - { value: few, label: 根+少分册, recommended_when: "large_repo", meta: agents_variant=modules(subset) }
+          - { value: all, label: 每模块一份, meta: agents_variant=modules(all) }
+      - id: Q_MODULE_AGENTS
+        text: 分册模板变体？（仅 Q_MODULES≠solo 时适用；Spring 后端模块选 spring）
+        type: choice
+        options:
+          - { value: default, label: 通用分册（默认） }
+          - { value: spring, label: Spring 后端分册, recommended_when: "S_SPRING" }
+      - id: Q_STACK
+        text: 技术栈是否如推断？
+        type: confirm
+      - id: Q_GLOBS
+        text: 用栈默认 globs 还是自定义？
+        type: choice
+        options:
+          - { value: stack_default, label: 栈默认（含手写 SQL 变体） }
+          - { value: custom, label: 自定义 }
+
+  - id: batch-1-new-b
+    when: "type == NEW_EMPTY || type == NEW_CODE_NO_HARNESS"
+    when_mode: [land, resume]
+    max: 5
+    questions:
+      - id: Q_RULE14
+        text: 是否安装中文文档规则 14-chinese-skill-docs？
+        type: boolean
+        recommended: true
+      - id: Q_RULE21
+        text: 是否安装后端可观测/注释行为规则 21-observability-comments？（探测到 Java+SLF4J 时推荐）
+        type: boolean
+        recommended_when: "S_SLF4J"
+      - id: Q_FRONTEND_RULE
+        text: 是否安装前端协作规则 17-frontend-web？（探测到前端工程时推荐）
+        type: boolean
+        recommended_when: "S_FRONTEND"
+      - id: Q_DB_MIGRATION
+        text: db 域迁移模式？（无 Flyway 依赖、人工执行 SQL 选 manual_sql）
+        type: choice
+        options:
+          - { value: flyway, label: flyway（自动/半自动迁移） }
+          - { value: manual_sql, label: manual_sql（人工按序执行迁移脚本）, recommended_when: "S_NO_FLYWAY" }
+          - { value: none, label: none（无迁移脚本） }
+      - id: Q_SEED
+        text: 是否安全预填 Commands/技术栈/模块列表？
+        type: boolean
+        recommended: true
+      - id: Q_GLOB_PROFILE
+        text: glob 档位？
+        type: choice
+        options:
+          - { value: wide, label: 全仓 }
+          - { value: focused, label: 收窄, recommended_when: "large_repo" }
+      - id: Q_AI_TOOL
+        text: 本仓要用哪些 AI 编程工具？（多选）
+        type: multi
+        options:
+          - { value: cursor, label: Cursor }
+          - { value: claude, label: Claude Code }
+          - { value: codex, label: Codex }
+          - { value: qoder, label: Qoder }
+          - { value: trae, label: Trae }
+          - { value: workbuddy, label: WorkBuddy }
+          - { value: custom, label: 自定义（工具名=…; 入口路径=…） }
+        recommended_from: fingerprint.detected_ai_tools
+        recommended_fallback: [cursor]
+      - id: Q_AGENT_CONFIG
+        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs --check；启用后 .cursor/ 等为生成物）？
+        type: boolean
+        recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
+
+  - id: batch-1-partial
+    when: "type == PARTIAL || mode == resume"
+    max: 5
+    questions:
+      - id: Q_GAP_TABLE
+        text: （展示缺口表）已有 vs 缺失；确认目标阶梯
+        type: info
+      - id: Q_AGENTS
+        text: 根 AGENTS 如何处理？
+        type: choice
+        when_signal: S_AGENTS_ROOT
+        options:
+          - { value: merge, label: 保留并 merge 缺章节, recommended: true }
+          - { value: backup-create, label: backup-create }
+          - { value: skip, label: skip }
+      - id: Q_RULES
+        text: rules 缺则 create；已有？
+        type: choice
+        when_signal: S_RULES
+        options:
+          - { value: create, label: create }
+          - { value: skip, label: skip }
+      - id: Q_DOCS
+        text: 旁路新建 docs/func|api…？
+        type: choice
+        options:
+          - { value: create_alongside, label: 旁路新建, recommended: true }
+          - { value: skip, label: skip }
+      - id: Q_SEED
+        text: 是否安全预填？
+        type: boolean
+        recommended: true
+      - id: Q_GLOB_PROFILE
+        text: glob 档位？
+        type: choice
+        options:
+          - { value: focused, label: focused, recommended: true }
+          - { value: wide, label: wide }
+      - id: Q_RULE14
+        text: 安装 rule 14？
+        type: boolean
+        recommended: true
+      - id: Q_RULE21
+        text: 安装 rule 21 行为包（日志/中文注释）？
+        type: boolean
+        recommended_when: "S_SLF4J"
+      - id: Q_FRONTEND_RULE
+        text: 安装 rule 17 前端协作包？
+        type: boolean
+        recommended_when: "S_FRONTEND"
+      - id: Q_AGENT_CONFIG
+        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs）？
+        type: boolean
+        recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
+
+  - id: batch-1-mature
+    when: "type == MATURE"
+    max: 5
+    questions:
+      - id: Q_WHY
+        text: 先审计，或补齐/升到哪一阶？
+        type: choice
+        options:
+          - { value: audit, label: 先审计, recommended: true }
+          - { value: resume, label: 补齐 }
+          - { value: upgrade, label: 升阶 }
+
+  - id: batch-1-foreign
+    when: "type == FOREIGN"
+    max: 5
+    questions:
+      - id: Q_COEXIST
+        text: 与既有 CLAUDE/外源如何共存？
+        type: choice
+        options:
+          - { value: keep_claude, label: 保留 CLAUDE 并存 }
+          - { value: migrate_agents, label: 逐步迁 AGENTS }
+          - { value: contracts_kb_only, label: 只加契约+kb }
+
+  - id: batch-2-contracts
+    when: "type == PARTIAL"
+    max: 5
+    questions:
+      - id: Q_SPLIT_API
+        text: 有长文 API 无 modules/ — 是否拆索引+modules？
+        type: boolean
+      - id: Q_ENABLE_DB
+        text: 有 Flyway 无 docs/db — 是否启用 db 域？
+        type: boolean
+      - id: Q_SQL_GLOB
+        text: S_SQL_DIR / S_NO_FLYWAY — GLOB_DB 含手写 SQL 目录？
+        type: boolean
+        recommended: true
+      - id: Q_MCP_EXAMPLE
+        text: mcp.json 疑似密钥 — 是否另写 example（不覆盖）？
+        type: boolean
+        recommended: true
+      - id: Q_SECRETS_HANDOFF
+        text: S_SECRETS_LEAK — 移交 P0 人工处理（skill 不删密）
+        type: info
+
+  - id: batch-3-l3l4
+    when: "ladder >= L3 || mode == upgrade"
+    max: 5
+    questions:
+      - id: Q_CODE_PREFIXES
+        text: commit 软提醒监视的业务路径前缀？
+        type: text
+        when_ladder_min: L3
+        recommended_from: fingerprint.focused_prefixes
+      - id: Q_HOOK
+        text: 是否启用 commit 软提醒（不拦截）？
+        type: boolean
+        when_ladder_min: L3
+        recommended: true
+      - id: Q_HOOKS_FAMILY
+        text: hooks 家族选装？（commit-gate-extended 与基础 commit 门禁互斥；装配 mysql MCP 时再选 mysql-guard）
+        type: multi
+        when_ladder_min: L3
+        options:
+          - { value: commit-gate-extended, label: commit-gate-extended（契约漏同步 + migration 环境 + pitfalls lint 五合一） }
+          - { value: mysql-guard, label: mysql-guard（MCP MySQL 分环境写库护栏） }
+          - { value: after-edit, label: after-edit（migration 命名/混写 + jobs yml 即时提醒） }
+          - { value: stop-checklist, label: stop-checklist（未提交收口盲区） }
+        recommended: [commit-gate-extended, after-edit, stop-checklist]
+      - id: Q_MCP
+        text: example 要哪些 server（mysql/redis/browser）？
+        type: multi
+        when_ladder_min: L4
+        options:
+          - { value: mysql, label: mysql }
+          - { value: redis, label: redis }
+          - { value: browser, label: browser }
+        recommended: [mysql, redis, browser]
+      - id: Q_MCP_TRACKING
+        text: mcp.json 跟踪策略？（团队约定共享且已跟踪含密 mcp.json 才选 vendored_shared）
+        type: choice
+        when_ladder_min: L4
+        options:
+          - { value: example_only, label: example_only（推荐：仅 example 入库，真密走 .gitignore）, recommended: true }
+          - { value: vendored_shared, label: vendored_shared（写入 meta；audit 不按反模式红灯） }
+
+  - id: batch-seed-truths
+    when: "mode == seed-truths"
+    max: 5
+    questions:
+      - id: Q_SEED_DOMAINS
+        text: 哪些域要空壳？
+        type: multi
+        options:
+          - { value: func, label: func }
+          - { value: api, label: api }
+          - { value: db, label: db }
+          - { value: redis, label: redis }
+          - { value: jobs, label: jobs }
+        recommended_from: meta.domains
+      - id: Q_SEED_NAMES
+        text: 短名列表？
+        type: text
+        recommended_from: fingerprint.module_dirs
+
+  - id: batch-fill
+    when: "mode == fill-score || mode == fill-morph || mode == fill-gate || mode == fill-truths || mode == fill-truths-agents || mode == fill-mcp || mode == pipeline || mode == fill-plan"
+    max: 9
+    questions:
+      - id: Q_FILL_ENGINE
+        text: 填充引擎？（大仓推荐 agents）
+        type: choice
+        when_mode: [pipeline, fill-truths, fill-truths-agents]
+        options:
+          - { value: agents, label: agents 多Agent+fill-plan精填, recommended_when: "large_repo" }
+          - { value: hybrid, label: hybrid 可选薄草稿+Agent }
+          - { value: auto, label: auto legacy仅脚本（不推荐） }
+        recommended_when: "large_repo"
+        recommended: agents
+      - id: Q_FILL_GOLD
+        text: 大仓是否启用金标批次（同域 api+func+db/redis[+jobs] + sample_n）？
+        type: boolean
+        when_mode: [pipeline, fill-plan]
+        recommended_when: "large_repo"
+        recommended: true
+      - id: Q_FILL_SAMPLE_N
+        text: 金标/大仓批次每批抽样接口数 sample_n？（推荐 30）
+        type: text
+        when_mode: [pipeline, fill-plan]
+        recommended_when: "large_repo"
+        recommended: "30"
+      - id: Q_FILL_DOMAINS
+        text: 填充/打分哪些契约域？
+        type: multi
+        options:
+          - { value: api, label: api }
+          - { value: func, label: func }
+          - { value: db, label: db }
+          - { value: redis, label: redis }
+          - { value: jobs, label: jobs }
+        recommended_when_mode:
+          fill-truths: [api]
+          fill-truths-agents: [api, func, db, redis]
+          fill-score: meta.domains
+          fill-morph: meta.domains
+          fill-gate: meta.domains
+          pipeline: [api, func, db, redis]
+      - id: Q_FILL_MODULES
+        text: 点名哪些模块？（大仓必问；pipeline 推荐 all）
+        type: text
+        recommended_from: fingerprint.module_dirs
+      - id: Q_PREAUTH
+        text: 是否预授权后续轮次自动写盘？（首轮仍确认 WritePlan）
+        type: boolean
+        when_mode: [pipeline, fill-truths, fill-truths-agents, fill-mcp]
+        recommended: true
+      - id: Q_FILL_MCP_FIRST
+        text: 是否先装配 MCP（mysql/redis）再 fill-truths？
+        type: boolean
+        when_mode: [fill-truths, fill-truths-agents, pipeline]
+        recommended: true
+      - id: Q_FILL_MCP_PROFILE
+        text: 填充实据/烟测主环境（MCP profile）？（矩阵可多环境；主环境用于扫库与 calibrate）
+        type: choice
+        when_mode: [fill-mcp, fill-truths, fill-truths-agents, pipeline]
+        options:
+          - { value: test, label: test（推荐）, recommended: true }
+          - { value: dev, label: dev }
+          - { value: uat, label: uat }
+          - { value: custom, label: 自定义（写下个答案写 profile 名） }
+        recommended: test
+      - id: Q_READY_COVERAGE
+        text: 开干覆盖率门槛 ready_coverage？（相对 inventory；写入 meta；默认 0.8=80%）
+        type: choice
+        when_mode: [fill-score, fill-morph, fill-gate, fill-plan, fill-truths-agents, pipeline]
+        options:
+          - { value: "0.6", label: 0.6（60%） }
+          - { value: "0.8", label: 0.8（80%·推荐） }
+          - { value: "0.9", label: 0.9（90%） }
+        recommended: "0.8"
+      - id: Q_GATE_PROFILE
+        text: 开干档 gate_profile？（写入 score-policy；strict=常用；gold=覆盖100%·形态≥90·完成度≥95·TODO·B·warnings=0）
+        type: choice
+        when_mode: [fill-score, fill-gate, fill-plan, fill-truths-agents, pipeline, upgrade, resume, land]
+        options:
+          - { value: strict, label: strict（推荐·大仓/新仓）, recommended: true }
+          - { value: gold, label: gold（高门槛·贴顶后升档） }
+          - { value: legacy, label: legacy（仅骨架+覆盖+语义+Plan，同 0.2.28） }
+        recommended: strict
+      - id: Q_FILL_REPORT
+        text: fill-score Markdown 报告是否写入 docs/harness-eng/fill-score-latest.md？
+        type: boolean
+        when_mode: [fill-score, fill-morph, fill-gate, pipeline]
+        recommended: false
+      - id: Q_REPORT_HTML
+        text: 是否生成 HTML 可视化报告（docs/harness-eng/report-latest.html）？
+        type: boolean
+        when_mode: [fill-score, fill-morph, fill-gate, pipeline]
+        recommended: true
+
+transitions:
+  - from: batch-0-global
+    when: "type == NEW_EMPTY || type == NEW_CODE_NO_HARNESS"
+    next: batch-1-new
+  - from: batch-1-new
+    next: batch-1-new-b
+  - from: batch-0-global
+    when: "type == PARTIAL || mode == resume"
+    next: batch-1-partial
+  - from: batch-0-global
+    when: "type == MATURE"
+    next: batch-1-mature
+  - from: batch-0-global
+    when: "type == FOREIGN"
+    next: batch-1-foreign
+  - from: batch-1-partial
+    next: batch-2-contracts
+  - from: batch-0-global
+    when: "mode == seed-truths"
+    next: batch-seed-truths
+  - from: batch-0-global
+    when: "mode == fill-score || mode == fill-morph || mode == fill-gate || mode == fill-truths || mode == fill-truths-agents || mode == fill-mcp || mode == pipeline || mode == fill-plan"
+    next: batch-fill
+  - from: batch-1-new-b
+    when: "ladder >= L3"
+    next: batch-3-l3l4
+  - from: batch-1-partial
+    when: "ladder >= L3"
+    next: batch-3-l3l4
+  - from: batch-1-new-b
+    when: "mode == pipeline"
+    next: batch-fill
+  - from: batch-1-partial
+    when: "mode == pipeline"
+    next: batch-fill

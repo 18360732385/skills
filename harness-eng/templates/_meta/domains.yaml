@@ -1,0 +1,106 @@
+# Contract domain registry (0.3.7+)
+# - Meta for score/seed/plan: weight, truths_dir, detect
+# - L1 file packs: templates/_meta/domain-packs.yaml（render 按 params.domains 展开）
+# Process packs (releases / frontend) and behavior packs (rule 21) are NOT scored — see glossary「过程包」「行为包」.
+
+version: "0.5.0"
+
+domains:
+  api:
+    kind: contract
+    ladder: L1
+    label: API
+    index: api.md
+    truths_dir: modules
+    rule_id: "12"
+    weight: 0.35
+    morph_cap: 75
+    optional: false
+    pack: api
+    scan_fill_work: true
+    hook_code: ["/\/controllers?\//", "packages/api-client/", "packages/types/", "packages/queries/"]
+    hook_docs: "docs/api/modules/"
+    hook_tip: "rule 12：先同步 docs/api/modules 模块真相"
+  func:
+    kind: contract
+    ladder: L1
+    label: Service
+    index: func.md
+    truths_dir: modules
+    rule_id: "11"
+    weight: 0.25
+    morph_cap: 70
+    optional: false
+    pack: func
+    hook_code: ["/\/service\//", "/\/plugin\/tools\//"]
+    hook_docs: "docs/func/modules/"
+    hook_tip: "rule 11：同步 docs/func/modules"
+  db:
+    kind: contract
+    ladder: L1
+    label: DB Table
+    index: db.md
+    truths_dir: table
+    rule_id: "13"
+    weight: 0.25
+    morph_cap: 80
+    optional: false
+    pack: db
+    migration_modes: [flyway, manual_sql, none]
+    hook_code: ["/db\/migration\//", "/\/domain\/entity\//"]
+    hook_docs: "docs/db/table/"
+    hook_tip: "rule 13：同步 docs/db/table + _change.sql"
+    hook_migration_dir: "db/migration/"
+    note: "迁移模式由 Q_DB_MIGRATION 选定并写入 docs/db/db.md 声明；detect S_NO_FLYWAY/S_SQL_DIR → 荐 manual_sql"
+  redis:
+    kind: contract
+    ladder: L1
+    label: Redis Key
+    index: redis.md
+    truths_dir: keys
+    rule_id: "16"
+    weight: 0.15
+    morph_cap: 75
+    optional: true
+    detect: [S_REDIS, S_STACK_REDIS]
+    pack: redis
+    hook_code: ["/\/cache\//", "/\/redis\//"]
+    hook_docs: "docs/redis/keys/"
+    hook_tip: "rule 16：同步 docs/redis/keys"
+  jobs:
+    kind: contract
+    ladder: L1
+    label: Job Task
+    index: jobs.md
+    truths_dir: tasks
+    rule_id: "20"
+    weight: 0.10
+    morph_cap: 80
+    optional: true
+    detect: [S_JOBS]
+    pack: jobs
+    inventory: fill-inventory-jobs.mjs
+    scan_fill_work: true
+    hook_code: ["/\/scheduler\//", "/\/jobs?\//"]
+    hook_docs: "docs/jobs/tasks/"
+    hook_tip: "rule 20：同步 docs/jobs/tasks + 四件套"
+    hook_yml_re: "(application[^/]*\\.ya?ml|config/.*\\.ya?ml)$"
+    note: "Cron / Scheduler / Registry 调度契约；非 OpenAPI 字段表"
+
+# Non-scored packs (detect / audit footnotes only)
+packs:
+  releases:
+    kind: process
+    paths: [docs/releases]
+    skill_hint: release-eng
+  frontend:
+    kind: collab
+    paths: ["**/apps/**", "**/packages/**", "**/*-web/**"]
+    rule_hint: "17-frontend-*"
+    detect: [S_FRONTEND]
+    note: "前端协作约束（rule 17 模板 0.4.0+）；非契约域，不进 fill-score 权重"
+  behavior:
+    kind: behavior
+    rule_hint: "21-observability-*"
+    detect: [S_SLF4J]
+    note: "后端日志/中文注释行为约束（rule 21）；非契约域，不进 fill-score 权重"

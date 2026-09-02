@@ -1,0 +1,41 @@
+---
+description: 数据库表结构同步规则
+globs: {{GLOB_DB}}
+alwaysApply: false
+---
+
+# 数据库表结构同步规则
+
+## 权威来源说明
+
+- **表结构真相（SSOT）**：`docs/db/table/` 下表文档与对应 `_change.sql`。
+- **索引（非 SSOT）**：`docs/db/db.md` 仅作表导航；**禁止**在索引中展开完整建表语句。
+- 冲突裁决：`docs/db/table/*.md` > `db.md`。
+- 写真相前查看 `docs/db/templates/db-table-template.md`；写索引前查看 `db-index-template.md`。
+
+## 文件命名（强制）
+
+- 表真相：`NN-{table_name}.md`；变更 SQL：`NN-{table_name}_change.sql`（同序号）。
+- 新建表取最大序号 +1，并更新 `db.md`、`table/README.md`。
+
+## 强制检查流程
+
+1. 先读 `docs/db/db.md`。
+2. 再读 `docs/db/table/NN-{table}.md` 与 `_change.sql`。
+3. **禁止**只读索引就改表文档或迁移。
+
+## 变更触发条件
+
+新建/改字段/改索引/主键外键/表注释/数据订正 SQL → 同步表文档；建表语句保持**最新完整 CREATE TABLE**。
+
+## 门禁要求
+
+- 变更说明含「表结构文档已同步」
+- `.md` 与 `_change.sql` 同行提交
+- 迁移类翻车回流 `docs/agent-kb/pitfalls.md`
+
+## 迁移模式（`db.md` 索引须声明）
+
+- `flyway`：自动 / 半自动迁移；只追加新版本，禁改已发布脚本。
+- `manual_sql`：**无** Flyway 依赖（`spring.flyway.*` 不生效）；发版 / 新环境须**人工按序**执行迁移脚本；空库首迁以 `db.md` 声明的基线序列为准；`*_change.sql` 仅追溯 / 增量草稿，勿当首迁等价物；勿伪造 `flyway_schema_history`。
+- `none`：无迁移脚本（表结构靠 `table/` 真相维护）。

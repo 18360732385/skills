@@ -1,0 +1,136 @@
+#!/usr/bin/env node
+/**
+ * MCP MySQL 写库护栏（harness-eng hooks 家族 · mysql-guard，非硬阻断）。
+ * allow=放行无输出；ask=确认（人类/护栏依据）；deny=仅阻断「高危环境且会话已多次 ask」。
+ * 测试/验收环境宽松，预发/生产类环境趋严（环境名取自 GUARDED_SERVERS 正则捕获组）。
+ *
+ * 渲染占位：MYSQL_GUARD_SERVERS —— 受护栏 server 名正则（默认 mysql-(dev|test|uat)）。
+ *
+ * 输入（Cursor beforeMCPExecution 协议）：
+ *   { mcp_server_name, tool_name, tool_input: { arguments / sql / query / statement } }
+ * 输出：{ permission, user_message, agent_message }。
+ */
+const GUARDED_SERVERS = new RegExp("^{{MYSQL_GUARD_SERVERS}}$");
+const STRICT_ENVS = ["uat", "pre", "prod"];
+const MEDIUM_ENVS = ["test"];
+const ASK_RATE_LIMIT = { windowMs: 60_000, maxAsks: 5 };
+const SESSION_TTL_MS = 30 * 60_000;
+
+const DDL_RE = /^\s*(create|alter|drop|truncate|rename)\b/i;
+const DML_RE = /^\s*(insert|update|delete|replace|merge)\b/i;
+const UNCONDITIONAL_WRITE_RE = /^\s*(update|delete)\b(?![\s\S]*\bwhere\b)/i;
+const TXN_RE = /^\s*(begin|start\s+transaction|commit|rollback)\b/i;
+
+const sessions = new Map();
+
+function readStdin() {
+  return new Promise((resolve) => {
+    const chunks = [];
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        process.stdin.pause();
+      } catch {
+        /* ignore */
+      }
+      resolve(Buffer.concat(chunks).toString("utf8").replace(/^﻿/, ""));
+    };
+    const timer = setTimeout(done, 2000);
+    process.stdin.on("data", (c) => chunks.push(Buffer.from(c, "utf8")));
+    process.stdin.on("end", done);
+    process.stdin.on("error", done);
+  });
+}
+
+function out(obj) {
+  process.stdout.write(JSON.stringify(obj));
+  process.exit(0);
+}
+const allow = () => out({ permission: "allow" });
+const ask = (user_message, agent_message) =>
+  out({ permission: "ask", user_message, agent_message: agent_message || user_message });
+const deny = (user_message, agent_message) =>
+  out({ permission: "deny", user_message, agent_message: agent_message || user_message });
+
+function extractStatements(payload) {
+  const input = payload.tool_input || {};
+  const args =
+    input.arguments && typeof input.arguments === "object" ? input.arguments : input;
+  const sql = args.sql || args.query || args.statement || "";
+  return String(sql)
+    .split(/;\s*(?:\r?\n|$)/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function classify(sql, env) {
+  if (DDL_RE.test(sql)) return { level: "ask", reason: `DDL（${env} 环境执行前请确认影响面）` };
+  if (UNCONDITIONAL_WRITE_RE.test(sql)) {
+    return { level: "ask", reason: "无 WHERE 的 UPDATE/DELETE，请确认是否为全表操作" };
+  }
+  if (DML_RE.test(sql)) return { level: "ask", reason: `DML 写操作（${env} 环境，请确认）` };
+  if (TXN_RE.test(sql)) return { level: "ask", reason: "事务语句（请确认上下文）" };
+  return { level: "allow" };
+}
+
+function sessionFor(key) {
+  const now = Date.now();
+  let s = sessions.get(key);
+  if (!s || now - s.startedAt > SESSION_TTL_MS) {
+    s = { startedAt: now, asks: [] };
+    sessions.set(key, s);
+  }
+  s.asks = s.asks.filter((t) => now - t < ASK_RATE_LIMIT.windowMs);
+  return s;
+}
+
+(async () => {
+  try {
+    const raw = await readStdin();
+    const payload = JSON.parse(raw || "{}");
+    const server = String(payload.mcp_server_name || payload.server_name || "");
+    const m = server.match(GUARDED_SERVERS);
+    if (!m) allow();
+
+    const env = m[1] || "";
+    const statements = extractStatements(payload);
+    if (!statements.length) allow();
+
+    let highest = { level: "allow" };
+    for (const sql of statements) {
+      const c = classify(sql, env);
+      if (c.level === "ask") highest = c;
+    }
+    if (highest.level === "allow") allow();
+
+    // dev（宽松）：DML 也直接放行；仅 DDL 与无条件写 ask
+    if (!STRICT_ENVS.includes(env) && !MEDIUM_ENVS.includes(env)) {
+      const risky = statements.some(
+        (s) => DDL_RE.test(s) || UNCONDITIONAL_WRITE_RE.test(s)
+      );
+      if (!risky) allow();
+    }
+
+    const s = sessionFor(server);
+    if (s.asks.length >= ASK_RATE_LIMIT.maxAsks) {
+      if (STRICT_ENVS.includes(env)) {
+        deny(
+          `[mcp-mysql-guard] ${server}：本会话写库确认已达 ${ASK_RATE_LIMIT.maxAsks} 次/分钟，已阻断`,
+          `${server} 环境高危且 ask 频率超限；请人工在 MySQL 客户端核对后执行`
+        );
+      }
+      allow();
+    }
+    s.asks.push(Date.now());
+
+    ask(
+      `[mcp-mysql-guard] ${server}：${highest.reason}`,
+      `${server} 环境写库须确认；DDL 变更请同步 db/migration 与表文档`
+    );
+  } catch {
+    allow();
+  }
+})();

@@ -1,0 +1,4 @@
+# release-eng 仪式本地临时产物（勿提交）
+_freeze*.json
+_ai-track*
+_draft-md*

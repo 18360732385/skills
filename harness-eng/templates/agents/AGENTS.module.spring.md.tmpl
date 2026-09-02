@@ -1,0 +1,65 @@
+# {{MODULE_NAME}} — AI 协作规范（Spring 后端分册）
+
+> 本文件供 AI 在 `{{MODULE_DIR}}/` 下工作时遵循。  
+> 仓库命令与红线见根 [AGENTS.md](../AGENTS.md)。
+
+## 模块定位
+
+| 项 | 说明 |
+|---|---|
+| 职责 | TODO(harness-eng): {{REPO_DESC}} |
+| 边界 | **仅后端**；前端 / 静态资源勿放本模块 |
+| 入口类 | TODO(harness-eng): `Application` 全限定类名 |
+| API 前缀 / 端口 | TODO(harness-eng) |
+
+## 构建纪律（Maven）
+
+- Maven 命令**必须在仓库根**执行（`${revision}` 等只从根解析）
+- 构建 / 测试可用 `-am` 带依赖模块；**`spring-boot:run` 禁止 `-am`**（父 POM 无 mainClass）
+
+```bash
+mvn -pl {{MODULE_DIR}} -am test
+mvn -pl {{MODULE_DIR}} spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+## 动手前检查
+
+1. 读根 AGENTS 与本分册
+2. 改业务：`docs/func` 索引 → 真相
+3. 改接口：`docs/api` 索引 → 真相
+4. 改表 / Redis / Cron：对应 `docs/db` / `docs/redis` / `docs/jobs`
+
+## 分层与编码
+
+- Controller → Service → Mapper/Infrastructure；业务编排优先在 Service 扩展
+- 统一响应包装 / 业务异常码：TODO(harness-eng) 按仓内现有类型
+- 用户上下文经仓内上下文持有者获取，**禁止**硬编码 userId
+- 日志与中文注释：若装 rule `21`（`21-observability-comments.mdc`）以其为准
+
+## 库表迁移
+
+- 迁移模式：TODO(harness-eng): flyway / manual_sql / none（与 `docs/db/db.md` 声明一致）
+- **禁止**修改已发布迁移脚本；新变更只追加下一版本
+- manual_sql 模式：发版 / 新环境须人工按序执行；勿伪造 `flyway_schema_history`
+
+## 改动路径速查
+
+| 需求 | 优先改动 |
+|---|---|
+| TODO | TODO |
+
+## 禁止事项
+
+- 提交密钥 / `application-secret.yml`
+- 无文档同步地变更公开契约
+- TODO(harness-eng): 域禁令
+
+## 文档同步门禁（交付必做）
+
+| 变更类型 | 必须同步 |
+|---|---|
+| 业务能力 | `docs/func/modules/…` |
+| REST / API | `docs/api/modules/…` |
+| 表结构 | `docs/db/table/…` |
+| Redis Key | `docs/redis/keys/…` |
+| Cron / 定时任务 | `docs/jobs/tasks/…` |

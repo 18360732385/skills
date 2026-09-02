@@ -1,0 +1,19 @@
+# harness-eng install metadata — do not put secrets here
+skill: harness-eng
+skill_version: "0.5.0"
+# agent_config: true = L5 配置 SSOT 管线已启用（docs/agent-config/ + scripts/agent-config/sync.mjs）；生成物勿手改
+agent_config: {{AGENT_CONFIG}}
+# mcp_tracking: example_only | vendored_shared（见 conflict-policy；缺省 example_only）
+# mcp_tracking: example_only
+ladder: "{{LADDER_TARGET}}"
+domains: {{DOMAINS_YAML}}
+agents_variant: "{{AGENTS_VARIANT}}"
+glob_profile: "{{GLOB_PROFILE}}"
+last_mode: "{{LAST_MODE}}"
+ai_tools: {{AI_TOOLS_YAML}}
+installed_at: "{{DATE}}"
+# 开干轴（≠ domain_caps / formula_ceiling）
+ready_quality: 80
+ready_coverage: 0.8
+# 填充实据 / 烟测主环境（矩阵可多环境；主环境默认 test）
+fill_mcp_profile: test

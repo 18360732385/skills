@@ -1,0 +1,35 @@
+---
+description: 接口文档同步规则
+globs: {{GLOB_API}}
+alwaysApply: false
+---
+
+# 接口文档同步规则
+
+## 权威来源说明
+
+- **接口契约真相（SSOT）**：`docs/api/modules/` 下对应模块文档。
+- **索引（非 SSOT）**：`docs/api/api.md` 仅作模块导航与全局约定；**禁止**在索引中展开单接口字段表。
+- 冲突裁决：`docs/api/modules/*.md` > `api.md`。
+- 编写真相前查看 `docs/api/templates/api-doc-template.md`；写索引前查看 `api-index-template.md`。
+
+## 文件命名与接口标题编号（强制）
+
+- 模块真相文件名：`NN-{service}-{domain}.md`（两位序号与 `api.md` 表顺序一致）。
+- 接口章节标题：`## N. 标题`；子标题统一 `###`（功能逻辑 / 请求参数 / 响应参数）。
+- **仅**对含接口地址的章节编号；变更记录等不编号。
+
+## 强制检查流程
+
+1. 先读 `docs/api/api.md` 索引。
+2. 再读对应 `docs/api/modules/NN-*.md` 真相。
+3. **禁止**只读索引就改接口契约；**禁止**把字段表写回 `api.md`。
+
+## 变更触发条件
+
+入参 / 出参 / URL / 请求方式 / 鉴权变更 → 必须同步 API 文档；并联动 `docs/func/modules/`。
+
+## 门禁要求
+
+- 变更说明须含「API 文档已同步」与「功能资产已同步」
+- 若修了契约双源类翻车，追加或核对 `docs/agent-kb/pitfalls.md` 的 `Pn`

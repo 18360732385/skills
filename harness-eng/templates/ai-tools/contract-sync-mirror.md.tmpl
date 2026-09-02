@@ -1,0 +1,34 @@
+---
+description: 契约同步纪律镜像 — 改业务前读 docs 真相（非 SSOT 正文）
+alwaysApply: true
+enabled: true
+---
+
+# 契约同步指针（宿主镜像 · harness-eng）
+
+> **适配层**。权威仍是根 `AGENTS.md` + `docs/func|api|db|redis`。  
+> 本文件让非 Cursor 宿主也能看见 sync 纪律；**禁止**复制 Never do / Pn 业务正文。
+
+## 读序
+
+1. 根 `AGENTS.md`
+2. 相关分册 `**/AGENTS.md`
+3. 先读索引再读真相：`docs/func|api|db|redis`
+4. 改后回写对应 `modules/` / `table/` / `keys/`
+
+## 域与 globs（施工时写入）
+
+| 域 | 真相目录 | 触发路径（globs） |
+|---|---|---|
+| func | `docs/func/modules/` | `{{GLOB_FUNC}}` |
+| api | `docs/api/modules/` | `{{GLOB_API}}` |
+| db | `docs/db/table/` | `{{GLOB_DB}}` |
+| redis | `docs/redis/keys/` | `{{GLOB_REDIS}}` |
+
+详细条文仍以仓库内 `.cursor/rules/11|12|13|16-*-sync*.mdc` 为准（若存在）；本镜像只提醒「必须同步文档」。
+
+## 禁止
+
+- 只读索引不读真相就改契约相关代码
+- 把字段表写回索引文件
+- 写入明文密码 / Token

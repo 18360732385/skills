@@ -1,0 +1,71 @@
+# harness-eng
+
+将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
+
+**当前版本：0.5.0**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+
+**一页纸入口**：[QUICKSTART.md](QUICKSTART.md)
+
+0.5.0 要点：**配置 SSOT 管线 L5**（`docs/agent-config/` + `sync.mjs --check`）、**hooks 家族**（commit 软门禁扩展 / MCP MySQL 护栏 / 编辑即时提醒 / 交付收口）、**pitfalls 工程化**（7 列模板 + lint 校验脚本）。更早要点见 [CHANGELOG.md](CHANGELOG.md)。
+
+## 安装
+
+### 源仓内置
+
+路径：源仓 `.cursor/skills/harness-eng/`。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。
+
+### 跨仓 / 用户 skills
+
+```powershell
+Copy-Item -Recurse -Force .cursor\skills\harness-eng $env:USERPROFILE\.cursor\skills\harness-eng
+```
+
+```bash
+cp -R .cursor/skills/harness-eng ~/.cursor/skills/harness-eng
+```
+
+重启 Cursor 或新开 Agent 会话后生效。
+
+## 模式
+
+| 中文 | 模式 | 用途 |
+|---|---|---|
+| 落地 | `land` | 探测 → 推荐包 → 提问 → WritePlan → 确认后 render |
+| 续跑 | `resume` | 半成品差分补齐；`on_exists=skip` |
+| 流水线 | `pipeline` | 骨架战役 → 填充战役（过 **填充 MCP 闸**） |
+| 审计 | `audit` | 只读对照阶梯缺口 |
+| 升阶 | `upgrade` | 默认 +1；书面可到指定阶（[upgrade.md](upgrade.md)） |
+| 补空壳真相 | `seed-truths` | 索引行 + `01-*.md` 空壳 |
+| 完整度打分 | `fill-score` | `scripts/fill-score.mjs` + score-policy 裁决（双轴） |
+| 形态诊断 | `fill-morph` | 同上 `--focus morph`；看诊断台 |
+| 开干闸 | `fill-gate` | 同上 `--focus gate`；看决策台 |
+| 填充计划 | `fill-plan` | 批次 / 金标 |
+| 多 Agent 精填 | `fill-truths-agents` | 按 Plan 精填【推荐】 |
+| 自动填充 | `fill-truths-auto` | legacy 草稿 |
+| 契约填充 | `fill-truths` | 见 fill.md |
+| MCP 装配 | `fill-mcp` | 本仓配置 → 多环境 mcp 矩阵 |
+| live 校准 | `fill-calibrate-live` | MCP 不可用时直连 |
+| HTML 报告 | `fill-report-html` | score → Dashboard（`ui.version` ≠ skill_version） |
+
+不确定选项时回复：**全部推荐**（协议 [recommended-profile.md](recommended-profile.md)；写盘仍过 [write-plan.md](write-plan.md)）。
+
+## 纪律
+
+- 写盘前过 [write-plan.md](write-plan.md) 闸门（或已预授权）
+- 需 db·redis 时过 [fill-mcp.md](fill-mcp.md) **填充 MCP 闸**（过闸后再填充；未过停留骨架）
+- 模板只含去域化骨架；业务 `Pn` / 域 Never do / MCP 真密来自本仓经确认抽取
+- 多工作区必须确认目标根
+- 对用户优先中文；术语见 [glossary.md](glossary.md)
+
+## 脚本
+
+```bash
+node scripts/selfcheck-0.5.0.mjs
+node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
+```
+
+仅保留当前 selfcheck；历史脚本见 `archive/selfcheck/`。
+
+## 版本
+
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.0**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。

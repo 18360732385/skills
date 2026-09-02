@@ -1,0 +1,81 @@
+---
+description: 定时任务（Cron / Scheduler）文档同步规则
+globs: {{GLOB_JOBS}}
+alwaysApply: false
+---
+
+# 定时任务文档同步规则（jobs）
+
+## 权威来源说明
+
+- **调度契约真相（SSOT）**：`docs/jobs/tasks/` 下对应 `NN-{slug}.md`。
+- **索引（非 SSOT）**：`docs/jobs/jobs.md` 仅作导航与全局约定；**禁止**在索引中展开单任务完整 Cron / 默认参数正文。
+- 冲突裁决：`docs/jobs/tasks/*.md` > `jobs.md`；**调度契约**以 jobs 为准，func/api 只保留业务与 REST，Cron 细节回链 jobs。
+- 编写或更新 **任务真相**前，先查看 `docs/jobs/templates/job-template.md`。
+- 编写或更新 **索引**前，先查看 `docs/jobs/templates/jobs-index-template.md`。
+- 业务方法 / REST / Key / 表仍以 `docs/func`、`docs/api`、`docs/redis`、`docs/db` 为准。
+
+## 文件命名（强制）
+
+- 任务真相文件名：`NN-{slug}.md`（`slug` = cron 配置短键；与 `jobs.md`「任务文档」表顺序一致）。
+- 新建任务：取当前最大序号 +1，并同步更新 `jobs.md`、`tasks/README.md`。
+- 正文章节标题不加 `N.`。
+- **禁止**新建真相时省略序号前缀；**禁止**用含 `:` 的 `task_code` 做文件名。
+
+## 强制检查流程
+
+1. **强制**：先读 `docs/jobs/jobs.md`（索引）定位任务。
+2. **强制**：再读对应 `docs/jobs/tasks/NN-{slug}.md`（真相）。
+3. **禁止**：只读索引不读真相就改 Scheduler / Cron / Registry。
+4. **禁止**：把完整 Cron 表或默认参数表写回 `jobs.md` 索引正文（错峰总览除外）。
+
+## 变更触发条件
+
+以下任一变更发生，必须同步更新 jobs 文档：
+
+- 新增 / 删除 / 重命名 `task_code` 或 Scheduler 方法
+- 修改 Cron 表达式、配置键、enable 开关语义
+- 修改默认参数（须与 Scheduler + Registry 一致）
+- 修改触发面（SCHEDULED / ADMIN / 手工）
+- 修改锁策略、是否经统一执行器、错峰约定
+
+## 新增 / 修改任务四件套（强制）
+
+1. 任务码枚举（如 `SyncTaskCode`）
+2. `*Scheduler` 的 `@Scheduled`（及条件装配）
+3. `application*.yml`（或 profile）中 cron / enable
+4. Metadata Registry
+5. **`docs/jobs/tasks/NN-*.md`**（新建时更新 `jobs.md` 导航）
+
+## 文档格式约束
+
+- 真相模板：`docs/jobs/templates/job-template.md`
+- 索引模板：`docs/jobs/templates/jobs-index-template.md`
+- 每个 task_code 一个 `tasks/NN-{slug}.md`
+- 必须包含：标识、调度入口、Cron、开关、触发面、默认参数、锁与审计、代码锚点、关联、变更记录
+
+## 目录结构
+
+```
+docs/jobs/
+├── jobs.md
+├── templates/
+│   ├── jobs-index-template.md
+│   └── job-template.md
+└── tasks/
+    ├── README.md
+    └── NN-{slug}.md
+```
+
+## 与功能资产 / 接口联动
+
+- 新建或变更任务时，在相关 `docs/func` / `docs/api` 模块保留轻量回链
+- **禁止**把完整 Service 方法清单 / OpenAPI 字段表复制进 jobs 真相
+- Redis 锁 / checkpoint 表只回链，不在 jobs 重复字段级契约
+
+## 门禁要求
+
+- 文档不同步视为交付不完整
+- 变更说明须包含「定时任务文档已同步（tasks/…）」
+- `docs/jobs/tasks/` 变更须与相关代码同行提交
+- 若本次修了 Cron 四件套漂移 / 双重加锁类翻车，须在 `docs/agent-kb/pitfalls.md` 追加或核对 `Pn`（rule `19`）

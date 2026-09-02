@@ -1,0 +1,118 @@
+#!/usr/bin/env node
+/**
+ * stop 事件交付收口清单（harness-eng hooks 家族 · stop-checklist）。软提醒，fail-open，loop_limit=1。
+ * 覆盖 git 维度的收口盲区：工作区有未提交改动时，commit 门禁的暂存检查根本看不到。
+ *
+ * 渲染占位：DB_MIGRATION_DIR、MIGRATION_ENVS（空串=关闭）、CODE_PREFIXES。
+ */
+const { execSync } = require("child_process");
+
+const MIGRATION_PREFIX = "{{DB_MIGRATION_DIR}}";
+const MIGRATION_ENVS = "{{MIGRATION_ENVS}}";
+
+const CODE_PREFIXES = "{{CODE_PREFIXES}}"
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function readStdin() {
+  return new Promise((resolve) => {
+    const chunks = [];
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        process.stdin.pause();
+      } catch {
+        /* ignore */
+      }
+      resolve(Buffer.concat(chunks).toString("utf8").replace(/^﻿/, ""));
+    };
+    const timer = setTimeout(done, 2000);
+    process.stdin.on("data", (c) => chunks.push(Buffer.from(c, "utf8")));
+    process.stdin.on("end", done);
+    process.stdin.on("error", done);
+  });
+}
+
+function out(obj) {
+  process.stdout.write(JSON.stringify(obj));
+  process.exit(0);
+}
+const allow = () => out({ permission: "allow" });
+
+function git(cmd, cwd) {
+  return execSync(cmd, {
+    encoding: "utf8",
+    cwd,
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 5000,
+    windowsHide: true,
+  });
+}
+
+(async () => {
+  try {
+    const raw = await readStdin();
+    const payload = JSON.parse(raw || "{}");
+    // loop_limit 由宿主侧（hooks.json / hooks.config.json）配置；此处兜底防循环
+    if (Number(payload.loop_count || 0) >= 1) allow();
+
+    let root;
+    try {
+      root = git("git rev-parse --show-toplevel", process.cwd()).trim();
+    } catch {
+      allow();
+    }
+
+    let status;
+    try {
+      status = git("git status --porcelain", root);
+    } catch {
+      allow();
+    }
+    const files = status
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((l) => l.slice(3).trim().replace(/\\/g, "/"))
+      .filter(Boolean);
+    if (files.length === 0) allow();
+
+    const lines = [];
+    const migrations = files.filter((f) => f.startsWith(MIGRATION_PREFIX) && f.endsWith(".sql"));
+    if (MIGRATION_ENVS && migrations.length) {
+      lines.push(
+        `未提交的 migration：${migrations.join("、")} —— 人工同步到 ${MIGRATION_ENVS}，勿只合代码`
+      );
+    }
+    const plansUntracked = files.filter((f) => f.startsWith("docs/superpowers/plans/"));
+    const indexTouched = files.some(
+      (f) =>
+        f === "docs/superpowers/README.md" ||
+        f === "docs/superpowers/ARCHIVE.md" ||
+        f.startsWith("docs/superpowers/archive/")
+    );
+    if (plansUntracked.length && !indexTouched) {
+      lines.push("superpowers 有未收口 plan：交付时须徽章 + git mv archive + 写入 ARCHIVE（rule 18）");
+    }
+
+    const prefixes =
+      CODE_PREFIXES.length > 0
+        ? CODE_PREFIXES
+        : ["src/", "backend/", "frontend/", "apps/", "packages/"];
+    const codeChanged = files.some((f) => prefixes.some((p) => f.startsWith(p)));
+    if (codeChanged) {
+      lines.push("业务代码有改动：按 rule 19 三问自检 pitfalls 回流；按 rule 11–16 核对契约同步");
+    }
+
+    if (lines.length === 0) allow();
+    out({
+      permission: "allow",
+      followup_message: ["【交付收口清单（未提交改动）】", ...lines.map((l) => `- ${l}`)].join("\n"),
+    });
+  } catch {
+    allow();
+  }
+})();

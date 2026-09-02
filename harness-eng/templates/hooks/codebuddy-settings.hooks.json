@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CODEBUDDY_PROJECT_DIR/.codebuddy/hooks/superpowers-commit-gate.js\" --codebuddy",
+            "timeout": 8
+          }
+        ]
+      }
+    ]
+  }
+}

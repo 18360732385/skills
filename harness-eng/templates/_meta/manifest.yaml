@@ -1,0 +1,276 @@
+version: "0.5.0"
+source_repo: c-be-sms-ai
+description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
+
+placeholders:
+  - REPO_NAME
+  - REPO_DESC
+  - MODULE_DIRS
+  - MODULE_NAME
+  - MODULE_DIR
+  - GLOB_FUNC
+  - GLOB_API
+  - GLOB_DB
+  - GLOB_REDIS
+  - GLOB_JOBS
+  - GLOB_OBSERVABILITY
+  - GLOB_FRONTEND
+  - FRONTEND_DIR
+  - DB_MIGRATION_MODE
+  - CODE_PREFIXES
+  - BASE_PACKAGE
+  - LADDER_TARGET
+  - DATE
+  - AGENTS_VARIANT
+  - GLOB_PROFILE
+  - DOMAINS_YAML
+  - LAST_MODE
+  - AI_TOOLS_YAML
+  - AI_TOOLS_JSON
+  - AGENT_CONFIG
+  - PITFALL_DOMAINS
+  - CONTRACT_CHECKS_JS
+  - DB_MIGRATION_DIR
+  - MIGRATION_ENVS
+  - MYSQL_GUARD_SERVERS
+  - MIGRATION_NAME_RE
+  - JOBS_YML_RE
+  - HOOKS_CURSOR_EVENTS
+  - HOOKS_CLAUDE_GROUPS
+  - HOOKS_CONFIG_ENTRIES
+  - GITHOOKS_GATE_SCRIPT
+
+files:
+  # L0 — pick one agents-root* by agents_variant (solo | modules)
+  - id: agents-root-solo
+    ladder: L0
+    template: agents/AGENTS.root.solo.md.tmpl
+    target: AGENTS.md
+    placeholders: [REPO_NAME, MODULE_DIRS]
+    when:
+      agents_variant: solo
+  - id: agents-root
+    ladder: L0
+    template: agents/AGENTS.root.md.tmpl
+    target: AGENTS.md
+    placeholders: [REPO_NAME, MODULE_DIRS]
+    when:
+      agents_variant: modules
+  - id: agents-module
+    ladder: L0
+    template: agents/AGENTS.module.md.tmpl
+    target: "{{MODULE_DIR}}/AGENTS.md"
+    placeholders: [MODULE_NAME, MODULE_DIR, REPO_DESC]
+    note: One per module directory from Q_MODULES (few/all)；skip when solo；params.module_agents_template=spring 时改用 agents/AGENTS.module.spring.md.tmpl（Q_MODULE_AGENTS）
+    when:
+      agents_variant: modules
+  - id: harness-meta
+    ladder: L0
+    template: meta/harness-meta.yaml.tmpl
+    target: .cursor/harness-meta.yaml
+    placeholders: [LADDER_TARGET, DOMAINS_YAML, AGENTS_VARIANT, GLOB_PROFILE, DATE, LAST_MODE, AI_TOOLS_YAML]
+  - id: rule-00
+    ladder: L0
+    template: rules/00-project-docs-overview.mdc.tmpl
+    target: .cursor/rules/00-project-docs-overview.mdc
+  - id: rule-karpathy
+    ladder: L0
+    template: rules/karpathy-guidelines.mdc
+    target: .cursor/rules/karpathy-guidelines.mdc
+  - id: rule-14
+    ladder: L0
+    template: rules/14-chinese-skill-docs.mdc.tmpl
+    target: .cursor/rules/14-chinese-skill-docs.mdc
+    optional: true
+    note: Include when Q_RULE14=yes
+  - id: rule-21
+    ladder: L0
+    template: rules/21-observability-comments.mdc.tmpl
+    target: .cursor/rules/21-observability-comments.mdc
+    placeholders: [GLOB_OBSERVABILITY]
+    optional: true
+    note: 行为包（非契约域）；Include when Q_RULE21=yes（detect S_SLF4J 推荐）
+  - id: rule-17
+    ladder: L0
+    template: rules/17-frontend-web.mdc.tmpl
+    target: .cursor/rules/17-frontend-web.mdc
+    placeholders: [GLOB_FRONTEND, FRONTEND_DIR]
+    optional: true
+    note: 前端协作包（非契约域）；Include when Q_FRONTEND_RULE=yes（detect S_FRONTEND 推荐）
+
+  # L1 contract domains → templates/_meta/domain-packs.yaml (render expandDomainPackEntries)
+
+  # L2
+  - id: kb-readme
+    ladder: L2
+    template: docs/agent-kb/README.md
+    target: docs/agent-kb/README.md
+  - id: kb-arch
+    ladder: L2
+    template: docs/agent-kb/architecture-overview.md
+    target: docs/agent-kb/architecture-overview.md
+    placeholders: [MODULE_DIRS]
+  - id: kb-pitfalls
+    ladder: L2
+    template: docs/agent-kb/pitfalls.md
+    target: docs/agent-kb/pitfalls.md
+  - id: kb-gaps
+    ladder: L2
+    template: docs/agent-kb/accepted-gaps.md
+    target: docs/agent-kb/accepted-gaps.md
+  - id: rule-19
+    ladder: L2
+    template: rules/19-agent-kb.mdc.tmpl
+    target: .cursor/rules/19-agent-kb.mdc
+  - id: pitfalls-lint
+    ladder: L2
+    template: scripts/lint-pitfalls.mjs.tmpl
+    target: scripts/agent-kb/lint-pitfalls.mjs
+    placeholders: [PITFALL_DOMAINS]
+  - id: harness-eng-readme
+    ladder: L2
+    template: docs/harness-eng/README.md
+    target: docs/harness-eng/README.md
+    note: 施工现场（报告/评分）；非契约、非 agent-kb 知识回流
+
+  # L3
+  - id: sp-readme
+    ladder: L3
+    template: docs/superpowers/README.md.tmpl
+    target: docs/superpowers/README.md
+  - id: sp-archive
+    ladder: L3
+    template: docs/superpowers/ARCHIVE.md.tmpl
+    target: docs/superpowers/ARCHIVE.md
+  - id: sp-gitkeep-active-plans
+    ladder: L3
+    template: docs/superpowers/plans/.gitkeep
+    target: docs/superpowers/plans/.gitkeep
+  - id: sp-gitkeep-active-specs
+    ladder: L3
+    template: docs/superpowers/specs/.gitkeep
+    target: docs/superpowers/specs/.gitkeep
+  - id: sp-gitkeep-plans
+    ladder: L3
+    template: docs/superpowers/archive/plans/.gitkeep
+    target: docs/superpowers/archive/plans/.gitkeep
+  - id: sp-gitkeep-specs
+    ladder: L3
+    template: docs/superpowers/archive/specs/.gitkeep
+    target: docs/superpowers/archive/specs/.gitkeep
+  - id: rule-18
+    ladder: L3
+    template: rules/18-superpowers-corpus.mdc.tmpl
+    target: .cursor/rules/18-superpowers-corpus.mdc
+  - id: hooks-json
+    ladder: L3
+    template: hooks/hooks.json.tmpl
+    target: .cursor/hooks.json
+    placeholders: [HOOKS_CURSOR_EVENTS]
+    when_ai_tools: cursor
+    when_agent_config: false
+    note: L5（agent_config）时由 sync.mjs 从 hooks.config.json 生成，勿直渲
+  - id: hooks-gate
+    ladder: L3
+    template: hooks/superpowers-commit-gate.js.tmpl
+    target: .cursor/hooks/superpowers-commit-gate.js
+    placeholders: [CODE_PREFIXES]
+    when_ai_tools: cursor
+    when_agent_config: false
+  - id: hooks-claude-settings
+    ladder: L3
+    template: hooks/claude-settings.hooks.json.tmpl
+    target: .claude/settings.json
+    placeholders: [HOOKS_CLAUDE_GROUPS]
+    when_ai_tools: claude
+    when_agent_config: false
+    action_hint: merge-json-hooks
+    note: Merge hooks only; never wipe unrelated settings keys；L5 时由 sync.mjs 生成
+  - id: hooks-claude-gate
+    ladder: L3
+    template: hooks/superpowers-commit-gate.js.tmpl
+    target: .claude/hooks/superpowers-commit-gate.js
+    placeholders: [CODE_PREFIXES]
+    when_ai_tools: claude
+    when_agent_config: false
+  - id: hooks-codebuddy-settings
+    ladder: L3
+    template: hooks/codebuddy-settings.hooks.json
+    target: .codebuddy/settings.json
+    when_ai_tools: workbuddy
+    action_hint: merge-json-hooks
+    note: WorkBuddy/CodeBuddy; merge hooks only
+  - id: hooks-codebuddy-gate
+    ladder: L3
+    template: hooks/superpowers-commit-gate.js.tmpl
+    target: .codebuddy/hooks/superpowers-commit-gate.js
+    placeholders: [CODE_PREFIXES]
+    when_ai_tools: workbuddy
+  - id: hooks-codex-json
+    ladder: L3
+    template: hooks/codex-hooks.json
+    target: .codex/hooks.json
+    when_ai_tools: codex
+    action_hint: merge-json-hooks
+  - id: hooks-codex-gate
+    ladder: L3
+    template: hooks/superpowers-commit-gate.js.tmpl
+    target: .codex/hooks/superpowers-commit-gate.js
+    placeholders: [CODE_PREFIXES]
+    when_ai_tools: codex
+  - id: hooks-githooks-gate
+    ladder: L3
+    template: hooks/superpowers-commit-gate.js.tmpl
+    target: .githooks/superpowers-commit-gate.js
+    placeholders: [CODE_PREFIXES]
+    when_agent_config: false
+    note: Fallback for qoder/trae and commits outside AI hosts
+  - id: hooks-githooks-precommit
+    ladder: L3
+    template: hooks/githooks-pre-commit.tmpl
+    target: .githooks/pre-commit
+    placeholders: [GITHOOKS_GATE_SCRIPT]
+    note: Soft remind; always exit 0; suggest git config core.hooksPath .githooks
+
+  # L4
+  - id: mcp-example
+    ladder: L4
+    template: mcp/mcp.json.example
+    target: .cursor/mcp.json.example
+    when_agent_config: false
+    note: L5 时由 sync.mjs 从 docs/agent-config/mcp/servers.example.json 生成
+  - id: mcp-readme
+    ladder: L4
+    template: mcp/mcp-usage-guide.md.tmpl
+    target: .cursor/mcp-usage-guide.md
+    note: "0.2.5+ English filename; if legacy .cursor/MCP使用说明.md exists, skip old + create new (do not auto-delete)"
+  - id: gitignore-snippet
+    ladder: L4
+    template: gitignore/harness.gitignore.snippet
+    target: .gitignore
+    action_hint: merge-append-if-missing
+    note: Do not overwrite whole .gitignore; append snippet lines if absent
+
+  # L5 配置 SSOT 管线（Q_AGENT_CONFIG / Q_LADDER=L5）
+  - id: agent-config-readme
+    ladder: L5
+    template: agent-config/README.md.tmpl
+    target: docs/agent-config/README.md
+  - id: agent-config-sync
+    ladder: L5
+    template: agent-config/sync.mjs.tmpl
+    target: scripts/agent-config/sync.mjs
+    placeholders: [AI_TOOLS_JSON]
+  - id: agent-config-hooks-config
+    ladder: L5
+    template: agent-config/hooks/hooks.config.json.tmpl
+    target: docs/agent-config/hooks/hooks.config.json
+    placeholders: [HOOKS_CONFIG_ENTRIES]
+  - id: agent-config-mcp-example
+    ladder: L5
+    template: agent-config/mcp/servers.example.json
+    target: docs/agent-config/mcp/servers.example.json
+  - id: agent-config-settings
+    ladder: L5
+    template: agent-config/settings.json.tmpl
+    target: docs/agent-config/settings.json

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>fixture-new-code</artifactId>
+  <version>0.0.1</version>
+  <name>fixture-new-code</name>
+  <description>harness-eng NEW_CODE_NO_HARNESS fixture</description>
+</project>

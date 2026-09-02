@@ -1,0 +1,17 @@
+# fill-truths progress — no secrets
+# Copy to docs/harness-eng/progress.yaml after user confirmation.
+# Legacy: docs/agent-kb/fill-progress.yaml (pre-0.2.12)
+skill: harness-eng
+updated_at: "{{DATE}}"
+module: "{{MODULE_NAME}}"
+domain: api
+inventory: ""           # relative path to inv.json
+target_ssot: ""         # e.g. docs/api/modules/01-sms-entrance.md
+shards:
+  - id: shard-01
+    status: pending     # pending | filling | done | failed
+    endpoints: 0
+    work_file: docs/api/.fill-work/shard-01.md
+last_merge: ""
+last_score_overall: null
+notes: ""

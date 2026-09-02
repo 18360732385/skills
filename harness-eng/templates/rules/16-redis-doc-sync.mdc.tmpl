@@ -1,0 +1,34 @@
+---
+description: Redis Key 文档同步规则
+globs: {{GLOB_REDIS}}
+alwaysApply: false
+---
+
+# Redis Key 文档同步规则
+
+## 权威来源说明
+
+- **Key 契约真相（SSOT）**：`docs/redis/keys/` 下对应 Key 族文档。
+- **索引（非 SSOT）**：`docs/redis/redis.md`；**禁止**在索引中展开 value 字段表。
+- 冲突裁决：`docs/redis/keys/*.md` > `redis.md`。
+- 写真相前查看 `docs/redis/templates/redis-key-template.md`。
+
+## 文件命名（强制）
+
+- Key 真相：`NN-{family}.md`；新建取最大序号 +1，更新 `redis.md`、`keys/README.md`。
+
+## 强制检查流程
+
+1. 先读 `docs/redis/redis.md`。
+2. 再读 `docs/redis/keys/NN-{family}.md`。
+3. **禁止**只读索引就改 Key 相关代码或文档。
+
+## 变更触发条件
+
+Key 模式 / TTL / 数据结构 / value 语义 / 读写方变更 → 同步 Redis 文档。
+
+## 门禁要求
+
+- 变更说明含「Redis 文档已同步（keys/…）」
+- **禁止**把 Redis 密码、Token 样例写入 SSOT
+- 相关翻车回流 `docs/agent-kb/pitfalls.md`

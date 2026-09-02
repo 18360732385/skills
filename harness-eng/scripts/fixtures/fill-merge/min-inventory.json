@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "module": "fixture",
+  "endpoints": [
+    {
+      "id": "ep-0001",
+      "package": "common",
+      "controller": "AController",
+      "http": "GET",
+      "path": "/a",
+      "method": "getA",
+      "bodyType": "",
+      "retType": "AjaxResult",
+      "evidence": "fixtures/AController.java#getA"
+    },
+    {
+      "id": "ep-0002",
+      "package": "home",
+      "controller": "BController",
+      "http": "POST",
+      "path": "/b",
+      "method": "postB",
+      "bodyType": "BReq",
+      "retType": "AjaxResult",
+      "evidence": "fixtures/BController.java#postB"
+    }
+  ],
+  "shards": []
+}

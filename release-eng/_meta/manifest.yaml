@@ -1,0 +1,29 @@
+# release-eng 版本清单（权威号）
+
+version: "0.3.17"
+source_repo: c-be-sms-ai
+portable: copy-skill-dir
+harness_land: false
+description: >-
+  发版仪式 skill：prepare/resume/audit/seal；变更对象 + 双源去重 + artifacts.json；
+  双轨研判（release-ai-track prompt/merge）；首次分层；逾期硬闸；prior 并集；
+  Asia/Shanghai；截断5（前3后2、hash前8位）；摘要分支级聚合并入元信息；来源分支功能一句话（origin/ 归一去重）；
+  版本身份=发版分支归一化（日期解耦）；jobs 汇总单文件；yml 注释键上一行；目录包仅本版新增制品（不含 candidates）；键级diff；note-merge；seal-check；prod。
+
+modes:
+  - prepare
+  - resume
+  - audit
+  - seal
+
+scripts:
+  - scripts/release-format.mjs
+  - scripts/release-push-gate.mjs
+  - scripts/release-freeze.mjs
+  - scripts/release-freeze-enrich.mjs
+  - scripts/release-ai-track.mjs
+  - scripts/release-note-merge.mjs
+  - scripts/release-seal-check.mjs
+
+fixtures: fixtures/docs/releases/
+docs_truth: docs/releases/

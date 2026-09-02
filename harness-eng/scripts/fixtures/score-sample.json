@@ -1,0 +1,91 @@
+{
+  "ok": true,
+  "root": "D:/fixture/demo-repo",
+  "modules": [],
+  "threshold": 80,
+  "formula_ceiling": 75,
+  "domain_caps": { "api": 75, "func": 70, "db": 80, "redis": 75 },
+  "overall": 74,
+  "domains": {
+    "api": { "score": 75, "index": true, "truths": 12, "shells": 1 },
+    "func": { "score": 70, "index": true, "truths": 8, "shells": 0 },
+    "db": { "score": 78, "index": true, "truths": 20, "shells": 2 },
+    "redis": { "score": 74, "index": true, "truths": 5, "shells": 0 }
+  },
+  "quality": {
+    "overall": 74,
+    "domains": { "api": 75, "func": 70, "db": 78, "redis": 74 }
+  },
+  "coverage": { "percent": 80, "covered": 80, "code": 100, "ratio": 0.8 },
+  "coverage_by_domain": {
+    "api": { "percent": 80, "covered": 80, "code": 100 },
+    "func": { "percent": 65, "covered": 13, "code": 20 },
+    "db": { "percent": 90, "covered": 18, "code": 20 },
+    "redis": { "percent": 70, "covered": 7, "code": 10 }
+  },
+  "ready": {
+    "ok": true,
+    "quality_ok": true,
+    "coverage_ok": true,
+    "coverage_incomplete": false,
+    "rule": "quality>=70 && coverage>=0.6 (compat; see ai_coding_ready)",
+    "ready_quality": 70,
+    "ready_coverage": 0.6
+  },
+  "skeleton_ready": { "ok": true, "ladder": "L4" },
+  "coverage_ready": { "ok": true, "coverage_incomplete": false },
+  "semantic_ready": {
+    "ok": false,
+    "generic_logic_template": 12,
+    "dto_unbound": 4,
+    "rule": "generic_logic<=5 && dto_unbound<=3 && template_completeness>=50"
+  },
+  "fill_plan": {
+    "present": true,
+    "all_closed": false,
+    "open_total": 3,
+    "closed_total": 1
+  },
+  "ai_coding_ready": {
+    "ok": false,
+    "rule": "skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed",
+    "blockers": ["semantic_ready", "fill_plan_open_batches"]
+  },
+  "gold_ratio": 0.42,
+  "acceptance": { "blockers": 3, "warnings": 1, "status": 1 },
+  "draft_vs_ssot": "SSOT 须过 acceptance；heuristic draft 仅 .fill-work",
+  "pass": true,
+  "miss_histogram": {
+    "has-field-comment": 3,
+    "has-ttl": 1,
+    "has-method-list": 2,
+    "missing-req-section": 8,
+    "generic-logic-template": 12,
+    "dto-unbound": 4
+  },
+  "template_completeness": {
+    "overall": 42,
+    "by_domain": { "api": 35, "func": 40, "db": 55, "redis": 50 }
+  },
+  "gaps": [
+    {
+      "domain": "func",
+      "path": "docs/func/modules/01-demo.md",
+      "score": 55,
+      "issues": ["缺少方法清单"]
+    },
+    {
+      "domain": "api",
+      "path": "docs/api/modules/01-demo.md",
+      "score": 60,
+      "issues": ["缺字段说明"]
+    }
+  ],
+  "next_shards": [
+    { "id": "shard-api-01", "package": "com.demo.web", "count": 24 },
+    { "id": "shard-api-02", "package": "com.demo.admin", "count": 18 },
+    { "id": "shard-func-01", "package": "com.demo.service", "count": 12 }
+  ],
+  "diff": { "overall": 2, "api": 1 },
+  "suggest_next": "gold_ratio=0.42 偏低 → acceptance-check 清 blocker，按 truth-quality 精修金标；勿空追 overall"
+}

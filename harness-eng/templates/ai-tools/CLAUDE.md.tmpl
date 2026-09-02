@@ -1,0 +1,19 @@
+# {{REPO_NAME}} — Claude Code 入口
+
+> **适配层（非 SSOT）**。完整命令、红线与契约以仓库根 [`AGENTS.md`](./AGENTS.md) 与 `docs/func|api|db|redis` 为准。
+
+## 必读顺序
+
+1. [`AGENTS.md`](./AGENTS.md) — Critical / Commands / Never do
+2. 改动路径上的分册 `**/AGENTS.md`（若有）
+3. 契约：先索引再真相（`docs/func` → `api` → `db` → `redis`）
+4. `docs/agent-kb/` — 架构与踩坑（非契约 SSOT）
+
+## 冲突裁决
+
+磁盘上最新的 AGENTS / 契约真相优先于本文件与会话早期摘要。动手前重新 Read。
+
+## 禁止
+
+- 在本文件复制业务 Never do / 密码 / Token
+- 用 plan 覆盖 `docs/**` 契约真相

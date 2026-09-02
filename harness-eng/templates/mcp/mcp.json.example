@@ -1,0 +1,97 @@
+{
+  "mcpServers": {
+    "mysql-dev-example": {
+      "command": "npx",
+      "args": ["-y", "@benborla29/mcp-server-mysql"],
+      "env": {
+        "MYSQL_HOST": "YOUR_DEV_HOST",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "YOUR_USER",
+        "MYSQL_PASS": "YOUR_PASSWORD",
+        "MYSQL_DB": "YOUR_DEV_DB",
+        "ALLOW_INSERT_OPERATION": "true",
+        "ALLOW_UPDATE_OPERATION": "true",
+        "ALLOW_DELETE_OPERATION": "true",
+        "ALLOW_DDL_OPERATION": "false",
+        "MYSQL_DISABLE_READ_ONLY_TRANSACTIONS": "true"
+      }
+    },
+    "mysql-test-example": {
+      "command": "npx",
+      "args": ["-y", "@benborla29/mcp-server-mysql"],
+      "env": {
+        "MYSQL_HOST": "YOUR_TEST_HOST",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "YOUR_USER",
+        "MYSQL_PASS": "YOUR_PASSWORD",
+        "MYSQL_DB": "YOUR_TEST_DB",
+        "ALLOW_INSERT_OPERATION": "true",
+        "ALLOW_UPDATE_OPERATION": "true",
+        "ALLOW_DELETE_OPERATION": "true",
+        "ALLOW_DDL_OPERATION": "false",
+        "MYSQL_DISABLE_READ_ONLY_TRANSACTIONS": "true"
+      }
+    },
+    "mysql-local-example": {
+      "command": "npx",
+      "args": ["-y", "@benborla29/mcp-server-mysql"],
+      "env": {
+        "MYSQL_HOST": "127.0.0.1",
+        "MYSQL_PORT": "3306",
+        "MYSQL_USER": "YOUR_USER",
+        "MYSQL_PASS": "YOUR_PASSWORD",
+        "MYSQL_DB": "YOUR_LOCAL_DB",
+        "ALLOW_INSERT_OPERATION": "true",
+        "ALLOW_UPDATE_OPERATION": "true",
+        "ALLOW_DELETE_OPERATION": "true",
+        "ALLOW_DDL_OPERATION": "false",
+        "MYSQL_DISABLE_READ_ONLY_TRANSACTIONS": "true"
+      }
+    },
+    "oracle-dev-example": {
+      "command": "npx",
+      "args": ["-y", "YOUR_ORACLE_MCP_PACKAGE"],
+      "env": {
+        "ORACLE_HOST": "YOUR_DEV_HOST",
+        "ORACLE_PORT": "1521",
+        "ORACLE_USER": "YOUR_USER",
+        "ORACLE_PASSWORD": "YOUR_PASSWORD",
+        "ORACLE_SERVICE": "YOUR_SERVICE"
+      }
+    },
+    "redis-dev-example": {
+      "command": "uvx",
+      "args": [
+        "--with",
+        "mcp[cli]>=1.9.4,<2",
+        "redis-mcp-server@latest",
+        "--url",
+        "redis://:YOUR_PASSWORD@YOUR_DEV_HOST:6379/0"
+      ]
+    },
+    "redis-test-example": {
+      "command": "uvx",
+      "args": [
+        "--with",
+        "mcp[cli]>=1.9.4,<2",
+        "redis-mcp-server@latest",
+        "--url",
+        "redis://:YOUR_PASSWORD@YOUR_TEST_HOST:6379/0"
+      ]
+    },
+    "redis-local-example": {
+      "command": "uvx",
+      "args": [
+        "--with",
+        "mcp[cli]>=1.9.4,<2",
+        "redis-mcp-server@latest",
+        "--url",
+        "redis://:YOUR_PASSWORD@127.0.0.1:6379/0"
+      ]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
+    }
+  }
+}

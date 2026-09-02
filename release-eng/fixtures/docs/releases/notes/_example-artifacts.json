@@ -1,0 +1,33 @@
+{
+  "identity": "YYYY-MM-DD-slug",
+  "version": 1,
+  "generatedAt": "2026-08-21T00:00:00.000Z",
+  "sql": [
+    {
+      "stableId": "V0003__example.sql",
+      "path": "sms-ai/src/main/resources/db/migration/V0003__example.sql",
+      "action": "新增/变更",
+      "profile": "prod",
+      "confidence": "path"
+    }
+  ],
+  "config": [
+    {
+      "stableId": "sms.ai.example.enabled",
+      "path": "sms-ai/src/main/resources/application-prod.yml",
+      "description": "示例键",
+      "value": "true",
+      "profile": "prod",
+      "change": "added",
+      "confidence": "key-diff"
+    }
+  ],
+  "jobs": [],
+  "changeObjects": [],
+  "aiTrack": {
+    "status": "stub",
+    "policy": "dual-track",
+    "aiRanked": [],
+    "aiNoise": []
+  }
+}

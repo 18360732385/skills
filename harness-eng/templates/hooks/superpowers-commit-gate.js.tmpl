@@ -1,0 +1,186 @@
+#!/usr/bin/env node
+/**
+ * Commit soft gate — Cursor / Claude / CodeBuddy / Codex / git pre-commit.
+ * Never blocks commit (fail-open).
+ *
+ * Modes:
+ *   (default Cursor stdin)  payload.command contains git commit → JSON allow + agent_message
+ *   --git                   staged + active plans → stderr, exit 0
+ *   --claude|--codebuddy|--codex
+ *                           stdin tool_input.command contains git commit → stderr, exit 0
+ *
+ * 渲染时将 {{CODE_PREFIXES}} 替换为逗号分隔前缀，如: backend/src/,web/src/
+ */
+const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+const STDIN_TIMEOUT_MS = 2000;
+const CODE_PREFIXES = "{{CODE_PREFIXES}}"
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const argv = process.argv.slice(2);
+const GIT_MODE = argv.includes("--git") || process.env.HARNESS_HOOK_MODE === "git";
+const CLAUDE_MODE =
+  argv.includes("--claude") || process.env.HARNESS_HOOK_MODE === "claude";
+const CODEBUDDY_MODE =
+  argv.includes("--codebuddy") || process.env.HARNESS_HOOK_MODE === "codebuddy";
+const CODEX_MODE =
+  argv.includes("--codex") || process.env.HARNESS_HOOK_MODE === "codex";
+const HOST_SOFT =
+  GIT_MODE || CLAUDE_MODE || CODEBUDDY_MODE || CODEX_MODE;
+
+function readStdin() {
+  return new Promise((resolve) => {
+    const chunks = [];
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        process.stdin.pause();
+        process.stdin.removeAllListeners("data");
+        process.stdin.removeAllListeners("end");
+        process.stdin.removeAllListeners("error");
+      } catch {
+        /* ignore */
+      }
+      resolve(Buffer.concat(chunks).toString("utf8"));
+    };
+    const timer = setTimeout(done, STDIN_TIMEOUT_MS);
+    try {
+      process.stdin.setEncoding("utf8");
+      process.stdin.on("data", (c) => {
+        chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(String(c), "utf8"));
+      });
+      process.stdin.on("end", done);
+      process.stdin.on("error", done);
+      if (process.stdin.readableEnded) done();
+    } catch {
+      done();
+    }
+  });
+}
+
+function allow(extra = {}) {
+  if (HOST_SOFT) {
+    if (extra.agent_message) {
+      console.error(extra.agent_message);
+    }
+    process.exit(0);
+  }
+  process.stdout.write(JSON.stringify({ permission: "allow", ...extra }));
+  process.exit(0);
+}
+
+function git(cmd, cwd) {
+  return execSync(cmd, {
+    encoding: "utf8",
+    cwd,
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 5000,
+    windowsHide: true,
+  });
+}
+
+function extractShellCommand(payload) {
+  if (!payload || typeof payload !== "object") return "";
+  if (payload.command) return String(payload.command);
+  const ti = payload.tool_input || payload.toolInput || {};
+  if (ti.command) return String(ti.command);
+  if (typeof payload.tool_input === "string") return payload.tool_input;
+  return "";
+}
+
+function isGitCommitCommand(cmd) {
+  return /\bgit\s+commit\b/.test(String(cmd || ""));
+}
+
+function evaluate(root) {
+  const plansDir = path.join(root, "docs", "superpowers", "plans");
+  let activePlans = [];
+  try {
+    activePlans = fs
+      .readdirSync(plansDir)
+      .filter((f) => f.endsWith(".md") && f !== "README.md");
+  } catch {
+    return null;
+  }
+
+  let stagedFiles = [];
+  try {
+    stagedFiles = git("git diff --cached --name-only", root)
+      .split(/\r?\n/)
+      .filter(Boolean);
+  } catch {
+    return null;
+  }
+
+  const prefixes =
+    CODE_PREFIXES.length > 0
+      ? CODE_PREFIXES
+      : ["src/", "backend/", "frontend/", "apps/", "packages/"];
+  const codeTouched = stagedFiles.some((f) =>
+    prefixes.some((p) => f.startsWith(p))
+  );
+  const indexTouched = stagedFiles.some(
+    (f) =>
+      f === "docs/superpowers/README.md" ||
+      f === "docs/superpowers/ARCHIVE.md" ||
+      f.startsWith("docs/superpowers/archive/")
+  );
+
+  if (activePlans.length === 0 || !codeTouched || indexTouched) {
+    return null;
+  }
+
+  return [
+    "【superpowers 软提醒】暂存含业务代码，且仍有进行中 plan：",
+    ...activePlans.map((p) => `  - ${p}`),
+    "若本提交完成某主题主功能：先按 rule 18 收口再 commit。",
+    "纯 fix/chore 可忽略本提醒。",
+  ].join("\n");
+}
+
+(async () => {
+  try {
+    if (GIT_MODE) {
+      let root;
+      try {
+        root = git("git rev-parse --show-toplevel", process.cwd()).trim();
+      } catch {
+        allow();
+      }
+      const msg = evaluate(root);
+      allow(msg ? { agent_message: msg } : {});
+    }
+
+    const raw = await readStdin();
+    let payload = {};
+    try {
+      payload = JSON.parse(raw || "{}");
+    } catch {
+      allow();
+    }
+
+    const command = extractShellCommand(payload);
+    if (!isGitCommitCommand(command)) {
+      allow();
+    }
+
+    let root;
+    try {
+      root = git("git rev-parse --show-toplevel", process.cwd()).trim();
+    } catch {
+      allow();
+    }
+
+    const msg = evaluate(root);
+    allow(msg ? { agent_message: msg } : {});
+  } catch {
+    allow();
+  }
+})();
