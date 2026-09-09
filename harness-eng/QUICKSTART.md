@@ -1,6 +1,7 @@
 # harness-eng 快速开始
 
-一页纸入口。详细闸门与模式见 [SKILL.md](SKILL.md)、[glossary.md](glossary.md)。
+一页纸入口。详细闸门与模式见 [SKILL.md](SKILL.md)、[glossary.md](glossary.md)。  
+人读完整说明：[使用手册.md](使用手册.md)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。
 
 ## 你要做什么？
 

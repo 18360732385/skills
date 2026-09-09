@@ -10,7 +10,7 @@ description: >-
 
 Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持久约束。  
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
-一页纸：[QUICKSTART.md](QUICKSTART.md)。施工产物默认 `docs/harness-eng/`。
+一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](write-plan.md)。  
 **全部推荐**协议 SSOT：[recommended-profile.md](recommended-profile.md)。他处只指针。
