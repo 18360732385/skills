@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>harness-eng 使用手册 · v0.5.0</title>
+  <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --bg-elev: #171e26;
+      --bg-soft: #1c2530;
+      --ink: #e8eef4;
+      --muted: #8b9aab;
+      --line: rgba(232, 238, 244, 0.1);
+      --accent: #2dd4bf;
+      --accent-dim: rgba(45, 212, 191, 0.14);
+      --accent-hot: #5eead4;
+      --warn: #f0b429;
+      --danger: #f07178;
+      --ok: #7fd962;
+      --code-bg: #0a0e12;
+      --radius: 10px;
+      --max: 1120px;
+      --nav-w: 248px;
+      --font-display: "Outfit", "Segoe UI", sans-serif;
+      --font-body: "Source Serif 4", "Noto Serif SC", Georgia, serif;
+      --font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, monospace;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.7;
+      background:
+        radial-gradient(1200px 600px at 12% -10%, rgba(45, 212, 191, 0.16), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(56, 189, 248, 0.1), transparent 50%),
+        linear-gradient(180deg, #121820 0%, var(--bg) 28%, #0c1015 100%);
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent-hot); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    a:hover { color: #99f6e4; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(14px);
+      background: rgba(15, 20, 25, 0.82);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.7rem 1.25rem;
+    }
+    .brand {
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: 1.05rem;
+      color: var(--ink);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .brand span { color: var(--accent); }
+    .search {
+      flex: 1;
+      max-width: 420px;
+      position: relative;
+    }
+    .search input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 0.55rem 1rem 0.55rem 2.35rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      outline: none;
+    }
+    .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .search::before {
+      content: "⌕";
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .ver {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .menu-btn {
+      display: none;
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 0.4rem 0.65rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .shell {
+      max-width: calc(var(--max) + var(--nav-w) + 3rem);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: var(--nav-w) minmax(0, 1fr);
+      gap: 2rem;
+      padding: 1.5rem 1.25rem 4rem;
+    }
+
+    .nav {
+      position: sticky;
+      top: 4.2rem;
+      align-self: start;
+      max-height: calc(100vh - 5rem);
+      overflow: auto;
+      padding-right: 0.35rem;
+    }
+    .nav h2 {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 0 0 0.75rem;
+      font-weight: 600;
+    }
+    .nav a {
+      display: block;
+      color: var(--muted);
+      text-decoration: none;
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      padding: 0.38rem 0.55rem;
+      border-radius: 8px;
+      border-left: 2px solid transparent;
+      margin-bottom: 0.15rem;
+      transition: color .2s, background .2s, border-color .2s;
+    }
+    .nav a:hover, .nav a.active {
+      color: var(--ink);
+      background: var(--accent-dim);
+      border-left-color: var(--accent);
+    }
+
+    .hero {
+      position: relative;
+      padding: 2.4rem 0 2rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line);
+      animation: rise .7s ease both;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: -10% -5% auto auto;
+      width: min(420px, 70vw);
+      height: 220px;
+      background:
+        linear-gradient(135deg, rgba(45, 212, 191, 0.18), transparent 60%),
+        radial-gradient(circle at 70% 40%, rgba(56, 189, 248, 0.2), transparent 55%);
+      filter: blur(2px);
+      pointer-events: none;
+      animation: drift 10s ease-in-out infinite alternate;
+    }
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 0 0 0.85rem;
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(2.4rem, 6vw, 3.6rem);
+      letter-spacing: -0.045em;
+      line-height: 1.05;
+      margin: 0 0 0.9rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+    .lede {
+      max-width: 40rem;
+      color: var(--muted);
+      font-size: 1.08rem;
+      margin: 0 0 1.25rem;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .chip {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--ink);
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+    }
+    .chip.ok { border-color: rgba(127, 217, 98, 0.35); color: var(--ok); }
+    .chip.warn { border-color: rgba(240, 180, 41, 0.35); color: var(--warn); }
+
+    section {
+      scroll-margin-top: 4.5rem;
+      padding: 1.6rem 0 0.6rem;
+      animation: rise .55s ease both;
+    }
+    section h2 {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      letter-spacing: -0.03em;
+      margin: 0 0 0.85rem;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid var(--line);
+    }
+    section h3 {
+      font-family: var(--font-display);
+      font-size: 1.12rem;
+      margin: 1.5rem 0 0.55rem;
+      letter-spacing: -0.02em;
+    }
+    p { margin: 0.7rem 0; }
+    strong { font-weight: 700; }
+    ol, ul { margin: 0.55rem 0 0.9rem; padding-left: 1.25rem; }
+    li { margin: 0.28rem 0; }
+    li::marker { color: var(--accent); }
+
+    .callout {
+      border: 1px solid rgba(45, 212, 191, 0.28);
+      background: linear-gradient(120deg, var(--accent-dim), transparent 70%), var(--bg-elev);
+      border-radius: var(--radius);
+      padding: 0.95rem 1.1rem;
+      margin: 1rem 0;
+      box-shadow: var(--shadow);
+    }
+    .callout.warn {
+      border-color: rgba(240, 180, 41, 0.35);
+      background: linear-gradient(120deg, rgba(240, 180, 41, 0.1), transparent 70%), var(--bg-elev);
+    }
+    .callout .label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .callout.warn .label { color: var(--warn); }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 0.9rem 0 1.2rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      min-width: 560px;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.7rem 0.85rem;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--bg-soft);
+      letter-spacing: 0.02em;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(45, 212, 191, 0.04); }
+    code, .mono {
+      font-family: var(--font-mono);
+      font-size: 0.86em;
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 0.08em 0.35em;
+    }
+    pre {
+      margin: 0.9rem 0;
+      padding: 1rem 1.1rem;
+      overflow-x: auto;
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: #d7e2ec;
+    }
+    pre code { background: none; border: none; padding: 0; font-size: inherit; }
+
+    .faq details {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg-elev);
+      margin: 0.55rem 0;
+      overflow: hidden;
+    }
+    .faq summary {
+      cursor: pointer;
+      list-style: none;
+      font-family: var(--font-display);
+      font-weight: 600;
+      padding: 0.85rem 1rem;
+      position: relative;
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after {
+      content: "+";
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent);
+      font-family: var(--font-mono);
+    }
+    .faq details[open] summary::after { content: "–"; }
+    .faq .ans {
+      padding: 0 1rem 1rem;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+    }
+    .faq .ans p:first-child { margin-top: 0.85rem; }
+
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+    }
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding: 0.55rem 0 0.55rem 2.6rem;
+      border-left: 1px dashed rgba(45, 212, 191, 0.35);
+      margin-left: 0.7rem;
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: -0.7rem;
+      top: 0.55rem;
+      width: 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #06241f;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0 1.25rem;
+    }
+    .tool {
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      border-radius: var(--radius);
+      padding: 0.9rem 1rem;
+      transition: transform .2s ease, border-color .2s ease;
+    }
+    .tool:hover {
+      transform: translateY(-2px);
+      border-color: rgba(45, 212, 191, 0.4);
+    }
+    .tool .name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+    .tool .id {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      margin-bottom: 0.45rem;
+    }
+    .tool p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .dash-preview {
+      margin: 1.25rem 0 0;
+      border: 1px solid rgba(45, 212, 191, 0.28);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(160deg, rgba(45, 212, 191, 0.08), transparent 45%),
+        var(--bg-elev);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .dash-preview .dash-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .dash-preview .dash-tabs {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .dash-preview .dash-tab {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      color: var(--muted);
+    }
+    .dash-preview .dash-tab.on {
+      color: #06241f;
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .dash-preview .dash-body { padding: 1rem 1.1rem 1.15rem; }
+    .dash-preview .verdict-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      margin-bottom: 0.9rem;
+    }
+    .dash-preview .badge {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.92rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      background: rgba(127, 217, 98, 0.15);
+      border: 1px solid rgba(127, 217, 98, 0.45);
+      color: var(--ok);
+      white-space: nowrap;
+    }
+    .dash-preview .badge.no {
+      background: rgba(240, 180, 41, 0.12);
+      border-color: rgba(240, 180, 41, 0.4);
+      color: var(--warn);
+    }
+    .dash-preview .verdict-row p {
+      margin: 0 0 0.35rem;
+      font-size: 0.95rem;
+    }
+    .dash-preview .verdict-row .sub {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+    .dash-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+    .dash-kpi {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+      background: var(--bg-soft);
+    }
+    .dash-kpi .k {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .dash-kpi .v {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .dash-kpi .v.ok { color: var(--ok); }
+    .dash-kpi .v.warn { color: var(--warn); }
+    .dash-kpi .note {
+      margin-top: 0.25rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .dash-legend {
+      margin: 0.9rem 0 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .dash-legend strong { color: var(--ink); }
+
+    @media (max-width: 720px) {
+      .dash-preview .verdict-row { grid-template-columns: 1fr; }
+      .dash-kpis { grid-template-columns: 1fr; }
+    }
+
+    .footer {
+      margin-top: 2.5rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .mark { background: rgba(240, 180, 41, 0.35); color: inherit; border-radius: 3px; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes drift {
+      from { transform: translate(0, 0); opacity: 0.85; }
+      to { transform: translate(-18px, 10px); opacity: 1; }
+    }
+
+    @media (max-width: 920px) {
+      .shell { grid-template-columns: 1fr; padding-top: 0.75rem; }
+      .nav {
+        position: fixed;
+        inset: 3.3rem auto 0 0;
+        width: min(86vw, 300px);
+        background: rgba(15, 20, 25, 0.96);
+        border-right: 1px solid var(--line);
+        padding: 1rem;
+        z-index: 35;
+        transform: translateX(-105%);
+        transition: transform .25s ease;
+        max-height: none;
+      }
+      body.nav-open .nav { transform: none; }
+      .menu-btn { display: inline-block; }
+      .tool-grid { grid-template-columns: 1fr; }
+      .search { max-width: none; }
+    }
+
+    @media print {
+      .topbar, .nav, .menu-btn { display: none !important; }
+      .shell { display: block; max-width: none; }
+      body { background: #fff; color: #111; }
+      a { color: #0f766e; }
+      .hero::before { display: none; }
+      .callout, .table-wrap, .tool, .faq details { box-shadow: none; background: #f7f7f7; color: #111; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <button class="menu-btn" type="button" id="menuBtn" aria-label="打开目录">目录</button>
+    <a class="brand" href="#top">harness<span>-eng</span></a>
+    <div class="search">
+      <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
+    </div>
+    <div class="ver">v0.5.0</div>
+  </header>
+
+  <div class="shell">
+    <nav class="nav" id="sideNav" aria-label="章节目录">
+      <h2>目录</h2>
+      <a href="#s1">1. 技能用途</a>
+      <a href="#s2">2. 安装和更新</a>
+      <a href="#s3">3. 如何使用</a>
+      <a href="#s4">4. AI 工具支持</a>
+      <a href="#s5">5. 多工具共仓</a>
+      <a href="#s6">6. 能否 AI Coding</a>
+      <a href="#s7">7. 常见问题</a>
+      <a href="#s8">8. 文档索引</a>
+    </nav>
+
+    <main id="top">
+      <header class="hero">
+        <p class="kicker">Agent Harness · Field Guide</p>
+        <h1>harness<em>-eng</em><br />使用手册</h1>
+        <p class="lede">
+          面向要把业务仓装上 AI 编程脚手架的同学：讲清用途与痛点、安装与自然语言用法、多工具并存，以及怎样确认「可以放心让 AI 改业务」。
+        </p>
+        <div class="chips">
+          <span class="chip">施工产物 · docs/harness-eng/</span>
+          <span class="chip ok">开干只看 ai_coding_ready</span>
+          <span class="chip warn">写盘前须确认闸门</span>
+          <span class="chip">SSOT · AGENTS + docs/**</span>
+        </div>
+
+        <div class="dash-preview" aria-label="仪表盘决策台示意">
+          <div class="dash-head">
+            <span>目标仓 · docs/harness-eng/report-latest.html</span>
+            <div class="dash-tabs" aria-hidden="true">
+              <span class="dash-tab on">决策台</span>
+              <span class="dash-tab">诊断台</span>
+              <span class="dash-tab">任务台</span>
+              <span class="dash-tab">趋势台</span>
+            </div>
+          </div>
+          <div class="dash-body">
+            <div class="verdict-row">
+              <div class="badge">建议可以开干</div>
+              <div>
+                <p><strong>能否 AI Coding 的首页标准</strong>：只认决策台这枚徽章 +「可 AI coding」KPI。</p>
+                <p class="sub">趋势台「仪表参考分」、形态 overall、金标达标率再高，只要徽章是「建议暂缓」就不能开干。</p>
+              </div>
+            </div>
+            <div class="dash-kpis">
+              <div class="dash-kpi">
+                <div class="k">可 AI coding · ai_coding_ready</div>
+                <div class="v ok">YES</div>
+                <div class="note">唯一开干闸</div>
+              </div>
+              <div class="dash-kpi">
+                <div class="k">覆盖 coverage_ready</div>
+                <div class="v ok">达标</div>
+                <div class="note">strict 常 ≥80% · gold=100%</div>
+              </div>
+              <div class="dash-kpi">
+                <div class="k">金标 gold_ratio / 参考分</div>
+                <div class="v warn">仅参考</div>
+                <div class="note">不替代开干</div>
+              </div>
+            </div>
+            <p class="dash-legend">
+              生成方式：对 Agent 说「完整度打分 / 开干闸」，或跑 <code>fill-score</code> + <code>fill-report-html</code>。
+              详细四台读法见 <a href="#s6">第 6 章</a>。
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <section id="s1">
+        <h2>1. 这个技能是做什么的？</h2>
+        <p><strong>harness-eng</strong> 把「Agent Harness 工程化」做成可重复的施工仪式：探测仓库 → 推荐配置 → 你确认 → 再往目标仓写入去域化模板。</p>
+        <p>它落地的不是某业务系统的私有规范，而是一套<strong>跨仓可复用</strong>的协作骨架。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>能力</th><th>落在哪</th><th>作用</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>协作入口</td><td>根/分册 <code>AGENTS.md</code>、总览规则</td><td>Agent 一进仓就知道命令、红线、文档优先级</td></tr>
+              <tr><td>契约骨架</td><td><code>docs/func|api|db|redis|jobs</code> + path-scoped rules</td><td>「改代码前读真相、改后回写文档」有落点</td></tr>
+              <tr><td>知识回流</td><td><code>docs/agent-kb</code></td><td>pitfalls / 架构概览 / 已知缺口可沉淀</td></tr>
+              <tr><td>规划与软门禁</td><td><code>docs/superpowers</code> + hooks</td><td>进行中事项可见；提交前软提醒（不拦截）</td></tr>
+              <tr><td>工具连接样例</td><td><code>mcp.json.example</code> 等</td><td>教怎么接 MCP，真密不入库</td></tr>
+              <tr><td>多工具配置 SSOT（可选 L5）</td><td><code>docs/agent-config/</code> + <code>sync.mjs</code></td><td>一份真相生成 Cursor / Claude / Qoder 等目录</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>解决了什么问题？</h3>
+        <ol>
+          <li><strong>每个 AI 工具各写一套规则</strong>，Never do / 契约互相漂移，换工具就丢上下文。</li>
+          <li><strong>文档和代码脱节</strong>：接口、库表、Redis Key 只在人脑里，Agent 只能猜。</li>
+          <li><strong>「装了很多 markdown」≠「可以放心 AI 改业务」</strong>：空壳、TODO、未验收片段被当成真相。</li>
+          <li><strong>大仓第一次工程化路径过长</strong>：探测、骨架、MCP、inventory、精填、验收、打分没有统一流水线。</li>
+        </ol>
+
+        <div class="callout">
+          <div class="label">一句话</div>
+          技能负责「把仓库改造成适合多 AI 工具协作的工程形态」；业务真相仍由你们（或 Agent 按 Plan 精填）写进 <code>docs/**</code>，各工具只挂薄入口。
+        </div>
+      </section>
+
+      <section id="s2">
+        <h2>2. 如何安装和更新</h2>
+        <p>技能本身装在 <strong>Agent 能读到的 skills 目录</strong>；施工产物写在 <strong>业务目标仓</strong>（装 skill ≠ 给业务仓落地 harness）。</p>
+
+        <h3>2.1 一句话安装（推荐）</h3>
+        <p>对有 shell 权限的 Agent（如 Cursor Agent）直接说：</p>
+        <pre><code>帮我安装这个 skill 到本机用户目录，地址：
+https://github.com/18360732385/skills/tree/main/harness-eng
+装到 ~/.cursor/skills/harness-eng（保证目录内直接有 SKILL.md），装完告诉我路径。</code></pre>
+        <p>也可自己跑 CLI（全局、面向 Cursor；若提示复制/软链，优先 <strong>Copy</strong>）：</p>
+        <pre><code>npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --agent cursor</code></pre>
+        <p>装好后：<strong>新开 Agent 会话</strong>，再显式点名 <strong>harness-eng</strong>。上述 URL 指向 <code>main</code>；若要跟踪施工主干，可改成当前发布分支（如 <code>V0.5.X</code>）。</p>
+
+        <h3>2.2 一句话更新</h3>
+        <pre><code>帮我更新本机的 harness-eng skill：从
+https://github.com/18360732385/skills/tree/main/harness-eng
+覆盖安装到 ~/.cursor/skills/harness-eng，完成后核对 SKILL.md / manifest 版本。</code></pre>
+        <p>或再次执行上面的 <code>npx skills add ...</code>，然后新开会话。目标仓 <code>.cursor/harness-meta.yaml</code> 的 <code>skill_version</code> 可随后续 resume / upgrade 对齐。</p>
+
+        <h3>2.3 从本源仓使用（开发 / 自测）</h3>
+        <p>若你就在含 <code>harness-eng/</code> 的 skills 仓库里对话，直接点名技能即可。路径因宿主而异，常见为：</p>
+        <ul>
+          <li>仓库内：<code>harness-eng/</code>（本仓布局）</li>
+          <li>或 Cursor 约定：<code>.cursor/skills/harness-eng/</code></li>
+        </ul>
+
+        <h3>2.4 手动拷贝安装</h3>
+        <p><strong>Cursor（用户级 skills）：</strong></p>
+        <pre><code># Windows PowerShell
+Copy-Item -Recurse -Force &lt;源&gt;\harness-eng $env:USERPROFILE\.cursor\skills\harness-eng
+
+# macOS / Linux
+cp -R &lt;源&gt;/harness-eng ~/.cursor/skills/harness-eng</code></pre>
+        <p><strong>Claude Code 等</strong>：把同一目录拷到该产品识别的 skills 路径（例如 <code>.claude/skills/harness-eng</code>），以各产品文档为准。</p>
+
+        <h3>2.5 前置条件</h3>
+        <ul>
+          <li>本机可用 <strong>Node.js</strong>（渲染、打分、验收、报告等脚本为 <code>.mjs</code>）。</li>
+          <li>写盘前必须过 <strong>确认闸门</strong>；审计模式默认不写文件。</li>
+          <li>多工作区 / 多模块仓要先确认 <strong>目标根目录</strong>，技能只写已确认的根。</li>
+          <li>一句话安装装的是 <strong>skill 文件</strong>；要给业务仓施工，需另说「流水线 / 落地 / 审计」等。</li>
+        </ul>
+      </section>
+
+      <section id="s3">
+        <h2>3. 如何使用（自然语言即可）</h2>
+        <p>不必背内部模式名。对 Agent <strong>点名 harness-eng</strong>，再用场景话描述意图即可。</p>
+
+        <h3>3.1 按场景怎么说</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>你想做什么</th><th>可以这样说</th><th>Agent 大致会走</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>大仓第一次全面工程化</td><td>「用 harness-eng 跑<strong>流水线</strong>，目标 L4」</td><td>audit → L4 骨架 → MCP 矩阵/闸 → 填充计划 → 多 Agent 精填 → 打分 / HTML 报告</td></tr>
+              <tr><td>只想看缺什么、先别改仓</td><td>「<strong>审计</strong>一下本仓 harness 成熟度」</td><td>对照 L0–L5，默认不写盘</td></tr>
+              <tr><td>从零或按阶梯装骨架</td><td>「给这个仓<strong>落地</strong> harness，做到 L2，域只要 api 和 db」</td><td>探测 → 推荐包 → 提问 → WritePlan → <strong>等你确认</strong> → 渲染</td></tr>
+              <tr><td>已经装了一半</td><td>「<strong>续跑</strong>补齐缺口，不要覆盖我已有的 Never do」</td><td>读 meta，只补缺，<code>on_exists=skip</code></td></tr>
+              <tr><td>升一阶</td><td>「从现在完整阶<strong>升阶</strong>到 L3」</td><td>按 upgrade 规格差分补齐</td></tr>
+              <tr><td>深填契约真相</td><td>「按 fill-plan 做<strong>多 Agent 填充</strong>」</td><td>过填充 MCP 闸 → 批次精填 → acceptance → merge → score</td></tr>
+              <tr><td>能不能开 AI 改业务</td><td>「跑<strong>完整度打分</strong> / <strong>开干闸</strong>」</td><td>看 <code>ai_coding_ready</code>，打开 <code>docs/harness-eng/report-latest.html</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>不确定选项时，回复 <strong>「全部推荐」</strong>：按探测结果的推荐包收齐答案；<strong>写盘仍要再确认一次</strong>（或先说预授权）。</p>
+
+        <h3>3.2 标准施工节奏</h3>
+        <ol class="steps">
+          <li><strong>探测</strong>：指纹仓库类型（空仓 / 半成品 / 已成熟 / 已有 Claude 外源等）。</li>
+          <li><strong>推荐包</strong>：给出 RecommendedProfile（阶梯、契约域、分册、AI 工具面等）。</li>
+          <li><strong>提问</strong>：每批尽量 ≤5 题；可「全部推荐」。</li>
+          <li><strong>WritePlan</strong>：白话摘要 + 文件动作表 + 渲染预览。</li>
+          <li><strong>确认闸门</strong>：你明确说确认类词语之后，才真正写盘。</li>
+          <li><strong>自检与移交</strong>：对照阶梯清单；打印分级 TODO（密钥泄露、空壳补真相等）。</li>
+        </ol>
+
+        <h3>3.3 确认与预授权（写盘前必过）</h3>
+        <div class="callout warn">
+          <div class="label">确认闸门</div>
+          在回复下列<strong>任一</strong>之前，Agent <strong>不应</strong>往目标仓写 harness 文件：
+          <code>确认</code> · <code>确认写入</code> · <code>按计划执行</code> · <code>执行 WritePlan</code> · <code>LGTM</code>
+        </div>
+        <p>也可子集确认，例如：<code>只执行 L0</code>、<code>去掉 14 后执行</code>。若首轮同意 <strong>预授权</strong>，同会话后续的 resume / fill 可自动写盘。</p>
+
+        <h3>3.4 推荐最短路径（大仓）</h3>
+        <ol>
+          <li>「点名 harness-eng，跑流水线，目标 L4，填充用 agents，金标批次。」</li>
+          <li>「全部推荐 → 确认预授权 → 确认。」</li>
+          <li>骨架与 MCP 闸过完后，继续填充战役；验收合并后打开 <code>docs/harness-eng/report-latest.html</code>。</li>
+          <li>看报告上的 <strong>开干（ai_coding_ready）</strong> 与 <strong>金标达标率（gold_ratio）</strong>；启发式草稿只留在 <code>.fill-work</code>，不要当 SSOT。</li>
+        </ol>
+
+        <h3>3.5 本地脚本（可选）</h3>
+        <pre><code>node scripts/fill-score.mjs --root &lt;目标仓路径&gt;
+node scripts/fill-report-html.mjs --root &lt;目标仓路径&gt; --score docs/harness-eng/score-latest.json
+node scripts/acceptance-check.mjs --root &lt;目标仓路径&gt; --domain api</code></pre>
+      </section>
+
+      <section id="s4">
+        <h2>4. 支持哪些 AI 编程工具？</h2>
+        <p>真相与契约只维护 <strong>一份 SSOT</strong>：<code>AGENTS.md</code> + <code>docs/**</code>。各 AI 产品只生成 <strong>入口适配</strong>（短指针 / 薄规则），业务红线与 Pn <strong>不</strong>复制多份。</p>
+
+        <h3>4.1 内置适配</h3>
+        <div class="tool-grid">
+          <div class="tool">
+            <div class="name">Cursor</div>
+            <div class="id">cursor · .cursor/</div>
+            <p>L0 rules / AGENTS；可选 <code>00-harness-ssot.mdc</code></p>
+          </div>
+          <div class="tool">
+            <div class="name">Claude Code</div>
+            <div class="id">claude · CLAUDE.md / .claude/</div>
+            <p>根 <code>CLAUDE.md</code> 指向 AGENTS；契约 sync 镜像在 <code>.claude/rules/</code></p>
+          </div>
+          <div class="tool">
+            <div class="name">Codex</div>
+            <div class="id">codex · .codex/</div>
+            <p><code>.codex/harness.md</code> 等指针</p>
+          </div>
+          <div class="tool">
+            <div class="name">Qoder</div>
+            <div class="id">qoder · .qoder/</div>
+            <p><code>.qoder/rules/00-harness-ssot.md</code></p>
+          </div>
+          <div class="tool">
+            <div class="name">Trae</div>
+            <div class="id">trae · .trae/</div>
+            <p><code>.trae/rules/00-harness-ssot.md</code></p>
+          </div>
+          <div class="tool">
+            <div class="name">WorkBuddy</div>
+            <div class="id">workbuddy · .codebuddy/</div>
+            <p><code>CODEBUDDY.md</code> + <code>.codebuddy/rules/</code></p>
+          </div>
+        </div>
+        <p>提问对应 <code>Q_AI_TOOL</code>，<strong>可多选</strong>。未探测到任何工具时，「全部推荐」默认偏向 Cursor。</p>
+
+        <h3>4.2 自定义工具</h3>
+        <pre><code>自定义: 工具名=FooAgent; 入口路径=.foo/RULES.md</code></pre>
+        <p>技能会在该路径写入指针模板。自定义工具<strong>不会</strong>自动装配宿主 hooks。</p>
+
+        <h3>4.3 软门禁与 hooks 差异（L3+）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>工具</th><th>hooks 能力简述</th></tr></thead>
+            <tbody>
+              <tr><td>Cursor</td><td><code>.cursor/hooks.json</code> + 脚本；支持 hooks 家族（扩展 commit 门禁、MySQL 护栏、编辑提醒、stop 清单等）</td></tr>
+              <tr><td>Claude</td><td><code>.claude/settings.json</code>（只 merge hooks 段）+ adapter 协议翻译</td></tr>
+              <tr><td>WorkBuddy / Codex</td><td>有基础门禁装配；能力面小于 Cursor 家族全套</td></tr>
+              <tr><td>Qoder / Trae</td><td><strong>不臆造</strong>宿主 hooks；依赖 <code>.githooks</code> 兜底；L5 时 Qoder 可经 sync 生成部分配置</td></tr>
+              <tr><td>任意工具（L3）</td><td>建议 <code>git config core.hooksPath .githooks</code>，仓外直接 <code>git commit</code> 也有软提醒</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>软门禁一律 <strong>fail-open</strong>（提醒不拦截提交）。</p>
+      </section>
+
+      <section id="s5">
+        <h2>5. 一个仓库如何同时支持多套 AI 工具？</h2>
+        <div class="callout">
+          <div class="label">核心原则</div>
+          <strong>契约一份，入口多份，生成物可同步。</strong>
+        </div>
+
+        <h3>5.1 落地时多选 AI 工具面</h3>
+        <p>在提问 <code>Q_AI_TOOL</code> 时勾选 Cursor + Claude + Qoder + Trae… 确认写入后，技能会：</p>
+        <ul>
+          <li>为每个已选工具生成对应适配文件；</li>
+          <li>把 <code>ai_tools</code> 列表记入 <code>.cursor/harness-meta.yaml</code>；</li>
+          <li>对非 Cursor 工具额外写入 <strong>契约 sync 镜像</strong>（避免宿主读不到 <code>.cursor/rules/*.mdc</code>）；</li>
+          <li><strong>不删除</strong>未选工具目录里你已有的用户文件（续跑时 skip）。</li>
+        </ul>
+
+        <h3>5.2 已有 Claude / 外源规则时（FOREIGN）</h3>
+        <ul>
+          <li><strong>保留 CLAUDE 并存</strong>：不动 Claude 文件，另装 AGENTS / rules / 契约；冲突裁决写进 AGENTS。</li>
+          <li><strong>逐步迁到 AGENTS</strong>：暂留 Claude，迁移完成后你再决定是否归档。</li>
+          <li><strong>只加契约与 agent-kb</strong>：不强装根 AGENTS / alwaysApply 规则。</li>
+        </ul>
+        <p>删除 <code>CLAUDE.md</code> 必须你书面确认，技能默认不删。</p>
+
+        <h3>5.3 多工具长期维护：升到 L5（推荐）</h3>
+        <ul>
+          <li>单一真相：<code>docs/agent-config/</code>（rules / hooks / mcp / settings / skills）</li>
+          <li>生成器：<code>scripts/agent-config/sync.mjs</code>；用 <code>--check</code> 查漂移</li>
+          <li>生成物带 GENERATED 标记 → <strong>勿手改</strong>；改 SSOT 再 sync</li>
+        </ul>
+
+        <h3>5.4 协作纪律</h3>
+        <ol>
+          <li>业务 Never do、接口/库表真相只改 <code>AGENTS</code> / <code>docs/**</code>。</li>
+          <li>各工具入口文件只保留「指向 SSOT」的薄指针。</li>
+          <li>MCP <strong>真密</strong>只放本机/本仓约定位置，example 可入库。</li>
+          <li>填充与打分以文件系统 + Node 脚本为准，与当前打开哪个 IDE <strong>无关</strong>。</li>
+        </ol>
+      </section>
+
+      <section id="s6">
+        <h2>6. 如何确认「工程化完成程度」够支撑 AI Coding？</h2>
+
+        <h3>10 秒结论（首页标准）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>你在仪表盘上看到</th><th>是否可以宣称 AI Coding</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>决策台</strong>徽章 = <strong>「建议可以开干」</strong>，且 KPI <strong>可 AI coding = YES</strong></td>
+                <td><strong>可以</strong>（仍须人工审）</td>
+              </tr>
+              <tr>
+                <td>徽章 = 「建议暂缓」，或开干 = NO / 有 blockers</td>
+                <td><strong>不可以</strong></td>
+              </tr>
+              <tr>
+                <td>仅阶梯到了 L4，或「仪表参考分 / overall」很高</td>
+                <td><strong>不可以</strong>（参考分 ≠开干）</td>
+              </tr>
+              <tr>
+                <td>金标达标率很高，但开干仍 NO</td>
+                <td><strong>不可以</strong>（金标不替代开干闸）</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>权威页面：目标仓 <code>docs/harness-eng/report-latest.html</code>（模板：<code>templates/report/harness-report.html.tmpl</code>）。</p>
+
+        <div class="dash-preview" style="margin-top:1rem">
+          <div class="dash-head">
+            <span>决策台示意 · 唯一开干裁决</span>
+            <div class="dash-tabs" aria-hidden="true">
+              <span class="dash-tab on">决策台</span>
+              <span class="dash-tab">诊断台</span>
+              <span class="dash-tab">任务台</span>
+              <span class="dash-tab">趋势台</span>
+            </div>
+          </div>
+          <div class="dash-body">
+            <div class="verdict-row">
+              <div class="badge">建议可以开干</div>
+              <div>
+                <p>文案：「10 秒结论：能否开干、差什么、下一步做什么。」</p>
+                <p class="sub">开干 YES 时底层须同时：skeleton ∧ coverage ∧ semantic ∧ fill-plan 全关（+ strict/gold 的 gate）。</p>
+              </div>
+            </div>
+            <div class="dash-kpis">
+              <div class="dash-kpi"><div class="k">可 AI coding</div><div class="v ok">YES</div><div class="note">唯一闸</div></div>
+              <div class="dash-kpi"><div class="k">覆盖 / 语义 / Plan</div><div class="v ok">全绿</div><div class="note">blockers 为空</div></div>
+              <div class="dash-kpi"><div class="k">金标 / 参考分</div><div class="v warn">参考</div><div class="note">≠开干</div></div>
+            </div>
+          </div>
+        </div>
+
+        <h3>先分清两件事</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>概念</th><th>含义</th><th>够不够 AI 改业务？</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>阶梯齐套（L0–L5）</strong></td>
+                <td>协作入口、契约骨架、kb、hooks、MCP example 等文件在不在</td>
+                <td>只说明「脚手架在」；<strong>不等于</strong>可以开干</td>
+              </tr>
+              <tr>
+                <td><strong>开干闸 <code>ai_coding_ready</code></strong></td>
+                <td>骨架就绪 ∧ 覆盖达标 ∧ 语义抽检过 ∧ fill-plan 批次全关，再叠加 gate_profile</td>
+                <td><strong>唯一</strong>对外宣称「建议可以 AI 改业务」的闸</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <div class="label">注意</div>
+          旧字段 <code>ready.ok</code>、形态分 <code>overall</code>、贴顶信号 <code>formula_ceiling</code> <strong>都不是</strong>开干依据。
+        </div>
+
+        <h3>6.1 怎么生成 / 打开仪表盘</h3>
+        <p>自然语言：「用 harness-eng 做<strong>完整度打分</strong>」或「跑<strong>开干闸</strong>」。</p>
+        <pre><code>node scripts/fill-score.mjs --root &lt;目标仓&gt; --focus full
+node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-eng/score-latest.json</code></pre>
+        <p>浏览器打开：<code>docs/harness-eng/report-latest.html</code>。</p>
+
+        <h3>6.2 仪表盘四台：看什么、到什么程度</h3>
+        <p><strong>能否 AI coding 只看决策台</strong>；其余台解释差在哪、下一步做什么。</p>
+
+        <h3>决策台（唯一开干裁决）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>界面元素</th><th>达到什么程度</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td>Verdict 徽章</td><td><strong>建议可以开干</strong></td><td><code>ai_coding_ready=true</code></td></tr>
+              <tr><td></td><td>建议暂缓</td><td>未达开干；看 blockers</td></tr>
+              <tr><td>KPI：可 AI coding</td><td><strong>YES</strong></td><td>与徽章一致；开干只看此项</td></tr>
+              <tr><td>KPI：金标达标率</td><td>越高越好</td><td>大仓进度参考，不替代开干</td></tr>
+              <tr><td>headline / 差距 / 动作列表</td><td>blockers 清空</td><td>按列表补齐后再打分</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>开干 YES 时需同时：骨架就绪、覆盖就绪（strict 常 ≥80%，gold 相关域 100%）、语义就绪、fill-plan 全关，以及 strict/gold 的 gate（如形态地板、TODO 扫面）。</p>
+
+        <h3>诊断台 / 任务台 / 趋势台</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>台</th><th>怎么用</th><th>与 AI Coding</th></tr></thead>
+            <tbody>
+              <tr><td>诊断台</td><td>覆盖条、形态分 vs 上限、miss、低分真相</td><td>解释哪域拖后腿；单独拉高形态分不会让徽章变绿</td></tr>
+              <tr><td>任务台</td><td>下一批 <code>next_shards</code></td><td>做完 → acceptance → merge → 再打分</td></tr>
+              <tr><td>趋势台</td><td>overall / coverage 历史、「仪表参考分」</td><td>页面标明 <strong>≠开干</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>6.3 对照表：仪表盘读数 → 行动</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>决策台状态</th><th>建议行动</th></tr></thead>
+            <tbody>
+              <tr><td>建议可以开干</td><td>可 AI 改业务；合并前仍人工审</td></tr>
+              <tr><td>缺 fill-plan / 有开放批次</td><td>init / 继续 agents 关批次</td></tr>
+              <tr><td>coverage_ready=false</td><td>补 inventory + 分域真相</td></tr>
+              <tr><td>semantic_ready=false</td><td>按接口重填再 acceptance</td></tr>
+              <tr><td>skeleton_ready=false</td><td>resume / upgrade 到 L4</td></tr>
+              <tr><td>gate blockers / 形态贴顶但开干 NO</td><td>清 gate；勿空追 overall</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>6.4 阶梯自检（脚手架维度）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>阶</th><th>你得到什么</th><th>粗检</th></tr></thead>
+            <tbody>
+              <tr><td>L0 协作入口</td><td>AGENTS、meta、总览规则</td><td>新 Agent 找得到命令与红线占位</td></tr>
+              <tr><td>L1 契约骨架</td><td>所选域 docs + sync rules</td><td>改契约有 path rule 提醒回写</td></tr>
+              <tr><td>L2 知识回流</td><td>agent-kb 四件套</td><td>pitfalls 含「域」列</td></tr>
+              <tr><td>L3 规划与软门禁</td><td>superpowers + hooks / githooks</td><td>软提醒不拦截提交</td></tr>
+              <tr><td>L4 工具连接样例</td><td>mcp example + 说明 + gitignore</td><td>无明文密码入库</td></tr>
+              <tr><td>L5 配置 SSOT</td><td>agent-config + sync --check</td><td>生成物勿手改、无漂移</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>大仓常见起步：<strong>一次到 L4</strong>，再填真相；多工具仓再考虑 L5。</p>
+
+        <h3>6.5 开干仍须人工审</h3>
+        <p>即使决策台为 <strong>「建议可以开干」</strong>，含义是「建议可以开始用 AI 改业务」，<strong>不是</strong>保证无错。启发式（<code>quality: heuristic</code>）片段不得冒充已晋升的 SSOT。</p>
+      </section>
+
+      <section id="s7" class="faq">
+        <h2>7. 常见问题（FAQ）</h2>
+
+        <details>
+          <summary>Q1：装了技能但对话里没反应？</summary>
+          <div class="ans"><p>确认技能目录在宿主可加载路径；重启或新开会话；话术里<strong>显式点名 harness-eng</strong>。MATURE 仓未点名时，默认倾向只做审计。</p></div>
+        </details>
+        <details>
+          <summary>Q2：Agent 一直出计划不写文件？</summary>
+          <div class="ans"><p>这是设计如此。须回复确认闸门等价词。若希望同会话连续填充，首轮一并<strong>确认预授权</strong>。</p></div>
+        </details>
+        <details>
+          <summary>Q3：会不会覆盖我手写的 AGENTS Never do？</summary>
+          <div class="ans"><p>续跑 / merge 策略下：<strong>同名章节正文保留</strong>，只追加缺失章节。FOREIGN 仓删除 Claude 文件必须你书面同意。</p></div>
+        </details>
+        <details>
+          <summary>Q4：骨架装完就能让 AI 大规模改业务吗？</summary>
+          <div class="ans"><p>不能单凭阶梯。请看 <code>ai_coding_ready</code>。仅有空壳或未关 fill-plan 时，开干应为 NO。</p></div>
+        </details>
+        <details>
+          <summary>Q5：db / redis 域为什么填不下去？</summary>
+          <div class="ans"><p>需过<strong>填充 MCP 闸</strong>：矩阵达标且（MCP 烟测或 live 校准）通过。未过闸应停留在骨架。</p></div>
+        </details>
+        <details>
+          <summary>Q6：README 里好像有密钥，技能会自动删吗？</summary>
+          <div class="ans"><p>不会。只检测并列入移交 TODO，由人工处理。</p></div>
+        </details>
+        <details>
+          <summary>Q7：多模块大仓 glob 怎么选？</summary>
+          <div class="ans"><p>大仓【推荐】<strong>focused</strong>（收窄到入口与确认模块）。分册可选 solo / few / all。</p></div>
+        </details>
+        <details>
+          <summary>Q8：Cursor 和其他工具规则不一致怎么办？</summary>
+          <div class="ans"><p>短期检查契约 sync 镜像；长期升 <strong>L5</strong>，以 <code>docs/agent-config/</code> 为 SSOT，用 <code>sync.mjs --check</code> 防漂移。</p></div>
+        </details>
+        <details>
+          <summary>Q9：Qoder / Trae 为什么没有和 Cursor 一样的 hooks？</summary>
+          <div class="ans"><p>不为无等价事件机制的宿主<strong>臆造</strong> hooks；L3 用 <code>.githooks</code> 兜底。</p></div>
+        </details>
+        <details>
+          <summary>Q10：打分 overall 很高但开干仍是 NO？</summary>
+          <div class="ans"><p>常见原因：fill-plan 未关、覆盖未达标、acceptance blocker、TODO、缺 inventory。以报告 <strong>blockers</strong> 为准。</p></div>
+        </details>
+        <details>
+          <summary>Q11：heuristic 草稿能直接当正式契约吗？</summary>
+          <div class="ans"><p>不能。须过 acceptance-check 再 merge；启发式须标 <code>quality: heuristic</code> 并留在 <code>.fill-work</code>。</p></div>
+        </details>
+        <details>
+          <summary>Q12：版本以谁为准？</summary>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.0</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
+        </details>
+        <details>
+          <summary>Q13：只想审计、怕写错兄弟仓？</summary>
+          <div class="ans"><p>说「审计」；多根时先确认 <code>Q_TARGET_ROOT</code>。审计默认不写盘。</p></div>
+        </details>
+        <details>
+          <summary>Q14：流水线和落地有什么区别？</summary>
+          <div class="ans">
+            <p><strong>落地 land</strong>：按目标阶梯安装/合并骨架。</p>
+            <p><strong>流水线 pipeline</strong>：一次确认串联审计 → L4 骨架 → MCP 闸 → inventory → fill-plan → agents → score（大仓首次【推荐】）。</p>
+            <p>半成品用<strong>续跑</strong>；已成熟默认<strong>审计</strong>。</p>
+          </div>
+        </details>
+      </section>
+
+      <section id="s8">
+        <h2>8. 相关文档索引</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>文档</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td><a href="使用手册-摘要.md">使用手册-摘要.md</a></td><td>对外一分钟导读</td></tr>
+              <tr><td><a href="使用手册.md">使用手册.md</a></td><td>本页对应的 Markdown 源</td></tr>
+              <tr><td><a href="QUICKSTART.md">QUICKSTART.md</a></td><td>一页纸场景表与最短路径</td></tr>
+              <tr><td><a href="SKILL.md">SKILL.md</a></td><td>Agent 施工仪式总流程</td></tr>
+              <tr><td><a href="glossary.md">glossary.md</a></td><td>阶梯 / 模式 / 开干术语</td></tr>
+              <tr><td><a href="ai-tools.md">ai-tools.md</a></td><td>多 AI 工具面与 hooks / L5</td></tr>
+              <tr><td><a href="ladder.md">ladder.md</a></td><td>L0–L5 交付物与自检清单</td></tr>
+              <tr><td><a href="write-plan.md">write-plan.md</a></td><td>确认闸门与预授权词表</td></tr>
+              <tr><td><a href="fill-score.md">fill-score.md</a> / <a href="fill-gate.md">fill-gate.md</a></td><td>双轴打分与开干闸</td></tr>
+              <tr><td><a href="pipeline.md">pipeline.md</a> / <a href="pipeline-fill.md">pipeline-fill.md</a></td><td>骨架战役与填充战役</td></tr>
+              <tr><td><a href="examples.md">examples.md</a></td><td>情景示例</td></tr>
+              <tr><td><a href="CHANGELOG.md">CHANGELOG.md</a></td><td>版本变更</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.0
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const btn = document.getElementById("menuBtn");
+      const nav = document.getElementById("sideNav");
+      const links = [...nav.querySelectorAll("a")];
+      const sections = links.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+
+      btn.addEventListener("click", () => document.body.classList.toggle("nav-open"));
+      links.forEach((a) => a.addEventListener("click", () => document.body.classList.remove("nav-open")));
+
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          const id = "#" + e.target.id;
+          links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === id));
+        });
+      }, { rootMargin: "-30% 0px -55% 0px", threshold: 0.01 });
+      sections.forEach((s) => io.observe(s));
+
+      const input = document.getElementById("q");
+      let marks = [];
+      function clearMarks() {
+        marks.forEach((m) => {
+          const p = m.parentNode;
+          if (!p) return;
+          p.replaceChild(document.createTextNode(m.textContent), m);
+          p.normalize();
+        });
+        marks = [];
+      }
+      function walk(node, q) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.nodeValue;
+          const idx = text.toLowerCase().indexOf(q);
+          if (idx < 0 || !text.trim()) return;
+          const range = document.createRange();
+          range.setStart(node, idx);
+          range.setEnd(node, idx + q.length);
+          const mark = document.createElement("span");
+          mark.className = "mark";
+          range.surroundContents(mark);
+          marks.push(mark);
+          return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        if (["SCRIPT", "STYLE", "NAV", "INPUT"].includes(node.tagName)) return;
+        [...node.childNodes].forEach((c) => walk(c, q));
+      }
+      input.addEventListener("input", () => {
+        clearMarks();
+        const q = input.value.trim().toLowerCase();
+        if (q.length < 2) return;
+        walk(document.querySelector("main"), q);
+        if (marks[0]) marks[0].scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    })();
+  </script>
+</body>
+</html>

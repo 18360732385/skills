@@ -5,7 +5,7 @@
 **当前版本：0.5.0**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
-**使用手册（人读）**：[使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
+**使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
 
 0.5.0 要点：**配置 SSOT 管线 L5**（`docs/agent-config/` + `sync.mjs --check`）、**hooks 家族**（commit 软门禁扩展 / MCP MySQL 护栏 / 编辑即时提醒 / 交付收口）、**pitfalls 工程化**（7 列模板 + lint 校验脚本）。更早要点见 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -13,7 +13,9 @@
 
 ### 源仓内置
 
-本仓路径：`harness-eng/`（若拷到 Cursor 约定位置则为 `.cursor/skills/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.md](使用手册.md)。
+本仓路径：`harness-eng/`（若拷到 Cursor 约定位置则为 `.cursor/skills/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。
+
+**一句话安装（推荐）：** 对 Agent 说「帮我安装这个 skill，地址：https://github.com/18360732385/skills/tree/main/harness-eng，装到 ~/.cursor/skills/harness-eng」；或 `npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --agent cursor`。装完新开会话后再点名。
 
 ### 跨仓 / 用户 skills
 
