@@ -15,7 +15,7 @@
 
 ### 版本钉
 
-- manifest → `0.5.3`；QUICKSTART / glossary 指针 session-dashboard
+- manifest / meta / questions / README / VERIFY / QUICKSTART → `0.5.3`；glossary 指针 session-dashboard
 
 ## 0.5.2 — 2026-09-11（多宿主对等 P0 + sync-hosts 规格）
 
