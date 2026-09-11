@@ -13,9 +13,8 @@
  *   path-scoped 语义以正文自然语言保留（qoder/trae 额外生成「适用路径」行）。
  * - 各工具目录中未被本脚本管理的内容（如 .cursor/harness-meta.yaml、mcp.local.json
  *   等运行时数据）不受影响。
- * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder → settings.json hooks
- *   （Claude 系）；trae → .trae/hooks.json（Claude 系嵌套格式）。均经 claude-adapter
- *   翻译统一脚本。无等价事件机制的工具不生成、不降级模拟。
+ * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
+ *   （Claude 系）；trae → .trae/hooks.json。均经 claude-adapter 翻译统一脚本。
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -99,12 +98,15 @@ function planRules() {
     const withHeader = rule.raw.replace(FM_RE, (m) => m + "\n" + HEADER_MD);
     // cursor：原生 .mdc（frontmatter 保留）
     if (has("cursor")) put(`.cursor/rules/${rule.name}`, withHeader);
-    // qoder / trae：纯 .md（官方文档为 *.md；path 作用域降级为正文提示）
+    // qoder / trae / claude：纯 .md（path 作用域降级为正文提示）
     if (has("qoder")) {
       put(`.qoder/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule));
     }
     if (has("trae")) {
       put(`.trae/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule));
+    }
+    if (has("claude")) {
+      put(`.claude/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule));
     }
     // codebuddy：每条规则一个文件夹，内含 RULE.mdc
     if (has("workbuddy")) {
@@ -132,7 +134,7 @@ function buildClaudeStyleEvents(cfg, tool) {
       hooks: [{ type: "command", command, timeout: t.timeout || 8 }],
     });
   }
-  return { events, ids };
+  return { events, ids, dir };
 }
 
 function planHooks() {
@@ -173,15 +175,14 @@ function planHooks() {
     }
   }
 
-  // claude / qoder：Claude 系 hooks 写入 settings.json
-  for (const tool of ["claude", "qoder"]) {
+  // claude / qoder / workbuddy：Claude 系 hooks 写入 settings.json
+  for (const tool of ["claude", "qoder", "workbuddy"]) {
     if (!has(tool)) continue;
-    const { events, ids } = buildClaudeStyleEvents(cfg, tool);
+    const { events, ids, dir } = buildClaudeStyleEvents(cfg, tool);
     if (!ids.length) continue;
-    const dir = `.${tool}`;
     const needAdapter = ids.some((id) => id !== "commit-gate");
     const base =
-      tool === "qoder" && ssotExists("settings.json")
+      (tool === "qoder" || tool === "workbuddy") && ssotExists("settings.json")
         ? JSON.parse(readSsot("settings.json"))
         : {};
     putJson(`${dir}/settings.json`, {
@@ -210,8 +211,8 @@ function planMcp() {
   if (ssotExists("mcp", "servers.json")) {
     const servers = JSON.parse(readSsot("mcp", "servers.json"));
     if (has("cursor")) putJson(".cursor/mcp.json", { _generated: HEADER_JSON, ...servers });
-    // qoder / claude 官方主路径：仓库根 .mcp.json（mcpServers）
-    if (has("claude") || has("qoder")) {
+    // qoder / claude / workbuddy 官方主路径：仓库根 .mcp.json
+    if (has("claude") || has("qoder") || has("workbuddy")) {
       putJson(".mcp.json", { _generated: HEADER_JSON, ...servers });
     }
     // trae：项目级 .trae/mcp.json
@@ -220,7 +221,7 @@ function planMcp() {
   if (ssotExists("mcp", "servers.example.json")) {
     const example = JSON.parse(readSsot("mcp", "servers.example.json"));
     if (has("cursor")) putJson(".cursor/mcp.json.example", { _generated: HEADER_JSON, ...example });
-    if (has("claude") || has("qoder")) {
+    if (has("claude") || has("qoder") || has("workbuddy")) {
       putJson(".mcp.json.example", { _generated: HEADER_JSON, ...example });
     }
     if (has("trae")) putJson(".trae/mcp.json.example", { _generated: HEADER_JSON, ...example });
@@ -248,6 +249,7 @@ function planSkills() {
     has("qoder") && ".qoder",
     has("claude") && ".claude",
     has("trae") && ".trae",
+    has("workbuddy") && ".codebuddy",
   ].filter(Boolean);
   for (const file of walk(src)) {
     const rel = path.relative(src, file).split(path.sep).join("/");
@@ -281,12 +283,15 @@ const MANAGED_DIRS = [
   has("qoder") && ".qoder/rules",
   has("qoder") && ".qoder/hooks",
   has("qoder") && ".qoder/skills",
+  has("claude") && ".claude/rules",
   has("claude") && ".claude/hooks",
   has("claude") && ".claude/skills",
   has("trae") && ".trae/rules",
   has("trae") && ".trae/hooks",
   has("trae") && ".trae/skills",
   has("workbuddy") && ".codebuddy/rules",
+  has("workbuddy") && ".codebuddy/hooks",
+  has("workbuddy") && ".codebuddy/skills",
 ].filter(Boolean);
 
 function staleFiles() {

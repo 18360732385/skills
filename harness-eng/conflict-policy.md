@@ -12,7 +12,7 @@
 | 目标存在但异构 | `skip`，建议旁路路径 | `backup-create` |
 | 根 `AGENTS.md` 已存在 | `merge` | `backup-create` / `skip` |
 | 已有其他 alwaysApply 总览 | 不删旧；新增 `00` 前先问 | 合并进旧文件 / 双 always（警告上下文膨胀） |
-| `.cursor/mcp.json` 已存在 | **非 fill-mcp：永不覆盖** | fill-mcp 经 WritePlan 确认后可覆盖或 backup-create |
+| `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json`（及遗留 `.qoder/mcp.json`）已存在 | **非 fill-mcp：永不覆盖** | fill-mcp 经 WritePlan 确认后可按 `ai_tools` 覆盖或 backup-create（多路径内容一致） |
 | MCP 跟踪策略 `mcp_tracking` | land/L4 默认 **`example_only`**（`.gitignore` 忽略真密；仅 example 入库） | **`vendored_shared`**：团队约定跟踪共享 `mcp.json`（须写入 harness-meta；audit 不按反模式红灯；仍禁止把个人机绝对路径 / PAT 扩散到技能分发） |
 | 密文写入 docs / mcp | **fill**：源文件已在**本仓**可读 → 允许写入并可入库 | land/seed 不主动扩散密文 |
 | `.cursor/harness-meta.yaml` 已存在 | `merge`：脚本对 YAML 做**键级合并**（受管键 `ladder`/`domains`/`skill_version`/… 覆盖；未知用户键保留） | `backup-create` |

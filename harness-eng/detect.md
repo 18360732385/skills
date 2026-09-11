@@ -33,7 +33,7 @@ git rev-parse --show-toplevel
 | `S_KB` | `docs/agent-kb/` **且至少 1 个非空文件** |
 | `S_SP` | `docs/superpowers/` **且至少 1 个非空文件** |
 | `S_HOOKS` | `.cursor/hooks.json` |
-| `S_MCP` | `.cursor/mcp.json` 或 `mcp.json.example` |
+| `S_MCP` | `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json` 或任一 `mcp.json.example` |
 | `S_CLAUDE` | `CLAUDE.md` 或 `.claude/` |
 | `S_STACK` | `pom.xml` / `package.json` / `go.mod` / `Cargo.toml` / `pyproject.toml` 等 |
 | `S_HARNESS_META` | `.cursor/harness-meta.yaml`（PARTIAL/upgrade 读 ladder/domains） |

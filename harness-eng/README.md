@@ -2,12 +2,12 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.5.1**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.5.2**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
 
-0.5.1 要点：**Qoder/Trae 宿主对齐**（Claude 系 hooks + 正确 MCP 路径 + L3 全量 rules 镜像）。0.5.0 要点：配置 SSOT 管线 L5、hooks 家族、pitfalls 工程化。更早要点见 [CHANGELOG.md](CHANGELOG.md)。
+0.5.2 要点：**MCP 多路径**、**CodeBuddy hooks/MCP 升格**、**Claude rules 镜像**、**sync-hosts 适配卡**。更早要点见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
@@ -65,7 +65,7 @@ cp -R harness-eng ~/.cursor/skills/harness-eng
 ## 脚本
 
 ```bash
-node scripts/selfcheck-0.5.1.mjs
+node scripts/selfcheck-0.5.2.mjs
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
 ```
 
@@ -73,4 +73,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.1**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.2**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。

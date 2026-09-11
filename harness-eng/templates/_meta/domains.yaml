@@ -3,7 +3,7 @@
 # - L1 file packs: templates/_meta/domain-packs.yaml（render 按 params.domains 展开）
 # Process packs (releases / frontend) and behavior packs (rule 21) are NOT scored — see glossary「过程包」「行为包」.
 
-version: "0.5.1"
+version: "0.5.2"
 
 domains:
   api:

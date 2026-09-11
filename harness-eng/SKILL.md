@@ -95,7 +95,7 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 | 深·真·全 / draft vs SSOT | [truth-quality.md](truth-quality.md) |
 | 多 Agent worker | [fill-workers.md](fill-workers.md) · [fill-truths-agents.md](fill-truths-agents.md) |
 | 加契约域 / packs / morph | [domain-extend.md](domain-extend.md) · `templates/_meta/domains.yaml` · `domain-packs.yaml` · `morph-required.yaml` |
-| AI 工具面 | [ai-tools.md](ai-tools.md) |
+| AI 工具面 | [ai-tools.md](ai-tools.md) · [sync-hosts.md](sync-hosts.md) · `templates/ai-tools/adapters/` |
 | 自动填充（legacy） | [fill-truths-auto.md](fill-truths-auto.md) |
 | live 校准 | `scripts/fill-calibrate-live.mjs`（`--help`） |
 | HTML 报告 | `scripts/fill-report-html.mjs`（`--help`）；score 后【推荐】 |

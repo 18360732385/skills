@@ -11,10 +11,10 @@
  * - expandHooksFamily：选中 hook 的脚本文件条目（L5 → docs/agent-config/hooks/，
  *   否则 → .cursor/hooks/ 等直渲）
  *
- * 协议族（0.5.1+）：
+ * 协议族（0.5.1+ / 0.5.2+ workbuddy）：
  * - cursor：hooks.json + beforeShellExecution / afterFileEdit / …
- * - claude / qoder / trae：Claude 系（settings.json 或 hooks.json）+ PreToolUse / …
- *   经 claude-adapter.js 翻译；qoder 写入 .qoder/settings.json；trae 写入 .trae/hooks.json
+ * - claude / qoder / trae / workbuddy：Claude 系 + claude-adapter.js
+ *   qoder/workbuddy → settings.json；trae → .trae/hooks.json；claude → .claude/settings.json
  */
 import path from "path";
 import { fileURLToPath } from "url";
@@ -25,7 +25,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "../..");
 const DOMAINS_YAML = path.join(SKILL_ROOT, "templates/_meta/domains.yaml");
 
-/** Claude 系宿主共用事件映射（qoder/trae 与 claude 同协议，经 adapter 翻译）。 */
+/** Claude 系宿主共用事件映射（经 adapter 翻译）。 */
 const CLAUDE_STYLE = {
   "commit-gate": { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
   "commit-gate-extended": { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
@@ -49,6 +49,7 @@ export const HOOK_DEFS = {
       claude: CLAUDE_STYLE["commit-gate"],
       qoder: CLAUDE_STYLE["commit-gate"],
       trae: CLAUDE_STYLE["commit-gate"],
+      workbuddy: CLAUDE_STYLE["commit-gate"],
     },
   },
   "commit-gate-extended": {
@@ -60,6 +61,7 @@ export const HOOK_DEFS = {
       claude: CLAUDE_STYLE["commit-gate-extended"],
       qoder: CLAUDE_STYLE["commit-gate-extended"],
       trae: CLAUDE_STYLE["commit-gate-extended"],
+      workbuddy: CLAUDE_STYLE["commit-gate-extended"],
     },
   },
   "mysql-guard": {
@@ -70,6 +72,7 @@ export const HOOK_DEFS = {
       claude: CLAUDE_STYLE["mysql-guard"],
       qoder: CLAUDE_STYLE["mysql-guard"],
       trae: CLAUDE_STYLE["mysql-guard"],
+      workbuddy: CLAUDE_STYLE["mysql-guard"],
     },
   },
   "after-edit": {
@@ -80,6 +83,7 @@ export const HOOK_DEFS = {
       claude: CLAUDE_STYLE["after-edit"],
       qoder: CLAUDE_STYLE["after-edit"],
       trae: CLAUDE_STYLE["after-edit"],
+      workbuddy: CLAUDE_STYLE["after-edit"],
     },
   },
   "stop-checklist": {
@@ -90,21 +94,28 @@ export const HOOK_DEFS = {
       claude: CLAUDE_STYLE["stop-checklist"],
       qoder: CLAUDE_STYLE["stop-checklist"],
       trae: CLAUDE_STYLE["stop-checklist"],
+      workbuddy: CLAUDE_STYLE["stop-checklist"],
     },
   },
 };
 
 export const DEFAULT_HOOKS_FAMILY = ["commit-gate"];
 
-/** Claude 系宿主（settings.json 或 hooks.json + adapter）。 */
-export const CLAUDE_STYLE_TOOLS = ["claude", "qoder", "trae"];
+/** Claude 系宿主（settings.json 或 hooks.json + adapter）。workbuddy 目录名为 .codebuddy */
+export const CLAUDE_STYLE_TOOLS = ["claude", "qoder", "trae", "workbuddy"];
 
-/** 与 extended 门禁互斥的基础门禁 manifest 条目（cursor/claude/qoder/trae/githooks）。 */
+/** 工具 id → 磁盘目录名 */
+export function toolDirName(toolKey) {
+  return toolKey === "workbuddy" ? "codebuddy" : toolKey;
+}
+
+/** 与 extended 门禁互斥的基础门禁 manifest 条目 */
 export const BASIC_GATE_IDS = [
   "hooks-gate",
   "hooks-claude-gate",
   "hooks-qoder-gate",
   "hooks-trae-gate",
+  "hooks-codebuddy-gate",
   "hooks-githooks-gate",
 ];
 
@@ -245,7 +256,7 @@ function hooksConfigEntriesJson(selection, aiTools) {
   for (const key of selection) {
     const def = HOOK_DEFS[key];
     const targets = {};
-    for (const t of ["cursor", "claude", "qoder", "trae"]) {
+    for (const t of ["cursor", "claude", "qoder", "trae", "workbuddy"]) {
       if (!tools.has(t)) continue;
       const ev = def.events[t];
       if (ev) targets[t] = ev;
@@ -307,6 +318,10 @@ export function buildHookPlaceholders({ params, agentConfig, existing }) {
   put("HOOKS_QODER_GROUPS", claudeStyleGroupsJson(selection, "qoder", ".qoder/hooks"));
   put("HOOKS_TRAE_GROUPS", claudeStyleGroupsJson(selection, "trae", ".trae/hooks"));
   put(
+    "HOOKS_CODEBUDDY_GROUPS",
+    claudeStyleGroupsJson(selection, "workbuddy", ".codebuddy/hooks")
+  );
+  put(
     "HOOKS_CONFIG_ENTRIES",
     hooksConfigEntriesJson(selection, aiTools)
   );
@@ -351,6 +366,9 @@ export function expandHooksFamily(params, agentConfig, actionForTarget) {
     if (has("claude")) push(`hookfam-${key}-claude`, def.template, `.claude/hooks/${def.script}`);
     if (has("qoder")) push(`hookfam-${key}-qoder`, def.template, `.qoder/hooks/${def.script}`);
     if (has("trae")) push(`hookfam-${key}-trae`, def.template, `.trae/hooks/${def.script}`);
+    if (has("workbuddy")) {
+      push(`hookfam-${key}-codebuddy`, def.template, `.codebuddy/hooks/${def.script}`);
+    }
     if (def.gate) push(`hookfam-${key}-githooks`, def.template, `.githooks/${def.script}`);
   }
 
@@ -369,6 +387,13 @@ export function expandHooksFamily(params, agentConfig, actionForTarget) {
       }
       if (has("trae")) {
         push("hookfam-trae-adapter", "hooks/claude-adapter.js", ".trae/hooks/claude-adapter.js");
+      }
+      if (has("workbuddy")) {
+        push(
+          "hookfam-codebuddy-adapter",
+          "hooks/claude-adapter.js",
+          ".codebuddy/hooks/claude-adapter.js"
+        );
       }
     }
   }

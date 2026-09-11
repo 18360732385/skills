@@ -51,9 +51,16 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.5.1 → 0.5.2 迁移要点
+
+1. **meta**：`skill_version` → `0.5.2`
+2. **fill-mcp**：按 `ai_tools` 写入 `.cursor/mcp.json` 与/或根 `.mcp.json` 与/或 `.trae/mcp.json`（内容一致）
+3. **CodeBuddy**：resume 后应有全家桶 hooks（非仅基础 gate）；确认根 `.mcp.json.example`
+4. **Claude**：出现 `.claude/rules/*.md` 全量镜像属预期
+
 ## 0.5.0 → 0.5.1 迁移要点
 
-1. **meta**：`skill_version` → `0.5.1`
+1. **meta**：`skill_version` → `0.5.1`（再升 0.5.2 见上）
 2. **Qoder**：若曾有 Cursor 式 `.qoder/hooks.json`，改由 `.qoder/settings.json` hooks 接管；L5 仓跑 `sync.mjs` 后可删过期 `hooks.json`（sync 会清 stale）
 3. **MCP**：Qoder 真密/example 改用根 `.mcp.json`（勿再依赖 `.qoder/mcp.json`）
 4. **Trae**：确认 `Q_AI_TOOL` 含 trae 后 resume/upgrade 补 hooks + mcp example

@@ -648,6 +648,9 @@ function expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root
     if (tools.has("trae")) {
       pushMirror(`${f.id || stem}-mirror-trae`, `.trae/rules/${stem}.md`, "mdc-to-host-md");
     }
+    if (tools.has("claude")) {
+      pushMirror(`${f.id || stem}-mirror-claude`, `.claude/rules/${stem}.md`, "mdc-to-host-md");
+    }
     if (tools.has("workbuddy")) {
       pushMirror(
         `${f.id || stem}-mirror-workbuddy`,
@@ -660,7 +663,12 @@ function expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root
 }
 
 /** sync.mjs 托管的规则目录前缀（L5 下 render 不再直渲，避免被当 stale 清理）。 */
-const SYNC_MANAGED_RULE_PREFIXES = [".qoder/rules/", ".trae/rules/", ".codebuddy/rules/"];
+const SYNC_MANAGED_RULE_PREFIXES = [
+  ".qoder/rules/",
+  ".trae/rules/",
+  ".claude/rules/",
+  ".codebuddy/rules/",
+];
 
 function expandAiToolAdapters(params, root, actionForTarget, agentConfig) {
   const tools = Array.isArray(params.ai_tools) ? params.ai_tools : [];

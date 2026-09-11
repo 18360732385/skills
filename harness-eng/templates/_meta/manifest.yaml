@@ -1,4 +1,4 @@
-version: "0.5.1"
+version: "0.5.2"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 
@@ -39,6 +39,7 @@ placeholders:
   - HOOKS_CLAUDE_GROUPS
   - HOOKS_QODER_GROUPS
   - HOOKS_TRAE_GROUPS
+  - HOOKS_CODEBUDDY_GROUPS
   - HOOKS_CONFIG_ENTRIES
   - GITHOOKS_GATE_SCRIPT
 
@@ -228,17 +229,20 @@ files:
     when_agent_config: false
   - id: hooks-codebuddy-settings
     ladder: L3
-    template: hooks/codebuddy-settings.hooks.json
+    template: hooks/codebuddy-settings.hooks.json.tmpl
     target: .codebuddy/settings.json
+    placeholders: [HOOKS_CODEBUDDY_GROUPS]
     when_ai_tools: workbuddy
+    when_agent_config: false
     action_hint: merge-json-hooks
-    note: WorkBuddy/CodeBuddy; merge hooks only
+    note: WorkBuddy/CodeBuddy = Claude 系；hooks 写入 settings.json（0.5.2+ 全家桶）
   - id: hooks-codebuddy-gate
     ladder: L3
     template: hooks/superpowers-commit-gate.js.tmpl
     target: .codebuddy/hooks/superpowers-commit-gate.js
     placeholders: [CODE_PREFIXES]
     when_ai_tools: workbuddy
+    when_agent_config: false
   - id: hooks-codex-json
     ladder: L3
     template: hooks/codex-hooks.json
@@ -276,9 +280,9 @@ files:
     ladder: L4
     template: mcp/mcp.json.example
     target: .mcp.json.example
-    when_ai_tools: [claude, qoder]
+    when_ai_tools: [claude, qoder, workbuddy]
     when_agent_config: false
-    note: Claude/Qoder 官方主路径根 .mcp.json；example 入库、真密不覆盖
+    note: Claude/Qoder/CodeBuddy 官方主路径根 .mcp.json
   - id: mcp-example-trae
     ladder: L4
     template: mcp/mcp.json.example

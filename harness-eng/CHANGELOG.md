@@ -1,8 +1,22 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`0.2.x → 0.3.0 → … → 0.4.0 → 0.5.0 → 0.5.1`（当前 **0.5.1**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`… → 0.5.0 → 0.5.1 → 0.5.2`（当前 **0.5.2**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.2 — 2026-09-11（多宿主对等 P0 + sync-hosts 规格）
+
+### 产品
+
+- **MCP 多路径**：`scripts/lib/mcp-paths.mjs`；fill-mcp / calibrate-live / conflict-policy / detect 对齐 `.cursor/mcp.json` ∥ `.mcp.json` ∥ `.trae/mcp.json`
+- **CodeBuddy 升格**：hooks 家族进 `.codebuddy/settings.json`（Claude 系 + adapter）；L4/L5 根 `.mcp.json`；L5 sync 分发 hooks/skills
+- **Claude 全量 rules 镜像**：L3+ / L5 → `.claude/rules/*.md`
+- **P1 骨架**：`sync-hosts.md` + `templates/ai-tools/adapters/{cursor,claude,qoder,trae,workbuddy,codex}.md`（Codex 仍为部分对齐）
+
+### 版本钉
+
+- manifest / meta / questions / domains / README / QUICKSTART / VERIFY → `0.5.2`
+- selfcheck → `selfcheck-0.5.2.mjs`；`0.5.1` → archive
 
 ## 0.5.1 — 2026-09-11（多宿主对齐：Qoder/Trae hooks·MCP·rules）
 
