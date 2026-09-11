@@ -5,10 +5,16 @@
  * - normalizeHooksFamily：Q_HOOKS_FAMILY 答案 → 规范选择（extended 与 basic 门禁互斥）
  * - resolveAgentConfig：params.agent_config 或 ladder>=L5 → 配置 SSOT 管线模式
  * - buildHookPlaceholders：CONTRACT_CHECKS_JS / HOOKS_CURSOR_EVENTS /
- *   HOOKS_CLAUDE_GROUPS / HOOKS_CONFIG_ENTRIES / GITHOOKS_GATE_SCRIPT /
+ *   HOOKS_CLAUDE_GROUPS / HOOKS_QODER_GROUPS / HOOKS_TRAE_GROUPS /
+ *   HOOKS_CONFIG_ENTRIES / GITHOOKS_GATE_SCRIPT /
  *   DB_MIGRATION_DIR / MIGRATION_ENVS / MYSQL_GUARD_SERVERS
  * - expandHooksFamily：选中 hook 的脚本文件条目（L5 → docs/agent-config/hooks/，
  *   否则 → .cursor/hooks/ 等直渲）
+ *
+ * 协议族（0.5.1+）：
+ * - cursor：hooks.json + beforeShellExecution / afterFileEdit / …
+ * - claude / qoder / trae：Claude 系（settings.json 或 hooks.json）+ PreToolUse / …
+ *   经 claude-adapter.js 翻译；qoder 写入 .qoder/settings.json；trae 写入 .trae/hooks.json
  */
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,6 +25,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "../..");
 const DOMAINS_YAML = path.join(SKILL_ROOT, "templates/_meta/domains.yaml");
 
+/** Claude 系宿主共用事件映射（qoder/trae 与 claude 同协议，经 adapter 翻译）。 */
+const CLAUDE_STYLE = {
+  "commit-gate": { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
+  "commit-gate-extended": { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
+  "mysql-guard": { event: "PreToolUse", matcher: "mcp__mysql", adapter: "mcp-guard" },
+  "after-edit": {
+    event: "PostToolUse",
+    matcher: "Edit|Write|MultiEdit",
+    adapter: "edit-reminder",
+  },
+  "stop-checklist": { event: "Stop", adapter: "stop-check" },
+};
+
 /** hooks 家族登记表。gate 类才有 git 模式（.githooks 兜底）。 */
 export const HOOK_DEFS = {
   "commit-gate": {
@@ -27,8 +46,9 @@ export const HOOK_DEFS = {
     gate: true,
     events: {
       cursor: { event: "beforeShellExecution", matcher: "git\\s+commit", timeout: 8 },
-      qoder: { event: "beforeShellExecution", matcher: "git\\s+commit", timeout: 8 },
-      claude: { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
+      claude: CLAUDE_STYLE["commit-gate"],
+      qoder: CLAUDE_STYLE["commit-gate"],
+      trae: CLAUDE_STYLE["commit-gate"],
     },
   },
   "commit-gate-extended": {
@@ -37,8 +57,9 @@ export const HOOK_DEFS = {
     gate: true,
     events: {
       cursor: { event: "beforeShellExecution", matcher: "git\\s+(commit|merge)\\b", timeout: 12 },
-      qoder: { event: "beforeShellExecution", matcher: "git\\s+commit", timeout: 8 },
-      claude: { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
+      claude: CLAUDE_STYLE["commit-gate-extended"],
+      qoder: CLAUDE_STYLE["commit-gate-extended"],
+      trae: CLAUDE_STYLE["commit-gate-extended"],
     },
   },
   "mysql-guard": {
@@ -46,7 +67,9 @@ export const HOOK_DEFS = {
     template: "hooks/mcp-mysql-guard.js.tmpl",
     events: {
       cursor: { event: "beforeMCPExecution", timeout: 8 },
-      claude: { event: "PreToolUse", matcher: "mcp__mysql", adapter: "mcp-guard" },
+      claude: CLAUDE_STYLE["mysql-guard"],
+      qoder: CLAUDE_STYLE["mysql-guard"],
+      trae: CLAUDE_STYLE["mysql-guard"],
     },
   },
   "after-edit": {
@@ -54,7 +77,9 @@ export const HOOK_DEFS = {
     template: "hooks/after-edit-reminder.js.tmpl",
     events: {
       cursor: { event: "afterFileEdit", timeout: 8 },
-      claude: { event: "PostToolUse", matcher: "Edit|Write|MultiEdit", adapter: "edit-reminder" },
+      claude: CLAUDE_STYLE["after-edit"],
+      qoder: CLAUDE_STYLE["after-edit"],
+      trae: CLAUDE_STYLE["after-edit"],
     },
   },
   "stop-checklist": {
@@ -62,15 +87,26 @@ export const HOOK_DEFS = {
     template: "hooks/stop-delivery-checklist.js.tmpl",
     events: {
       cursor: { event: "stop", timeout: 8, loop_limit: 1 },
-      claude: { event: "Stop", adapter: "stop-check" },
+      claude: CLAUDE_STYLE["stop-checklist"],
+      qoder: CLAUDE_STYLE["stop-checklist"],
+      trae: CLAUDE_STYLE["stop-checklist"],
     },
   },
 };
 
 export const DEFAULT_HOOKS_FAMILY = ["commit-gate"];
 
-/** 与 extended 门禁互斥的基础门禁 manifest 条目（cursor/claude/githooks）。 */
-export const BASIC_GATE_IDS = ["hooks-gate", "hooks-claude-gate", "hooks-githooks-gate"];
+/** Claude 系宿主（settings.json 或 hooks.json + adapter）。 */
+export const CLAUDE_STYLE_TOOLS = ["claude", "qoder", "trae"];
+
+/** 与 extended 门禁互斥的基础门禁 manifest 条目（cursor/claude/qoder/trae/githooks）。 */
+export const BASIC_GATE_IDS = [
+  "hooks-gate",
+  "hooks-claude-gate",
+  "hooks-qoder-gate",
+  "hooks-trae-gate",
+  "hooks-githooks-gate",
+];
 
 /** Q_HOOKS_FAMILY 答案归一化；extended 选中时剔除 basic。 */
 export function normalizeHooksFamily(input) {
@@ -170,16 +206,16 @@ function cursorEventsJson(selection) {
   return parts.join(",\n    ");
 }
 
-function claudeGroupsJson(selection) {
+function claudeStyleGroupsJson(selection, toolKey, hooksDir) {
   const byEvent = new Map();
   for (const key of selection) {
     const def = HOOK_DEFS[key];
-    const ev = def.events.claude;
+    const ev = def.events[toolKey];
     if (!ev) continue;
     const command =
       key === "commit-gate"
-        ? `node \${CLAUDE_PROJECT_DIR}/.claude/hooks/${def.script} --claude`
-        : `node \${CLAUDE_PROJECT_DIR}/.claude/hooks/claude-adapter.js ${ev.adapter} ${def.script}`;
+        ? `node ${hooksDir}/${def.script} --claude`
+        : `node ${hooksDir}/claude-adapter.js ${ev.adapter} ${def.script}`;
     const group = {
       ...(ev.matcher ? { matcher: ev.matcher } : {}),
       hooks: [{ type: "command", command, timeout: 8 }],
@@ -197,6 +233,11 @@ function claudeGroupsJson(selection) {
   return parts.join(",\n    ");
 }
 
+/** @deprecated use claudeStyleGroupsJson(selection, "claude", ".claude/hooks") */
+function claudeGroupsJson(selection) {
+  return claudeStyleGroupsJson(selection, "claude", "${CLAUDE_PROJECT_DIR}/.claude/hooks");
+}
+
 /** L5：hooks.config.json 的 hooks 数组片段（按 ai_tools 裁剪 targets）。 */
 function hooksConfigEntriesJson(selection, aiTools) {
   const tools = new Set(aiTools && aiTools.length ? aiTools : ["cursor"]);
@@ -204,7 +245,7 @@ function hooksConfigEntriesJson(selection, aiTools) {
   for (const key of selection) {
     const def = HOOK_DEFS[key];
     const targets = {};
-    for (const t of ["cursor", "qoder", "claude"]) {
+    for (const t of ["cursor", "claude", "qoder", "trae"]) {
       if (!tools.has(t)) continue;
       const ev = def.events[t];
       if (ev) targets[t] = ev;
@@ -259,7 +300,12 @@ export function buildHookPlaceholders({ params, agentConfig, existing }) {
   );
   put("MYSQL_GUARD_SERVERS", "mysql-(dev|test|uat)");
   put("HOOKS_CURSOR_EVENTS", cursorEventsJson(selection));
-  put("HOOKS_CLAUDE_GROUPS", claudeGroupsJson(selection));
+  put(
+    "HOOKS_CLAUDE_GROUPS",
+    claudeStyleGroupsJson(selection, "claude", "${CLAUDE_PROJECT_DIR}/.claude/hooks")
+  );
+  put("HOOKS_QODER_GROUPS", claudeStyleGroupsJson(selection, "qoder", ".qoder/hooks"));
+  put("HOOKS_TRAE_GROUPS", claudeStyleGroupsJson(selection, "trae", ".trae/hooks"));
   put(
     "HOOKS_CONFIG_ENTRIES",
     hooksConfigEntriesJson(selection, aiTools)
@@ -303,17 +349,28 @@ export function expandHooksFamily(params, agentConfig, actionForTarget) {
     }
     if (has("cursor")) push(`hookfam-${key}-cursor`, def.template, `.cursor/hooks/${def.script}`);
     if (has("claude")) push(`hookfam-${key}-claude`, def.template, `.claude/hooks/${def.script}`);
+    if (has("qoder")) push(`hookfam-${key}-qoder`, def.template, `.qoder/hooks/${def.script}`);
+    if (has("trae")) push(`hookfam-${key}-trae`, def.template, `.trae/hooks/${def.script}`);
     if (def.gate) push(`hookfam-${key}-githooks`, def.template, `.githooks/${def.script}`);
   }
 
   // 家族 hook 走 claude-adapter（basic gate 自带 --claude 模式，不需要适配器）
   const needsAdapter =
-    has("claude") && selection.some((k) => k !== "commit-gate");
+    CLAUDE_STYLE_TOOLS.some((t) => has(t)) && selection.some((k) => k !== "commit-gate");
   if (needsAdapter) {
-    const target = agentConfig
-      ? "docs/agent-config/hooks/claude-adapter.js"
-      : ".claude/hooks/claude-adapter.js";
-    push("hookfam-claude-adapter", "hooks/claude-adapter.js", target);
+    if (agentConfig) {
+      push("hookfam-claude-adapter", "hooks/claude-adapter.js", "docs/agent-config/hooks/claude-adapter.js");
+    } else {
+      if (has("claude")) {
+        push("hookfam-claude-adapter", "hooks/claude-adapter.js", ".claude/hooks/claude-adapter.js");
+      }
+      if (has("qoder")) {
+        push("hookfam-qoder-adapter", "hooks/claude-adapter.js", ".qoder/hooks/claude-adapter.js");
+      }
+      if (has("trae")) {
+        push("hookfam-trae-adapter", "hooks/claude-adapter.js", ".trae/hooks/claude-adapter.js");
+      }
+    }
   }
   return out;
 }

@@ -16,7 +16,7 @@
 | MCP 跟踪策略 `mcp_tracking` | land/L4 默认 **`example_only`**（`.gitignore` 忽略真密；仅 example 入库） | **`vendored_shared`**：团队约定跟踪共享 `mcp.json`（须写入 harness-meta；audit 不按反模式红灯；仍禁止把个人机绝对路径 / PAT 扩散到技能分发） |
 | 密文写入 docs / mcp | **fill**：源文件已在**本仓**可读 → 允许写入并可入库 | land/seed 不主动扩散密文 |
 | `.cursor/harness-meta.yaml` 已存在 | `merge`：脚本对 YAML 做**键级合并**（受管键 `ladder`/`domains`/`skill_version`/… 覆盖；未知用户键保留） | `backup-create` |
-| `.claude/settings.json` / `.codebuddy/settings.json` / `.codex/hooks.json` 已存在 | **`merge-json-hooks`**：只追加/去重 hooks command；保留用户其它顶层键 | skip |
+| `.claude/settings.json` / `.qoder/settings.json` / `.codebuddy/settings.json` / `.codex/hooks.json` / `.trae/hooks.json` 已存在 | **`merge-json-hooks`**：只追加/去重 hooks command；保留用户其它顶层键 | skip |
 | 根 `.gitignore` 已存在（L4 snippet） | **追加**缺失行，不整文件覆盖 | skip |
 | L5 已启用（meta `agent_config: true`） | `.cursor/rules` 改投 `docs/agent-config/rules/`；hooks 脚本改投 `docs/agent-config/hooks/`；`.cursor/hooks.json` / `.claude/settings.json` / CLAUDE.md 由 `sync.mjs` 生成，**render 不直渲**（互斥，避免被 sync 当 stale 清理或漂移） | — |
 | L5 生成物（带 GENERATED 标记）已存在且内容异构 | 勿手改对齐；改 SSOT 后跑 `node scripts/agent-config/sync.mjs`；漂移校验 `sync.mjs --check` | backup-create（仅用户书面要求） |
@@ -32,7 +32,7 @@
 
 ### JSON hooks merge（0.2.6+）
 
-用于 `.claude/settings.json`、`.codebuddy/settings.json`、`.codex/hooks.json`：
+用于 `.claude/settings.json`、`.qoder/settings.json`、`.codebuddy/settings.json`、`.codex/hooks.json`、`.trae/hooks.json`：
 
 1. 解析双方 JSON；保留目标已有**非 `hooks`** 顶层键。
 2. 按事件名（如 `PreToolUse`）合并 matcher 组。

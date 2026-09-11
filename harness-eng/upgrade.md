@@ -51,9 +51,17 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.5.0 → 0.5.1 迁移要点
+
+1. **meta**：`skill_version` → `0.5.1`
+2. **Qoder**：若曾有 Cursor 式 `.qoder/hooks.json`，改由 `.qoder/settings.json` hooks 接管；L5 仓跑 `sync.mjs` 后可删过期 `hooks.json`（sync 会清 stale）
+3. **MCP**：Qoder 真密/example 改用根 `.mcp.json`（勿再依赖 `.qoder/mcp.json`）
+4. **Trae**：确认 `Q_AI_TOOL` 含 trae 后 resume/upgrade 补 hooks + mcp example
+5. **rules**：非 L5 仓 resume 会镜像全量 `.md` 到 `.qoder/rules` / `.trae/rules`
+
 ## 0.4.0 → 0.5.0 迁移要点
 
-1. **meta**：`skill_version` → `0.5.0`；启用 L5 的仓补 `agent_config: true`（yaml-keys merge 受管键）。
+1. **meta**：`skill_version` → `0.5.0`（再升 0.5.1 见上）；启用 L5 的仓补 `agent_config: true`（yaml-keys merge 受管键）。
 2. **L2 pitfalls 工程化**：`pitfalls.md` 模板升 7 列（+状态 / +触发路径 / +路径速查 / +已根治留档区）；老仓升级时把旧 5 列行人工补列；新增 `scripts/agent-kb/lint-pitfalls.mjs`，改台账后必跑。
 3. **hooks 家族**：`Q_HOOKS_FAMILY` 选装；选 `commit-gate-extended` 后基础门禁不再重复渲染（互斥）。契约提醒路径由 `domains.yaml` 各域 `hook:` 段驱动，按本仓栈调整 `hook_code` globs。
 4. **MATURE 仓 adopt L5（配置 SSOT 管线）**：

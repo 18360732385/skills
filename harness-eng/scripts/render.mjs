@@ -194,6 +194,23 @@ function stripFrontmatter(src) {
   return { fm: src.slice(0, close) + "\n", body: after };
 }
 
+/** Cursor .mdc → qoder/trae 宿主 .md：strip frontmatter，globs/alwaysApply 降级为正文提示。 */
+function transformMdcToHostMd(raw) {
+  const m = String(raw || "").match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (!m) return raw;
+  const fm = {};
+  for (const line of m[1].split(/\r?\n/)) {
+    const kv = line.match(/^(\w+):\s*(.*)$/);
+    if (kv) fm[kv[1]] = kv[2].trim();
+  }
+  const body = raw.slice(m[0].length);
+  const bits = [];
+  if (fm.alwaysApply === "true") bits.push("> 适用范围：始终应用\n");
+  if (fm.globs) bits.push(`> 适用路径：\`${fm.globs}\`\n`);
+  const head = bits.length ? bits.join("\n") + "\n" : "";
+  return head + body;
+}
+
 function splitH2Sections(body) {
   const lines = body.split(/\r?\n/);
   const sections = [];
@@ -356,8 +373,17 @@ function ensureDir(filePath) {
 }
 
 function isMcpJson(targetRel) {
-  const n = targetRel.replace(/\\/g, "/");
-  return n === ".cursor/mcp.json" || n.endsWith("/.cursor/mcp.json");
+  const n = String(targetRel || "").replace(/\\/g, "/");
+  return (
+    n === ".cursor/mcp.json" ||
+    n.endsWith("/.cursor/mcp.json") ||
+    n === ".mcp.json" ||
+    n.endsWith("/.mcp.json") ||
+    n === ".trae/mcp.json" ||
+    n.endsWith("/.trae/mcp.json") ||
+    n === ".qoder/mcp.json" ||
+    n.endsWith("/.qoder/mcp.json")
+  );
 }
 
 function todayStamp() {
@@ -454,11 +480,12 @@ function expandFromManifest(manifestPath, params, root) {
       entry &&
       (entry.action_hint === "merge-json-hooks" ||
         entry.mergeMode === "json-hooks" ||
-        /settings\.json$/i.test(targetRel) && /hooks-(claude|codebuddy|codex)/.test(entryId || ""))
+        (/settings\.json$/i.test(targetRel) &&
+          /hooks-(claude|codebuddy|codex|qoder)/.test(entryId || "")))
     ) {
       return fs.existsSync(path.join(root, targetRel)) ? "merge" : "create";
     }
-    if (entryId === "hooks-codex-json") {
+    if (entryId === "hooks-codex-json" || entryId === "hooks-trae-json") {
       return fs.existsSync(path.join(root, targetRel)) ? "merge" : "create";
     }
     const abs = path.join(root, targetRel);
@@ -561,7 +588,9 @@ function expandFromManifest(manifestPath, params, root) {
     if (
       e.action_hint === "merge-json-hooks" ||
       e.id === "hooks-codex-json" ||
+      e.id === "hooks-trae-json" ||
       e.id === "hooks-claude-settings" ||
+      e.id === "hooks-qoder-settings" ||
       e.id === "hooks-codebuddy-settings"
     ) {
       item.mergeMode = "json-hooks";
@@ -571,9 +600,63 @@ function expandFromManifest(manifestPath, params, root) {
 
   // AI tool adapters (L0+); always eligible when listed in params.ai_tools
   files.push(...expandAiToolAdapters(params, root, actionForTarget, agentConfig));
+  // L3+：非 Cursor 宿主镜像全量 .cursor/rules（L5 由 sync 托管，此处跳过）
+  files.push(...expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root));
   // hooks 家族脚本（0.5.0+；L5 → docs/agent-config/hooks/，否则按工具直渲）
   files.push(...expandHooksFamily(params, agentConfig, actionForTarget));
   return files;
+}
+
+/**
+ * 将已展开的 .cursor/rules/*.mdc 镜像到 qoder/trae/workbuddy。
+ * qoder/trae → .md（strip FM）；workbuddy → rules/<name>/RULE.mdc。
+ */
+function expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root) {
+  if (agentConfig) return [];
+  const tools = new Set(
+    (Array.isArray(params.ai_tools) ? params.ai_tools : [])
+      .map((t) => String(t || "").trim().toLowerCase())
+      .filter(Boolean)
+  );
+  if (!tools.size) return [];
+  const out = [];
+  const taken = new Set(
+    files.map((f) => String(f.target || "").replace(/\\/g, "/")).filter(Boolean)
+  );
+  for (const f of files) {
+    const t = String(f.target || "").replace(/\\/g, "/");
+    if (!t.startsWith(".cursor/rules/") || !t.endsWith(".mdc")) continue;
+    const base = path.basename(t);
+    // 薄 SSOT 指针已由 expandAiToolAdapters 写入各宿主，勿再镜像撞车
+    if (base === "00-harness-ssot.mdc") continue;
+    const stem = base.replace(/\.mdc$/, "");
+    const pushMirror = (id, target, contentTransform) => {
+      if (taken.has(target)) return;
+      taken.add(target);
+      out.push({
+        id,
+        template: f.template,
+        target,
+        action: actionForTarget(target, id, f),
+        contentTransform,
+        placeholders_extra: f.placeholders_extra,
+      });
+    };
+    if (tools.has("qoder")) {
+      pushMirror(`${f.id || stem}-mirror-qoder`, `.qoder/rules/${stem}.md`, "mdc-to-host-md");
+    }
+    if (tools.has("trae")) {
+      pushMirror(`${f.id || stem}-mirror-trae`, `.trae/rules/${stem}.md`, "mdc-to-host-md");
+    }
+    if (tools.has("workbuddy")) {
+      pushMirror(
+        `${f.id || stem}-mirror-workbuddy`,
+        `.codebuddy/rules/${stem}/RULE.mdc`,
+        undefined
+      );
+    }
+  }
+  return out;
 }
 
 /** sync.mjs 托管的规则目录前缀（L5 下 render 不再直渲，避免被当 stale 清理）。 */
@@ -755,7 +838,10 @@ function applyOne(root, item, placeholders, dryRun, log) {
   if (!item.template) throw new Error(`file ${targetRel}: missing template`);
   const tmplPath = path.join(TEMPLATES, item.template);
   if (!fs.existsSync(tmplPath)) throw new Error(`Template not found: ${tmplPath}`);
-  const rendered = renderPlaceholders(fs.readFileSync(tmplPath, "utf8"), ph);
+  let rendered = renderPlaceholders(fs.readFileSync(tmplPath, "utf8"), ph);
+  if (item.contentTransform === "mdc-to-host-md") {
+    rendered = transformMdcToHostMd(rendered);
+  }
   const unresolvedPlaceholders = findUnresolvedPlaceholders(rendered);
 
   if (dryRun) {

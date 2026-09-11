@@ -65,7 +65,7 @@ node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
 node scripts/acceptance-check.mjs --root <TARGET> --domain api
 node scripts/fill-score.mjs --root <TARGET>
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
-node scripts/selfcheck-0.5.0.mjs
+node scripts/selfcheck-0.5.1.mjs
 ```
 
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.0**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.1**）。

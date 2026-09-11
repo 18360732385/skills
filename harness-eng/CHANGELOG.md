@@ -1,8 +1,24 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`0.2.x → 0.3.0 → … → 0.3.10 → 0.4.0 → 0.5.0`（当前 **0.5.0**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`0.2.x → 0.3.0 → … → 0.4.0 → 0.5.0 → 0.5.1`（当前 **0.5.1**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.1 — 2026-09-11（多宿主对齐：Qoder/Trae hooks·MCP·rules）
+
+### 产品
+
+- **协议族厘清**：Cursor 族 vs Claude 族（`claude` / `qoder` / `trae`）；脚本仍统一 Cursor 协议，Claude 族经 `claude-adapter.js` 翻译
+- **Qoder 纠偏**：hooks 写入 `.qoder/settings.json`（`PreToolUse` 等），**不再**生成 Cursor 式 `.qoder/hooks.json`；MCP example/真密主路径改为根 **`.mcp.json`**（与官方一致）
+- **Trae 补齐**：L3+ 生成 `.trae/hooks.json`（Claude 系嵌套）+ hooks 脚本/adapter；L4+ `.trae/mcp.json.example`
+- **全量 rules 镜像（L3+）**：非 L5 时把 `.cursor/rules/*.mdc` 镜像到 qoder/trae（`.md`，strip frontmatter）与 workbuddy（`RULE.mdc`）；L5 `sync.mjs` 同步按此分发
+- **gitignore**：snippet 增加 `.mcp.json` / `.trae/mcp.json`
+- ladder / conflict-policy / ai-tools 文档对齐
+
+### 版本钉
+
+- manifest / meta / questions / domains / README / QUICKSTART / VERIFY → `0.5.1`
+- selfcheck → `selfcheck-0.5.1.mjs`；`0.5.0` → archive
 
 ## 0.5.0 — 2026-08-31（配置 SSOT 管线 L5 / hooks 家族 / pitfalls 工程化）
 
