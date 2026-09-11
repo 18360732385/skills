@@ -51,6 +51,12 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.5.2 → 0.5.3 迁移要点
+
+1. **meta**：`skill_version` → `0.5.3`（resume / upgrade 写 meta 时对齐 manifest）
+2. **行为**：Agent 每轮回复末尾附**会话仪表盘**（四台 +「详情请查询仪表盘」链）；无额外写盘
+3. **可选**：`node scripts/session-dash.mjs --root <TARGET>` 核对读数与 `report-latest.html` 一致
+
 ## 0.5.1 → 0.5.2 迁移要点
 
 1. **meta**：`skill_version` → `0.5.2`

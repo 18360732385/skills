@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.5.2</title>
+  <title>harness-eng 使用手册 · v0.5.3</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.5.2</div>
+    <div class="ver">v0.5.3</div>
   </header>
 
   <div class="shell">
@@ -994,7 +994,11 @@ node scripts/selfcheck-0.5.2.mjs</code></pre>
           旧字段 <code>ready.ok</code>、形态分 <code>overall</code>、贴顶信号 <code>formula_ceiling</code> <strong>都不是</strong>开干依据。
         </div>
 
-        <h3>6.1 怎么生成 / 打开仪表盘</h3>
+        <h3>6.0 对话内会话仪表盘（每轮末尾）</h3>
+        <p>0.5.3+：点名 harness-eng 后，Agent <strong>每一轮</strong>回复末尾附四台摘要 + mermaid。脚注固定 <strong>详情请查询仪表盘</strong> → 目标仓 <code>report-latest.html</code>（已生成时）· 本页 <a href="#s6">#s6 四台读法</a>。</p>
+        <p>脚本：<code>node scripts/session-dash.mjs --root &lt;目标仓&gt;</code> · 规格 <code>session-dashboard.md</code>。</p>
+
+        <h3>6.1 怎么生成 / 打开 HTML 仪表盘</h3>
         <p>自然语言：「用 harness-eng 做<strong>完整度打分</strong>」或「跑<strong>开干闸</strong>」。</p>
         <pre><code>node scripts/fill-score.mjs --root &lt;目标仓&gt; --focus full
 node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-eng/score-latest.json</code></pre>
@@ -1114,7 +1118,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.2</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.3</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1159,7 +1163,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.2
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.3
         </div>
       </section>
     </main>
