@@ -1,8 +1,21 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.0 → 0.5.1 → 0.5.2`（当前 **0.5.2**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`… → 0.5.1 → 0.5.2 → 0.5.3`（当前 **0.5.3**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.3 — 2026-09-11（会话仪表盘 · 每轮回复末尾）
+
+### 产品
+
+- **会话仪表盘 SSOT**：[session-dashboard.md](session-dashboard.md) — 每轮 harness-eng 回复末尾固定四台（决策/诊断/任务/趋势）+ mermaid 象限图
+- **脚本**：`scripts/session-dash.mjs` + `scripts/lib/session-dashboard.mjs`（只读；读 meta / score / progress / fill-plan）
+- **SKILL 流程第 6 步**：有目标根时优先跑 session-dash 渲染脚注
+- 脚注 **详情请查询仪表盘** → 目标仓 `report-latest.html` + skill [使用手册.html#s6](使用手册.html#s6)
+
+### 版本钉
+
+- manifest → `0.5.3`；QUICKSTART / glossary 指针 session-dashboard
 
 ## 0.5.2 — 2026-09-11（多宿主对等 P0 + sync-hosts 规格）
 

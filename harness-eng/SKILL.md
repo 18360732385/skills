@@ -22,6 +22,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘模式须用户点名 land / upgrade / resume / pipeline / fill-*。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](write-plan.md#windows-json-传参gotcha-ssot)。
+6. **每轮回复末尾**附可视化**会话仪表盘**（四台 + mermaid；[session-dashboard.md](session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET>`。
 
 ## 模式分流
 
@@ -99,5 +100,6 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 | 自动填充（legacy） | [fill-truths-auto.md](fill-truths-auto.md) |
 | live 校准 | `scripts/fill-calibrate-live.mjs`（`--help`） |
 | HTML 报告 | `scripts/fill-report-html.mjs`（`--help`）；score 后【推荐】 |
+| 会话仪表盘 | [session-dashboard.md](session-dashboard.md) · `scripts/session-dash.mjs`（每轮回复末尾） |
 | 模板清单 / 版本 | [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) · [CHANGELOG.md](CHANGELOG.md) |
 | 渲染脚本 | `scripts/render.mjs`（`--help` / 目录即环境） |

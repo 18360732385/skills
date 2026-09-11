@@ -184,7 +184,7 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.2"/.test(manifest), "manifest 0.5.2");
+assert(/version:\s*"0\.5\.3"/.test(manifest), "manifest 0.5.3");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
@@ -1556,4 +1556,64 @@ if (fail.length) {
   for (const m of fail) console.error(`  ✗ ${m}`);
   process.exit(1);
 }
+// --- 0.5.3 session dashboard ---
+assert(
+  fs.existsSync(path.join(skillRoot, "session-dashboard.md")),
+  "session-dashboard.md"
+);
+assert(
+  fs.existsSync(path.join(skillRoot, "scripts/session-dash.mjs")),
+  "session-dash.mjs"
+);
+assert(
+  fs.existsSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs")),
+  "lib/session-dashboard.mjs"
+);
+assert(/会话仪表盘/.test(skill), "SKILL mandates session dashboard footer");
+assert(/session-dashboard\.md/.test(skill), "SKILL points session-dashboard.md");
+const sessionDashMd = fs.readFileSync(path.join(skillRoot, "session-dashboard.md"), "utf8");
+assert(/决策台/.test(sessionDashMd) && /趋势台/.test(sessionDashMd), "session-dashboard four panels");
+assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
+assert(/使用手册\.html#s6/.test(sessionDashMd), "session-dashboard handbook anchor");
+{
+  const dashRoot = fs.mkdtempSync(path.join(os.tmpdir(), "he-session-dash-"));
+  try {
+    const scoreDir = path.join(dashRoot, "docs/harness-eng");
+    fs.mkdirSync(scoreDir, { recursive: true });
+    fs.copyFileSync(
+      path.join(skillRoot, "scripts/fixtures/score-sample.json"),
+      path.join(scoreDir, "score-latest.json")
+    );
+    const dashRun = runNode([
+      path.join(skillRoot, "scripts/session-dash.mjs"),
+      "--root",
+      dashRoot,
+      "--mode",
+      "fill-score",
+      "--json",
+    ]);
+    assert(dashRun.status === 0, "session-dash exits 0");
+    let dashJson = null;
+    try {
+      dashJson = JSON.parse(dashRun.stdout.trim());
+    } catch {
+      dashJson = null;
+    }
+    assert(
+      dashJson && dashJson.decision?.ai_coding_ready === false,
+      "session-dash reads score ai_coding_ready"
+    );
+    const dashMd = runNode([
+      path.join(skillRoot, "scripts/session-dash.mjs"),
+      "--root",
+      dashRoot,
+    ]);
+    assert(dashMd.status === 0 && /quadrantChart/.test(dashMd.stdout || ""), "session-dash renders mermaid");
+    assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
+    assert(/使用手册\.html#s6/.test(dashMd.stdout || ""), "session-dash handbook link");
+  } finally {
+    fs.rmSync(dashRoot, { recursive: true, force: true });
+  }
+}
+
 console.log("selfcheck-0.5.2 PASS");
