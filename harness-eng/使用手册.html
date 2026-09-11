@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.5.0</title>
+  <title>harness-eng 使用手册 · v0.5.2</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.5.0</div>
+    <div class="ver">v0.5.2</div>
   </header>
 
   <div class="shell">
@@ -706,7 +706,9 @@ https://github.com/18360732385/skills/tree/main/harness-eng
 装到 ~/.cursor/skills/harness-eng（保证目录内直接有 SKILL.md），装完告诉我路径。</code></pre>
         <p>也可自己跑 CLI（全局、面向 Cursor；若提示复制/软链，优先 <strong>Copy</strong>）：</p>
         <pre><code>npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --agent cursor</code></pre>
-        <p>装好后：<strong>新开 Agent 会话</strong>，再显式点名 <strong>harness-eng</strong>。上述 URL 指向 <code>main</code>；若要跟踪施工主干，可改成当前发布分支（如 <code>V0.5.X</code>）。</p>
+        <p>装好后：<strong>新开 Agent 会话</strong>，再显式点名 <strong>harness-eng</strong>。</p>
+        <p>路径提示：Cursor 常见为 <code>~/.cursor/skills/</code> 或 <code>~/.cursor/skills-cursor/</code>（以宿主实际加载目录为准）；Claude Code 等为 <code>~/.claude/skills/</code>。</p>
+        <p>上述 URL 指向 <code>main</code>；若要跟踪施工主干，可改成当前发布分支（如 <code>V0.5.X</code>）。</p>
 
         <h3>2.2 一句话更新</h3>
         <pre><code>帮我更新本机的 harness-eng skill：从
@@ -789,9 +791,13 @@ cp -R &lt;源&gt;/harness-eng ~/.cursor/skills/harness-eng</code></pre>
         </ol>
 
         <h3>3.5 本地脚本（可选）</h3>
-        <pre><code>node scripts/fill-score.mjs --root &lt;目标仓路径&gt;
-node scripts/fill-report-html.mjs --root &lt;目标仓路径&gt; --score docs/harness-eng/score-latest.json
-node scripts/acceptance-check.mjs --root &lt;目标仓路径&gt; --domain api</code></pre>
+        <p>在 <strong>harness-eng 技能目录</strong>执行（<code>--root</code> 指向业务目标仓）：</p>
+        <pre><code>cd &lt;harness-eng技能目录&gt;
+node scripts/fill-plan.mjs --root &lt;目标仓&gt; --init --gold --sample-n 30
+node scripts/fill-score.mjs --root &lt;目标仓&gt;
+node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-eng/score-latest.json
+node scripts/acceptance-check.mjs --root &lt;目标仓&gt; --domain api
+node scripts/selfcheck-0.5.2.mjs</code></pre>
       </section>
 
       <section id="s4">
@@ -808,27 +814,27 @@ node scripts/acceptance-check.mjs --root &lt;目标仓路径&gt; --domain api</c
           <div class="tool">
             <div class="name">Claude Code</div>
             <div class="id">claude · CLAUDE.md / .claude/</div>
-            <p>根 <code>CLAUDE.md</code> 指向 AGENTS；契约 sync 镜像在 <code>.claude/rules/</code></p>
+            <p>根 <code>CLAUDE.md</code> + L3+ 全量 <code>.claude/rules/*.md</code> 镜像</p>
           </div>
           <div class="tool">
             <div class="name">Codex</div>
             <div class="id">codex · .codex/</div>
-            <p><code>.codex/harness.md</code> 等指针</p>
+            <p><code>.codex/harness.md</code> 等指针（hooks/MCP 部分对齐）</p>
           </div>
           <div class="tool">
             <div class="name">Qoder</div>
             <div class="id">qoder · .qoder/</div>
-            <p><code>.qoder/rules/00-harness-ssot.md</code></p>
+            <p><code>.qoder/rules/00-harness-ssot.md</code> + L3+ 全量 rules 镜像</p>
           </div>
           <div class="tool">
             <div class="name">Trae</div>
             <div class="id">trae · .trae/</div>
-            <p><code>.trae/rules/00-harness-ssot.md</code></p>
+            <p><code>.trae/rules/00-harness-ssot.md</code> + L3+ 全量 rules 镜像</p>
           </div>
           <div class="tool">
-            <div class="name">WorkBuddy</div>
+            <div class="name">WorkBuddy / CodeBuddy</div>
             <div class="id">workbuddy · .codebuddy/</div>
-            <p><code>CODEBUDDY.md</code> + <code>.codebuddy/rules/</code></p>
+            <p><code>CODEBUDDY.md</code> + rules 镜像 + L3+ Claude 系 hooks 全家桶</p>
           </div>
         </div>
         <p>提问对应 <code>Q_AI_TOOL</code>，<strong>可多选</strong>。未探测到任何工具时，「全部推荐」默认偏向 Cursor。</p>
@@ -837,20 +843,37 @@ node scripts/acceptance-check.mjs --root &lt;目标仓路径&gt; --domain api</c
         <pre><code>自定义: 工具名=FooAgent; 入口路径=.foo/RULES.md</code></pre>
         <p>技能会在该路径写入指针模板。自定义工具<strong>不会</strong>自动装配宿主 hooks。</p>
 
-        <h3>4.3 软门禁与 hooks 差异（L3+）</h3>
+        <h3>4.3 软门禁与 hooks / MCP 差异（L3+）</h3>
+        <p>按<strong>协议族</strong>理解（详 <a href="ai-tools.md">ai-tools.md</a>）：</p>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>工具</th><th>hooks 能力简述</th></tr></thead>
+            <thead><tr><th>族</th><th>工具</th><th>hooks（L3+）</th><th>MCP example（L4+）</th></tr></thead>
             <tbody>
-              <tr><td>Cursor</td><td><code>.cursor/hooks.json</code> + 脚本；支持 hooks 家族（扩展 commit 门禁、MySQL 护栏、编辑提醒、stop 清单等）</td></tr>
-              <tr><td>Claude</td><td><code>.claude/settings.json</code>（只 merge hooks 段）+ adapter 协议翻译</td></tr>
-              <tr><td>WorkBuddy / Codex</td><td>有基础门禁装配；能力面小于 Cursor 家族全套</td></tr>
-              <tr><td>Qoder / Trae</td><td><strong>不臆造</strong>宿主 hooks；依赖 <code>.githooks</code> 兜底；L5 时 Qoder 可经 sync 生成部分配置</td></tr>
-              <tr><td>任意工具（L3）</td><td>建议 <code>git config core.hooksPath .githooks</code>，仓外直接 <code>git commit</code> 也有软提醒</td></tr>
+              <tr><td><strong>Cursor 族</strong></td><td><code>cursor</code></td><td><code>.cursor/hooks.json</code> + hooks 家族全套</td><td><code>.cursor/mcp.json.example</code></td></tr>
+              <tr><td rowspan="4"><strong>Claude 族</strong></td><td><code>claude</code></td><td><code>.claude/settings.json</code> + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
+              <tr><td><code>qoder</code></td><td><code>.qoder/settings.json</code> + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
+              <tr><td><code>trae</code></td><td><code>.trae/hooks.json</code> + adapter</td><td><code>.trae/mcp.json.example</code></td></tr>
+              <tr><td><code>workbuddy</code></td><td><code>.codebuddy/settings.json</code> 全家桶 + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
+              <tr><td><strong>部分对齐</strong></td><td><code>codex</code></td><td>基础 commit gate</td><td>见 adapters/codex.md</td></tr>
+              <tr><td><strong>兜底</strong></td><td>任意 L3+</td><td colspan="2">建议 <code>git config core.hooksPath .githooks</code></td></tr>
             </tbody>
           </table>
         </div>
-        <p>软门禁一律 <strong>fail-open</strong>（提醒不拦截提交）。</p>
+        <p>软门禁一律 <strong>fail-open</strong>。L4 只落 example；真密由 fill-mcp 写入（<code>mcp-paths.mjs</code>）。</p>
+
+        <h3>4.4 0.5.2+ 多宿主对齐（摘要）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>变更</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td>MCP 多路径</td><td><code>.cursor/mcp.json</code> ∥ 根 <code>.mcp.json</code> ∥ <code>.trae/mcp.json</code></td></tr>
+              <tr><td>Claude rules 镜像</td><td>L3+ 全量 <code>.claude/rules/*.md</code></td></tr>
+              <tr><td>CodeBuddy 升格</td><td><code>workbuddy</code> hooks 家族 + 根 MCP example</td></tr>
+              <tr><td>适配卡</td><td><a href="templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td></tr>
+              <tr><td>L5 生成引擎</td><td><a href="sync-hosts.md">sync-hosts.md</a> + <code>sync.mjs</code></td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section id="s5">
@@ -993,7 +1016,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
             </tbody>
           </table>
         </div>
-        <p>开干 YES 时需同时：骨架就绪、覆盖就绪（strict 常 ≥80%，gold 相关域 100%）、语义就绪、fill-plan 全关，以及 strict/gold 的 gate（如形态地板、TODO 扫面）。</p>
+        <p>开干 YES 时需同时：骨架就绪、覆盖就绪（以 <code>score-policy.yaml</code> 为准）、语义就绪、fill-plan 全关，以及 <code>gate_profile</code> 下的 gate 项。具体阈值见 <a href="fill-gate.md">fill-gate.md</a> 与当次 score JSON 的 blockers，<strong>勿背手册硬编码数字</strong>。</p>
 
         <h3>诊断台 / 任务台 / 趋势台</h3>
         <div class="table-wrap">
@@ -1078,8 +1101,8 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
           <div class="ans"><p>短期检查契约 sync 镜像；长期升 <strong>L5</strong>，以 <code>docs/agent-config/</code> 为 SSOT，用 <code>sync.mjs --check</code> 防漂移。</p></div>
         </details>
         <details>
-          <summary>Q9：Qoder / Trae 为什么没有和 Cursor 一样的 hooks？</summary>
-          <div class="ans"><p>不为无等价事件机制的宿主<strong>臆造</strong> hooks；L3 用 <code>.githooks</code> 兜底。</p></div>
+          <summary>Q9：Qoder / Trae 为什么不用 Cursor 式 hooks？</summary>
+          <div class="ans"><p>走 <strong>Claude 族</strong>协议（<code>settings.json</code> 或 <code>.trae/hooks.json</code> + <code>claude-adapter.js</code>），<strong>有 hooks</strong>，只是事件名与 Cursor 不同。Claude 族含 claude / qoder / trae / workbuddy；L3 另有 <code>.githooks</code> 兜底。</p></div>
         </details>
         <details>
           <summary>Q10：打分 overall 很高但开干仍是 NO？</summary>
@@ -1091,7 +1114,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.0</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.2</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1120,7 +1143,11 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
               <tr><td><a href="SKILL.md">SKILL.md</a></td><td>Agent 施工仪式总流程</td></tr>
               <tr><td><a href="glossary.md">glossary.md</a></td><td>阶梯 / 模式 / 开干术语</td></tr>
               <tr><td><a href="ai-tools.md">ai-tools.md</a></td><td>多 AI 工具面与 hooks / L5</td></tr>
+              <tr><td><a href="sync-hosts.md">sync-hosts.md</a></td><td>L5 宿主目录生成与适配卡索引</td></tr>
+              <tr><td><a href="templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td><td>各 AI 工具路径适配卡</td></tr>
+              <tr><td><a href="conflict-policy.md">conflict-policy.md</a></td><td>merge / MCP / L5 生成物冲突策略</td></tr>
               <tr><td><a href="ladder.md">ladder.md</a></td><td>L0–L5 交付物与自检清单</td></tr>
+              <tr><td><a href="VERIFY.md">VERIFY.md</a></td><td>版本验收记录</td></tr>
               <tr><td><a href="write-plan.md">write-plan.md</a></td><td>确认闸门与预授权词表</td></tr>
               <tr><td><a href="fill-score.md">fill-score.md</a> / <a href="fill-gate.md">fill-gate.md</a></td><td>双轴打分与开干闸</td></tr>
               <tr><td><a href="pipeline.md">pipeline.md</a> / <a href="pipeline-fill.md">pipeline-fill.md</a></td><td>骨架战役与填充战役</td></tr>
@@ -1132,7 +1159,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.0
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.2
         </div>
       </section>
     </main>

@@ -349,6 +349,20 @@ assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 
 assert(/selfcheck-0\.5\.2/.test(readme), "README pins selfcheck 0.5.2");
 assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 
+const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
+const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
+const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+assert(/版本：\*\*0\.5\.2\*\*/.test(handbookMd), "使用手册.md version 0.5.2");
+assert(/v0\.5\.2/.test(handbookHtml), "使用手册.html version 0.5.2");
+assert(!/v0\.5\.0/.test(handbookHtml), "使用手册.html no stale v0.5.0");
+assert(!/不臆造/.test(handbookHtml), "使用手册.html no stale 不臆造 hooks");
+assert(/L0–L5/.test(quickstartMd), "QUICKSTART audit L0-L5");
+assert(/^# 阶梯 L0–L5/m.test(ladderMd), "ladder title L0-L5");
+assert(/sync-hosts\.md/.test(handbookMd), "使用手册.md links sync-hosts");
+assert(/4\.4 0\.5\.2\+ 多宿主对齐/.test(handbookMd), "使用手册.md has 0.5.2 multi-host section");
+assert(/协议族/.test(handbookMd), "使用手册.md hooks protocol family table");
+
 assert(fs.existsSync(path.join(skillRoot, "pipeline-fill.md")), "pipeline-fill.md exists");
 assert(fs.existsSync(path.join(skillRoot, "upgrade.md")), "upgrade.md exists");
 assert(/## Done/.test(fs.readFileSync(path.join(skillRoot, "upgrade.md"), "utf8")), "upgrade has Done");

@@ -1,4 +1,4 @@
-# 阶梯 L0–L4
+# 阶梯 L0–L5
 
 与模板 `ladder` 标签对齐。land/resume 时只安装 **≤ 用户所选目标阶梯** 的文件。  
 对用户展示时用中文名（详见 [glossary.md](glossary.md)）。

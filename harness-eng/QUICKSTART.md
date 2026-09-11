@@ -21,7 +21,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --
 | 场景 | 对 Agent 说 | 结果 |
 |---|---|---|
 | 大仓第一次上 harness | **流水线** / pipeline | audit → **L4** land → **MCP 矩阵** → inventory → **fill-plan --gold** → **agents** → acceptance → score → **HTML 报告** |
-| 只看缺口、不写盘 | **审计** / audit | 对照 L0–L4，默认不写文件 |
+| 只看缺口、不写盘 | **审计** / audit | 对照 L0–L5，默认不写文件 |
 | 半成品接着补 | **续跑** / resume | 只补缺口，`on_exists=skip` |
 | 按模板深填契约 | **多 Agent 填充** / fill-truths-agents | 须过 **填充 MCP 闸** → Plan 批次 → acceptance → merge → score |
 | 含 Cron / Scheduler | 域含 **jobs** + inventory | `fill-inventory-jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT） |
@@ -60,7 +60,10 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --
 
 ## 本地脚本（可选）
 
+在 **harness-eng 技能目录**执行（`--root` 指向业务目标仓）：
+
 ```bash
+cd <harness-eng技能目录>
 node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
 node scripts/acceptance-check.mjs --root <TARGET> --domain api
 node scripts/fill-score.mjs --root <TARGET>
