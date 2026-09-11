@@ -1,4 +1,4 @@
-version: "0.5.0"
+version: "0.5.3"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 
@@ -37,6 +37,9 @@ placeholders:
   - JOBS_YML_RE
   - HOOKS_CURSOR_EVENTS
   - HOOKS_CLAUDE_GROUPS
+  - HOOKS_QODER_GROUPS
+  - HOOKS_TRAE_GROUPS
+  - HOOKS_CODEBUDDY_GROUPS
   - HOOKS_CONFIG_ENTRIES
   - GITHOOKS_GATE_SCRIPT
 
@@ -193,19 +196,53 @@ files:
     placeholders: [CODE_PREFIXES]
     when_ai_tools: claude
     when_agent_config: false
+  - id: hooks-qoder-settings
+    ladder: L3
+    template: hooks/qoder-settings.hooks.json.tmpl
+    target: .qoder/settings.json
+    placeholders: [HOOKS_QODER_GROUPS]
+    when_ai_tools: qoder
+    when_agent_config: false
+    action_hint: merge-json-hooks
+    note: Qoder = Claude 系；hooks 写入 settings.json（非 Cursor hooks.json）
+  - id: hooks-qoder-gate
+    ladder: L3
+    template: hooks/superpowers-commit-gate.js.tmpl
+    target: .qoder/hooks/superpowers-commit-gate.js
+    placeholders: [CODE_PREFIXES]
+    when_ai_tools: qoder
+    when_agent_config: false
+  - id: hooks-trae-json
+    ladder: L3
+    template: hooks/trae-hooks.json.tmpl
+    target: .trae/hooks.json
+    placeholders: [HOOKS_TRAE_GROUPS]
+    when_ai_tools: trae
+    when_agent_config: false
+    note: Trae 项目级 hooks.json（Claude 系嵌套格式）
+  - id: hooks-trae-gate
+    ladder: L3
+    template: hooks/superpowers-commit-gate.js.tmpl
+    target: .trae/hooks/superpowers-commit-gate.js
+    placeholders: [CODE_PREFIXES]
+    when_ai_tools: trae
+    when_agent_config: false
   - id: hooks-codebuddy-settings
     ladder: L3
-    template: hooks/codebuddy-settings.hooks.json
+    template: hooks/codebuddy-settings.hooks.json.tmpl
     target: .codebuddy/settings.json
+    placeholders: [HOOKS_CODEBUDDY_GROUPS]
     when_ai_tools: workbuddy
+    when_agent_config: false
     action_hint: merge-json-hooks
-    note: WorkBuddy/CodeBuddy; merge hooks only
+    note: WorkBuddy/CodeBuddy = Claude 系；hooks 写入 settings.json（0.5.2+ 全家桶）
   - id: hooks-codebuddy-gate
     ladder: L3
     template: hooks/superpowers-commit-gate.js.tmpl
     target: .codebuddy/hooks/superpowers-commit-gate.js
     placeholders: [CODE_PREFIXES]
     when_ai_tools: workbuddy
+    when_agent_config: false
   - id: hooks-codex-json
     ladder: L3
     template: hooks/codex-hooks.json
@@ -224,7 +261,7 @@ files:
     target: .githooks/superpowers-commit-gate.js
     placeholders: [CODE_PREFIXES]
     when_agent_config: false
-    note: Fallback for qoder/trae and commits outside AI hosts
+    note: Fallback for commits outside AI hosts（仍建议 core.hooksPath=.githooks）
   - id: hooks-githooks-precommit
     ladder: L3
     template: hooks/githooks-pre-commit.tmpl
@@ -239,6 +276,20 @@ files:
     target: .cursor/mcp.json.example
     when_agent_config: false
     note: L5 时由 sync.mjs 从 docs/agent-config/mcp/servers.example.json 生成
+  - id: mcp-example-root
+    ladder: L4
+    template: mcp/mcp.json.example
+    target: .mcp.json.example
+    when_ai_tools: [claude, qoder, workbuddy]
+    when_agent_config: false
+    note: Claude/Qoder/CodeBuddy 官方主路径根 .mcp.json
+  - id: mcp-example-trae
+    ladder: L4
+    template: mcp/mcp.json.example
+    target: .trae/mcp.json.example
+    when_ai_tools: trae
+    when_agent_config: false
+    note: Trae 项目级 .trae/mcp.json
   - id: mcp-readme
     ladder: L4
     template: mcp/mcp-usage-guide.md.tmpl

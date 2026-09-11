@@ -1,4 +1,4 @@
-# 阶梯 L0–L4
+# 阶梯 L0–L5
 
 与模板 `ladder` 标签对齐。land/resume 时只安装 **≤ 用户所选目标阶梯** 的文件。  
 对用户展示时用中文名（详见 [glossary.md](glossary.md)）。
@@ -47,16 +47,22 @@
 
 - [ ] `docs/superpowers/README.md` 含进行中表
 - [ ] `18-superpowers-corpus.mdc` 存在
-- [ ] 按所选 `ai_tools` 原生 hooks 均存在（cursor / claude / workbuddy / codex）；qoder/trae 可仅 githooks
+- [ ] 按所选 `ai_tools` 原生 hooks 均存在（cursor / claude / qoder / trae / workbuddy / codex）；未选工具不要求
 - [ ] `.githooks/pre-commit` + gate 存在（L3 兜底）；建议 `git config core.hooksPath .githooks`
 - [ ] Cursor 若选用：`.cursor/hooks.json` 的 `failClosed` 不为强拦（允许 false）
+- [ ] Qoder 若选用：`.qoder/settings.json` 含 Claude 系 `hooks`（`PreToolUse` 等），**不是** Cursor 式 `.qoder/hooks.json`
+- [ ] Trae 若选用：`.trae/hooks.json` 含 Claude 系嵌套 hooks
+- [ ] CodeBuddy 若选用：`.codebuddy/settings.json` 含 hooks 家族（非仅基础 gate）
+- [ ] Claude 若选用：`.claude/settings.json` hooks +（L3+）`.claude/rules` 镜像
 - [ ] 装后烟测：软提醒不拦截提交
 
 ### L4
 
-- [ ] 仅有 `mcp.json.example`（或未跟踪真密）
+- [ ] 仅有 `mcp.json.example`（或未跟踪真密）；按 ai_tools 检查 `.cursor/` / 根 `.mcp.json.example` / `.trae/`
 - [ ] 说明文档 `.cursor/mcp-usage-guide.md` 含「勿提交真密」（若仍有旧名 `MCP使用说明.md`：新建英文名，旧文件 skip 不删，移交可手工清理）
-- [ ] 装后烟测：`.gitignore` 建议含 `.cursor/mcp.json`（snippet merge，不整文件覆盖）
+- [ ] 装后烟测：`.gitignore` 建议含 `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json`（snippet merge，不整文件覆盖）
+- [ ] 非 Cursor 已选工具：rules 目录含全量镜像（qoder/trae/claude 为 `.md`；codebuddy 为 `RULE.mdc`）
+- [ ] fill-mcp 真密按 `scripts/lib/mcp-paths.mjs` 多路径写入
 
 ### L5
 

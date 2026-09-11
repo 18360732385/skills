@@ -15,8 +15,18 @@
 |---|---|
 | `rules/*.mdc` | Cursor 原生 frontmatter 规则；其他工具生成时自动 strip / 降级 |
 | `hooks/hooks.config.json` | hook 资产与各工具事件映射；无等价事件机制的工具不生成、不降级模拟 |
-| `hooks/*.js` | 统一 Cursor 协议脚本；Claude 经 `claude-adapter.js` 双向翻译 |
+| `hooks/*.js` | 统一 Cursor 协议脚本；Claude 族（claude/qoder/trae）经 `claude-adapter.js` 双向翻译 |
 | `mcp/servers.json` | （可选）MCP server SSOT；**含密即 vendored_shared 团队约定**，example_only 仓勿建 |
-| `mcp/servers.example.json` | 无密示例 |
-| `settings.json` | （可选）`.cursor/` `.qoder/` settings.json 的 SSOT |
+| `mcp/servers.example.json` | 无密示例 → `.cursor/mcp.json.example` / 根 `.mcp.json.example` / `.trae/mcp.json.example` |
+| `settings.json` | （可选）`.cursor/settings.json` 与 qoder settings 非 hooks 键的 SSOT |
 | `skills/` | （可选）vendored skills，分发到各工具 `skills/` 目录 |
+
+### sync 分发摘要（0.5.1+）
+
+| 工具 | rules | hooks | MCP |
+|---|---|---|---|
+| cursor | `.cursor/rules/*.mdc` | `.cursor/hooks.json` | `.cursor/mcp.json` |
+| qoder | `.qoder/rules/*.md` | `.qoder/settings.json` hooks | 根 `.mcp.json` |
+| trae | `.trae/rules/*.md` | `.trae/hooks.json` | `.trae/mcp.json` |
+| claude | `.claude/rules/*.md` | `.claude/settings.json` | 根 `.mcp.json` |
+| workbuddy | `.codebuddy/rules/<name>/RULE.mdc` | `.codebuddy/settings.json` | 根 `.mcp.json` |

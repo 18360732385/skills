@@ -10,7 +10,7 @@ description: >-
 
 Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持久约束。  
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
-一页纸：[QUICKSTART.md](QUICKSTART.md)。施工产物默认 `docs/harness-eng/`。
+一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](write-plan.md)。  
 **全部推荐**协议 SSOT：[recommended-profile.md](recommended-profile.md)。他处只指针。
@@ -22,6 +22,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘模式须用户点名 land / upgrade / resume / pipeline / fill-*。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](write-plan.md#windows-json-传参gotcha-ssot)。
+6. **每轮回复末尾**附可视化**会话仪表盘**（四台 + mermaid；[session-dashboard.md](session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET>`。
 
 ## 模式分流
 
@@ -95,9 +96,10 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 | 深·真·全 / draft vs SSOT | [truth-quality.md](truth-quality.md) |
 | 多 Agent worker | [fill-workers.md](fill-workers.md) · [fill-truths-agents.md](fill-truths-agents.md) |
 | 加契约域 / packs / morph | [domain-extend.md](domain-extend.md) · `templates/_meta/domains.yaml` · `domain-packs.yaml` · `morph-required.yaml` |
-| AI 工具面 | [ai-tools.md](ai-tools.md) |
+| AI 工具面 | [ai-tools.md](ai-tools.md) · [sync-hosts.md](sync-hosts.md) · `templates/ai-tools/adapters/` |
 | 自动填充（legacy） | [fill-truths-auto.md](fill-truths-auto.md) |
 | live 校准 | `scripts/fill-calibrate-live.mjs`（`--help`） |
 | HTML 报告 | `scripts/fill-report-html.mjs`（`--help`）；score 后【推荐】 |
+| 会话仪表盘 | [session-dashboard.md](session-dashboard.md) · `scripts/session-dash.mjs`（每轮回复末尾） |
 | 模板清单 / 版本 | [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) · [CHANGELOG.md](CHANGELOG.md) |
 | 渲染脚本 | `scripts/render.mjs`（`--help` / 目录即环境） |

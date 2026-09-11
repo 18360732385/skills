@@ -8,18 +8,16 @@
  *   node scripts/fill-calibrate-live.mjs --root <TARGET> --dry-run
  *
  * Connection (no inventing secrets):
- *   1) .cursor/mcp.json env (if present, usually gitignored)
- *   2) sms-entrance/src/main/resources/application-<profile>.yml (or application.yml)
+ *   1) mcp 真密（按优先级）：.cursor/mcp.json → .mcp.json → .trae/mcp.json → .qoder/mcp.json
+ *   2) application-<profile>.yml (or application.yml)
  *
- * Deps (one-shot in TEMP):
- *   npm install mysql2 ioredis   # under %TEMP%/harness-mcp-calibrate or /tmp/...
- *
- * Prefer fill-mcp + Cursor MCP when available. This is the fallback path (0.2.10).
+ * Prefer fill-mcp + host MCP when available. This is the fallback path (0.2.10+; multi-path 0.5.2+).
  */
 import fs from "fs";
 import path from "path";
 import { createRequire } from "module";
 import os from "os";
+import { loadMcpCredentials } from "./lib/mcp-paths.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -46,7 +44,7 @@ function printHelp() {
   node scripts/fill-calibrate-live.mjs --root <TARGET> [--profile dev] [--dry-run]
 
 Calibrate docs/db/table via MySQL SHOW CREATE TABLE and docs/redis/keys via Redis SCAN.
-Reads credentials from .cursor/mcp.json or application-<profile>.yml (never invents).
+Reads credentials from .cursor/mcp.json | .mcp.json | .trae/mcp.json (or application-<profile>.yml); never invents.
 Requires mysql2 + ioredis (install once under TEMP/harness-mcp-calibrate).
 `);
 }
@@ -79,32 +77,7 @@ function loadDrivers() {
 }
 
 function parseMcpJson(root) {
-  const p = path.join(root, ".cursor", "mcp.json");
-  if (!fs.existsSync(p)) return null;
-  try {
-    const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    const mysql = j.mcpServers?.mysql?.env || j.mcpServers?.["mysql-local-example"]?.env;
-    const redisArgs = j.mcpServers?.redis?.args || j.mcpServers?.["redis-local-example"]?.args;
-    let redisUrl = null;
-    if (Array.isArray(redisArgs)) {
-      const idx = redisArgs.indexOf("--url");
-      if (idx >= 0) redisUrl = redisArgs[idx + 1];
-    }
-    return {
-      mysql: mysql
-        ? {
-            host: mysql.MYSQL_HOST,
-            port: Number(mysql.MYSQL_PORT || 3306),
-            user: mysql.MYSQL_USER,
-            password: mysql.MYSQL_PASS,
-            database: mysql.MYSQL_DB,
-          }
-        : null,
-      redisUrl,
-    };
-  } catch {
-    return null;
-  }
+  return loadMcpCredentials(root);
 }
 
 function parseYmlMysqlRedis(text) {
