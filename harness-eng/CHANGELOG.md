@@ -6,16 +6,17 @@
 
 ## 0.6.1-dev — 2026-09-12（Trae P0 spike：官方实证 · FM 保留 · mature-trae）
 
-**不**把矩阵 Trae 中高改成高（T-P1-5 等人 Trae 会话确认 hooks / MCP）。
+**不**把矩阵 Trae 中高改成高（T-P1-5 等 Settings → Hooks + matcher `RunCommand` 新会话复测 PASS + MCP）。
 
 ### 产品
 
-- **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；matcher `Bash` vs `RunCommand` 风险）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
+- **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；官方终端 **`RunCommand`**）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
 - **实机回传**（2026-09-12 Trae CN）：T-P0-1 消费仓磁盘 FAIL（实例化 `sync.mjs` 仍旧 strip）；T-P0-2 **IDE 已消费** `mcp.json`；T-P0-3 待新会话；T-P0-4 会话 PASS
-- **实机回传续**（2026-09-12 Trae CN · c-be-sms-ai）：Round A 刷新后 T-P0-1 **磁盘+行为 PASS**（13 份、认 `globs`、无 `1x`）；Round C T-P0-3 **本机行为 FAIL**（`.trae/hooks.json` 未调用；`Bash` / `RunCommand` 皆无）。**不**改 `HOOK_DEFS`；探测只认 `.trae/hooks.json`
-- **升级注意**：消费仓必须 **刷新** `scripts/agent-config/sync.mjs`（从 tmpl 重落地）后再 sync，`.trae/rules` 才会带 FM
+- **实机回传续**（2026-09-12 Trae CN · c-be-sms-ai）：Round A 刷新后 T-P0-1 **磁盘+行为 PASS**（13 份、认 `globs`、无 `1x`）；Round C T-P0-3 **本机行为 FAIL**（`.trae/hooks.json` 当时 matcher=`Bash`）。事后判 **matcher 误诊**（`Bash` 永不匹配 `RunCommand`）
+- **T-P1-2 hooks**：`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`（门禁 matcher `Bash|RunCommand`）；`claude-adapter.js` 软放行同时写 `systemMessage` + `hookSpecificOutput.additionalContext`。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底。消费仓须 sync + **Settings → Hooks 启用项目 hooks** + **新会话**复测。**不**升矩阵
+- **升级注意**：消费仓必须 **刷新** `scripts/agent-config/sync.mjs`（从 tmpl 重落地）后再 sync，`.trae/rules` 才会带 FM，`.trae/hooks.json` 才会带 `RunCommand`
 - **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)（含消费仓刷新配方 + 新会话 hooks 探测；禁止用 Cursor `beforeShellExecution` 当 Trae 证据）
-- **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；matcher 风险；链到实证页；消费仓刷新 `sync.mjs`
+- **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；T-P1-2 matcher `RunCommand`；链到实证页；消费仓刷新 `sync.mjs`
 - **hotfix**：镜像到 Trae **保留** frontmatter（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）
 - **L5 00-harness-ssot via SSOT**：只要选了 cursor/trae/qoder/claude/workbuddy，render 必写 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 00 / 冗余 1x 仍由 sync 托管（清 stale 正确，勿 git restore）。人审见 [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)
 - **fixture**：`scripts/fixtures/mature-trae/`（无 `.cursor/rules` 仍 MATURE）

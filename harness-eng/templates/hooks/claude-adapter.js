@@ -4,7 +4,7 @@
  *
  * 用法：node claude-adapter.js <mode> <script>
  * Claude 与 Cursor 的 hook 输入/输出协议不同，本适配器做双向翻译后调用仓内统一脚本：
- * - shell-gate    PreToolUse(Bash)      → {command} → {permission, agent_message}
+ * - shell-gate    PreToolUse(Bash|RunCommand；视宿主) → {command} → {permission, agent_message}
  * - mcp-guard     PreToolUse(mcp__*)    → {mcp_server_name, tool_name, tool_input} → {permission, ...}
  * - edit-reminder PostToolUse(Edit|Write|MultiEdit) → {file_path, edits} → {additional_context}
  * - stop-check    Stop                  → {status, loop_count} → {followup_message}
@@ -66,8 +66,17 @@ function toPreToolUse(reply) {
   const decision = PERMISSION_MAP[reply.permission] || "allow";
   const reason = reply.user_message || reply.agent_message || "";
   if (decision === "allow") {
-    // 软提醒：不阻塞，仅以 systemMessage 透传给用户可见
-    return reason ? { systemMessage: String(reason) } : {};
+    // 软提醒：不阻塞。Claude 认 systemMessage；Trae 认 hookSpecificOutput.additionalContext
+    return reason
+      ? {
+          systemMessage: String(reason),
+          hookSpecificOutput: {
+            hookEventName: "PreToolUse",
+            permissionDecision: "allow",
+            additionalContext: String(reason),
+          },
+        }
+      : {};
   }
   return {
     hookSpecificOutput: {
