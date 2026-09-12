@@ -3,7 +3,7 @@
 主 agent 在 **fill-truths-agents** 确认后按 **fill-plan 批次 → shard** 填充。  
 **契约以文件系统 + node 脚本为准**，不绑定 Cursor Task，也不依赖任何宿主「自动拉起子 agent」API。
 
-适用：Cursor / Claude Code / Codex / Qoder / Trae / WorkBuddy·CodeBuddy / 自定义（见 [ai-tools.md](ai-tools.md)）。  
+适用：Cursor / Claude Code / Codex / Qoder / Trae / WorkBuddy·CodeBuddy / 自定义（见 [ai-tools.md](../host/ai-tools.md)）。  
 编排规格：[fill-truths-agents.md](fill-truths-agents.md) · 批次：[fill-plan.md](fill-plan.md)。
 
 ## 契约（所有工具 · 所有域）
@@ -13,7 +13,7 @@
 | 输入 | **fill-plan 当前批次** + inventory `shards[]`；写出 `docs/<domain>/.fill-work/<shard-id>.json` |
 | 输出 | **仅** `docs/<domain>/.fill-work/<shard-id>.md`（或约定 fragment 名） |
 | 范围 | 只写本 shard fragment；字段/URL/密文只从本仓证据；结案范围以 Plan `sample_n`/`deferred` 为准 |
-| 验收 | 对照批次 `acceptance[]` + [truth-quality.md](truth-quality.md)；`acceptance-check` 无 blocker |
+| 验收 | 对照批次 `acceptance[]` + [truth-quality.md](../modes/truth-quality.md)；`acceptance-check` 无 blocker |
 | 合并 | `acceptance-check` → `fill-merge.mjs --domain <id> --check` → `--write`；api 专属 `--enrich-dto`/`--module` 仍用 `fill-merge-api`；dto-batch 按接口绑定 |
 | 状态 | 只认磁盘（`.fill-work/`、`docs/harness-eng/fill-plan.yaml`、可选 `progress.yaml`） |
 | 模板 | 对照目标仓 `docs/<domain>/templates/*` **完整档必填章** |

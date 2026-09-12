@@ -36,4 +36,4 @@ L1 文件靠 **packs** 数据展开；域名单 / 路径 / 默认 CLI 读 `domai
 | acceptance `--domain all` / fill-plan·seed 默认域 | inventory 扫描启发式 |
 | todo 扫描真相路径、report 域列表 | — |
 
-指针：`templates/_meta/domains.yaml` · `domain-packs.yaml` · `morph-required.yaml` · [glossary.md](glossary.md)「契约域」「packs」。
+指针：`templates/_meta/domains.yaml` · `domain-packs.yaml` · `morph-required.yaml` · [glossary.md](../glossary.md)「契约域」「packs」。

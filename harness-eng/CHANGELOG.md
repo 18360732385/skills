@@ -4,7 +4,7 @@
 **列车**：`… → 0.5.10 → 0.6.0-dev`（当前 **0.6.0-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
 > 0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。历史条目里「后续（0.3.0）/ P3」许愿已过期。
 
-## Unreleased / 0.6.0-dev — 进行中（M1：统一入口）
+## Unreleased / 0.6.0-dev — 进行中（M1：统一入口 · M2：文档拓扑）
 
 ### 产品
 
@@ -12,13 +12,15 @@
 - **G1 公开入口**：`scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 薄别名；L5/`agent_config` 仍拒直渲生成宿主路径并走 `sync.mjs`
 - **pipeline-skeleton**：仅骨架战役写盘，不跑 fill-* / 不进入 pipeline-fill
 - **文档指针**：SKILL / AGENT-INDEX / write-plan / conflict-policy / QUICKSTART / pipeline 以 harness CLI 为 Agent 主路径；`render.mjs --help` 指向公开入口
-- **G6**：0.6.x **冻结 Codex P2**，全量对等另立项（adapters/codex.md · ai-tools.md）
-- **G7**：manifest / meta / questions 钉 **`0.6.0-dev`**；upgrade 增加 0.5.10 → 0.6.0 短清单（文档搬家在 M2）
+- **G2 文档拓扑**：根 `*.md` **15**（≤20）。模式规格进 `modes/`，fill-* 进 `fill/`，`ai-tools` / `sync-hosts` 进 `host/`。仓库内链接已改；热路径旧路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline` / `fill-truths-auto`）
+- **AGENT-INDEX**：按新拓扑重写，必读 ≤8
+- **G6**：0.6.x **冻结 Codex P2**，全量对等另立项（adapters/codex.md · host/ai-tools.md）
+- **G7**：manifest / meta / questions 钉 **`0.6.0-dev`**；upgrade 含 0.5.10 → 0.6.0 短清单（文档搬家见 M2）
 
 ### 版本钉
 
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → `0.6.0-dev`
-- selfcheck 断言 `0.6.0-dev`
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → `0.6.0-dev`（**未**钉正式 `0.6.0`）
+- selfcheck 断言 `0.6.0-dev` + M2 根 md 计数 / stub 策略 / 新路径
 
 ## 0.5.10 — 2026-09-12（audit P2：Codex 不默认 · 报告壳叙事 · 皆无探测 ≠ Cursor · 归档）
 
@@ -120,7 +122,7 @@
 
 ### 产品
 
-- **会话仪表盘 SSOT**：[session-dashboard.md](session-dashboard.md) — 每轮 harness-eng 回复末尾固定四台（决策/诊断/任务/趋势）+ mermaid 象限图
+- **会话仪表盘 SSOT**：[session-dashboard.md](modes/session-dashboard.md) — 每轮 harness-eng 回复末尾固定四台（决策/诊断/任务/趋势）+ mermaid 象限图
 - **脚本**：`scripts/session-dash.mjs` + `scripts/lib/session-dashboard.mjs`（只读；读 meta / score / progress / fill-plan）
 - **SKILL 流程第 6 步**：有目标根时优先跑 session-dash 渲染脚注
 - 脚注 **详情请查询仪表盘** → 目标仓 `report-latest.html` + skill [使用手册.html#s6](使用手册.html#s6)

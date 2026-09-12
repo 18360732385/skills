@@ -1,6 +1,6 @@
 # Adapter: Claude Code
 
-对齐程度：**高**（L3+ 全量 rules 镜像）。L3+ / L5 不再另写冗余 `1x-contract-sync`。矩阵见 [ai-tools.md](../../../ai-tools.md)。
+对齐程度：**高**（L3+ 全量 rules 镜像）。L3+ / L5 不再另写冗余 `1x-contract-sync`。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。
 
 - **目录**: `.claude/` + 根 `CLAUDE.md`
 - **Rules**: `.claude/rules/*.md`（strip Cursor frontmatter；`globs`→正文「适用路径」）

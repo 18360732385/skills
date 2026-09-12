@@ -2,9 +2,9 @@
 
 真相与契约仍在 `AGENTS.md` + `docs/**`（**一份 SSOT**）。各工具生成**入口适配 + 宿主对齐交付**（rules 镜像 / hooks / MCP example）；业务 Never do / Pn 只留在 SSOT。
 
-宿主路径细节见适配卡：[templates/ai-tools/adapters/](templates/ai-tools/adapters/) · 生成引擎见 [sync-hosts.md](sync-hosts.md)。
+宿主路径细节见适配卡：[templates/ai-tools/adapters/](../templates/ai-tools/adapters/) · 生成引擎见 [sync-hosts.md](sync-hosts.md)。
 
-**0.6.x 冻结 P2**：Codex 保持部分对齐·不默认；本列车不扩展其对齐面。全量对等（rules / hooks / MCP / skills 与 Cursor/Claude 同构）另立项，见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+**0.6.x 冻结 P2**：Codex 保持部分对齐·不默认；本列车不扩展其对齐面。全量对等（rules / hooks / MCP / skills 与 Cursor/Claude 同构）另立项，见 [ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)。
 
 ## 内置工具
 
@@ -59,7 +59,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 | `qoder` | **高** | L3+ 全量 `.qoder/rules/*.md` 镜像 + Claude 族 hooks |
 | `workbuddy` | **高** | L3+ rules 镜像 + CodeBuddy hooks 全家桶 |
 | `trae` | **中高** | L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` |
-| `codex` | **部分（P2）·不默认** | 仅薄指针 + 基础 commit gate；**不全量镜像** rules；hooks / MCP / skills **未**与 Cursor/Claude 对等；未探测不进「全部推荐」。**0.6.x 冻结 P2**，全量对等另立项（[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)） |
+| `codex` | **部分（P2）·不默认** | 仅薄指针 + 基础 commit gate；**不全量镜像** rules；hooks / MCP / skills **未**与 Cursor/Claude 对等；未探测不进「全部推荐」。**0.6.x 冻结 P2**，全量对等另立项（[ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)） |
 
 自定义入口-only 工具：只保证入口指针（及同目录 `1x` 指针），不装 hooks/MCP。
 

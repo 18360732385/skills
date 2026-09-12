@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.6.0-dev: harness.mjs public CLI, ROADMAP, Codex P2 freeze, version pin.
+ * 0.6.0-dev: M1 harness CLI + M2 doc topology (modes/fill/host), ROADMAP, Codex P2 freeze.
  * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
  * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
  * Inherited 0.2.27–0.5.7 gates.
@@ -31,11 +31,26 @@ import {
 } from "./lib/harness-meta.mjs";
 import { scanSignals } from "./lib/detect-signals.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
+import {
+  DOC_MOVES,
+  ROOT_STUBS,
+  ROOT_KEEP,
+  ROOT_MD_MAX,
+  resolveDoc,
+} from "./lib/doc-paths.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
 const fail = [];
 const ok = [];
+
+function docPath(basename) {
+  return resolveDoc(skillRoot, basename);
+}
+
+function readDoc(basename) {
+  return fs.readFileSync(docPath(basename), "utf8");
+}
 
 function assert(cond, msg) {
   if (cond) ok.push(msg);
@@ -51,7 +66,7 @@ function runNode(args, opts = {}) {
 }
 
 // --- 0.2.18 inherited checks (abbreviated) ---
-assert(fs.existsSync(path.join(skillRoot, "truth-quality.md")), "truth-quality.md");
+assert(fs.existsSync(docPath("truth-quality.md")), "truth-quality.md");
 assert(
   fs.existsSync(path.join(skillRoot, "scripts/acceptance-check.mjs")),
   "acceptance-check.mjs"
@@ -252,7 +267,7 @@ assert(
   "score-policy template"
 );
 
-const fillMcp = fs.readFileSync(path.join(skillRoot, "fill-mcp.md"), "utf8");
+const fillMcp = readDoc("fill-mcp.md");
 assert(/fill_mcp_profile/.test(fillMcp), "fill-mcp documents fill_mcp_profile");
 assert(/优先 \*\*`test`\*\*/.test(fillMcp) || /默认 \*\*`test`\*\*/.test(fillMcp), "fill-mcp prefers/defaults test");
 
@@ -287,13 +302,13 @@ assert(/本 skill 只写目标仓/.test(skill), "SKILL positive write-scope gate
 assert(!/UTF-8 无 BOM/.test(skill), "SKILL does not restate UTF-8 BOM gotcha");
 assert(/write-plan\.md#windows-json/.test(skill), "SKILL points to Windows JSON gotcha");
 
-const writePlan = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+const writePlan = readDoc("write-plan.md");
 assert(/闸门词表 SSOT/.test(writePlan), "write-plan is gate SSOT");
 assert(/`按计划执行`/.test(writePlan) && /`LGTM`/.test(writePlan), "write-plan has full gate list");
 assert(/Windows JSON 传参（gotcha SSOT）/.test(writePlan), "write-plan owns Windows JSON gotcha");
 assert(/UTF-8 无 BOM/.test(writePlan), "write-plan states UTF-8 no BOM");
 
-const pipeline = fs.readFileSync(path.join(skillRoot, "pipeline.md"), "utf8");
+const pipeline = readDoc("pipeline.md");
 assert(!/UTF-8 无 BOM/.test(pipeline), "pipeline does not restate UTF-8 BOM");
 assert(/write-plan\.md#windows-json/.test(pipeline), "pipeline points to Windows JSON gotcha");
 
@@ -308,7 +323,7 @@ const quick = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 assert(!/`按计划执行`/.test(quick), "QUICKSTART does not restate gate full list");
 assert(/write-plan\.md/.test(quick), "QUICKSTART points to write-plan");
 
-const fillScoreMd = fs.readFileSync(path.join(skillRoot, "fill-score.md"), "utf8");
+const fillScoreMd = readDoc("fill-score.md");
 assert(/覆盖裁决/.test(fillScoreMd), "fill-score has 覆盖裁决");
 assert(!/\*\*0\.2\.8\+\*\*/.test(fillScoreMd), "fill-score has no 0.2.8+ sediment");
 assert(!/\*\*0\.2\.9\+\*\*/.test(fillScoreMd), "fill-score has no 0.2.9+ sediment");
@@ -317,7 +332,7 @@ assert(/CHANGELOG\.md/.test(fillScoreMd), "fill-score points version history to 
 assert(/score-policy|覆盖裁决/.test(skill), "SKILL points to score-policy / 覆盖裁决");
 assert(/打分 \/ score-policy/.test(skill), "SKILL branch table has score-policy row");
 
-const fillMcpGate = fs.readFileSync(path.join(skillRoot, "fill-mcp.md"), "utf8");
+const fillMcpGate = readDoc("fill-mcp.md");
 assert(/过闸后再/.test(fillMcpGate), "fill-mcp positive: 过闸后再");
 assert(/停留骨架/.test(fillMcpGate), "fill-mcp positive: 停留骨架");
 assert(!/禁止进入填充/.test(fillMcpGate), "fill-mcp dropped 禁止进入填充");
@@ -391,7 +406,7 @@ assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
-const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+const ladderMd = readDoc("ladder.md");
 assert(/版本：\*\*0\.6\.0-dev\*\*/.test(handbookMd), "使用手册.md version 0.6.0-dev");
 assert(/v0\.6\.0-dev/.test(handbookHtml), "使用手册.html version 0.6.0-dev");
 assert(/当前 \*\*0\.6\.0-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.0-dev");
@@ -421,16 +436,16 @@ assert(/sync-hosts\.md/.test(handbookMd), "使用手册.md links sync-hosts");
 assert(/4\.4 0\.5\.2\+ 多宿主对齐/.test(handbookMd), "使用手册.md has 0.5.2 multi-host section");
 assert(/协议族/.test(handbookMd), "使用手册.md hooks protocol family table");
 
-assert(fs.existsSync(path.join(skillRoot, "pipeline-fill.md")), "pipeline-fill.md exists");
-assert(fs.existsSync(path.join(skillRoot, "upgrade.md")), "upgrade.md exists");
-assert(/## Done/.test(fs.readFileSync(path.join(skillRoot, "upgrade.md"), "utf8")), "upgrade has Done");
+assert(fs.existsSync(docPath("pipeline-fill.md")), "pipeline-fill.md exists");
+assert(fs.existsSync(docPath("upgrade.md")), "upgrade.md exists");
+assert(/## Done/.test(readDoc("upgrade.md")), "upgrade has Done");
 assert(/骨架战役/.test(pipeline), "pipeline is skeleton campaign");
 assert(/填充 MCP 闸/.test(pipeline), "pipeline has fill MCP gate");
 assert(/停留骨架/.test(pipeline), "pipeline positive stay-skeleton");
-assert(/填充 MCP 闸/.test(fs.readFileSync(path.join(skillRoot, "pipeline-fill.md"), "utf8")), "pipeline-fill has fill MCP gate");
+assert(/填充 MCP 闸/.test(readDoc("pipeline-fill.md")), "pipeline-fill has fill MCP gate");
 assert(/填充 MCP 闸/.test(fillMcpGate), "fill-mcp defines gate");
-assert(/S_ENV_PROFILES/.test(fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8")), "detect has S_ENV_PROFILES");
-assert(/MCP 矩阵/.test(fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8")), "detect has MCP matrix");
+assert(/S_ENV_PROFILES/.test(readDoc("detect.md")), "detect has S_ENV_PROFILES");
+assert(/MCP 矩阵/.test(readDoc("detect.md")), "detect has MCP matrix");
 assert(/mysql-dev-example/.test(fs.readFileSync(path.join(skillRoot, "templates/mcp/mcp.json.example"), "utf8")), "mcp example multi-env");
 assert(/意图（一支）/.test(skill), "SKILL uses one-branch intent table");
 assert(/upgrade\.md/.test(skill), "SKILL points to upgrade.md");
@@ -548,8 +563,8 @@ if (fs.existsSync(fixture)) {
   assert(/hasDbFieldEvidence/.test(scoreSrc), "db field evidence helper");
   assert(/##\s*Value(?:\s*结构)?|Value(?:\s*结构)?/.test(scoreSrc) || scoreSrc.includes("Value(?:\\s*结构)?"), "Value heading isomorphic");
   assert(/--focus/.test(scoreSrc), "fill-score --focus");
-  assert(fs.existsSync(path.join(skillRoot, "fill-morph.md")), "fill-morph.md");
-  assert(fs.existsSync(path.join(skillRoot, "fill-gate.md")), "fill-gate.md");
+  assert(fs.existsSync(docPath("fill-morph.md")), "fill-morph.md");
+  assert(fs.existsSync(docPath("fill-gate.md")), "fill-gate.md");
   const q = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(/value:\s*fill-morph/.test(q) && /value:\s*fill-gate/.test(q), "Q_MODE has morph/gate");
   const tmpl = fs.readFileSync(
@@ -585,7 +600,7 @@ if (fs.existsSync(fixture)) {
   assert(failMorph.active && !failMorph.ok && failMorph.blockers.some((b) => String(b).startsWith("morph_floor:")), "strict morph_floor blocks");
   const skillTxt = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
   assert(/开干/.test(skillTxt) && /形态/.test(skillTxt) && /覆盖/.test(skillTxt), "SKILL description leading words");
-  assert(/bump-run-round/.test(fs.readFileSync(path.join(skillRoot, "fill-truths-agents.md"), "utf8")), "agents Done bumps round");
+  assert(/bump-run-round/.test(readDoc("fill-truths-agents.md")), "agents Done bumps round");
 }
 
 // --- 0.3.5 gold profile ---
@@ -638,7 +653,7 @@ if (fs.existsSync(fixture)) {
   );
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
-  assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
+  assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
   assert(/version:\s*"0\.6\.0-dev"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.0-dev");
 }
 
@@ -704,10 +719,10 @@ if (fs.existsSync(fixture)) {
   assert(/--domains/.test(scoreSrc2), "fill-score --domains");
   assert(/domain === "jobs"/.test(scoreSrc2), "fill-score jobs morph");
   assert(/resolveScoreDomains/.test(scoreSrc2), "fill-score resolveScoreDomains");
-  assert(/S_JOBS/.test(fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8")), "detect S_JOBS");
+  assert(/S_JOBS/.test(readDoc("detect.md")), "detect S_JOBS");
   assert(
     /mcp_tracking/.test(
-      fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8")
+      readDoc("conflict-policy.md")
     ),
     "conflict-policy mcp_tracking"
   );
@@ -740,7 +755,7 @@ if (fs.existsSync(fixture)) {
   const skillMd = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
   assert(/Cron|Scheduler|jobs/.test(skillMd), "SKILL description Cron/jobs");
   assert(
-    fs.existsSync(path.join(skillRoot, "domain-extend.md")),
+    fs.existsSync(docPath("domain-extend.md")),
     "domain-extend.md"
   );
   assert(/domain-extend\.md/.test(skillMd), "SKILL branch points domain-extend");
@@ -756,7 +771,7 @@ if (fs.existsSync(fixture)) {
   );
   assert(/jobs-heuristic-unmarked/.test(accSrc), "acceptance jobs-heuristic-unmarked");
   assert(/jobs-heuristic-in-ssot/.test(accSrc), "acceptance jobs-heuristic-in-ssot");
-  const workers = fs.readFileSync(path.join(skillRoot, "fill-workers.md"), "utf8");
+  const workers = readDoc("fill-workers.md");
   assert(/契约域 fragment/.test(workers), "fill-workers 契约域 fragment");
   assert(!/###\s*四域 fragment/.test(workers), "fill-workers no 四域 fragment heading");
   assert(/scheduler_link/.test(workers), "fill-workers documents scheduler_link");
@@ -800,17 +815,17 @@ if (fs.existsSync(fixture)) {
     ),
     "report-ui registry domains"
   );
-  assert(/0\.3\.8/.test(fs.readFileSync(path.join(skillRoot, "domain-extend.md"), "utf8")), "domain-extend 0.3.8");
+  assert(/0\.3\.8/.test(readDoc("domain-extend.md")), "domain-extend 0.3.8");
 }
 
 // --- 0.3.8 P0 hotpath + P1 morph-required ---
 {
-  const pipelineFill = fs.readFileSync(path.join(skillRoot, "pipeline-fill.md"), "utf8");
+  const pipelineFill = readDoc("pipeline-fill.md");
   assert(/fill-merge\.mjs --domain/.test(pipelineFill), "pipeline-fill fill-merge --domain");
   assert(!/fill-merge-\{api/.test(pipelineFill), "pipeline-fill no brace enum merge");
-  const workers = fs.readFileSync(path.join(skillRoot, "fill-workers.md"), "utf8");
+  const workers = readDoc("fill-workers.md");
   assert(/fill-merge\.mjs --domain/.test(workers), "fill-workers fill-merge --domain");
-  const agents = fs.readFileSync(path.join(skillRoot, "fill-truths-agents.md"), "utf8");
+  const agents = readDoc("fill-truths-agents.md");
   assert(/fill-merge\.mjs --domain/.test(agents), "fill-truths-agents fill-merge --domain");
   const qs = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
   const jobsRows = (qs.match(/fill-inventory-jobs/g) || []).length;
@@ -833,14 +848,14 @@ if (fs.existsSync(fixture)) {
     "fill-score loads morph-required"
   );
   assert(fs.existsSync(path.join(skillRoot, "scripts/lib/morph-required.mjs")), "morph-required.mjs");
-  const de = fs.readFileSync(path.join(skillRoot, "domain-extend.md"), "utf8");
+  const de = readDoc("domain-extend.md");
   assert(/morph-required/.test(de), "domain-extend mentions morph-required");
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
   const modeSection = (skill.split("## 模式分流")[1] || "").split("## land")[0] || "";
   assert(!/\|\s*\*\*自动填充\*\*/.test(modeSection), "SKILL mode table no 自动填充 row");
   assert(/fill-truths-auto/.test(skill), "SKILL still points fill-truths-auto");
   assert(
-    /报告字段速查/.test(fs.readFileSync(path.join(skillRoot, "fill-score.md"), "utf8")),
+    /报告字段速查/.test(readDoc("fill-score.md")),
     "fill-score 报告字段速查"
   );
   assert(
@@ -848,11 +863,11 @@ if (fs.existsSync(fixture)) {
     "archive OPTIMIZATION not roadmap"
   );
   assert(
-    /契约域闭环/.test(fs.readFileSync(path.join(skillRoot, "truth-quality.md"), "utf8")),
+    /契约域闭环/.test(readDoc("truth-quality.md")),
     "truth-quality 契约域闭环"
   );
   assert(
-    /契约域 packs/.test(fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8")),
+    /契约域 packs/.test(readDoc("ai-tools.md")),
     "ai-tools 契约域 packs"
   );
 }
@@ -886,14 +901,14 @@ if (fs.existsSync(fixture)) {
   const q = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(/Q_MCP_TRACKING/.test(q), "questions has Q_MCP_TRACKING");
   assert(/vendored_shared/.test(q), "Q_MCP_TRACKING has vendored_shared");
-  const audit = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
+  const audit = readDoc("audit-report.md");
   assert(/write-meta-only/.test(audit), "audit has write-meta-only");
   assert(/重号/.test(audit), "audit anti-pattern Pn duplicate id");
-  const ladder = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+  const ladder = readDoc("ladder.md");
   assert(/扩展文档/.test(ladder), "ladder L2 allows extension docs");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/write-meta-only/.test(gloss), "glossary has write-meta-only");
-  const rp = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  const rp = readDoc("recommended-profile.md");
   assert(/Q_MCP_TRACKING/.test(rp), "recommended-profile points Q_MCP_TRACKING");
 }
 
@@ -917,19 +932,19 @@ if (fs.existsSync(fixture)) {
   assert(/kind:\s*behavior/.test(domYaml), "domains.yaml has behavior pack");
   const q = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(/Q_RULE21/.test(q), "questions has Q_RULE21");
-  const det = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  const det = readDoc("detect.md");
   assert(/S_SLF4J/.test(det), "detect has S_SLF4J");
   assert(/GLOB_OBSERVABILITY/.test(det), "detect has GLOB_OBSERVABILITY default");
-  const rp = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  const rp = readDoc("recommended-profile.md");
   assert(/rule21/.test(rp), "recommended-profile has rule21");
   const rule00 = fs.readFileSync(
     path.join(skillRoot, "templates/rules/00-project-docs-overview.mdc.tmpl"),
     "utf8"
   );
   assert(/日志\/注释/.test(rule00), "00 tmpl has 日志/注释 strip row");
-  const ladder = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+  const ladder = readDoc("ladder.md");
   assert(/21-observability-comments/.test(ladder), "ladder L0 behavior pack");
-  const audit = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
+  const audit = readDoc("audit-report.md");
   assert(/行为包/.test(audit), "audit L0 behavior pack");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/行为包/.test(gloss), "glossary has 行为包");
@@ -966,7 +981,7 @@ if (fs.existsSync(fixture)) {
   assert(/Q_FRONTEND_RULE/.test(q), "questions has Q_FRONTEND_RULE");
   assert(/Q_MODULE_AGENTS/.test(q), "questions has Q_MODULE_AGENTS");
   assert(/Q_DB_MIGRATION/.test(q), "questions has Q_DB_MIGRATION");
-  const det = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  const det = readDoc("detect.md");
   assert(/S_SPRING/.test(det), "detect has S_SPRING");
   assert(/GLOB_FRONTEND/.test(det), "detect has GLOB_FRONTEND default");
   assert(/manual_sql/.test(det), "detect maps manual_sql");
@@ -986,15 +1001,15 @@ if (fs.existsSync(fixture)) {
   );
   assert(/migration_modes/.test(domYaml), "domains db migration_modes");
   assert(/S_FRONTEND/.test(domYaml) && !/sms-ai-web/.test(domYaml), "domains frontend pack generic + detect");
-  const rp = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  const rp = readDoc("recommended-profile.md");
   assert(/rule17/.test(rp) && /module_agents_template/.test(rp), "recommended-profile new rows");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/manual_sql/.test(gloss) && /分册变体/.test(gloss), "glossary manual_sql + 分册变体");
-  const resume = fs.readFileSync(path.join(skillRoot, "resume.md"), "utf8");
+  const resume = readDoc("resume.md");
   assert(/mergePreview/.test(resume), "resume documents mergePreview");
-  const ladder = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+  const ladder = readDoc("ladder.md");
   assert(/17-frontend-web/.test(ladder), "ladder L0 frontend collab pack");
-  const audit = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
+  const audit = readDoc("audit-report.md");
   assert(/rule 17/.test(audit), "audit L0 rule 17");
 }
 
@@ -1171,15 +1186,15 @@ if (fs.existsSync(fixture)) {
     "utf8"
   );
   assert(/agent_config:\s*\{\{AGENT_CONFIG\}\}/.test(metaTmpl050), "meta tmpl agent_config field");
-  const ladder050 = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+  const ladder050 = readDoc("ladder.md");
   assert(/L5/.test(ladder050) && /配置 SSOT 管线/.test(ladder050), "ladder has L5 row");
   const gloss050 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/配置 SSOT 管线/.test(gloss050), "glossary L5");
   assert(/hooks 家族/.test(gloss050), "glossary hooks family");
   assert(/pitfalls lint/.test(gloss050), "glossary pitfalls lint");
-  const det050 = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  const det050 = readDoc("detect.md");
   assert(/S_AGENT_CONFIG/.test(det050) && /S_MULTI_TOOL/.test(det050), "detect L5 signals");
-  const rp050 = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  const rp050 = readDoc("recommended-profile.md");
   assert(/agent_config/.test(rp050) && /hooks_family/.test(rp050), "recommended-profile L5 rows");
 
   // pitfalls 工程化
@@ -1209,9 +1224,9 @@ if (fs.existsSync(fixture)) {
   assert(/路径速查/.test(r00050), "rule00 pitfalls query protocol");
   assert(/sync\.mjs/.test(r00050), "rule00 agent-config commit gate line");
   assert(/生成物勿手改/.test(r00050), "rule00 generated-artifacts rule");
-  const conflict050 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  const conflict050 = readDoc("conflict-policy.md");
   assert(/agent_config/.test(conflict050), "conflict-policy L5 rows");
-  const upg050 = fs.readFileSync(path.join(skillRoot, "upgrade.md"), "utf8");
+  const upg050 = readDoc("upgrade.md");
   assert(/0\.4\.0 → 0\.5\.0/.test(upg050), "upgrade has 0.4.0 → 0.5.0 path");
   assert(/0\.5\.0 → 0\.5\.1/.test(upg050), "upgrade has 0.5.0 → 0.5.1 path");
   assert(/0\.5\.1 → 0\.5\.2/.test(upg050), "upgrade has 0.5.1 → 0.5.2 path");
@@ -1225,10 +1240,10 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.9 → 0\.5\.10/.test(upg050), "upgrade has 0.5.9 → 0.5.10 path");
   assert(/0\.5\.10 → 0\.6\.0/.test(upg050), "upgrade has 0.5.10 → 0.6.0 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
-  const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
+  const audit050 = readDoc("audit-report.md");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
   assert(/pitfalls 未过 lint/.test(audit050), "audit pitfalls-lint anti-pattern");
-  const aiTools050 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  const aiTools050 = readDoc("ai-tools.md");
   assert(/hooks 家族/.test(aiTools050), "ai-tools hooks family section");
   assert(/配置 SSOT 管线/.test(aiTools050), "ai-tools L5 section");
   assert(/协议族/.test(aiTools050), "ai-tools protocol family section");
@@ -1254,7 +1269,7 @@ if (fs.existsSync(fixture)) {
     fs.existsSync(path.join(skillRoot, "scripts/lib/mcp-paths.mjs")),
     "mcp-paths.mjs"
   );
-  assert(fs.existsSync(path.join(skillRoot, "sync-hosts.md")), "sync-hosts.md");
+  assert(fs.existsSync(docPath("sync-hosts.md")), "sync-hosts.md");
   for (const a of ["cursor", "claude", "qoder", "trae", "workbuddy", "codex"]) {
     assert(
       fs.existsSync(path.join(skillRoot, `templates/ai-tools/adapters/${a}.md`)),
@@ -1638,7 +1653,7 @@ assert(
   "manifest mcp-usage-guide target is no longer .cursor/"
 );
 {
-  const detect056 = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  const detect056 = readDoc("detect.md");
   assert(
     /docs\/harness-eng\/harness-meta\.yaml/.test(detect056) && /S_HARNESS_META/.test(detect056),
     "detect S_HARNESS_META prefers docs/harness-eng/"
@@ -1660,7 +1675,7 @@ assert(
 );
 assert(/docs\/harness-eng\/harness-meta\.yaml/.test(skill), "SKILL Done prefers new meta path");
 {
-  const conflict056 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  const conflict056 = readDoc("conflict-policy.md");
   assert(/docs\/harness-eng\/harness-meta\.yaml/.test(conflict056), "conflict-policy writes new meta path");
   assert(/不自动删除/.test(conflict056), "conflict-policy leaves legacy meta in place");
 }
@@ -1833,7 +1848,7 @@ assert(
 
 // --- 0.5.3 / 0.5.4 session dashboard ---
 assert(
-  fs.existsSync(path.join(skillRoot, "session-dashboard.md")),
+  fs.existsSync(docPath("session-dashboard.md")),
   "session-dashboard.md"
 );
 assert(
@@ -1848,7 +1863,7 @@ assert(/会话仪表盘/.test(skill), "SKILL mandates session dashboard footer")
 assert(/session-dashboard\.md/.test(skill), "SKILL points session-dashboard.md");
 assert(/工程轮/.test(skill), "SKILL gates dashboard to engineering turns");
 assert(!/\*\*每轮回复末尾\*\*/.test(skill), "SKILL no unconditional every-turn dashboard");
-const sessionDashMd = fs.readFileSync(path.join(skillRoot, "session-dashboard.md"), "utf8");
+const sessionDashMd = readDoc("session-dashboard.md");
 assert(/决策台/.test(sessionDashMd) && /趋势台/.test(sessionDashMd), "session-dashboard four panels");
 assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
 assert(/使用手册\.html#s6/.test(sessionDashMd), "session-dashboard handbook anchor");
@@ -1971,7 +1986,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
     "contract-sync tmpl treats .cursor/rules only as Cursor example"
   );
 
-  const aiTools057 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  const aiTools057 = readDoc("ai-tools.md");
   assert(/对齐矩阵/.test(aiTools057), "ai-tools.md has 对齐矩阵");
   assert(/部分（P2）|部分对齐（P2）/.test(aiTools057), "ai-tools.md marks Codex as partial P2");
   assert(/中高/.test(aiTools057), "ai-tools.md marks Trae as 中高");
@@ -1989,14 +2004,14 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   );
 
   const handbook057 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
-  const syncHosts057 = fs.readFileSync(path.join(skillRoot, "sync-hosts.md"), "utf8");
+  const syncHosts057 = readDoc("sync-hosts.md");
   const codexAd057 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
   assert(/对齐矩阵|部分（P2）|部分对齐（P2）/.test(handbook057), "handbook FAQ/docs mention alignment / Codex P2");
   assert(/部分对齐|P2/.test(syncHosts057), "sync-hosts.md keeps Codex as P2 / 部分对齐");
   assert(/部分对齐|P2/.test(codexAd057), "codex adapter stays 部分对齐 P2");
   assert(!/全量镜像/.test(codexAd057) || /暂不全量|不全量/.test(codexAd057), "codex adapter does not claim full sync");
 
-  const conflict057 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  const conflict057 = readDoc("conflict-policy.md");
   assert(
     /1x-contract-sync|契约 sync/.test(conflict057) && /不自动删除|不删/.test(conflict057),
     "conflict-policy: leftover 1x skip, do not auto-delete"
@@ -2091,7 +2106,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
 // --- 0.5.8 P0-1: detect / MATURE multi-host honesty ---
 {
-  const det058 = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  const det058 = readDoc("detect.md");
   assert(/\.claude\/rules/.test(det058), "S_RULES includes .claude/rules");
   assert(/\.qoder\/rules/.test(det058), "S_RULES includes .qoder/rules");
   assert(/\.trae\/rules/.test(det058), "S_RULES includes .trae/rules");
@@ -2118,7 +2133,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
     /任一宿主|非仅 Cursor|非仅 `\.cursor\/rules`/.test(det058),
     "MATURE host-honest wording"
   );
-  const rp058 = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  const rp058 = readDoc("recommended-profile.md");
   assert(
     /S_RULES|S_HOOKS/.test(rp058) && /任一宿主|非仅 Cursor/.test(rp058),
     "recommended-profile MATURE uses host-honest detect"
@@ -2127,7 +2142,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
 // --- 0.5.8 P0-4: Codex / L5 expectation (P2 / 部分对齐) ---
 {
-  const wp058 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+  const wp058 = readDoc("write-plan.md");
   assert(/部分对齐|P2/.test(wp058) && /codex/i.test(wp058), "write-plan Codex P2 warning");
   assert(
     /不全量/.test(wp058) && /hooks/.test(wp058) && /MCP/.test(wp058) && /skills/.test(wp058),
@@ -2135,21 +2150,21 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   );
   assert(/adapters\/codex/.test(wp058), "write-plan cross-links adapters/codex.md");
 
-  const audit058 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
+  const audit058 = readDoc("audit-report.md");
   assert(
     /把 Codex \+ L5 当成全量对齐/.test(audit058) && /P2/.test(audit058),
     "audit anti-pattern Codex+L5 full-parity"
   );
   assert(/adapters\/codex/.test(audit058), "audit cross-links adapters/codex.md");
 
-  const syncHosts058 = fs.readFileSync(path.join(skillRoot, "sync-hosts.md"), "utf8");
+  const syncHosts058 = readDoc("sync-hosts.md");
   assert(
     /## Done[\s\S]*部分对齐（P2）[\s\S]*\*\*不\*\*全量发出 Codex/.test(syncHosts058),
     "sync-hosts Done Codex P2 / not full emit"
   );
   assert(/adapters\/codex/.test(syncHosts058), "sync-hosts cross-links adapters/codex.md");
 
-  const ladder058 = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+  const ladder058 = readDoc("ladder.md");
   assert(
     /P2 \/ 部分对齐/.test(ladder058) && /\*\*不\*\*全量分发 Codex/.test(ladder058),
     "ladder L5 Codex P2 checklist"
@@ -2165,13 +2180,13 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
     "questions.yaml L5 option mentions Codex P2"
   );
 
-  const qMd058 = fs.readFileSync(path.join(skillRoot, "questions.md"), "utf8");
+  const qMd058 = readDoc("questions.md");
   assert(
     /部分（P2）/.test(qMd058) && /adapters\/codex/.test(qMd058),
     "questions.md Codex P2 + adapter link"
   );
 
-  const rpCodex = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  const rpCodex = readDoc("recommended-profile.md");
   assert(
     /部分对齐（P2）/.test(rpCodex) && /\*\*不\*\*全量发出 Codex/.test(rpCodex),
     "recommended-profile Codex P2 footnote"
@@ -2212,11 +2227,11 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/AGENT-INDEX\.md/.test(skill059), "SKILL points AGENT-INDEX");
   assert(/fill\/README\.md/.test(skill059), "SKILL fill rows point at fill index");
   assert(/land\.mjs/.test(skill059), "SKILL prefers land.mjs");
-  const fillMd059 = fs.readFileSync(path.join(skillRoot, "fill.md"), "utf8");
+  const fillMd059 = readDoc("fill.md");
   assert(/fill-inventory\.mjs --domain/.test(fillMd059), "fill.md documents unified inventory");
-  const wp059 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+  const wp059 = readDoc("write-plan.md");
   assert(/land\.mjs/.test(wp059), "write-plan prefers land.mjs");
-  const conflict059 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  const conflict059 = readDoc("conflict-policy.md");
   assert(/land\.mjs/.test(conflict059), "conflict-policy names land.mjs");
   const qs059 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
   assert(/land\.mjs/.test(qs059), "QUICKSTART names land.mjs");
@@ -2426,7 +2441,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
     "Q_AI_TOOL recommended_fallback is [] not [cursor]"
   );
 
-  const rp0510 = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  const rp0510 = readDoc("recommended-profile.md");
   assert(/部分对齐·不默认|不默认/.test(rp0510) && /codex/i.test(rp0510), "recommended-profile Codex 不默认");
   assert(
     /皆无则\s*`?\[\]`?|皆无则 \[\]/.test(rp0510) || /皆无[\s\S]{0,40}`\[\]`/.test(rp0510),
@@ -2434,7 +2449,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   );
   assert(!/皆无则 `\[cursor\]`/.test(rp0510), "recommended-profile no 皆无则 [cursor]");
 
-  const det0510 = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  const det0510 = readDoc("detect.md");
   assert(
     /ai_tools:\s*`?\[\]`?/.test(det0510) && /不.*默认/.test(det0510),
     "detect.md 无信号 ai_tools [] / 不默认 Cursor"
@@ -2442,11 +2457,11 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(!/无信号时推荐包默认 `ai_tools: \[cursor\]`/.test(det0510), "detect.md no cursor-only default");
   assert(/不默认/.test(det0510) && /codex/i.test(det0510), "detect.md Codex 不默认");
 
-  const aiTools0510 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  const aiTools0510 = readDoc("ai-tools.md");
   assert(/部分对齐·不默认|不默认/.test(aiTools0510), "ai-tools.md Codex 部分对齐·不默认");
   assert(!/若无探测则默认 Cursor/.test(aiTools0510), "ai-tools.md 全部推荐 no Cursor default");
 
-  const qMd0510 = fs.readFileSync(path.join(skillRoot, "questions.md"), "utf8");
+  const qMd0510 = readDoc("questions.md");
   assert(/不默认/.test(qMd0510) && /codex/i.test(qMd0510), "questions.md Codex 不默认");
 
   const handbook0510 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
@@ -2455,14 +2470,14 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(!/全部推荐」默认偏向 Cursor/.test(handbookHtml0510), "handbook.html no Cursor-default 全部推荐");
   assert(/不默认/.test(handbook0510) && /Codex|codex/.test(handbook0510), "handbook.md Codex 不默认");
 
-  const wp0510 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+  const wp0510 = readDoc("write-plan.md");
   assert(/不默认/.test(wp0510) && /codex/i.test(wp0510), "write-plan Codex 不默认");
 
   const gloss0510 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/skill_version/.test(gloss0510) && /report_schema/.test(gloss0510), "glossary skill_version + report_schema");
   assert(/报告壳版本 ≠ skill|报告壳.*≠.*skill/.test(gloss0510), "glossary 报告壳 ≠ skill");
 
-  const fillScore0510 = fs.readFileSync(path.join(skillRoot, "fill-score.md"), "utf8");
+  const fillScore0510 = readDoc("fill-score.md");
   assert(
     /skill_version/.test(fillScore0510) && /report_schema|ui\.version/.test(fillScore0510),
     "fill-score pairs skill_version with report schema"
@@ -2669,10 +2684,10 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(landHelp060.status === 0 && /--root/.test(landHelp060.stdout), "land.mjs alias --help");
 
   const skill060 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
-  const wp060 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
-  const conflict060 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  const wp060 = readDoc("write-plan.md");
+  const conflict060 = readDoc("conflict-policy.md");
   const qs060 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
-  const pipeline060 = fs.readFileSync(path.join(skillRoot, "pipeline.md"), "utf8");
+  const pipeline060 = readDoc("pipeline.md");
   for (const [label, text] of [
     ["SKILL.md", skill060],
     ["AGENT-INDEX.md", agentIndex060],
@@ -2691,7 +2706,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/harness\.mjs/.test(renderHelp.stdout), "render --help points to harness.mjs");
 
   const codex060 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
-  const aiTools060 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  const aiTools060 = readDoc("ai-tools.md");
   assert(/冻结/.test(codex060) && /P2/.test(codex060) && /另立项/.test(codex060), "adapters/codex.md G6 freeze");
   assert(/冻结/.test(aiTools060) && /P2/.test(aiTools060) && /另立项/.test(aiTools060), "ai-tools.md G6 freeze");
 
@@ -2797,6 +2812,115 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   } finally {
     fs.rmSync(tmpSkel, { recursive: true, force: true });
   }
+}
+
+// --- 0.6.0-dev M2: document topology (modes / fill / host) ---
+{
+  const rootMds = fs
+    .readdirSync(skillRoot)
+    .filter((f) => f.endsWith(".md") && fs.statSync(path.join(skillRoot, f)).isFile());
+  assert(rootMds.length <= ROOT_MD_MAX, `root harness-eng/*.md count ${rootMds.length} ≤ ${ROOT_MD_MAX}`);
+  assert(rootMds.length <= 15, `root harness-eng/*.md ideally ≤15 (got ${rootMds.length})`);
+
+  for (const keep of ROOT_KEEP) {
+    assert(rootMds.includes(keep), `root keeps ${keep}`);
+  }
+  for (const stub of ROOT_STUBS) {
+    assert(rootMds.includes(stub), `root stub ${stub} exists`);
+  }
+  const unexpected = rootMds.filter((f) => !ROOT_KEEP.includes(f) && !ROOT_STUBS.includes(f));
+  assert(unexpected.length === 0, `no unexpected root md (${unexpected.join(", ") || "none"})`);
+
+  for (const [from, to] of Object.entries(DOC_MOVES)) {
+    assert(fs.existsSync(path.join(skillRoot, to)), `canonical ${to}`);
+    assert(readDoc(from).length > 200, `readDoc(${from}) hits canonical`);
+    const body = fs.readFileSync(path.join(skillRoot, to), "utf8");
+    assert(body.length > 200 && !/^# .+\n\n正文已迁到/.test(body), `${to} is not a stub`);
+  }
+
+  for (const stub of ROOT_STUBS) {
+    const text = fs.readFileSync(path.join(skillRoot, stub), "utf8");
+    const lines = text.trim().split(/\n/).length;
+    assert(lines <= 12, `stub ${stub} is thin (≤12 lines, got ${lines})`);
+    if (stub === "fill-truths-auto.md") {
+      assert(/archive\/fill-truths-auto/.test(text), "fill-truths-auto stub → archive");
+    } else {
+      const dest = DOC_MOVES[stub];
+      assert(dest && text.includes(dest), `stub ${stub} points to ${dest}`);
+      assert(/已搬家|迁到/.test(text), `stub ${stub} says 已搬家`);
+    }
+  }
+
+  assert(fs.existsSync(path.join(skillRoot, "modes/README.md")), "modes/README.md");
+  assert(fs.existsSync(path.join(skillRoot, "host/README.md")), "host/README.md");
+  assert(fs.existsSync(path.join(skillRoot, "fill/README.md")), "fill/README.md");
+
+  const agentIndexM2 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  const mustReadBlock = agentIndexM2.split("## 按需")[0];
+  const mustReadRows = (mustReadBlock.match(/^\|/gm) || []).length - 2; // drop header + sep
+  assert(mustReadRows > 0 && mustReadRows <= 8, `AGENT-INDEX 必读 rows ${mustReadRows} ≤8`);
+  assert(/modes\/write-plan\.md/.test(agentIndexM2), "AGENT-INDEX points modes/write-plan.md");
+  assert(/fill\/README\.md/.test(agentIndexM2), "AGENT-INDEX points fill/README");
+  assert(/host\/ai-tools\.md/.test(agentIndexM2), "AGENT-INDEX points host/ai-tools.md");
+  assert(/拓扑|modes\//.test(agentIndexM2), "AGENT-INDEX mentions new topology");
+
+  const skillM2 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
+  assert(/modes\/write-plan\.md/.test(skillM2), "SKILL points modes/write-plan.md");
+  assert(/fill\/fill-score\.md/.test(skillM2), "SKILL points fill/fill-score.md");
+  assert(/host\/ai-tools\.md/.test(skillM2), "SKILL points host/ai-tools.md");
+
+  const roadmapM2 = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
+  assert(/\[x\].*T2\.1/.test(roadmapM2) && /\[x\].*T2\.5/.test(roadmapM2), "ROADMAP G2 T2.1–T2.5 checked");
+
+  const changelogM2 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/G2|文档拓扑/.test(changelogM2), "CHANGELOG notes M2 / G2 文档拓扑");
+  assert(/0\.6\.0-dev/.test(changelogM2), "CHANGELOG still 0.6.0-dev");
+
+  const verifyM2 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/M2/.test(verifyM2) && /根目录/.test(verifyM2), "VERIFY has M2 section");
+
+  function collectRelTargets(text) {
+    const urls = [];
+    const reMd = /\]\(([^)\s]+)\)/g;
+    const reHref = /href="([^"]+)"/g;
+    let m;
+    while ((m = reMd.exec(text))) urls.push(m[1]);
+    while ((m = reHref.exec(text))) urls.push(m[1]);
+    return urls;
+  }
+
+  function danglingFrom(relFile) {
+    const abs = path.join(skillRoot, relFile);
+    if (!fs.existsSync(abs)) return [`missing source ${relFile}`];
+    const text = fs.readFileSync(abs, "utf8");
+    const dir = path.posix.dirname(relFile);
+    const bad = [];
+    for (const url of collectRelTargets(text)) {
+      if (!url || /^(https?:|mailto:|data:|#|\/)/i.test(url)) continue;
+      const pathname = url.split("#")[0];
+      if (!pathname) continue;
+      if (!/\.(md|html|yaml|yml|mjs)$/.test(pathname)) continue;
+      const target = path.normalize(
+        path.join(skillRoot, dir === "." ? pathname : path.join(dir, pathname))
+      );
+      if (!fs.existsSync(target)) bad.push(`${relFile} → ${url}`);
+    }
+    return bad;
+  }
+
+  const sweepFiles = [
+    "SKILL.md",
+    "AGENT-INDEX.md",
+    "QUICKSTART.md",
+    "fill/README.md",
+    "modes/README.md",
+    "host/README.md",
+    ...fs.readdirSync(path.join(skillRoot, "modes")).filter((f) => f.endsWith(".md")).map((f) => `modes/${f}`),
+    ...fs.readdirSync(path.join(skillRoot, "fill")).filter((f) => f.endsWith(".md")).map((f) => `fill/${f}`),
+    ...fs.readdirSync(path.join(skillRoot, "host")).filter((f) => f.endsWith(".md")).map((f) => `host/${f}`),
+  ];
+  const dangling = sweepFiles.flatMap(danglingFrom);
+  assert(dangling.length === 0, `no dangling relative links (${dangling.slice(0, 8).join(" ; ") || "none"})`);
 }
 
 console.log(`ok: ${ok.length}`);

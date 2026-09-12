@@ -3,7 +3,7 @@
 **前置**：
 
 1. 骨架战役 [pipeline.md](pipeline.md) 的 Done 已全部为真，且非 `fill_deferred`
-2. **填充 MCP 闸**已过（[fill-mcp.md](fill-mcp.md)）：需 db·redis 实据时，过闸后再执行下列步骤 4+；未过则停留骨架
+2. **填充 MCP 闸**已过（[fill-mcp.md](../fill/fill-mcp.md)）：需 db·redis 实据时，过闸后再执行下列步骤 4+；未过则停留骨架
 
 首轮只读骨架文件；骨架 Done 且闸过后再 Read 本文件。
 

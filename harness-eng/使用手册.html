@@ -857,7 +857,7 @@ node scripts/selfcheck.mjs</code></pre>
         <p>技能会在该路径写入指针模板。自定义工具<strong>不会</strong>自动装配宿主 hooks。</p>
 
         <h3>4.3 软门禁与 hooks / MCP 差异（L3+）</h3>
-        <p>按<strong>协议族</strong>理解（详 <a href="ai-tools.md">ai-tools.md</a>）：</p>
+        <p>按<strong>协议族</strong>理解（详 <a href="host/ai-tools.md">ai-tools.md</a>）：</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>族</th><th>工具</th><th>hooks（L3+）</th><th>MCP example（L4+）</th></tr></thead>
@@ -883,7 +883,7 @@ node scripts/selfcheck.mjs</code></pre>
               <tr><td>Claude rules 镜像</td><td>L3+ 全量 <code>.claude/rules/*.md</code></td></tr>
               <tr><td>CodeBuddy 升格</td><td><code>workbuddy</code> hooks 家族 + 根 MCP example</td></tr>
               <tr><td>适配卡</td><td><a href="templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td></tr>
-              <tr><td>L5 生成引擎</td><td><a href="sync-hosts.md">sync-hosts.md</a> + <code>sync.mjs</code></td></tr>
+              <tr><td>L5 生成引擎</td><td><a href="host/sync-hosts.md">sync-hosts.md</a> + <code>sync.mjs</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -899,7 +899,7 @@ node scripts/selfcheck.mjs</code></pre>
             </tbody>
           </table>
         </div>
-        <p><code>1x-contract-sync</code> 只给拿不到全量 <code>*-sync*</code> 镜像的宿主（尤其 Codex、自定义入口、L0–L2）。L3+ / L5 全量镜像宿主不再强制冗余 1x。权威始终是根 <code>AGENTS.md</code> + <code>docs/**</code>，外加<strong>本宿主</strong> rules 目录；<code>.cursor/rules/11|12|13|16</code> 只是 Cursor 示例。详 <a href="ai-tools.md">ai-tools.md</a>。</p>
+        <p><code>1x-contract-sync</code> 只给拿不到全量 <code>*-sync*</code> 镜像的宿主（尤其 Codex、自定义入口、L0–L2）。L3+ / L5 全量镜像宿主不再强制冗余 1x。权威始终是根 <code>AGENTS.md</code> + <code>docs/**</code>，外加<strong>本宿主</strong> rules 目录；<code>.cursor/rules/11|12|13|16</code> 只是 Cursor 示例。详 <a href="host/ai-tools.md">ai-tools.md</a>。</p>
         <p>选 <strong>Codex + L5</strong> 时：<code>sync.mjs</code> <strong>不会</strong>全量发出 Codex 的 rules / hooks / MCP / skills（<strong>部分对齐 P2 · 不默认</strong>）。详见 <a href="templates/ai-tools/adapters/codex.md">adapters/codex.md</a>。</p>
       </section>
 
@@ -1047,7 +1047,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
             </tbody>
           </table>
         </div>
-        <p>开干 YES 时需同时：骨架就绪、覆盖就绪（以 <code>score-policy.yaml</code> 为准）、语义就绪、fill-plan 全关，以及 <code>gate_profile</code> 下的 gate 项。具体阈值见 <a href="fill-gate.md">fill-gate.md</a> 与当次 score JSON 的 blockers，<strong>勿背手册硬编码数字</strong>。</p>
+        <p>开干 YES 时需同时：骨架就绪、覆盖就绪（以 <code>score-policy.yaml</code> 为准）、语义就绪、fill-plan 全关，以及 <code>gate_profile</code> 下的 gate 项。具体阈值见 <a href="fill/fill-gate.md">fill-gate.md</a> 与当次 score JSON 的 blockers，<strong>勿背手册硬编码数字</strong>。</p>
 
         <h3>诊断台 / 任务台 / 趋势台</h3>
         <div class="table-wrap">
@@ -1173,16 +1173,16 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
               <tr><td><a href="QUICKSTART.md">QUICKSTART.md</a></td><td>一页纸场景表与最短路径</td></tr>
               <tr><td><a href="SKILL.md">SKILL.md</a></td><td>Agent 施工仪式总流程</td></tr>
               <tr><td><a href="glossary.md">glossary.md</a></td><td>阶梯 / 模式 / 开干术语</td></tr>
-              <tr><td><a href="ai-tools.md">ai-tools.md</a></td><td>多 AI 工具面与 hooks / L5</td></tr>
-              <tr><td><a href="sync-hosts.md">sync-hosts.md</a></td><td>L5 宿主目录生成与适配卡索引</td></tr>
+              <tr><td><a href="host/ai-tools.md">ai-tools.md</a></td><td>多 AI 工具面与 hooks / L5</td></tr>
+              <tr><td><a href="host/sync-hosts.md">sync-hosts.md</a></td><td>L5 宿主目录生成与适配卡索引</td></tr>
               <tr><td><a href="templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td><td>各 AI 工具路径适配卡</td></tr>
-              <tr><td><a href="conflict-policy.md">conflict-policy.md</a></td><td>merge / MCP / L5 生成物冲突策略</td></tr>
-              <tr><td><a href="ladder.md">ladder.md</a></td><td>L0–L5 交付物与自检清单</td></tr>
+              <tr><td><a href="modes/conflict-policy.md">conflict-policy.md</a></td><td>merge / MCP / L5 生成物冲突策略</td></tr>
+              <tr><td><a href="modes/ladder.md">ladder.md</a></td><td>L0–L5 交付物与自检清单</td></tr>
               <tr><td><a href="VERIFY.md">VERIFY.md</a></td><td>版本验收记录</td></tr>
-              <tr><td><a href="write-plan.md">write-plan.md</a></td><td>确认闸门与预授权词表</td></tr>
-              <tr><td><a href="fill-score.md">fill-score.md</a> / <a href="fill-gate.md">fill-gate.md</a></td><td>双轴打分与开干闸</td></tr>
-              <tr><td><a href="pipeline.md">pipeline.md</a> / <a href="pipeline-fill.md">pipeline-fill.md</a></td><td>骨架战役与填充战役</td></tr>
-              <tr><td><a href="examples.md">examples.md</a></td><td>情景示例</td></tr>
+              <tr><td><a href="modes/write-plan.md">write-plan.md</a></td><td>确认闸门与预授权词表</td></tr>
+              <tr><td><a href="fill/fill-score.md">fill-score.md</a> / <a href="fill/fill-gate.md">fill-gate.md</a></td><td>双轴打分与开干闸</td></tr>
+              <tr><td><a href="modes/pipeline.md">pipeline.md</a> / <a href="modes/pipeline-fill.md">pipeline-fill.md</a></td><td>骨架战役与填充战役</td></tr>
+              <tr><td><a href="modes/examples.md">examples.md</a></td><td>情景示例</td></tr>
               <tr><td><a href="CHANGELOG.md">CHANGELOG.md</a></td><td>版本变更</td></tr>
             </tbody>
           </table>

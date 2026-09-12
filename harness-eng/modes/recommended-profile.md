@@ -22,7 +22,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 | `hooks_family` | L3+ 默认 `commit-gate-extended, after-edit, stop-checklist`；装配 mysql MCP 再加 `mysql-guard`（`Q_HOOKS_FAMILY`；extended 与基础 commit 门禁互斥） |
 | `seed` | 默认 **是**（安全预填） |
 | `name` / `desc` | 来自 pom / package.json（无密） |
-| `ai_tools` | 仅已探测项：`.cursor`→`cursor`；`CLAUDE.md`→`claude`；`.codex`→`codex`（**部分对齐·不默认**）；`.qoder`→`qoder`；`.trae`→`trae`；`.codebuddy`/`CODEBUDDY.md`→`workbuddy`。**Codex 不进「全部推荐」** 除非探测到 `.codex/` 或用户显式勾选。皆无则 `[]`，须追问一次 `Q_AI_TOOL`；**不**默认 `[cursor]`，不因此只写 `.cursor/` 适配/hooks。自定义不进「全部推荐」除非用户已写路径。**含 `codex` 时脚注「部分对齐（P2）·不默认」** — L5/`sync.mjs` **不**全量发出 Codex rules/hooks/MCP/skills（见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)） |
+| `ai_tools` | 仅已探测项：`.cursor`→`cursor`；`CLAUDE.md`→`claude`；`.codex`→`codex`（**部分对齐·不默认**）；`.qoder`→`qoder`；`.trae`→`trae`；`.codebuddy`/`CODEBUDDY.md`→`workbuddy`。**Codex 不进「全部推荐」** 除非探测到 `.codex/` 或用户显式勾选。皆无则 `[]`，须追问一次 `Q_AI_TOOL`；**不**默认 `[cursor]`，不因此只写 `.cursor/` 适配/hooks。自定义不进「全部推荐」除非用户已写路径。**含 `codex` 时脚注「部分对齐（P2）·不默认」** — L5/`sync.mjs` **不**全量发出 Codex rules/hooks/MCP/skills（见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md)） |
 | `mcp_tracking` | 已跟踪含密 `mcp.json`（团队共享）→ 脚注 **`vendored_shared`**；否则【推荐】**`example_only`**（L4 理想态）；提问见 `Q_MCP_TRACKING` |
 | `fill_mcp_first` | 用户走 fill / pipeline / 含 db·redis 域 → 默认 **是**（先装配 MCP 再 fill-truths） |
 | `fill_mcp_profile` | 填充实据主环境默认 **`test`**（`Q_FILL_MCP_PROFILE`）；无 test 凭证再回退 dev |

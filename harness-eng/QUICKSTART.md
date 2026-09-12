@@ -1,7 +1,8 @@
 # harness-eng 快速开始
 
 一页纸入口。详细闸门与模式见 [SKILL.md](SKILL.md)、[glossary.md](glossary.md)。  
-人读完整说明：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。
+人读完整说明：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。  
+拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主；热路径见 [AGENT-INDEX.md](AGENT-INDEX.md)。
 
 ## 一句话安装 / 更新
 
@@ -41,20 +42,20 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
 四台读法见 [使用手册.html](使用手册.html) 首页示意与第 6 章。  
-施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + mermaid）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](session-dashboard.md)。
+施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + mermaid）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](modes/session-dashboard.md)。
 
 ## 写盘闸门（必记）
 
-确认 / 预授权词表：[write-plan.md](write-plan.md)。「全部推荐」协议：[recommended-profile.md](recommended-profile.md)。最短路径：全部推荐 → 确认预授权 → 确认。
+确认 / 预授权词表：[write-plan.md](modes/write-plan.md)。「全部推荐」协议：[recommended-profile.md](modes/recommended-profile.md)。最短路径：全部推荐 → 确认预授权 → 确认。
 
-需 db·redis 实据时另过 **填充 MCP 闸**（[fill-mcp.md](fill-mcp.md)）：仓库 profile 自动发现 → `{engine}-{profile}` 矩阵 +（烟测 ∨ calibrate-live）；**过闸后再** inventory / agents；未过则停留骨架。
+需 db·redis 实据时另过 **填充 MCP 闸**（[fill-mcp.md](fill/fill-mcp.md)）：仓库 profile 自动发现 → `{engine}-{profile}` 矩阵 +（烟测 ∨ calibrate-live）；**过闸后再** inventory / agents；未过则停留骨架。
 
 ## 推荐最短路径（大仓）
 
 ```text
 1. 点名 harness-eng → 流水线（目标 L4 · fill_engine=agents · gold）
 2. 全部推荐 → 确认预授权 → 确认
-3. 骨架战役（audit→L4→fill-mcp 矩阵）过闸后 → 填充战役见 pipeline-fill.md
+3. 骨架战役（audit→L4→fill-mcp 矩阵）过闸后 → 填充战役见 modes/pipeline-fill.md
 4. acceptance-check → fill-merge.mjs --domain <id>（过闸）→ 打开 docs/harness-eng/report-latest.html
 5. 看决策台 **建议可以开干**（ai_coding_ready）；顺带看 gold_ratio；heuristic 只留 `.fill-work`
 6. Plan 未关或金标低 → 继续 agents；早停看 Plan 关闭 + `ai_coding_ready` / `gold_ratio`
@@ -77,7 +78,7 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 node scripts/selfcheck.mjs
 ```
 
-多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分对齐·不默认（P2）**（未探测不进「全部推荐」）。详 [ai-tools.md](ai-tools.md)。
+多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分对齐·不默认（P2）**（未探测不进「全部推荐」）。详 [ai-tools.md](host/ai-tools.md)。
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
 0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  

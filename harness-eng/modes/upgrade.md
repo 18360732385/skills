@@ -55,8 +55,8 @@
 
 1. **meta**：`skill_version` → `0.6.0-dev`（正式 `0.6.0` 在 M4 去 `-dev`；resume / upgrade 写 meta 时对齐 manifest）
 2. **写盘入口**：Agent 优先 `scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 为薄别名。勿把 `render.mjs` 当主路径
-3. **CLI 改名 / 文档搬家**：M1 只改入口指针；`modes/` · `fill/` · `host/` 拓扑调整在 **M2**（旧路径届时留 stub）
-4. **Codex**：0.6.x **冻结 P2**，全量对等另立项（见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)）
+3. **文档搬家（M2）**：规格在 `modes/` · `fill/` · `host/`；热路径旧根路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline`）
+4. **Codex**：0.6.x **冻结 P2**，全量对等另立项（见 [ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)）
 5. **pipeline**：骨架战役用 `--mode pipeline-skeleton`（不跑 fill-*）
 
 ## 0.5.9 → 0.5.10 迁移要点
@@ -72,7 +72,7 @@
 1. **meta**：`skill_version` → `0.5.9`（resume / upgrade 写 meta 时对齐 manifest）
 2. **写盘入口**：Agent 优先 `scripts/land.mjs`；L5/`agent_config` **拒绝**直渲 `.cursor/rules` 等生成宿主路径，改走 `sync.mjs`
 3. **填充 CLI**：inventory / merge 优先 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（域脚本是别名）
-4. **热路径**：先读 [AGENT-INDEX.md](AGENT-INDEX.md) 与 [fill/README.md](fill/README.md)
+4. **热路径**：先读 [AGENT-INDEX.md](../AGENT-INDEX.md) 与 [fill/README.md](../fill/README.md)
 
 ## 0.5.7 → 0.5.8 迁移要点
 

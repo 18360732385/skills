@@ -7,9 +7,10 @@
 **0.6.0 计划**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
-**使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
+**使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
+**拓扑**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主
 
-0.6.0-dev（M1）：公开写盘入口 `harness.mjs`（`land.mjs` 薄别名）；Codex **0.6.x 冻结 P2**。0.5.10：Codex 不默认；皆无探测不默认 Cursor。更早见 [CHANGELOG.md](CHANGELOG.md)。
+0.6.0-dev（M2）：文档进 `modes/` / `fill/` / `host/`，根 md ≤20。M1：公开写盘入口 `harness.mjs`（`land.mjs` 薄别名）；Codex **0.6.x 冻结 P2**。0.5.10：Codex 不默认；皆无探测不默认 Cursor。更早见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
@@ -43,7 +44,7 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 | 续跑 | `resume` | 半成品差分补齐；`on_exists=skip` |
 | 流水线 | `pipeline` | 骨架战役 → 填充战役（过 **填充 MCP 闸**） |
 | 审计 | `audit` | 只读对照阶梯缺口 |
-| 升阶 | `upgrade` | 默认 +1；书面可到指定阶（[upgrade.md](upgrade.md)） |
+| 升阶 | `upgrade` | 默认 +1；书面可到指定阶（[upgrade.md](modes/upgrade.md)） |
 | 补空壳真相 | `seed-truths` | 索引行 + `01-*.md` 空壳 |
 | 完整度打分 | `fill-score` | `scripts/fill-score.mjs` + score-policy 裁决（双轴） |
 | 形态诊断 | `fill-morph` | 同上 `--focus morph`；看诊断台 |
@@ -51,17 +52,17 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 | 填充计划 | `fill-plan` | 批次 / 金标 |
 | 多 Agent 精填 | `fill-truths-agents` | 按 Plan 精填【推荐】 |
 | 自动填充 | `fill-truths-auto` | 仅脚本、对话不推荐（[archive](archive/fill-truths-auto/INDEX.md)） |
-| 契约填充 | `fill-truths` | 见 fill.md |
+| 契约填充 | `fill-truths` | 见 [fill/fill.md](fill/fill.md) |
 | MCP 装配 | `fill-mcp` | 本仓配置 → 多环境 mcp 矩阵 |
 | live 校准 | `fill-calibrate-live` | MCP 不可用时直连 |
 | HTML 报告 | `fill-report-html` | score → Dashboard（`skill_version` + `report_schema`；报告壳 ≠ skill） |
 
-不确定选项时回复：**全部推荐**（协议 [recommended-profile.md](recommended-profile.md)；写盘仍过 [write-plan.md](write-plan.md)）。
+不确定选项时回复：**全部推荐**（协议 [recommended-profile.md](modes/recommended-profile.md)；写盘仍过 [write-plan.md](modes/write-plan.md)）。
 
 ## 纪律
 
-- 写盘前过 [write-plan.md](write-plan.md) 闸门（或已预授权）
-- 需 db·redis 时过 [fill-mcp.md](fill-mcp.md) **填充 MCP 闸**（过闸后再填充；未过停留骨架）
+- 写盘前过 [write-plan.md](modes/write-plan.md) 闸门（或已预授权）
+- 需 db·redis 时过 [fill-mcp.md](fill/fill-mcp.md) **填充 MCP 闸**（过闸后再填充；未过停留骨架）
 - 模板只含去域化骨架；业务 `Pn` / 域 Never do / MCP 真密来自本仓经确认抽取
 - 多工作区必须确认目标根
 - 对用户优先中文；术语见 [glossary.md](glossary.md)

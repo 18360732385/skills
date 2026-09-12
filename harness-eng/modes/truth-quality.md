@@ -2,7 +2,7 @@
 
 填充与 promote 的验收规格。对照优秀仓契约写法；可 AI coding **仅**绑 `ai_coding_ready`（不是 coverage）。
 
-详见执行：[fill-truths-agents.md](fill-truths-agents.md) · [fill-workers.md](fill-workers.md) · [scripts/acceptance-check.mjs](scripts/acceptance-check.mjs)。
+详见执行：[fill-truths-agents.md](../fill/fill-truths-agents.md) · [fill-workers.md](../fill/fill-workers.md) · [scripts/acceptance-check.mjs](../scripts/acceptance-check.mjs)。
 
 ## 深 Depth
 
@@ -71,4 +71,4 @@ inventory → docs/<domain>/.fill-work/   # draft（agents | heuristic）
 **api 逻辑**：编号步骤，含分支/约束/落库/错误码之一。  
 **出入参**：展开业务字段；表须含 **示例值** 列（无证据写 `未知`/`—`，**禁止空单元格**）。  
 **出参**：展开业务字段或标明 stream/void。  
-完整卡见 [fill-workers.md](fill-workers.md)。
+完整卡见 [fill-workers.md](../fill/fill-workers.md)。

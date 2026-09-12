@@ -10,7 +10,7 @@
 
 主 Agent 编排 + 多会话 worker 对照**目标仓 templates 完整档**写真相。  
 **0.2.17+ 默认填充路径**；`fill-truths-auto` 为 legacy。  
-**0.2.18+**：须过 [truth-quality.md](truth-quality.md) / `acceptance-check` 才可 promote SSOT。  
+**0.2.18+**：须过 [truth-quality.md](../modes/truth-quality.md) / `acceptance-check` 才可 promote SSOT。  
 须配合 [fill-plan.md](fill-plan.md) 批次关闭；执行契约见 [fill-workers.md](fill-workers.md)。
 
 ## 触发
@@ -69,7 +69,7 @@ inventory（脚本；jobs=fill-inventory-jobs）
 
 ## 域 checklist（worker 必达 · 深真全）
 
-完整反例与答案卡：[truth-quality.md](truth-quality.md) · [fill-workers.md](fill-workers.md)。
+完整反例与答案卡：[truth-quality.md](../modes/truth-quality.md) · [fill-workers.md](fill-workers.md)。
 
 ### api
 
@@ -84,7 +84,7 @@ inventory（脚本；jobs=fill-inventory-jobs）
 
 ### func / db / redis
 
-同 [truth-quality.md](truth-quality.md) 表格；db 须完整 DDL；redis 须 TTL+读写方。
+同 [truth-quality.md](../modes/truth-quality.md) 表格；db 须完整 DDL；redis 须 TTL+读写方。
 
 ## 纪律
 
