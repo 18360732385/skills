@@ -68,6 +68,8 @@
 
 0.5.8–0.5.10 已把 Codex 定为 **部分对齐（P2）·不默认**：未探测 `.codex/` 不进「全部推荐」；L5 `sync.mjs` **不全量**发出 Codex 的 rules / hooks / MCP / skills。0.6.x **不再扩** Codex 对齐面（不补全家桶事件、不镜像全量 `.mdc`、不做 sync 对等）。若产品要「与 Cursor/Claude 同构」，单独立项，不占用本列车 M1–M4。交叉：[adapters/codex.md](templates/ai-tools/adapters/codex.md) · [ai-tools.md](host/ai-tools.md)。
 
+**Trae 中高→高不在 G6。** Codex 冻结与 Trae 同级是两条线；后者跟踪 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)，不占用本列车。
+
 - [x] **T6.1** 本文件 + `adapters/codex.md` + `ai-tools.md` 各留冻结段（M1；M4 复核无新 Codex 能力）
 - [x] **T6.2** 全量对等：**不做**（另立项）
 
@@ -89,9 +91,16 @@
 ## 非目标（本列车不做）
 
 - Codex **全量** sync / 全家桶对等（见 G6，另立项）
+- Trae **中高→高** / 原生执行实证（旁路，见下方「后续」）
 - 使用手册全文重写（只改版本钉与入口指针）
 - 新契约域 / 新 host
 - 重做打分模型（`score-policy` / `ai_coding_ready` 语义保持 0.5.x）
+
+## 后续（非 0.6.0 列车）
+
+**0.6.0 列车已收口**，本段不重开 M1–M4，也不改本列车主题。
+
+**Trae 中高 → 高**（旁路立项）：脚手架已共享 SSOT + Claude 族 hooks；缺口是原生执行与实证宿主行为，不是「还没写适配」。跟踪清单：[host/TRAE-PARITY.md](host/TRAE-PARITY.md)。建议单开 **0.6.1 Trae parity** 或完全旁路立项——**不塞进已收口的 0.6.0**。G6 仍只管 Codex P2 冻结，与本条无关。
 
 ## Agent 用法（M1 起）
 
