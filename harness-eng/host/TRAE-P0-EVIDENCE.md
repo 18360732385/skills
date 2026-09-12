@@ -1,6 +1,6 @@
 # Trae P0 官方实证（2026-09-12）
 
-对照日：**2026-09-12**。本页只钉**官方文档事实**与 harness 差集；**不**把矩阵 Trae 从中高改成高（T-P1-5 仍等真人 Trae 会话确认 hooks / MCP）。
+对照日：**2026-09-12**。上半页钉**官方文档事实**与 harness 差集；下半页钉同日 **Trae CN 实机回传**（消费仓 L5）。**不**把矩阵 Trae 从中高改成高（T-P1-5 仍等 hooks matcher 新会话 + MCP 面板余项）。
 
 交叉：[TRAE-PARITY.md](TRAE-PARITY.md) · [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md) · [adapters/trae.md](../templates/ai-tools/adapters/trae.md)。
 
@@ -17,12 +17,35 @@
 
 | ID | 状态 | 官方事实 | Harness 现状 | 剩余 |
 |---|---|---|---|---|
-| **T-P0-1** | **docs PASS** | Trae 把 `.trae/rules/*.md`（含子目录，最多 3 层）当项目规则；YAML frontmatter 原生 `alwaysApply` / `globs` / `description`。UI 激活方式会改 `alwaysApply`，并按模式要求配 `description` 或 `globs`（如 Apply to Specific Files → `globs`） | **本 spike 已修**：镜像到 Trae **不再剥 FM**（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）。此前 gap：镜像把 FM 降级成正文「适用路径」提示，官方作用域语义被丢掉 | 真人会话确认：alwaysApply 规则注入、globs 命中「Apply to Specific Files」、嵌套目录生效。清单见 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md) |
-| **T-P0-2** | **partial** | 文档强调 Settings → Add MCP servers；项目 MCP 路径 harness 写 **`.trae/mcp.json`**（另有 `.example`） | 路径已落盘（L4+ / L5 sync）；**磁盘产物 ≠ 已启用** | **等人**在 Trae 面板确认：打开项目 MCP 后 `.trae/mcp.json` 是否生效、未开时的失败形态、与 Cursor `.cursor/mcp.json` 的操作差 |
-| **T-P0-3** | **docs PASS structure** | 项目 hooks 路径 **`.trae/hooks.json`** 正确；事件族含 PreToolUse / PostToolUse / Stop（及 SessionStart / UserPromptSubmit / Notification）。`matcher` 匹配 **Trae `tool_name`** | 结构已对：`version` + Claude 系嵌套 `hooks` + `claude-adapter.js`。**风险**：`HOOK_DEFS` 仍用 Claude 族 matcher（`Bash` / `Edit\|Write\|MultiEdit` / `mcp__mysql`），Trae 终端工具名是 **`RunCommand`**，可能匹配不上 | 事件/工具映射草案见下；**等人**用 Trae 会话验证 `RunCommand` 是否触发门禁。**不**在本 spike 改 `HOOK_DEFS` matcher（等 T-P1-2 / 人确认） |
-| **T-P0-4** | **docs PASS** | `.trae/skills/` 是项目 skills **一等公民**；按需加载；可选 `.agents/skills/` | 适配卡已去掉「若宿主支持」；生成路径仍为 `.trae/skills/` | 发现/点名行为与 Cursor `.cursor/skills/` 的差集可在真人会话补一句；不挡 docs PASS |
+| **T-P0-1** | **docs PASS**（消费仓磁盘须刷新） | Trae 把 `.trae/rules/*.md`（含子目录，最多 3 层）当项目规则；YAML frontmatter 原生 `alwaysApply` / `globs` / `description`。UI 激活方式会改 `alwaysApply`，并按模式要求配 `description` 或 `globs`（如 Apply to Specific Files → `globs`） | **技能仓已修**：镜像到 Trae **不再剥 FM**（`render.mjs` / L5 tmpl `toHostMd(rule, host)`；Claude/Qoder 仍 strip）。**消费仓实例化** `scripts/agent-config/sync.mjs` 不会随 skill 升级自动更新 | **实机回传**：消费仓磁盘 FAIL（旧 strip）。刷新配方见 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)；UI「Apply to Specific Files」仍须磁盘有 FM + 人看面板 |
+| **T-P0-2** | **partial↑**（IDE 已消费文件） | 文档强调 Settings → Add MCP servers；项目 MCP 路径 harness 写 **`.trae/mcp.json`**（另有 `.example`） | 路径已落盘（L4+ / L5 sync）；**磁盘产物 ≠ 已启用**（关开关对照未做） | **实机回传**：Trae 已挂上部分 server。余项：Settings 面板缺服报错 + disable-switch |
+| **T-P0-3** | **docs PASS structure**（会话 inconclusive） | 项目 hooks 路径 **`.trae/hooks.json`** 正确；事件族含 PreToolUse / PostToolUse / Stop（及 SessionStart / UserPromptSubmit / Notification）。`matcher` 匹配 **Trae `tool_name`** | 结构已对：`version` + Claude 系嵌套 `hooks` + `claude-adapter.js`。**风险**：`HOOK_DEFS` 仍用 Claude 族 matcher（`Bash` / `Edit\|Write\|MultiEdit` / `mcp__mysql`），Trae 终端工具名是 **`RunCommand`**，可能匹配不上 | **实机回传**：本会话未见 systemMessage。**待新 Trae 会话**再测 Bash → RunCommand。**不**改 `HOOK_DEFS` matcher |
+| **T-P0-4** | **PASS**（docs + 会话） | `.trae/skills/` 是项目 skills **一等公民**；按需加载；可选 `.agents/skills/` | 适配卡已去掉「若宿主支持」；生成路径仍为 `.trae/skills/` | **实机回传**：`harness-eng` 可见可点名；`release-eng` 因 `disable-model-invocation: true` 隐藏 |
 
-未过项**不**改矩阵、不宣称同级。T-P1-5（中高→高）明确等待 hooks/MCP 真人确认。
+未过项**不**改矩阵、不宣称同级。T-P1-5（中高→高）明确等待 hooks 新会话 + MCP 面板余项。
+
+## 实机回传 2026-09-12 Trae CN
+
+消费仓 L5、用户按 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md) 在 **Trae CN** 跑 P0。下表只记本会话观测，**不发明**表外结论。
+
+| ID | 本会话 | 观测 | 剩余 |
+|---|---|---|---|
+| **T-P0-1** | **磁盘 FAIL** | 消费仓 `.trae/rules/*.md` **无 YAML frontmatter**；`适用路径` / `始终应用` 是正文引用块。技能 tmpl 已修（`templates/agent-config/sync.mjs.tmpl` 的 `toHostMd(rule, host)` 对 trae 保留 FM），但消费仓**实例化**的 `scripts/agent-config/sync.mjs` 仍是旧版无条件 strip → 约 17:53 用旧生成器写出产物。模型侧：路径作用域规则在会话里被**全量注入**（与「无 FM → always-on」一致）。UI「Apply to Specific Files」未验（要磁盘有 FM + 人看面板） | **docs PASS**；按 MANUAL 刷新消费仓 `sync.mjs` 后再验 FM / 面板 |
+| **T-P0-2** | **partial↑**（IDE 已吃文件） | 磁盘 `.trae/mcp.json` ✓。Trae **已消费**：会话挂上 `mcp_gitlab`、`mcp_chrome-devtools`、`mcp_Apifox_Dao_Ru`（中文名被压成 Dao_Ru）。缺 7 台（mysql×4、redis×3、sonarqube）— 多半启动失败，须看 Settings MCP 面板报错。关掉开关对照未做（UI） | Settings 面板错误 + disable-switch 对照 |
+| **T-P0-3** | **inconclusive** | 结构 OK。探测（stage `.claude` 生成物 + `git commit --dry-run`）：matcher `Bash` 与会话中途临时改 `RunCommand` 均**未见** systemMessage。中途改 `hooks.json` 可能不热加载 | **新 Trae 会话**再测 Bash → RunCommand（配方留在 MANUAL） |
+| **T-P0-4** | **PASS** | `harness-eng` 从 `.trae/skills/` 可见、可点名。`release-eng` 因 `disable-model-invocation: true` 隐藏 — 证明 Trae 认 SKILL.md FM / 按需 | 无挡矩阵项 |
+
+### T-P0-1 消费仓漂移根因
+
+技能仓 tmpl 已按宿主保留 Trae FM，**不会**在消费仓升级 skill 时自动覆盖已落地的 `scripts/agent-config/sync.mjs`。
+
+```text
+skill tmpl（已修）                         消费仓实例化 sync.mjs（仍旧）           磁盘产物
+toHostMd(rule, host)                    无条件 strip FM                     正文「适用路径」blockquote
+host === "trae" → 保留 rule.raw 的 FM    （旧生成器，约 17:53）                 无 YAML frontmatter
+```
+
+要让 `.trae/rules` 带上 FM：升级 skill → 再 land/render L5 从 tmpl **刷新** `scripts/agent-config/sync.mjs` → `node scripts/agent-config/sync.mjs` → **重开** Trae 会话。步骤见 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)。
 
 ## T-P0-3 事件 / 工具名映射草案
 
@@ -36,12 +59,13 @@
 | 结束检查 | `stop` | `Stop` | `Stop`（事件名一致） | 结构很可能通；仍须人点一次 |
 | 会话/提示（官方有、harness 未用） | — | 未生成 | `SessionStart` / `UserPromptSubmit` / `Notification` | 非 P0 扩面 |
 
-**人验最低条**（见 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)）：在 Trae 里跑一条会走终端的操作，看 `.trae/hooks.json` 里 `PreToolUse`+`Bash` 是否触发；若不触发，改试 `RunCommand` 再记一笔。
+**人验最低条**（见 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)）：**新 Trae 会话**里跑终端操作（配方：stage `.claude` 生成物 + `git commit --dry-run`），看 `PreToolUse`+`Bash` 是否触发；若不触发，改 `RunCommand` 后再开**新会话**测。中途改 `hooks.json` 可能不热加载。
 
 ## 本 spike 已改的 harness 行为
 
 - **T-P0-1 hotfix**：`transformMdcToHostMd` / L5 `toHostMd` **按宿主分支**——仅 Trae 保留 FM；Claude / Qoder 仍 strip。
-- selfcheck：L4 镜像与 L5 sync 的 Trae 规则必须仍含 `alwaysApply` / `globs`。
+- **消费仓**：升级 skill 后须从 tmpl **刷新**实例化 `sync.mjs`（见 MANUAL 第 0 节）。
+- selfcheck：L4 镜像与 L5 sync 的 Trae 规则必须仍含 `alwaysApply` / `globs`；tmpl `toHostMd(rule, host)` + `host === "trae"` 保留分支。
 - fixture：`scripts/fixtures/mature-trae/`（根 AGENTS + 带 FM 的 `.trae/rules` + api/kb，无 `.cursor/rules`）判 MATURE。
 
 ## 明确不在本页范围
