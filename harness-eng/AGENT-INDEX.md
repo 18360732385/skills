@@ -28,6 +28,7 @@
 | 契约填充 / workers | [fill/fill.md](fill/fill.md) · [fill/fill-truths-agents.md](fill/fill-truths-agents.md) · [fill/fill-workers.md](fill/fill-workers.md) |
 | MCP / live 校准 | [fill/fill-mcp.md](fill/fill-mcp.md) · `scripts/fill-calibrate-live.mjs --help` |
 | AI 工具面 / 多宿主 | [host/ai-tools.md](host/ai-tools.md) · [host/sync-hosts.md](host/sync-hosts.md) |
+| Trae 中高→高（旁路，非 0.6.0） | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) |
 | 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` |
 | 会话仪表盘 | [modes/session-dashboard.md](modes/session-dashboard.md) |
 | 版本 / 模板清单 | [CHANGELOG.md](CHANGELOG.md) · [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) |
