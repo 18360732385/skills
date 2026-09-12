@@ -236,8 +236,13 @@ function stripFrontmatter(src) {
   return { fm: src.slice(0, close) + "\n", body: after };
 }
 
-/** Cursor .mdc → qoder/trae 宿主 .md：strip frontmatter，globs/alwaysApply 降级为正文提示。 */
-function transformMdcToHostMd(raw) {
+/**
+ * Cursor .mdc → 宿主 .md。
+ * - qoder/claude：strip frontmatter，globs/alwaysApply 降级为正文提示。
+ * - trae：保留 YAML frontmatter（官方原生 alwaysApply / globs / description）。
+ */
+function transformMdcToHostMd(raw, { preserveFrontmatter = false } = {}) {
+  if (preserveFrontmatter) return raw;
   const m = String(raw || "").match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!m) return raw;
   const fm = {};
@@ -658,7 +663,7 @@ function expandFromManifest(manifestPath, params, root) {
 
 /**
  * 将已展开的 .cursor/rules/*.mdc 镜像到 qoder/trae/workbuddy。
- * qoder/trae → .md（strip FM）；workbuddy → rules/<name>/RULE.mdc。
+ * qoder/claude → .md（strip FM）；trae → .md（保留 FM）；workbuddy → rules/<name>/RULE.mdc。
  */
 function expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root) {
   if (agentConfig) return [];
@@ -915,7 +920,10 @@ function applyOne(root, item, placeholders, dryRun, log) {
   if (!fs.existsSync(tmplPath)) throw new Error(`Template not found: ${tmplPath}`);
   let rendered = renderPlaceholders(fs.readFileSync(tmplPath, "utf8"), ph);
   if (item.contentTransform === "mdc-to-host-md") {
-    rendered = transformMdcToHostMd(rendered);
+    const rel = String(targetRel || "").replace(/\\/g, "/");
+    rendered = transformMdcToHostMd(rendered, {
+      preserveFrontmatter: rel.startsWith(".trae/rules/"),
+    });
   }
   const unresolvedPlaceholders = findUnresolvedPlaceholders(rendered);
 

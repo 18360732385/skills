@@ -106,4 +106,5 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 | 模板清单 / 版本 | [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) · [CHANGELOG.md](CHANGELOG.md) |
 | 写盘入口 | **`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；`land.mjs` 薄别名；L5 拒直渲生成宿主路径） |
 | 渲染脚本（内部；非 L5 委托） | `scripts/render.mjs`（`--help` 指向 harness；勿当 Agent 主路径） |
-| 0.6.0 计划 | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
+| 0.6.0 计划（已收口） | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
+| 0.6.1-dev Trae P0 | [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) · [host/TRAE-PARITY.md](host/TRAE-PARITY.md) |

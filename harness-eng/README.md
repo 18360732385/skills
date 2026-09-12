@@ -2,9 +2,9 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.6.0**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.6.1-dev**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
-**0.6.0 计划**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
+**0.6.1-dev**：Trae P0 spike（[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)）。**0.6.0 计划**（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
@@ -79,4 +79,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.0**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.1-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.6.1-dev: Trae P0 spike (evidence, FM-preserve, mature-trae); matrix Trae stays 中高.
  * 0.6.0: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures + M4 slim pack / formal pin.
  * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
  * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
@@ -150,8 +151,8 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.6\.0"(?!-)/.test(qYaml), "questions.yaml version 0.6.0");
-assert(!/0\.6\.0-dev/.test(qYaml), "questions.yaml not 0.6.0-dev");
+assert(/version:\s*"0\.6\.1-dev"/.test(qYaml), "questions.yaml version 0.6.1-dev");
+assert(!/version:\s*"0\.6\.0"(?!-)/.test(qYaml), "questions.yaml not frozen 0.6.0");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -214,14 +215,14 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.6\.0"(?!-)/.test(manifest), "manifest 0.6.0");
-assert(!/version:\s*"0\.6\.0-dev"/.test(manifest), "manifest not 0.6.0-dev");
+assert(/version:\s*"0\.6\.1-dev"/.test(manifest), "manifest 0.6.1-dev");
+assert(!/version:\s*"0\.6\.0"(?!-)/.test(manifest), "manifest not frozen 0.6.0");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.6\.0"(?!-)/.test(metaTmpl), "harness-meta 0.6.0");
-assert(!/0\.6\.0-dev/.test(metaTmpl), "harness-meta not 0.6.0-dev");
+assert(/skill_version:\s*"0\.6\.1-dev"/.test(metaTmpl), "harness-meta 0.6.1-dev");
+assert(!/skill_version:\s*"0\.6\.0"(?!-)/.test(metaTmpl), "harness-meta not frozen 0.6.0");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -386,14 +387,14 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.6\.0）/.test(verifyMd) && /当前 \*\*0\.6\.0\*\*/.test(verifyMd), "VERIFY is 0.6.0");
+assert(/验收记录（0\.6\.1-dev）/.test(verifyMd) && /当前 \*\*0\.6\.1-dev\*\*/.test(verifyMd), "VERIFY is 0.6.1-dev");
 assert(!/当前 \*\*0\.6\.0-dev\*\*/.test(verifyMd), "VERIFY current pin not 0.6.0-dev");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.6\.0(?!-dev)/.test(readme), "README header version 0.6.0");
-assert(/当前 \*\*0\.6\.0\*\*/.test(readme) && !/当前 \*\*0\.6\.0-dev\*\*/.test(readme), "README footer version 0.6.0");
+assert(/当前版本：0\.6\.1-dev/.test(readme), "README header version 0.6.1-dev");
+assert(/当前 \*\*0\.6\.1-dev\*\*/.test(readme) && !/当前 \*\*0\.6\.0-dev\*\*/.test(readme), "README footer version 0.6.1-dev");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -404,9 +405,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.6\.0\*\*/.test(handbookMd) && !/0\.6\.0-dev/.test(handbookMd), "使用手册.md version 0.6.0");
-assert(/v0\.6\.0(?!-dev)/.test(handbookHtml) && !/v0\.6\.0-dev/.test(handbookHtml), "使用手册.html version 0.6.0");
-assert(/当前 \*\*0\.6\.0\*\*/.test(quickstartMd) && !/0\.6\.0-dev/.test(quickstartMd), "QUICKSTART version 0.6.0");
+assert(/版本：\*\*0\.6\.1-dev\*\*/.test(handbookMd), "使用手册.md version 0.6.1-dev");
+assert(/v0\.6\.1-dev/.test(handbookHtml) && !/v0\.6\.0(?!-dev)/.test(handbookHtml), "使用手册.html version 0.6.1-dev");
+assert(/当前 \*\*0\.6\.1-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.1-dev");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -651,7 +652,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.6\.0"(?!-)/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.0");
+  assert(/version:\s*"0\.6\.1-dev"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.1-dev");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1396,6 +1397,33 @@ if (fs.existsSync(fixture)) {
       fs.existsSync(path.join(tmpA, ".trae/rules/00-project-docs-overview.md")),
       "L4 mirrors cursor rules to trae .md"
     );
+    const traeL4Rule = fs.readFileSync(
+      path.join(tmpA, ".trae/rules/00-project-docs-overview.md"),
+      "utf8"
+    );
+    assert(
+      /^---\r?\n[\s\S]*?alwaysApply:\s*true[\s\S]*?\r?\n---/.test(traeL4Rule),
+      "L4 Trae mirrored rule keeps alwaysApply frontmatter"
+    );
+    const traeL4ApiPath = path.join(tmpA, ".trae/rules/12-api-doc-sync-rules.md");
+    assert(fs.existsSync(traeL4ApiPath), "L4 mirrors api-doc-sync to trae .md");
+    const traeL4Api = fs.existsSync(traeL4ApiPath)
+      ? fs.readFileSync(traeL4ApiPath, "utf8")
+      : "";
+    assert(
+      /^---\r?\n[\s\S]*?globs:\s*.+[\s\S]*?\r?\n---/.test(traeL4Api),
+      "L4 Trae mirrored rule keeps globs frontmatter"
+    );
+    const qoderL4Rule = fs.readFileSync(
+      path.join(tmpA, ".qoder/rules/00-project-docs-overview.md"),
+      "utf8"
+    );
+    const claudeL4Rule = fs.readFileSync(
+      path.join(tmpA, ".claude/rules/00-project-docs-overview.md"),
+      "utf8"
+    );
+    assert(!/^---/.test(qoderL4Rule), "L4 Qoder still strips frontmatter");
+    assert(!/^---/.test(claudeL4Rule), "L4 Claude still strips frontmatter");
     assert(
       fs.existsSync(path.join(tmpA, ".claude/rules/00-project-docs-overview.md")),
       "L4 mirrors cursor rules to claude .md"
@@ -1564,6 +1592,28 @@ if (fs.existsSync(fixture)) {
       fs.existsSync(path.join(tmpB, ".trae/rules/00-project-docs-overview.md")),
       "L5 sync trae rules as .md"
     );
+    const traeL5Rule = fs.readFileSync(
+      path.join(tmpB, ".trae/rules/00-project-docs-overview.md"),
+      "utf8"
+    );
+    assert(
+      /^---\r?\n[\s\S]*?alwaysApply:\s*true[\s\S]*?\r?\n---/.test(traeL5Rule),
+      "L5 Trae synced rule keeps alwaysApply frontmatter"
+    );
+    const traeL5ApiPath = path.join(tmpB, ".trae/rules/12-api-doc-sync-rules.md");
+    assert(fs.existsSync(traeL5ApiPath), "L5 sync api-doc-sync to trae .md");
+    const traeL5Api = fs.existsSync(traeL5ApiPath)
+      ? fs.readFileSync(traeL5ApiPath, "utf8")
+      : "";
+    assert(
+      /^---\r?\n[\s\S]*?globs:\s*.+[\s\S]*?\r?\n---/.test(traeL5Api),
+      "L5 Trae synced rule keeps globs frontmatter"
+    );
+    const claudeL5Rule = fs.readFileSync(
+      path.join(tmpB, ".claude/rules/00-project-docs-overview.md"),
+      "utf8"
+    );
+    assert(!/^---/.test(claudeL5Rule), "L5 Claude still strips frontmatter");
     assert(fs.existsSync(path.join(tmpB, ".trae/mcp.json.example")), "L5 sync trae mcp example");
     const cbSync = JSON.parse(fs.readFileSync(path.join(tmpB, ".codebuddy/settings.json"), "utf8"));
     assert(cbSync.hooks && cbSync.hooks.PreToolUse, "L5 sync codebuddy settings hooks");
@@ -1833,7 +1883,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.6\.0"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.6\.1-dev"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -2262,6 +2312,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   );
 
   const matureFix = path.join(skillRoot, "scripts/fixtures/mature-claude");
+  const matureTraeFix = path.join(skillRoot, "scripts/fixtures/mature-trae");
   const qoderFix = path.join(skillRoot, "scripts/fixtures/qoder-hooks");
   const stackFix = path.join(skillRoot, "scripts/fixtures/stack-node");
   assert(fs.existsSync(path.join(matureFix, "AGENTS.md")), "mature-claude AGENTS.md");
@@ -2272,6 +2323,22 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   const matureSig = scanSignals(matureFix);
   assert(matureSig.S_AGENTS_ROOT && matureSig.S_RULES && !matureSig.S_CURSOR_RULES, "mature-claude rules without cursor");
   assert(matureSig.S_API && matureSig.S_KB && matureSig.MATURE, "mature-claude MATURE without .cursor/rules");
+  assert(fs.existsSync(path.join(matureTraeFix, "AGENTS.md")), "mature-trae AGENTS.md");
+  assert(fs.existsSync(path.join(matureTraeFix, ".trae/rules/00-overview.md")), "mature-trae .trae/rules");
+  assert(fs.existsSync(path.join(matureTraeFix, ".trae/rules/api/12-api.md")), "mature-trae nested api rule");
+  assert(fs.existsSync(path.join(matureTraeFix, "docs/api/api.md")), "mature-trae docs/api");
+  assert(fs.existsSync(path.join(matureTraeFix, "docs/agent-kb/README.md")), "mature-trae agent-kb");
+  assert(!fs.existsSync(path.join(matureTraeFix, ".cursor/rules")), "mature-trae has no .cursor/rules");
+  const matureTrae00 = fs.readFileSync(path.join(matureTraeFix, ".trae/rules/00-overview.md"), "utf8");
+  const matureTraeApi = fs.readFileSync(path.join(matureTraeFix, ".trae/rules/api/12-api.md"), "utf8");
+  assert(/alwaysApply:\s*true/.test(matureTrae00), "mature-trae overview keeps alwaysApply");
+  assert(/globs:/.test(matureTraeApi), "mature-trae api rule keeps globs");
+  const matureTraeSig = scanSignals(matureTraeFix);
+  assert(
+    matureTraeSig.S_AGENTS_ROOT && matureTraeSig.S_RULES && !matureTraeSig.S_CURSOR_RULES,
+    "mature-trae rules without cursor"
+  );
+  assert(matureTraeSig.S_API && matureTraeSig.S_KB && matureTraeSig.MATURE, "mature-trae MATURE without .cursor/rules");
   assert(fs.existsSync(path.join(qoderFix, ".qoder/settings.json")), "qoder-hooks settings.json");
   const qoderSig = scanSignals(qoderFix);
   assert(qoderSig.S_HOOKS, "qoder-hooks S_HOOKS via settings.json");
@@ -3018,10 +3085,13 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(multiSig.S_HOOKS, "multi-host-hooks S_HOOKS");
 
   const matureFixM3 = path.join(skillRoot, "scripts/fixtures/mature-claude");
+  const matureTraeFixM3 = path.join(skillRoot, "scripts/fixtures/mature-trae");
   const qoderFixM3 = path.join(skillRoot, "scripts/fixtures/qoder-hooks");
   const stackFixM3 = path.join(skillRoot, "scripts/fixtures/stack-node");
   const matureSigM3 = scanSignals(matureFixM3);
   assert(matureSigM3.MATURE && !matureSigM3.S_CURSOR_RULES, "mature-claude still MATURE without cursor");
+  const matureTraeSigM3 = scanSignals(matureTraeFixM3);
+  assert(matureTraeSigM3.MATURE && !matureTraeSigM3.S_CURSOR_RULES, "mature-trae still MATURE without cursor");
   assert(scanSignals(qoderFixM3).S_HOOKS, "qoder-hooks still S_HOOKS");
   assert(scanSignals(stackFixM3).S_STACK && !scanSignals(stackFixM3).MATURE, "stack-node still S_STACK only");
 
@@ -3091,7 +3161,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.0", "manifest version exactly 0.6.0");
+  assert(verLine && verLine[1] === "0.6.1-dev", "manifest version exactly 0.6.1-dev");
 
   const roadmapM4 = readRel("ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -3118,6 +3188,43 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/冻结/.test(codexM4) && /P2/.test(codexM4) && /另立项/.test(codexM4), "G6 freeze still in adapters/codex.md");
   assert(/冻结/.test(aiToolsM4) && /另立项/.test(aiToolsM4), "G6 freeze still in ai-tools.md");
   assert(!/全家桶对等已落地|全量 sync 已/.test(codexM4 + aiToolsM4), "G6 no new Codex parity claim");
+}
+
+// --- 0.6.1-dev: Trae P0 spike (evidence · FM-preserve · mature-trae) ---
+{
+  const evidence = fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md"), "utf8");
+  assert(/T-P0-1/.test(evidence) && /T-P0-4/.test(evidence), "TRAE-P0-EVIDENCE has T-P0-1…4");
+  assert(/docs PASS/.test(evidence) && /partial/.test(evidence), "TRAE-P0-EVIDENCE statuses");
+  assert(/RunCommand/.test(evidence) && /alwaysApply/.test(evidence), "TRAE-P0-EVIDENCE cites FM + RunCommand");
+  assert(/docs\.trae\.ai\/ide\/rules/.test(evidence), "TRAE-P0-EVIDENCE cites official rules URL");
+  assert(fs.existsSync(path.join(skillRoot, "host/TRAE-P0-MANUAL.md")), "TRAE-P0-MANUAL.md");
+  const manual = fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-MANUAL.md"), "utf8");
+  assert(/RunCommand/.test(manual) && /MCP/.test(manual) && /Specific Files|globs/.test(manual), "MANUAL covers hooks/MCP/rules");
+
+  const traeAd = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/trae.md"), "utf8");
+  assert(!/若宿主支持/.test(traeAd), "trae adapter dropped 若宿主支持");
+  assert(/一等公民/.test(traeAd), "trae adapter skills first-class");
+  assert(/alwaysApply/.test(traeAd) && /globs/.test(traeAd), "trae adapter documents native FM");
+  assert(/RunCommand/.test(traeAd), "trae adapter notes RunCommand matcher risk");
+  assert(/TRAE-P0-EVIDENCE/.test(traeAd), "trae adapter links evidence");
+
+  const parity061 = fs.readFileSync(path.join(skillRoot, "host/TRAE-PARITY.md"), "utf8");
+  assert(/TRAE-P0-EVIDENCE/.test(parity061) && /0\.6\.1-dev/.test(parity061), "TRAE-PARITY links evidence + 0.6.1-dev");
+  const aiTools061 = readDoc("ai-tools.md");
+  assert(/中高/.test(aiTools061), "ai-tools.md still marks Trae as 中高");
+  assert(!/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools061), "matrix Trae not bumped to 高");
+
+  const render061 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/preserveFrontmatter/.test(render061), "render.mjs Trae preserveFrontmatter branch");
+  const syncTmpl061 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/host === "trae"/.test(syncTmpl061), "sync.mjs.tmpl toHostMd branches by trae");
+
+  const changelog061 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.1-dev\b/m.test(changelog061), "CHANGELOG 0.6.1-dev section");
+  const roadmap061 = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
+  assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
+  const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/0\.6\.1-dev/.test(verify061) && /mature-trae|Trae P0/.test(verify061), "VERIFY has 0.6.1-dev Trae P0 section");
 }
 
 console.log(`ok: ${ok.length}`);
