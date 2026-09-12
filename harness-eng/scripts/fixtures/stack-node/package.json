@@ -1,0 +1,5 @@
+{
+  "name": "harness-eng-fixture-stack-node",
+  "private": true,
+  "description": "thin non-Java S_STACK marker"
+}

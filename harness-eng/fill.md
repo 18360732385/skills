@@ -52,5 +52,17 @@
 | **单域补齐** | fill-score → fill-mcp（过闸）→ inventory → fill-plan → WritePlan → agents → acceptance → merge → score |
 | **继续**（已预授权） | 确认闸仍成立 → score → 读 fill-plan 下一批 → agents/calibrate/merge → score |
 
+## 规范 CLI（0.5.9+）
+
+inventory / merge **优先**统一入口（域脚本是别名，见 [fill/README.md](fill/README.md)）：
+
+```bash
+node scripts/fill-inventory.mjs --domain <api|func|db|redis|jobs> --root <TARGET>
+node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --check
+node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --target <ssot.md> --write
+```
+
+`fill-inventory-*.mjs` / `fill-merge-*.mjs` 仅作兼容别名（api merge 的 `--enrich-dto` / `--module` / `--auto-fill` 仍走 `fill-merge-api.mjs`）。
+
 workers：[fill-workers.md](fill-workers.md) · [ai-tools.md](ai-tools.md)。  
 质量：[truth-quality.md](truth-quality.md)。

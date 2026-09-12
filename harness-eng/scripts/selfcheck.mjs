@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.5.8: multi-host detect/MATURE + Codex P2 expectation + archive slim.
+ * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
  * Inherited 0.2.27–0.5.7 gates.
  */
 import fs from "fs";
@@ -27,6 +27,8 @@ import {
   findMcpUsageGuideFile,
   migrateMcpUsageGuideIfNeeded,
 } from "./lib/harness-meta.mjs";
+import { scanSignals } from "./lib/detect-signals.mjs";
+import { isGeneratedHostPath, resolveLandAgentConfig } from "./land.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
@@ -131,7 +133,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.8"/.test(qYaml), "questions.yaml version 0.5.8");
+assert(/version:\s*"0\.5\.9"/.test(qYaml), "questions.yaml version 0.5.9");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -152,23 +154,23 @@ const mergeDbSrc = fs.readFileSync(
   path.join(skillRoot, "scripts/fill-merge-db.mjs"),
   "utf8"
 );
-assert(/domain:\s*"db"/.test(mergeDbSrc), "fill-merge-db uses domain=db");
+assert(/--domain"?,\s*"db"/.test(mergeDbSrc), "fill-merge-db uses domain=db");
 assert(
-  /mergeDomain/.test(mergeDbSrc),
-  "fill-merge-db calls mergeDomain"
+  /fill-merge\.mjs/.test(mergeDbSrc),
+  "fill-merge-db delegates to fill-merge.mjs"
 );
 
 const mergeRedisSrc = fs.readFileSync(
   path.join(skillRoot, "scripts/fill-merge-redis.mjs"),
   "utf8"
 );
-assert(/domain:\s*"redis"/.test(mergeRedisSrc), "fill-merge-redis uses domain=redis");
+assert(/--domain"?,\s*"redis"/.test(mergeRedisSrc), "fill-merge-redis uses domain=redis");
 
 const mergeFuncSrc = fs.readFileSync(
   path.join(skillRoot, "scripts/fill-merge-func.mjs"),
   "utf8"
 );
-assert(/domain:\s*"func"/.test(mergeFuncSrc), "fill-merge-func uses domain=func");
+assert(/--domain"?,\s*"func"/.test(mergeFuncSrc), "fill-merge-func uses domain=func");
 
 // --- 0.2.19 merge-domain lib content ---
 const mergeDomainSrc = fs.readFileSync(
@@ -194,12 +196,12 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.8"/.test(manifest), "manifest 0.5.8");
+assert(/version:\s*"0\.5\.9"/.test(manifest), "manifest 0.5.9");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.8"/.test(metaTmpl), "harness-meta 0.5.8");
+assert(/skill_version:\s*"0\.5\.9"/.test(metaTmpl), "harness-meta 0.5.9");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -210,6 +212,7 @@ assert(/## 0\.5\.5/.test(changelog), "CHANGELOG 0.5.5");
 assert(/## 0\.5\.6/.test(changelog), "CHANGELOG 0.5.6");
 assert(/## 0\.5\.7/.test(changelog), "CHANGELOG 0.5.7");
 assert(/## 0\.5\.8/.test(changelog), "CHANGELOG 0.5.8");
+assert(/## 0\.5\.9/.test(changelog), "CHANGELOG 0.5.9");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -369,13 +372,13 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.8/.test(verifyMd), "VERIFY is 0.5.8");
+assert(/0\.5\.9/.test(verifyMd), "VERIFY is 0.5.9");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.8/.test(readme), "README header version 0.5.8");
-assert(/当前 \*\*0\.5\.8\*\*/.test(readme), "README footer version 0.5.8");
+assert(/当前版本：0\.5\.9/.test(readme), "README header version 0.5.9");
+assert(/当前 \*\*0\.5\.9\*\*/.test(readme), "README footer version 0.5.9");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -386,9 +389,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.8\*\*/.test(handbookMd), "使用手册.md version 0.5.8");
-assert(/v0\.5\.8/.test(handbookHtml), "使用手册.html version 0.5.8");
-assert(/当前 \*\*0\.5\.8\*\*/.test(quickstartMd), "QUICKSTART version 0.5.8");
+assert(/版本：\*\*0\.5\.9\*\*/.test(handbookMd), "使用手册.md version 0.5.9");
+assert(/v0\.5\.9/.test(handbookHtml), "使用手册.html version 0.5.9");
+assert(/当前 \*\*0\.5\.9\*\*/.test(quickstartMd), "QUICKSTART version 0.5.9");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -633,7 +636,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.8"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.8");
+  assert(/version:\s*"0\.5\.9"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.9");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1215,6 +1218,7 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.5 → 0\.5\.6/.test(upg050), "upgrade has 0.5.5 → 0.5.6 path");
   assert(/0\.5\.6 → 0\.5\.7/.test(upg050), "upgrade has 0.5.6 → 0.5.7 path");
   assert(/0\.5\.7 → 0\.5\.8/.test(upg050), "upgrade has 0.5.7 → 0.5.8 path");
+  assert(/0\.5\.8 → 0\.5\.9/.test(upg050), "upgrade has 0.5.8 → 0.5.9 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
@@ -1812,7 +1816,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/skill_version:\s*"?0\.5\.8"?/.test(migrated), "render migrate+merge updates skill_version");
+    assert(/skill_version:\s*"?0\.5\.9"?/.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -2186,6 +2190,225 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
     "utf8"
   );
   assert(/schema_version/.test(packsHead), "domain-packs.yaml notes schema_version ≠ skill_version");
+}
+
+// --- 0.5.9 P1: hot-path index · land entry · fill CLI · fixtures · schema_version ---
+{
+  assert(fs.existsSync(path.join(skillRoot, "AGENT-INDEX.md")), "AGENT-INDEX.md");
+  const agentIndex = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(/必读/.test(agentIndex) && /land\.mjs/.test(agentIndex), "AGENT-INDEX has 必读 + land.mjs");
+  assert(/fill\/README\.md/.test(agentIndex), "AGENT-INDEX points fill/README");
+  assert(fs.existsSync(path.join(skillRoot, "fill/README.md")), "fill/README.md");
+  const fillIdx = fs.readFileSync(path.join(skillRoot, "fill/README.md"), "utf8");
+  assert(/fill-inventory\.mjs --domain/.test(fillIdx), "fill index documents unified inventory");
+  assert(/fill-merge\.mjs --domain/.test(fillIdx), "fill index documents unified merge");
+  assert(/别名/.test(fillIdx), "fill index says per-domain scripts are aliases");
+  const skill059 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
+  assert(/AGENT-INDEX\.md/.test(skill059), "SKILL points AGENT-INDEX");
+  assert(/fill\/README\.md/.test(skill059), "SKILL fill rows point at fill index");
+  assert(/land\.mjs/.test(skill059), "SKILL prefers land.mjs");
+  const fillMd059 = fs.readFileSync(path.join(skillRoot, "fill.md"), "utf8");
+  assert(/fill-inventory\.mjs --domain/.test(fillMd059), "fill.md documents unified inventory");
+  const wp059 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+  assert(/land\.mjs/.test(wp059), "write-plan prefers land.mjs");
+  const conflict059 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  assert(/land\.mjs/.test(conflict059), "conflict-policy names land.mjs");
+  const qs059 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
+  assert(/land\.mjs/.test(qs059), "QUICKSTART names land.mjs");
+  assert(/fill-inventory\.mjs --domain/.test(qs059), "QUICKSTART unified inventory");
+
+  const morphHead = fs.readFileSync(path.join(skillRoot, "templates/_meta/morph-required.yaml"), "utf8");
+  assert(/schema_version/.test(morphHead) && /≠ skill_version|!= skill_version/.test(morphHead), "morph-required schema_version ≠ skill_version");
+  const policyHead = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/harness-eng/score-policy.yaml.tmpl"),
+    "utf8"
+  );
+  assert(/schema_version/.test(policyHead) && /≠ skill_version|!= skill_version/.test(policyHead), "score-policy schema_version ≠ skill_version");
+
+  assert(fs.existsSync(path.join(skillRoot, "scripts/land.mjs")), "land.mjs");
+  assert(fs.existsSync(path.join(skillRoot, "scripts/fill-inventory.mjs")), "fill-inventory.mjs");
+  const invUni = fs.readFileSync(path.join(skillRoot, "scripts/fill-inventory.mjs"), "utf8");
+  assert(/--domain/.test(invUni), "fill-inventory --domain");
+  const landHelp = runNode([path.join(skillRoot, "scripts/land.mjs"), "--help"]);
+  assert(landHelp.status === 0 && /--root/.test(landHelp.stdout), "land.mjs --help");
+  const invHelp = runNode([path.join(skillRoot, "scripts/fill-inventory.mjs"), "--help"]);
+  assert(invHelp.status === 0 && /--domain/.test(invHelp.stdout), "fill-inventory.mjs --help");
+  const invDbHelp = runNode([
+    path.join(skillRoot, "scripts/fill-inventory.mjs"),
+    "--domain",
+    "db",
+    "--help",
+  ]);
+  assert(
+    invDbHelp.status === 0 && /fill-inventory-db|--sql-root|--root/.test(invDbHelp.stdout + invDbHelp.stderr),
+    "fill-inventory --domain db --help dispatches"
+  );
+
+  const matureFix = path.join(skillRoot, "scripts/fixtures/mature-claude");
+  const qoderFix = path.join(skillRoot, "scripts/fixtures/qoder-hooks");
+  const stackFix = path.join(skillRoot, "scripts/fixtures/stack-node");
+  assert(fs.existsSync(path.join(matureFix, "AGENTS.md")), "mature-claude AGENTS.md");
+  assert(fs.existsSync(path.join(matureFix, ".claude/rules/00-overview.md")), "mature-claude .claude/rules");
+  assert(fs.existsSync(path.join(matureFix, "docs/api/api.md")), "mature-claude docs/api");
+  assert(fs.existsSync(path.join(matureFix, "docs/agent-kb/README.md")), "mature-claude agent-kb");
+  assert(!fs.existsSync(path.join(matureFix, ".cursor/rules")), "mature-claude has no .cursor/rules");
+  const matureSig = scanSignals(matureFix);
+  assert(matureSig.S_AGENTS_ROOT && matureSig.S_RULES && !matureSig.S_CURSOR_RULES, "mature-claude rules without cursor");
+  assert(matureSig.S_API && matureSig.S_KB && matureSig.MATURE, "mature-claude MATURE without .cursor/rules");
+  assert(fs.existsSync(path.join(qoderFix, ".qoder/settings.json")), "qoder-hooks settings.json");
+  const qoderSig = scanSignals(qoderFix);
+  assert(qoderSig.S_HOOKS, "qoder-hooks S_HOOKS via settings.json");
+  assert(fs.existsSync(path.join(stackFix, "package.json")), "stack-node package.json");
+  const stackSig = scanSignals(stackFix);
+  assert(stackSig.S_STACK && !stackSig.MATURE, "stack-node S_STACK only");
+
+  assert(isGeneratedHostPath(".cursor/rules/00-project-docs-overview.mdc"), "generated host: .cursor/rules");
+  assert(isGeneratedHostPath("CLAUDE.md"), "generated host: CLAUDE.md");
+  assert(!isGeneratedHostPath("docs/agent-config/rules/00.mdc"), "SSOT is not generated host");
+  assert(!isGeneratedHostPath("AGENTS.md"), "AGENTS.md is not generated host");
+  assert(
+    resolveLandAgentConfig({ ladder: "L4" }, { agent_config: true }) === true,
+    "land reads meta.agent_config"
+  );
+  assert(
+    resolveLandAgentConfig({ ladder: "L5" }, null) === true,
+    "land treats params.ladder L5 as agent_config"
+  );
+  assert(
+    resolveLandAgentConfig({ ladder: "L4" }, { ladder: "L2" }) === false,
+    "land L4 without meta flag is not agent_config"
+  );
+
+  const tmpL5 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-059-l5-"));
+  try {
+    const ph = {
+      REPO_NAME: "demo",
+      REPO_DESC: "demo",
+      DATE: "2026-09-12",
+      AGENTS_VARIANT: "solo",
+      LADDER_TARGET: "L5",
+      GLOB_PROFILE: "wide",
+      LAST_MODE: "land",
+      MODULE_DIRS: "",
+      CODE_PREFIXES: "src/",
+      COMMAND_TEST: "echo test",
+      COMMAND_BUILD: "echo build",
+      GLOB_API: "**/controller/**,docs/api/**",
+      GLOB_FUNC: "**/src/**,docs/func/**",
+      GLOB_DB: "**/db/**,docs/db/**",
+      GLOB_JOBS: "docs/jobs/**",
+      GLOB_KB: "docs/agent-kb/**",
+      GLOB_SUPERPOWERS: "docs/superpowers/**",
+      GLOB_AI_TOOLS: ".cursor/**",
+      GLOB_OBSERVABILITY: "**/src/**",
+      GLOB_FRONTEND: "apps/**",
+      STACK_BADGES: "Java",
+      PROJECT_NAME: "demo",
+      PROJECT_DESC: "demo",
+    };
+    const pRefuse = path.join(tmpL5, "params-refuse.json");
+    fs.writeFileSync(
+      pRefuse,
+      JSON.stringify({
+        ladder: "L5",
+        agent_config: true,
+        files: [
+          {
+            template: "rules/00-project-docs-overview.mdc.tmpl",
+            target: ".cursor/rules/00-project-docs-overview.mdc",
+            action: "create",
+          },
+        ],
+        placeholders: ph,
+      }),
+      "utf8"
+    );
+    const rRefuse = runNode([
+      path.join(skillRoot, "scripts/land.mjs"),
+      "--root",
+      tmpL5,
+      "--params",
+      pRefuse,
+      "--no-sync",
+    ]);
+    assert(rRefuse.status !== 0, "land L5 refuses explicit .cursor/rules file");
+    assert(
+      !fs.existsSync(path.join(tmpL5, ".cursor/rules/00-project-docs-overview.mdc")),
+      "L5 land did not write .cursor/rules via render"
+    );
+
+    fs.mkdirSync(path.join(tmpL5, ".cursor"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpL5, ".cursor/harness-meta.yaml"),
+      'skill: harness-eng\nladder: L5\nagent_config: true\nskill_version: "0.5.9"\n',
+      "utf8"
+    );
+    const pMeta = path.join(tmpL5, "params-meta.json");
+    fs.writeFileSync(
+      pMeta,
+      JSON.stringify({
+        ladder: "L4",
+        files: [
+          {
+            template: "rules/karpathy-guidelines.mdc",
+            target: ".cursor/rules/karpathy-guidelines.mdc",
+            action: "create",
+          },
+        ],
+        placeholders: ph,
+      }),
+      "utf8"
+    );
+    const rMeta = runNode([
+      path.join(skillRoot, "scripts/land.mjs"),
+      "--root",
+      tmpL5,
+      "--params",
+      pMeta,
+      "--no-sync",
+    ]);
+    assert(rMeta.status !== 0, "land refuses generated host path when legacy meta agent_config");
+
+    const tmpExpand = fs.mkdtempSync(path.join(os.tmpdir(), "harness-059-l5e-"));
+    try {
+      const pExp = path.join(tmpExpand, "params.json");
+      fs.writeFileSync(
+        pExp,
+        JSON.stringify({
+          ladder: "L5",
+          domains: ["api"],
+          ai_tools: ["cursor"],
+          agents_variant: "solo",
+          hooks_family: ["commit-gate"],
+          expandFromManifest: true,
+          placeholders: { ...ph, LADDER_TARGET: "L5" },
+        }),
+        "utf8"
+      );
+      const rExp = runNode([
+        path.join(skillRoot, "scripts/land.mjs"),
+        "--root",
+        tmpExpand,
+        "--params",
+        pExp,
+        "--no-sync",
+      ]);
+      assert(rExp.status === 0, "land L5 expand --no-sync exits 0");
+      assert(
+        !fs.existsSync(path.join(tmpExpand, ".cursor/rules/00-project-docs-overview.mdc")),
+        "land L5 --no-sync does not write generated .cursor/rules"
+      );
+      assert(
+        fs.existsSync(path.join(tmpExpand, "scripts/agent-config/sync.mjs")) ||
+          fs.existsSync(path.join(tmpExpand, "docs/agent-config")),
+        "land L5 still renders SSOT / sync script"
+      );
+    } finally {
+      fs.rmSync(tmpExpand, { recursive: true, force: true });
+    }
+  } finally {
+    fs.rmSync(tmpL5, { recursive: true, force: true });
+  }
 }
 
 console.log(`ok: ${ok.length}`);

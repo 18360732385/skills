@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-func — Service/Component → inventory JSON (no npm deps).
+ * Alias (0.5.9+): prefer `fill-inventory.mjs --domain func`.
  *
  * Usage:
  *   node scripts/fill-inventory-func.mjs --root <TARGET>

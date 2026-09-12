@@ -25,7 +25,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 | 只看缺口、不写盘 | **审计** / audit | 对照 L0–L5，默认不写文件 |
 | 半成品接着补 | **续跑** / resume | 只补缺口，`on_exists=skip` |
 | 按模板深填契约 | **多 Agent 填充** / fill-truths-agents | 须过 **填充 MCP 闸** → Plan 批次 → acceptance → merge → score |
-| 含 Cron / Scheduler | 域含 **jobs** + inventory | `fill-inventory-jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT） |
+| 含 Cron / Scheduler | 域含 **jobs** + inventory | `fill-inventory.mjs --domain jobs`（别名 `fill-inventory-jobs`）→ `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT） |
 | 建填充目标/批次 | **填充计划** / fill-plan | `docs/harness-eng/fill-plan.yaml`（大仓 gold+sample_n） |
 | 仅脚本薄草稿（不推荐） | **自动填充** / fill-truths-auto | 仅 `--work-only` → `.fill-work`（legacy；仅 draft） |
 | 看能不能开 AI 改业务 | **完整度打分** / fill-score | 打开 **report-latest.html** 决策台 |
@@ -66,6 +66,9 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 
 ```bash
 cd <harness-eng技能目录>
+node scripts/land.mjs --root <TARGET> --params <params.json> --mode land
+node scripts/fill-inventory.mjs --domain api --root <TARGET>
+node scripts/fill-merge.mjs --domain api --inventory <inv.json> --work-dir <dir> --check
 node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
 node scripts/acceptance-check.mjs --root <TARGET> --domain api
 node scripts/fill-score.mjs --root <TARGET>
@@ -75,4 +78,5 @@ node scripts/selfcheck.mjs
 
 多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分（P2）**（不全量同步）。详 [ai-tools.md](ai-tools.md)。
 
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.8**）。
+Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.9**）。

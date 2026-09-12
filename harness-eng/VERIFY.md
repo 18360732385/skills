@@ -1,10 +1,21 @@
-﻿# harness-eng 验收记录（0.5.8）
+﻿# harness-eng 验收记录（0.5.9）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.5.8**。报告壳 `ui.version`（0.2.24）≠ `skill_version`。
+当前 **0.5.9**。报告壳 `ui.version`（0.2.24）≠ `skill_version`。
+
+## 0.5.9 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `AGENT-INDEX.md` + `fill/README.md`；SKILL 填充行先指向索引 | 有 |
+| `land.mjs`：L5/`agent_config` 不经 render 写 `.cursor/rules` | 有 |
+| `fill-inventory.mjs --domain` + `fill-merge.mjs --domain` 为规范入口 | 有 |
+| fixture：`mature-claude` / `qoder-hooks` / `stack-node` | 有 |
+| `_meta` schema_version 注释（≠ skill_version）含 morph / score-policy | 有 |
 
 ## 0.5.8 增量验收
 
