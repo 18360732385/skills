@@ -3282,6 +3282,21 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/00-harness-ssot\.mdc/.test(traeAd), "trae adapter points L5 00 at SSOT");
   assert(/L5_SSOT_HARNESS_TARGET|00-harness-ssot\.mdc/.test(render061), "render.mjs L5 SSOT 00 constant or target");
   assert(/1x-contract-sync/.test(syncTmpl061) && /00-harness-ssot/.test(syncTmpl061), "sync.mjs.tmpl header documents 1x/00 prune");
+
+  assert(/Round A/.test(evidence) && /c-be-sms-ai/.test(evidence), "EVIDENCE Round A names c-be-sms-ai");
+  assert(/磁盘 \+ 行为 PASS|磁盘\+行为 PASS/.test(evidence), "EVIDENCE Round A T-P0-1 disk+behavior PASS");
+  assert(/1x-contract-sync/.test(evidence) && /#17/.test(evidence), "EVIDENCE Round A confirms no 1x (#17)");
+  assert(/17-frontend-web/.test(evidence) && /globs/.test(evidence), "EVIDENCE Round A selective globs injection");
+  assert(/Round C/.test(evidence) && /本机行为 FAIL/.test(evidence), "EVIDENCE Round C T-P0-3 local FAIL");
+  assert(/Shell/.test(evidence) && /HOOK_DEFS/.test(evidence), "EVIDENCE notes Shell vs Bash + HOOK_DEFS hold");
+  assert(/beforeShellExecution/.test(evidence) && /\.cursor\/hooks\.json/.test(evidence), "EVIDENCE Round B invalid Cursor channel");
+  assert(/永远不要|勿/.test(manual) && /\.cursor\/hooks\.json/.test(manual) && /beforeShellExecution/.test(manual), "MANUAL forbids Cursor channel as Trae hooks evidence");
+  assert(/Shell/.test(manual) && /HOOK_DEFS/.test(manual), "MANUAL notes Shell vs Bash + HOOK_DEFS hold");
+  assert(/本机行为 FAIL/.test(parity061) && /HOOK_DEFS/.test(parity061), "TRAE-PARITY T-P0-3 FAIL + HOOK_DEFS hold");
+  assert(/Round A/.test(parity061) && /PASS/.test(parity061), "TRAE-PARITY T-P0-1 Round A PASS");
+  assert(/HOOK_DEFS/.test(traeAd) && /beforeShellExecution/.test(traeAd), "trae adapter holds HOOK_DEFS + forbids Cursor channel");
+  assert(/Round C/.test(changelog061) && /本机行为 FAIL/.test(changelog061), "CHANGELOG 0.6.1-dev notes Round C FAIL");
+  assert(/不/.test(changelog061) && /HOOK_DEFS/.test(changelog061), "CHANGELOG holds HOOK_DEFS");
 }
 
 console.log(`ok: ${ok.length}`);
