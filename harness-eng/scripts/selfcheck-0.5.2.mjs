@@ -121,7 +121,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.3"/.test(qYaml), "questions.yaml version 0.5.3");
+assert(/version:\s*"0\.5\.4"/.test(qYaml), "questions.yaml version 0.5.4");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -184,17 +184,18 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.3"/.test(manifest), "manifest 0.5.3");
+assert(/version:\s*"0\.5\.4"/.test(manifest), "manifest 0.5.4");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.3"/.test(metaTmpl), "harness-meta 0.5.3");
+assert(/skill_version:\s*"0\.5\.4"/.test(metaTmpl), "harness-meta 0.5.4");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
 assert(/## 0\.5\.2/.test(changelog), "CHANGELOG 0.5.2");
 assert(/## 0\.5\.3/.test(changelog), "CHANGELOG 0.5.3");
+assert(/## 0\.5\.4/.test(changelog), "CHANGELOG 0.5.4");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -339,13 +340,13 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.3/.test(verifyMd), "VERIFY is 0.5.3");
+assert(/0\.5\.4/.test(verifyMd), "VERIFY is 0.5.4");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.3/.test(readme), "README header version 0.5.3");
-assert(/当前 \*\*0\.5\.3\*\*/.test(readme), "README footer version 0.5.3");
+assert(/当前版本：0\.5\.4/.test(readme), "README header version 0.5.4");
+assert(/当前 \*\*0\.5\.4\*\*/.test(readme), "README footer version 0.5.4");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck-0\.5\.2/.test(readme), "README pins selfcheck 0.5.2");
@@ -355,8 +356,8 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.3\*\*/.test(handbookMd), "使用手册.md version 0.5.3");
-assert(/v0\.5\.3/.test(handbookHtml), "使用手册.html version 0.5.3");
+assert(/版本：\*\*0\.5\.4\*\*/.test(handbookMd), "使用手册.md version 0.5.4");
+assert(/v0\.5\.4/.test(handbookHtml), "使用手册.html version 0.5.4");
 assert(/6\.0 对话内会话仪表盘/.test(handbookMd), "使用手册.md session dashboard section");
 assert(/详情请查询仪表盘/.test(handbookHtml), "使用手册.html session dashboard footer copy");
 assert(!/v0\.5\.0/.test(handbookHtml), "使用手册.html no stale v0.5.0");
@@ -585,7 +586,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.3"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.3");
+  assert(/version:\s*"0\.5\.4"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.4");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1162,6 +1163,7 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.0 → 0\.5\.1/.test(upg050), "upgrade has 0.5.0 → 0.5.1 path");
   assert(/0\.5\.1 → 0\.5\.2/.test(upg050), "upgrade has 0.5.1 → 0.5.2 path");
   assert(/0\.5\.2 → 0\.5\.3/.test(upg050), "upgrade has 0.5.2 → 0.5.3 path");
+  assert(/0\.5\.3 → 0\.5\.4/.test(upg050), "upgrade has 0.5.3 → 0.5.4 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
@@ -1554,14 +1556,7 @@ if (fs.existsSync(fixture)) {
   }
 }
 
-console.log(`ok: ${ok.length}`);
-for (const m of ok) console.log(`  ✓ ${m}`);
-if (fail.length) {
-  console.error(`fail: ${fail.length}`);
-  for (const m of fail) console.error(`  ✗ ${m}`);
-  process.exit(1);
-}
-// --- 0.5.3 session dashboard ---
+// --- 0.5.3 / 0.5.4 session dashboard ---
 assert(
   fs.existsSync(path.join(skillRoot, "session-dashboard.md")),
   "session-dashboard.md"
@@ -1576,10 +1571,23 @@ assert(
 );
 assert(/会话仪表盘/.test(skill), "SKILL mandates session dashboard footer");
 assert(/session-dashboard\.md/.test(skill), "SKILL points session-dashboard.md");
+assert(/工程轮/.test(skill), "SKILL gates dashboard to engineering turns");
+assert(!/\*\*每轮回复末尾\*\*/.test(skill), "SKILL no unconditional every-turn dashboard");
 const sessionDashMd = fs.readFileSync(path.join(skillRoot, "session-dashboard.md"), "utf8");
 assert(/决策台/.test(sessionDashMd) && /趋势台/.test(sessionDashMd), "session-dashboard four panels");
 assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
 assert(/使用手册\.html#s6/.test(sessionDashMd), "session-dashboard handbook anchor");
+assert(/\*\*SHOW\*\*/.test(sessionDashMd) && /\*\*HIDE\*\*/.test(sessionDashMd), "session-dashboard SHOW/HIDE");
+assert(/当前版本号多少/.test(sessionDashMd), "session-dashboard version-question hide example");
+assert(/WritePlan 确认/.test(sessionDashMd), "session-dashboard mid-session meta still SHOW");
+assert(/含糊/.test(sessionDashMd), "session-dashboard ambiguous defaults HIDE");
+assert(/--intent engineering\|meta/.test(sessionDashMd), "session-dashboard documents --intent");
+assert(!/会话内\*\*每一轮\*\*/.test(sessionDashMd), "session-dashboard SSOT no longer every-turn");
+assert(/工程轮/.test(handbookMd), "使用手册.md dashboard is engineering-turn gated");
+assert(!/Agent \*\*每一轮\*\*/.test(handbookMd), "使用手册.md no unconditional every-turn dashboard");
+assert(/工程轮/.test(handbookHtml), "使用手册.html dashboard is engineering-turn gated");
+assert(!/Agent <strong>每一轮<\/strong>/.test(handbookHtml), "使用手册.html no unconditional every-turn dashboard");
+assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn gated");
 {
   const dashRoot = fs.mkdtempSync(path.join(os.tmpdir(), "he-session-dash-"));
   try {
@@ -1616,9 +1624,56 @@ assert(/使用手册\.html#s6/.test(sessionDashMd), "session-dashboard handbook 
     assert(dashMd.status === 0 && /quadrantChart/.test(dashMd.stdout || ""), "session-dash renders mermaid");
     assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
     assert(/使用手册\.html#s6/.test(dashMd.stdout || ""), "session-dash handbook link");
+    const dashEng = runNode([
+      path.join(skillRoot, "scripts/session-dash.mjs"),
+      "--root",
+      dashRoot,
+      "--intent",
+      "engineering",
+    ]);
+    assert(
+      dashEng.status === 0 && /## harness-eng 会话仪表盘/.test(dashEng.stdout || ""),
+      "session-dash --intent engineering renders"
+    );
+    const dashMeta = runNode([
+      path.join(skillRoot, "scripts/session-dash.mjs"),
+      "--root",
+      dashRoot,
+      "--intent",
+      "meta",
+    ]);
+    assert(dashMeta.status === 0, "session-dash --intent meta exits 0");
+    assert(
+      !/会话仪表盘/.test(dashMeta.stdout || ""),
+      "session-dash --intent meta omits markdown"
+    );
+    const dashMetaJson = runNode([
+      path.join(skillRoot, "scripts/session-dash.mjs"),
+      "--intent",
+      "meta",
+      "--json",
+    ]);
+    let metaJson = null;
+    try {
+      metaJson = JSON.parse((dashMetaJson.stdout || "").trim());
+    } catch {
+      metaJson = null;
+    }
+    assert(
+      dashMetaJson.status === 0 && metaJson && metaJson.omitted === true && metaJson.reason === "meta",
+      "session-dash --intent meta --json omitted"
+    );
   } finally {
     fs.rmSync(dashRoot, { recursive: true, force: true });
   }
+}
+
+console.log(`ok: ${ok.length}`);
+for (const m of ok) console.log(`  ✓ ${m}`);
+if (fail.length) {
+  console.error(`fail: ${fail.length}`);
+  for (const m of fail) console.error(`  ✗ ${m}`);
+  process.exit(1);
 }
 
 console.log("selfcheck-0.5.2 PASS");

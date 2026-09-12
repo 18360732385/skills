@@ -1,6 +1,7 @@
 /**
- * Chat footer dashboard for harness-eng sessions (0.5.3+).
+ * Chat footer dashboard for harness-eng engineering turns (0.5.3+; gated 0.5.4+).
  * Mirrors report-latest.html four panels in markdown + mermaid.
+ * When to SHOW/HIDE: session-dashboard.md (agent decides; --intent on session-dash.mjs).
  */
 import fs from "fs";
 import path from "path";

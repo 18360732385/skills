@@ -1,16 +1,50 @@
-# 会话仪表盘（每轮回复末尾）
+# 会话仪表盘（工程轮回复末尾）
 
-> SSOT：harness-eng 对话**每一轮**对用户可见回复的**固定结尾**。与 `docs/harness-eng/report-latest.html`（施工 HTML 四台）互补：HTML 是持久产物；本节是**会话内**快照。
+> SSOT：仅当本轮是**目标仓施工 / harness 工程**时，对用户可见回复的**固定结尾**。纯 meta / 信息问答**整块省略**。与 `docs/harness-eng/report-latest.html`（施工 HTML 四台）互补：HTML 是持久产物；本节是**会话内**快照。
 
 ## Done
 
+**SHOW**（本轮判定为工程轮时）：
+
 1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 条件 mermaid）
-2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检）
+2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`）
 3. 尚无目标根时，仍输出仪表盘，但决策/诊断/趋势台标「—」或「未探测」，任务台写当前阶段
+
+**HIDE**（本轮判定为 meta 时）：
+
+- **省略**整个 `## harness-eng 会话仪表盘` 块（含四台、mermaid、脚注）
+- 不要为了「凑脚注」去跑 session-dash；若脚本自检可用 `--intent meta`（无 markdown 输出）
 
 ## 触发
 
-- 用户点名 **harness-eng** / `/harness-eng` 的会话内**每一轮** Agent 回复（含 audit 只读、提问、WritePlan、执行中进度）
+Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负责渲染，**不**推断意图。
+
+### SHOW（附仪表盘）
+
+本轮涉及目标仓施工 / 跑 harness 模式，例如：
+
+- `land` / `resume` / `pipeline` / `audit` / `upgrade` / `fill-*` / `fill-score` / `fill-mcp` / `detect` / WritePlan / render / ladder 工作
+- 讨论或改目标仓 harness 产物（AGENTS、rules、`docs/harness-eng`、meta、项目 MCP 接线）
+- 续跑中的工程会话：已有确认的目标根 + 进行中的模式
+
+### HIDE（省略整块）
+
+本轮是纯 meta / 信息问答、且不施工目标仓，例如：
+
+- 当前 skill 版本号 / changelog
+- harness-eng 是做什么的 / 怎么安装 / 术语表
+- 只读 handbook / QUICKSTART、未定目标仓
+- 纯聊 skill 本身，无 land/audit/pipeline/fill 意图、无目标根工程动作
+
+### 边角
+
+| 情形 | 判定 |
+|---|---|
+| 工程模式仍在进行（例如正等 WritePlan 确认），用户中途问一句 meta | **SHOW**（工程上下文未结束） |
+| 首条只问「当前版本号多少」 | **HIDE** |
+| 含糊：无进行中的工程模式、无已确认的 `Q_TARGET_ROOT` 施工、无明确工程动词 | **HIDE**（默认） |
+
+有进行中的工程模式、已确认的 `Q_TARGET_ROOT` 施工、或明确工程动词 → SHOW。
 
 ## 格式（固定）
 
@@ -53,10 +87,12 @@
 ```bash
 node scripts/session-dash.mjs --root <TARGET> \
   --mode pipeline --phase "WritePlan 待确认" --preauth no \
-  [--pending "等待确认"] [--next "确认后 render"] [--json]
+  [--pending "等待确认"] [--next "确认后 render"] [--json] \
+  [--intent engineering|meta]
 ```
 
 - 只读；不写盘
+- Agent 按本页触发规则决定是否调用；`--intent engineering`（默认）渲染仪表盘；`--intent meta` 不输出 markdown（`--json` 时写 `{ omitted: true, reason: "meta" }`）
 - 无 score 时不报错，趋势台写「暂无 score」
 - 脚注固定以 **详情请查询仪表盘** 开头；链到目标仓 `report-latest.html`（已生成）+ skill 内 [使用手册.html#s6](使用手册.html#s6)
 
@@ -64,7 +100,8 @@ node scripts/session-dash.mjs --root <TARGET> \
 
 | 场景 | 会话仪表盘 | report-latest.html |
 |---|---|---|
-| 探测 / 提问 / 未打分 | 会话态 + 阶梯/meta | 可能不存在 |
+| 探测 / 提问 / 未打分（工程轮） | 会话态 + 阶梯/meta | 可能不存在 |
+| 纯 meta / 版本 / 手册问答 | **省略** | 不涉及 |
 | fill-score 后 | 三词 + 四台摘要 | 【推荐】同步生成，脚注链过去 |
 | audit 只读 | 缺口摘要进任务台 | 不强制生成 |
 
