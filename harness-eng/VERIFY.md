@@ -1,10 +1,20 @@
-﻿# harness-eng 验收记录（0.5.5）
+﻿# harness-eng 验收记录（0.5.6）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.5.5**。报告壳 `ui.version`（0.2.24）≠ `skill_version`。
+当前 **0.5.6**。报告壳 `ui.version`（0.2.24）≠ `skill_version`。
+
+## 0.5.6 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck-0.5.2.mjs` exit 0 | 烟测 |
+| manifest `harness-meta` / `mcp-readme` target → `docs/harness-eng/` | 有 |
+| 读侧回退 `.cursor/harness-meta.yaml`（及 `.yml`） | 有 |
+| L0 不要求 meta **只能**在 `.cursor/` | 有 |
+| resume/upgrade 仅旧 meta 时迁到新路径、不删旧文件 | 有 |
 
 ## 0.5.5 增量验收
 

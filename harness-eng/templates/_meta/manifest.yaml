@@ -1,4 +1,4 @@
-version: "0.5.5"
+version: "0.5.6"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 
@@ -70,8 +70,9 @@ files:
   - id: harness-meta
     ladder: L0
     template: meta/harness-meta.yaml.tmpl
-    target: .cursor/harness-meta.yaml
+    target: docs/harness-eng/harness-meta.yaml
     placeholders: [LADDER_TARGET, DOMAINS_YAML, AGENTS_VARIANT, GLOB_PROFILE, DATE, LAST_MODE, AI_TOOLS_YAML]
+    note: "0.5.6+ SSOT under docs/harness-eng/; readers fall back to legacy .cursor/harness-meta.yaml(.yml)"
   - id: rule-00
     ladder: L0
     template: rules/00-project-docs-overview.mdc.tmpl
@@ -293,8 +294,8 @@ files:
   - id: mcp-readme
     ladder: L4
     template: mcp/mcp-usage-guide.md.tmpl
-    target: .cursor/mcp-usage-guide.md
-    note: "0.2.5+ English filename; if legacy .cursor/MCP使用说明.md exists, skip old + create new (do not auto-delete)"
+    target: docs/harness-eng/mcp-usage-guide.md
+    note: "0.5.6+ under docs/harness-eng/; readers accept .cursor/mcp-usage-guide.md and legacy .cursor/MCP使用说明.md (do not auto-delete)"
   - id: gitignore-snippet
     ladder: L4
     template: gitignore/harness.gitignore.snippet

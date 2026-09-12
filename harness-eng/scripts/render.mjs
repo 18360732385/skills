@@ -30,6 +30,12 @@ import {
   normalizeHooksFamily,
   resolveAgentConfig,
 } from "./lib/hooks-checks.mjs";
+import {
+  HARNESS_META_CANONICAL,
+  MCP_USAGE_GUIDE_CANONICAL,
+  migrateHarnessMetaIfNeeded,
+  migrateMcpUsageGuideIfNeeded,
+} from "./lib/harness-meta.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "..");
@@ -474,7 +480,12 @@ function expandFromManifest(manifestPath, params, root) {
   function actionForTarget(targetRel, entryId, entry) {
     if (entryId === "gitignore-snippet") return "merge";
     if (entryId === "harness-meta") {
-      return fs.existsSync(path.join(root, targetRel)) ? "merge" : "create";
+      migrateHarnessMetaIfNeeded(root);
+      const dest = path.join(root, HARNESS_META_CANONICAL);
+      return fs.existsSync(dest) ? "merge" : "create";
+    }
+    if (entryId === "mcp-readme" && (onExists === "skip" || onExists === "merge")) {
+      migrateMcpUsageGuideIfNeeded(root);
     }
     if (
       entry &&
@@ -572,10 +583,12 @@ function expandFromManifest(manifestPath, params, root) {
     }
 
     // L5：rules 落到 SSOT 侧，由 sync.mjs 分发到各工具目录
-    const itemTarget =
+    let itemTarget =
       agentConfig && typeof e.target === "string" && e.target.startsWith(".cursor/rules/")
         ? `docs/agent-config/rules/${path.basename(e.target)}`
         : e.target;
+    if (e.id === "harness-meta") itemTarget = HARNESS_META_CANONICAL;
+    if (e.id === "mcp-readme") itemTarget = MCP_USAGE_GUIDE_CANONICAL;
     const action = actionForTarget(itemTarget, e.id, e);
     const item = {
       id: e.id,

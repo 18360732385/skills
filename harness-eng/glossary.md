@@ -6,7 +6,7 @@
 
 | 阶 | 中文名 | 一句话：你得到什么 |
 |---|---|---|
-| **L0** | 协作入口 | 根/分册 `AGENTS.md`、总览规则、Karpathy、`.cursor/harness-meta.yaml` |
+| **L0** | 协作入口 | 根/分册 `AGENTS.md`、总览规则、Karpathy、`docs/harness-eng/harness-meta.yaml`（遗留 `.cursor/` 只读回退） |
 | **L1** | 契约骨架 | `docs/func|api|db|redis|jobs`（按所选）索引 + templates + 同步 rules（11/12/13/16/20） |
 | **L2** | 知识回流 | `docs/agent-kb` 四件套 + pitfalls「域」列 + rule 19 |
 | **L3** | 规划与软门禁 | `docs/superpowers` 进行中表 + commit **软提醒** hooks（不拦截） |
@@ -80,7 +80,7 @@
 | **配置 SSOT 管线** | L5：`docs/agent-config/` 为 rules/hooks/mcp/settings 单一真相源，`scripts/agent-config/sync.mjs` 生成各工具目录，`--check` 校验漂移；meta 记 `agent_config: true` |
 | **hooks 家族** | L3 选装软门禁组（`Q_HOOKS_FAMILY`）：`commit-gate-extended`（契约漏同步/migration 环境/pitfalls lint 五合一）· `mysql-guard` · `after-edit` · `stop-checklist`；全部 fail-open；脚本统一 Cursor 协议，Claude 经 `claude-adapter.js` 翻译 |
 | **pitfalls lint** | `scripts/agent-kb/lint-pitfalls.mjs`：台账 7 列 / ID 递增 / 状态分区 / 封闭域词表 / 速查一致性校验（0.5.0+，L2） |
-| **write-meta-only** | audit 子动作：MATURE 无 meta 时仅写 `.cursor/harness-meta.yaml`（ladder / domains / ai_tools / mcp_tracking 快照），不渲染模板 |
+| **write-meta-only** | audit 子动作：MATURE 无 meta 时仅写 `docs/harness-eng/harness-meta.yaml`（ladder / domains / ai_tools / mcp_tracking 快照），不渲染模板 |
 | **分册** | 子模块 `AGENTS.md`（`solo` 仅根 / `few` 少册 / `all` 每模块） |
 | **glob 档位** | `wide` 全仓宽扫 / `focused` 收窄到入口与确认模块（**大仓推荐 focused**） |
 | **完整档** | fill-truths 唯一默认：按所选契约域**模板**写齐必填章（无精简档；jobs 为调度面章节） |
@@ -94,7 +94,7 @@
 | **MCP 主环境** | `fill_mcp_profile`（默认 **test**）：烟测/calibrate/agents 实据优先 `{engine}-{profile}` |
 | **MCP 先行** | 先 fill-mcp（或多环境矩阵）再填真相；过闸规格见 [fill-mcp.md](fill-mcp.md) |
 | **live 校准** | MCP 未挂载时用 `fill-calibrate-live` 直连；可按引擎满足填充 MCP 闸 |
-| **施工现场** | `docs/harness-eng/`：评分 / 报告 / 进度（契约与 agent-kb 之外） |
+| **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
 | **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
 | **会话仪表盘** | 工程轮回复末尾的四台 markdown + mermaid（meta / 版本问答省略）；规格 [session-dashboard.md](session-dashboard.md)；脚本 `session-dash.mjs` |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |

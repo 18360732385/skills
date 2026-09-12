@@ -3,7 +3,7 @@
 ## Done
 
 1. 本轮 WritePlan 所列升阶缺口已 `create` / `skip` / `merge`（`on_exists=skip`）
-2. `.cursor/harness-meta.yaml` 的 `ladder` 已升到目标阶，`last_mode=upgrade`，`skill_version` 与 manifest 一致
+2. `docs/harness-eng/harness-meta.yaml` 的 `ladder` 已升到目标阶，`last_mode=upgrade`，`skill_version` 与 manifest 一致（若仅有遗留 `.cursor/` meta：先迁到新路径再写）
 3. 目标阶 [ladder.md](ladder.md) 必备项勾选通过；分级移交 TODO 已打印
 
 当前阶梯已齐、只要再升阶时使用。默认 **完整阶 +1**；用户书面「升到 Ln」可一次覆盖中间阶缺口。
@@ -17,7 +17,7 @@
 ## 流水线
 
 ```
-- [ ] 1 定根 + 读 harness-meta（当前 ladder / domains / skill_version）
+- [ ] 1 定根 + 读 harness-meta（先 `docs/harness-eng/harness-meta.yaml`，无则回退 `.cursor/`；当前 ladder / domains / skill_version）
 - [ ] 2 定目标阶：默认 current+1；书面指定则用书面阶
 - [ ] 3 对照 ladder.md + manifest，列出「当前阶已有 / 升阶缺口」
 - [ ] 4 条件提问（升阶相关；可「全部推荐」）— 每批≤5；若仓已有 score-policy，确认 **`Q_GATE_PROFILE`**（推荐 strict；要兼容则 legacy）
@@ -50,6 +50,12 @@
 ## render 参数
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
+
+## 0.5.5 → 0.5.6 迁移要点
+
+1. **meta**：`skill_version` → `0.5.6`；写入改到 `docs/harness-eng/harness-meta.yaml`。若仅有遗留 `.cursor/harness-meta.yaml`（或 `.yml`），resume / upgrade **迁到新路径**（键级合并），旧文件不自动删（遗留只读）
+2. **mcp-usage-guide**：新默认 `docs/harness-eng/mcp-usage-guide.md`；读侧仍认 `.cursor/mcp-usage-guide.md` / 旧中文名
+3. **行为**：`.cursor/mcp.json` 等工具运行时路径不变；L0 自检不再要求 meta **只能**在 `.cursor/`
 
 ## 0.5.4 → 0.5.5 迁移要点
 

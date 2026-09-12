@@ -76,7 +76,7 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 | 台 | 来源（高→低） |
 |---|---|
 | 决策台 | `score-latest.json` → `ai_coding_ready` + `buildReportUi` verdict |
-| 诊断台 | `.cursor/harness-meta.yaml` + score 的 skeleton/semantic/gold |
+| 诊断台 | `docs/harness-eng/harness-meta.yaml`（无则回退 `.cursor/`）+ score 的 skeleton/semantic/gold |
 | 任务台 | CLI `--pending`/`--next` → 会话上下文 → `fill-plan.yaml` → `next_shards` |
 | 趋势台 | score 的 coverage / overall / ui.composite |
 

@@ -35,7 +35,7 @@
 
 ## 按 ai_tools 启动 worker（说明性 · 非门禁）
 
-读目标仓 `.cursor/harness-meta.yaml` 的 `ai_tools`，用**已选工具**开会话。  
+读目标仓 `docs/harness-eng/harness-meta.yaml`（无则回退 `.cursor/harness-meta.yaml`）的 `ai_tools`，用**已选工具**开会话。  
 按 `meta.ai_tools` 开会话；无并行则同会话串行（不绑定某一宿主 Task API）。
 
 | `ai_tools` ID | 如何开并行 worker（可选） |

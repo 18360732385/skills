@@ -15,7 +15,10 @@
 | `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json`（及遗留 `.qoder/mcp.json`）已存在 | **非 fill-mcp：永不覆盖** | fill-mcp 经 WritePlan 确认后可按 `ai_tools` 覆盖或 backup-create（多路径内容一致） |
 | MCP 跟踪策略 `mcp_tracking` | land/L4 默认 **`example_only`**（`.gitignore` 忽略真密；仅 example 入库） | **`vendored_shared`**：团队约定跟踪共享 `mcp.json`（须写入 harness-meta；audit 不按反模式红灯；仍禁止把个人机绝对路径 / PAT 扩散到技能分发） |
 | 密文写入 docs / mcp | **fill**：源文件已在**本仓**可读 → 允许写入并可入库 | land/seed 不主动扩散密文 |
-| `.cursor/harness-meta.yaml` 已存在 | `merge`：脚本对 YAML 做**键级合并**（受管键 `ladder`/`domains`/`skill_version`/… 覆盖；未知用户键保留） | `backup-create` |
+| `docs/harness-eng/harness-meta.yaml` 已存在 | `merge`：脚本对 YAML 做**键级合并**（受管键 `ladder`/`domains`/`skill_version`/… 覆盖；未知用户键保留）；写入只走新路径 | `backup-create` |
+| 仅有遗留 `.cursor/harness-meta.yaml`（或 `.yml`），新路径不存在 | **迁移**：复制/合并到 `docs/harness-eng/harness-meta.yaml`（同一键级合并语义），再按上列写入；**不自动删除**旧文件（遗留只读；可选手工清理） | 保留双份 / 手工删旧 |
+| `docs/harness-eng/mcp-usage-guide.md` 已存在 | `skip`（resume）或按 `on_exists`；写入只走新路径 | `merge` / `backup-create` |
+| 仅有遗留 `.cursor/mcp-usage-guide.md`（或旧名 `MCP使用说明.md`） | resume/upgrade：复制到新路径后 skip/merge；**不自动删除**旧文件（遗留只读；可选手工清理） | 保留双份 / 手工删旧 |
 | `.claude/settings.json` / `.qoder/settings.json` / `.codebuddy/settings.json` / `.codex/hooks.json` / `.trae/hooks.json` 已存在 | **`merge-json-hooks`**：只追加/去重 hooks command；保留用户其它顶层键 | skip |
 | 根 `.gitignore` 已存在（L4 snippet） | **追加**缺失行，不整文件覆盖 | skip |
 | L5 已启用（meta `agent_config: true`） | `.cursor/rules` 改投 `docs/agent-config/rules/`；hooks 脚本改投 `docs/agent-config/hooks/`；`.cursor/hooks.json` / `.claude/settings.json` / CLAUDE.md 由 `sync.mjs` 生成，**render 不直渲**（互斥，避免被 sync 当 stale 清理或漂移） | — |

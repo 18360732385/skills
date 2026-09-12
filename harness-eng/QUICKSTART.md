@@ -73,4 +73,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 node scripts/selfcheck-0.5.2.mjs
 ```
 
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.5**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.6**）。

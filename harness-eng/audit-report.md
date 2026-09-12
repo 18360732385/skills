@@ -5,7 +5,7 @@
 1. 已按本模板输出完整 audit 报告（已具备 / 缺口 / 反模式 / 建议下一阶）
 2. 本模式未向目标仓写盘（用户明确要求补齐则转 resume/pipeline，不在本 Done 内）
 
-audit 模式按下列结构输出（只读，默认不写盘）。优先读取 `.cursor/harness-meta.yaml`（若 `S_HARNESS_META`）。
+audit 模式按下列结构输出（只读，默认不写盘）。优先读取 `docs/harness-eng/harness-meta.yaml`，无则回退 `.cursor/harness-meta.yaml`（若 `S_HARNESS_META`）。
 
 ```text
 # harness-eng audit — {{REPO_NAME 或根目录名}}
@@ -84,7 +84,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 
 - 当前最高**完整**阶：Lx
 - 建议：大仓 → `upgrade`/`resume` 到 **L4** 或 `pipeline`；或 `seed-truths` 补空壳真相
-- 无 meta 的 MATURE：可 **write-meta-only**（仅写 `.cursor/harness-meta.yaml` 快照：ladder / domains / ai_tools / mcp_tracking；不渲染模板）
+- 无 meta 的 MATURE：可 **write-meta-only**（仅写 `docs/harness-eng/harness-meta.yaml` 快照：ladder / domains / ai_tools / mcp_tracking；不渲染模板）
 - 契约深度不足：`fill-plan --gold` → `fill-truths-agents` → acceptance → merge；开干看 **ai_coding_ready** + **gold_ratio**；heuristic 留 `.fill-work`
 
 ## L3/L4 烟测（若已宣称具备）

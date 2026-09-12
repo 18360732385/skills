@@ -36,7 +36,7 @@ git rev-parse --show-toplevel
 | `S_MCP` | `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json` 或任一 `mcp.json.example` |
 | `S_CLAUDE` | `CLAUDE.md` 或 `.claude/` |
 | `S_STACK` | `pom.xml` / `package.json` / `go.mod` / `Cargo.toml` / `pyproject.toml` 等 |
-| `S_HARNESS_META` | `.cursor/harness-meta.yaml`（PARTIAL/upgrade 读 ladder/domains） |
+| `S_HARNESS_META` | `docs/harness-eng/harness-meta.yaml`（无则回退 `.cursor/harness-meta.yaml` / `.yml`；PARTIAL/upgrade 读 ladder/domains） |
 | `S_SECRETS_LEAK` | README / `*.yml` / `*.yaml` / `.env*` 命中启发式：`password:`、`密码`、`passwd`、`secret:`、`api[_-]?key`、疑似长 token（≥20 连续字母数字） |
 | `S_SQL_DIR` | 存在 `file/**/*.sql` 或仓内集中手写 SQL 目录，且非标准 migration 树 |
 | `S_NO_FLYWAY` | 无 `**/db/migration/**`、无 `flyway` 目录/配置 |

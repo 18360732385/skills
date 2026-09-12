@@ -46,7 +46,7 @@ Q_SEED: 是
 2. 拟写入的各 sync rule 的 `globs:` 行（11/12/13/16 中本轮会装的）
 3. 若目标阶梯 ≥ L3 或含 L4：附带 **装后烟测**：
    - hooks：按 `ai_tools` 装 Cursor/Claude/WorkBuddy/Codex 原生 hooks；另有 `.githooks` 兜底；一律 fail-open
-   - MCP：仅 example / 无明文密入库；说明文件为 `.cursor/mcp-usage-guide.md`（若仓内仍有旧名 `MCP使用说明.md`：新建英文名、旧文件 skip 不删，移交可手工清理）
+   - MCP：仅 example / 无明文密入库；说明文件为 `docs/harness-eng/mcp-usage-guide.md`（读侧仍认 `.cursor/mcp-usage-guide.md`；若仓内仍有旧名 `MCP使用说明.md`：新建英文名、旧文件 skip 不删，移交可手工清理）
    - `.gitignore`：建议忽略 `.cursor/mcp.json`（见 gitignore snippet）
 
 ## 确认闸门（强制）
@@ -103,7 +103,7 @@ Q_SEED: 是
 ## 写后自检
 
 按 [ladder.md](ladder.md) 对应阶梯勾选；失败项列出补救，不假装成功。  
-确认 `.cursor/harness-meta.yaml` 已写入且 `skill_version` / `ladder` / `domains` 正确。
+确认 `docs/harness-eng/harness-meta.yaml` 已写入且 `skill_version` / `ladder` / `domains` 正确（读侧可回退遗留 `.cursor/`）。
 
 ## 移交 TODO（分级）
 

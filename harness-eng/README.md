@@ -2,12 +2,12 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.5.5**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.5.6**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
 
-0.5.5 要点：**安装说明宿主无关**（不默认装到 `~/.cursor`）。0.5.4：**会话仪表盘仅工程轮 SHOW**。0.5.3：**会话仪表盘**（四台摘要 + HTML 链）。更早见 [CHANGELOG.md](CHANGELOG.md)。
+0.5.6 要点：**harness-meta / mcp-usage-guide 迁到 `docs/harness-eng/`**（`.cursor/` 遗留只读回退）。0.5.5：**安装说明宿主无关**。0.5.4：**会话仪表盘仅工程轮 SHOW**。更早见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
@@ -75,4 +75,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.5**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.6**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。

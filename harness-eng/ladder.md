@@ -17,7 +17,7 @@
 ### L0
 
 - [ ] 根 `AGENTS.md` 存在（含 Commands / Never do / 文档优先级骨架；solo 文案无「见分册」误导）
-- [ ] `.cursor/harness-meta.yaml` 存在（skill_version / ladder / domains）
+- [ ] `docs/harness-eng/harness-meta.yaml` 存在（skill_version / ladder / domains）；无则回退认遗留 `.cursor/harness-meta.yaml`（或 `.yml`）
 - [ ] `.cursor/rules/karpathy-guidelines.mdc` 且 `alwaysApply: true`
 - [ ] `.cursor/rules/00-project-docs-overview.mdc` 且 `alwaysApply: true`
 - [ ] （可选，行为包）`21-observability-comments.mdc` 存在（`Q_RULE21=yes` 且 `S_SLF4J` 时推荐）
@@ -59,7 +59,7 @@
 ### L4
 
 - [ ] 仅有 `mcp.json.example`（或未跟踪真密）；按 ai_tools 检查 `.cursor/` / 根 `.mcp.json.example` / `.trae/`
-- [ ] 说明文档 `.cursor/mcp-usage-guide.md` 含「勿提交真密」（若仍有旧名 `MCP使用说明.md`：新建英文名，旧文件 skip 不删，移交可手工清理）
+- [ ] 说明文档 `docs/harness-eng/mcp-usage-guide.md` 含「勿提交真密」（无则回退 `.cursor/mcp-usage-guide.md`；若仍有旧名 `MCP使用说明.md`：新建英文名，旧文件 skip 不删，移交可手工清理）
 - [ ] 装后烟测：`.gitignore` 建议含 `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json`（snippet merge，不整文件覆盖）
 - [ ] 非 Cursor 已选工具：rules 目录含全量镜像（qoder/trae/claude 为 `.md`；codebuddy 为 `RULE.mdc`）
 - [ ] fill-mcp 真密按 `scripts/lib/mcp-paths.mjs` 多路径写入

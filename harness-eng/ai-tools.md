@@ -50,7 +50,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 
 - 多选时**都**生成对应适配；未选的不删已有用户文件（resume 时 skip）
 - 适配正文只含：指向根 AGENTS、docs 优先级、勿复制密文
-- `ai_tools` 写入 `.cursor/harness-meta.yaml`（YAML 列表）
+- `ai_tools` 写入 `docs/harness-eng/harness-meta.yaml`（YAML 列表；读侧可回退 `.cursor/`）
 - **宿主对齐（0.2.16+）**：非 `cursor` 工具额外写入 **契约 sync 镜像**（`1x-contract-sync.md`），含契约域 packs / globs 指针
 - **全量 rules 镜像（0.5.1+ / 0.5.2+ claude）**：L3+ 镜像到 qoder/trae/claude（`.md`）与 workbuddy（`RULE.mdc`）；L5 由 `sync.mjs` 分发
 - audit / detect：若 meta.`ai_tools` 含某工具但入口或镜像缺失 → 记反模式 / 缺口
