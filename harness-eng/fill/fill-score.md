@@ -30,7 +30,7 @@
 ```
 
 无 `--inventory` 时自动扫描 `docs/api/.fill-work/inventory*.json`（多模块合并）。db/redis/func/**jobs** 覆盖率写入 `coverage_by_domain`（域列表见 `templates/_meta/domains.yaml`；可用 `--domains` 覆盖）。  
-对用户摘要输出三词（开干 / 覆盖 / 形态）；贴顶时看 `formula_ceiling` 后走 agents。版本史见 [CHANGELOG.md](CHANGELOG.md)。
+对用户摘要输出三词（开干 / 覆盖 / 形态）；贴顶时看 `formula_ceiling` 后走 agents。版本史见 [CHANGELOG.md](../CHANGELOG.md)。
 
 ## HTML 报告
 
@@ -44,7 +44,7 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 默认写出：`docs/harness-eng/report-latest.html`、`docs/harness-eng/score-latest.json`。  
 audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标达标率** / 骨架就绪 / 语义抽检 / 文档形态分 / 相对代码覆盖 / 公式上限 / **模板完整度**），英文 ID 放「技术细节」。  
-报告优先对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 同值，现 0.2.24）。**报告壳版本 ≠ skill**。术语见 [glossary.md](glossary.md)。
+报告优先对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 同值，现 0.2.24）。**报告壳版本 ≠ skill**。术语见 [glossary.md](../glossary.md)。
 
 ### 报告字段速查
 
@@ -63,7 +63,7 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 | **quality** | 文档形态（0–100，再加权 overall） | 见下「分项」；格式与 **api-doc-template** 对齐 |
 | **coverage** | 相对代码覆盖（有 inventory 时） | api：`docs 已登记接口数 / inventory 接口数` |
 | **template_completeness** | 模板必填章 + 列密度（0–100，独立指标） | 见「模板完整度」；**不进** ready 公式 |
-| **gold_ratio** | acceptance 达标占比（0–1） | 见 [truth-quality.md](truth-quality.md)；**不进** `ai_coding_ready` 公式 |
+| **gold_ratio** | acceptance 达标占比（0–1） | 见 [truth-quality.md](../modes/truth-quality.md)；**不进** `ai_coding_ready` 公式 |
 
 **ready.ok（兼容 · 形态/覆盖）**：`quality` 加权 overall ≥ `--ready-quality`（默认 80；可读 meta），且 overall coverage ≥ `--ready-coverage`（默认 0.8；可读 meta）。无 inventory 时 `coverage_incomplete=true`，`ready.ok=false`。开干不看此项。
 
@@ -74,7 +74,7 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 
 **形态上限**：`domain_caps` / `formula_ceiling` 只描述形态天花板；抬 caps 不会使 `ai_coding_ready` 变 true。
 
-正写摘要三词：**开干** / **覆盖** / **形态**（见 [glossary.md](glossary.md)）。提问见 `Q_GATE_PROFILE`。
+正写摘要三词：**开干** / **覆盖** / **形态**（见 [glossary.md](../glossary.md)）。提问见 `Q_GATE_PROFILE`。
 
 ### 覆盖裁决 · score-policy
 

@@ -6,6 +6,18 @@
 
 当前 **0.6.0-dev**。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。0.6.0 计划见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
 
+## 0.6.0-dev 增量验收（M2）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `node scripts/selfcheck-render.mjs` | 烟测 |
+| 根目录 `harness-eng/*.md` ≤ 20（现 15） | 有 |
+| `modes/` · `fill/` · `host/` 规格已搬家 | 有 |
+| 热路径旧路径薄 stub（write-plan / detect / fill / pipeline / fill-truths-auto） | 有 |
+| AGENT-INDEX 必读 ≤ 8；SKILL / QUICKSTART 路径已改 | 有 |
+| 版本仍为 `0.6.0-dev`（未钉 0.6.0） | 有 |
+
 ## 0.6.0-dev 增量验收（M1）
 
 | 检查 | 结果 |
@@ -79,7 +91,7 @@
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| [session-dashboard.md](session-dashboard.md) SHOW/HIDE 触发 | 有 |
+| [session-dashboard.md](modes/session-dashboard.md) SHOW/HIDE 触发 | 有 |
 | 工程轮脚注「详情请查询仪表盘」+ 使用手册.html#s6 | 有 |
 | 纯 meta 轮省略整个 `## harness-eng 会话仪表盘` 块 | 有 |
 
@@ -87,7 +99,7 @@
 
 | 检查 | 结果 |
 |---|---|
-| [session-dashboard.md](session-dashboard.md) + `session-dash.mjs` | 有 |
+| [session-dashboard.md](modes/session-dashboard.md) + `session-dash.mjs` | 有 |
 | 工程轮脚注「详情请查询仪表盘」+ 使用手册.html#s6 | 有 |
 
 ## 0.5.2 增量验收

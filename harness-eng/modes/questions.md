@@ -1,12 +1,12 @@
 # 条件问题树
 
 原则：每批最多 5 题；能从指纹推断的先展示【推荐】再确认。  
-提问前 Read [glossary.md](glossary.md) 相关行，并用中文简述阶梯/模式。  
+提问前 Read [glossary.md](../glossary.md) 相关行，并用中文简述阶梯/模式。  
 detect 后先展示 [RecommendedProfile](recommended-profile.md)；引导「不确定请回复：**全部推荐**」。
 
 ## 机器可读 SSOT（0.2.5+）
 
-- 完整题库：[questions.yaml](questions.yaml)
+- 完整题库：[questions.yaml](../questions.yaml)
 - 下一批驱动：
 
 ```bash
@@ -34,13 +34,13 @@ Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘�
 | `batch-seed-truths` | seed-truths | `Q_SEED_DOMAINS` / `Q_SEED_NAMES` |
 | `batch-fill` | fill-* / pipeline | `Q_FILL_ENGINE`(agents【推荐】) / 域/模块/MCP 先行/报告；**完整档**唯一 |
 
-`Q_AI_TOOL` 选项与写入 params 见 [ai-tools.md](ai-tools.md)。含 **Codex** 时对齐程度为 **部分（P2）·不默认**（未探测不进「全部推荐」）；L5 `sync.mjs` **不全量**分发其 rules/hooks/MCP/skills（见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)）。无探测时「全部推荐」的 `ai_tools` 为 `[]`，须追问一次，**不**默认 Cursor。  
-`Q_FILL_ENGINE`：`agents`【大仓推荐】/ `hybrid`（可选薄草稿）/ `auto`（legacy）（见 [fill-truths-agents.md](fill-truths-agents.md) · [fill-plan.md](fill-plan.md)）。  
+`Q_AI_TOOL` 选项与写入 params 见 [ai-tools.md](../host/ai-tools.md)。含 **Codex** 时对齐程度为 **部分（P2）·不默认**（未探测不进「全部推荐」）；L5 `sync.mjs` **不全量**分发其 rules/hooks/MCP/skills（见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md)）。无探测时「全部推荐」的 `ai_tools` 为 `[]`，须追问一次，**不**默认 Cursor。  
+`Q_FILL_ENGINE`：`agents`【大仓推荐】/ `hybrid`（可选薄草稿）/ `auto`（legacy）（见 [fill-truths-agents.md](../fill/fill-truths-agents.md) · [fill-plan.md](../fill/fill-plan.md)）。  
 大仓 / pipeline 默认 `Q_LADDER=L4`（见 [recommended-profile.md](recommended-profile.md)）。  
 `Q_MODULES` → manifest：`solo`→`agents-root-solo`；`few`/`all`→`agents-root`+`agents-module`。  
 `Q_RULE14=true` → params `include_optional: ["rule-14"]`（**数组**，勿写布尔进 render params）。  
 resume 写盘：`on_exists=skip`（见 [resume.md](resume.md)）。  
-fill 确认协议见 [fill.md](fill.md)。
+fill 确认协议见 [fill.md](../fill/fill.md)。
 
 `MATURE` + 未指定 mode → 【推荐】`audit`。  
 `PARTIAL` / 有 meta 未满阶 → 【推荐】`resume`。

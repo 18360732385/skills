@@ -56,7 +56,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 - [ ] `docs/agent-config/` + `scripts/agent-config/sync.mjs`
 - [ ] `node scripts/agent-config/sync.mjs --check` 无漂移
 - [ ] 生成物带 GENERATED 标记；无人手改生成物
-- [ ] 若 `ai_tools` 含 `codex`：已标明 **P2 / 部分对齐**（`sync.mjs` **不全量**发出 Codex rules/hooks/MCP/skills；见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)）
+- [ ] 若 `ai_tools` 含 `codex`：已标明 **P2 / 部分对齐**（`sync.mjs` **不全量**发出 Codex rules/hooks/MCP/skills；见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md)）
 
 ## 缺口
 
@@ -77,7 +77,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 | **L5 仓生成物漂移**（`sync.mjs --check` 有差异仍提交） | |
 | **L5 仓手改生成物**（带 GENERATED 标记文件与 SSOT 不一致） | |
 | **L5 与直渲混用**（`agent_config: true` 仍由 render 直渲 `.cursor/hooks.json` 等 sync 托管目标） | |
-| **把 Codex + L5 当成全量对齐**（`sync.mjs` **不全量**发出 Codex rules/hooks/MCP/skills；对齐程度 **P2**，见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)） | |
+| **把 Codex + L5 当成全量对齐**（`sync.mjs` **不全量**发出 Codex rules/hooks/MCP/skills；对齐程度 **P2**，见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md)） | |
 | **把旧 `ready.ok` / 形态分当真「可 AI coding」**（须看 `ai_coding_ready`） | |
 | **把形态覆盖 / inventory 覆盖当真「深真全」**（须看 `gold_ratio` + [truth-quality.md](truth-quality.md)） | |
 | **默认 auto / 启发式脚本写 SSOT**（0.2.17+ 禁止；0.2.18+ merge 须过 acceptance；仅 legacy `--work-only` / `--force-write` 移交） | |
@@ -94,4 +94,4 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 1. hooks：`failClosed` 不为 true 强拦（软提醒）；按 `ai_tools` 检查对应宿主 hooks
 2. MCP：仅 example 或真密未入库
 3. `.gitignore` 是否忽略 `.cursor/mcp.json`（建议有）
-4. 非 cursor 工具：契约 sync 镜像文件存在（见 [ai-tools.md](ai-tools.md)）
+4. 非 cursor 工具：契约 sync 镜像文件存在（见 [ai-tools.md](../host/ai-tools.md)）

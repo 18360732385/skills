@@ -30,7 +30,7 @@
 - [ ] 8 可选 fill-dto-batch；拆页（≥200）；fill-progress；fill-score（ready + template_completeness）
 ```
 
-深度精填见 [fill-truths-agents.md](fill-truths-agents.md)。薄底见 [fill-truths-auto.md](fill-truths-auto.md)。  
+深度精填见 [fill-truths-agents.md](fill-truths-agents.md)。薄底见 [fill-truths-auto.md](../fill-truths-auto.md)。  
 执行细节见 [fill-workers.md](fill-workers.md)（**工具无关**：默认串行；并行可选）。
 
 ## 完整档检查清单（api）

@@ -2,7 +2,7 @@
 
 ## Done
 
-1. 已按 [detect.md](detect.md) **MCP 矩阵**写出应有 `{engine}-{profile}` server（或缺口已列入 `matrix_gap: no_creds`）
+1. 已按 [detect.md](../modes/detect.md) **MCP 矩阵**写出应有 `{engine}-{profile}` server（或缺口已列入 `matrix_gap: no_creds`）
 2. 按 `ai_tools` 写入对应真密路径（经确认）；example / 使用说明已与命名约定对齐
 3. 烟测结论已写明：每个所需引擎满足 **MCP 主环境可扫库** 或 **`fill-calibrate-live` 已通**（见 **填充 MCP 闸**）
 
@@ -52,7 +52,7 @@
 写完真密 mcp.json 后，若会话工具列表仍无对应 server：
 
 1. 提示 **Reload Window / 新开 Agent**（【推荐】）
-2. 改走 [`fill-calibrate-live.mjs`](scripts/fill-calibrate-live.mjs)（见 `--help`）
+2. 改走 [`fill-calibrate-live.mjs`](../scripts/fill-calibrate-live.mjs)（见 `--help`）
 3. 两路径皆失败 → 闸门未过，停填充
 
 ## 步骤

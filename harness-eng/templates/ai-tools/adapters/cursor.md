@@ -1,6 +1,6 @@
 # Adapter: Cursor
 
-对齐程度：**高**。不另写 `1x-contract-sync`（已有真实 `11|12|13|16-*-sync*`）。矩阵见 [ai-tools.md](../../../ai-tools.md)。
+对齐程度：**高**。不另写 `1x-contract-sync`（已有真实 `11|12|13|16-*-sync*`）。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。
 
 - **目录**: `.cursor/`
 - **Rules**: `.cursor/rules/*.mdc`（保留 YAML frontmatter：`alwaysApply` / `globs` / `description`）

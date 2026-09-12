@@ -28,15 +28,15 @@
 - **T1.5** 热路径文档改指向本 CLI（SKILL / AGENT-INDEX / write-plan / conflict-policy / QUICKSTART / pipeline）
 - **T1.6** `render.mjs --help`（或横幅）声明：内部渲染器，公开入口是 `harness.mjs`
 
-### G2 文档拓扑
+### G2 文档拓扑（M2 已落地）
 
 根目录可导航：人/Agent 都不必扫几十个 md。
 
-- **T2.1** 根 md **≤ 20**（SKILL / AGENT-INDEX / QUICKSTART / CHANGELOG / ROADMAP / 手册入口等保留）
-- **T2.2** `modes/`：land · resume · upgrade · pipeline · audit 搬家
-- **T2.3** `fill/`：收齐 fill-* 规格（索引已有，正文迁入）
-- **T2.4** `host/`（或 `docs/host/`）：ai-tools · sync-hosts · adapters 指针
-- **T2.5** 更新 AGENT-INDEX / SKILL 相对路径；旧路径留 stub 一轮
+- [x] **T2.1** 根 md **≤ 20**（SKILL / AGENT-INDEX / QUICKSTART / CHANGELOG / ROADMAP / 手册入口等保留）
+- [x] **T2.2** `modes/`：land · resume · upgrade · pipeline · audit 搬家
+- [x] **T2.3** `fill/`：收齐 fill-* 规格（索引已有，正文迁入）
+- [x] **T2.4** `host/`（或 `docs/host/`）：ai-tools · sync-hosts · adapters 指针
+- [x] **T2.5** 更新 AGENT-INDEX / SKILL 相对路径；热路径旧路径留 stub
 
 ### G3 fill 引擎真内聚
 
@@ -66,7 +66,7 @@
 
 **0.6.x 冻结 P2，全量对等另立项。**
 
-0.5.8–0.5.10 已把 Codex 定为 **部分对齐（P2）·不默认**：未探测 `.codex/` 不进「全部推荐」；L5 `sync.mjs` **不全量**发出 Codex 的 rules / hooks / MCP / skills。0.6.x **不再扩** Codex 对齐面（不补全家桶事件、不镜像全量 `.mdc`、不做 sync 对等）。若产品要「与 Cursor/Claude 同构」，单独立项，不占用本列车 M1–M4。交叉：[adapters/codex.md](templates/ai-tools/adapters/codex.md) · [ai-tools.md](ai-tools.md)。
+0.5.8–0.5.10 已把 Codex 定为 **部分对齐（P2）·不默认**：未探测 `.codex/` 不进「全部推荐」；L5 `sync.mjs` **不全量**发出 Codex 的 rules / hooks / MCP / skills。0.6.x **不再扩** Codex 对齐面（不补全家桶事件、不镜像全量 `.mdc`、不做 sync 对等）。若产品要「与 Cursor/Claude 同构」，单独立项，不占用本列车 M1–M4。交叉：[adapters/codex.md](templates/ai-tools/adapters/codex.md) · [ai-tools.md](host/ai-tools.md)。
 
 - **T6.1** 本文件 + `adapters/codex.md` + `ai-tools.md` 各留冻结段（M1 轻量）
 - **T6.2** 全量对等：**不做**（另立项）
@@ -74,15 +74,15 @@
 ### G7 版本钉与 0.5.10→0.6.0 迁移说明
 
 - **T7.1** M1：`manifest` / meta / questions → **`0.6.0-dev`**；M4 去 `-dev` 钉 `0.6.0`
-- **T7.2** [upgrade.md](upgrade.md) 短清单：CLI 改名、文档搬家（M2）、入口指针
-- **T7.3** CHANGELOG `Unreleased` / `0.6.0-dev` 记 M1；正式版条目在 M4 写齐
+- **T7.2** [upgrade.md](modes/upgrade.md) 短清单：CLI 改名、文档搬家（M2）、入口指针
+- **T7.3** CHANGELOG `Unreleased` / `0.6.0-dev` 记 M1+M2；正式版条目在 M4 写齐
 
 ## 里程碑
 
 | 里程碑 | 范围 | 完成判据 |
 |---|---|---|
-| **M1**（本切片） | G1 CLI + 热路径指针 + G6 轻声明 + G7 `0.6.0-dev` + ROADMAP + upgrade stub | `harness.mjs` 可跑四模式；`land.mjs` 别名；`render --help` 指向公开入口；selfcheck 钉 `0.6.0-dev` |
-| **M2** | G2 文档拓扑 | 根 md≤20；modes / fill / host 已搬；旧路径 stub |
+| **M1** | G1 CLI + 热路径指针 + G6 轻声明 + G7 `0.6.0-dev` + ROADMAP + upgrade stub | `harness.mjs` 可跑四模式；`land.mjs` 别名；`render --help` 指向公开入口；selfcheck 钉 `0.6.0-dev` |
+| **M2**（本切片） | G2 文档拓扑 | 根 md≤20（现 15）；`modes/` / `fill/` / `host/` 已搬；热路径旧路径 stub；AGENT-INDEX 必读≤8 |
 | **M3** | G3 fill 内聚 + G4 黄金集 | 域脚本无旁路语义；L5 `sync --check` fixture 绿；multi-host hooks 夹具 |
 | **M4** | G5 发包减脂 + 正式 `0.6.0` | 安装不含 legacy selfcheck；manifest `0.6.0`；upgrade 收口 |
 
@@ -104,5 +104,5 @@ node scripts/harness.mjs --root <TARGET> --params <params.json> --mode upgrade
 node scripts/harness.mjs --root <TARGET> --params <params.json> --mode pipeline-skeleton
 ```
 
-`pipeline-skeleton` 只写骨架（audit 后的 L4 land/resume 写盘）。填充战役仍走 [pipeline-fill.md](pipeline-fill.md)，且须先过填充 MCP 闸。  
+`pipeline-skeleton` 只写骨架（audit 后的 L4 land/resume 写盘）。填充战役仍走 [pipeline-fill.md](modes/pipeline-fill.md)，且须先过填充 MCP 闸。  
 L5 / `agent_config`：不要让 `render.mjs` 直写 `.cursor/rules` 等生成宿主路径；由 `node scripts/agent-config/sync.mjs` 发出。

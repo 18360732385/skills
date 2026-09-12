@@ -2,7 +2,7 @@
 
 把「填真相」从分数早停，改成 **可关闭的目标批次**。  
 状态文件：目标仓 `docs/harness-eng/fill-plan.yaml`（施工产物，非契约 SSOT）。  
-质量规格：[truth-quality.md](truth-quality.md)（0.2.18+ 深·真·全）。
+质量规格：[truth-quality.md](../modes/truth-quality.md)（0.2.18+ 深·真·全）。
 
 ## 触发
 

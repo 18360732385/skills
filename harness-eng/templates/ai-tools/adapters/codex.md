@@ -1,6 +1,6 @@
 # Adapter: Codex（部分对齐 · P2）
 
-对齐程度：**部分（P2）·不默认**。与 Cursor/Claude/Qoder/WorkBuddy（高）或 Trae（中高）不同，**不要**假设 Codex 已全量同步 rules / hooks / MCP / skills。**未探测到 `.codex/` 时不进「全部推荐」**；勿因习惯勾选。矩阵见 [ai-tools.md](../../../ai-tools.md)。
+对齐程度：**部分（P2）·不默认**。与 Cursor/Claude/Qoder/WorkBuddy（高）或 Trae（中高）不同，**不要**假设 Codex 已全量同步 rules / hooks / MCP / skills。**未探测到 `.codex/` 时不进「全部推荐」**；勿因习惯勾选。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。
 
 **0.6.x 冻结 P2**：本列车不再扩展 Codex 对齐面（不补全家桶事件、不全量镜像 `.mdc`、不做 `sync.mjs` 对等）。全量对等另立项，见 [ROADMAP-0.6.0.md](../../../ROADMAP-0.6.0.md)。
 
