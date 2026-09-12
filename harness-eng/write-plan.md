@@ -38,6 +38,12 @@ Q_SEED: 是
 | `.cursor/rules/karpathy-guidelines.mdc` | create | `templates/rules/karpathy-guidelines.mdc` | L0 |
 | … | … | … | … |
 
+### Codex 期望（`ai_tools` 含 `codex` 时强制展示）
+
+白话摘要与技术摘要须含一行**可见**警告（不得只藏在适配卡里）：
+
+> **Codex = 部分对齐（P2）**：本轮 land / L5 `sync.mjs` **不全量**发出 Codex 的 rules / hooks / MCP / skills。不要当成与 Cursor/Claude 全家桶对等。详见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)。
+
 ### 渲染预览（强制）
 
 在确认前展示：

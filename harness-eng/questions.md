@@ -34,7 +34,7 @@ Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘�
 | `batch-seed-truths` | seed-truths | `Q_SEED_DOMAINS` / `Q_SEED_NAMES` |
 | `batch-fill` | fill-* / pipeline | `Q_FILL_ENGINE`(agents【推荐】) / 域/模块/MCP 先行/报告；**完整档**唯一 |
 
-`Q_AI_TOOL` 选项与写入 params 见 [ai-tools.md](ai-tools.md)。  
+`Q_AI_TOOL` 选项与写入 params 见 [ai-tools.md](ai-tools.md)。含 **Codex** 时对齐程度为 **部分（P2）**；L5 `sync.mjs` **不全量**分发其 rules/hooks/MCP/skills（见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)）。  
 `Q_FILL_ENGINE`：`agents`【大仓推荐】/ `hybrid`（可选薄草稿）/ `auto`（legacy）（见 [fill-truths-agents.md](fill-truths-agents.md) · [fill-plan.md](fill-plan.md)）。  
 大仓 / pipeline 默认 `Q_LADDER=L4`（见 [recommended-profile.md](recommended-profile.md)）。  
 `Q_MODULES` → manifest：`solo`→`agents-root-solo`；`few`/`all`→`agents-root`+`agents-module`。  

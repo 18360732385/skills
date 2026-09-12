@@ -51,6 +51,13 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.5.7 → 0.5.8 迁移要点
+
+1. **meta**：`skill_version` → `0.5.8`（resume / upgrade 写 meta 时对齐 manifest）
+2. **detect**：`S_RULES` / `S_HOOKS` / `MATURE` 按多宿主计（非仅 Cursor）；仅 Claude/Qoder/Trae/CodeBuddy 仓可判 MATURE
+3. **selfcheck**：热路径改为 `scripts/selfcheck.mjs`（旧名 `selfcheck-0.5.2.mjs` 已弃用）
+4. **Codex + L5**：须明示 **P2 / 部分对齐**；sync 不全量分发 Codex rules/hooks/MCP/skills
+
 ## 0.5.6 → 0.5.7 迁移要点
 
 1. **meta**：`skill_version` → `0.5.7`（resume / upgrade 写 meta 时对齐 manifest）

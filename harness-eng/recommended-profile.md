@@ -8,7 +8,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 
 | 字段 | 规则 |
 |---|---|
-| `mode` | `MATURE`→`audit`；`PARTIAL` 或已有 `S_HARNESS_META` 但未满目标阶→`resume`；有代码无 harness→`land`；用户已说「落地/升到 Ln」→尊从；大仓首次→【推荐】**pipeline** |
+| `mode` | `MATURE`→`audit`（`MATURE` 判定见 [detect.md](detect.md)：`S_RULES`/`S_HOOKS` 按**任一宿主**，非仅 Cursor）；`PARTIAL` 或已有 `S_HARNESS_META` 但未满目标阶→`resume`；有代码无 harness→`land`；用户已说「落地/升到 Ln」→尊从；大仓首次→【推荐】**pipeline** |
 | `ladder` | 大仓（多模块或 Controller≥50）或 pipeline → 默认 **L4**；小仓默认 L4（骨架一次到位）；用户书面「只要 L2 / 不要 hooks·MCP」才推荐 L2 |
 | `domains` | Java/Maven 默认 `func,api,db`；探测到 redis 目录/依赖再加 `redis`；**`S_JOBS` 或 Scheduler 指纹再加 `jobs`**【0.3.4】；手写 SQL→务必含 `db`。域注册表见 `templates/_meta/domains.yaml` |
 | `agents_variant` | 模块≥5 → `modules`+`few`（入口+核心业务模块）；否则 `solo`；`S_FRONTEND` 时脚注前端分册 |
@@ -22,7 +22,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 | `hooks_family` | L3+ 默认 `commit-gate-extended, after-edit, stop-checklist`；装配 mysql MCP 再加 `mysql-guard`（`Q_HOOKS_FAMILY`；extended 与基础 commit 门禁互斥） |
 | `seed` | 默认 **是**（安全预填） |
 | `name` / `desc` | 来自 pom / package.json（无密） |
-| `ai_tools` | 探测到 `.cursor`→含 `cursor`；`CLAUDE.md`→`claude`；`.codex`→`codex`；`.qoder`→`qoder`；`.trae`→`trae`；`.codebuddy`/`CODEBUDDY.md`→`workbuddy`；皆无则 `[cursor]`。自定义不进「全部推荐」除非用户已写路径 |
+| `ai_tools` | 探测到 `.cursor`→含 `cursor`；`CLAUDE.md`→`claude`；`.codex`→`codex`；`.qoder`→`qoder`；`.trae`→`trae`；`.codebuddy`/`CODEBUDDY.md`→`workbuddy`；皆无则 `[cursor]`。自定义不进「全部推荐」除非用户已写路径。**含 `codex` 时脚注「部分对齐（P2）」** — L5/`sync.mjs` **不**全量发出 Codex rules/hooks/MCP/skills（见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)） |
 | `mcp_tracking` | 已跟踪含密 `mcp.json`（团队共享）→ 脚注 **`vendored_shared`**；否则【推荐】**`example_only`**（L4 理想态）；提问见 `Q_MCP_TRACKING` |
 | `fill_mcp_first` | 用户走 fill / pipeline / 含 db·redis 域 → 默认 **是**（先装配 MCP 再 fill-truths） |
 | `fill_mcp_profile` | 填充实据主环境默认 **`test`**（`Q_FILL_MCP_PROFILE`）；无 test 凭证再回退 dev |
@@ -44,7 +44,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 - 分册: few（sms-entrance, …）
 - glob: focused
 - Rule14 / Rule21 / 安全预填: 是 / 是(S_SLF4J) / 是
-- AI 工具面: cursor — 理由：探测到 .cursor
+- AI 工具面: cursor — 理由：探测到 .cursor（若含 codex：脚注 **部分对齐（P2）**，L5 sync 不全量分发）
 - MCP 跟踪策略: example_only（或 vendored_shared 脚注）
 - fill: MCP先行=是 · **主环境=test** · 深度=完整档 · **引擎=agents** · **fill-plan=是** · **金标+sample_n=是** · **ready_coverage=0.8** — 理由：多 Agent 按批次精填；acceptance 过闸才 SSOT；开干看覆盖率非形态上限
 - 旁注（若探测）: releases→release-eng；frontend→rule 17 协作包（非 fill-score 契约域）

@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.5.7"
+version: "0.5.8"
 
 all_recommend_phrases:
   - 全部推荐
@@ -47,7 +47,7 @@ batches:
           - { value: L2, label: L2 知识回流 }
           - { value: L3, label: L3 规划与软门禁 }
           - { value: L4, label: L4 工具连接样例, recommended_when: "large_repo || mode == pipeline || mode == land" }
-          - { value: L5, label: L5 配置 SSOT 管线（多工具仓推荐）, recommended_when: "S_MULTI_TOOL" }
+          - { value: L5, label: L5 配置 SSOT 管线（多工具仓推荐；含 Codex 仍为 P2 部分对齐）, recommended_when: "S_MULTI_TOOL" }
       - id: Q_CONTRACT
         text: 启用哪些契约域？（L1+）
         type: multi
@@ -138,7 +138,7 @@ batches:
         options:
           - { value: cursor, label: Cursor }
           - { value: claude, label: Claude Code }
-          - { value: codex, label: Codex }
+          - { value: codex, label: Codex（部分对齐 P2；L5 sync 不全量分发） }
           - { value: qoder, label: Qoder }
           - { value: trae, label: Trae }
           - { value: workbuddy, label: WorkBuddy }
@@ -146,7 +146,7 @@ batches:
         recommended_from: fingerprint.detected_ai_tools
         recommended_fallback: [cursor]
       - id: Q_AGENT_CONFIG
-        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs --check；启用后 .cursor/ 等为生成物）？
+        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs --check；启用后 .cursor/ 等为生成物）？含 Codex 时 sync 不全量分发其 rules/hooks/MCP/skills（P2）
         type: boolean
         recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
 
@@ -201,7 +201,7 @@ batches:
         type: boolean
         recommended_when: "S_FRONTEND"
       - id: Q_AGENT_CONFIG
-        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs）？
+        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs）？含 Codex 时 sync 不全量分发（P2）
         type: boolean
         recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
 

@@ -1,8 +1,23 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.5 → 0.5.6 → 0.5.7`（当前 **0.5.7**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`… → 0.5.6 → 0.5.7 → 0.5.8`（当前 **0.5.8**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.8 — 2026-09-12（detect 多宿主诚实 + selfcheck 稳定名 + Codex P2 期望）
+
+### 产品
+
+- **P0-1 detect / MATURE**：`S_RULES` / `S_HOOKS` 按任一支持宿主计（`.claude/.qoder/.trae/.codebuddy` rules；Claude 系 settings hooks / Trae / Codex / `.githooks`）。仅非 Cursor 仓只要根 AGENTS + 该宿主 rules + 契约骨架 + agent-kb 仍判 **MATURE**（默认 audit），不再因缺 `.cursor/rules` 误 land
+- **P0-2 selfcheck**：热路径更名为稳定 `scripts/selfcheck.mjs`（与 skill 号脱钩）；断言仍钉 manifest **0.5.8**
+- **P0-3 archive**：`archive/README.md` 指向现行 `selfcheck.mjs`；0.2.x–0.3.x 迁到 `archive/selfcheck/legacy/`（INDEX）；近期归档保留 0.4.0 / 0.5.0 / 0.5.1
+- **P0-4 Codex / L5**：WritePlan / audit / detect / recommended-profile / questions / ladder L5 / sync-hosts Done 强制可见 **部分对齐（P2）** — `sync.mjs` **不全量**发出 Codex rules/hooks/MCP/skills（交叉 [adapters/codex.md](templates/ai-tools/adapters/codex.md)）
+- **边角**：`docs/harness-eng` README 模板去掉重复 `progress.yaml` 行；`domains.yaml` / `domain-packs.yaml` 标明 `schema_version`（≠ skill_version）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → `0.5.8`
+- selfcheck → `scripts/selfcheck.mjs`
 
 ## 0.5.7 — 2026-09-12（契约 sync 指针去 Cursor 唯权威 + 减少冗余 1x）
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.5.7</title>
+  <title>harness-eng 使用手册 · v0.5.8</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.5.7</div>
+    <div class="ver">v0.5.8</div>
   </header>
 
   <div class="shell">
@@ -810,7 +810,7 @@ node scripts/fill-plan.mjs --root &lt;目标仓&gt; --init --gold --sample-n 30
 node scripts/fill-score.mjs --root &lt;目标仓&gt;
 node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-eng/score-latest.json
 node scripts/acceptance-check.mjs --root &lt;目标仓&gt; --domain api
-node scripts/selfcheck-0.5.2.mjs</code></pre>
+node scripts/selfcheck.mjs</code></pre>
       </section>
 
       <section id="s4">
@@ -888,7 +888,7 @@ node scripts/selfcheck-0.5.2.mjs</code></pre>
           </table>
         </div>
 
-        <h3>4.5 对齐矩阵（0.5.7）</h3>
+        <h3>4.5 对齐矩阵（0.5.7+）</h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>工具</th><th>对齐程度</th><th>不要误读成</th></tr></thead>
@@ -900,6 +900,7 @@ node scripts/selfcheck-0.5.2.mjs</code></pre>
           </table>
         </div>
         <p><code>1x-contract-sync</code> 只给拿不到全量 <code>*-sync*</code> 镜像的宿主（尤其 Codex、自定义入口、L0–L2）。L3+ / L5 全量镜像宿主不再强制冗余 1x。权威始终是根 <code>AGENTS.md</code> + <code>docs/**</code>，外加<strong>本宿主</strong> rules 目录；<code>.cursor/rules/11|12|13|16</code> 只是 Cursor 示例。详 <a href="ai-tools.md">ai-tools.md</a>。</p>
+        <p>选 <strong>Codex + L5</strong> 时：<code>sync.mjs</code> <strong>不会</strong>全量发出 Codex 的 rules / hooks / MCP / skills（<strong>部分对齐 P2</strong>）。详见 <a href="templates/ai-tools/adapters/codex.md">adapters/codex.md</a>。</p>
       </section>
 
       <section id="s5">
@@ -1144,7 +1145,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.7</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.8</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1189,7 +1190,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.7
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.8
         </div>
       </section>
     </main>
