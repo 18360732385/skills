@@ -1,10 +1,23 @@
-﻿# harness-eng 验收记录（0.6.0）
+﻿# harness-eng 验收记录（0.6.1-dev）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.0**（列车已收口）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。路线见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.1-dev**（Trae P0 spike）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+
+## 0.6.1-dev 增量验收（Trae P0）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `node scripts/selfcheck-render.mjs` | 烟测 |
+| manifest / meta / questions 为 `0.6.1-dev` | 有 |
+| [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表 | 有 |
+| Trae 镜像保留 `alwaysApply` / `globs`；Claude/Qoder 仍 strip | 有 |
+| `mature-trae` 无 `.cursor/rules` 仍 MATURE | 有 |
+| 适配卡去掉「若宿主支持」；矩阵 Trae 仍 **中高** | 有 |
+| 未改矩阵 中高→高 | 有 |
 
 ## 0.6.0 增量验收（M4）
 
@@ -30,7 +43,7 @@
 | 域脚本为弃用 shim（≤~30 行，只转发 argv）；实现在 lib | 有 |
 | `l5-sync-golden` 上 `sync.mjs --check` 绿 | 有 |
 | `multi-host-hooks` 多宿主 hooks 信号（S_HOOKS） | 有 |
-| mature-claude / qoder-hooks / stack-node 仍绿 | 有 |
+| mature-claude / mature-trae / qoder-hooks / stack-node 仍绿 | 有 |
 | 版本仍为 `0.6.0-dev`（未钉 0.6.0）；根 md ≤20 | 有 |
 
 ## 0.6.0-dev 增量验收（M2）
@@ -74,7 +87,7 @@
 | `AGENT-INDEX.md` + `fill/README.md`；SKILL 填充行先指向索引 | 有 |
 | `land.mjs`：L5/`agent_config` 不经 render 写 `.cursor/rules` | 有 |
 | `fill-inventory.mjs --domain` + `fill-merge.mjs --domain` 为规范入口 | 有 |
-| fixture：`mature-claude` / `qoder-hooks` / `stack-node` | 有 |
+| fixture：`mature-claude` / `mature-trae` / `qoder-hooks` / `stack-node` | 有 |
 | `_meta` schema_version 注释（≠ skill_version）含 morph / score-policy | 有 |
 
 ## 0.5.8 增量验收

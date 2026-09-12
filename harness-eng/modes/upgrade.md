@@ -51,6 +51,12 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.6.0 → 0.6.1-dev 迁移要点
+
+1. **meta**：`skill_version` → `0.6.1-dev`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Trae P0**：官方实证 [TRAE-P0-EVIDENCE.md](../host/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae 仍 **中高**
+3. **0.6.0 列车不重开**；人验 hooks/MCP 见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md)
+
 ## 0.5.10 → 0.6.0 迁移要点
 
 1. **meta**：`skill_version` → `0.6.0`（resume / upgrade 写 meta 时对齐 manifest）

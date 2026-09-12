@@ -9,8 +9,9 @@
  * 约定：
  * - 手改只发生在 docs/agent-config/；已启用工具的 rules/hooks/mcp/settings/skills
  *   与 CLAUDE.md 均为生成物（含 GENERATED 标记），手改会被本脚本覆盖。
- * - rules 的 .mdc frontmatter 为 Cursor 原生格式；其他工具生成时 strip 元数据，
- *   path-scoped 语义以正文自然语言保留（qoder/trae 额外生成「适用路径」行）。
+ * - rules 的 .mdc frontmatter 为 Cursor 原生格式；qoder/claude 生成时 strip 元数据，
+ *   path-scoped 语义以正文自然语言保留。trae 保留 alwaysApply / globs / description
+ *   （官方项目规则 frontmatter）。
  * - 各工具目录中未被本脚本管理的内容（如 docs/harness-eng/harness-meta.yaml、
  *   遗留 .cursor/harness-meta.yaml、mcp.local.json 等运行时数据）不受影响。
  * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
@@ -84,8 +85,11 @@ function loadRules() {
     .map((f) => ({ name: f, raw: fs.readFileSync(path.join(dir, f), "utf8"), ...parseRule(fs.readFileSync(path.join(dir, f), "utf8")) }));
 }
 
-/** Cursor .mdc → 宿主 .md（strip frontmatter；globs/alwaysApply 降级为正文提示） */
-function toHostMd(rule) {
+/** Cursor .mdc → 宿主 .md。trae 保留 FM；qoder/claude strip 并降级为正文提示。 */
+function toHostMd(rule, host) {
+  if (host === "trae") {
+    return rule.raw.replace(FM_RE, (m) => m + "\n" + HEADER_MD);
+  }
   const bits = [];
   if (rule.fm.alwaysApply === "true") bits.push("> 适用范围：始终应用\n");
   if (rule.fm.globs) bits.push(`> 适用路径：\`${rule.fm.globs}\`\n`);
@@ -98,15 +102,15 @@ function planRules() {
     const withHeader = rule.raw.replace(FM_RE, (m) => m + "\n" + HEADER_MD);
     // cursor：原生 .mdc（frontmatter 保留）
     if (has("cursor")) put(`.cursor/rules/${rule.name}`, withHeader);
-    // qoder / trae / claude：纯 .md（path 作用域降级为正文提示）
+    // qoder / claude：纯 .md（path 作用域降级为正文提示）
     if (has("qoder")) {
-      put(`.qoder/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule));
+      put(`.qoder/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule, "qoder"));
     }
     if (has("trae")) {
-      put(`.trae/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule));
+      put(`.trae/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule, "trae"));
     }
     if (has("claude")) {
-      put(`.claude/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule));
+      put(`.claude/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule, "claude"));
     }
     // codebuddy：每条规则一个文件夹，内含 RULE.mdc
     if (has("workbuddy")) {

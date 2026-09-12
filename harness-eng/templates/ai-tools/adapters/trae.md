@@ -1,12 +1,13 @@
 # Adapter: Trae
 
-对齐程度：**中高**（L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json`）。L3+ / L5 不再另写冗余 `1x-contract-sync`。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。若要对齐到 Cursor 级，见 [TRAE-PARITY.md](../../../host/TRAE-PARITY.md)。
+对齐程度：**中高**（L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json`）。L3+ / L5 不再另写冗余 `1x-contract-sync`。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。P0 官方实证（2026-09-12）：[TRAE-P0-EVIDENCE.md](../../../host/TRAE-P0-EVIDENCE.md)。同级跟踪：[TRAE-PARITY.md](../../../host/TRAE-PARITY.md)。**未**把矩阵改成高。
 
 - **目录**: `.trae/`
-- **Rules**: `.trae/rules/*.md`（strip frontmatter；可嵌套子目录）
-- **Hooks**: `.trae/hooks.json`（`version` + Claude 系嵌套 `hooks`）
-  - 事件：`PreToolUse` · `PostToolUse` · `Stop` 等
+- **Rules**: `.trae/rules/*.md`（**官方原生 frontmatter**：`alwaysApply` / `globs` / `description`；可嵌套最多 3 层）。harness 镜像**保留** FM（不再 strip）。另可导入根 `AGENTS.md` / `CLAUDE.md`（官方开关）
+- **Hooks**: `.trae/hooks.json`（`version` + Claude 系嵌套 `hooks`；路径已官方确认）
+  - 事件：官方含 `SessionStart` · `UserPromptSubmit` · `PreToolUse` · `PostToolUse` · `Stop` · `Notification`
   - 脚本：`.trae/hooks/*.js` + `claude-adapter.js`
-- **MCP**: `.trae/mcp.json`（需启用项目 MCP / Beta 时以官方为准）
-- **Skills**: `.trae/skills/`（若宿主支持）
+  - **风险**：`matcher` 须对 Trae `tool_name`（终端为 **`RunCommand`**）。现网仍写 Claude 族 `Bash` / `Edit|Write` 等，**可能不触发**；亦可导入 Claude Code hooks。人验见 [TRAE-P0-MANUAL.md](../../../host/TRAE-P0-MANUAL.md)
+- **MCP**: `.trae/mcp.json`（**磁盘产物 + 必须在 IDE Settings → Add MCP servers / 项目 MCP 启用**；未开面板 ≠ 已接入）
+- **Skills**: `.trae/skills/`（**一等公民**，按需加载）。可选 `.agents/skills/`
 - **禁止**: 勿用 Cursor `beforeShellExecution` 顶层扁平 hooks.json

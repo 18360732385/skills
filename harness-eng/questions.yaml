@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.6.0"
+version: "0.6.1-dev"
 
 all_recommend_phrases:
   - 全部推荐

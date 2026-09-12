@@ -81,5 +81,5 @@ node scripts/selfcheck.mjs
 多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分对齐·不默认（P2）**（未探测不进「全部推荐」）。详 [ai-tools.md](host/ai-tools.md)。
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
-0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.0**）。
+0.6.1-dev Trae P0：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 计划（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.1-dev**）。

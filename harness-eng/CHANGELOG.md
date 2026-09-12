@@ -1,8 +1,25 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.10 → 0.6.0-dev → 0.6.0`（当前 **0.6.0**，列车已收口）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
-> 0.6.0 路线：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。历史条目里「后续（0.3.0）/ P3」许愿已过期。
+**列车**：`… → 0.6.0 → 0.6.1-dev`（当前 **0.6.1-dev**，Trae P0 spike）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
+> 0.6.1-dev 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。
+
+## 0.6.1-dev — 2026-09-12（Trae P0 spike：官方实证 · FM 保留 · mature-trae）
+
+**不**把矩阵 Trae 中高改成高（T-P1-5 等人 Trae 会话确认 hooks / MCP）。
+
+### 产品
+
+- **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；matcher `Bash` vs `RunCommand` 风险）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
+- **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)
+- **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；matcher 风险；链到实证页
+- **hotfix**：镜像到 Trae **保留** frontmatter（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）
+- **fixture**：`scripts/fixtures/mature-trae/`（无 `.cursor/rules` 仍 MATURE）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.1-dev`**
+- ROADMAP 注明 0.6.1 Trae spike 已开工；0.6.0 列车不重开
 
 ## 0.6.0 — 2026-09-12（M1–M4：统一入口 · 文档拓扑 · fill 内聚 · 发包减脂 · 正式钉号）
 
