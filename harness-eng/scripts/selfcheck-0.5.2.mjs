@@ -121,7 +121,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.4"/.test(qYaml), "questions.yaml version 0.5.4");
+assert(/version:\s*"0\.5\.5"/.test(qYaml), "questions.yaml version 0.5.5");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -184,18 +184,19 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.4"/.test(manifest), "manifest 0.5.4");
+assert(/version:\s*"0\.5\.5"/.test(manifest), "manifest 0.5.5");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.4"/.test(metaTmpl), "harness-meta 0.5.4");
+assert(/skill_version:\s*"0\.5\.5"/.test(metaTmpl), "harness-meta 0.5.5");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
 assert(/## 0\.5\.2/.test(changelog), "CHANGELOG 0.5.2");
 assert(/## 0\.5\.3/.test(changelog), "CHANGELOG 0.5.3");
 assert(/## 0\.5\.4/.test(changelog), "CHANGELOG 0.5.4");
+assert(/## 0\.5\.5/.test(changelog), "CHANGELOG 0.5.5");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -340,13 +341,13 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.4/.test(verifyMd), "VERIFY is 0.5.4");
+assert(/0\.5\.5/.test(verifyMd), "VERIFY is 0.5.5");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.4/.test(readme), "README header version 0.5.4");
-assert(/当前 \*\*0\.5\.4\*\*/.test(readme), "README footer version 0.5.4");
+assert(/当前版本：0\.5\.5/.test(readme), "README header version 0.5.5");
+assert(/当前 \*\*0\.5\.5\*\*/.test(readme), "README footer version 0.5.5");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck-0\.5\.2/.test(readme), "README pins selfcheck 0.5.2");
@@ -356,8 +357,22 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.4\*\*/.test(handbookMd), "使用手册.md version 0.5.4");
-assert(/v0\.5\.4/.test(handbookHtml), "使用手册.html version 0.5.4");
+assert(/版本：\*\*0\.5\.5\*\*/.test(handbookMd), "使用手册.md version 0.5.5");
+assert(/v0\.5\.5/.test(handbookHtml), "使用手册.html version 0.5.5");
+assert(/当前 \*\*0\.5\.5\*\*/.test(quickstartMd), "QUICKSTART version 0.5.5");
+const handbookSummary = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
+for (const [label, text] of [
+  ["使用手册.md", handbookMd],
+  ["使用手册.html", handbookHtml],
+  ["使用手册-摘要.md", handbookSummary],
+  ["QUICKSTART.md", quickstartMd],
+  ["README.md", readme],
+]) {
+  assert(/宿主的用户 skills 目录/.test(text), `${label} host-agnostic install wording`);
+  assert(!/装到 ~\/\.cursor\/skills\/harness-eng/.test(text), `${label} no Cursor-only install dest`);
+  assert(!/npx skills add[^\n]*--agent cursor/.test(text), `${label} CLI not --agent cursor only`);
+}
+assert(!/重启 Cursor/.test(readme), "README no restart Cursor");
 assert(/6\.0 对话内会话仪表盘/.test(handbookMd), "使用手册.md session dashboard section");
 assert(/详情请查询仪表盘/.test(handbookHtml), "使用手册.html session dashboard footer copy");
 assert(!/v0\.5\.0/.test(handbookHtml), "使用手册.html no stale v0.5.0");
@@ -586,7 +601,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.4"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.4");
+  assert(/version:\s*"0\.5\.5"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.5");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1164,6 +1179,7 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.1 → 0\.5\.2/.test(upg050), "upgrade has 0.5.1 → 0.5.2 path");
   assert(/0\.5\.2 → 0\.5\.3/.test(upg050), "upgrade has 0.5.2 → 0.5.3 path");
   assert(/0\.5\.3 → 0\.5\.4/.test(upg050), "upgrade has 0.5.3 → 0.5.4 path");
+  assert(/0\.5\.4 → 0\.5\.5/.test(upg050), "upgrade has 0.5.4 → 0.5.5 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");

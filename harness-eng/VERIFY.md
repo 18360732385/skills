@@ -1,10 +1,18 @@
-﻿# harness-eng 验收记录（0.5.4）
+﻿# harness-eng 验收记录（0.5.5）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.5.4**。报告壳 `ui.version`（0.2.24）≠ `skill_version`。
+当前 **0.5.5**。报告壳 `ui.version`（0.2.24）≠ `skill_version`。
+
+## 0.5.5 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck-0.5.2.mjs` exit 0 | 烟测 |
+| 安装一句话 / CLI 不默认 `~/.cursor/skills/harness-eng` 或 `--agent cursor` | 有 |
+| 手册 md+html 安装节对齐：宿主用户 skills 目录 + 多宿主示例 | 有 |
 
 ## 0.5.4 增量验收
 

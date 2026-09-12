@@ -2,34 +2,36 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.5.4**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.5.5**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
 
-0.5.4 要点：**会话仪表盘仅工程轮 SHOW**（meta / 版本问答省略）。0.5.3：**会话仪表盘**（四台摘要 + HTML 链）。0.5.2：**MCP 多路径**、**CodeBuddy/Claude 多宿主**。更早见 [CHANGELOG.md](CHANGELOG.md)。
+0.5.5 要点：**安装说明宿主无关**（不默认装到 `~/.cursor`）。0.5.4：**会话仪表盘仅工程轮 SHOW**。0.5.3：**会话仪表盘**（四台摘要 + HTML 链）。更早见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
 ### 源仓内置
 
-本仓路径：`harness-eng/`（若拷到 Cursor 约定位置则为 `.cursor/skills/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。
+本仓路径：`harness-eng/`（拷到宿主用户 skills 目录后为 `<host-skills-dir>/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。
 
-**一句话安装（推荐）：** 对 Agent 说「帮我安装这个 skill，地址：https://github.com/18360732385/skills/tree/main/harness-eng，装到 ~/.cursor/skills/harness-eng」；或 `npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --agent cursor`。装完新开会话后再点名。
+**一句话安装（推荐）：** 对 Agent 说「帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：https://github.com/18360732385/skills/tree/main/harness-eng」；或 `npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g`（需要时按宿主加 `--agent`）。装完新开会话后再点名。
 
 ### 跨仓 / 用户 skills
 
+拷到 `<host-skills-dir>/harness-eng`，保证目录内直接有 `SKILL.md`。示例：Cursor `~/.cursor/skills/harness-eng`（或 `skills-cursor`）；Claude Code `~/.claude/skills/harness-eng`；其他按该宿主文档。
+
 ```powershell
-Copy-Item -Recurse -Force harness-eng $env:USERPROFILE\.cursor\skills\harness-eng
+Copy-Item -Recurse -Force harness-eng <host-skills-dir>\harness-eng
 ```
 
 ```bash
-cp -R harness-eng ~/.cursor/skills/harness-eng
+cp -R harness-eng <host-skills-dir>/harness-eng
 ```
 
-（若源已在 `.cursor/skills/harness-eng`，把上面的 `harness-eng` 换成该路径即可。）
+（若源已在某宿主的 skills 目录，把上面的 `harness-eng` 换成该路径即可。）
 
-重启 Cursor 或新开 Agent 会话后生效。
+新开 Agent 会话后生效。
 
 ## 模式
 
@@ -73,4 +75,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.4**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.5**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。

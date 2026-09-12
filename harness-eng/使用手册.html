@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.5.4</title>
+  <title>harness-eng 使用手册 · v0.5.5</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.5.4</div>
+    <div class="ver">v0.5.5</div>
   </header>
 
   <div class="shell">
@@ -697,40 +697,53 @@
 
       <section id="s2">
         <h2>2. 如何安装和更新</h2>
-        <p>技能本身装在 <strong>Agent 能读到的 skills 目录</strong>；施工产物写在 <strong>业务目标仓</strong>（装 skill ≠ 给业务仓落地 harness）。</p>
+        <p>技能本身装在 <strong>当前 Agent 宿主的用户级 skills 目录</strong>（保证 <code>SKILL.md</code> 在技能根目录）；施工产物写在 <strong>业务目标仓</strong>（装 skill ≠ 给业务仓落地 harness）。用户可能用 Cursor、Claude Code、Qoder、Trae、Codex 等，<strong>不要默认装到某一家的目录</strong>。</p>
 
         <h3>2.1 一句话安装（推荐）</h3>
-        <p>对有 shell 权限的 Agent（如 Cursor Agent）直接说：</p>
-        <pre><code>帮我安装这个 skill 到本机用户目录，地址：
+        <p>对当前对话里的 Agent 说：</p>
+        <pre><code>帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：
 https://github.com/18360732385/skills/tree/main/harness-eng
-装到 ~/.cursor/skills/harness-eng（保证目录内直接有 SKILL.md），装完告诉我路径。</code></pre>
-        <p>也可自己跑 CLI（全局、面向 Cursor；若提示复制/软链，优先 <strong>Copy</strong>）：</p>
-        <pre><code>npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --agent cursor</code></pre>
+保证目录内直接有 SKILL.md，装完告诉我实际路径。</code></pre>
+        <p>也可自己跑 CLI（全局；若提示复制/软链，优先 <strong>Copy</strong>）。<code>--agent</code> 按你用的宿主传，不要默认写成某一家：</p>
+        <pre><code>npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
+# 需要指定宿主时加上：--agent &lt;host&gt;</code></pre>
         <p>装好后：<strong>新开 Agent 会话</strong>，再显式点名 <strong>harness-eng</strong>。</p>
-        <p>路径提示：Cursor 常见为 <code>~/.cursor/skills/</code> 或 <code>~/.cursor/skills-cursor/</code>（以宿主实际加载目录为准）；Claude Code 等为 <code>~/.claude/skills/</code>。</p>
+        <p>常见用户 skills 目录（示例，以宿主实际加载目录与官方文档为准）：</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>宿主</th><th>用户 skills 目录示例</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Cursor</td><td><code>~/.cursor/skills/</code> 或 <code>~/.cursor/skills-cursor/</code></td></tr>
+              <tr><td>Claude Code</td><td><code>~/.claude/skills/</code></td></tr>
+              <tr><td>Codex / Qoder / Trae / 其他</td><td>按该宿主文档</td></tr>
+            </tbody>
+          </table>
+        </div>
         <p>上述 URL 指向 <code>main</code>；若要跟踪施工主干，可改成当前发布分支（如 <code>V0.5.X</code>）。</p>
 
         <h3>2.2 一句话更新</h3>
         <pre><code>帮我更新本机的 harness-eng skill：从
 https://github.com/18360732385/skills/tree/main/harness-eng
-覆盖安装到 ~/.cursor/skills/harness-eng，完成后核对 SKILL.md / manifest 版本。</code></pre>
-        <p>或再次执行上面的 <code>npx skills add ...</code>，然后新开会话。目标仓 <code>.cursor/harness-meta.yaml</code> 的 <code>skill_version</code> 可随后续 resume / upgrade 对齐。</p>
+覆盖安装到你当前 Agent 宿主的用户 skills 目录（保留备份或直接覆盖均可），完成后核对 SKILL.md / manifest 版本。</code></pre>
+        <p>或再次执行上面的 <code>npx skills add ...</code>（按宿主传 <code>--agent</code>），然后新开会话。目标仓 <code>.cursor/harness-meta.yaml</code> 的 <code>skill_version</code> 可随后续 resume / upgrade 对齐。</p>
 
         <h3>2.3 从本源仓使用（开发 / 自测）</h3>
         <p>若你就在含 <code>harness-eng/</code> 的 skills 仓库里对话，直接点名技能即可。路径因宿主而异，常见为：</p>
         <ul>
           <li>仓库内：<code>harness-eng/</code>（本仓布局）</li>
-          <li>或 Cursor 约定：<code>.cursor/skills/harness-eng/</code></li>
+          <li>或已拷到某宿主用户目录：<code>&lt;host-skills-dir&gt;/harness-eng/</code></li>
         </ul>
 
         <h3>2.4 手动拷贝安装</h3>
-        <p><strong>Cursor（用户级 skills）：</strong></p>
+        <p>把同一目录拷到 <strong>当前宿主的用户 skills 目录</strong>，保证 <code>&lt;host-skills-dir&gt;/harness-eng/SKILL.md</code> 直接存在：</p>
         <pre><code># Windows PowerShell
-Copy-Item -Recurse -Force &lt;源&gt;\harness-eng $env:USERPROFILE\.cursor\skills\harness-eng
+Copy-Item -Recurse -Force &lt;源&gt;\harness-eng &lt;host-skills-dir&gt;\harness-eng
 
 # macOS / Linux
-cp -R &lt;源&gt;/harness-eng ~/.cursor/skills/harness-eng</code></pre>
-        <p><strong>Claude Code 等</strong>：把同一目录拷到该产品识别的 skills 路径（例如 <code>.claude/skills/harness-eng</code>），以各产品文档为准。</p>
+cp -R &lt;源&gt;/harness-eng &lt;host-skills-dir&gt;/harness-eng</code></pre>
+        <p>路径示例（非唯一）：Cursor 常见 <code>~/.cursor/skills/harness-eng</code>（或 <code>skills-cursor</code>）；Claude Code 常见 <code>~/.claude/skills/harness-eng</code>；其余按该宿主文档。</p>
 
         <h3>2.5 前置条件</h3>
         <ul>
@@ -1118,7 +1131,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.4</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.5</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1163,7 +1176,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.4
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.5
         </div>
       </section>
     </main>

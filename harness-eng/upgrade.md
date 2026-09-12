@@ -51,6 +51,12 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.5.4 → 0.5.5 迁移要点
+
+1. **meta**：`skill_version` → `0.5.5`（resume / upgrade 写 meta 时对齐 manifest）
+2. **文档**：安装路径改为「当前 Agent 宿主的用户 skills 目录」；Cursor / Claude 等只作示例。脚手架与目标仓 `.cursor/` 产物路径不变
+3. **行为**：无施工协议变更
+
 ## 0.5.3 → 0.5.4 迁移要点
 
 1. **meta**：`skill_version` → `0.5.4`（resume / upgrade 写 meta 时对齐 manifest）
