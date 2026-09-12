@@ -4,7 +4,9 @@
 
 仓库至少有：`.trae/rules/`（含 frontmatter）、`.trae/hooks.json`、`.trae/mcp.json`（或 `.example` 拷成真文件）。
 
-2026-09-12 Trae CN 回传见实证页「实机回传」。**T-P0-1 消费仓磁盘 FAIL** 的根因是实例化 `sync.mjs` 仍旧；先做第 0 节再验规则。
+2026-09-12 Trae CN 回传见实证页「实机回传」。权威仓 **c-be-sms-ai**：**Round A** 刷新后 T-P0-1 **磁盘 + 行为 PASS**（刷新前磁盘 FAIL，根因仍是实例化 `sync.mjs` 仍旧）。**Round C** T-P0-3 **本机行为 FAIL**（事后判 **matcher 误诊**：当时 `Bash` 对不上 `RunCommand`）。先做第 0 节再验规则；hooks 复测见第 3 节。
+
+**通道纪律（强制）**：Trae hooks 探测 **只认 `.trae/hooks.json`**。**永远不要**把 `.cursor/hooks.json` 的 `beforeShellExecution` 当作 Trae 证据（Round B 打到 Cursor 通道 = 无效）。
 
 ## 0. 消费仓刷新（0.6.1-dev 升级后必做）
 
@@ -30,6 +32,8 @@
 
 失败请记：规则路径、FM 原文、Trae 面板显示的激活方式。2026-09-12 消费仓未刷新时：磁盘无 FM、路径作用域规则被全量注入（与 always-on 一致）；面板未验。
 
+**Round A**（c-be-sms-ai，SSOT/sync 刷新后）：磁盘 **13** 份（`alwaysApply: true` ×3 = `00-harness-ssot` / `00-project-docs-overview` / `karpathy-guidelines`；`alwaysApply: false` ×10 = 11/12/13/14/16/17/18/19/20/21；**无** `1x-contract-sync`）。读 `sms-ai-web/apps/.../localDate.ts` 注入完整 `17-frontend-web`（+ `sms-ai-web/AGENTS.md`）→ **T-P0-1 磁盘 + 行为 PASS**。Trae 认 `globs`。
+
 ## 2. MCP：磁盘产物 + IDE 启用
 
 - [ ] 确认磁盘有 `.trae/mcp.json`（不要只留 `.example`）
@@ -41,24 +45,30 @@
 
 2026-09-12 Trae CN：磁盘 ✓；IDE **已消费**文件（`mcp_gitlab` / `mcp_chrome-devtools` / `mcp_Apifox_Dao_Ru`）；缺 mysql×4、redis×3、sonarqube；disable-switch 对照未做。T-P0-2 保持 **partial↑** 直到面板报错 + 关开关对照有人勾。
 
-## 3. Hooks：`Bash` 然后 `RunCommand`（必须新会话）
+## 3. Hooks：只认 `.trae/hooks.json`（必须新会话）
 
-现网 `.trae/hooks.json` 门禁 matcher 仍是 Claude 族 **`Bash`**（**不**在本切片改 `HOOK_DEFS`）。
+T-P1-2 后生成物门禁 matcher 是 **`Bash|RunCommand`**（官方终端 `tool_name` = **`RunCommand`**）。Round C 当时 matcher 仍是 Claude 族 **`Bash`**，对不上 `RunCommand`，**很可能是误诊**成「宿主从未调用」。**不要**据此把矩阵改成高。
 
-**探测配方**（2026-09-12 实机用过；保留）：
+**通道（强制）**：
 
-1. **新开** Trae Agent 会话（中途改 `hooks.json` **可能不热加载**；本会话因此 inconclusive）
-2. stage 一份会被门禁盯到的生成物（例：`.claude` 下 GENERATED 文件）
-3. 让 Agent 跑 `git commit --dry-run`（走终端 / 软门禁）
-4. 看是否出现 hook `systemMessage` / 拦截文案 / adapter 输出
-5. 先记 **`Bash`** 是否触发
-6. 若 **`Bash` 不触发**：把该组 matcher 临时改成 **`RunCommand`**，**再开新会话**跑同一条（不要只在当前会话改 json）
-7. 记下：`Bash` 触发？`RunCommand` 触发？两者都触发？（导入 Claude Code hooks 时另注）
-8. `Stop` 检查清单是否在会话结束时跑一次
+- Trae 探测 = **`.trae/hooks.json` only**（`PreToolUse` / `PostToolUse` / `Stop` + `claude-adapter.js`）
+- **永远不要**用 `.cursor/hooks.json` `beforeShellExecution` 当 Trae 证据（那是 Cursor 通道；Round B 因此作废）
+- **Settings → Hooks** 必须**启用项目 hooks**（磁盘有 `.trae/hooks.json` ≠ 面板已开）
+- `.githooks` 仍是兜底（`pre-commit` + gate `--git`），不替代 Trae 原生 hook 复测
 
-2026-09-12：结构 OK；`Bash` 与会话中途临时 `RunCommand` 均未见 systemMessage。**必须新会话**再测。
+**探测配方**（T-P1-2 后）：
 
-只要「`Bash` 不触发、`RunCommand` 触发」成立，T-P1-2 才改 harness matcher。
+1. 升级 skill → land/render L5 **刷新** `sync.mjs` → `node scripts/agent-config/sync.mjs`（让 `.trae/hooks.json` 带上 `RunCommand`）
+2. Trae **Settings → Hooks** 启用**项目** hooks
+3. **新开** Trae Agent 会话（中途改 `hooks.json` **可能不热加载**）
+4. stage 一份会被门禁盯到的生成物（例：`.claude` 下 GENERATED 文件）
+5. 让 Agent 经 **Trae 终端工具**（`RunCommand`）跑 `git commit --dry-run`
+6. 期望 hook 注入 `systemMessage` 和/或 `hookSpecificOutput.additionalContext`（软提醒，不阻断）
+7. `Stop` 检查清单是否在会话结束时跑一次
+
+**PostToolUse 干扰 caveat**：Edit 路径静默 **不是**「hooks 没跑」的证据——`after-edit-reminder` 对不匹配路径本就返回 `{}`。先用手工 stdin 跑同一脚本对照，再解释 live 静默。
+
+2026-09-12 Round C（正确通道 `.trae/hooks.json`，matcher 当时仍是 `Bash`）：手工 stdin Claude payload ✓ 注入；live `Shell` + `git commit --dry-run` ✗；live Exec `RunCommand` ✗。**T-P0-3 本机行为 FAIL**。事后判 **matcher 误诊**（`Bash` 永不匹配 `RunCommand`）。上半场 `Bash` / 中途临时 `RunCommand` 亦未见 systemMessage（中途改可能不热加载；Settings → Hooks 当时未核）。
 
 ## 4. Skills（可选补一句）
 
@@ -79,9 +89,9 @@
 ## 回传格式（可贴 PR）
 
 ```text
-T-P0-1 rules：消费仓 sync.mjs 已刷新=是|否 / 磁盘 FM=有|无 / alwaysApply=… / globs 面板=… / 嵌套=…
+T-P0-1 rules：消费仓 sync.mjs 已刷新=是|否 / 磁盘 FM=有|无 / alwaysApply=… / globs 注入=… / 嵌套=…
 T-P0-2 MCP：路径= .trae/mcp.json / IDE 已消费=是|否 / 挂上=… / 缺服=… / 面板报错=… / 关开关=…
-T-P0-3 hooks：是否新会话=是|否 / Bash=触发|否 / RunCommand=触发|否 / Stop=…
+T-P0-3 hooks：通道=.trae/hooks.json（勿报 .cursor） / Settings→Hooks 项目已启用=是|否 / 是否新会话=是|否 / matcher=RunCommand / systemMessage|additionalContext=有|无 / Stop=… / .githooks兜底=…
 T-P0-4 skills：可见=… / 按需=… / disable-model-invocation=…
 Trae 版本 / 日期：
 ```

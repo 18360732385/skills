@@ -15,7 +15,7 @@ harness-eng **0.6.1-dev**（0.6.0 列车已收口）对齐矩阵：Trae **中高
 
 | 维度 | Cursor（高） | Trae 0.6.0 基线（中高） | 同级要补的 |
 |---|---|---|---|
-| Rules | `.cursor/rules/*.mdc` 保留 `alwaysApply` / `globs` | `.trae/rules/*.md`，**保留**官方 FM（P0 hotfix）；**消费仓须刷新** `sync.mjs` | 刷新后真人会话确认作用域不丢 |
+| Rules | `.cursor/rules/*.mdc` 保留 `alwaysApply` / `globs` | `.trae/rules/*.md`，**保留**官方 FM（P0 hotfix）；**消费仓须刷新** `sync.mjs` | 刷新后真人会话 **已确认** globs 作用域（Round A PASS） |
 | Hooks | 原生 `beforeShellExecution` 等 | Claude 系 `PreToolUse` / `PostToolUse` / `Stop` + adapter | 事件对照表经实测，外加 `.githooks` 兜底 |
 | MCP | `.cursor/mcp.json` | `.trae/mcp.json`（项目 MCP / Beta 以官方为准） | 启用条件写死、fill 路径对齐 |
 | Skills | `.cursor/skills/` 一等公民 | `.trae/skills/` **一等公民**（docs PASS；适配卡已去掉「若宿主支持」） | 真人会话确认可发现 / 可点名 |
@@ -43,9 +43,9 @@ P0 spike（0.6.1-dev）已落地的工程项：
 仍等人 / 未做：
 
 - `l5-sync-golden` 未另钉一份 Trae 专用黄金树（T-P1-4 余项）
-- **消费仓须刷新**实例化 `scripts/agent-config/sync.mjs`（T-P0-1 docs PASS，2026-09-12 磁盘仍无 FM）
+- **消费仓刷新后** T-P0-1 磁盘+行为 PASS（2026-09-12 Round A，c-be-sms-ai）；升级后仍须按 MANUAL **刷新**实例化 `scripts/agent-config/sync.mjs`
 - 项目 MCP：**IDE 已消费** `.trae/mcp.json`（T-P0-2 partial↑）；缺服面板报错 + disable-switch 对照未做
-- hooks matcher `Bash` vs `RunCommand`（T-P0-3 **待新会话**）
+- hooks：T-P0-3 **本机行为 FAIL**（Round C）。事后判 **matcher 误诊**（当时 `Bash` 永不匹配官方 `RunCommand`）。T-P1-2 已改 `TRAE_STYLE` + adapter `additionalContext`。消费仓须 sync + **Settings → Hooks** + **新会话**复测；未 PASS **不**升矩阵。`.githooks` 仍兜底
 - **不**改矩阵 中高→高（等 T-P1-5 + 人确认）
 
 ## P0 必须先验证的产品事实
@@ -56,9 +56,9 @@ P0 spike（0.6.1-dev）已落地的工程项：
 
 | ID | 要验证 | 通过标准 | 0.6.1-dev 状态 |
 |---|---|---|---|
-| **T-P0-1** rules load | Trae 是否把 `.trae/rules/*.md`（含子目录）当项目规则加载；**官方 FM** `alwaysApply` / `globs` 是否生效；嵌套目录是否生效 | 官方路径 + 真实 Trae 会话中规则被注入；对照 Cursor `.mdc` 记「加载范围 + 失败形态」 | **docs PASS**；tmpl / render 已停剥 FM。**消费仓须刷新**实例化 `sync.mjs`（2026-09-12 Trae CN：磁盘仍无 FM）。UI Apply to Specific Files 仍开放 |
+| **T-P0-1** rules load | Trae 是否把 `.trae/rules/*.md`（含子目录）当项目规则加载；**官方 FM** `alwaysApply` / `globs` 是否生效；嵌套目录是否生效 | 官方路径 + 真实 Trae 会话中规则被注入；对照 Cursor `.mdc` 记「加载范围 + 失败形态」 | **docs + 磁盘 + 行为 PASS**（Round A，c-be-sms-ai，消费仓刷新后）。刷新前磁盘 FAIL 仍见实证页上半场。升级后仍须刷新 `sync.mjs` |
 | **T-P0-2** project MCP / Beta | `.trae/mcp.json` 是否必须打开项目 MCP / Beta；与 Cursor `.cursor/mcp.json` 的操作差在哪 | 官方或实测：启用开关、路径、未开时的失败形态 | **partial↑**：**IDE 已消费**文件（gitlab / chrome-devtools / Apifox_Dao_Ru）。缺 7 台 + disable-switch 对照仍开放 |
-| **T-P0-3** hooks event map | Claude 族 `PreToolUse` / `PostToolUse` / `Stop`（及 matcher `Bash` / `Edit\|Write` / `mcp__mysql`）在 Trae 是否真触发 | 对照表经实测；至少一条门禁生效；**不**改写成 Cursor 扁平协议 | **docs PASS structure**；2026-09-12 **inconclusive**（Bash / 中途改 RunCommand 均无可见 systemMessage）。**待新会话**再测。**不**改 matcher |
+| **T-P0-3** hooks event map | Claude 族 `PreToolUse` / `PostToolUse` / `Stop`（及 matcher `RunCommand` / `Edit\|Write` / `mcp__mysql.*`）在 Trae 是否真触发 | 对照表经实测；至少一条门禁生效；**不**改写成 Cursor 扁平协议 | **docs PASS structure**；Round C **本机行为 FAIL**（事后 **matcher 误诊**）。T-P1-2 已改 Trae matcher `RunCommand`。等 Settings → Hooks + **新会话**复测 |
 | **T-P0-4** skills first-class | `.trae/skills/` 是否一等公民（项目 skills 可发现、可点名） | 官方或实测：发现规则与 Cursor 对等或明确差集；适配卡去掉「若宿主支持」 | **PASS**（会话：`harness-eng` 可见可点名；`release-eng` 因 `disable-model-invocation` 隐藏） |
 
 P0 文档产出已在 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。T-P0-1 的 strip-FM 是文档揭示的明确 harness bug，本 spike **已按宿主分支修好**（Claude/Qoder 仍 strip）。
@@ -70,7 +70,7 @@ P0 过关后再动生成器 / fixture / 矩阵。
 | ID | 工作 | 完成判据 |
 |---|---|---|
 | **T-P1-1** preserve / translate globs | 镜像 `.mdc` → `.trae/rules/*.md` 时，`globs` / `alwaysApply` 不要只降级成正文提示（若 T-P0-1 证明 Trae 有原生或等价作用域） | 有作用域则保留或翻译成 Trae 认识的元数据；无则文档写明「仅自然语言提示」且与 Claude/Qoder 一致；`render.mjs` / L5 `sync.mjs` 行为与适配卡一致。**P0 hotfix 已保留 FM**；人验通过后可勾 |
-| **T-P1-2** hooks + githooks | 原生 Claude 族 hooks 与 L3 `.githooks` 兜底一起对 Trae 可靠 | `HOOK_DEFS` 的 trae 映射经 T-P0-3 核实后不改族、只修路径/matcher；gate 类仍有 `--git` 兜底；Trae-only 仓 L3 软门禁与 Cursor 同级可回归 |
+| **T-P1-2** hooks + githooks | 原生 Claude 族 hooks 与 L3 `.githooks` 兜底一起对 Trae 可靠 | 不改族、只修 matcher：`TRAE_STYLE` 门禁 **`RunCommand`**（`Bash\|RunCommand` 兼容）；adapter 软放行补 `additionalContext`；gate 类仍有 `--git` 兜底。**生成器已落地**；真人 Settings → Hooks + 新会话复测未 PASS 前不勾、不升矩阵 |
 | **T-P1-3** MCP docs + fill path | 文档与 fill 路径对齐 T-P0-2 | [ai-tools.md](ai-tools.md) · [fill-mcp.md](../fill/fill-mcp.md) · `mcp-paths.mjs` · calibrate-live 优先级写清 `.trae/mcp.json` 与 Beta；gitignore snippet 已有则不重复发明 |
 | **T-P1-4** fixtures | 补 Trae 黄金集 | 新增 `mature-trae`（对照 `mature-claude`：根 AGENTS + `.trae/rules` + 契约骨架 + agent-kb，**无** `.cursor/rules` 仍判 MATURE）；`l5-trae-sync` 或把 `l5-sync-golden` 扩成可 `--check` 的 Trae 分发树；selfcheck 钉路径 |
 | **T-P1-5** matrix bump | 矩阵 Trae **中高 → 高** | 仅当 P0 全过且 T-P1-1…4 绿；同步改 [ai-tools.md](ai-tools.md) · [adapters/trae.md](../templates/ai-tools/adapters/trae.md) · [sync-hosts.md](sync-hosts.md) · QUICKSTART / 手册矩阵句；**同时**改 selfcheck 里「marks Trae as 中高」类断言。未达标不改字 |
@@ -113,9 +113,9 @@ Spike（P0 产品事实） → Parity（P1 工程） → Polish（P2 体验）
 
 全部勾上才允许 T-P1-5 把矩阵写成 **高**。
 
-- [x] T-P0-1：官方加载路径 + FM 已记录；harness 停剥 FM；**消费仓刷新**仍开放（见实证页实机回传）
+- [x] T-P0-1：官方加载路径 + FM 已记录；harness 停剥 FM；**消费仓刷新后**磁盘+行为 PASS（Round A）；升级后仍须刷新
 - [ ] T-P0-2：项目 MCP 路径已写；**IDE 已消费**文件（2026-09-12）；面板缺服 / disable-switch 仍开放
-- [ ] T-P0-3：hooks **结构** docs PASS；**matcher / RunCommand** 待新会话
+- [ ] T-P0-3：hooks **结构** docs PASS；**本机行为 FAIL**（Round C，**matcher 误诊**）；T-P1-2 已改 `RunCommand`；等 Settings → Hooks + 新会话复测
 - [x] T-P0-4：skills 官方一等公民 + **会话 PASS**（`.trae/skills/` 可发现 / 按需）
 - [x] T-P1-1：globs / alwaysApply **已保留**（Trae 专用路径；Claude/Qoder 仍 strip）；人验见 MANUAL
 - [ ] T-P1-2：原生 hooks + `.githooks` 对 Trae-only 仓可回归

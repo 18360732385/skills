@@ -15,6 +15,7 @@
  * - cursor：hooks.json + beforeShellExecution / afterFileEdit / …
  * - claude / qoder / trae / workbuddy：Claude 系 + claude-adapter.js
  *   qoder/workbuddy → settings.json；trae → .trae/hooks.json；claude → .claude/settings.json
+ *   trae 事件映射走 TRAE_STYLE（终端 matcher RunCommand），其余走 CLAUDE_STYLE（Bash）
  */
 import path from "path";
 import { fileURLToPath } from "url";
@@ -25,11 +26,33 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "../..");
 const DOMAINS_YAML = path.join(SKILL_ROOT, "templates/_meta/domains.yaml");
 
-/** Claude 系宿主共用事件映射（经 adapter 翻译）。 */
+/** Claude 系宿主共用事件映射（经 adapter 翻译）。终端工具名为 Bash。 */
 const CLAUDE_STYLE = {
   "commit-gate": { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
   "commit-gate-extended": { event: "PreToolUse", matcher: "Bash", adapter: "shell-gate" },
   "mysql-guard": { event: "PreToolUse", matcher: "mcp__mysql", adapter: "mcp-guard" },
+  "after-edit": {
+    event: "PostToolUse",
+    matcher: "Edit|Write|MultiEdit",
+    adapter: "edit-reminder",
+  },
+  "stop-checklist": { event: "Stop", adapter: "stop-check" },
+};
+
+/**
+ * Trae 官方 tool_name：终端为 RunCommand（不是 Claude 的 Bash）。
+ * matcher 是正则；Bash|RunCommand 兼容导入 Claude Code hooks。
+ * MCP 名为 mcp__<server>__<tool>。
+ * @see https://docs.trae.cn/ide/reference-for-hooks-configuration
+ */
+const TRAE_STYLE = {
+  "commit-gate": { event: "PreToolUse", matcher: "Bash|RunCommand", adapter: "shell-gate" },
+  "commit-gate-extended": {
+    event: "PreToolUse",
+    matcher: "Bash|RunCommand",
+    adapter: "shell-gate",
+  },
+  "mysql-guard": { event: "PreToolUse", matcher: "mcp__mysql.*", adapter: "mcp-guard" },
   "after-edit": {
     event: "PostToolUse",
     matcher: "Edit|Write|MultiEdit",
@@ -48,7 +71,7 @@ export const HOOK_DEFS = {
       cursor: { event: "beforeShellExecution", matcher: "git\\s+commit", timeout: 8 },
       claude: CLAUDE_STYLE["commit-gate"],
       qoder: CLAUDE_STYLE["commit-gate"],
-      trae: CLAUDE_STYLE["commit-gate"],
+      trae: TRAE_STYLE["commit-gate"],
       workbuddy: CLAUDE_STYLE["commit-gate"],
     },
   },
@@ -60,7 +83,7 @@ export const HOOK_DEFS = {
       cursor: { event: "beforeShellExecution", matcher: "git\\s+(commit|merge)\\b", timeout: 12 },
       claude: CLAUDE_STYLE["commit-gate-extended"],
       qoder: CLAUDE_STYLE["commit-gate-extended"],
-      trae: CLAUDE_STYLE["commit-gate-extended"],
+      trae: TRAE_STYLE["commit-gate-extended"],
       workbuddy: CLAUDE_STYLE["commit-gate-extended"],
     },
   },
@@ -71,7 +94,7 @@ export const HOOK_DEFS = {
       cursor: { event: "beforeMCPExecution", timeout: 8 },
       claude: CLAUDE_STYLE["mysql-guard"],
       qoder: CLAUDE_STYLE["mysql-guard"],
-      trae: CLAUDE_STYLE["mysql-guard"],
+      trae: TRAE_STYLE["mysql-guard"],
       workbuddy: CLAUDE_STYLE["mysql-guard"],
     },
   },
@@ -82,7 +105,7 @@ export const HOOK_DEFS = {
       cursor: { event: "afterFileEdit", timeout: 8 },
       claude: CLAUDE_STYLE["after-edit"],
       qoder: CLAUDE_STYLE["after-edit"],
-      trae: CLAUDE_STYLE["after-edit"],
+      trae: TRAE_STYLE["after-edit"],
       workbuddy: CLAUDE_STYLE["after-edit"],
     },
   },
@@ -93,7 +116,7 @@ export const HOOK_DEFS = {
       cursor: { event: "stop", timeout: 8, loop_limit: 1 },
       claude: CLAUDE_STYLE["stop-checklist"],
       qoder: CLAUDE_STYLE["stop-checklist"],
-      trae: CLAUDE_STYLE["stop-checklist"],
+      trae: TRAE_STYLE["stop-checklist"],
       workbuddy: CLAUDE_STYLE["stop-checklist"],
     },
   },

@@ -31,6 +31,7 @@ import {
   migrateMcpUsageGuideIfNeeded,
 } from "./lib/harness-meta.mjs";
 import { scanSignals } from "./lib/detect-signals.mjs";
+import { HOOK_DEFS } from "./lib/hooks-checks.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
 import {
   DOC_MOVES,
@@ -1161,6 +1162,26 @@ if (fs.existsSync(fixture)) {
     "utf8"
   );
   assert(/HOOK_DEFS/.test(hooksLib) && /commit-gate-extended/.test(hooksLib), "hooks lib registry");
+  assert(/TRAE_STYLE/.test(hooksLib), "hooks lib has TRAE_STYLE distinct from CLAUDE_STYLE");
+  assert(
+    HOOK_DEFS["commit-gate"].events.trae.matcher.includes("RunCommand"),
+    "HOOK_DEFS trae commit-gate matcher includes RunCommand"
+  );
+  assert(
+    HOOK_DEFS["commit-gate-extended"].events.trae.matcher.includes("RunCommand"),
+    "HOOK_DEFS trae commit-gate-extended matcher includes RunCommand"
+  );
+  assert(
+    HOOK_DEFS["commit-gate"].events.claude.matcher === "Bash" &&
+      HOOK_DEFS["commit-gate"].events.qoder.matcher === "Bash" &&
+      HOOK_DEFS["commit-gate"].events.workbuddy.matcher === "Bash",
+    "Claude/Qoder/WorkBuddy commit-gate matcher stays Bash"
+  );
+  assert(
+    HOOK_DEFS["commit-gate-extended"].events.claude.matcher === "Bash" &&
+      HOOK_DEFS["commit-gate-extended"].events.qoder.matcher === "Bash",
+    "Claude/Qoder extended gate matcher stays Bash"
+  );
   const domYaml050 = fs.readFileSync(
     path.join(skillRoot, "templates/_meta/domains.yaml"),
     "utf8"
@@ -1389,6 +1410,27 @@ if (fs.existsSync(fixture)) {
     );
     const traeHooks = JSON.parse(fs.readFileSync(path.join(tmpA, ".trae/hooks.json"), "utf8"));
     assert(traeHooks.hooks && traeHooks.hooks.PreToolUse, "trae hooks.json Claude-style");
+    const traeL4Gate = (traeHooks.hooks.PreToolUse || []).find((g) =>
+      JSON.stringify(g).includes("git-commit-soft-gate")
+    );
+    assert(
+      traeL4Gate && String(traeL4Gate.matcher || "").includes("RunCommand"),
+      "L4 Trae commit-gate matcher includes RunCommand"
+    );
+    const claudeL4Gate = (settings.hooks.PreToolUse || []).find((g) =>
+      JSON.stringify(g).includes("git-commit-soft-gate")
+    );
+    const qoderL4Gate = (qoderSettings.hooks.PreToolUse || []).find((g) =>
+      JSON.stringify(g).includes("git-commit-soft-gate")
+    );
+    assert(
+      claudeL4Gate && claudeL4Gate.matcher === "Bash",
+      "L4 Claude commit-gate matcher stays Bash"
+    );
+    assert(
+      qoderL4Gate && qoderL4Gate.matcher === "Bash",
+      "L4 Qoder commit-gate matcher stays Bash"
+    );
     assert(
       fs.existsSync(path.join(tmpA, ".qoder/rules/00-project-docs-overview.md")),
       "L4 mirrors cursor rules to qoder .md"
@@ -1592,6 +1634,30 @@ if (fs.existsSync(fixture)) {
       fs.readFileSync(path.join(tmpB, ".trae/hooks.json"), "utf8")
     );
     assert(traeSyncHooks.hooks && traeSyncHooks.hooks.PreToolUse, "L5 sync trae hooks.json");
+    const traeL5Gate = (traeSyncHooks.hooks.PreToolUse || []).find((g) =>
+      JSON.stringify(g).includes("git-commit-soft-gate")
+    );
+    assert(
+      traeL5Gate && String(traeL5Gate.matcher || "").includes("RunCommand"),
+      "L5 sync Trae commit-gate matcher includes RunCommand"
+    );
+    const claudeSyncSettings = JSON.parse(
+      fs.readFileSync(path.join(tmpB, ".claude/settings.json"), "utf8")
+    );
+    const claudeL5Gate = (claudeSyncSettings.hooks.PreToolUse || []).find((g) =>
+      JSON.stringify(g).includes("git-commit-soft-gate")
+    );
+    const qoderL5Gate = (qoderSyncSettings.hooks.PreToolUse || []).find((g) =>
+      JSON.stringify(g).includes("git-commit-soft-gate")
+    );
+    assert(
+      claudeL5Gate && claudeL5Gate.matcher === "Bash",
+      "L5 sync Claude commit-gate matcher stays Bash"
+    );
+    assert(
+      qoderL5Gate && qoderL5Gate.matcher === "Bash",
+      "L5 sync Qoder commit-gate matcher stays Bash"
+    );
     assert(
       fs.existsSync(path.join(tmpB, ".trae/rules/00-project-docs-overview.md")),
       "L5 sync trae rules as .md"
@@ -3111,6 +3177,16 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(fs.existsSync(path.join(multi, ".qoder/settings.json")), "multi-host-hooks qoder settings");
   assert(fs.existsSync(path.join(multi, ".trae/hooks.json")), "multi-host-hooks trae hooks.json");
   assert(fs.existsSync(path.join(multi, ".codebuddy/settings.json")), "multi-host-hooks workbuddy settings");
+  const multiTrae = JSON.parse(fs.readFileSync(path.join(multi, ".trae/hooks.json"), "utf8"));
+  const multiClaude = JSON.parse(fs.readFileSync(path.join(multi, ".claude/settings.json"), "utf8"));
+  assert(
+    JSON.stringify(multiTrae).includes("RunCommand"),
+    "multi-host-hooks Trae matcher includes RunCommand"
+  );
+  assert(
+    JSON.stringify(multiClaude).includes("Bash") && !JSON.stringify(multiClaude).includes("RunCommand"),
+    "multi-host-hooks Claude matcher stays Bash"
+  );
   const multiSig = scanSignals(multi);
   assert(multiSig.S_HOOKS, "multi-host-hooks S_HOOKS");
 
@@ -3282,6 +3358,123 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/00-harness-ssot\.mdc/.test(traeAd), "trae adapter points L5 00 at SSOT");
   assert(/L5_SSOT_HARNESS_TARGET|00-harness-ssot\.mdc/.test(render061), "render.mjs L5 SSOT 00 constant or target");
   assert(/1x-contract-sync/.test(syncTmpl061) && /00-harness-ssot/.test(syncTmpl061), "sync.mjs.tmpl header documents 1x/00 prune");
+
+  assert(/Round A/.test(evidence) && /c-be-sms-ai/.test(evidence), "EVIDENCE Round A names c-be-sms-ai");
+  assert(/磁盘 \+ 行为 PASS|磁盘\+行为 PASS/.test(evidence), "EVIDENCE Round A T-P0-1 disk+behavior PASS");
+  assert(/1x-contract-sync/.test(evidence) && /#17/.test(evidence), "EVIDENCE Round A confirms no 1x (#17)");
+  assert(/17-frontend-web/.test(evidence) && /globs/.test(evidence), "EVIDENCE Round A selective globs injection");
+  assert(/Round C/.test(evidence) && /本机行为 FAIL/.test(evidence), "EVIDENCE Round C T-P0-3 local FAIL");
+  assert(/误诊/.test(evidence) && /RunCommand/.test(evidence), "EVIDENCE reclassifies Round C as matcher misdiagnosis");
+  assert(/Settings/.test(evidence) && /Hooks/.test(evidence) && /新会话/.test(evidence), "EVIDENCE requires Settings→Hooks + new session retest");
+  assert(/beforeShellExecution/.test(evidence) && /\.cursor\/hooks\.json/.test(evidence), "EVIDENCE Round B invalid Cursor channel");
+  assert(/永远不要|勿/.test(manual) && /\.cursor\/hooks\.json/.test(manual) && /beforeShellExecution/.test(manual), "MANUAL forbids Cursor channel as Trae hooks evidence");
+  assert(/RunCommand/.test(manual) && /Settings/.test(manual) && /Hooks/.test(manual), "MANUAL probe uses RunCommand + Settings→Hooks");
+  assert(/additionalContext|systemMessage/.test(manual), "MANUAL expects systemMessage/additionalContext");
+  assert(/\.githooks/.test(manual), "MANUAL keeps .githooks as fallback");
+  assert(/本机行为 FAIL/.test(parity061) && /误诊/.test(parity061), "TRAE-PARITY T-P0-3 FAIL reclassified as matcher misdiagnosis");
+  assert(/Round A/.test(parity061) && /PASS/.test(parity061), "TRAE-PARITY T-P0-1 Round A PASS");
+  assert(/RunCommand/.test(traeAd) && /beforeShellExecution/.test(traeAd), "trae adapter documents RunCommand + forbids Cursor channel");
+  assert(/Round C/.test(changelog061) && /本机行为 FAIL/.test(changelog061), "CHANGELOG 0.6.1-dev notes Round C FAIL");
+  assert(
+    /误诊/.test(changelog061) && /RunCommand/.test(changelog061),
+    "CHANGELOG reclassifies Round C as matcher misdiagnosis + RunCommand fix"
+  );
+  assert(/Settings/.test(changelog061) && /Hooks/.test(changelog061), "CHANGELOG requires Settings→Hooks enable project");
+  assert(
+    /中高/.test(changelog061) && /不.*矩阵|不把矩阵/.test(changelog061),
+    "CHANGELOG 0.6.1-dev keeps Trae 中高 (no bump)"
+  );
+
+  // T-P1-2: adapter soft-allow must emit Trae hookSpecificOutput.additionalContext
+  {
+    const tmpAd = fs.mkdtempSync(path.join(os.tmpdir(), "harness-adapter-soft-"));
+    try {
+      const adapterSrc = fs.readFileSync(
+        path.join(skillRoot, "templates/hooks/claude-adapter.js"),
+        "utf8"
+      );
+      fs.writeFileSync(path.join(tmpAd, "claude-adapter.js"), adapterSrc, "utf8");
+      fs.writeFileSync(
+        path.join(tmpAd, "soft-allow.js"),
+        [
+          "#!/usr/bin/env node",
+          "process.stdout.write(JSON.stringify({",
+          '  permission: "allow",',
+          '  agent_message: "soft reminder for commit",',
+          "}));",
+          "",
+        ].join("\n"),
+        "utf8"
+      );
+      const soft = runNode(
+        [path.join(tmpAd, "claude-adapter.js"), "shell-gate", "soft-allow.js"],
+        {
+          cwd: tmpAd,
+          input: JSON.stringify({
+            hook_event_name: "PreToolUse",
+            tool_name: "RunCommand",
+            tool_input: { command: "git commit --dry-run" },
+          }),
+        }
+      );
+      assert(soft.status === 0, "adapter soft-allow exits 0");
+      let softOut = {};
+      try {
+        softOut = JSON.parse(String(soft.stdout || "").trim());
+      } catch {
+        softOut = {};
+      }
+      assert(
+        softOut.systemMessage === "soft reminder for commit",
+        "adapter soft-allow keeps Claude systemMessage"
+      );
+      assert(
+        softOut.hookSpecificOutput &&
+          softOut.hookSpecificOutput.hookEventName === "PreToolUse" &&
+          softOut.hookSpecificOutput.permissionDecision === "allow" &&
+          softOut.hookSpecificOutput.additionalContext === "soft reminder for commit",
+        "adapter soft-allow emits Trae additionalContext"
+      );
+
+      fs.writeFileSync(
+        path.join(tmpAd, "soft-deny.js"),
+        [
+          "#!/usr/bin/env node",
+          "process.stdout.write(JSON.stringify({",
+          '  permission: "deny",',
+          '  agent_message: "blocked",',
+          "}));",
+          "",
+        ].join("\n"),
+        "utf8"
+      );
+      const deny = runNode(
+        [path.join(tmpAd, "claude-adapter.js"), "shell-gate", "soft-deny.js"],
+        {
+          cwd: tmpAd,
+          input: JSON.stringify({
+            hook_event_name: "PreToolUse",
+            tool_name: "RunCommand",
+            tool_input: { command: "rm -rf /" },
+          }),
+        }
+      );
+      let denyOut = {};
+      try {
+        denyOut = JSON.parse(String(deny.stdout || "").trim());
+      } catch {
+        denyOut = {};
+      }
+      assert(
+        denyOut.hookSpecificOutput &&
+          denyOut.hookSpecificOutput.permissionDecision === "deny" &&
+          denyOut.hookSpecificOutput.permissionDecisionReason === "blocked",
+        "adapter deny path still uses hookSpecificOutput"
+      );
+    } finally {
+      fs.rmSync(tmpAd, { recursive: true, force: true });
+    }
+  }
 }
 
 console.log(`ok: ${ok.length}`);
