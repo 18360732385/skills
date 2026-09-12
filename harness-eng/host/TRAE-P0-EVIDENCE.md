@@ -68,6 +68,20 @@ host === "trae" → 保留 rule.raw 的 FM    （旧生成器，约 17:53）    
 - selfcheck：L4 镜像与 L5 sync 的 Trae 规则必须仍含 `alwaysApply` / `globs`；tmpl `toHostMd(rule, host)` + `host === "trae"` 保留分支。
 - fixture：`scripts/fixtures/mature-trae/`（根 AGENTS + 带 FM 的 `.trae/rules` + api/kb，无 `.cursor/rules`）判 MATURE。
 
+## 2026-09-12 消费仓 sync stale 清理（人审 · 权威）
+
+消费仓从 tmpl 刷新 `scripts/agent-config/sync.mjs` 后再跑 sync，清掉 7 份「过期」宿主副本：`00-harness-ssot`×3 宿主 + `1x-contract-sync`×4 宿主。Trae 会话曾判断删除错误并从 git 恢复。**对照 skill 代码的独立结论：**
+
+| 清理对象 | 结论 | 理由 |
+|---|---|---|
+| **`1x-contract-sync`**（claude/qoder/trae/workbuddy） | **删除正确 ✅** | 0.5.7 / `shouldEmitContractSync`：L3+ 全量镜像或 L5 sync 宿主省略冗余 1x。从 git 恢复等于回退该契约 |
+| **宿主 `00-harness-ssot`**（`.trae/.qoder/.claude/.codebuddy/rules/`） | **机械删除正确 ✅**，但必须经 SSOT 回灌 | 这些目录属 `SYNC_MANAGED_RULE_PREFIXES`，L5 由 sync 托管；plan 里没有的就是 stale。Trae 说「L5 仍由 render 直渲这些 00」是错的 |
+| **从 git 恢复宿主孤儿** | **错误 ❌** | Trae 仍需要 alwaysApply harness 指针，但正确路径是文件活在 **`docs/agent-config/rules/00-harness-ssot.mdc`**（SSOT），再 sync 分发。不要把宿主副本捡回来 |
+
+工程缺口（本页对照日之后的 hotfix）：L5 `adaptTarget` 原先只把 `.cursor/rules/*` 改投 SSOT；Trae/Qoder/WorkBuddy 的 00 目标返回 `null` 且不写盘。若消费仓没跟 Cursor 一起 land、或 SSOT 从未落下 00，sync 清掉宿主副本后指针永久消失。**修复**：L5 只要选了 cursor/trae/qoder/claude/workbuddy，render 必须保证 SSOT `00-harness-ssot.mdc` 在计划里（cursor 风格 tmpl），再由 sync 分发。**不**为全量镜像 L5 宿主重新写出 `1x-contract-sync`。
+
+人验：见 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)「消费仓 refresh」。
+
 ## 明确不在本页范围
 
 - 不改矩阵 Trae **中高 → 高**

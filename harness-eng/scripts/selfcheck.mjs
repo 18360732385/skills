@@ -1528,6 +1528,10 @@ if (fs.existsSync(fixture)) {
       "L5 rules rendered to SSOT side"
     );
     assert(
+      fs.existsSync(path.join(tmpB, "docs/agent-config/rules/00-harness-ssot.mdc")),
+      "L5 render writes SSOT 00-harness-ssot"
+    );
+    assert(
       !fs.existsSync(path.join(tmpB, ".cursor/rules/00-project-docs-overview.mdc")),
       "L5 does not direct-render .cursor/rules"
     );
@@ -1591,6 +1595,14 @@ if (fs.existsSync(fixture)) {
     assert(
       fs.existsSync(path.join(tmpB, ".trae/rules/00-project-docs-overview.md")),
       "L5 sync trae rules as .md"
+    );
+    assert(
+      fs.existsSync(path.join(tmpB, ".trae/rules/00-harness-ssot.md")),
+      "L5 sync distributes 00-harness-ssot to trae"
+    );
+    assert(
+      !fs.existsSync(path.join(tmpB, ".trae/rules/1x-contract-sync.md")),
+      "L5 sync does not emit trae 1x-contract-sync"
     );
     const traeL5Rule = fs.readFileSync(
       path.join(tmpB, ".trae/rules/00-project-docs-overview.md"),
@@ -2148,6 +2160,24 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(
     !l5.targets.some((t) => /1x-contract-sync/.test(t) && !t.startsWith(".codex/")),
     "L5 does not emit alwaysApply 1x alongside full mirrored sync rules"
+  );
+  assert(
+    l5.targets.includes("docs/agent-config/rules/00-harness-ssot.mdc"),
+    "L5 multi-host plan includes SSOT 00-harness-ssot"
+  );
+
+  const l5TraeOnly = dryTargets("L5", ["trae"]);
+  assert(
+    l5TraeOnly.targets.includes("docs/agent-config/rules/00-harness-ssot.mdc"),
+    "L5 trae-only plan includes SSOT 00-harness-ssot"
+  );
+  assert(
+    !l5TraeOnly.targets.includes(".trae/rules/00-harness-ssot.md"),
+    "L5 trae-only does not direct-render host 00"
+  );
+  assert(
+    !l5TraeOnly.targets.some((t) => /1x-contract-sync/.test(t)),
+    "L5 trae-only still omits 1x-contract-sync"
   );
 }
 
@@ -3237,10 +3267,21 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   const changelog061 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   assert(/^## 0\.6\.1-dev\b/m.test(changelog061), "CHANGELOG 0.6.1-dev section");
   assert(/刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
+  assert(/00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1-dev notes L5 SSOT 00");
   const roadmap061 = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
   assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
   const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/0\.6\.1-dev/.test(verify061) && /mature-trae|Trae P0/.test(verify061), "VERIFY has 0.6.1-dev Trae P0 section");
+
+  assert(/2026-09-12/.test(evidence) && /stale|过期/.test(evidence), "EVIDENCE records 2026-09-12 sync stale cleanup");
+  assert(/git restore|从 git 恢复/.test(evidence) && /❌/.test(evidence), "EVIDENCE marks git-restore orphans as wrong");
+  assert(/00-harness-ssot\.mdc/.test(evidence), "EVIDENCE points 00 at SSOT");
+  assert(/不要|勿|不要\s*`?git/.test(manual) && /00-harness-ssot/.test(manual), "MANUAL says do not git-restore host 00");
+  assert(/1x-contract-sync/.test(manual) && /消失|gone|不要从 git/.test(manual), "MANUAL expects 1x gone after sync");
+  assert(/00-harness-ssot/.test(parity061) && /SSOT/.test(parity061), "TRAE-PARITY notes L5 00 via SSOT");
+  assert(/00-harness-ssot\.mdc/.test(traeAd), "trae adapter points L5 00 at SSOT");
+  assert(/L5_SSOT_HARNESS_TARGET|00-harness-ssot\.mdc/.test(render061), "render.mjs L5 SSOT 00 constant or target");
+  assert(/1x-contract-sync/.test(syncTmpl061) && /00-harness-ssot/.test(syncTmpl061), "sync.mjs.tmpl header documents 1x/00 prune");
 }
 
 console.log(`ok: ${ok.length}`);

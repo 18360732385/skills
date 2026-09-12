@@ -21,8 +21,9 @@
 | 仅有遗留 `.cursor/mcp-usage-guide.md`（或旧名 `MCP使用说明.md`） | resume/upgrade：复制到新路径后 skip/merge；**不自动删除**旧文件（遗留只读；可选手工清理） | 保留双份 / 手工删旧 |
 | `.claude/settings.json` / `.qoder/settings.json` / `.codebuddy/settings.json` / `.codex/hooks.json` / `.trae/hooks.json` 已存在 | **`merge-json-hooks`**：只追加/去重 hooks command；保留用户其它顶层键 | skip |
 | 根 `.gitignore` 已存在（L4 snippet） | **追加**缺失行，不整文件覆盖 | skip |
-| L5 已启用（meta `agent_config: true`） | 写盘入口 **`scripts/harness.mjs`**（`land.mjs` 薄别名）：`.cursor/rules` 改投 `docs/agent-config/rules/`；hooks 脚本改投 `docs/agent-config/hooks/`；`.cursor/hooks.json` / `.claude/settings.json` / CLAUDE.md 由 `sync.mjs` 生成，**render / harness 不直渲**（互斥，避免被 sync 当 stale 清理或漂移）；全量镜像宿主 **omit** 冗余 `1x-contract-sync`（Codex 仍写 `.codex/contract-sync.md`） | — |
-| L3+ / L5 全量镜像宿主已有冗余 `1x-contract-sync.md` | resume **`skip`**，**不自动删除**；可选列入移交 TODO 手工清理 | 用户书面要求才 backup-create / 删除 |
+| L5 已启用（meta `agent_config: true`） | 写盘入口 **`scripts/harness.mjs`**（`land.mjs` 薄别名）：`.cursor/rules` 改投 `docs/agent-config/rules/`；hooks 脚本改投 `docs/agent-config/hooks/`；`.cursor/hooks.json` / `.claude/settings.json` / CLAUDE.md 由 `sync.mjs` 生成，**render / harness 不直渲**（互斥，避免被 sync 当 stale 清理或漂移）；全量镜像宿主 **omit** 冗余 `1x-contract-sync`（Codex 仍写 `.codex/contract-sync.md`）。**00-harness-ssot** 必须先落 `docs/agent-config/rules/00-harness-ssot.mdc`，再由 sync 分发 | — |
+| L3+ / L5 全量镜像宿主已有冗余 `1x-contract-sync.md` | **render/resume `skip`，不自动删除**（移交 TODO 可手工清）。**L5 再跑 sync** 时，托管 rules 目录里不在 plan 的 1x / 宿主 `00-harness-ssot` 孤儿会被当 stale 清掉——这是故意的；缺 00 应回灌 SSOT，勿 git restore 宿主副本 | 用户书面要求才 backup-create / 在未跑 sync 前保留 |
+| L5 托管 rules 目录所有权 | **sync**：`.cursor/.trae/.qoder/.claude/.codebuddy/rules/` 以 sync plan 为准；render 不直渲这些前缀（`SYNC_MANAGED_RULE_PREFIXES`） | — |
 | L5 生成物（带 GENERATED 标记）已存在且内容异构 | 勿手改对齐；改 SSOT 后跑 `node scripts/agent-config/sync.mjs`；漂移校验 `sync.mjs --check` | backup-create（仅用户书面要求） |
 | 文件内容含疑似密码/Token | **拒绝写入同路径** | 提示移出 git |
 | `docs/superpowers/archive/**` 业务正文 | 永不从本 skill 覆盖 | — |

@@ -16,6 +16,7 @@
 - **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)（含消费仓刷新配方 + 新会话 hooks 探测）
 - **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；matcher 风险；链到实证页；消费仓刷新 `sync.mjs`
 - **hotfix**：镜像到 Trae **保留** frontmatter（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）
+- **L5 00-harness-ssot via SSOT**：只要选了 cursor/trae/qoder/claude/workbuddy，render 必写 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 00 / 冗余 1x 仍由 sync 托管（清 stale 正确，勿 git restore）。人审见 [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)
 - **fixture**：`scripts/fixtures/mature-trae/`（无 `.cursor/rules` 仍 MATURE）
 
 ### 版本钉

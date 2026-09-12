@@ -68,6 +68,14 @@
 
 2026-09-12：**PASS** — `harness-eng` 可见可点名；`release-eng` 因 FM 隐藏。
 
+## 5. 消费仓 refresh：sync 清 1x / 宿主 00 之后怎么办
+
+刷新 `scripts/agent-config/sync.mjs`（从 skill tmpl）再跑 sync 之后：
+
+- **预期**：各宿主 `1x-contract-sync.md` **消失**（L5 全量镜像，1x 冗余）。不要从 git 捡回来。
+- **若 `.trae/rules/00-harness-ssot.md` 没了**：先确认 SSOT 有 `docs/agent-config/rules/00-harness-ssot.mdc`。没有就 **重新 land/render L5**（让 render 写出 SSOT 00），再 `node scripts/agent-config/sync.mjs`。**不要** `git restore` `.trae/rules/00-harness-ssot.md`（或 qoder/claude/codebuddy 上的同名孤儿）。
+- 判断依据：[TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)「2026-09-12 消费仓 sync stale 清理」。
+
 ## 回传格式（可贴 PR）
 
 ```text
