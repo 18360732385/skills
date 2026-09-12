@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.6.0-dev: harness.mjs public CLI, ROADMAP, Codex P2 freeze, version pin.
  * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
  * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
  * Inherited 0.2.27–0.5.7 gates.
@@ -29,7 +30,7 @@ import {
   migrateMcpUsageGuideIfNeeded,
 } from "./lib/harness-meta.mjs";
 import { scanSignals } from "./lib/detect-signals.mjs";
-import { isGeneratedHostPath, resolveLandAgentConfig } from "./land.mjs";
+import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
@@ -134,7 +135,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.10"/.test(qYaml), "questions.yaml version 0.5.10");
+assert(/version:\s*"0\.6\.0-dev"/.test(qYaml), "questions.yaml version 0.6.0-dev");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -197,12 +198,12 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.10"/.test(manifest), "manifest 0.5.10");
+assert(/version:\s*"0\.6\.0-dev"/.test(manifest), "manifest 0.6.0-dev");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.10"/.test(metaTmpl), "harness-meta 0.5.10");
+assert(/skill_version:\s*"0\.6\.0-dev"/.test(metaTmpl), "harness-meta 0.6.0-dev");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -374,13 +375,13 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.10/.test(verifyMd), "VERIFY is 0.5.10");
+assert(/0\.6\.0-dev/.test(verifyMd), "VERIFY is 0.6.0-dev");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.10/.test(readme), "README header version 0.5.10");
-assert(/当前 \*\*0\.5\.10\*\*/.test(readme), "README footer version 0.5.10");
+assert(/当前版本：0\.6\.0-dev/.test(readme), "README header version 0.6.0-dev");
+assert(/当前 \*\*0\.6\.0-dev\*\*/.test(readme), "README footer version 0.6.0-dev");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -391,9 +392,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.10\*\*/.test(handbookMd), "使用手册.md version 0.5.10");
-assert(/v0\.5\.10/.test(handbookHtml), "使用手册.html version 0.5.10");
-assert(/当前 \*\*0\.5\.10\*\*/.test(quickstartMd), "QUICKSTART version 0.5.10");
+assert(/版本：\*\*0\.6\.0-dev\*\*/.test(handbookMd), "使用手册.md version 0.6.0-dev");
+assert(/v0\.6\.0-dev/.test(handbookHtml), "使用手册.html version 0.6.0-dev");
+assert(/当前 \*\*0\.6\.0-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.0-dev");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -638,7 +639,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.10"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.10");
+  assert(/version:\s*"0\.6\.0-dev"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.0-dev");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1222,6 +1223,7 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.7 → 0\.5\.8/.test(upg050), "upgrade has 0.5.7 → 0.5.8 path");
   assert(/0\.5\.8 → 0\.5\.9/.test(upg050), "upgrade has 0.5.8 → 0.5.9 path");
   assert(/0\.5\.9 → 0\.5\.10/.test(upg050), "upgrade has 0.5.9 → 0.5.10 path");
+  assert(/0\.5\.10 → 0\.6\.0/.test(upg050), "upgrade has 0.5.10 → 0.6.0 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
@@ -1819,7 +1821,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/skill_version:\s*"?0\.5\.10"?/.test(migrated), "render migrate+merge updates skill_version");
+    assert(/skill_version:\s*"?0\.6\.0-dev"?/.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -2629,6 +2631,172 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
     !/aiTools\.size \? aiTools : new Set\(\["cursor"\]\)/.test(renderSrc0510),
     "render does not inject [cursor] when ai_tools empty"
   );
+}
+
+// --- 0.6.0-dev M1: harness CLI · ROADMAP · G6 freeze · version pin ---
+{
+  assert(fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "ROADMAP-0.6.0.md");
+  const roadmap = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
+  assert(/G1/.test(roadmap) && /G7/.test(roadmap), "ROADMAP has G1–G7");
+  assert(/M1/.test(roadmap) && /M4/.test(roadmap), "ROADMAP has M1–M4");
+  assert(/pipeline-skeleton/.test(roadmap), "ROADMAP names pipeline-skeleton");
+  assert(/入口单一|统一入口/.test(roadmap), "ROADMAP theme 统一入口");
+  assert(/冻结/.test(roadmap) && /P2/.test(roadmap) && /另立项/.test(roadmap), "ROADMAP G6 Codex P2 freeze");
+  assert(/非目标|Non-goals|不做/.test(roadmap), "ROADMAP lists non-goals");
+
+  assert(/ROADMAP-0\.6\.0/.test(readme), "README links ROADMAP-0.6.0");
+  const agentIndex060 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(/ROADMAP-0\.6\.0/.test(agentIndex060), "AGENT-INDEX links ROADMAP-0.6.0");
+  const changelog060 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(
+    /0\.6\.0-dev|Unreleased/.test(changelog060) && /ROADMAP-0\.6\.0/.test(changelog060),
+    "CHANGELOG Unreleased/0.6.0-dev + ROADMAP"
+  );
+  assert(/## 0\.6\.0-dev|## Unreleased/.test(changelog060), "CHANGELOG has 0.6.0-dev or Unreleased heading");
+
+  assert(fs.existsSync(path.join(skillRoot, "scripts/harness.mjs")), "harness.mjs");
+  const harnessHelp = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
+  assert(harnessHelp.status === 0 && /--root/.test(harnessHelp.stdout), "harness.mjs --help");
+  assert(
+    /pipeline-skeleton/.test(harnessHelp.stdout) &&
+      /land\|resume\|upgrade\|pipeline-skeleton/.test(harnessHelp.stdout),
+    "harness --help lists land|resume|upgrade|pipeline-skeleton"
+  );
+
+  const landSrc060 = fs.readFileSync(path.join(skillRoot, "scripts/land.mjs"), "utf8");
+  assert(/harness\.mjs/.test(landSrc060), "land.mjs aliases harness.mjs");
+  const landHelp060 = runNode([path.join(skillRoot, "scripts/land.mjs"), "--help"]);
+  assert(landHelp060.status === 0 && /--root/.test(landHelp060.stdout), "land.mjs alias --help");
+
+  const skill060 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
+  const wp060 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+  const conflict060 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  const qs060 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
+  const pipeline060 = fs.readFileSync(path.join(skillRoot, "pipeline.md"), "utf8");
+  for (const [label, text] of [
+    ["SKILL.md", skill060],
+    ["AGENT-INDEX.md", agentIndex060],
+    ["write-plan.md", wp060],
+    ["conflict-policy.md", conflict060],
+    ["QUICKSTART.md", qs060],
+    ["pipeline.md", pipeline060],
+  ]) {
+    assert(/harness\.mjs/.test(text), `${label} names harness.mjs as write entry`);
+  }
+  assert(/pipeline-skeleton/.test(pipeline060), "pipeline.md names pipeline-skeleton");
+  assert(/pipeline-skeleton/.test(skill060) || /harness\.mjs/.test(skill060), "SKILL points harness CLI");
+
+  const renderHelp = runNode([path.join(skillRoot, "scripts/render.mjs"), "--help"]);
+  assert(renderHelp.status === 0, "render.mjs --help exits 0");
+  assert(/harness\.mjs/.test(renderHelp.stdout), "render --help points to harness.mjs");
+
+  const codex060 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
+  const aiTools060 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  assert(/冻结/.test(codex060) && /P2/.test(codex060) && /另立项/.test(codex060), "adapters/codex.md G6 freeze");
+  assert(/冻结/.test(aiTools060) && /P2/.test(aiTools060) && /另立项/.test(aiTools060), "ai-tools.md G6 freeze");
+
+  const rBadMode = runNode([
+    path.join(skillRoot, "scripts/harness.mjs"),
+    "--root",
+    skillRoot,
+    "--params",
+    path.join(skillRoot, "scripts/selfcheck.mjs"),
+    "--mode",
+    "fill-all",
+  ]);
+  assert(rBadMode.status !== 0, "harness unknown --mode exits non-zero");
+  assert(/land\|resume\|upgrade\|pipeline-skeleton/.test(rBadMode.stderr + rBadMode.stdout), "unknown mode lists legal modes");
+
+  const tmpSkel = fs.mkdtempSync(path.join(os.tmpdir(), "harness-060-skel-"));
+  try {
+    const ph = {
+      REPO_NAME: "demo",
+      REPO_DESC: "demo",
+      DATE: "2026-09-12",
+      AGENTS_VARIANT: "solo",
+      LADDER_TARGET: "L4",
+      GLOB_PROFILE: "wide",
+      LAST_MODE: "pipeline-skeleton",
+      MODULE_DIRS: "",
+      CODE_PREFIXES: "src/",
+      COMMAND_TEST: "echo test",
+      COMMAND_BUILD: "echo build",
+      GLOB_API: "**/controller/**,docs/api/**",
+      GLOB_FUNC: "**/src/**,docs/func/**",
+      GLOB_DB: "**/db/**,docs/db/**",
+      GLOB_JOBS: "docs/jobs/**",
+      GLOB_KB: "docs/agent-kb/**",
+      GLOB_SUPERPOWERS: "docs/superpowers/**",
+      GLOB_AI_TOOLS: ".cursor/**",
+      GLOB_OBSERVABILITY: "**/src/**",
+      GLOB_FRONTEND: "apps/**",
+      STACK_BADGES: "Java",
+      PROJECT_NAME: "demo",
+      PROJECT_DESC: "demo",
+    };
+    const pSkel = path.join(tmpSkel, "params.json");
+    fs.writeFileSync(
+      pSkel,
+      JSON.stringify({
+        ladder: "L4",
+        domains: ["api"],
+        ai_tools: ["cursor"],
+        agents_variant: "solo",
+        hooks_family: ["commit-gate"],
+        expandFromManifest: true,
+        placeholders: ph,
+      }),
+      "utf8"
+    );
+    const rSkel = runNode([
+      path.join(skillRoot, "scripts/harness.mjs"),
+      "--root",
+      tmpSkel,
+      "--params",
+      pSkel,
+      "--mode",
+      "pipeline-skeleton",
+      "--dry-run",
+    ]);
+    assert(rSkel.status === 0, "harness --mode pipeline-skeleton --dry-run exits 0");
+    assert(
+      /骨架/.test(rSkel.stderr + rSkel.stdout) && /fill/.test(rSkel.stderr + rSkel.stdout),
+      "pipeline-skeleton banner says skeleton-only / no fill"
+    );
+    assert(
+      !fs.existsSync(path.join(tmpSkel, "docs/harness-eng/fill-plan.yaml")),
+      "pipeline-skeleton does not write fill-plan"
+    );
+
+    const pRefuse = path.join(tmpSkel, "params-refuse.json");
+    fs.writeFileSync(
+      pRefuse,
+      JSON.stringify({
+        ladder: "L5",
+        agent_config: true,
+        files: [
+          {
+            template: "rules/00-project-docs-overview.mdc.tmpl",
+            target: ".cursor/rules/00-project-docs-overview.mdc",
+            action: "create",
+          },
+        ],
+        placeholders: { ...ph, LADDER_TARGET: "L5" },
+      }),
+      "utf8"
+    );
+    const rRefuse = runNode([
+      path.join(skillRoot, "scripts/harness.mjs"),
+      "--root",
+      tmpSkel,
+      "--params",
+      pRefuse,
+      "--no-sync",
+    ]);
+    assert(rRefuse.status !== 0, "harness L5 refuses explicit .cursor/rules file");
+  } finally {
+    fs.rmSync(tmpSkel, { recursive: true, force: true });
+  }
 }
 
 console.log(`ok: ${ok.length}`);

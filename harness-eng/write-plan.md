@@ -91,7 +91,7 @@ Q_SEED: 是
 
 ## 写入方式
 
-确认后优先跑 `scripts/land.mjs`（`--mode land|resume|upgrade`）。非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，**拒绝**直渲 `.cursor/rules` 等生成宿主路径，改走目标仓 `node scripts/agent-config/sync.mjs`。字段与展开语义以 `render.mjs --help` / `land.mjs --help` 为准。要点：
+确认后优先跑 `scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`；`land.mjs` 为薄别名）。非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，**拒绝**直渲 `.cursor/rules` 等生成宿主路径，改走目标仓 `node scripts/agent-config/sync.mjs`。字段与展开语义以 `harness.mjs --help` 为准（`render.mjs --help` 仅内部渲染器）。要点：
 
 - 显式：`--root` + `--params`（占位符 + `files[]`）
 - 展开：params 含 `ladder` / `domains` / `agents_variant` / `on_exists` 等，可 `--manifest` 或 `expandFromManifest: true`

@@ -3,7 +3,12 @@
  * harness-eng render — no npm deps.
  * Usage:
  *   node scripts/render.mjs --root <TARGET> --params <params.json>
- *       [--dry-run] [--manifest <path>] [--backup]
+ *       [--dry-run] [--manifest <path>] [--backup] [--help]
+ *
+ * Internal renderer. Agent public write entry:
+ *   node scripts/harness.mjs --root <TARGET> --params <params.json>
+ *       [--mode land|resume|upgrade|pipeline-skeleton]
+ *   (land.mjs is a thin alias)
  *
  * Explicit files:
  *   { "placeholders": {...}, "files": [{ "template", "target", "action" }] }
@@ -141,8 +146,21 @@ function shouldEmitContractSync(id, params, agentConfig) {
   return !hostGetsFullRulesMirror(id, params, agentConfig);
 }
 
+function printHelp() {
+  console.log(`Usage:
+  node scripts/render.mjs --root <TARGET> --params <params.json>
+      [--dry-run] [--manifest <path>] [--backup]
+
+Internal renderer (not the Agent primary write path).
+Public entry:
+  node scripts/harness.mjs --root <TARGET> --params <params.json>
+      [--mode land|resume|upgrade|pipeline-skeleton]
+  land.mjs is a thin alias of harness.mjs.
+`);
+}
+
 function parseArgs(argv) {
-  const out = { dryRun: false, root: null, params: null, manifest: null, backup: false };
+  const out = { dryRun: false, root: null, params: null, manifest: null, backup: false, help: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--dry-run") out.dryRun = true;
@@ -150,11 +168,13 @@ function parseArgs(argv) {
     else if (a === "--root") out.root = argv[++i];
     else if (a === "--params") out.params = argv[++i];
     else if (a === "--manifest") out.manifest = argv[++i];
+    else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
+  if (out.help) return out;
   if (!out.root || !out.params) {
     throw new Error(
-      "Required: --root <TARGET> --params <params.json>\nOptional: --dry-run --manifest <path> --backup"
+      "Required: --root <TARGET> --params <params.json>\nOptional: --dry-run --manifest <path> --backup\nPublic entry: node scripts/harness.mjs (not render.mjs)"
     );
   }
   return out;
@@ -1011,6 +1031,10 @@ function resolveManifestPath(args, params) {
 
 function main() {
   const args = parseArgs(process.argv);
+  if (args.help) {
+    printHelp();
+    process.exit(0);
+  }
   const root = path.resolve(args.root);
   const params = JSON.parse(fs.readFileSync(path.resolve(args.params), "utf8"));
   const placeholders = ensureYamlListPlaceholders(params, params.placeholders || {});

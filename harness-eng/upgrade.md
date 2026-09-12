@@ -22,7 +22,7 @@
 - [ ] 3 对照 ladder.md + manifest，列出「当前阶已有 / 升阶缺口」
 - [ ] 4 条件提问（升阶相关；可「全部推荐」）— 每批≤5；若仓已有 score-policy，确认 **`Q_GATE_PROFILE`**（推荐 strict；要兼容则 legacy）
 - [ ] 5 WritePlan：仅缺口路径；注明跳阶依据（默认 +1 或用户书面）；含 score-policy `gate_profile` / `coverage_mode` 若需升档
-- [ ] 6 确认闸门后 `scripts/land.mjs --mode upgrade`（非 L5 委托 render；L5 走 sync）：params.on_exists=skip
+- [ ] 6 确认闸门后 `scripts/harness.mjs --mode upgrade`（`land.mjs` 薄别名；非 L5 委托 render；L5 走 sync）：params.on_exists=skip
 - [ ] 7 自检 + 更新 meta.ladder / last_mode=upgrade / skill_version + 移交 TODO
 ```
 
@@ -50,6 +50,14 @@
 ## render 参数
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
+
+## 0.5.10 → 0.6.0 迁移要点（进行中 · 0.6.0-dev）
+
+1. **meta**：`skill_version` → `0.6.0-dev`（正式 `0.6.0` 在 M4 去 `-dev`；resume / upgrade 写 meta 时对齐 manifest）
+2. **写盘入口**：Agent 优先 `scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 为薄别名。勿把 `render.mjs` 当主路径
+3. **CLI 改名 / 文档搬家**：M1 只改入口指针；`modes/` · `fill/` · `host/` 拓扑调整在 **M2**（旧路径届时留 stub）
+4. **Codex**：0.6.x **冻结 P2**，全量对等另立项（见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)）
+5. **pipeline**：骨架战役用 `--mode pipeline-skeleton`（不跑 fill-*）
 
 ## 0.5.9 → 0.5.10 迁移要点
 

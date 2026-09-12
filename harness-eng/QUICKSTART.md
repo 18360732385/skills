@@ -66,7 +66,8 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 
 ```bash
 cd <harness-eng技能目录>
-node scripts/land.mjs --root <TARGET> --params <params.json> --mode land
+node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land
+# land.mjs 为薄别名；骨架战役用 --mode pipeline-skeleton（不跑 fill-*）
 node scripts/fill-inventory.mjs --domain api --root <TARGET>
 node scripts/fill-merge.mjs --domain api --inventory <inv.json> --work-dir <dir> --check
 node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
@@ -79,4 +80,5 @@ node scripts/selfcheck.mjs
 多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分对齐·不默认（P2）**（未探测不进「全部推荐」）。详 [ai-tools.md](ai-tools.md)。
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.10**）。
+0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.0-dev**）。

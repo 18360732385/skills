@@ -24,8 +24,11 @@
 ```text
 1. audit（只读指纹 + MCP 矩阵）→ [audit-report.md](audit-report.md) · [detect.md](detect.md)
 2. land 或 resume（骨架目标 **L4**：hooks + mcp.example + gitignore）
+   → 确认后 `scripts/harness.mjs --mode pipeline-skeleton`（仅骨架写盘，不跑 fill-* / 不 Read pipeline-fill）
 3. fill-mcp（多环境矩阵；烟测或 calibrate-live）→ [fill-mcp.md](fill-mcp.md)
 ```
+
+写盘走公开入口 `scripts/harness.mjs`（`land.mjs` 薄别名），**不要**把 `render.mjs` 当 Agent 主路径。`pipeline-skeleton` 只覆盖本文件骨架战役；填充战役仍在骨架 Done 且非 `fill_deferred` 后再 Read [pipeline-fill.md](pipeline-fill.md)。
 
 引擎默认：`Q_FILL_ENGINE=agents`（填充战役用）。hybrid/auto 见 [pipeline-fill.md](pipeline-fill.md) · [fill.md](fill.md)。
 
