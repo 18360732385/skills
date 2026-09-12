@@ -1,8 +1,20 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.2 → 0.5.3 → 0.5.4`（当前 **0.5.4**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`… → 0.5.3 → 0.5.4 → 0.5.5`（当前 **0.5.5**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.5 — 2026-09-12（安装说明 · 宿主无关）
+
+### 产品
+
+- **安装文案去 Cursor 默认路径**：手册 / README / QUICKSTART / 摘要改为「装到当前 Agent 宿主的用户 skills 目录」；Cursor / Claude Code 等只作路径示例，不作为唯一安装目标
+- **CLI**：`npx skills add … -g`，`--agent` 按宿主传；不再把 `--agent cursor` 当唯一命令
+- **行为**：施工脚手架、目标仓 `.cursor/harness-meta.yaml`、L0–L5 路径约定不变
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART → `0.5.5`
 
 ## 0.5.4 — 2026-09-12（会话仪表盘 · 仅工程轮 SHOW）
 

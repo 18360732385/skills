@@ -6,15 +6,16 @@
 ## 一句话安装 / 更新
 
 ```text
-帮我安装这个 skill 到 ~/.cursor/skills/harness-eng，地址：
+帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：
 https://github.com/18360732385/skills/tree/main/harness-eng
 ```
 
 ```bash
-npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --agent cursor
+npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
+# 需要指定宿主时加上：--agent <host>
 ```
 
-装完**新开会话**后点名 **harness-eng**。更新同 URL 再执行一次即可。详情见手册「2. 如何安装和更新」。
+装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；其他按该宿主文档）。更新同 URL 再执行一次即可。详情见手册「2. 如何安装和更新」。
 
 ## 你要做什么？
 
@@ -72,4 +73,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 node scripts/selfcheck-0.5.2.mjs
 ```
 
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.4**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.5**）。
