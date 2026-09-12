@@ -2,7 +2,7 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.6.0-dev**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.6.0**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
 **0.6.0 计划**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
@@ -10,7 +10,7 @@
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
 **拓扑**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主
 
-0.6.0-dev（M2）：文档进 `modes/` / `fill/` / `host/`，根 md ≤20。M1：公开写盘入口 `harness.mjs`（`land.mjs` 薄别名）；Codex **0.6.x 冻结 P2**。0.5.10：Codex 不默认；皆无探测不默认 Cursor。更早见 [CHANGELOG.md](CHANGELOG.md)。
+0.6.0：文档进 `modes/` / `fill/` / `host/`，根 md ≤20；公开写盘入口 `harness.mjs`（`land.mjs` 薄别名）；Codex **0.6.x 冻结 P2**；默认安装不含 `archive/selfcheck/legacy` 体积。0.5.10：Codex 不默认；皆无探测不默认 Cursor。更早见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
@@ -75,8 +75,8 @@ node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
 ```
 
-仅保留当前 selfcheck；历史脚本见 `archive/selfcheck/`。
+仅保留当前 selfcheck；近期归档见 `archive/selfcheck/`。0.2.x–0.3.x 体积不在热树，见 [archive/selfcheck/legacy/INDEX.md](archive/selfcheck/legacy/INDEX.md)。**安装 ≠ 全仓。**
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.0-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.0**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。

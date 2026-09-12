@@ -2,8 +2,8 @@
 
 主题：**从厚仪式 → 入口单一、文档可导航、fill 可维护、发包可瘦。**
 
-列车：`0.5.10` → **`0.6.0-dev`**（本文件）→ 正式 `0.6.0`（M4）。权威号：`templates/_meta/manifest.yaml`。  
-分支约定：工作在 `V0.6.X`；不合并到 `main`，直到列车收口另议。
+列车：`0.5.10` → `0.6.0-dev` → **`0.6.0`（列车已收口）**。权威号：`templates/_meta/manifest.yaml`。  
+分支约定：工作在 `V0.6.X`；不合并到 `main`，直到用户另议。M1–M4 已完成。
 
 ## 0.5.8–0.5.10 已落地（本列车不重做）
 
@@ -58,9 +58,9 @@
 
 安装物不是考古馆。
 
-- **T5.1** 安装包 **不含** `archive/selfcheck/legacy`
-- **T5.2** 文档写明「安装 ≠ 全仓」；开发自检仍可 Read archive
-- **T5.3** selfcheck 断言发包清单 / ignore 规则
+- [x] **T5.1** 安装包 **不含** `archive/selfcheck/legacy` 体积（热树只留 INDEX；全文在 `_history/` / git）
+- [x] **T5.2** 文档写明「安装 ≠ 全仓」；开发自检仍可 Read `_history/` / archive 指针
+- [x] **T5.3** selfcheck 断言发包清单 / `.skillignore` 规则
 
 ### G6 Codex P2 冻结至另立项
 
@@ -68,23 +68,23 @@
 
 0.5.8–0.5.10 已把 Codex 定为 **部分对齐（P2）·不默认**：未探测 `.codex/` 不进「全部推荐」；L5 `sync.mjs` **不全量**发出 Codex 的 rules / hooks / MCP / skills。0.6.x **不再扩** Codex 对齐面（不补全家桶事件、不镜像全量 `.mdc`、不做 sync 对等）。若产品要「与 Cursor/Claude 同构」，单独立项，不占用本列车 M1–M4。交叉：[adapters/codex.md](templates/ai-tools/adapters/codex.md) · [ai-tools.md](host/ai-tools.md)。
 
-- **T6.1** 本文件 + `adapters/codex.md` + `ai-tools.md` 各留冻结段（M1 轻量）
-- **T6.2** 全量对等：**不做**（另立项）
+- [x] **T6.1** 本文件 + `adapters/codex.md` + `ai-tools.md` 各留冻结段（M1；M4 复核无新 Codex 能力）
+- [x] **T6.2** 全量对等：**不做**（另立项）
 
 ### G7 版本钉与 0.5.10→0.6.0 迁移说明
 
-- **T7.1** M1：`manifest` / meta / questions → **`0.6.0-dev`**；M4 去 `-dev` 钉 `0.6.0`
-- **T7.2** [upgrade.md](modes/upgrade.md) 短清单：CLI 改名、文档搬家（M2）、入口指针
-- **T7.3** CHANGELOG `Unreleased` / `0.6.0-dev` 记 M1+M2；正式版条目在 M4 写齐
+- [x] **T7.1** M1：`manifest` / meta / questions → `0.6.0-dev`；M4 去 `-dev` 钉 **`0.6.0`**
+- [x] **T7.2** [upgrade.md](modes/upgrade.md) 短清单：CLI 改名、文档搬家、入口指针、发包政策
+- [x] **T7.3** CHANGELOG 正式 **`0.6.0`** 条目汇总 M1–M4
 
 ## 里程碑
 
 | 里程碑 | 范围 | 完成判据 |
 |---|---|---|
-| **M1** | G1 CLI + 热路径指针 + G6 轻声明 + G7 `0.6.0-dev` + ROADMAP + upgrade stub | `harness.mjs` 可跑四模式；`land.mjs` 别名；`render --help` 指向公开入口；selfcheck 钉 `0.6.0-dev` |
-| **M2**（本切片） | G2 文档拓扑 | 根 md≤20（现 15）；`modes/` / `fill/` / `host/` 已搬；热路径旧路径 stub；AGENT-INDEX 必读≤8 |
-| **M3**（本切片） | G3 fill 内聚 + G4 黄金集 | 域脚本无旁路语义；L5 `sync --check` fixture 绿；multi-host hooks 夹具 |
-| **M4** | G5 发包减脂 + 正式 `0.6.0` | 安装不含 legacy selfcheck；manifest `0.6.0`；upgrade 收口 |
+| **M1**（已完成） | G1 CLI + 热路径指针 + G6 轻声明 + G7 `0.6.0-dev` + ROADMAP + upgrade stub | `harness.mjs` 可跑四模式；`land.mjs` 别名；`render --help` 指向公开入口 |
+| **M2**（已完成） | G2 文档拓扑 | 根 md≤20（现 15）；`modes/` / `fill/` / `host/` 已搬；热路径旧路径 stub；AGENT-INDEX 必读≤8 |
+| **M3**（已完成） | G3 fill 内聚 + G4 黄金集 | 域脚本无旁路语义；L5 `sync --check` fixture 绿；multi-host hooks 夹具 |
+| **M4**（已完成） | G5 发包减脂 + 正式 `0.6.0` | 安装不含 legacy selfcheck 体积；manifest `0.6.0`；upgrade 收口；**列车已收口** |
 
 ## 非目标（本列车不做）
 
