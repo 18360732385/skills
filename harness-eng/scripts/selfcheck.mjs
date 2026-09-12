@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Lightweight 0.5.2 selfcheck: 配置 SSOT 管线 L5 / hooks 家族 / pitfalls 工程化
- * + inherited 0.2.27–0.4.0 gates.
+ * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.5.8: multi-host detect/MATURE + Codex P2 expectation + archive slim.
+ * Inherited 0.2.27–0.5.7 gates.
  */
 import fs from "fs";
 import os from "os";
@@ -130,7 +131,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.7"/.test(qYaml), "questions.yaml version 0.5.7");
+assert(/version:\s*"0\.5\.8"/.test(qYaml), "questions.yaml version 0.5.8");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -193,12 +194,12 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.7"/.test(manifest), "manifest 0.5.7");
+assert(/version:\s*"0\.5\.8"/.test(manifest), "manifest 0.5.8");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.7"/.test(metaTmpl), "harness-meta 0.5.7");
+assert(/skill_version:\s*"0\.5\.8"/.test(metaTmpl), "harness-meta 0.5.8");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -208,6 +209,7 @@ assert(/## 0\.5\.4/.test(changelog), "CHANGELOG 0.5.4");
 assert(/## 0\.5\.5/.test(changelog), "CHANGELOG 0.5.5");
 assert(/## 0\.5\.6/.test(changelog), "CHANGELOG 0.5.6");
 assert(/## 0\.5\.7/.test(changelog), "CHANGELOG 0.5.7");
+assert(/## 0\.5\.8/.test(changelog), "CHANGELOG 0.5.8");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -319,10 +321,14 @@ assert(!/禁止进入填充/.test(quick), "QUICKSTART dropped 禁止进入填充
 assert(/过闸后再/.test(quick), "QUICKSTART has 过闸后再");
 
 const scriptsDir = fs.readdirSync(path.join(skillRoot, "scripts"));
+assert(
+  fs.existsSync(path.join(skillRoot, "scripts/selfcheck.mjs")),
+  "hot path is scripts/selfcheck.mjs"
+);
 const selfchecksHot = scriptsDir.filter((n) => /^selfcheck-0\.\d+\.\d+\.mjs$/.test(n));
 assert(
-  selfchecksHot.length === 1 && selfchecksHot[0] === "selfcheck-0.5.2.mjs",
-  "only current selfcheck in scripts/"
+  selfchecksHot.length === 0,
+  "no versioned selfcheck-0.x.x.mjs in scripts/ (use selfcheck.mjs)"
 );
 assert(
   fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.4.0.mjs")),
@@ -337,41 +343,55 @@ assert(
   "0.5.1 selfcheck archived"
 );
 assert(
-  fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.3.10.mjs")),
-  "0.3.10 selfcheck archived"
+  fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/INDEX.md")),
+  "legacy selfcheck INDEX"
 );
 assert(
-  fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.3.9.mjs")),
-  "0.3.9 selfcheck archived"
+  fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.10.mjs")),
+  "0.3.10 selfcheck in legacy/"
 );
 assert(
-  fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.3.2.mjs")),
-  "0.3.2 selfcheck archived"
+  fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.9.mjs")),
+  "0.3.9 selfcheck in legacy/"
+);
+assert(
+  fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.2.mjs")),
+  "0.3.2 selfcheck in legacy/"
+);
+const archiveReadme = fs.readFileSync(path.join(skillRoot, "archive/README.md"), "utf8");
+assert(/scripts\/selfcheck\.mjs/.test(archiveReadme), "archive README points to selfcheck.mjs");
+assert(
+  !/热路径仅当前 `scripts\/selfcheck-0\.3\.\*`/.test(archiveReadme),
+  "archive README no stale 0.3 hot-path line"
 );
 assert(
   fs.existsSync(path.join(skillRoot, "archive/VERIFY-history-through-0.2.27.md")),
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.7/.test(verifyMd), "VERIFY is 0.5.7");
+assert(/0\.5\.8/.test(verifyMd), "VERIFY is 0.5.8");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.7/.test(readme), "README header version 0.5.7");
-assert(/当前 \*\*0\.5\.7\*\*/.test(readme), "README footer version 0.5.7");
+assert(/当前版本：0\.5\.8/.test(readme), "README header version 0.5.8");
+assert(/当前 \*\*0\.5\.8\*\*/.test(readme), "README footer version 0.5.8");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
-assert(/selfcheck-0\.5\.2/.test(readme), "README pins selfcheck 0.5.2");
+assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
+assert(!/selfcheck-0\.5\.2/.test(readme), "README no stale selfcheck-0.5.2 pin");
 assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 
 const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.7\*\*/.test(handbookMd), "使用手册.md version 0.5.7");
-assert(/v0\.5\.7/.test(handbookHtml), "使用手册.html version 0.5.7");
-assert(/当前 \*\*0\.5\.7\*\*/.test(quickstartMd), "QUICKSTART version 0.5.7");
+assert(/版本：\*\*0\.5\.8\*\*/.test(handbookMd), "使用手册.md version 0.5.8");
+assert(/v0\.5\.8/.test(handbookHtml), "使用手册.html version 0.5.8");
+assert(/当前 \*\*0\.5\.8\*\*/.test(quickstartMd), "QUICKSTART version 0.5.8");
+assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
+assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
+assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
 const handbookSummary = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
 for (const [label, text] of [
   ["使用手册.md", handbookMd],
@@ -613,7 +633,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.7"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.7");
+  assert(/version:\s*"0\.5\.8"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.8");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -690,8 +710,8 @@ if (fs.existsSync(fixture)) {
     "Q_CONTRACT jobs"
   );
   assert(
-    fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.3.6.mjs")),
-    "0.3.6 selfcheck archived"
+    fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.6.mjs")),
+    "0.3.6 selfcheck in legacy/"
   );
   const reg = parseDomainsYaml(domYaml);
   assert(reg.jobs && reg.jobs.truths_dir === "tasks", "jobs truths_dir tasks");
@@ -1194,6 +1214,7 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.4 → 0\.5\.5/.test(upg050), "upgrade has 0.5.4 → 0.5.5 path");
   assert(/0\.5\.5 → 0\.5\.6/.test(upg050), "upgrade has 0.5.5 → 0.5.6 path");
   assert(/0\.5\.6 → 0\.5\.7/.test(upg050), "upgrade has 0.5.6 → 0.5.7 path");
+  assert(/0\.5\.7 → 0\.5\.8/.test(upg050), "upgrade has 0.5.7 → 0.5.8 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
@@ -2059,6 +2080,114 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   );
 }
 
+// --- 0.5.8 P0-1: detect / MATURE multi-host honesty ---
+{
+  const det058 = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  assert(/\.claude\/rules/.test(det058), "S_RULES includes .claude/rules");
+  assert(/\.qoder\/rules/.test(det058), "S_RULES includes .qoder/rules");
+  assert(/\.trae\/rules/.test(det058), "S_RULES includes .trae/rules");
+  assert(/\.codebuddy\/rules/.test(det058), "S_RULES includes .codebuddy/rules");
+  assert(
+    !/\| `S_RULES` \| `\.cursor\/rules\/\*\.mdc` 至少一个 \|/.test(det058),
+    "S_RULES is not Cursor-only"
+  );
+  assert(/\.claude\/settings\.json/.test(det058), "S_HOOKS includes .claude/settings.json");
+  assert(/\.qoder\/settings\.json/.test(det058), "S_HOOKS includes .qoder/settings.json");
+  assert(/\.codebuddy\/settings\.json/.test(det058), "S_HOOKS includes .codebuddy/settings.json");
+  assert(/\.trae\/hooks\.json/.test(det058), "S_HOOKS includes .trae/hooks.json");
+  assert(/\.codex\/hooks\.json/.test(det058), "S_HOOKS includes .codex/hooks.json");
+  assert(/\.githooks\/pre-commit/.test(det058), "S_HOOKS includes .githooks/pre-commit");
+  assert(
+    !/\| `S_HOOKS` \| `\.cursor\/hooks\.json` \|/.test(det058),
+    "S_HOOKS is not Cursor-only"
+  );
+  assert(
+    /MATURE[\s\S]*S_AGENTS_ROOT[\s\S]*S_RULES[\s\S]*S_KB/.test(det058),
+    "MATURE still AGENTS + rules + contract + kb"
+  );
+  assert(
+    /任一宿主|非仅 Cursor|非仅 `\.cursor\/rules`/.test(det058),
+    "MATURE host-honest wording"
+  );
+  const rp058 = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  assert(
+    /S_RULES|S_HOOKS/.test(rp058) && /任一宿主|非仅 Cursor/.test(rp058),
+    "recommended-profile MATURE uses host-honest detect"
+  );
+}
+
+// --- 0.5.8 P0-4: Codex / L5 expectation (P2 / 部分对齐) ---
+{
+  const wp058 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+  assert(/部分对齐|P2/.test(wp058) && /codex/i.test(wp058), "write-plan Codex P2 warning");
+  assert(
+    /不全量/.test(wp058) && /hooks/.test(wp058) && /MCP/.test(wp058) && /skills/.test(wp058),
+    "write-plan says sync does not fully emit Codex rules/hooks/MCP/skills"
+  );
+  assert(/adapters\/codex/.test(wp058), "write-plan cross-links adapters/codex.md");
+
+  const audit058 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
+  assert(
+    /把 Codex \+ L5 当成全量对齐/.test(audit058) && /P2/.test(audit058),
+    "audit anti-pattern Codex+L5 full-parity"
+  );
+  assert(/adapters\/codex/.test(audit058), "audit cross-links adapters/codex.md");
+
+  const syncHosts058 = fs.readFileSync(path.join(skillRoot, "sync-hosts.md"), "utf8");
+  assert(
+    /## Done[\s\S]*部分对齐（P2）[\s\S]*\*\*不\*\*全量发出 Codex/.test(syncHosts058),
+    "sync-hosts Done Codex P2 / not full emit"
+  );
+  assert(/adapters\/codex/.test(syncHosts058), "sync-hosts cross-links adapters/codex.md");
+
+  const ladder058 = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
+  assert(
+    /P2 \/ 部分对齐/.test(ladder058) && /\*\*不\*\*全量分发 Codex/.test(ladder058),
+    "ladder L5 Codex P2 checklist"
+  );
+
+  const qYaml058 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(
+    /Codex（部分对齐 P2/.test(qYaml058),
+    "questions.yaml Codex option labels P2"
+  );
+  assert(
+    /含 Codex 仍为 P2/.test(qYaml058),
+    "questions.yaml L5 option mentions Codex P2"
+  );
+
+  const qMd058 = fs.readFileSync(path.join(skillRoot, "questions.md"), "utf8");
+  assert(
+    /部分（P2）/.test(qMd058) && /adapters\/codex/.test(qMd058),
+    "questions.md Codex P2 + adapter link"
+  );
+
+  const rpCodex = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  assert(
+    /部分对齐（P2）/.test(rpCodex) && /\*\*不\*\*全量发出 Codex/.test(rpCodex),
+    "recommended-profile Codex P2 footnote"
+  );
+
+  const heReadmeTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/harness-eng/README.md"),
+    "utf8"
+  );
+  assert(
+    (heReadmeTmpl.match(/\| `progress\.yaml` \|/g) || []).length === 1,
+    "docs/harness-eng README tmpl has single progress.yaml row"
+  );
+  const domainsHead = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domains.yaml"),
+    "utf8"
+  );
+  assert(/schema_version/.test(domainsHead), "domains.yaml notes schema_version ≠ skill_version");
+  const packsHead = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domain-packs.yaml"),
+    "utf8"
+  );
+  assert(/schema_version/.test(packsHead), "domain-packs.yaml notes schema_version ≠ skill_version");
+}
+
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);
 if (fail.length) {
@@ -2067,4 +2196,4 @@ if (fail.length) {
   process.exit(1);
 }
 
-console.log("selfcheck-0.5.2 PASS");
+console.log("selfcheck PASS");

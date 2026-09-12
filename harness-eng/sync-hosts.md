@@ -8,6 +8,7 @@
 1. 目标 `ai_tools` 的 rules / hooks 配置 / MCP example（及 L5 skills）路径已对齐 [ai-tools.md](ai-tools.md)
 2. hooks **脚本**与 `claude-adapter.js` 仅从模板/SSOT **拷贝**，不由模型重写
 3. 若启用 Agent 生成：产出须能通过 `node scripts/agent-config/sync.mjs --check`（L5）或与 script 引擎黄金 fixture 一致
+4. 若 `ai_tools` 含 `codex`：已向用户明示 **部分对齐（P2）** — sync **不**全量发出 Codex rules / hooks / MCP / skills（见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)）
 
 ## 引擎 `Q_SYNC_ENGINE`
 

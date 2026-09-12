@@ -1,6 +1,7 @@
 # L1 contract domain file packs (0.3.7+)
 # SSOT for land/render of contract domains. Selected via params.domains.
 # Non-domain ladder files (L0/L2/L3/L4) stay in manifest.yaml.
+# schema_version: 0.3.8 — 文件包 schema（≠ skill_version；技能号见 manifest.yaml）
 
 version: "0.3.8"
 

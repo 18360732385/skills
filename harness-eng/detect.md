@@ -20,7 +20,7 @@ git rev-parse --show-toplevel
 | `S_EMPTY` | 无常见源码入口（无 `src/`、`pom.xml`、`package.json`、`go.mod` 等）且无 harness 指纹 |
 | `S_AGENTS_ROOT` | 根 `AGENTS.md` |
 | `S_AGENTS_MOD` | 任意子目录 `**/AGENTS.md`（非根） |
-| `S_RULES` | `.cursor/rules/*.mdc` 至少一个 |
+| `S_RULES` | 任一支持宿主的 rules **至少 1 个非空文件**：`.cursor/rules/*`（含 `.mdc`）**或** `.claude/rules/*` **或** `.qoder/rules/*` **或** `.trae/rules/*` **或** `.codebuddy/rules/**`（含嵌套）。**非仅 Cursor** |
 | `S_00` | 存在 `00-*.mdc` 且 alwaysApply 类总览 |
 | `S_KARPATHY` | `karpathy-guidelines.mdc` |
 | `S_FUNC` | `docs/func/` **且至少 1 个非空文件**（仅空目录记「空壳」≠已有契约） |
@@ -32,7 +32,7 @@ git rev-parse --show-toplevel
 | `S_FRONTEND` | 存在前端分册/`apps/*` 且有 path rule `17-*` 或 `package.json` workspace 前端包（协作包脚注） |
 | `S_KB` | `docs/agent-kb/` **且至少 1 个非空文件** |
 | `S_SP` | `docs/superpowers/` **且至少 1 个非空文件** |
-| `S_HOOKS` | `.cursor/hooks.json` |
+| `S_HOOKS` | 任一：`.cursor/hooks.json` **或** Claude 系 settings 含 `hooks` 段（`.claude/settings.json` / `.qoder/settings.json` / `.codebuddy/settings.json`）**或** `.trae/hooks.json` **或** `.codex/hooks.json` **或** `.githooks/pre-commit`。**非仅 Cursor** |
 | `S_MCP` | `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json` 或任一 `mcp.json.example` |
 | `S_CLAUDE` | `CLAUDE.md` 或 `.claude/` |
 | `S_STACK` | `pom.xml` / `package.json` / `go.mod` / `Cargo.toml` / `pyproject.toml` 等 |
@@ -93,9 +93,9 @@ Fingerprint 摘要须打印：**应有 MCP 矩阵**（列表）+ **已有 mcp.js
 ## 类型判定（优先序）
 
 1. **FOREIGN**：有 `S_CLAUDE` 且无本 harness 形态（无 `S_00`+契约索引+真相结构）→ 先问并存策略（[foreign-playbook.md](foreign-playbook.md)）
-2. **MATURE**：`S_AGENTS_ROOT` 且 `S_RULES` 且（`S_FUNC|S_API|S_DB|S_REDIS|S_JOBS` 至少一个）且 `S_KB` → 默认 audit
+2. **MATURE**：`S_AGENTS_ROOT` 且 `S_RULES`（**任一宿主** rules，非仅 `.cursor/rules`）且（`S_FUNC|S_API|S_DB|S_REDIS|S_JOBS` 至少一个）且 `S_KB` → 默认 audit。仅 Claude / Qoder / Trae / CodeBuddy 的仓只要根 AGENTS + 该宿主 rules + 契约骨架 + agent-kb 齐套，仍判 MATURE（**不要**因缺少 `.cursor/rules` 就降为 PARTIAL / 误默认 land）
 3. **PARTIAL**：有任一 harness 信号但不满足 MATURE → 差分补齐
-4. **NEW_CODE_NO_HARNESS**：有 `S_STACK` 或明显源码，无 `S_AGENTS_ROOT` 且无 `S_RULES` 且无契约目录 → 全量 scaffold
+4. **NEW_CODE_NO_HARNESS**：有 `S_STACK` 或明显源码，无 `S_AGENTS_ROOT` 且无 `S_RULES`（任一宿主）且无契约目录 → 全量 scaffold
 5. **NEW_EMPTY**：其余近空 → 全量 scaffold
 
 ## 栈默认 globs（推断后须用户确认）
@@ -136,7 +136,8 @@ detect 结束时输出「建议档位」；最终以 `Q_GLOB_PROFILE` 为准。f
 | `.codebuddy/` / `CODEBUDDY.md` / 用户提 WorkBuddy | `workbuddy` |
 
 本版按选中工具生成**入口适配**（指针文件），契约 SSOT 仍为 `AGENTS` + `docs/**`。详见 [ai-tools.md](ai-tools.md)。  
-无信号时推荐包默认 `ai_tools: [cursor]`。自定义工具须用户给出入口路径。
+无信号时推荐包默认 `ai_tools: [cursor]`。自定义工具须用户给出入口路径。  
+若探测/勾选 **`codex`**：Fingerprint / 推荐包 / WritePlan **必须**标 **部分对齐（P2）** — L5 `sync.mjs` **不会**全量发出 Codex 的 rules / hooks / MCP / skills。勿当成与 Cursor/Claude 全家桶对等。见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)。
 
 **宿主交叉校验（0.2.16+ / 0.5.7 收窄）**：若已有 meta.`ai_tools`，对照磁盘**入口**。契约 sync 指针只对**不全量镜像**的宿主必查（典型：Codex → `.codex/contract-sync.md`；L0–L2 的 claude/qoder/trae/workbuddy → 各宿主 `1x-contract-sync.md`）。L3+ / L5 全量镜像宿主改查本宿主 `*-sync*` 规则，**缺 1x 不记缺口**。Cursor 查真实 `11|12|13|16`。缺失记入 RecommendedProfile 缺口 / audit 反模式。
 

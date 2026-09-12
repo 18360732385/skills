@@ -73,3 +73,4 @@
 - [ ] `harness-meta.yaml` 记 `agent_config: true`
 - [ ] hooks 经 `docs/agent-config/hooks/hooks.config.json` 驱动（无等价事件机制的工具不生成、不降级模拟）
 - [ ] 全量镜像宿主（claude/qoder/trae/workbuddy）**omit** 冗余 alwaysApply `1x-contract-sync`；Codex 仍保留 `.codex/contract-sync.md`
+- [ ] 若选用 Codex：已告知 **P2 / 部分对齐** — `sync.mjs` **不**全量分发 Codex rules/hooks/MCP/skills（见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)）

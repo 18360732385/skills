@@ -70,9 +70,9 @@ node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
 node scripts/acceptance-check.mjs --root <TARGET> --domain api
 node scripts/fill-score.mjs --root <TARGET>
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
-node scripts/selfcheck-0.5.2.mjs
+node scripts/selfcheck.mjs
 ```
 
 多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分（P2）**（不全量同步）。详 [ai-tools.md](ai-tools.md)。
 
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.7**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.8**）。

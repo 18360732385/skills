@@ -2,12 +2,12 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.5.7**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.5.8**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
 
-0.5.7 要点：**契约 sync 指针去 Cursor 唯权威**；L3+/L5 全量镜像宿主不再强制冗余 `1x`；对齐矩阵（Codex **部分 P2**）。0.5.6：**harness-meta / mcp-usage-guide 迁到 `docs/harness-eng/`**。更早见 [CHANGELOG.md](CHANGELOG.md)。
+0.5.8 要点：**detect / MATURE 多宿主诚实**（非仅 Cursor）；selfcheck 稳定名 `scripts/selfcheck.mjs`；Codex+L5 强制 **P2 / 部分对齐** 警告。0.5.7：契约 sync 指针去 Cursor 唯权威。更早见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
@@ -67,7 +67,7 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 ## 脚本
 
 ```bash
-node scripts/selfcheck-0.5.2.mjs
+node scripts/selfcheck.mjs
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
 ```
 
@@ -75,4 +75,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.7**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.8**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。

@@ -13,8 +13,7 @@
 | `report-latest.html` | Dashboard v2 施工指挥台（决策 / 诊断 / 任务 / 趋势台） |
 | `score-latest.json` | 最近一次 fill-score 机器可读结果 |
 | `score-history.jsonl` | 历次评分追加日志（0.2.14+；供趋势台） |
-| `progress.yaml` | 填充进度状态（0.2.15+；inventory/auto/score 可写） |
-| `progress.yaml` | 可选：分片填充进度（经确认写入） |
+| `progress.yaml` | 填充进度状态（0.2.15+；inventory/auto/score 可写；分片进度经确认写入） |
 | `history/` | 可选：带时间戳的历史 HTML 报告 |
 | `README.md` | 本说明 |
 
