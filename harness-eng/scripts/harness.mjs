@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Public write entry (0.6.0-dev+).
+ * Public write entry (0.6.0+).
  *
  * Usage:
  *   node scripts/harness.mjs --root <TARGET> --params <params.json>
@@ -83,7 +83,7 @@ function printHelp() {
       [--mode land|resume|upgrade|pipeline-skeleton]
       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
 
-Canonical Agent write entry (0.6.0-dev+). land.mjs is a thin alias.
+Canonical Agent write entry (0.6.0+). land.mjs is a thin alias.
   non-L5: delegates to render.mjs (same --root/--params/--dry-run/--manifest/--backup)
   L5 / agent_config: refuse render into generated host paths; run
     node scripts/agent-config/sync.mjs

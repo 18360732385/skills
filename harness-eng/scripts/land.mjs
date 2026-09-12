@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Thin alias of scripts/harness.mjs (0.6.0-dev+).
+ * Thin alias of scripts/harness.mjs (0.6.0+).
  *
  * Prefer:
  *   node scripts/harness.mjs --root <TARGET> --params <params.json>
