@@ -11,8 +11,8 @@
  *   与 CLAUDE.md 均为生成物（含 GENERATED 标记），手改会被本脚本覆盖。
  * - rules 的 .mdc frontmatter 为 Cursor 原生格式；其他工具生成时 strip 元数据，
  *   path-scoped 语义以正文自然语言保留（qoder/trae 额外生成「适用路径」行）。
- * - 各工具目录中未被本脚本管理的内容（如 .cursor/harness-meta.yaml、mcp.local.json
- *   等运行时数据）不受影响。
+ * - 各工具目录中未被本脚本管理的内容（如 docs/harness-eng/harness-meta.yaml、
+ *   遗留 .cursor/harness-meta.yaml、mcp.local.json 等运行时数据）不受影响。
  * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
  *   （Claude 系）；trae → .trae/hooks.json。均经 claude-adapter 翻译统一脚本。
  */

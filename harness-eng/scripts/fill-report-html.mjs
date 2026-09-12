@@ -20,6 +20,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { buildReportUi } from "./lib/report-ui.mjs";
+import { HARNESS_META_READ_CANDIDATES } from "./lib/harness-meta.mjs";
 import {
   appendScoreHistory,
   buildTrendSeries,
@@ -130,8 +131,9 @@ function readScore(spec) {
 function loadMeta(root, metaArg) {
   const candidates = [];
   if (metaArg) candidates.push(path.resolve(metaArg));
-  candidates.push(path.join(root, ".cursor/harness-meta.yaml"));
-  candidates.push(path.join(root, ".cursor/harness-meta.yml"));
+  for (const rel of HARNESS_META_READ_CANDIDATES) {
+    candidates.push(path.join(root, ...rel.split("/")));
+  }
   for (const p of candidates) {
     if (!fs.existsSync(p)) continue;
     try {

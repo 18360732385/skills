@@ -49,7 +49,7 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 
 ### Done
 
-1. `.cursor/harness-meta.yaml` 存在且 `skill_version` 与 manifest、`ladder`/`domains` 正确
+1. `docs/harness-eng/harness-meta.yaml` 存在且 `skill_version` 与 manifest、`ladder`/`domains` 正确（读侧可回退遗留 `.cursor/harness-meta.yaml`）
 2. 目标阶 [ladder.md](ladder.md) 必备项勾选通过（本轮 create/skip/merge 已执行）
 3. 分级移交 TODO 已打印
 

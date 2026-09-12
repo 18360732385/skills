@@ -40,6 +40,7 @@ import {
   knownContractDomainIds,
 } from "./lib/domains.mjs";
 import { loadMorphRequired } from "./lib/morph-required.mjs";
+import { findHarnessMetaFile, findMcpUsageGuideFile } from "./lib/harness-meta.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOMAIN_REGISTRY = loadDomainRegistry();
@@ -648,11 +649,11 @@ const GENERIC_LOGIC_RE =
 
 function readHarnessMeta(root) {
   try {
-    const metaPath = path.join(root, ".cursor/harness-meta.yaml");
-    if (!fs.existsSync(metaPath)) return {};
-    const raw = fs.readFileSync(metaPath, "utf8");
+    const found = findHarnessMetaFile(root);
+    if (!found) return {};
+    const raw = fs.readFileSync(found.abs, "utf8");
     const out = {};
-    const ladder = raw.match(/ladder:\s*["']?(L[0-4])["']?/);
+    const ladder = raw.match(/ladder:\s*["']?(L[0-5])["']?/);
     if (ladder) out.ladder = ladder[1];
     const rq = raw.match(/ready_quality:\s*([0-9.]+)/);
     if (rq) out.ready_quality = Number(rq[1]);
@@ -874,24 +875,15 @@ function loadFillPlanSummary(root) {
 }
 
 function skeletonReady(root, ladder) {
-  const need = [
-    "AGENTS.md",
-    ".cursor/harness-meta.yaml",
-    "docs/api/api.md",
-    "docs/func/func.md",
-  ];
+  const need = ["AGENTS.md", "docs/api/api.md", "docs/func/func.md"];
   let filesOk = 0;
   for (const rel of need) {
     if (fs.existsSync(path.join(root, rel))) filesOk++;
   }
-  const l4Hints = [
-    ".cursor/mcp.json.example",
-    ".cursor/mcp-usage-guide.md",
-  ];
+  if (findHarnessMetaFile(root)) filesOk++;
   let l4Ok = 0;
-  for (const rel of l4Hints) {
-    if (fs.existsSync(path.join(root, rel))) l4Ok++;
-  }
+  if (fs.existsSync(path.join(root, ".cursor/mcp.json.example"))) l4Ok++;
+  if (findMcpUsageGuideFile(root)) l4Ok++;
   const ladderOk = ladder === "L4" || ladder === "L5" || (ladder === "L3" && l4Ok >= 1);
   // Prefer explicit L4/L5; also accept files present even if meta lagging
   const ok =

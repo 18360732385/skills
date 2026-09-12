@@ -3,7 +3,7 @@
 ## Done
 
 1. 本轮 WritePlan 所列缺口路径已 `create` / `skip` / `merge`（`on_exists=skip`）
-2. `.cursor/harness-meta.yaml` 已更新（`last_mode=resume`，ladder/domains 正确）
+2. `docs/harness-eng/harness-meta.yaml` 已更新（`last_mode=resume`，ladder/domains 正确；若仅有遗留 `.cursor/` meta：先迁再写）
 3. 对照 [ladder.md](ladder.md) 目标阶自检通过；移交 TODO 已打印
 
 半成品 / 重复执行入口：梳理目标仓已有 harness，**只补缺口**，不覆盖用户已写章节正文（merge 规则除外）。
@@ -17,7 +17,7 @@
 ## 流水线
 
 ```
-- [ ] 1 定根 + Fingerprint；读 .cursor/harness-meta.yaml（ladder/domains/…）
+- [ ] 1 定根 + Fingerprint；读 docs/harness-eng/harness-meta.yaml（无则回退 .cursor/harness-meta.yaml；ladder/domains/…）
 - [ ] 2 对照 ladder.md + manifest，列出「已有 / 缺口」表（按阶、按域）
 - [ ] 3 展示推荐包：目标阶梯默认 = max(meta.ladder, 用户指定)；模式=resume
 - [ ] 4 条件提问（缺口相关；可「全部推荐」）— 每批≤5

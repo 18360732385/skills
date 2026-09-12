@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import { parse as parseYaml } from "./yaml.mjs";
 import { buildReportUi } from "./report-ui.mjs";
 import { readProgress } from "./progress-file.mjs";
+import { findHarnessMetaFile } from "./harness-meta.mjs";
 
 const SCORE_REL = "docs/harness-eng/score-latest.json";
 const REPORT_REL = "docs/harness-eng/report-latest.html";
@@ -30,15 +31,13 @@ function readJson(file) {
 }
 
 function readMeta(root) {
-  for (const name of ["harness-meta.yaml", "harness-meta.yml"]) {
-    const p = path.join(root, ".cursor", name);
-    if (!fs.existsSync(p)) continue;
-    try {
-      const doc = parseYaml(fs.readFileSync(p, "utf8"));
-      if (doc && typeof doc === "object") return doc;
-    } catch {
-      /* ignore */
-    }
+  const found = findHarnessMetaFile(root);
+  if (!found) return null;
+  try {
+    const doc = parseYaml(fs.readFileSync(found.abs, "utf8"));
+    if (doc && typeof doc === "object") return doc;
+  } catch {
+    /* ignore */
   }
   return null;
 }

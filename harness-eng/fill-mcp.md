@@ -82,7 +82,7 @@ redis-dev / redis-test / …
 | 项 | 规则 |
 |---|---|
 | 默认 | **`test`**（提问 `Q_FILL_MCP_PROFILE`；【推荐】test） |
-| 落盘 | `.cursor/harness-meta.yaml` → `fill_mcp_profile` |
+| 落盘 | `docs/harness-eng/harness-meta.yaml` → `fill_mcp_profile`（读侧可回退 `.cursor/`） |
 | 用途 | 烟测扫库、fill-calibrate-live、agents 实据优先用 `{engine}-{profile}`（如 `mysql-test` / `redis-test`） |
 | 与矩阵 | 矩阵仍按 detect 装配多环境；**主环境 ≠ 只装一个 server** |
 

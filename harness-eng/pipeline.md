@@ -7,7 +7,7 @@
 全部为真才允许 Read 填充战役规格：
 
 1. audit 报告已输出（已具备 / 缺口 / 反模式 / 建议下一阶）
-2. 目标 **L4** 骨架齐：`.cursor/harness-meta.yaml` 的 `ladder`≥L4（或本轮 land/resume 已装齐 L4 必备文件）
+2. 目标 **L4** 骨架齐：`docs/harness-eng/harness-meta.yaml`（无则回退 `.cursor/`）的 `ladder`≥L4（或本轮 land/resume 已装齐 L4 必备文件）
 3. **填充 MCP 闸**已过（见 [fill-mcp.md](fill-mcp.md)）：域/栈需 db·redis 时，矩阵 +（MCP 烟测 ∨ calibrate-live）；仅书面跳过 MCP 且无 calibrate-live → 本项为假（停留骨架）
 4. 若不做填充、只要骨架：WritePlan 标注 `fill_deferred=true`，则第 3 项可记「延期」；**本轮不** Read [pipeline-fill.md](pipeline-fill.md)
 

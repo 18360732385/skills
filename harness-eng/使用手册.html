@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.5.5</title>
+  <title>harness-eng 使用手册 · v0.5.7</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.5.5</div>
+    <div class="ver">v0.5.7</div>
   </header>
 
   <div class="shell">
@@ -727,7 +727,7 @@ https://github.com/18360732385/skills/tree/main/harness-eng
         <pre><code>帮我更新本机的 harness-eng skill：从
 https://github.com/18360732385/skills/tree/main/harness-eng
 覆盖安装到你当前 Agent 宿主的用户 skills 目录（保留备份或直接覆盖均可），完成后核对 SKILL.md / manifest 版本。</code></pre>
-        <p>或再次执行上面的 <code>npx skills add ...</code>（按宿主传 <code>--agent</code>），然后新开会话。目标仓 <code>.cursor/harness-meta.yaml</code> 的 <code>skill_version</code> 可随后续 resume / upgrade 对齐。</p>
+        <p>或再次执行上面的 <code>npx skills add ...</code>（按宿主传 <code>--agent</code>），然后新开会话。目标仓 <code>docs/harness-eng/harness-meta.yaml</code> 的 <code>skill_version</code> 可随后续 resume / upgrade 对齐。</p>
 
         <h3>2.3 从本源仓使用（开发 / 自测）</h3>
         <p>若你就在含 <code>harness-eng/</code> 的 skills 仓库里对话，直接点名技能即可。路径因宿主而异，常见为：</p>
@@ -832,7 +832,7 @@ node scripts/selfcheck-0.5.2.mjs</code></pre>
           <div class="tool">
             <div class="name">Codex</div>
             <div class="id">codex · .codex/</div>
-            <p><code>.codex/harness.md</code> 等指针（hooks/MCP 部分对齐）</p>
+            <p><code>.codex/harness.md</code> + <code>contract-sync.md</code> 指针（对齐程度 <strong>部分（P2）</strong>，hooks/MCP 未全量同步）</p>
           </div>
           <div class="tool">
             <div class="name">Qoder</div>
@@ -887,6 +887,19 @@ node scripts/selfcheck-0.5.2.mjs</code></pre>
             </tbody>
           </table>
         </div>
+
+        <h3>4.5 对齐矩阵（0.5.7）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>工具</th><th>对齐程度</th><th>不要误读成</th></tr></thead>
+            <tbody>
+              <tr><td>Cursor / Claude / Qoder / WorkBuddy</td><td><strong>高</strong></td><td>—</td></tr>
+              <tr><td>Trae</td><td><strong>中高</strong></td><td>不是低配、也不是「未对齐」</td></tr>
+              <tr><td>Codex</td><td><strong>部分（P2）</strong></td><td><strong>不是</strong>已全量同步 rules/hooks/MCP</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><code>1x-contract-sync</code> 只给拿不到全量 <code>*-sync*</code> 镜像的宿主（尤其 Codex、自定义入口、L0–L2）。L3+ / L5 全量镜像宿主不再强制冗余 1x。权威始终是根 <code>AGENTS.md</code> + <code>docs/**</code>，外加<strong>本宿主</strong> rules 目录；<code>.cursor/rules/11|12|13|16</code> 只是 Cursor 示例。详 <a href="ai-tools.md">ai-tools.md</a>。</p>
       </section>
 
       <section id="s5">
@@ -900,8 +913,8 @@ node scripts/selfcheck-0.5.2.mjs</code></pre>
         <p>在提问 <code>Q_AI_TOOL</code> 时勾选 Cursor + Claude + Qoder + Trae… 确认写入后，技能会：</p>
         <ul>
           <li>为每个已选工具生成对应适配文件；</li>
-          <li>把 <code>ai_tools</code> 列表记入 <code>.cursor/harness-meta.yaml</code>；</li>
-          <li>对非 Cursor 工具额外写入 <strong>契约 sync 镜像</strong>（避免宿主读不到 <code>.cursor/rules/*.mdc</code>）；</li>
+          <li>把 <code>ai_tools</code> 列表记入 <code>docs/harness-eng/harness-meta.yaml</code>；</li>
+          <li>对<strong>不全量镜像</strong>的宿主写入 <strong>契约 sync 指针</strong>（Codex 始终；claude/qoder/trae/workbuddy 仅 L0–L2）；L3+ / L5 全量镜像宿主不再强制冗余 <code>1x</code>；</li>
           <li><strong>不删除</strong>未选工具目录里你已有的用户文件（续跑时 skip）。</li>
         </ul>
 
@@ -1115,7 +1128,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q8：Cursor 和其他工具规则不一致怎么办？</summary>
-          <div class="ans"><p>短期检查契约 sync 镜像；长期升 <strong>L5</strong>，以 <code>docs/agent-config/</code> 为 SSOT，用 <code>sync.mjs --check</code> 防漂移。</p></div>
+          <div class="ans"><p>先看<strong>对齐矩阵</strong>：Cursor / Claude / Qoder / WorkBuddy <strong>高</strong>；Trae <strong>中高</strong>；Codex <strong>部分（P2）</strong>，不要假定 Codex 已全量同步。短期：不全量镜像的宿主（尤其 Codex）检查契约 sync 指针；L3+ 看本宿主 <code>*-sync*</code>，不必强求 <code>1x-contract-sync</code>。权威是根 <code>AGENTS.md</code> + <code>docs/**</code>。长期升 <strong>L5</strong>，以 <code>docs/agent-config/</code> 为 SSOT，用 <code>sync.mjs --check</code> 防漂移。</p></div>
         </details>
         <details>
           <summary>Q9：Qoder / Trae 为什么不用 Cursor 式 hooks？</summary>
@@ -1131,7 +1144,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.5</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.7</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1176,7 +1189,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.5
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.7
         </div>
       </section>
     </main>

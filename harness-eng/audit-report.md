@@ -5,7 +5,7 @@
 1. 已按本模板输出完整 audit 报告（已具备 / 缺口 / 反模式 / 建议下一阶）
 2. 本模式未向目标仓写盘（用户明确要求补齐则转 resume/pipeline，不在本 Done 内）
 
-audit 模式按下列结构输出（只读，默认不写盘）。优先读取 `.cursor/harness-meta.yaml`（若 `S_HARNESS_META`）。
+audit 模式按下列结构输出（只读，默认不写盘）。优先读取 `docs/harness-eng/harness-meta.yaml`，无则回退 `.cursor/harness-meta.yaml`（若 `S_HARNESS_META`）。
 
 ```text
 # harness-eng audit — {{REPO_NAME 或根目录名}}
@@ -70,7 +70,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 | `.cursor/mcp.json` 含明文密且被跟踪 | 按 meta.`mcp_tracking`：`example_only`→反模式；`vendored_shared`→注明约定例外 |
 | `S_SECRETS_LEAK`（README/yml） | |
 | 根 AGENTS 与分册严重漂移且无冲突裁决 | |
-| **meta.ai_tools 与入口/镜像 rules 不一致**（例：workbuddy 无 `CODEBUDDY.md` 或无 `.codebuddy/rules/1x-contract-sync.md`） | |
+| **meta.ai_tools 与入口/镜像 rules 不一致**（入口缺失必记；`1x-contract-sync` 仅对 Codex / L0–L2 未镜像宿主必查。L3+/L5 全量镜像宿主看本宿主 `*-sync*`，缺 1x 不记此反模式） | |
 | `pitfalls.md` 稳定 ID 重号（`Pn` 重复、语义不同） | |
 | **pitfalls 未过 lint**（有 `lint-pitfalls.mjs` 却未跑 / 7 列或速查不一致） | |
 | **L5 仓生成物漂移**（`sync.mjs --check` 有差异仍提交） | |
@@ -84,7 +84,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 
 - 当前最高**完整**阶：Lx
 - 建议：大仓 → `upgrade`/`resume` 到 **L4** 或 `pipeline`；或 `seed-truths` 补空壳真相
-- 无 meta 的 MATURE：可 **write-meta-only**（仅写 `.cursor/harness-meta.yaml` 快照：ladder / domains / ai_tools / mcp_tracking；不渲染模板）
+- 无 meta 的 MATURE：可 **write-meta-only**（仅写 `docs/harness-eng/harness-meta.yaml` 快照：ladder / domains / ai_tools / mcp_tracking；不渲染模板）
 - 契约深度不足：`fill-plan --gold` → `fill-truths-agents` → acceptance → merge；开干看 **ai_coding_ready** + **gold_ratio**；heuristic 留 `.fill-work`
 
 ## L3/L4 烟测（若已宣称具备）

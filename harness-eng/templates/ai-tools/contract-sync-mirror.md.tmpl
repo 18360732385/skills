@@ -25,7 +25,12 @@ enabled: true
 | db | `docs/db/table/` | `{{GLOB_DB}}` |
 | redis | `docs/redis/keys/` | `{{GLOB_REDIS}}` |
 
-详细条文仍以仓库内 `.cursor/rules/11|12|13|16-*-sync*.mdc` 为准（若存在）；本镜像只提醒「必须同步文档」。
+详细条文以根 `AGENTS.md` + `docs/**` 为 SSOT，**不以**某一宿主的 rules 文件为全仓唯一权威。
+
+若**本宿主**已有镜像的 sync 规则，优先读本宿主 rules 目录（例：`.claude/rules/*-sync*`、`.qoder/rules/…`、`.trae/rules/…`、`.codebuddy/rules/…`）。  
+`.cursor/rules/11|12|13|16-*-sync*.mdc` 仅在 `ai_tools` 含 Cursor 时作为 Cursor 侧示例；非 Cursor 宿主不必、也不应把该路径当作唯一权威。
+
+本镜像只提醒「必须同步文档」，不复制 Never do / Pn 正文。
 
 ## 禁止
 

@@ -17,6 +17,15 @@ import {
   countHarnessTodos,
 } from "./lib/ai-coding-gate.mjs";
 import { parseDomainsYaml, resolveScoreDomains, expandDomainPackEntries, parseDomainPacksYaml, defaultContractDomains, knownContractDomainIds } from "./lib/domains.mjs";
+import {
+  HARNESS_META_CANONICAL,
+  MCP_USAGE_GUIDE_CANONICAL,
+  findHarnessMetaFile,
+  harnessMetaExists,
+  migrateHarnessMetaIfNeeded,
+  findMcpUsageGuideFile,
+  migrateMcpUsageGuideIfNeeded,
+} from "./lib/harness-meta.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
@@ -121,7 +130,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.5"/.test(qYaml), "questions.yaml version 0.5.5");
+assert(/version:\s*"0\.5\.7"/.test(qYaml), "questions.yaml version 0.5.7");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -184,12 +193,12 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.5"/.test(manifest), "manifest 0.5.5");
+assert(/version:\s*"0\.5\.7"/.test(manifest), "manifest 0.5.7");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.5"/.test(metaTmpl), "harness-meta 0.5.5");
+assert(/skill_version:\s*"0\.5\.7"/.test(metaTmpl), "harness-meta 0.5.7");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -197,6 +206,8 @@ assert(/## 0\.5\.2/.test(changelog), "CHANGELOG 0.5.2");
 assert(/## 0\.5\.3/.test(changelog), "CHANGELOG 0.5.3");
 assert(/## 0\.5\.4/.test(changelog), "CHANGELOG 0.5.4");
 assert(/## 0\.5\.5/.test(changelog), "CHANGELOG 0.5.5");
+assert(/## 0\.5\.6/.test(changelog), "CHANGELOG 0.5.6");
+assert(/## 0\.5\.7/.test(changelog), "CHANGELOG 0.5.7");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -217,6 +228,7 @@ assert(/示例值/.test(goodFix), "good fixture has 示例值 column");
 // --- 0.2.26 fill-score meta + default 0.8 ---
 assert(/readyCoverage:\s*0\.8/.test(scoreSrc), "fill-score default readyCoverage 0.8");
 assert(/readHarnessMeta/.test(scoreSrc), "fill-score reads harness meta");
+assert(/findHarnessMetaFile/.test(scoreSrc), "fill-score uses harness-meta path ladder");
 assert(/domain_caps[\s\S]*MORPH|MORPH axis/.test(scoreSrc), "fill-score morph axis comment");
 
 // --- 0.2.27 score-policy + density ---
@@ -341,13 +353,13 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.5/.test(verifyMd), "VERIFY is 0.5.5");
+assert(/0\.5\.7/.test(verifyMd), "VERIFY is 0.5.7");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.5/.test(readme), "README header version 0.5.5");
-assert(/当前 \*\*0\.5\.5\*\*/.test(readme), "README footer version 0.5.5");
+assert(/当前版本：0\.5\.7/.test(readme), "README header version 0.5.7");
+assert(/当前 \*\*0\.5\.7\*\*/.test(readme), "README footer version 0.5.7");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck-0\.5\.2/.test(readme), "README pins selfcheck 0.5.2");
@@ -357,9 +369,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.5\*\*/.test(handbookMd), "使用手册.md version 0.5.5");
-assert(/v0\.5\.5/.test(handbookHtml), "使用手册.html version 0.5.5");
-assert(/当前 \*\*0\.5\.5\*\*/.test(quickstartMd), "QUICKSTART version 0.5.5");
+assert(/版本：\*\*0\.5\.7\*\*/.test(handbookMd), "使用手册.md version 0.5.7");
+assert(/v0\.5\.7/.test(handbookHtml), "使用手册.html version 0.5.7");
+assert(/当前 \*\*0\.5\.7\*\*/.test(quickstartMd), "QUICKSTART version 0.5.7");
 const handbookSummary = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
 for (const [label, text] of [
   ["使用手册.md", handbookMd],
@@ -601,7 +613,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.5"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.5");
+  assert(/version:\s*"0\.5\.7"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.7");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1180,6 +1192,8 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.2 → 0\.5\.3/.test(upg050), "upgrade has 0.5.2 → 0.5.3 path");
   assert(/0\.5\.3 → 0\.5\.4/.test(upg050), "upgrade has 0.5.3 → 0.5.4 path");
   assert(/0\.5\.4 → 0\.5\.5/.test(upg050), "upgrade has 0.5.4 → 0.5.5 path");
+  assert(/0\.5\.5 → 0\.5\.6/.test(upg050), "upgrade has 0.5.5 → 0.5.6 path");
+  assert(/0\.5\.6 → 0\.5\.7/.test(upg050), "upgrade has 0.5.6 → 0.5.7 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
@@ -1459,7 +1473,7 @@ if (fs.existsSync(fixture)) {
     assert(!/\{\{[A-Z]/.test(syncSrc), "rendered sync.mjs no unresolved placeholders");
     const check0 = runNode(["--check", path.join(tmpB, "scripts/agent-config/sync.mjs")]);
     assert(check0.status === 0, "rendered sync.mjs syntax");
-    const meta = fs.readFileSync(path.join(tmpB, ".cursor/harness-meta.yaml"), "utf8");
+    const meta = fs.readFileSync(path.join(tmpB, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/agent_config:\s*true/.test(meta), "harness-meta agent_config true");
 
     const sync1 = runNode([path.join(tmpB, "scripts/agent-config/sync.mjs")], { cwd: tmpB });
@@ -1572,6 +1586,221 @@ if (fs.existsSync(fixture)) {
   }
 }
 
+// --- 0.5.6 harness-meta / mcp-usage-guide under docs/harness-eng ---
+assert(
+  fs.existsSync(path.join(skillRoot, "scripts/lib/harness-meta.mjs")),
+  "lib/harness-meta.mjs"
+);
+assert(
+  /target:\s*docs\/harness-eng\/harness-meta\.yaml/.test(manifest),
+  "manifest harness-meta target is docs/harness-eng/"
+);
+assert(
+  /target:\s*docs\/harness-eng\/mcp-usage-guide\.md/.test(manifest),
+  "manifest mcp-usage-guide target is docs/harness-eng/"
+);
+assert(
+  !/target:\s*\.cursor\/harness-meta\.yaml/.test(manifest),
+  "manifest harness-meta target is no longer .cursor/"
+);
+assert(
+  !/target:\s*\.cursor\/mcp-usage-guide\.md/.test(manifest),
+  "manifest mcp-usage-guide target is no longer .cursor/"
+);
+{
+  const detect056 = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  assert(
+    /docs\/harness-eng\/harness-meta\.yaml/.test(detect056) && /S_HARNESS_META/.test(detect056),
+    "detect S_HARNESS_META prefers docs/harness-eng/"
+  );
+  assert(/回退|\.cursor\/harness-meta/.test(detect056), "detect S_HARNESS_META documents legacy fallback");
+}
+assert(
+  /docs\/harness-eng\/harness-meta\.yaml/.test(ladderMd),
+  "ladder L0 checklist prefers docs/harness-eng/harness-meta.yaml"
+);
+assert(
+  !/^- \[ \] `\.cursor\/harness-meta\.yaml` 存在/.test(ladderMd),
+  "L0 checklist is not .cursor-only for meta"
+);
+assert(/回退/.test(ladderMd), "ladder documents legacy meta fallback");
+assert(
+  /docs\/harness-eng\/mcp-usage-guide\.md/.test(ladderMd),
+  "ladder L4 prefers docs/harness-eng/mcp-usage-guide.md"
+);
+assert(/docs\/harness-eng\/harness-meta\.yaml/.test(skill), "SKILL Done prefers new meta path");
+{
+  const conflict056 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  assert(/docs\/harness-eng\/harness-meta\.yaml/.test(conflict056), "conflict-policy writes new meta path");
+  assert(/不自动删除/.test(conflict056), "conflict-policy leaves legacy meta in place");
+}
+assert(
+  /宿主的 MCP 设置|当前 Agent 宿主/.test(
+    fs.readFileSync(path.join(skillRoot, "templates/mcp/mcp-usage-guide.md.tmpl"), "utf8")
+  ),
+  "mcp-usage-guide enable steps are host-agnostic"
+);
+assert(
+  !/Cursor → Settings → MCP/.test(
+    fs.readFileSync(path.join(skillRoot, "templates/mcp/mcp-usage-guide.md.tmpl"), "utf8")
+  ),
+  "mcp-usage-guide dropped Cursor-only Settings → MCP"
+);
+{
+  const libDash = fs.readFileSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs"), "utf8");
+  const reportSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-report-html.mjs"), "utf8");
+  assert(/findHarnessMetaFile|HARNESS_META_READ_CANDIDATES/.test(libDash), "session-dash reads via harness-meta helper");
+  assert(/HARNESS_META_READ_CANDIDATES/.test(reportSrc), "fill-report-html reads via harness-meta candidates");
+  const render056 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/migrateHarnessMetaIfNeeded/.test(render056), "render migrates legacy meta to new path");
+}
+{
+  const tmpMeta = fs.mkdtempSync(path.join(os.tmpdir(), "he-meta-ladder-"));
+  try {
+    fs.mkdirSync(path.join(tmpMeta, ".cursor"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpMeta, ".cursor/harness-meta.yaml"),
+      'skill: harness-eng\nladder: L2\ncustom_user_key: keep-me\n',
+      "utf8"
+    );
+    assert(harnessMetaExists(tmpMeta), "helper sees legacy .cursor meta");
+    const foundLegacy = findHarnessMetaFile(tmpMeta);
+    assert(foundLegacy && foundLegacy.rel === ".cursor/harness-meta.yaml", "helper falls back to .cursor yaml");
+    const newDir = path.join(tmpMeta, "docs/harness-eng");
+    fs.mkdirSync(newDir, { recursive: true });
+    fs.writeFileSync(path.join(newDir, "harness-meta.yaml"), "ladder: L4\n", "utf8");
+    const foundNew = findHarnessMetaFile(tmpMeta);
+    assert(foundNew && foundNew.rel === HARNESS_META_CANONICAL, "helper prefers docs/harness-eng/ meta");
+    fs.rmSync(path.join(newDir, "harness-meta.yaml"));
+    const mig = migrateHarnessMetaIfNeeded(tmpMeta);
+    assert(mig.migrated === true && fs.existsSync(path.join(tmpMeta, HARNESS_META_CANONICAL)), "migrate copies old meta to new path");
+    assert(fs.existsSync(path.join(tmpMeta, ".cursor/harness-meta.yaml")), "migrate leaves legacy meta in place");
+    fs.writeFileSync(path.join(tmpMeta, ".cursor/mcp-usage-guide.md"), "# old guide\n勿提交真密\n", "utf8");
+    assert(findMcpUsageGuideFile(tmpMeta)?.rel === ".cursor/mcp-usage-guide.md", "guide helper falls back to .cursor");
+    const migG = migrateMcpUsageGuideIfNeeded(tmpMeta);
+    assert(migG.migrated === true && fs.existsSync(path.join(tmpMeta, MCP_USAGE_GUIDE_CANONICAL)), "migrate copies old guide to new path");
+    assert(fs.existsSync(path.join(tmpMeta, ".cursor/mcp-usage-guide.md")), "migrate leaves legacy guide in place");
+  } finally {
+    fs.rmSync(tmpMeta, { recursive: true, force: true });
+  }
+}
+{
+  const skelNew = fs.mkdtempSync(path.join(os.tmpdir(), "he-skel-new-"));
+  const skelOld = fs.mkdtempSync(path.join(os.tmpdir(), "he-skel-old-"));
+  try {
+    const seed = (root, metaRel) => {
+      fs.mkdirSync(path.join(root, "docs/api"), { recursive: true });
+      fs.mkdirSync(path.join(root, "docs/func"), { recursive: true });
+      fs.mkdirSync(path.dirname(path.join(root, metaRel)), { recursive: true });
+      fs.writeFileSync(path.join(root, "AGENTS.md"), "# agents\n", "utf8");
+      fs.writeFileSync(path.join(root, "docs/api/api.md"), "# api\n", "utf8");
+      fs.writeFileSync(path.join(root, "docs/func/func.md"), "# func\n", "utf8");
+      fs.writeFileSync(
+        path.join(root, metaRel),
+        'skill: harness-eng\nladder: L4\nskill_version: "0.5.6"\n',
+        "utf8"
+      );
+      fs.mkdirSync(path.join(root, ".cursor"), { recursive: true });
+      fs.writeFileSync(path.join(root, ".cursor/mcp.json.example"), "{}\n", "utf8");
+      const guideRel =
+        metaRel.startsWith("docs/")
+          ? "docs/harness-eng/mcp-usage-guide.md"
+          : ".cursor/mcp-usage-guide.md";
+      fs.mkdirSync(path.dirname(path.join(root, guideRel)), { recursive: true });
+      fs.writeFileSync(path.join(root, guideRel), "# guide\n勿提交真密\n", "utf8");
+    };
+    seed(skelNew, HARNESS_META_CANONICAL);
+    seed(skelOld, ".cursor/harness-meta.yaml");
+    const runScore = (root) => {
+      const r = runNode([
+        path.join(skillRoot, "scripts/fill-score.mjs"),
+        "--root",
+        root,
+        "--json",
+      ]);
+      assert(r.status === 0, `fill-score exits 0 for ${root}`);
+      let json = null;
+      try {
+        json = JSON.parse(r.stdout.trim());
+      } catch {
+        json = null;
+      }
+      return json;
+    };
+    const newScore = runScore(skelNew);
+    const oldScore = runScore(skelOld);
+    assert(newScore?.skeleton_ready?.ok === true, "fill-score L0/L4 skeleton accepts new meta path only");
+    assert(oldScore?.skeleton_ready?.ok === true, "fill-score L0/L4 skeleton accepts legacy .cursor meta");
+    assert(newScore?.skeleton_ready?.files_ok >= 4, "new-path skeleton counts meta file");
+    assert(oldScore?.skeleton_ready?.files_ok >= 4, "legacy-path skeleton counts meta file");
+  } finally {
+    fs.rmSync(skelNew, { recursive: true, force: true });
+    fs.rmSync(skelOld, { recursive: true, force: true });
+  }
+}
+{
+  const tmpR = fs.mkdtempSync(path.join(os.tmpdir(), "he-meta-render-"));
+  const pR = path.join(tmpR, "params.json");
+  try {
+    fs.mkdirSync(path.join(tmpR, ".cursor"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpR, ".cursor/harness-meta.yaml"),
+      [
+        "skill: harness-eng",
+        'skill_version: "0.5.5"',
+        "ladder: L0",
+        "custom_user_key: keep-me",
+        "domains: []",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    fs.writeFileSync(
+      pR,
+      JSON.stringify({
+        ladder: "L0",
+        domains: [],
+        agents_variant: "solo",
+        on_exists: "skip",
+        expandFromManifest: true,
+        placeholders: {
+          REPO_NAME: "demo",
+          REPO_DESC: "demo",
+          DATE: "2026-09-12",
+          AGENTS_VARIANT: "solo",
+          LADDER_TARGET: "L0",
+          DOMAINS_YAML: "[]",
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "resume",
+          AI_TOOLS_YAML: "[cursor]",
+        },
+      }),
+      "utf8"
+    );
+    const r = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpR,
+      "--params",
+      pR,
+    ]);
+    assert(r.status === 0, "render resume migrates/writes new meta path");
+    assert(
+      fs.existsSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml")),
+      "render wrote docs/harness-eng/harness-meta.yaml"
+    );
+    const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
+    assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
+    assert(/skill_version:\s*"?0\.5\.7"?/.test(migrated), "render migrate+merge updates skill_version");
+    assert(
+      fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
+      "render leaves legacy meta file"
+    );
+  } finally {
+    fs.rmSync(tmpR, { recursive: true, force: true });
+  }
+}
+
 // --- 0.5.3 / 0.5.4 session dashboard ---
 assert(
   fs.existsSync(path.join(skillRoot, "session-dashboard.md")),
@@ -1605,13 +1834,19 @@ assert(/工程轮/.test(handbookHtml), "使用手册.html dashboard is engineeri
 assert(!/Agent <strong>每一轮<\/strong>/.test(handbookHtml), "使用手册.html no unconditional every-turn dashboard");
 assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn gated");
 {
-  const dashRoot = fs.mkdtempSync(path.join(os.tmpdir(), "he-session-dash-"));
+    const dashRoot = fs.mkdtempSync(path.join(os.tmpdir(), "he-session-dash-"));
   try {
     const scoreDir = path.join(dashRoot, "docs/harness-eng");
     fs.mkdirSync(scoreDir, { recursive: true });
     fs.copyFileSync(
       path.join(skillRoot, "scripts/fixtures/score-sample.json"),
       path.join(scoreDir, "score-latest.json")
+    );
+    fs.mkdirSync(path.join(dashRoot, ".cursor"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dashRoot, ".cursor/harness-meta.yaml"),
+      'skill: harness-eng\nladder: L3\ndomains: [api]\nlast_mode: audit\n',
+      "utf8"
     );
     const dashRun = runNode([
       path.join(skillRoot, "scripts/session-dash.mjs"),
@@ -1632,6 +1867,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
       dashJson && dashJson.decision?.ai_coding_ready === false,
       "session-dash reads score ai_coding_ready"
     );
+    assert(dashJson && dashJson.diagnose?.ladder === "L3", "session-dash reads legacy .cursor meta");
     const dashMd = runNode([
       path.join(skillRoot, "scripts/session-dash.mjs"),
       "--root",
@@ -1682,6 +1918,145 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   } finally {
     fs.rmSync(dashRoot, { recursive: true, force: true });
   }
+}
+
+// --- 0.5.7: contract-sync 指针去 Cursor 唯权威 + 全量镜像宿主跳过冗余 1x ---
+{
+  const contractTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/ai-tools/contract-sync-mirror.md.tmpl"),
+    "utf8"
+  );
+  assert(
+    !/以[^\n]*\.cursor\/rules\/11\|12\|13\|16[^\n]*为准/.test(contractTmpl),
+    "contract-sync tmpl no longer treats .cursor 11|12|13|16 as universal authority"
+  );
+  assert(/AGENTS\.md/.test(contractTmpl), "contract-sync tmpl points to root AGENTS.md");
+  assert(/docs\//.test(contractTmpl), "contract-sync tmpl points to docs/** SSOT");
+  assert(
+    /\.claude\/rules|\.qoder\/rules|\.trae\/rules|\.codebuddy\/rules/.test(contractTmpl),
+    "contract-sync tmpl mentions this-host mirrored sync rules"
+  );
+  assert(
+    /示例|含 cursor|ai_tools/i.test(contractTmpl),
+    "contract-sync tmpl treats .cursor/rules only as Cursor example"
+  );
+
+  const aiTools057 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  assert(/对齐矩阵/.test(aiTools057), "ai-tools.md has 对齐矩阵");
+  assert(/部分（P2）|部分对齐（P2）/.test(aiTools057), "ai-tools.md marks Codex as partial P2");
+  assert(/中高/.test(aiTools057), "ai-tools.md marks Trae as 中高");
+  assert(
+    /跳过|不再强制|omit|不另写/.test(aiTools057) && /1x-contract-sync|契约 sync/.test(aiTools057),
+    "ai-tools.md documents skip/omit 1x for full-mirror hosts"
+  );
+  assert(!/非 `cursor` 工具额外写入 \*\*契约 sync 镜像\*\*/.test(aiTools057) || /L0–L2|不全量镜像/.test(aiTools057),
+    "ai-tools.md no longer implies 1x is always-on for every non-cursor host");
+
+  const render057 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(
+    /FULL_RULES_MIRROR_HOSTS|hostGetsFullRulesMirror|shouldEmitContractSync/.test(render057),
+    "render encodes full-mirror / 1x emit conditions"
+  );
+
+  const handbook057 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+  const syncHosts057 = fs.readFileSync(path.join(skillRoot, "sync-hosts.md"), "utf8");
+  const codexAd057 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
+  assert(/对齐矩阵|部分（P2）|部分对齐（P2）/.test(handbook057), "handbook FAQ/docs mention alignment / Codex P2");
+  assert(/部分对齐|P2/.test(syncHosts057), "sync-hosts.md keeps Codex as P2 / 部分对齐");
+  assert(/部分对齐|P2/.test(codexAd057), "codex adapter stays 部分对齐 P2");
+  assert(!/全量镜像/.test(codexAd057) || /暂不全量|不全量/.test(codexAd057), "codex adapter does not claim full sync");
+
+  const conflict057 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  assert(
+    /1x-contract-sync|契约 sync/.test(conflict057) && /不自动删除|不删/.test(conflict057),
+    "conflict-policy: leftover 1x skip, do not auto-delete"
+  );
+
+  function dryTargets(ladder, tools, extra = {}) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "he-057-1x-"));
+    const p = path.join(tmp, "params.json");
+    fs.writeFileSync(
+      p,
+      JSON.stringify({
+        ladder,
+        domains: ["func", "api", "db", "redis"],
+        ai_tools: tools,
+        agents_variant: "solo",
+        expandFromManifest: true,
+        on_exists: "skip",
+        ...extra,
+        placeholders: {
+          REPO_NAME: "demo",
+          REPO_DESC: "demo",
+          DATE: "2026-09-12",
+          AGENTS_VARIANT: "solo",
+          LADDER_TARGET: ladder,
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "land",
+          GLOB_API: "**/controller/**,docs/api/**",
+          GLOB_FUNC: "**/src/**,docs/func/**",
+          GLOB_DB: "**/db/**,docs/db/**",
+          GLOB_REDIS: "**/redis/**,docs/redis/**",
+        },
+      }),
+      "utf8"
+    );
+    try {
+      const r = runNode([
+        path.join(skillRoot, "scripts/render.mjs"),
+        "--root",
+        tmp,
+        "--params",
+        p,
+        "--dry-run",
+      ]);
+      assert(r.status === 0, `0.5.7 dry-run ${ladder} exits 0`);
+      if (r.status !== 0) {
+        return { tmp, targets: [] };
+      }
+      const json = JSON.parse(r.stdout);
+      const targets = (json.results || []).map((x) => String(x.target || "").replace(/\\/g, "/"));
+      return { tmp, targets };
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }
+
+  const FULL_MIRROR_1X = [
+    ".claude/rules/1x-contract-sync.md",
+    ".qoder/rules/1x-contract-sync.md",
+    ".trae/rules/1x-contract-sync.md",
+    ".codebuddy/rules/1x-contract-sync.md",
+  ];
+  const allTools = ["cursor", "claude", "qoder", "trae", "workbuddy", "codex"];
+
+  const l0 = dryTargets("L0", allTools);
+  for (const t of FULL_MIRROR_1X) {
+    assert(l0.targets.includes(t), `L0 still emits ${t} (no full rules mirror yet)`);
+  }
+  assert(l0.targets.includes(".codex/contract-sync.md"), "L0 Codex still gets contract-sync pointer");
+  assert(!l0.targets.includes(".cursor/rules/1x-contract-sync.md"), "Cursor never gets separate 1x");
+
+  const l3 = dryTargets("L3", allTools);
+  for (const t of FULL_MIRROR_1X) {
+    assert(!l3.targets.includes(t), `L3 full-mirror host skips redundant ${t}`);
+  }
+  assert(l3.targets.includes(".codex/contract-sync.md"), "L3 Codex still gets contract-sync pointer");
+  assert(
+    l3.targets.includes(".claude/rules/11-func-sync-rules.md") ||
+      l3.targets.includes(".qoder/rules/11-func-sync-rules.md"),
+    "L3 full-mirror hosts still receive *-sync* rules"
+  );
+
+  const l5 = dryTargets("L5", allTools);
+  for (const t of FULL_MIRROR_1X) {
+    assert(!l5.targets.includes(t), `L5 omits redundant ${t}`);
+  }
+  assert(l5.targets.includes(".codex/contract-sync.md"), "L5 Codex still gets contract-sync pointer");
+  assert(
+    !l5.targets.some((t) => /1x-contract-sync/.test(t) && !t.startsWith(".codex/")),
+    "L5 does not emit alwaysApply 1x alongside full mirrored sync rules"
+  );
 }
 
 console.log(`ok: ${ok.length}`);

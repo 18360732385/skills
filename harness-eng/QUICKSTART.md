@@ -73,4 +73,6 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 node scripts/selfcheck-0.5.2.mjs
 ```
 
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.5**）。
+多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分（P2）**（不全量同步）。详 [ai-tools.md](ai-tools.md)。
+
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.7**）。

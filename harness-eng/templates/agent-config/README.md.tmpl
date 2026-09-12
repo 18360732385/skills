@@ -7,7 +7,7 @@
 - **勿手改生成物**（带 GENERATED 标记）；手改会被下次 sync 覆盖
 - 改配置只改本目录，改完必跑：`node scripts/agent-config/sync.mjs`
 - CI / 提交前校验漂移：`node scripts/agent-config/sync.mjs --check`（有差异退出码 1）
-- 生成物以外的运行时数据（如 `.cursor/harness-meta.yaml`、`mcp.local.json`）不受管理
+- 生成物以外的运行时数据（如 `docs/harness-eng/harness-meta.yaml`、遗留 `.cursor/harness-meta.yaml`、`mcp.local.json`）不受管理
 
 ## 布局
 

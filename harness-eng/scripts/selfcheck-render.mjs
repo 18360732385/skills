@@ -58,12 +58,12 @@ function main() {
     placeholders,
     files: [
       { template: "agents/AGENTS.root.solo.md.tmpl", target: "AGENTS.md", action: "create" },
-      { template: "meta/harness-meta.yaml.tmpl", target: ".cursor/harness-meta.yaml", action: "create" },
+      { template: "meta/harness-meta.yaml.tmpl", target: "docs/harness-eng/harness-meta.yaml", action: "create" },
     ],
   });
   const dry1 = runDry(newCodeRoot, tmp);
   const targets1 = dry1.results.map((x) => x.target).sort();
-  const expect1 = [".cursor/harness-meta.yaml", "AGENTS.md"].sort();
+  const expect1 = ["docs/harness-eng/harness-meta.yaml", "AGENTS.md"].sort();
   if (JSON.stringify(targets1) !== JSON.stringify(expect1)) {
     throw new Error(`new-code dry-run targets mismatch: ${targets1}`);
   }
@@ -158,7 +158,7 @@ function main() {
   const t5 = dry5.results.map((x) => x.target.replace(/\\/g, "/"));
   for (const need of [
     "AGENTS.md",
-    ".cursor/harness-meta.yaml",
+    "docs/harness-eng/harness-meta.yaml",
     ".cursor/rules/00-project-docs-overview.mdc",
     ".cursor/rules/karpathy-guidelines.mdc",
   ]) {
@@ -167,7 +167,7 @@ function main() {
   if (t5.some((t) => t.includes("14-chinese"))) {
     throw new Error("optional rule-14 should be excluded");
   }
-  if (t5.some((t) => t.startsWith("docs/"))) {
+  if (t5.some((t) => t.startsWith("docs/") && t !== "docs/harness-eng/harness-meta.yaml")) {
     throw new Error("L1 docs should be excluded at L0");
   }
 

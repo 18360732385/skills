@@ -46,25 +46,42 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 不确定请回复：全部推荐（= 仅已探测项；若无探测则默认 Cursor）
 ```
 
+## 对齐矩阵（0.5.7）
+
+契约 SSOT 始终是根 `AGENTS.md` + `docs/**`。下表只描述**宿主脚手架对齐程度**，不要把「已选进 `ai_tools`」读成「全家桶已对等」。
+
+| 工具 | 对齐程度 | 说明 |
+|---|---|---|
+| `cursor` | **高** | 原生 `11\|12\|13\|16-*-sync*` rules + hooks 家族 |
+| `claude` | **高** | L3+ 全量 `.claude/rules/*.md` 镜像 + Claude 族 hooks |
+| `qoder` | **高** | L3+ 全量 `.qoder/rules/*.md` 镜像 + Claude 族 hooks |
+| `workbuddy` | **高** | L3+ rules 镜像 + CodeBuddy hooks 全家桶 |
+| `trae` | **中高** | L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` |
+| `codex` | **部分（P2）** | 仅薄指针 + 基础 commit gate；**不全量镜像** rules；hooks / MCP / skills **未**与 Cursor/Claude 对等 |
+
+自定义入口-only 工具：只保证入口指针（及同目录 `1x` 指针），不装 hooks/MCP。
+
 ## 纪律
 
 - 多选时**都**生成对应适配；未选的不删已有用户文件（resume 时 skip）
 - 适配正文只含：指向根 AGENTS、docs 优先级、勿复制密文
-- `ai_tools` 写入 `.cursor/harness-meta.yaml`（YAML 列表）
-- **宿主对齐（0.2.16+）**：非 `cursor` 工具额外写入 **契约 sync 镜像**（`1x-contract-sync.md`），含契约域 packs / globs 指针
+- `ai_tools` 写入 `docs/harness-eng/harness-meta.yaml`（YAML 列表；读侧可回退 `.cursor/`）
+- **契约 sync 指针（0.5.7 收窄）**：只给**拿不到全量 `*-sync*` 镜像**的宿主（`when_full_rules_mirror: false`）；指针含契约域 packs / globs，不复制 Never do / Pn
+  - **仍写 `1x`**：`codex`（`.codex/contract-sync.md`）、自定义入口-only、以及 L0–L2 尚未全量镜像的 claude/qoder/trae/workbuddy
+  - **跳过 / 不另写 `1x`**：L3+ 全量镜像或 L5 `sync.mjs` 分发规则的 claude / qoder / trae / workbuddy（land/resume 不强制再写 alwaysApply 1x；已有文件 resume `skip`，不自动删）
+  - **Cursor**：不另写 `1x`（已有真实 `11\|12\|13\|16`）
+  - L5（`agent_config: true`）下，全量镜像宿主 **omit** 冗余 1x；Codex 仍保留指针
 - **全量 rules 镜像（0.5.1+ / 0.5.2+ claude）**：L3+ 镜像到 qoder/trae/claude（`.md`）与 workbuddy（`RULE.mdc`）；L5 由 `sync.mjs` 分发
-- audit / detect：若 meta.`ai_tools` 含某工具但入口或镜像缺失 → 记反模式 / 缺口
+- audit / detect：入口仍要在；`1x` 缺失不再作为 L3+/L5 全量镜像宿主的缺口（改看本宿主 `*-sync*`）；Codex 仍要 `contract-sync.md`
 
 ## 契约 sync 镜像路径
 
-| `ai_tools` | 镜像路径 |
-|---|---|
-| `workbuddy` | `.codebuddy/rules/1x-contract-sync.md` |
-| `claude` | `.claude/rules/1x-contract-sync.md` |
-| `codex` | `.codex/contract-sync.md` |
-| `qoder` | `.qoder/rules/1x-contract-sync.md` |
-| `trae` | `.trae/rules/1x-contract-sync.md` |
-| `cursor` | 不另镜；已有 `.cursor/rules/11|12|13|16-*.mdc` |
+| `ai_tools` | 何时写 `1x` | 路径 |
+|---|---|---|
+| `codex` | **始终**（无全量镜像） | `.codex/contract-sync.md` |
+| `claude` / `qoder` / `trae` / `workbuddy` | 仅 L0–L2（`when_full_rules_mirror: false`） | `.claude\|.qoder\|.trae/rules/1x-contract-sync.md`；workbuddy → `.codebuddy/rules/1x-contract-sync.md` |
+| 自定义入口-only | 始终（与入口同目录） | `<entry-dir>/1x-contract-sync.md` |
+| `cursor` | 不写 | 已有 `.cursor/rules/11\|12\|13\|16-*-sync*.mdc`（Cursor 示例，非全宿主唯一权威） |
 
 ## 协议族（0.5.1+ / 0.5.2 workbuddy）
 
