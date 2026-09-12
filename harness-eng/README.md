@@ -2,13 +2,14 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.5.10**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.6.0-dev**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
+**0.6.0 计划**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
 
-0.5.10 要点：Codex **部分对齐·不默认**；皆无探测不默认 Cursor；报告对照 **skill_version + report_schema**。0.5.9：热路径索引 + land.mjs。更早见 [CHANGELOG.md](CHANGELOG.md)。
+0.6.0-dev（M1）：公开写盘入口 `harness.mjs`（`land.mjs` 薄别名）；Codex **0.6.x 冻结 P2**。0.5.10：Codex 不默认；皆无探测不默认 Cursor。更早见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
@@ -38,7 +39,7 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 
 | 中文 | 模式 | 用途 |
 |---|---|---|
-| 落地 | `land` | 探测 → 推荐包 → 提问 → WritePlan → 确认后 `land.mjs` |
+| 落地 | `land` | 探测 → 推荐包 → 提问 → WritePlan → 确认后 `harness.mjs` |
 | 续跑 | `resume` | 半成品差分补齐；`on_exists=skip` |
 | 流水线 | `pipeline` | 骨架战役 → 填充战役（过 **填充 MCP 闸**） |
 | 审计 | `audit` | 只读对照阶梯缺口 |
@@ -69,7 +70,7 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 
 ```bash
 node scripts/selfcheck.mjs
-node scripts/land.mjs --root <TARGET> --params <params.json>
+node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
 ```
 
@@ -77,4 +78,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.10**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.0-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。

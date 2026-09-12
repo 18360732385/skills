@@ -1,10 +1,21 @@
-﻿# harness-eng 验收记录（0.5.10）
+﻿# harness-eng 验收记录（0.6.0-dev）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.5.10**。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。
+当前 **0.6.0-dev**。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。0.6.0 计划见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+
+## 0.6.0-dev 增量验收（M1）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `scripts/harness.mjs`：`--mode land\|resume\|upgrade\|pipeline-skeleton` | 有 |
+| `land.mjs` 薄别名；`render.mjs --help` 指向 harness | 有 |
+| L5/`agent_config` 不经 render 写 `.cursor/rules` | 有 |
+| ROADMAP + G6「0.6.x 冻结 P2，全量对等另立项」 | 有 |
+| manifest / meta 钉 `0.6.0-dev` | 有 |
 
 ## 0.5.10 增量验收
 

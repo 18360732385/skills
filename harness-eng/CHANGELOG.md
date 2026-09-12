@@ -1,8 +1,24 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.8 → 0.5.9 → 0.5.10`（当前 **0.5.10**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
-> 0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。历史条目里「后续（0.3.0）/ P3」许愿已过期。
+**列车**：`… → 0.5.10 → 0.6.0-dev`（当前 **0.6.0-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
+> 0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。历史条目里「后续（0.3.0）/ P3」许愿已过期。
+
+## Unreleased / 0.6.0-dev — 进行中（M1：统一入口）
+
+### 产品
+
+- **路线图**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) — 主题「入口单一、文档可导航、fill 可维护、发包可瘦」；G1–G7 / M1–M4
+- **G1 公开入口**：`scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 薄别名；L5/`agent_config` 仍拒直渲生成宿主路径并走 `sync.mjs`
+- **pipeline-skeleton**：仅骨架战役写盘，不跑 fill-* / 不进入 pipeline-fill
+- **文档指针**：SKILL / AGENT-INDEX / write-plan / conflict-policy / QUICKSTART / pipeline 以 harness CLI 为 Agent 主路径；`render.mjs --help` 指向公开入口
+- **G6**：0.6.x **冻结 Codex P2**，全量对等另立项（adapters/codex.md · ai-tools.md）
+- **G7**：manifest / meta / questions 钉 **`0.6.0-dev`**；upgrade 增加 0.5.10 → 0.6.0 短清单（文档搬家在 M2）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → `0.6.0-dev`
+- selfcheck 断言 `0.6.0-dev`
 
 ## 0.5.10 — 2026-09-12（audit P2：Codex 不默认 · 报告壳叙事 · 皆无探测 ≠ Cursor · 归档）
 
