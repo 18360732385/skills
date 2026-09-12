@@ -31,7 +31,7 @@
 | trae | `adapters/trae.md` | **中高**（同级缺口见 [TRAE-PARITY.md](TRAE-PARITY.md)） |
 | codex | `adapters/codex.md`（P2：部分对齐） | **部分（P2）** — 勿当成已全量同步 |
 
-对齐矩阵 SSOT：[ai-tools.md](ai-tools.md)。L3+ / L5 全量镜像宿主不再强制冗余 `1x-contract-sync`；Codex 仍写 `.codex/contract-sync.md`。
+对齐矩阵 SSOT：[ai-tools.md](ai-tools.md)。L3+ / L5 全量镜像宿主不再强制冗余 `1x-contract-sync`；Codex 仍写 `.codex/contract-sync.md`。L5 宿主 rules 目录由 **sync 托管**：plan 外的 `1x-contract-sync` 与宿主 `00-harness-ssot` 孤儿会被清掉；alwaysApply 指针必须先在 **`docs/agent-config/rules/00-harness-ssot.mdc`**。
 
 ## Agent 模式硬约束
 
@@ -42,5 +42,5 @@
 
 ## 与 land / L5
 
-- L5：`docs/agent-config/` 为 SSOT；生成物带 GENERATED 标记
+- L5：`docs/agent-config/` 为 SSOT；生成物带 GENERATED 标记。宿主 `.trae/.qoder/.claude/.codebuddy/rules/`（及 Cursor rules）属 sync 所有权：1x omit；`00-harness-ssot` 只从 SSOT 分发，勿 git restore 宿主孤儿
 - L3/L4：无 agent-config 时仍由 `render.mjs` 直渲；Agent 模式仅建议在 L5 启用

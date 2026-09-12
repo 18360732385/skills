@@ -724,13 +724,19 @@ const SYNC_MANAGED_RULE_PREFIXES = [
   ".codebuddy/rules/",
 ];
 
+/** L5 下 00-harness-ssot 必须先落 SSOT，再由 sync 分发；这些宿主会读 alwaysApply 指针。 */
+const L5_SSOT_HARNESS_HOSTS = new Set(["cursor", "trae", "qoder", "claude", "workbuddy"]);
+const L5_SSOT_HARNESS_TARGET = "docs/agent-config/rules/00-harness-ssot.mdc";
+const L5_SSOT_HARNESS_TMPL = "ai-tools/cursor-harness-ssot.mdc.tmpl";
+
 function expandAiToolAdapters(params, root, actionForTarget, agentConfig) {
   const tools = Array.isArray(params.ai_tools) ? params.ai_tools : [];
   const customs = Array.isArray(params.ai_tools_custom) ? params.ai_tools_custom : [];
   const out = [];
   const seen = new Set();
 
-  /** L5 适配层归并：CLAUDE.md 由 sync 生成；.cursor/rules 改投 SSOT；托管目录直渲跳过。 */
+  /** L5 适配层归并：CLAUDE.md 由 sync 生成；.cursor/rules 改投 SSOT；托管目录直渲跳过。
+   *  宿主 00-harness-ssot 因此变 null；函数末尾会补 SSOT 00（见 L5_SSOT_HARNESS_*）。 */
   const adaptTarget = (target) => {
     if (!agentConfig) return target;
     if (target === "CLAUDE.md") return null;
@@ -817,6 +823,24 @@ function expandAiToolAdapters(params, root, actionForTarget, agentConfig) {
         template: "ai-tools/contract-sync-mirror.md.tmpl",
         target: custom1x,
         action: actionForTarget(custom1x, `ai-custom-${toolId}-contract-sync`),
+      });
+    }
+  }
+
+  // L5：cursor 的 00 已由 adaptTarget 改投 SSOT；trae/qoder/claude/workbuddy 宿主
+  // 00 目标被 SYNC_MANAGED_RULE_PREFIXES 置 null。若计划里还没有 SSOT 00，
+  // 必须补一份 cursor 风格指针，否则 sync 清掉宿主孤儿后指针永久消失。
+  if (agentConfig) {
+    const needsSsot00 = [...seen].some((id) => L5_SSOT_HARNESS_HOSTS.has(id));
+    const already = out.some(
+      (f) => String(f.target || "").replace(/\\/g, "/") === L5_SSOT_HARNESS_TARGET
+    );
+    if (needsSsot00 && !already) {
+      out.push({
+        id: "ai-ssot-harness-00",
+        template: L5_SSOT_HARNESS_TMPL,
+        target: L5_SSOT_HARNESS_TARGET,
+        action: actionForTarget(L5_SSOT_HARNESS_TARGET, "ai-ssot-harness-00"),
       });
     }
   }

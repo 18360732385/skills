@@ -16,6 +16,10 @@
  *   遗留 .cursor/harness-meta.yaml、mcp.local.json 等运行时数据）不受影响。
  * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
  *   （Claude 系）；trae → .trae/hooks.json。均经 claude-adapter 翻译统一脚本。
+ * - 托管 rules 目录（.cursor/.trae/.qoder/.claude/.codebuddy/rules）里不在本脚本 plan
+ *   的文件会被当 stale 清理。这是故意的：L3+/L5 全量镜像宿主不再写 1x-contract-sync.md；
+ *   宿主侧 00-harness-ssot 孤儿也不属于 plan（由 SSOT docs/agent-config/rules/00-harness-ssot.mdc
+ *   分发）。缺 00 时先 land/render 把 SSOT 指针写上再 sync，勿 git restore 宿主孤儿。
  */
 import fs from "node:fs";
 import path from "node:path";

@@ -18,6 +18,7 @@
 | `mature-trae` 无 `.cursor/rules` 仍 MATURE | 有 |
 | 适配卡去掉「若宿主支持」；矩阵 Trae 仍 **中高** | 有 |
 | 未改矩阵 中高→高 | 有 |
+| L5 计划含 SSOT `00-harness-ssot.mdc`（含 Trae-only）；1x 仍 omit | 有 |
 
 ## 0.6.0 增量验收（M4）
 

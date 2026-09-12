@@ -213,6 +213,29 @@ function main() {
     throw new Error("include_optional:true should expand rule-14");
   }
 
+  // 8) L5 + Trae-only：必须落 SSOT 00-harness-ssot；宿主 00 / 1x 由 sync 分发或省略
+  writeParams(tmp, {
+    ladder: "L5",
+    domains: [],
+    agents_variant: "solo",
+    include_optional: [],
+    ai_tools: ["trae"],
+    on_exists: "fail",
+    placeholders: { ...placeholders, LADDER_TARGET: "L5" },
+    files: [],
+  });
+  const dry8 = runDry(newCodeRoot, tmp, ["--manifest", MANIFEST]);
+  const t8 = dry8.results.map((x) => x.target.replace(/\\/g, "/"));
+  if (!t8.includes("docs/agent-config/rules/00-harness-ssot.mdc")) {
+    throw new Error("L5 trae-only plan must include SSOT 00-harness-ssot.mdc");
+  }
+  if (t8.includes(".trae/rules/00-harness-ssot.md")) {
+    throw new Error("L5 must not direct-render host 00-harness-ssot (sync distributes)");
+  }
+  if (t8.some((t) => /1x-contract-sync/.test(t))) {
+    throw new Error("L5 must not emit 1x-contract-sync for full-mirror hosts");
+  }
+
   try {
     fs.unlinkSync(tmp);
   } catch (_) {}
@@ -233,6 +256,7 @@ function main() {
           "manifest-expand-l0-solo",
           "ai-tools-adapters-custom",
           "include-optional-boolean",
+          "l5-trae-ssot-00-harness",
         ],
       },
       null,

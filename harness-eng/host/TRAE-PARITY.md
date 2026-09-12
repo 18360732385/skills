@@ -38,6 +38,7 @@ P0 spike（0.6.1-dev）已落地的工程项：
 - `mature-trae` fixture（无 `.cursor/rules` 仍 MATURE）；适配卡 Skills 已是一等公民
 - 镜像 **保留** Trae frontmatter（不再只剩正文提示）
 - 官方事实页 + 人验清单已写
+- L5 **00-harness-ssot 经 SSOT**：render 保证 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 rules 目录仍由 sync 托管。2026-09-12 消费仓 sync 清 `1x` ✅、清宿主 00 孤儿 ✅；从 git 恢复宿主副本 ❌（见 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)）
 
 仍等人 / 未做：
 
