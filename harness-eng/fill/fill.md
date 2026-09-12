@@ -62,7 +62,7 @@ node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir
 node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --target <ssot.md> --write
 ```
 
-`fill-inventory-*.mjs` / `fill-merge-*.mjs` 仅作兼容别名（api merge 的 `--enrich-dto` / `--module` / `--auto-fill` 仍走 `fill-merge-api.mjs`）。
+`fill-inventory-*.mjs` / `fill-merge-*.mjs` 仅为 **弃用** 薄包装（只转发 argv）。api 的 `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 CLI：`fill-merge.mjs --domain api`（`fill-merge-api.mjs` 仍可当 shim）。
 
 workers：[fill-workers.md](fill-workers.md) · [ai-tools.md](../host/ai-tools.md)。  
 质量：[truth-quality.md](../modes/truth-quality.md)。

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * fill-merge-func — alias for `fill-merge.mjs --domain func` (0.5.9).
- * Prefer the unified entry; this wrapper stays for back-compat.
+ * Deprecated shim (0.6.0-dev M3): prefer `fill-merge.mjs --domain func`.
+ * Forwards argv only.
  */
 import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";

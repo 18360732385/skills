@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "echo trae-hook-fixture" }]
+      }
+    ]
+  }
+}

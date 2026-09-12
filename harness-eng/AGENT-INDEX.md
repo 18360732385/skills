@@ -32,6 +32,7 @@
 | 会话仪表盘 | [modes/session-dashboard.md](modes/session-dashboard.md) |
 | 版本 / 模板清单 | [CHANGELOG.md](CHANGELOG.md) · [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) |
 | 0.6.0 计划 | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
+| L5 / 多宿主黄金夹具 | `scripts/fixtures/l5-sync-golden` · `scripts/fixtures/multi-host-hooks` |
 
 ## 写盘纪律（一行）
 

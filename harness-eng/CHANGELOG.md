@@ -4,7 +4,7 @@
 **列车**：`… → 0.5.10 → 0.6.0-dev`（当前 **0.6.0-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
 > 0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。历史条目里「后续（0.3.0）/ P3」许愿已过期。
 
-## Unreleased / 0.6.0-dev — 进行中（M1：统一入口 · M2：文档拓扑）
+## Unreleased / 0.6.0-dev — 进行中（M1：统一入口 · M2：文档拓扑 · M3：fill 内聚 + 黄金集）
 
 ### 产品
 
@@ -14,6 +14,8 @@
 - **文档指针**：SKILL / AGENT-INDEX / write-plan / conflict-policy / QUICKSTART / pipeline 以 harness CLI 为 Agent 主路径；`render.mjs --help` 指向公开入口
 - **G2 文档拓扑**：根 `*.md` **15**（≤20）。模式规格进 `modes/`，fill-* 进 `fill/`，`ai-tools` / `sync-hosts` 进 `host/`。仓库内链接已改；热路径旧路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline` / `fill-truths-auto`）
 - **AGENT-INDEX**：按新拓扑重写，必读 ≤8
+- **G3 fill 引擎内聚**：`fill-inventory.mjs --domain` / `fill-merge.mjs --domain` 为唯一实现入口；扫描/合并逻辑在 `lib/inventory-*` 与 `lib/merge-api.mjs`；域脚本为 **弃用** 薄包装（只转发 argv）。api `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 merge CLI
+- **G4 fixture 黄金集**：`scripts/fixtures/l5-sync-golden`（`sync.mjs --check` 无漂移）+ `scripts/fixtures/multi-host-hooks`（Cursor / Claude / Qoder / Trae / WorkBuddy hooks 信号）；selfcheck 钉路径。既有 mature-claude / qoder-hooks / stack-node 保持
 - **G6**：0.6.x **冻结 Codex P2**，全量对等另立项（adapters/codex.md · host/ai-tools.md）
 - **G7**：manifest / meta / questions 钉 **`0.6.0-dev`**；upgrade 含 0.5.10 → 0.6.0 短清单（文档搬家见 M2）
 

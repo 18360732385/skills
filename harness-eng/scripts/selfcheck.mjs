@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.6.0-dev: M1 harness CLI + M2 doc topology (modes/fill/host), ROADMAP, Codex P2 freeze.
+ * 0.6.0-dev: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures.
  * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
  * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
  * Inherited 0.2.27–0.5.7 gates.
@@ -100,17 +100,17 @@ assert(
 
 // --- 0.2.19 fill-merge-api multi-module fix ---
 const mergeApiSrc = fs.readFileSync(
-  path.join(skillRoot, "scripts/fill-merge-api.mjs"),
+  path.join(skillRoot, "scripts/lib/merge-api.mjs"),
   "utf8"
 );
-assert(/--module/.test(mergeApiSrc), "fill-merge-api has --module arg");
-assert(/invEvidenceSet/.test(mergeApiSrc), "fill-merge-api multi-module evidence filtering");
-assert(/skippedOtherModule/.test(mergeApiSrc), "fill-merge-api skips other-module fragments");
+assert(/--module/.test(mergeApiSrc), "merge-api has --module arg");
+assert(/invEvidenceSet/.test(mergeApiSrc), "merge-api multi-module evidence filtering");
+assert(/skippedOtherModule/.test(mergeApiSrc), "merge-api skips other-module fragments");
 assert(
   /force-write.*missing|forceWrite.*missing/i.test(mergeApiSrc),
-  "fill-merge-api --force-write skips missing check"
+  "merge-api --force-write skips missing check"
 );
-assert(/if \(!sec\)/.test(mergeApiSrc), "fill-merge-api skips missing endpoints in body builder");
+assert(/if \(!sec\)/.test(mergeApiSrc), "merge-api skips missing endpoints in body builder");
 
 // --- 0.2.19 fill-score output standardization ---
 const scoreSrc = fs.readFileSync(
@@ -132,20 +132,20 @@ assert(/fill_work_lines/.test(planSrc), "fill-plan shard_progress has fill_work_
 
 // --- 0.2.19 fill-inventory-api controller path fix ---
 const invApiSrc = fs.readFileSync(
-  path.join(skillRoot, "scripts/fill-inventory-api.mjs"),
+  path.join(skillRoot, "scripts/lib/inventory-api.mjs"),
   "utf8"
 );
 assert(
   /CONTROLLER_DIR_NAMES/.test(invApiSrc),
-  "fill-inventory-api has CONTROLLER_DIR_NAMES array"
+  "inventory-api has CONTROLLER_DIR_NAMES array"
 );
 assert(
   /web.*api.*endpoint.*rest/i.test(invApiSrc),
-  "fill-inventory-api expanded controller dir names"
+  "inventory-api expanded controller dir names"
 );
 assert(
   /fallback.*scan entire module|walkJava\(c\)/.test(invApiSrc),
-  "fill-inventory-api has module-level fallback scan"
+  "inventory-api has module-level fallback scan"
 );
 
 // --- 0.2.19 questions.yaml variant naming ---
@@ -760,7 +760,7 @@ if (fs.existsSync(fixture)) {
   );
   assert(/domain-extend\.md/.test(skillMd), "SKILL branch points domain-extend");
   const invJobs = fs.readFileSync(
-    path.join(skillRoot, "scripts/fill-inventory-jobs.mjs"),
+    path.join(skillRoot, "scripts/lib/inventory-jobs.mjs"),
     "utf8"
   );
   assert(/scheduler_link/.test(invJobs), "inventory scheduler_link");
@@ -2921,6 +2921,123 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   ];
   const dangling = sweepFiles.flatMap(danglingFrom);
   assert(dangling.length === 0, `no dangling relative links (${dangling.slice(0, 8).join(" ; ") || "none"})`);
+}
+
+// --- 0.6.0-dev M3: G3 fill engine convergence + G4 golden fixtures ---
+{
+  const domains = ["api", "func", "db", "redis", "jobs"];
+  const SHIM_MAX = 30;
+  function lineCount(rel) {
+    return fs.readFileSync(path.join(skillRoot, rel), "utf8").trim().split(/\n/).length;
+  }
+  function readRel(rel) {
+    return fs.readFileSync(path.join(skillRoot, rel), "utf8");
+  }
+
+  const invUni060 = readRel("scripts/fill-inventory.mjs");
+  assert(/lib\/inventory-/.test(invUni060), "fill-inventory.mjs loads lib/inventory-*");
+  assert(
+    !/fill-inventory-\$\{domain\}/.test(invUni060) && !/fill-inventory-\$\{/.test(invUni060),
+    "fill-inventory.mjs does not spawn domain scripts"
+  );
+
+  for (const id of domains) {
+    const rel = `scripts/fill-inventory-${id}.mjs`;
+    const src = readRel(rel);
+    const n = lineCount(rel);
+    assert(n <= SHIM_MAX, `fill-inventory-${id}.mjs shim ≤${SHIM_MAX} lines (got ${n})`);
+    assert(/fill-inventory\.mjs/.test(src) && /--domain/.test(src), `fill-inventory-${id} forwards --domain`);
+    assert(
+      !/CONTROLLER_DIR_NAMES|CREATE\s+TABLE|walkJava|SyncTaskCode/.test(src),
+      `fill-inventory-${id} has no scan logic`
+    );
+    assert(fs.existsSync(path.join(skillRoot, `scripts/lib/inventory-${id}.mjs`)), `lib/inventory-${id}.mjs`);
+  }
+
+  const mergeUni060 = readRel("scripts/fill-merge.mjs");
+  assert(/--enrich-dto/.test(mergeUni060), "fill-merge.mjs accepts --enrich-dto");
+  assert(/--auto-fill/.test(mergeUni060) && /--module/.test(mergeUni060), "fill-merge.mjs accepts api extras");
+  assert(/mergeApi/.test(mergeUni060) && /lib\/merge-api\.mjs/.test(mergeUni060), "fill-merge.mjs uses lib/merge-api");
+
+  for (const id of domains) {
+    const rel = `scripts/fill-merge-${id}.mjs`;
+    const src = readRel(rel);
+    const n = lineCount(rel);
+    assert(n <= SHIM_MAX, `fill-merge-${id}.mjs shim ≤${SHIM_MAX} lines (got ${n})`);
+    assert(/fill-merge\.mjs/.test(src) && /--domain/.test(src), `fill-merge-${id} forwards --domain`);
+    assert(!/invEvidenceSet|skippedOtherModule|walkMd\(/.test(src), `fill-merge-${id} has no merge body`);
+  }
+
+  const invHelpM3 = runNode([path.join(skillRoot, "scripts/fill-inventory.mjs"), "--help"]);
+  assert(invHelpM3.status === 0 && /--domain/.test(invHelpM3.stdout), "M3 fill-inventory.mjs --help");
+  for (const id of ["api", "db"]) {
+    const h = runNode([path.join(skillRoot, "scripts/fill-inventory.mjs"), "--domain", id, "--help"]);
+    assert(h.status === 0 && /--root/.test(h.stdout + h.stderr), `fill-inventory --domain ${id} --help`);
+  }
+  const mergeHelpM3 = runNode([path.join(skillRoot, "scripts/fill-merge.mjs"), "--help"]);
+  assert(
+    mergeHelpM3.status === 0 && /--domain/.test(mergeHelpM3.stdout) && /--enrich-dto/.test(mergeHelpM3.stdout),
+    "M3 fill-merge.mjs --help lists --domain and --enrich-dto"
+  );
+
+  const fillIdxM3 = readRel("fill/README.md");
+  assert(/deprecated|弃用|薄包装|shim/i.test(fillIdxM3), "fill/README marks domain scripts deprecated shims");
+  assert(/--enrich-dto/.test(fillIdxM3), "fill/README documents api enrich flags on unified merge");
+  const fillMdM3 = readDoc("fill.md");
+  assert(/--enrich-dto/.test(fillMdM3) && /fill-merge\.mjs --domain api/.test(fillMdM3), "fill.md api enrich on unified CLI");
+
+  const golden = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
+  assert(fs.existsSync(path.join(golden, "docs/agent-config/rules/00-overview.mdc")), "l5-sync-golden SSOT rule");
+  assert(fs.existsSync(path.join(golden, "scripts/agent-config/sync.mjs")), "l5-sync-golden sync.mjs");
+  const goldenSync = fs.readFileSync(path.join(golden, "scripts/agent-config/sync.mjs"), "utf8");
+  assert(!/\{\{[A-Z]/.test(goldenSync), "l5-sync-golden sync.mjs has no template placeholders");
+  assert(/\["cursor",\s*"claude"\]/.test(goldenSync), "l5-sync-golden AI_TOOLS cursor+claude");
+  const goldenCheck = runNode([path.join(golden, "scripts/agent-config/sync.mjs"), "--check"], {
+    cwd: golden,
+  });
+  assert(goldenCheck.status === 0, "l5-sync-golden sync --check exit 0");
+
+  const tmpGold = fs.mkdtempSync(path.join(os.tmpdir(), "harness-060-l5-gold-"));
+  try {
+    fs.cpSync(golden, tmpGold, { recursive: true });
+    const tmpl = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+    const rerendered = tmpl.replaceAll("{{AI_TOOLS_JSON}}", JSON.stringify(["cursor", "claude"]));
+    fs.writeFileSync(path.join(tmpGold, "scripts/agent-config/sync.mjs"), rerendered, "utf8");
+    const rerenderCheck = runNode([path.join(tmpGold, "scripts/agent-config/sync.mjs"), "--check"], {
+      cwd: tmpGold,
+    });
+    assert(rerenderCheck.status === 0, "l5-sync-golden --check still green with re-rendered sync.mjs");
+  } finally {
+    fs.rmSync(tmpGold, { recursive: true, force: true });
+  }
+
+  const multi = path.join(skillRoot, "scripts/fixtures/multi-host-hooks");
+  assert(fs.existsSync(path.join(multi, ".cursor/hooks.json")), "multi-host-hooks cursor hooks.json");
+  assert(fs.existsSync(path.join(multi, ".claude/settings.json")), "multi-host-hooks claude settings");
+  assert(fs.existsSync(path.join(multi, ".qoder/settings.json")), "multi-host-hooks qoder settings");
+  assert(fs.existsSync(path.join(multi, ".trae/hooks.json")), "multi-host-hooks trae hooks.json");
+  assert(fs.existsSync(path.join(multi, ".codebuddy/settings.json")), "multi-host-hooks workbuddy settings");
+  const multiSig = scanSignals(multi);
+  assert(multiSig.S_HOOKS, "multi-host-hooks S_HOOKS");
+
+  const matureFixM3 = path.join(skillRoot, "scripts/fixtures/mature-claude");
+  const qoderFixM3 = path.join(skillRoot, "scripts/fixtures/qoder-hooks");
+  const stackFixM3 = path.join(skillRoot, "scripts/fixtures/stack-node");
+  const matureSigM3 = scanSignals(matureFixM3);
+  assert(matureSigM3.MATURE && !matureSigM3.S_CURSOR_RULES, "mature-claude still MATURE without cursor");
+  assert(scanSignals(qoderFixM3).S_HOOKS, "qoder-hooks still S_HOOKS");
+  assert(scanSignals(stackFixM3).S_STACK && !scanSignals(stackFixM3).MATURE, "stack-node still S_STACK only");
+
+  const roadmapM3 = readRel("ROADMAP-0.6.0.md");
+  assert(/\[x\].*T3\.1/.test(roadmapM3) && /\[x\].*T3\.3/.test(roadmapM3), "ROADMAP G3 T3.1–T3.3 checked");
+  assert(/\[x\].*T4\.1/.test(roadmapM3) && /\[x\].*T4\.3/.test(roadmapM3), "ROADMAP G4 T4.1–T4.3 checked");
+
+  const changelogM3 = readRel("CHANGELOG.md");
+  assert(/G3|fill 引擎|内聚/.test(changelogM3) && /G4|黄金集|fixture/.test(changelogM3), "CHANGELOG notes M3 G3/G4");
+  assert(/0\.6\.0-dev/.test(changelogM3), "CHANGELOG still 0.6.0-dev");
+
+  const verifyM3 = readRel("VERIFY.md");
+  assert(/M3/.test(verifyM3) && /l5-sync-golden|黄金/.test(verifyM3), "VERIFY has M3 section");
 }
 
 console.log(`ok: ${ok.length}`);

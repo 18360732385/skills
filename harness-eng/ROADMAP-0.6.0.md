@@ -42,17 +42,17 @@
 
 填充实现只有一套，域脚本继续当别名。
 
-- **T3.1** inventory / merge 实现收口到 `--domain` 入口（0.5.9 已开，0.6 去掉旁路语义漂移）
-- **T3.2** 合并重复 fill 规格；对话热路径只留 `fill/README.md`
-- **T3.3** 不再在 SKILL 根表罗列每域脚本文件名
+- [x] **T3.1** inventory / merge 实现收口到 `--domain` 入口（域脚本为弃用 shim；实现在 `lib/inventory-*` / `merge-api`）
+- [x] **T3.2** 合并重复 fill 规格；对话热路径只留 `fill/README.md`
+- [x] **T3.3** 不再在 SKILL 根表罗列每域脚本文件名
 
 ### G4 fixture 黄金集
 
 可回归的宿主/阶梯样本，而不是一次性自检。
 
-- **T4.1** L5 仓 fixture：`sync.mjs --check` 必须绿
-- **T4.2** multi-host hooks fixture（Claude / Qoder / Trae / WorkBuddy 至少各一）
-- **T4.3** selfcheck 钉黄金集路径与期望信号（扩 0.5.9 薄夹具）
+- [x] **T4.1** L5 仓 fixture：`scripts/fixtures/l5-sync-golden` 上 `sync.mjs --check` 必须绿
+- [x] **T4.2** multi-host hooks fixture（Cursor + Claude / Qoder / Trae / WorkBuddy）
+- [x] **T4.3** selfcheck 钉黄金集路径与期望信号（扩 0.5.9 薄夹具）
 
 ### G5 发包减脂
 
@@ -83,7 +83,7 @@
 |---|---|---|
 | **M1** | G1 CLI + 热路径指针 + G6 轻声明 + G7 `0.6.0-dev` + ROADMAP + upgrade stub | `harness.mjs` 可跑四模式；`land.mjs` 别名；`render --help` 指向公开入口；selfcheck 钉 `0.6.0-dev` |
 | **M2**（本切片） | G2 文档拓扑 | 根 md≤20（现 15）；`modes/` / `fill/` / `host/` 已搬；热路径旧路径 stub；AGENT-INDEX 必读≤8 |
-| **M3** | G3 fill 内聚 + G4 黄金集 | 域脚本无旁路语义；L5 `sync --check` fixture 绿；multi-host hooks 夹具 |
+| **M3**（本切片） | G3 fill 内聚 + G4 黄金集 | 域脚本无旁路语义；L5 `sync --check` fixture 绿；multi-host hooks 夹具 |
 | **M4** | G5 发包减脂 + 正式 `0.6.0` | 安装不含 legacy selfcheck；manifest `0.6.0`；upgrade 收口 |
 
 ## 非目标（本列车不做）

@@ -9,7 +9,7 @@ L1 文件靠 **packs** 数据展开；域名单 / 路径 / 默认 CLI 读 `domai
 1. `domains.yaml` 已注册（weight / detect / truths_dir / label / 可选 inventory / scan_fill_work）
 2. `domain-packs.yaml` 有该域 L1 列表 + `templates/docs/<domain>/` + rule tmpl
 3. acceptance：`ACCEPTANCE_BY_DOMAIN` 增加 checker；`--domain all` 自动含新域
-4. 需要 inventory 时：`fill-inventory-<id>.mjs`；合并优先 `fill-merge.mjs --domain <id>`
+4. 需要 inventory 时：`lib/inventory-<id>.mjs` + `fill-inventory.mjs --domain <id>`（域脚本只做 shim）；合并优先 `fill-merge.mjs --domain <id>`
 5. 需要形态分时：`templates/_meta/morph-required.yaml` 增加该域条目；新 `named` 钩子注册 `NAMED_TESTS`；`buildChecks` 仍要码
 6. selfcheck 钉 + CHANGELOG
 
@@ -19,10 +19,10 @@ L1 文件靠 **packs** 数据展开；域名单 / 路径 / 默认 CLI 读 `domai
 - [ ] 1 templates/_meta/domains.yaml：kind=contract、label、index、truths_dir、rule_id、weight、optional/detect、pack、scan_fill_work?
 - [ ] 2 templates/_meta/domain-packs.yaml：索引 + README + 真相 tmpl + rule tmpl
 - [ ] 3 落盘模板：docs/<domain>/…、rules/NN-*-sync.mdc.tmpl
-- [ ] 4（可选）scripts/fill-inventory-<domain>.mjs → docs/<domain>/.fill-work/inventory.json
+- [ ] 4（可选）scripts/lib/inventory-<domain>.mjs + fill-inventory.mjs --domain <id> → docs/<domain>/.fill-work/inventory.json
 - [ ] 5 acceptance-check.mjs：ACCEPTANCE_BY_DOMAIN[<id>] = checkXxxFile
 - [ ] 6 morph-required.yaml 增加域条目（re / named）；新 named → fill-score NAMED_TESTS；buildChecks 分域加项
-- [ ] 7 合并：fill-merge.mjs --domain <id>（或薄包装 fill-merge-<id>.mjs）
+- [ ] 7 合并：fill-merge.mjs --domain <id>（域脚本仅为弃用 shim）
 - [ ] 8 selfcheck + CHANGELOG / VERIFY
 ```
 
