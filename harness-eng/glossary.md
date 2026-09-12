@@ -88,7 +88,7 @@
 | **完整档** | fill-truths 唯一默认：按所选契约域**模板**写齐必填章（无精简档；jobs 为调度面章节） |
 | **miss_histogram** | fill-score 域检查项 MISS 计数（如 `has-field-comment` / `missing-req-section`） |
 | **shard** | inventory 切出的填充分片；一次确认可执行全部 shards |
-| **fill-work** | `docs/api/.fill-work/` worker 片段目录；经 `fill-merge-api`（过 acceptance）合并进 SSOT |
+| **fill-work** | `docs/api/.fill-work/` worker 片段目录；经 `fill-merge.mjs --domain`（过 acceptance）合并进 SSOT |
 | **acceptance-check** | 深真全语义闸（反例正则+必填章）；merge/close 前置 |
 | **金标批次** | 同业务域 api+func+相关 db/redis 同批 + 强制 `sample_n` |
 | **MCP 矩阵** | detect 产出的应有 `{engine}-{profile}` 集合（profile 以仓库自动发现为准） |

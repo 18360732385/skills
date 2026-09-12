@@ -1,0 +1,7 @@
+---
+description: Golden L5 overview
+alwaysApply: true
+---
+# Golden overview
+
+Minimal rule for `sync.mjs --check`.

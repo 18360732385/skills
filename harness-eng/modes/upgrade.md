@@ -58,6 +58,7 @@
 3. **文档搬家（M2）**：规格在 `modes/` · `fill/` · `host/`；热路径旧根路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline`）
 4. **Codex**：0.6.x **冻结 P2**，全量对等另立项（见 [ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)）
 5. **pipeline**：骨架战役用 `--mode pipeline-skeleton`（不跑 fill-*）
+6. **填充 CLI（M3）**：只认 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（api `--enrich-dto` 挂统一入口）；域脚本为弃用 shim
 
 ## 0.5.9 → 0.5.10 迁移要点
 

@@ -6,6 +6,19 @@
 
 当前 **0.6.0-dev**。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。0.6.0 计划见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
 
+## 0.6.0-dev 增量验收（M3）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `node scripts/selfcheck-render.mjs` | 烟测 |
+| `fill-inventory.mjs --help` / `--domain`（≥2 域）与 `fill-merge.mjs --help` | 有 |
+| 域脚本为弃用 shim（≤~30 行，只转发 argv）；实现在 lib | 有 |
+| `l5-sync-golden` 上 `sync.mjs --check` 绿 | 有 |
+| `multi-host-hooks` 多宿主 hooks 信号（S_HOOKS） | 有 |
+| mature-claude / qoder-hooks / stack-node 仍绿 | 有 |
+| 版本仍为 `0.6.0-dev`（未钉 0.6.0）；根 md ≤20 | 有 |
+
 ## 0.6.0-dev 增量验收（M2）
 
 | 检查 | 结果 |

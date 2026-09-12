@@ -30,11 +30,11 @@
 ## 引擎关系（0.2.18）
 
 ```text
-inventory（脚本；jobs=fill-inventory-jobs）
+inventory（脚本；jobs=`fill-inventory.mjs --domain jobs`）
   → fill-plan init [--gold]
   → fill-truths-agents（本模式）按批次 + 模板完整档 → 只写 .fill-work
   → acceptance-check（深真全闸；含 jobs）
-  → fill-merge.mjs --domain <id> --check → --write（过闸才写；api 专属 --enrich-dto/--module 仍用 fill-merge-api）
+  → fill-merge.mjs --domain <id> --check → --write（过闸才写；api 专属 --enrich-dto/--module 挂统一 CLI）
   → dto-batch（接口绑定；api）
   → fill-calibrate-live（db/redis 实据）
   → fill-score（ai_coding_ready + semantic + gold_ratio + plan）
@@ -54,7 +54,7 @@ inventory（脚本；jobs=fill-inventory-jobs）
 - [ ] 2 将开放批次标 in_progress；按批次切 shard → docs/<domain>/.fill-work/<shard-id>.json
 - [ ] 3 串行（兜底）或并行 ≤3（大仓额度紧时）启动 worker；各贴答案卡 + acceptance
 - [ ] 4 收盘：只认磁盘 fragment；usage limit/超时 → 批次 blocked；启发式只标 `quality: heuristic` 留在 `.fill-work`
-- [ ] 5 acceptance-check.mjs；`fill-merge.mjs --domain <id> --check` → `--write`；api 需 enrich-dto 时用 fill-merge-api；fill-dto-batch
+- [ ] 5 acceptance-check.mjs；`fill-merge.mjs --domain <id> --check` → `--write`；api 需 enrich-dto 时加在统一 CLI；fill-dto-batch
 - [ ] 6 各契约域过闸后并入 SSOT
 - [ ] 7 fill-score + fill-report-html；过闸则 fill-plan --close
 ```

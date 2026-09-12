@@ -26,7 +26,7 @@
 - [ ] 4 用 MCP 或 calibrate-live 扫相关表/Key（不编造）
 - [ ] 5 WritePlan：一次列出全部 domains/shards — 等待确认
 - [ ] 6 确认后按 `Q_FILL_ENGINE`：【推荐】fill-truths-agents；或薄底 auto；或仅 auto
-- [ ] 7 `fill-merge.mjs --domain <id> --check|--write`；api 需 `--enrich-dto` 时用 fill-merge-api
+- [ ] 7 `fill-merge.mjs --domain <id> --check|--write`；api 需 `--enrich-dto` 时加在统一 CLI
 - [ ] 8 可选 fill-dto-batch；拆页（≥200）；fill-progress；fill-score（ready + template_completeness）
 ```
 
@@ -50,8 +50,8 @@
 ## 证据源
 
 1. **代码**：Controller / DTO / Service / Key 常量  
-2. **手写 SQL**：`fill-inventory-db.mjs`  
-3. **Redis 常量**：`fill-inventory-redis.mjs`  
+2. **手写 SQL**：`fill-inventory.mjs --domain db`  
+3. **Redis 常量**：`fill-inventory.mjs --domain redis`  
 4. **MCP 扫库**【推荐】：mysql / redis 实况  
 
 无证据 → `TODO(harness-eng)`。
@@ -66,12 +66,12 @@
 node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir docs/api/.fill-work --check
 node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir docs/api/.fill-work \
   --target docs/api/modules/01-….md --write
-# api 专属 --enrich-dto / --module：
-node scripts/fill-merge-api.mjs --inventory inv.json --work-dir docs/api/.fill-work \
+# api 专属 --enrich-dto / --module 挂在统一 CLI：
+node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir docs/api/.fill-work \
   --target docs/api/modules/01-….md --write --enrich-dto --source-root <java-root>
 ```
 
-`missing` 必须为 `[]`。兼容薄包装：`fill-merge-<domain>.mjs`（prefer 统一入口）。
+`missing` 必须为 `[]`。域脚本 `fill-merge-<domain>.mjs` 为 **弃用** 薄包装。
 
 ## 大文件拆页 / 进度
 

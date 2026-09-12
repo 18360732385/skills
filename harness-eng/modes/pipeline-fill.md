@@ -22,10 +22,10 @@
 
 ```text
 4. fill-score（基线）
-5. fill-inventory-*（api --all-modules · db · redis · func --all-modules）
+5. fill-inventory.mjs --domain（api --all-modules · db · redis · func --all-modules）
 6. fill-plan init【推荐】（大仓：--gold --sample-n 30）
 7. fill-truths-agents【推荐】按 Plan 批次精填（fill-truths-agents.md / fill-workers.md / truth-quality.md）
-8. acceptance-check → fill-merge.mjs --domain <id> --check → --write（含 jobs）；api 需 --enrich-dto/--module 时仍用 fill-merge-api；dto-batch（仅绑定当前接口类型）
+8. acceptance-check → fill-merge.mjs --domain <id> --check → --write（含 jobs）；api `--enrich-dto`/`--module` 挂统一 CLI；dto-batch（仅绑定当前接口类型）
 9. 会话中途 MCP 掉线：先 reload；仍不可用则该引擎改 calibrate-live（须仍满足填充 MCP 闸）
 10. fill-score（收口：分层 ready / ai_coding_ready / gold_ratio / formula_ceiling / semantic miss）
 11. fill-report-html【推荐】→ docs/harness-eng/report-latest.html
@@ -55,7 +55,7 @@ usage-limit 后启发式只进 draft（`quality: heuristic`），见 [truth-qual
 - 每步中文摘要：score / formula_ceiling / template_completeness / **ai_coding_ready** / plan open batches / writes / **MCP 矩阵覆盖**
 - 每次 fill-score 后（`Q_REPORT_HTML` 默认开）：score JSON → `fill-report-html` → 回复 HTML 路径
 - inventory 退出码：`0` 成功；`2` 有 skip/warning 可继续；`1` 硬错误须停
-- agents 失败只重跑失败 shard；合并前 `fill-merge.mjs --domain <id> --check`（api 专属参数见 fill-merge-api）
+- agents 失败只重跑失败 shard；合并前 `fill-merge.mjs --domain <id> --check`（api 专属参数见统一 CLI `--enrich-dto`）
 - MCP 已写但工具列表无对应引擎 → reload 或 `fill-calibrate-live`；仍不过闸则 **停填充**
 - **收益递减早停**：
   - Plan 开放批次 >0 → 不因贴 ceiling 停止
@@ -68,10 +68,10 @@ usage-limit 后启发式只进 draft（`quality: heuristic`），见 [truth-qual
 ```bash
 node scripts/fill-score.mjs --root <T> --ready-quality 80 --ready-coverage 0.8 --summary-only
 node scripts/fill-report-html.mjs --root <T> --score score.json --mode pipeline
-node scripts/fill-inventory-api.mjs --root <T> --all-modules
-node scripts/fill-inventory-db.mjs --root <T>
-node scripts/fill-inventory-redis.mjs --root <T>
-node scripts/fill-inventory-func.mjs --root <T> --all-modules
+node scripts/fill-inventory.mjs --domain api --root <T> --all-modules
+node scripts/fill-inventory.mjs --domain db --root <T>
+node scripts/fill-inventory.mjs --domain redis --root <T>
+node scripts/fill-inventory.mjs --domain func --root <T> --all-modules
 node scripts/fill-plan.mjs --root <T> --init --domains api,func,db,redis
 # 主 Agent 按 fill-plan / fill-truths-agents / fill-workers 开多会话精填并 merge
 node scripts/fill-calibrate-live.mjs --root <T> --profile test

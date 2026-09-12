@@ -14,7 +14,7 @@
 | 输出 | **仅** `docs/<domain>/.fill-work/<shard-id>.md`（或约定 fragment 名） |
 | 范围 | 只写本 shard fragment；字段/URL/密文只从本仓证据；结案范围以 Plan `sample_n`/`deferred` 为准 |
 | 验收 | 对照批次 `acceptance[]` + [truth-quality.md](../modes/truth-quality.md)；`acceptance-check` 无 blocker |
-| 合并 | `acceptance-check` → `fill-merge.mjs --domain <id> --check` → `--write`；api 专属 `--enrich-dto`/`--module` 仍用 `fill-merge-api`；dto-batch 按接口绑定 |
+| 合并 | `acceptance-check` → `fill-merge.mjs --domain <id> --check` → `--write`；api 专属 `--enrich-dto`/`--module`/`--auto-fill` 挂在 `fill-merge.mjs --domain api`；dto-batch 按接口绑定 |
 | 状态 | 只认磁盘（`.fill-work/`、`docs/harness-eng/fill-plan.yaml`、可选 `progress.yaml`） |
 | 模板 | 对照目标仓 `docs/<domain>/templates/*` **完整档必填章** |
 | 失败 | usage limit → `blocked`；启发式仅 draft 且 `quality: heuristic`；SSOT 只经 acceptance promote |
@@ -25,13 +25,13 @@
 
 | 域 | 工作目录 | fragment 示例 | 合并目标 |
 |---|---|---|---|
-| api | `docs/api/.fill-work/` | `shard-01.md` | `docs/api/modules/NN-*.md` via `fill-merge.mjs --domain api`（enrich-dto → fill-merge-api） |
+| api | `docs/api/.fill-work/` | `shard-01.md` | `docs/api/modules/NN-*.md` via `fill-merge.mjs --domain api`（`--enrich-dto` 等同） |
 | func | `docs/func/.fill-work/` | `shard-func-entrance-01.md` | `docs/func/modules/NN-*.md` via `fill-merge.mjs --domain func` |
 | db | `docs/db/.fill-work/` | `shard-db-01.md` | `docs/db/table/NN-*.md` via `fill-merge.mjs --domain db` |
 | redis | `docs/redis/.fill-work/` | `shard-redis-01.md` | `docs/redis/keys/NN-*.md` via `fill-merge.mjs --domain redis` |
 | jobs | `docs/jobs/.fill-work/` | `shard-jobs-01.md` | `docs/jobs/tasks/NN-*.md` via `fill-merge.mjs --domain jobs` |
 
-**jobs**：inventory 用 `fill-inventory-jobs.mjs`（输出 `scheduler_link`: `exact`\|`heuristic`\|`none`）。worker 对照 `job-template.md` 写调度面（禁止 OpenAPI 字段表）。`scheduler_link: heuristic` 时 fragment 须标 `quality: heuristic`，且**不得** merge 进 `tasks/` SSOT；核对为 exact 后再 promote。合并前 `acceptance-check --domain jobs`。
+**jobs**：inventory 用 `fill-inventory.mjs --domain jobs`（输出 `scheduler_link`: `exact`\|`heuristic`\|`none`）。worker 对照 `job-template.md` 写调度面（禁止 OpenAPI 字段表）。`scheduler_link: heuristic` 时 fragment 须标 `quality: heuristic`，且**不得** merge 进 `tasks/` SSOT；核对为 exact 后再 promote。合并前 `acceptance-check --domain jobs`。
 
 ## 按 ai_tools 启动 worker（说明性 · 非门禁）
 
@@ -82,8 +82,8 @@
 ```bash
 node scripts/acceptance-check.mjs --work-dir <work> --domain api
 node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir <work> --check
-# api 专属 --enrich-dto / --module / --auto-fill 仍用薄包装：
-node scripts/fill-merge-api.mjs ... --write --enrich-dto --source-root <java-root>
+# api 专属旗标挂在统一 CLI（fill-merge-api.mjs 仅为弃用 shim）：
+node scripts/fill-merge.mjs --domain api ... --write --enrich-dto --source-root <java-root>
 node scripts/fill-dto-batch.mjs --root <TARGET>
 ```
 

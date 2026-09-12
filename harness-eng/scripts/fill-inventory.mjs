@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 /**
- * fill-inventory — domain-agnostic entry (0.5.9+)
+ * fill-inventory — canonical inventory CLI (0.6.0-dev M3).
  *
  * Usage:
  *   node scripts/fill-inventory.mjs --domain <id> --root <TARGET> [domain args...]
  *
- * Prefer this over fill-inventory-<domain>.mjs. Per-domain scripts remain
- * as aliases and still hold domain scan logic (not rewritten in 0.5.9).
+ * Scan logic lives in lib/inventory-<domain>.mjs. Per-domain scripts are
+ * deprecated shims that only forward argv.
  * Domain list: templates/_meta/domains.yaml
  */
-import { spawnSync } from "child_process";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import path from "path";
 import { defaultContractDomains } from "./lib/domains.mjs";
 
@@ -39,12 +38,12 @@ function printHelp() {
   console.log(`Usage:
   node scripts/fill-inventory.mjs --domain <${ids}> --root <TARGET> [domain-specific args]
 
-Canonical inventory entry (0.5.9+). Dispatches to fill-inventory-<domain>.mjs.
-Compat aliases: fill-inventory-api|func|db|redis|jobs.mjs
+Canonical inventory entry (0.6.0-dev M3). Implementation: lib/inventory-<domain>.mjs.
+Deprecated shims (argv forward only): fill-inventory-api|func|db|redis|jobs.mjs
 `);
 }
 
-function main() {
+async function main() {
   const { domain, help, rest } = parseDomain(process.argv);
   if (help && !domain) {
     printHelp();
@@ -59,13 +58,17 @@ function main() {
     console.error(`Unknown domain: ${domain}. Known: ${known.join(", ")}`);
     process.exit(1);
   }
-  const script = path.join(__dirname, `fill-inventory-${domain}.mjs`);
-  const r = spawnSync(process.execPath, [script, ...rest], { stdio: "inherit" });
-  process.exit(r.status === null ? 1 : r.status);
+  const libPath = path.join(__dirname, "lib", `inventory-${domain}.mjs`);
+  const mod = await import(pathToFileURL(libPath).href);
+  if (typeof mod.main !== "function") {
+    throw new Error(`lib/inventory-${domain}.mjs must export main()`);
+  }
+  const argv = [process.argv[0], process.argv[1], ...rest];
+  await Promise.resolve(mod.main(argv));
 }
 
 try {
-  main();
+  await main();
 } catch (e) {
   console.error(String(e && e.stack ? e.stack : e));
   process.exit(1);
