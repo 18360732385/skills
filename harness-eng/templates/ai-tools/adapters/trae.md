@@ -7,7 +7,7 @@
 - **Hooks**: `.trae/hooks.json`（`version` + Claude 系嵌套 `hooks`；路径已官方确认）
   - 事件：官方含 `SessionStart` · `UserPromptSubmit` · `PreToolUse` · `PostToolUse` · `Stop` · `Notification`
   - 脚本：`.trae/hooks/*.js` + `claude-adapter.js`
-  - **风险**：`matcher` 须对 Trae `tool_name`（官方终端为 **`RunCommand`**）。现网仍写 Claude 族 `Bash` / `Edit|Write` 等。Round C：宿主未调用 `.trae/hooks.json`（`Bash` / `RunCommand` 皆无 live 注入）→ **不**改 `HOOK_DEFS`。次要缺口：本机工具名 `Shell` / `run_mcp` / `Edit` / `Write` 对不上 `Bash` / `mcp__mysql` / `MultiEdit`。人验**只认** `.trae/hooks.json`，**勿**用 `.cursor/hooks.json` `beforeShellExecution`。见 [TRAE-P0-MANUAL.md](../../../host/TRAE-P0-MANUAL.md)
+  - **matcher（T-P1-2）**：官方终端 `tool_name` 为 **`RunCommand`**。`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`：提交门禁 `Bash|RunCommand`；mysql-guard `mcp__mysql.*`；after-edit `Edit|Write|MultiEdit`。Claude/Qoder 仍 `Bash`。Round C 本机 FAIL **很可能是 matcher 误诊**（当时写 `Bash`，永不匹配 `RunCommand`）。消费仓须 sync + **Settings → Hooks 启用项目 hooks** + **新会话**复测；未 PASS **不**升矩阵。`.githooks` 仍兜底。人验**只认** `.trae/hooks.json`，**勿**用 `.cursor/hooks.json` `beforeShellExecution`。见 [TRAE-P0-MANUAL.md](../../../host/TRAE-P0-MANUAL.md)
 - **MCP**: `.trae/mcp.json`（**磁盘产物 + 必须在 IDE Settings → Add MCP servers / 项目 MCP 启用**；未开面板 ≠ 已接入）
 - **Skills**: `.trae/skills/`（**一等公民**，按需加载）。可选 `.agents/skills/`
 - **禁止**: 勿用 Cursor `beforeShellExecution` 顶层扁平 hooks.json
