@@ -1,8 +1,21 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.1 → 0.5.2 → 0.5.3`（当前 **0.5.3**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`… → 0.5.2 → 0.5.3 → 0.5.4`（当前 **0.5.4**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.4 — 2026-09-12（会话仪表盘 · 仅工程轮 SHOW）
+
+### 产品
+
+- **触发收窄**：会话仪表盘不再「每一轮无条件」附末尾。SHOW = 目标仓施工 / 跑 harness 模式（land、resume、pipeline、audit、upgrade、fill-*、detect、WritePlan、render、ladder、改目标仓 harness 产物、续跑中的工程会话）；HIDE = 纯 meta / 版本 / 安装 / 手册 / 术语问答
+- **边角**：工程模式仍在进行（如等 WritePlan 确认）时中途 meta 问仍 SHOW；首条只问「当前版本号多少」HIDE；含糊默认 HIDE，除非有进行中的工程模式、已确认 `Q_TARGET_ROOT` 施工、或明确工程动词
+- **SKILL 流程第 6 步**：改为条件附仪表盘；手册 / glossary / QUICKSTART / VERIFY 对齐
+- **脚本**：`session-dash.mjs --intent engineering|meta`（meta 不输出 markdown；意图仍由 Agent 按 SSOT 判定）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART → `0.5.4`
 
 ## 0.5.3 — 2026-09-11（会话仪表盘 · 每轮回复末尾）
 

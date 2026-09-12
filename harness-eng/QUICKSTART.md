@@ -40,7 +40,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g --
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
 四台读法见 [使用手册.html](使用手册.html) 首页示意与第 6 章。  
-对话内每轮末尾另有**会话仪表盘**（四台摘要 + mermaid），见 [session-dashboard.md](session-dashboard.md)。
+施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + mermaid）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](session-dashboard.md)。
 
 ## 写盘闸门（必记）
 
@@ -72,4 +72,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 node scripts/selfcheck-0.5.2.mjs
 ```
 
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.3**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.4**）。
