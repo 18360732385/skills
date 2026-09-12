@@ -51,14 +51,15 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
-## 0.5.10 → 0.6.0 迁移要点（进行中 · 0.6.0-dev）
+## 0.5.10 → 0.6.0 迁移要点
 
-1. **meta**：`skill_version` → `0.6.0-dev`（正式 `0.6.0` 在 M4 去 `-dev`；resume / upgrade 写 meta 时对齐 manifest）
+1. **meta**：`skill_version` → `0.6.0`（resume / upgrade 写 meta 时对齐 manifest）
 2. **写盘入口**：Agent 优先 `scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 为薄别名。勿把 `render.mjs` 当主路径
-3. **文档搬家（M2）**：规格在 `modes/` · `fill/` · `host/`；热路径旧根路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline`）
+3. **文档搬家**：规格在 `modes/` · `fill/` · `host/`；热路径旧根路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline`）
 4. **Codex**：0.6.x **冻结 P2**，全量对等另立项（见 [ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)）
 5. **pipeline**：骨架战役用 `--mode pipeline-skeleton`（不跑 fill-*）
-6. **填充 CLI（M3）**：只认 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（api `--enrich-dto` 挂统一入口）；域脚本为弃用 shim
+6. **填充 CLI**：只认 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（api `--enrich-dto` 挂统一入口）；域脚本为弃用 shim
+7. **发包**：默认安装 **不含** `archive/selfcheck/legacy` 体积（热树只留 INDEX）；开发全仓可读 `_history/harness-eng-selfcheck-legacy/` 或 git 历史。`fill-truths-auto` 仍见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
 
 ## 0.5.9 → 0.5.10 迁移要点
 

@@ -1,28 +1,31 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.10 → 0.6.0-dev`（当前 **0.6.0-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
-> 0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。历史条目里「后续（0.3.0）/ P3」许愿已过期。
+**列车**：`… → 0.5.10 → 0.6.0-dev → 0.6.0`（当前 **0.6.0**，列车已收口）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
+> 0.6.0 路线：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。历史条目里「后续（0.3.0）/ P3」许愿已过期。
 
-## Unreleased / 0.6.0-dev — 进行中（M1：统一入口 · M2：文档拓扑 · M3：fill 内聚 + 黄金集）
+## 0.6.0 — 2026-09-12（M1–M4：统一入口 · 文档拓扑 · fill 内聚 · 发包减脂 · 正式钉号）
+
+列车 `0.5.10 → 0.6.0-dev → 0.6.0` 收口。M1–M3 在 `-dev` 切片落地；本条把 G5 发包减脂与正式号钉齐。
 
 ### 产品
 
-- **路线图**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) — 主题「入口单一、文档可导航、fill 可维护、发包可瘦」；G1–G7 / M1–M4
-- **G1 公开入口**：`scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 薄别名；L5/`agent_config` 仍拒直渲生成宿主路径并走 `sync.mjs`
+- **路线图**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) — 主题「入口单一、文档可导航、fill 可维护、发包可瘦」；G1–G7 / M1–M4 **已完成**
+- **G1 公开入口**（M1）：`scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 薄别名；L5/`agent_config` 仍拒直渲生成宿主路径并走 `sync.mjs`
 - **pipeline-skeleton**：仅骨架战役写盘，不跑 fill-* / 不进入 pipeline-fill
 - **文档指针**：SKILL / AGENT-INDEX / write-plan / conflict-policy / QUICKSTART / pipeline 以 harness CLI 为 Agent 主路径；`render.mjs --help` 指向公开入口
-- **G2 文档拓扑**：根 `*.md` **15**（≤20）。模式规格进 `modes/`，fill-* 进 `fill/`，`ai-tools` / `sync-hosts` 进 `host/`。仓库内链接已改；热路径旧路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline` / `fill-truths-auto`）
+- **G2 文档拓扑**（M2）：根 `*.md` **15**（≤20）。模式规格进 `modes/`，fill-* 进 `fill/`，`ai-tools` / `sync-hosts` 进 `host/`。仓库内链接已改；热路径旧路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline` / `fill-truths-auto`）
 - **AGENT-INDEX**：按新拓扑重写，必读 ≤8
-- **G3 fill 引擎内聚**：`fill-inventory.mjs --domain` / `fill-merge.mjs --domain` 为唯一实现入口；扫描/合并逻辑在 `lib/inventory-*` 与 `lib/merge-api.mjs`；域脚本为 **弃用** 薄包装（只转发 argv）。api `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 merge CLI
-- **G4 fixture 黄金集**：`scripts/fixtures/l5-sync-golden`（`sync.mjs --check` 无漂移）+ `scripts/fixtures/multi-host-hooks`（Cursor / Claude / Qoder / Trae / WorkBuddy hooks 信号）；selfcheck 钉路径。既有 mature-claude / qoder-hooks / stack-node 保持
-- **G6**：0.6.x **冻结 Codex P2**，全量对等另立项（adapters/codex.md · host/ai-tools.md）
-- **G7**：manifest / meta / questions 钉 **`0.6.0-dev`**；upgrade 含 0.5.10 → 0.6.0 短清单（文档搬家见 M2）
+- **G3 fill 引擎内聚**（M3）：`fill-inventory.mjs --domain` / `fill-merge.mjs --domain` 为唯一实现入口；扫描/合并逻辑在 `lib/inventory-*` 与 `lib/merge-api.mjs`；域脚本为 **弃用** 薄包装（只转发 argv）。api `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 merge CLI
+- **G4 fixture 黄金集**（M3）：`scripts/fixtures/l5-sync-golden`（`sync.mjs --check` 无漂移）+ `scripts/fixtures/multi-host-hooks`（Cursor / Claude / Qoder / Trae / WorkBuddy hooks 信号）；selfcheck 钉路径。既有 mature-claude / qoder-hooks / stack-node 保持
+- **G5 发包减脂**（M4）：热技能树 **不含** `archive/selfcheck/legacy/*.mjs` 体积；只留 INDEX 指针。全文在仓库 `_history/harness-eng-selfcheck-legacy/` 与 git 历史。`.skillignore` + [archive/README.md](archive/README.md) 写明 **安装 ≠ 全仓**。热包可保留近期 0.4/0.5 归档 selfcheck；`fill-truths-auto` 仍归档
+- **G6**：0.6.x **冻结 Codex P2**（M1 已冻；本版复核无新 Codex 能力），全量对等另立项（adapters/codex.md · host/ai-tools.md）
+- **G7**：manifest / meta / questions / README / VERIFY / QUICKSTART / 手册钉 **`0.6.0`**（去 `-dev`）；upgrade 收口 0.5.10 → 0.6.0 清单
 
 ### 版本钉
 
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → `0.6.0-dev`（**未**钉正式 `0.6.0`）
-- selfcheck 断言 `0.6.0-dev` + M2 根 md 计数 / stub 策略 / 新路径
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.0`**（无 `-dev`）
+- selfcheck 断言 `0.6.0` + G5 发包清单 / `.skillignore` + M2 根 md 计数 / stub 策略
 
 ## 0.5.10 — 2026-09-12（audit P2：Codex 不默认 · 报告壳叙事 · 皆无探测 ≠ Cursor · 归档）
 

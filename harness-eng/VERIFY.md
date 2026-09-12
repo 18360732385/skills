@@ -1,10 +1,24 @@
-﻿# harness-eng 验收记录（0.6.0-dev）
+﻿# harness-eng 验收记录（0.6.0）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.0-dev**。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。0.6.0 计划见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.0**（列车已收口）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。路线见 [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+
+## 0.6.0 增量验收（M4）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `node scripts/selfcheck-render.mjs` | 烟测 |
+| manifest / meta / questions 恰好 `0.6.0`（无 `-dev`） | 有 |
+| 根 md ≤20 | 有 |
+| `archive/selfcheck/legacy/` 热树只留 INDEX；无 `.mjs` 体积 | 有 |
+| `.skillignore` + archive README「安装 ≠ 全仓」 | 有 |
+| 近期 0.4/0.5 归档 selfcheck 可保留；`fill-truths-auto` 仍归档 | 有 |
+| G6 Codex P2 冻结文案仍一致（无新 Codex 能力） | 有 |
+| `harness.mjs --help` 可跑 | 有 |
 
 ## 0.6.0-dev 增量验收（M3）
 

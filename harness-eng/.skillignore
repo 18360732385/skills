@@ -1,0 +1,7 @@
+# harness-eng 发包排除清单（G5 / 0.6.0）
+# 安装 ≠ 全仓。`npx skills add` / 拷到宿主 skills 目录时，下列路径不是默认安装物。
+# 现行 skills CLI 未必识别本文件；权威保证是「热树不含 legacy 体积」+ archive/README。
+# 0.2.x–0.3.x 逐版 selfcheck 已移出热树（只留 INDEX 指针）。
+
+archive/selfcheck/legacy/**
+!archive/selfcheck/legacy/INDEX.md

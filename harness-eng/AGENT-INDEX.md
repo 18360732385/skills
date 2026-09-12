@@ -3,7 +3,7 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读一页纸：[QUICKSTART.md](QUICKSTART.md)。闸门词表：[write-plan.md](modes/write-plan.md)。
 
-**拓扑（0.6.0-dev M2）**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。根目录只留入口、手册与热路径 stub。
+**拓扑（0.6.0）**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。根目录只留入口、手册与热路径 stub。
 
 ## 必读（写盘前）≤8
 

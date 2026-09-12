@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.6.0-dev: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures.
+ * 0.6.0: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures + M4 slim pack / formal pin.
  * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
  * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
  * Inherited 0.2.27–0.5.7 gates.
@@ -150,7 +150,8 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.6\.0-dev"/.test(qYaml), "questions.yaml version 0.6.0-dev");
+assert(/version:\s*"0\.6\.0"(?!-)/.test(qYaml), "questions.yaml version 0.6.0");
+assert(!/0\.6\.0-dev/.test(qYaml), "questions.yaml not 0.6.0-dev");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -213,12 +214,14 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.6\.0-dev"/.test(manifest), "manifest 0.6.0-dev");
+assert(/version:\s*"0\.6\.0"(?!-)/.test(manifest), "manifest 0.6.0");
+assert(!/version:\s*"0\.6\.0-dev"/.test(manifest), "manifest not 0.6.0-dev");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.6\.0-dev"/.test(metaTmpl), "harness-meta 0.6.0-dev");
+assert(/skill_version:\s*"0\.6\.0"(?!-)/.test(metaTmpl), "harness-meta 0.6.0");
+assert(!/0\.6\.0-dev/.test(metaTmpl), "harness-meta not 0.6.0-dev");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -367,18 +370,11 @@ assert(
   fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/INDEX.md")),
   "legacy selfcheck INDEX"
 );
-assert(
-  fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.10.mjs")),
-  "0.3.10 selfcheck in legacy/"
-);
-assert(
-  fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.9.mjs")),
-  "0.3.9 selfcheck in legacy/"
-);
-assert(
-  fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.2.mjs")),
-  "0.3.2 selfcheck in legacy/"
-);
+{
+  const legacyDir = path.join(skillRoot, "archive/selfcheck/legacy");
+  const legacyMjs = fs.readdirSync(legacyDir).filter((n) => n.endsWith(".mjs"));
+  assert(legacyMjs.length === 0, "legacy/ has no bulk .mjs (INDEX only)");
+}
 const archiveReadme = fs.readFileSync(path.join(skillRoot, "archive/README.md"), "utf8");
 assert(/scripts\/selfcheck\.mjs/.test(archiveReadme), "archive README points to selfcheck.mjs");
 assert(
@@ -390,13 +386,14 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.6\.0-dev/.test(verifyMd), "VERIFY is 0.6.0-dev");
+assert(/验收记录（0\.6\.0）/.test(verifyMd) && /当前 \*\*0\.6\.0\*\*/.test(verifyMd), "VERIFY is 0.6.0");
+assert(!/当前 \*\*0\.6\.0-dev\*\*/.test(verifyMd), "VERIFY current pin not 0.6.0-dev");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.6\.0-dev/.test(readme), "README header version 0.6.0-dev");
-assert(/当前 \*\*0\.6\.0-dev\*\*/.test(readme), "README footer version 0.6.0-dev");
+assert(/当前版本：0\.6\.0(?!-dev)/.test(readme), "README header version 0.6.0");
+assert(/当前 \*\*0\.6\.0\*\*/.test(readme) && !/当前 \*\*0\.6\.0-dev\*\*/.test(readme), "README footer version 0.6.0");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -407,9 +404,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.6\.0-dev\*\*/.test(handbookMd), "使用手册.md version 0.6.0-dev");
-assert(/v0\.6\.0-dev/.test(handbookHtml), "使用手册.html version 0.6.0-dev");
-assert(/当前 \*\*0\.6\.0-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.0-dev");
+assert(/版本：\*\*0\.6\.0\*\*/.test(handbookMd) && !/0\.6\.0-dev/.test(handbookMd), "使用手册.md version 0.6.0");
+assert(/v0\.6\.0(?!-dev)/.test(handbookHtml) && !/v0\.6\.0-dev/.test(handbookHtml), "使用手册.html version 0.6.0");
+assert(/当前 \*\*0\.6\.0\*\*/.test(quickstartMd) && !/0\.6\.0-dev/.test(quickstartMd), "QUICKSTART version 0.6.0");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -654,7 +651,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.6\.0-dev"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.0-dev");
+  assert(/version:\s*"0\.6\.0"(?!-)/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.0");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -731,8 +728,8 @@ if (fs.existsSync(fixture)) {
     "Q_CONTRACT jobs"
   );
   assert(
-    fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/selfcheck-0.3.6.mjs")),
-    "0.3.6 selfcheck in legacy/"
+    /0\.3\./.test(fs.readFileSync(path.join(skillRoot, "archive/selfcheck/legacy/INDEX.md"), "utf8")),
+    "legacy INDEX still lists 0.3.x history"
   );
   const reg = parseDomainsYaml(domYaml);
   assert(reg.jobs && reg.jobs.truths_dir === "tasks", "jobs truths_dir tasks");
@@ -2664,10 +2661,10 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/ROADMAP-0\.6\.0/.test(agentIndex060), "AGENT-INDEX links ROADMAP-0.6.0");
   const changelog060 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   assert(
-    /0\.6\.0-dev|Unreleased/.test(changelog060) && /ROADMAP-0\.6\.0/.test(changelog060),
-    "CHANGELOG Unreleased/0.6.0-dev + ROADMAP"
+    /## 0\.6\.0\b/.test(changelog060) && /ROADMAP-0\.6\.0/.test(changelog060),
+    "CHANGELOG 0.6.0 + ROADMAP"
   );
-  assert(/## 0\.6\.0-dev|## Unreleased/.test(changelog060), "CHANGELOG has 0.6.0-dev or Unreleased heading");
+  assert(/^## 0\.6\.0\b/m.test(changelog060), "CHANGELOG has formal 0.6.0 heading");
 
   assert(fs.existsSync(path.join(skillRoot, "scripts/harness.mjs")), "harness.mjs");
   const harnessHelp = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
@@ -2874,7 +2871,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
   const changelogM2 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   assert(/G2|文档拓扑/.test(changelogM2), "CHANGELOG notes M2 / G2 文档拓扑");
-  assert(/0\.6\.0-dev/.test(changelogM2), "CHANGELOG still 0.6.0-dev");
+  assert(/## 0\.6\.0\b/.test(changelogM2), "CHANGELOG has formal 0.6.0");
 
   const verifyM2 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/M2/.test(verifyM2) && /根目录/.test(verifyM2), "VERIFY has M2 section");
@@ -3034,10 +3031,93 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
   const changelogM3 = readRel("CHANGELOG.md");
   assert(/G3|fill 引擎|内聚/.test(changelogM3) && /G4|黄金集|fixture/.test(changelogM3), "CHANGELOG notes M3 G3/G4");
-  assert(/0\.6\.0-dev/.test(changelogM3), "CHANGELOG still 0.6.0-dev");
+  assert(/## 0\.6\.0\b/.test(changelogM3), "CHANGELOG has formal 0.6.0");
 
   const verifyM3 = readRel("VERIFY.md");
   assert(/M3/.test(verifyM3) && /l5-sync-golden|黄金/.test(verifyM3), "VERIFY has M3 section");
+}
+
+// --- 0.6.0 M4: G5 slim pack + G6 freeze verify + G7 formal pin ---
+{
+  function readRel(rel) {
+    return fs.readFileSync(path.join(skillRoot, rel), "utf8");
+  }
+
+  const skillIgnorePath = path.join(skillRoot, ".skillignore");
+  assert(fs.existsSync(skillIgnorePath), ".skillignore exists");
+  const skillIgnore = fs.existsSync(skillIgnorePath) ? readRel(".skillignore") : "";
+  assert(/archive\/selfcheck\/legacy/.test(skillIgnore), ".skillignore excludes archive/selfcheck/legacy");
+
+  const archReadmeM4 = readRel("archive/README.md");
+  assert(/安装\s*≠\s*全仓|安装不等于全仓|发包/.test(archReadmeM4), "archive README packaging policy");
+  assert(/legacy/.test(archReadmeM4) && /git|历史|_history/.test(archReadmeM4), "archive README points where legacy lives");
+
+  const selfcheckReadmeM4 = readRel("archive/selfcheck/README.md");
+  assert(/INDEX|git|历史|_history/.test(selfcheckReadmeM4), "archive/selfcheck README points history");
+
+  const legacyDirM4 = path.join(skillRoot, "archive/selfcheck/legacy");
+  const legacyIdxPath = path.join(legacyDirM4, "INDEX.md");
+  assert(fs.existsSync(legacyIdxPath), "legacy INDEX remains in skill tree");
+  const legacyIdxM4 = fs.existsSync(legacyIdxPath) ? readRel("archive/selfcheck/legacy/INDEX.md") : "";
+  assert(/git|_history|历史/.test(legacyIdxM4), "legacy INDEX explains history location");
+  const legacyMjsM4 = fs.existsSync(legacyDirM4)
+    ? fs.readdirSync(legacyDirM4).filter((n) => n.endsWith(".mjs"))
+    : ["missing-dir"];
+  assert(legacyMjsM4.length === 0, "hot package has no legacy selfcheck .mjs bulk");
+
+  assert(
+    fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.4.0.mjs")),
+    "hot package may keep 0.4 archived selfcheck"
+  );
+  assert(
+    fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.5.1.mjs")),
+    "hot package may keep 0.5 archived selfcheck"
+  );
+  assert(
+    fs.existsSync(path.join(skillRoot, "archive/fill-truths-auto/INDEX.md")),
+    "fill-truths-auto remains archived"
+  );
+
+  const historyDir = path.resolve(skillRoot, "../_history/harness-eng-selfcheck-legacy");
+  assert(fs.existsSync(path.join(historyDir, "INDEX.md")), "_history/harness-eng-selfcheck-legacy/INDEX.md");
+  assert(
+    fs.existsSync(path.join(historyDir, "selfcheck-0.3.10.mjs")),
+    "legacy bulk lives in _history (0.3.10)"
+  );
+  assert(
+    fs.existsSync(path.join(historyDir, "selfcheck-0.2.10.mjs")),
+    "legacy bulk lives in _history (0.2.10)"
+  );
+
+  const manifestM4 = readRel("templates/_meta/manifest.yaml");
+  const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
+  assert(verLine && verLine[1] === "0.6.0", "manifest version exactly 0.6.0");
+
+  const roadmapM4 = readRel("ROADMAP-0.6.0.md");
+  assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
+  assert(/\[x\].*T7\.1/.test(roadmapM4) && /\[x\].*T7\.3/.test(roadmapM4), "ROADMAP G7 T7.1–T7.3 checked");
+  assert(/列车已收口|列车完成|正式 0\.6\.0.*收口/.test(roadmapM4), "ROADMAP notes train complete");
+  assert(/M1–M4 已|M1-M4 已|M4.*已完成|已完成（M1–M4）/.test(roadmapM4), "ROADMAP marks M1–M4 done");
+
+  const changelogM4 = readRel("CHANGELOG.md");
+  assert(/^## 0\.6\.0\b/m.test(changelogM4), "CHANGELOG formal 0.6.0 section");
+  assert(!/^## Unreleased/m.test(changelogM4), "CHANGELOG no Unreleased heading");
+  assert(/G5/.test(changelogM4) && /发包|legacy/.test(changelogM4), "CHANGELOG notes G5 slim pack");
+  assert(/M1/.test(changelogM4) && /M2/.test(changelogM4) && /M3/.test(changelogM4) && /M4/.test(changelogM4), "CHANGELOG summarizes M1–M4");
+
+  const verifyM4 = readRel("VERIFY.md");
+  assert(/M4/.test(verifyM4) && /legacy|发包/.test(verifyM4), "VERIFY has M4 packaging section");
+
+  const upgradeM4 = readDoc("upgrade.md");
+  assert(/0\.5\.10 → 0\.6\.0/.test(upgradeM4), "upgrade has 0.5.10 → 0.6.0");
+  assert(/skill_version.*`?0\.6\.0`?/.test(upgradeM4), "upgrade pins skill_version 0.6.0");
+  assert(!/进行中 · 0\.6\.0-dev/.test(upgradeM4), "upgrade checklist no longer in-progress -dev");
+
+  const codexM4 = readRel("templates/ai-tools/adapters/codex.md");
+  const aiToolsM4 = readDoc("ai-tools.md");
+  assert(/冻结/.test(codexM4) && /P2/.test(codexM4) && /另立项/.test(codexM4), "G6 freeze still in adapters/codex.md");
+  assert(/冻结/.test(aiToolsM4) && /另立项/.test(aiToolsM4), "G6 freeze still in ai-tools.md");
+  assert(!/全家桶对等已落地|全量 sync 已/.test(codexM4 + aiToolsM4), "G6 no new Codex parity claim");
 }
 
 console.log(`ok: ${ok.length}`);

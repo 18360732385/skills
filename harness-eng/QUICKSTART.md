@@ -82,4 +82,4 @@ node scripts/selfcheck.mjs
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
 0.6.0 计划：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.0-dev**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.0**）。
