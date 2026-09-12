@@ -138,7 +138,7 @@ detect 结束时输出「建议档位」；最终以 `Q_GLOB_PROFILE` 为准。f
 本版按选中工具生成**入口适配**（指针文件），契约 SSOT 仍为 `AGENTS` + `docs/**`。详见 [ai-tools.md](ai-tools.md)。  
 无信号时推荐包默认 `ai_tools: [cursor]`。自定义工具须用户给出入口路径。
 
-**宿主交叉校验（0.2.16+）**：若已有 meta.`ai_tools`，对照磁盘入口 + 契约 sync 镜像（非 cursor：如 workbuddy → `CODEBUDDY.md` + `.codebuddy/rules/1x-contract-sync.md`）。缺失记入 RecommendedProfile 缺口 / audit 反模式。
+**宿主交叉校验（0.2.16+ / 0.5.7 收窄）**：若已有 meta.`ai_tools`，对照磁盘**入口**。契约 sync 指针只对**不全量镜像**的宿主必查（典型：Codex → `.codex/contract-sync.md`；L0–L2 的 claude/qoder/trae/workbuddy → 各宿主 `1x-contract-sync.md`）。L3+ / L5 全量镜像宿主改查本宿主 `*-sync*` 规则，**缺 1x 不记缺口**。Cursor 查真实 `11|12|13|16`。缺失记入 RecommendedProfile 缺口 / audit 反模式。
 
 ## RecommendedProfile（强制输出）
 

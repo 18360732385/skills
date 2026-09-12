@@ -21,14 +21,16 @@
 目录：[templates/ai-tools/adapters/](templates/ai-tools/adapters/)。  
 每张卡固定回答：rules 路径与格式、hooks 文件与事件族、MCP 路径、禁止事项、与 Cursor 的差异。
 
-| 工具 | 卡 |
-|---|---|
-| cursor | `adapters/cursor.md` |
-| claude | `adapters/claude.md` |
-| qoder | `adapters/qoder.md` |
-| trae | `adapters/trae.md` |
-| workbuddy | `adapters/workbuddy.md` |
-| codex | `adapters/codex.md`（P2：部分对齐） |
+| 工具 | 卡 | 对齐程度 |
+|---|---|---|
+| cursor | `adapters/cursor.md` | **高** |
+| claude | `adapters/claude.md` | **高** |
+| qoder | `adapters/qoder.md` | **高** |
+| workbuddy | `adapters/workbuddy.md` | **高** |
+| trae | `adapters/trae.md` | **中高** |
+| codex | `adapters/codex.md`（P2：部分对齐） | **部分（P2）** — 勿当成已全量同步 |
+
+对齐矩阵 SSOT：[ai-tools.md](ai-tools.md)。L3+ / L5 全量镜像宿主不再强制冗余 `1x-contract-sync`；Codex 仍写 `.codex/contract-sync.md`。
 
 ## Agent 模式硬约束
 

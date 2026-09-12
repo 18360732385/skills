@@ -1,5 +1,7 @@
 # Adapter: WorkBuddy / CodeBuddy
 
+对齐程度：**高**（L3+ rules 镜像 + hooks 全家桶）。L3+ / L5 不再另写冗余 `1x-contract-sync`。矩阵见 [ai-tools.md](../../../ai-tools.md)。
+
 - **目录**: `.codebuddy/` + 根 `CODEBUDDY.md`
 - **Rules**: `.codebuddy/rules/<name>/RULE.mdc`（可保留 Cursor 风格 frontmatter）
 - **Hooks**: `.codebuddy/settings.json` 的 `hooks` 段（0.5.2+ 全家桶）

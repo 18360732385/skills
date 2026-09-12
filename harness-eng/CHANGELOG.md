@@ -1,8 +1,20 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.4 → 0.5.5 → 0.5.6`（当前 **0.5.6**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`… → 0.5.5 → 0.5.6 → 0.5.7`（当前 **0.5.7**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.7 — 2026-09-12（契约 sync 指针去 Cursor 唯权威 + 减少冗余 1x）
+
+### 产品
+
+- **模板**：`contract-sync-mirror.md.tmpl` 不再写「以 `.cursor/rules/11|12|13|16` 为准」。权威 = 根 `AGENTS.md` + `docs/**`，外加**本宿主**已镜像的 `*-sync*`；`.cursor/rules/…` 仅作 Cursor 示例
+- **对齐矩阵**：Cursor / Claude / Qoder / WorkBuddy **高**；Trae **中高**；Codex **部分（P2）** — 勿当成已全量同步
+- **`1x` 收窄**：只给拿不到全量 rules 镜像的宿主（Codex 始终；自定义入口-only；L0–L2 的 claude/qoder/trae/workbuddy）。L3+ 镜像或 L5 `sync.mjs` 分发时 **跳过 / omit** 冗余 alwaysApply `1x`；已有文件 resume `skip`、不自动删。Cursor 仍不另写 `1x`
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART → `0.5.7`
 
 ## 0.5.6 — 2026-09-12（施工 meta 迁入 docs/harness-eng）
 

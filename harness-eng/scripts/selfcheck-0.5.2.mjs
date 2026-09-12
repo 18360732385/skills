@@ -130,7 +130,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.6"/.test(qYaml), "questions.yaml version 0.5.6");
+assert(/version:\s*"0\.5\.7"/.test(qYaml), "questions.yaml version 0.5.7");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -193,12 +193,12 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.6"/.test(manifest), "manifest 0.5.6");
+assert(/version:\s*"0\.5\.7"/.test(manifest), "manifest 0.5.7");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.6"/.test(metaTmpl), "harness-meta 0.5.6");
+assert(/skill_version:\s*"0\.5\.7"/.test(metaTmpl), "harness-meta 0.5.7");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -207,6 +207,7 @@ assert(/## 0\.5\.3/.test(changelog), "CHANGELOG 0.5.3");
 assert(/## 0\.5\.4/.test(changelog), "CHANGELOG 0.5.4");
 assert(/## 0\.5\.5/.test(changelog), "CHANGELOG 0.5.5");
 assert(/## 0\.5\.6/.test(changelog), "CHANGELOG 0.5.6");
+assert(/## 0\.5\.7/.test(changelog), "CHANGELOG 0.5.7");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -352,13 +353,13 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.6/.test(verifyMd), "VERIFY is 0.5.6");
+assert(/0\.5\.7/.test(verifyMd), "VERIFY is 0.5.7");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.6/.test(readme), "README header version 0.5.6");
-assert(/当前 \*\*0\.5\.6\*\*/.test(readme), "README footer version 0.5.6");
+assert(/当前版本：0\.5\.7/.test(readme), "README header version 0.5.7");
+assert(/当前 \*\*0\.5\.7\*\*/.test(readme), "README footer version 0.5.7");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck-0\.5\.2/.test(readme), "README pins selfcheck 0.5.2");
@@ -368,9 +369,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.6\*\*/.test(handbookMd), "使用手册.md version 0.5.6");
-assert(/v0\.5\.6/.test(handbookHtml), "使用手册.html version 0.5.6");
-assert(/当前 \*\*0\.5\.6\*\*/.test(quickstartMd), "QUICKSTART version 0.5.6");
+assert(/版本：\*\*0\.5\.7\*\*/.test(handbookMd), "使用手册.md version 0.5.7");
+assert(/v0\.5\.7/.test(handbookHtml), "使用手册.html version 0.5.7");
+assert(/当前 \*\*0\.5\.7\*\*/.test(quickstartMd), "QUICKSTART version 0.5.7");
 const handbookSummary = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
 for (const [label, text] of [
   ["使用手册.md", handbookMd],
@@ -612,7 +613,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.6"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.6");
+  assert(/version:\s*"0\.5\.7"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.7");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1192,6 +1193,7 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.3 → 0\.5\.4/.test(upg050), "upgrade has 0.5.3 → 0.5.4 path");
   assert(/0\.5\.4 → 0\.5\.5/.test(upg050), "upgrade has 0.5.4 → 0.5.5 path");
   assert(/0\.5\.5 → 0\.5\.6/.test(upg050), "upgrade has 0.5.5 → 0.5.6 path");
+  assert(/0\.5\.6 → 0\.5\.7/.test(upg050), "upgrade has 0.5.6 → 0.5.7 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
@@ -1789,7 +1791,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/skill_version:\s*"?0\.5\.6"?/.test(migrated), "render migrate+merge updates skill_version");
+    assert(/skill_version:\s*"?0\.5\.7"?/.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -1916,6 +1918,145 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   } finally {
     fs.rmSync(dashRoot, { recursive: true, force: true });
   }
+}
+
+// --- 0.5.7: contract-sync 指针去 Cursor 唯权威 + 全量镜像宿主跳过冗余 1x ---
+{
+  const contractTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/ai-tools/contract-sync-mirror.md.tmpl"),
+    "utf8"
+  );
+  assert(
+    !/以[^\n]*\.cursor\/rules\/11\|12\|13\|16[^\n]*为准/.test(contractTmpl),
+    "contract-sync tmpl no longer treats .cursor 11|12|13|16 as universal authority"
+  );
+  assert(/AGENTS\.md/.test(contractTmpl), "contract-sync tmpl points to root AGENTS.md");
+  assert(/docs\//.test(contractTmpl), "contract-sync tmpl points to docs/** SSOT");
+  assert(
+    /\.claude\/rules|\.qoder\/rules|\.trae\/rules|\.codebuddy\/rules/.test(contractTmpl),
+    "contract-sync tmpl mentions this-host mirrored sync rules"
+  );
+  assert(
+    /示例|含 cursor|ai_tools/i.test(contractTmpl),
+    "contract-sync tmpl treats .cursor/rules only as Cursor example"
+  );
+
+  const aiTools057 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  assert(/对齐矩阵/.test(aiTools057), "ai-tools.md has 对齐矩阵");
+  assert(/部分（P2）|部分对齐（P2）/.test(aiTools057), "ai-tools.md marks Codex as partial P2");
+  assert(/中高/.test(aiTools057), "ai-tools.md marks Trae as 中高");
+  assert(
+    /跳过|不再强制|omit|不另写/.test(aiTools057) && /1x-contract-sync|契约 sync/.test(aiTools057),
+    "ai-tools.md documents skip/omit 1x for full-mirror hosts"
+  );
+  assert(!/非 `cursor` 工具额外写入 \*\*契约 sync 镜像\*\*/.test(aiTools057) || /L0–L2|不全量镜像/.test(aiTools057),
+    "ai-tools.md no longer implies 1x is always-on for every non-cursor host");
+
+  const render057 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(
+    /FULL_RULES_MIRROR_HOSTS|hostGetsFullRulesMirror|shouldEmitContractSync/.test(render057),
+    "render encodes full-mirror / 1x emit conditions"
+  );
+
+  const handbook057 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+  const syncHosts057 = fs.readFileSync(path.join(skillRoot, "sync-hosts.md"), "utf8");
+  const codexAd057 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
+  assert(/对齐矩阵|部分（P2）|部分对齐（P2）/.test(handbook057), "handbook FAQ/docs mention alignment / Codex P2");
+  assert(/部分对齐|P2/.test(syncHosts057), "sync-hosts.md keeps Codex as P2 / 部分对齐");
+  assert(/部分对齐|P2/.test(codexAd057), "codex adapter stays 部分对齐 P2");
+  assert(!/全量镜像/.test(codexAd057) || /暂不全量|不全量/.test(codexAd057), "codex adapter does not claim full sync");
+
+  const conflict057 = fs.readFileSync(path.join(skillRoot, "conflict-policy.md"), "utf8");
+  assert(
+    /1x-contract-sync|契约 sync/.test(conflict057) && /不自动删除|不删/.test(conflict057),
+    "conflict-policy: leftover 1x skip, do not auto-delete"
+  );
+
+  function dryTargets(ladder, tools, extra = {}) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "he-057-1x-"));
+    const p = path.join(tmp, "params.json");
+    fs.writeFileSync(
+      p,
+      JSON.stringify({
+        ladder,
+        domains: ["func", "api", "db", "redis"],
+        ai_tools: tools,
+        agents_variant: "solo",
+        expandFromManifest: true,
+        on_exists: "skip",
+        ...extra,
+        placeholders: {
+          REPO_NAME: "demo",
+          REPO_DESC: "demo",
+          DATE: "2026-09-12",
+          AGENTS_VARIANT: "solo",
+          LADDER_TARGET: ladder,
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "land",
+          GLOB_API: "**/controller/**,docs/api/**",
+          GLOB_FUNC: "**/src/**,docs/func/**",
+          GLOB_DB: "**/db/**,docs/db/**",
+          GLOB_REDIS: "**/redis/**,docs/redis/**",
+        },
+      }),
+      "utf8"
+    );
+    try {
+      const r = runNode([
+        path.join(skillRoot, "scripts/render.mjs"),
+        "--root",
+        tmp,
+        "--params",
+        p,
+        "--dry-run",
+      ]);
+      assert(r.status === 0, `0.5.7 dry-run ${ladder} exits 0`);
+      if (r.status !== 0) {
+        return { tmp, targets: [] };
+      }
+      const json = JSON.parse(r.stdout);
+      const targets = (json.results || []).map((x) => String(x.target || "").replace(/\\/g, "/"));
+      return { tmp, targets };
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  }
+
+  const FULL_MIRROR_1X = [
+    ".claude/rules/1x-contract-sync.md",
+    ".qoder/rules/1x-contract-sync.md",
+    ".trae/rules/1x-contract-sync.md",
+    ".codebuddy/rules/1x-contract-sync.md",
+  ];
+  const allTools = ["cursor", "claude", "qoder", "trae", "workbuddy", "codex"];
+
+  const l0 = dryTargets("L0", allTools);
+  for (const t of FULL_MIRROR_1X) {
+    assert(l0.targets.includes(t), `L0 still emits ${t} (no full rules mirror yet)`);
+  }
+  assert(l0.targets.includes(".codex/contract-sync.md"), "L0 Codex still gets contract-sync pointer");
+  assert(!l0.targets.includes(".cursor/rules/1x-contract-sync.md"), "Cursor never gets separate 1x");
+
+  const l3 = dryTargets("L3", allTools);
+  for (const t of FULL_MIRROR_1X) {
+    assert(!l3.targets.includes(t), `L3 full-mirror host skips redundant ${t}`);
+  }
+  assert(l3.targets.includes(".codex/contract-sync.md"), "L3 Codex still gets contract-sync pointer");
+  assert(
+    l3.targets.includes(".claude/rules/11-func-sync-rules.md") ||
+      l3.targets.includes(".qoder/rules/11-func-sync-rules.md"),
+    "L3 full-mirror hosts still receive *-sync* rules"
+  );
+
+  const l5 = dryTargets("L5", allTools);
+  for (const t of FULL_MIRROR_1X) {
+    assert(!l5.targets.includes(t), `L5 omits redundant ${t}`);
+  }
+  assert(l5.targets.includes(".codex/contract-sync.md"), "L5 Codex still gets contract-sync pointer");
+  assert(
+    !l5.targets.some((t) => /1x-contract-sync/.test(t) && !t.startsWith(".codex/")),
+    "L5 does not emit alwaysApply 1x alongside full mirrored sync rules"
+  );
 }
 
 console.log(`ok: ${ok.length}`);

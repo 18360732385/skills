@@ -108,22 +108,38 @@ const AI_TOOL_ADAPTERS = {
       template: "ai-tools/workbuddy-harness-ssot.md.tmpl",
       target: ".codebuddy/rules/00-harness-ssot.md",
     },
-    {
-      id: "ai-workbuddy-contract-sync",
-      template: "ai-tools/contract-sync-mirror.md.tmpl",
-      target: ".codebuddy/rules/1x-contract-sync.md",
-    },
+    // 1x-contract-sync：见 CONTRACT_SYNC_MIRRORS + shouldEmitContractSync（L3+/L5 全量镜像时跳过）
   ],
 };
 
-/** Non-cursor tools that need a contract-sync mirror so hosts see sync discipline. */
+/**
+ * 契约 sync 薄指针。仅给「拿不到全量 *-sync* 镜像」的宿主。
+ * when_full_rules_mirror=false 等价条件见 shouldEmitContractSync。
+ */
 const CONTRACT_SYNC_MIRRORS = {
   claude: ".claude/rules/1x-contract-sync.md",
   codex: ".codex/contract-sync.md",
   qoder: ".qoder/rules/1x-contract-sync.md",
   trae: ".trae/rules/1x-contract-sync.md",
-  // workbuddy included in AI_TOOL_ADAPTERS above
+  workbuddy: ".codebuddy/rules/1x-contract-sync.md",
 };
+
+/** L3+ 直渲镜像或 L5 sync 会分发全量 *-sync* 规则的宿主。Cursor 本身已有 11|12|13|16。 */
+const FULL_RULES_MIRROR_HOSTS = new Set(["claude", "qoder", "trae", "workbuddy"]);
+
+/** when_full_rules_mirror：L3+ 镜像或 L5 agent_config sync 已就位。 */
+function hostGetsFullRulesMirror(id, params, agentConfig) {
+  if (!FULL_RULES_MIRROR_HOSTS.has(id)) return false;
+  if (agentConfig) return true;
+  const ladder = String((params && params.ladder) || "L0");
+  return (LADDER_ORD[ladder] ?? 0) >= LADDER_ORD.L3;
+}
+
+/** 仍写 1x：Codex / 自定义入口 / L0–L2 未镜像宿主。Cursor 与全量镜像宿主不写。 */
+function shouldEmitContractSync(id, params, agentConfig) {
+  if (id === "cursor") return false;
+  return !hostGetsFullRulesMirror(id, params, agentConfig);
+}
 
 function parseArgs(argv) {
   const out = { dryRun: false, root: null, params: null, manifest: null, backup: false };
@@ -714,6 +730,12 @@ function expandAiToolAdapters(params, root, actionForTarget, agentConfig) {
       );
     }
     for (const a of adapters) {
+      if (
+        a.template === "ai-tools/contract-sync-mirror.md.tmpl" &&
+        !shouldEmitContractSync(id, params, agentConfig)
+      ) {
+        continue;
+      }
       const target = adaptTarget(a.target);
       if (!target) continue;
       out.push({
@@ -724,15 +746,16 @@ function expandAiToolAdapters(params, root, actionForTarget, agentConfig) {
       });
     }
     const mirrorTarget = CONTRACT_SYNC_MIRRORS[id];
-    if (mirrorTarget) {
+    if (mirrorTarget && shouldEmitContractSync(id, params, agentConfig)) {
       const target = adaptTarget(mirrorTarget);
-      if (!target) continue;
-      out.push({
-        id: `ai-${id}-contract-sync`,
-        template: "ai-tools/contract-sync-mirror.md.tmpl",
-        target,
-        action: actionForTarget(target, `ai-${id}-contract-sync`),
-      });
+      if (target) {
+        out.push({
+          id: `ai-${id}-contract-sync`,
+          template: "ai-tools/contract-sync-mirror.md.tmpl",
+          target,
+          action: actionForTarget(target, `ai-${id}-contract-sync`),
+        });
+      }
     }
   }
 
@@ -760,6 +783,17 @@ function expandAiToolAdapters(params, root, actionForTarget, agentConfig) {
         CUSTOM_ENTRY_PATH: entry,
       },
     });
+    // 自定义入口-only 工具没有 L3+ 全量镜像，仍写 1x 指针（与入口同目录）
+    const customDir = entry.includes("/") ? entry.replace(/\/[^/]+$/, "") : "";
+    if (customDir && customDir !== ".") {
+      const custom1x = `${customDir}/1x-contract-sync.md`;
+      out.push({
+        id: `ai-custom-${toolId}-contract-sync`,
+        template: "ai-tools/contract-sync-mirror.md.tmpl",
+        target: custom1x,
+        action: actionForTarget(custom1x, `ai-custom-${toolId}-contract-sync`),
+      });
+    }
   }
 
   return out;

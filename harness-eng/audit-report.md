@@ -70,7 +70,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 | `.cursor/mcp.json` 含明文密且被跟踪 | 按 meta.`mcp_tracking`：`example_only`→反模式；`vendored_shared`→注明约定例外 |
 | `S_SECRETS_LEAK`（README/yml） | |
 | 根 AGENTS 与分册严重漂移且无冲突裁决 | |
-| **meta.ai_tools 与入口/镜像 rules 不一致**（例：workbuddy 无 `CODEBUDDY.md` 或无 `.codebuddy/rules/1x-contract-sync.md`） | |
+| **meta.ai_tools 与入口/镜像 rules 不一致**（入口缺失必记；`1x-contract-sync` 仅对 Codex / L0–L2 未镜像宿主必查。L3+/L5 全量镜像宿主看本宿主 `*-sync*`，缺 1x 不记此反模式） | |
 | `pitfalls.md` 稳定 ID 重号（`Pn` 重复、语义不同） | |
 | **pitfalls 未过 lint**（有 `lint-pitfalls.mjs` 却未跑 / 7 列或速查不一致） | |
 | **L5 仓生成物漂移**（`sync.mjs --check` 有差异仍提交） | |

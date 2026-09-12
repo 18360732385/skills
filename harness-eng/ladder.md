@@ -61,7 +61,8 @@
 - [ ] 仅有 `mcp.json.example`（或未跟踪真密）；按 ai_tools 检查 `.cursor/` / 根 `.mcp.json.example` / `.trae/`
 - [ ] 说明文档 `docs/harness-eng/mcp-usage-guide.md` 含「勿提交真密」（无则回退 `.cursor/mcp-usage-guide.md`；若仍有旧名 `MCP使用说明.md`：新建英文名，旧文件 skip 不删，移交可手工清理）
 - [ ] 装后烟测：`.gitignore` 建议含 `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json`（snippet merge，不整文件覆盖）
-- [ ] 非 Cursor 已选工具：rules 目录含全量镜像（qoder/trae/claude 为 `.md`；codebuddy 为 `RULE.mdc`）
+- [ ] 非 Cursor 已选工具：rules 目录含全量镜像（qoder/trae/claude 为 `.md`；codebuddy 为 `RULE.mdc`）；**不要求**再写一份 alwaysApply `1x-contract-sync`
+- [ ] Codex 若选用：仍有 `.codex/contract-sync.md` 指针（P2，不全量镜像）
 - [ ] fill-mcp 真密按 `scripts/lib/mcp-paths.mjs` 多路径写入
 
 ### L5
@@ -71,3 +72,4 @@
 - [ ] 生成物（`.cursor/rules` 等）带 GENERATED 标记；根 AGENTS Never do 含「勿手改生成物」
 - [ ] `harness-meta.yaml` 记 `agent_config: true`
 - [ ] hooks 经 `docs/agent-config/hooks/hooks.config.json` 驱动（无等价事件机制的工具不生成、不降级模拟）
+- [ ] 全量镜像宿主（claude/qoder/trae/workbuddy）**omit** 冗余 alwaysApply `1x-contract-sync`；Codex 仍保留 `.codex/contract-sync.md`

@@ -1,6 +1,8 @@
-version: "0.5.6"
+version: "0.5.7"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
+# 0.5.7: 1x-contract-sync is NOT a static files[] row. render.mjs emits it only
+# when when_full_rules_mirror=false (Codex / custom / L0–L2). L3+ / L5 full-mirror hosts skip.
 
 placeholders:
   - REPO_NAME

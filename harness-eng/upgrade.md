@@ -51,6 +51,12 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.5.6 → 0.5.7 迁移要点
+
+1. **meta**：`skill_version` → `0.5.7`（resume / upgrade 写 meta 时对齐 manifest）
+2. **契约 sync 指针**：L3+ / L5 全量镜像宿主不再强制写 `1x-contract-sync`；已有文件 resume `skip`、不自动删。Codex 仍写 `.codex/contract-sync.md`
+3. **文档**：对齐矩阵（高 / 中高 / Codex 部分 P2）；模板不再把 `.cursor/rules/11|12|13|16` 当作全宿主唯一权威
+
 ## 0.5.5 → 0.5.6 迁移要点
 
 1. **meta**：`skill_version` → `0.5.6`；写入改到 `docs/harness-eng/harness-meta.yaml`。若仅有遗留 `.cursor/harness-meta.yaml`（或 `.yml`），resume / upgrade **迁到新路径**（键级合并），旧文件不自动删（遗留只读）
