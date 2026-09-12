@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.5.9</title>
+  <title>harness-eng 使用手册 · v0.5.10</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.5.9</div>
+    <div class="ver">v0.5.10</div>
   </header>
 
   <div class="shell">
@@ -608,7 +608,7 @@
         <p class="kicker">Agent Harness · Field Guide</p>
         <h1>harness<em>-eng</em><br />使用手册</h1>
         <p class="lede">
-          面向要把业务仓装上 AI 编程脚手架的同学：讲清用途与痛点、安装与自然语言用法、多工具并存，以及怎样确认「可以放心让 AI 改业务」。
+          面向要把业务仓装上 AI 编程脚手架的同学。<strong>最短路径</strong>见 <a href="使用手册-摘要.md">使用手册-摘要.md</a>；Agent 热路径见 AGENT-INDEX / QUICKSTART，不必通读本手册。
         </p>
         <div class="chips">
           <span class="chip">施工产物 · docs/harness-eng/</span>
@@ -831,8 +831,8 @@ node scripts/selfcheck.mjs</code></pre>
           </div>
           <div class="tool">
             <div class="name">Codex</div>
-            <div class="id">codex · .codex/</div>
-            <p><code>.codex/harness.md</code> + <code>contract-sync.md</code> 指针（对齐程度 <strong>部分（P2）</strong>，hooks/MCP 未全量同步）</p>
+            <div class="id">codex · .codex/ · 部分对齐·不默认</div>
+            <p><code>.codex/harness.md</code> + <code>contract-sync.md</code> 指针（<strong>部分对齐·不默认 / P2</strong>，hooks/MCP 未全量同步；未探测不进「全部推荐」）</p>
           </div>
           <div class="tool">
             <div class="name">Qoder</div>
@@ -850,7 +850,7 @@ node scripts/selfcheck.mjs</code></pre>
             <p><code>CODEBUDDY.md</code> + rules 镜像 + L3+ Claude 系 hooks 全家桶</p>
           </div>
         </div>
-        <p>提问对应 <code>Q_AI_TOOL</code>，<strong>可多选</strong>。未探测到任何工具时，「全部推荐」默认偏向 Cursor。</p>
+        <p>提问对应 <code>Q_AI_TOOL</code>，<strong>可多选</strong>。未探测到任何工具时，「全部推荐」的 <code>ai_tools</code> 为空，须追问一次；<strong>不</strong>默认 Cursor，也不把 Codex 塞进默认包。Codex 选项标注 <strong>部分对齐·不默认</strong>。</p>
 
         <h3>4.2 自定义工具</h3>
         <pre><code>自定义: 工具名=FooAgent; 入口路径=.foo/RULES.md</code></pre>
@@ -867,7 +867,7 @@ node scripts/selfcheck.mjs</code></pre>
               <tr><td><code>qoder</code></td><td><code>.qoder/settings.json</code> + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
               <tr><td><code>trae</code></td><td><code>.trae/hooks.json</code> + adapter</td><td><code>.trae/mcp.json.example</code></td></tr>
               <tr><td><code>workbuddy</code></td><td><code>.codebuddy/settings.json</code> 全家桶 + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
-              <tr><td><strong>部分对齐</strong></td><td><code>codex</code></td><td>基础 commit gate</td><td>见 adapters/codex.md</td></tr>
+              <tr><td><strong>部分对齐·不默认</strong></td><td><code>codex</code></td><td>基础 commit gate</td><td>见 adapters/codex.md</td></tr>
               <tr><td><strong>兜底</strong></td><td>任意 L3+</td><td colspan="2">建议 <code>git config core.hooksPath .githooks</code></td></tr>
             </tbody>
           </table>
@@ -895,12 +895,12 @@ node scripts/selfcheck.mjs</code></pre>
             <tbody>
               <tr><td>Cursor / Claude / Qoder / WorkBuddy</td><td><strong>高</strong></td><td>—</td></tr>
               <tr><td>Trae</td><td><strong>中高</strong></td><td>不是低配、也不是「未对齐」</td></tr>
-              <tr><td>Codex</td><td><strong>部分（P2）</strong></td><td><strong>不是</strong>已全量同步 rules/hooks/MCP</td></tr>
+              <tr><td>Codex</td><td><strong>部分（P2）·不默认</strong></td><td><strong>不是</strong>已全量同步 rules/hooks/MCP；未探测不进「全部推荐」</td></tr>
             </tbody>
           </table>
         </div>
         <p><code>1x-contract-sync</code> 只给拿不到全量 <code>*-sync*</code> 镜像的宿主（尤其 Codex、自定义入口、L0–L2）。L3+ / L5 全量镜像宿主不再强制冗余 1x。权威始终是根 <code>AGENTS.md</code> + <code>docs/**</code>，外加<strong>本宿主</strong> rules 目录；<code>.cursor/rules/11|12|13|16</code> 只是 Cursor 示例。详 <a href="ai-tools.md">ai-tools.md</a>。</p>
-        <p>选 <strong>Codex + L5</strong> 时：<code>sync.mjs</code> <strong>不会</strong>全量发出 Codex 的 rules / hooks / MCP / skills（<strong>部分对齐 P2</strong>）。详见 <a href="templates/ai-tools/adapters/codex.md">adapters/codex.md</a>。</p>
+        <p>选 <strong>Codex + L5</strong> 时：<code>sync.mjs</code> <strong>不会</strong>全量发出 Codex 的 rules / hooks / MCP / skills（<strong>部分对齐 P2 · 不默认</strong>）。详见 <a href="templates/ai-tools/adapters/codex.md">adapters/codex.md</a>。</p>
       </section>
 
       <section id="s5">
@@ -1145,7 +1145,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.9</strong>）。报告壳 <code>ui.version</code> ≠ skill_version。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.5.10</strong>）与目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（JSON 仍暴露 <code>ui.version</code> 同值）。<strong>报告壳版本 ≠ skill</strong>。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1190,7 +1190,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.9
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.5.10
         </div>
       </section>
     </main>

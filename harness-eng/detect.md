@@ -136,8 +136,8 @@ detect 结束时输出「建议档位」；最终以 `Q_GLOB_PROFILE` 为准。f
 | `.codebuddy/` / `CODEBUDDY.md` / 用户提 WorkBuddy | `workbuddy` |
 
 本版按选中工具生成**入口适配**（指针文件），契约 SSOT 仍为 `AGENTS` + `docs/**`。详见 [ai-tools.md](ai-tools.md)。  
-无信号时推荐包默认 `ai_tools: [cursor]`。自定义工具须用户给出入口路径。  
-若探测/勾选 **`codex`**：Fingerprint / 推荐包 / WritePlan **必须**标 **部分对齐（P2）** — L5 `sync.mjs` **不会**全量发出 Codex 的 rules / hooks / MCP / skills。勿当成与 Cursor/Claude 全家桶对等。见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)。
+无信号时推荐包 `ai_tools: []`，须追问一次 `Q_AI_TOOL`；**不**默认 `[cursor]`，不因此只写 `.cursor/` 适配/hooks（L0 核心规则仍可落技能历史路径，≠ 把工具面默认成 Cursor）。自定义工具须用户给出入口路径。  
+**Codex（部分对齐·不默认）**：未探测到 `.codex/` 时**不**进「全部推荐」。若探测/勾选 **`codex`**：Fingerprint / 推荐包 / WritePlan **必须**标 **部分对齐（P2）·不默认** — L5 `sync.mjs` **不会**全量发出 Codex 的 rules / hooks / MCP / skills。勿当成与 Cursor/Claude 全家桶对等。见 [adapters/codex.md](templates/ai-tools/adapters/codex.md)。
 
 **宿主交叉校验（0.2.16+ / 0.5.7 收窄）**：若已有 meta.`ai_tools`，对照磁盘**入口**。契约 sync 指针只对**不全量镜像**的宿主必查（典型：Codex → `.codex/contract-sync.md`；L0–L2 的 claude/qoder/trae/workbuddy → 各宿主 `1x-contract-sync.md`）。L3+ / L5 全量镜像宿主改查本宿主 `*-sync*` 规则，**缺 1x 不记缺口**。Cursor 查真实 `11|12|13|16`。缺失记入 RecommendedProfile 缺口 / audit 反模式。
 

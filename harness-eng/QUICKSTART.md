@@ -27,7 +27,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 | 按模板深填契约 | **多 Agent 填充** / fill-truths-agents | 须过 **填充 MCP 闸** → Plan 批次 → acceptance → merge → score |
 | 含 Cron / Scheduler | 域含 **jobs** + inventory | `fill-inventory.mjs --domain jobs`（别名 `fill-inventory-jobs`）→ `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT） |
 | 建填充目标/批次 | **填充计划** / fill-plan | `docs/harness-eng/fill-plan.yaml`（大仓 gold+sample_n） |
-| 仅脚本薄草稿（不推荐） | **自动填充** / fill-truths-auto | 仅 `--work-only` → `.fill-work`（legacy；仅 draft） |
+| 仅脚本薄草稿（对话不推荐） | **自动填充** / fill-truths-auto | 归档实现；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | 看能不能开 AI 改业务 | **完整度打分** / fill-score | 打开 **report-latest.html** 决策台 |
 
 ## 能否 AI Coding（10 秒）
@@ -76,7 +76,7 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 node scripts/selfcheck.mjs
 ```
 
-多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分（P2）**（不全量同步）。详 [ai-tools.md](ai-tools.md)。
+多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 中高**；**Codex 部分对齐·不默认（P2）**（未探测不进「全部推荐」）。详 [ai-tools.md](ai-tools.md)。
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.9**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.5.10**）。

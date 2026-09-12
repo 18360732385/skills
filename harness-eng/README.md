@@ -2,13 +2,13 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.5.9**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.5.10**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)
 
-0.5.9 要点：**Agent 热路径索引** + **land.mjs**（L5 拒直渲）+ fill 统一 `--domain` CLI。0.5.8：detect / MATURE 多宿主诚实；Codex+L5 **P2**。更早见 [CHANGELOG.md](CHANGELOG.md)。
+0.5.10 要点：Codex **部分对齐·不默认**；皆无探测不默认 Cursor；报告对照 **skill_version + report_schema**。0.5.9：热路径索引 + land.mjs。更早见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 安装
 
@@ -49,11 +49,11 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 | 开干闸 | `fill-gate` | 同上 `--focus gate`；看决策台 |
 | 填充计划 | `fill-plan` | 批次 / 金标 |
 | 多 Agent 精填 | `fill-truths-agents` | 按 Plan 精填【推荐】 |
-| 自动填充 | `fill-truths-auto` | legacy 草稿 |
+| 自动填充 | `fill-truths-auto` | 仅脚本、对话不推荐（[archive](archive/fill-truths-auto/INDEX.md)） |
 | 契约填充 | `fill-truths` | 见 fill.md |
 | MCP 装配 | `fill-mcp` | 本仓配置 → 多环境 mcp 矩阵 |
 | live 校准 | `fill-calibrate-live` | MCP 不可用时直连 |
-| HTML 报告 | `fill-report-html` | score → Dashboard（`ui.version` ≠ skill_version） |
+| HTML 报告 | `fill-report-html` | score → Dashboard（`skill_version` + `report_schema`；报告壳 ≠ skill） |
 
 不确定选项时回复：**全部推荐**（协议 [recommended-profile.md](recommended-profile.md)；写盘仍过 [write-plan.md](write-plan.md)）。
 
@@ -77,4 +77,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.9**）。报告壳 `ui.version` 见 glossary（≠ skill_version）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.5.10**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。

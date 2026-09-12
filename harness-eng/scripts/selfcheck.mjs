@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
  * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
  * Inherited 0.2.27–0.5.7 gates.
  */
@@ -133,7 +134,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.5\.9"/.test(qYaml), "questions.yaml version 0.5.9");
+assert(/version:\s*"0\.5\.10"/.test(qYaml), "questions.yaml version 0.5.10");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -196,12 +197,12 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.5\.9"/.test(manifest), "manifest 0.5.9");
+assert(/version:\s*"0\.5\.10"/.test(manifest), "manifest 0.5.10");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.5\.9"/.test(metaTmpl), "harness-meta 0.5.9");
+assert(/skill_version:\s*"0\.5\.10"/.test(metaTmpl), "harness-meta 0.5.10");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -213,6 +214,7 @@ assert(/## 0\.5\.6/.test(changelog), "CHANGELOG 0.5.6");
 assert(/## 0\.5\.7/.test(changelog), "CHANGELOG 0.5.7");
 assert(/## 0\.5\.8/.test(changelog), "CHANGELOG 0.5.8");
 assert(/## 0\.5\.9/.test(changelog), "CHANGELOG 0.5.9");
+assert(/## 0\.5\.10/.test(changelog), "CHANGELOG 0.5.10");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -372,13 +374,13 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/0\.5\.9/.test(verifyMd), "VERIFY is 0.5.9");
+assert(/0\.5\.10/.test(verifyMd), "VERIFY is 0.5.10");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.5\.9/.test(readme), "README header version 0.5.9");
-assert(/当前 \*\*0\.5\.9\*\*/.test(readme), "README footer version 0.5.9");
+assert(/当前版本：0\.5\.10/.test(readme), "README header version 0.5.10");
+assert(/当前 \*\*0\.5\.10\*\*/.test(readme), "README footer version 0.5.10");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -389,9 +391,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = fs.readFileSync(path.join(skillRoot, "ladder.md"), "utf8");
-assert(/版本：\*\*0\.5\.9\*\*/.test(handbookMd), "使用手册.md version 0.5.9");
-assert(/v0\.5\.9/.test(handbookHtml), "使用手册.html version 0.5.9");
-assert(/当前 \*\*0\.5\.9\*\*/.test(quickstartMd), "QUICKSTART version 0.5.9");
+assert(/版本：\*\*0\.5\.10\*\*/.test(handbookMd), "使用手册.md version 0.5.10");
+assert(/v0\.5\.10/.test(handbookHtml), "使用手册.html version 0.5.10");
+assert(/当前 \*\*0\.5\.10\*\*/.test(quickstartMd), "QUICKSTART version 0.5.10");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -636,7 +638,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(fs.readFileSync(path.join(skillRoot, "fill-gate.md"), "utf8")), "fill-gate docs gold");
-  assert(/version:\s*"0\.5\.9"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.9");
+  assert(/version:\s*"0\.5\.10"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.5.10");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1219,6 +1221,7 @@ if (fs.existsSync(fixture)) {
   assert(/0\.5\.6 → 0\.5\.7/.test(upg050), "upgrade has 0.5.6 → 0.5.7 path");
   assert(/0\.5\.7 → 0\.5\.8/.test(upg050), "upgrade has 0.5.7 → 0.5.8 path");
   assert(/0\.5\.8 → 0\.5\.9/.test(upg050), "upgrade has 0.5.8 → 0.5.9 path");
+  assert(/0\.5\.9 → 0\.5\.10/.test(upg050), "upgrade has 0.5.9 → 0.5.10 path");
   assert(/反向拷贝/.test(upg050), "upgrade MATURE adopt L5 reverse-copy");
   const audit050 = fs.readFileSync(path.join(skillRoot, "audit-report.md"), "utf8");
   assert(/sync\.mjs --check/.test(audit050), "audit drift anti-pattern");
@@ -1816,7 +1819,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/skill_version:\s*"?0\.5\.9"?/.test(migrated), "render migrate+merge updates skill_version");
+    assert(/skill_version:\s*"?0\.5\.10"?/.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -2152,7 +2155,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
   const qYaml058 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(
-    /Codex（部分对齐 P2/.test(qYaml058),
+    /Codex（部分对齐/.test(qYaml058) && /P2/.test(qYaml058),
     "questions.yaml Codex option labels P2"
   );
   assert(
@@ -2409,6 +2412,223 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   } finally {
     fs.rmSync(tmpL5, { recursive: true, force: true });
   }
+}
+
+// --- 0.5.10 P2: Codex 不默认 · ui/report_schema · 皆无探测 ≠ Cursor · CHANGELOG/auto 归档 ---
+{
+  const qYaml0510 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(/不默认/.test(qYaml0510) && /codex/i.test(qYaml0510), "Q_AI_TOOL Codex labeled 不默认");
+  assert(
+    /recommended_fallback:\s*\[\s*\]/.test(qYaml0510) &&
+      !/recommended_fallback:\s*\[cursor\]/.test(qYaml0510),
+    "Q_AI_TOOL recommended_fallback is [] not [cursor]"
+  );
+
+  const rp0510 = fs.readFileSync(path.join(skillRoot, "recommended-profile.md"), "utf8");
+  assert(/部分对齐·不默认|不默认/.test(rp0510) && /codex/i.test(rp0510), "recommended-profile Codex 不默认");
+  assert(
+    /皆无则\s*`?\[\]`?|皆无则 \[\]/.test(rp0510) || /皆无[\s\S]{0,40}`\[\]`/.test(rp0510),
+    "recommended-profile 皆无 → [] not [cursor]"
+  );
+  assert(!/皆无则 `\[cursor\]`/.test(rp0510), "recommended-profile no 皆无则 [cursor]");
+
+  const det0510 = fs.readFileSync(path.join(skillRoot, "detect.md"), "utf8");
+  assert(
+    /ai_tools:\s*`?\[\]`?/.test(det0510) && /不.*默认/.test(det0510),
+    "detect.md 无信号 ai_tools [] / 不默认 Cursor"
+  );
+  assert(!/无信号时推荐包默认 `ai_tools: \[cursor\]`/.test(det0510), "detect.md no cursor-only default");
+  assert(/不默认/.test(det0510) && /codex/i.test(det0510), "detect.md Codex 不默认");
+
+  const aiTools0510 = fs.readFileSync(path.join(skillRoot, "ai-tools.md"), "utf8");
+  assert(/部分对齐·不默认|不默认/.test(aiTools0510), "ai-tools.md Codex 部分对齐·不默认");
+  assert(!/若无探测则默认 Cursor/.test(aiTools0510), "ai-tools.md 全部推荐 no Cursor default");
+
+  const qMd0510 = fs.readFileSync(path.join(skillRoot, "questions.md"), "utf8");
+  assert(/不默认/.test(qMd0510) && /codex/i.test(qMd0510), "questions.md Codex 不默认");
+
+  const handbook0510 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+  const handbookHtml0510 = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
+  assert(!/全部推荐」默认偏向 Cursor/.test(handbook0510), "handbook.md no Cursor-default 全部推荐");
+  assert(!/全部推荐」默认偏向 Cursor/.test(handbookHtml0510), "handbook.html no Cursor-default 全部推荐");
+  assert(/不默认/.test(handbook0510) && /Codex|codex/.test(handbook0510), "handbook.md Codex 不默认");
+
+  const wp0510 = fs.readFileSync(path.join(skillRoot, "write-plan.md"), "utf8");
+  assert(/不默认/.test(wp0510) && /codex/i.test(wp0510), "write-plan Codex 不默认");
+
+  const gloss0510 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
+  assert(/skill_version/.test(gloss0510) && /report_schema/.test(gloss0510), "glossary skill_version + report_schema");
+  assert(/报告壳版本 ≠ skill|报告壳.*≠.*skill/.test(gloss0510), "glossary 报告壳 ≠ skill");
+
+  const fillScore0510 = fs.readFileSync(path.join(skillRoot, "fill-score.md"), "utf8");
+  assert(
+    /skill_version/.test(fillScore0510) && /report_schema|ui\.version/.test(fillScore0510),
+    "fill-score pairs skill_version with report schema"
+  );
+  assert(/报告壳版本 ≠ skill|报告壳.*≠.*skill|≠.*skill_version/.test(fillScore0510), "fill-score 报告壳 ≠ skill");
+
+  const reportUi0510 = fs.readFileSync(path.join(skillRoot, "scripts/lib/report-ui.mjs"), "utf8");
+  assert(/report_schema/.test(reportUi0510), "report-ui.mjs names report_schema");
+  const uiObj = buildReportUi({ overall: 0.5, domains: {} });
+  assert(uiObj.version === "0.2.24", "ui.version still 0.2.24 for consumers");
+  assert(uiObj.report_schema === uiObj.version, "report_schema aliases ui.version");
+
+  const reportTmpl0510 = fs.readFileSync(
+    path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
+    "utf8"
+  );
+  assert(/skill_version/.test(reportTmpl0510), "report HTML shows skill_version");
+  assert(/report_schema|报告壳 ≠ skill/.test(reportTmpl0510), "report HTML pairs report_schema / 报告壳 ≠ skill");
+
+  const changelog0510 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/## 0\.5\.10/.test(changelog0510), "CHANGELOG 0.5.10");
+  assert(
+    /archive\/CHANGELOG-through-0\.4/.test(changelog0510),
+    "CHANGELOG points to pre-0.5 archive"
+  );
+  const archivedClPath = path.join(skillRoot, "archive/CHANGELOG-through-0.4.md");
+  assert(fs.existsSync(archivedClPath), "archive/CHANGELOG-through-0.4.md");
+  if (fs.existsSync(archivedClPath)) {
+    const archivedCl = fs.readFileSync(archivedClPath, "utf8");
+    assert(/## 0\.4\.0/.test(archivedCl), "archived CHANGELOG has 0.4.0");
+  }
+  assert(!/^## 0\.4\.0/m.test(changelog0510), "main CHANGELOG dropped 0.4.0 body");
+
+  const autoIdx = path.join(skillRoot, "archive/fill-truths-auto/INDEX.md");
+  const autoSpec = path.join(skillRoot, "archive/fill-truths-auto/fill-truths-auto.md");
+  const autoScript = path.join(skillRoot, "archive/fill-truths-auto/fill-truths-auto.mjs");
+  assert(fs.existsSync(autoIdx), "archive/fill-truths-auto/INDEX.md");
+  assert(fs.existsSync(autoSpec), "archive fill-truths-auto spec");
+  assert(fs.existsSync(autoScript), "archive fill-truths-auto script");
+  const autoStub = fs.readFileSync(path.join(skillRoot, "fill-truths-auto.md"), "utf8");
+  assert(/archive\/fill-truths-auto/.test(autoStub), "fill-truths-auto.md stub points archive");
+  assert(/对话不推荐|仅脚本/.test(autoStub), "fill-truths-auto stub 仅脚本、对话不推荐");
+  const fillIdx0510 = fs.readFileSync(path.join(skillRoot, "fill/README.md"), "utf8");
+  assert(/archive\/fill-truths-auto/.test(fillIdx0510), "fill/README points archive fill-truths-auto");
+  const skill0510 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
+  assert(
+    /archive\/fill-truths-auto/.test(skill0510) && /对话不推荐|仅脚本/.test(skill0510),
+    "SKILL demotes fill-truths-auto to archive / 对话不推荐"
+  );
+
+  const qnEmpty = runNode([
+    path.join(skillRoot, "scripts/questions-next.mjs"),
+    "--answers",
+    JSON.stringify({
+      type: "NEW_CODE_NO_HARNESS",
+      mode: "land",
+      ladder: "L4",
+      answered_batches: ["batch-0-global", "batch-1-new"],
+      answered: [
+        "Q_RULE14",
+        "Q_RULE21",
+        "Q_FRONTEND_RULE",
+        "Q_DB_MIGRATION",
+        "Q_SEED",
+        "Q_GLOB_PROFILE",
+      ],
+      fingerprint: { detected_ai_tools: [] },
+    }),
+  ]);
+  assert(qnEmpty.status === 0, "questions-next 皆无探测 exits 0");
+  if (qnEmpty.status === 0) {
+    const qnDoc = JSON.parse(qnEmpty.stdout);
+    const aiQ = (qnDoc.questions || []).find((q) => q.id === "Q_AI_TOOL");
+    assert(aiQ, "questions-next surfaces Q_AI_TOOL");
+    const rec = aiQ && aiQ.recommended;
+    assert(
+      Array.isArray(rec) && rec.length === 0,
+      "皆无探测 Q_AI_TOOL recommended is [] not [cursor]"
+    );
+    assert(!(Array.isArray(rec) && rec.length === 1 && rec[0] === "cursor"), "皆无探测 does not force Cursor-only");
+  }
+
+  const qnCodex = runNode([
+    path.join(skillRoot, "scripts/questions-next.mjs"),
+    "--answers",
+    JSON.stringify({
+      type: "NEW_CODE_NO_HARNESS",
+      mode: "land",
+      ladder: "L4",
+      answered_batches: ["batch-0-global", "batch-1-new"],
+      answered: [
+        "Q_RULE14",
+        "Q_RULE21",
+        "Q_FRONTEND_RULE",
+        "Q_DB_MIGRATION",
+        "Q_SEED",
+        "Q_GLOB_PROFILE",
+      ],
+      fingerprint: { detected_ai_tools: ["codex"] },
+    }),
+  ]);
+  if (qnCodex.status === 0) {
+    const qnDoc2 = JSON.parse(qnCodex.stdout);
+    const aiQ2 = (qnDoc2.questions || []).find((q) => q.id === "Q_AI_TOOL");
+    assert(
+      aiQ2 && Array.isArray(aiQ2.recommended) && aiQ2.recommended.includes("codex"),
+      "detected .codex/ includes codex in recommended"
+    );
+    assert(
+      aiQ2 && !aiQ2.recommended.includes("cursor"),
+      "detected-only-codex does not also inject cursor"
+    );
+  }
+
+  const tmpEmpty = fs.mkdtempSync(path.join(os.tmpdir(), "he-0510-empty-"));
+  const pEmpty = path.join(tmpEmpty, "params.json");
+  fs.writeFileSync(
+    pEmpty,
+    JSON.stringify({
+      ladder: "L3",
+      domains: ["func"],
+      ai_tools: [],
+      agents_variant: "solo",
+      expandFromManifest: true,
+      on_exists: "skip",
+      placeholders: {
+        REPO_NAME: "demo",
+        REPO_DESC: "demo",
+        DATE: "2026-09-12",
+        AGENTS_VARIANT: "solo",
+        LADDER_TARGET: "L3",
+        GLOB_PROFILE: "wide",
+        LAST_MODE: "land",
+        GLOB_FUNC: "**/src/**,docs/func/**",
+      },
+    }),
+    "utf8"
+  );
+  try {
+    const rEmpty = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpEmpty,
+      "--params",
+      pEmpty,
+      "--dry-run",
+    ]);
+    assert(rEmpty.status === 0, "empty ai_tools L3 dry-run exits 0");
+    if (rEmpty.status === 0) {
+      const json = JSON.parse(rEmpty.stdout);
+      const targets = (json.results || []).map((x) => String(x.target || "").replace(/\\/g, "/"));
+      assert(targets.includes("AGENTS.md"), "empty ai_tools still writes AGENTS.md");
+      assert(!targets.includes(".cursor/hooks.json"), "empty ai_tools does not emit Cursor hooks");
+      assert(
+        !targets.some((t) => t.includes("00-harness-ssot")),
+        "empty ai_tools does not emit Cursor ssot adapter"
+      );
+      assert(!targets.some((t) => t.startsWith(".codex/")), "empty ai_tools does not emit Codex paths");
+    }
+  } finally {
+    fs.rmSync(tmpEmpty, { recursive: true, force: true });
+  }
+
+  const renderSrc0510 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(
+    !/aiTools\.size \? aiTools : new Set\(\["cursor"\]\)/.test(renderSrc0510),
+    "render does not inject [cursor] when ai_tools empty"
+  );
 }
 
 console.log(`ok: ${ok.length}`);

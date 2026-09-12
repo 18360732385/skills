@@ -1,10 +1,20 @@
-﻿# harness-eng 验收记录（0.5.9）
+﻿# harness-eng 验收记录（0.5.10）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.5.9**。报告壳 `ui.version`（0.2.24）≠ `skill_version`。
+当前 **0.5.10**。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。
+
+## 0.5.10 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| Codex「部分对齐·不默认」；未探测不进「全部推荐」 | 有 |
+| 皆无探测 `ai_tools: []`，不默认 Cursor | 有 |
+| glossary / 报告页脚：`skill_version` + `report_schema` | 有 |
+| CHANGELOG 0.4.x 归档；fill-truths-auto 迁 archive | 有 |
 
 ## 0.5.9 增量验收
 

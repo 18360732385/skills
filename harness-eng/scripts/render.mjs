@@ -202,7 +202,7 @@ function ensureYamlListPlaceholders(params, placeholders) {
   if (tools) {
     ph.AI_TOOLS_YAML = stringifyYaml(tools, { flow: true });
   } else if (ph.AI_TOOLS_YAML == null) {
-    ph.AI_TOOLS_YAML = "[cursor]";
+    ph.AI_TOOLS_YAML = "[]";
   }
   return ph;
 }
@@ -532,8 +532,8 @@ function expandFromManifest(manifestPath, params, root) {
     if (e.optional && !includeOptional.has(e.id)) return;
     if (e.when && e.when.agents_variant && e.when.agents_variant !== variant) return;
     if (e.when_ai_tools && e.when_ai_tools.length) {
-      const tools = aiTools.size ? aiTools : new Set(["cursor"]);
-      if (!e.when_ai_tools.some((t) => tools.has(String(t).toLowerCase()))) return;
+      if (!aiTools.size) return;
+      if (!e.when_ai_tools.some((t) => aiTools.has(String(t).toLowerCase()))) return;
     }
     seenIds.add(e.id);
     // L5：rules 落到 SSOT 侧，由 sync.mjs 分发到各工具目录
@@ -575,8 +575,8 @@ function expandFromManifest(manifestPath, params, root) {
     if (skipBasicGate && BASIC_GATE_IDS.includes(e.id)) continue;
     if (e.optional && !includeOptional.has(e.id)) continue;
     if (e.when_ai_tools && e.when_ai_tools.length) {
-      const tools = aiTools.size ? aiTools : new Set(["cursor"]);
-      if (!e.when_ai_tools.some((t) => tools.has(String(t).toLowerCase()))) continue;
+      if (!aiTools.size) continue;
+      if (!e.when_ai_tools.some((t) => aiTools.has(String(t).toLowerCase()))) continue;
     }
 
     if (e.id === "agents-module") {
@@ -1023,7 +1023,7 @@ function main() {
     placeholders.PITFALL_DOMAINS = DEFAULT_PITFALL_DOMAINS;
   }
   if (placeholders.AI_TOOLS_JSON == null) {
-    const tools = Array.isArray(params.ai_tools) && params.ai_tools.length ? params.ai_tools : ["cursor"];
+    const tools = Array.isArray(params.ai_tools) ? params.ai_tools : [];
     placeholders.AI_TOOLS_JSON = JSON.stringify(tools);
   }
   Object.assign(

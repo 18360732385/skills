@@ -1491,8 +1491,9 @@
     var bits = [];
     if (mode) bits.push("模式 " + mode);
     if (ladder) bits.push("阶梯 " + ladder);
-    if (skillVer) bits.push("skill " + skillVer);
-    if (ui.version) bits.push("report " + ui.version);
+    if (skillVer) bits.push("skill_version " + skillVer);
+    var reportSchema = ui.report_schema || ui.version || "";
+    if (reportSchema) bits.push("report_schema " + reportSchema + "（报告壳 ≠ skill）");
     if (generatedAt) bits.push(generatedAt);
     $("subtitle").textContent = bits.join(" · ");
     show($("hdr"));
@@ -1727,7 +1728,9 @@
 
     $("footer").textContent =
       (ui.disclaimer || "本报告不是契约真相。") +
-      " 由 harness-eng fill-report-html 生成 · Dashboard v2.24 · CYBERPUNK · 不含密文。";
+      " skill_version " + (skillVer || "—") +
+      " · report_schema " + (ui.report_schema || ui.version || "—") +
+      "（报告壳 ≠ skill） · 由 harness-eng fill-report-html 生成 · 不含密文。";
     show($("footer"));
   } catch (e) {
     show($("err"));

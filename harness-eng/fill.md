@@ -22,7 +22,7 @@
 | live 校准 | `fill-calibrate-live` | MCP 不可用时直连；可按引擎过 **填充 MCP 闸** | `scripts/fill-calibrate-live.mjs` |
 | HTML 报告 | `fill-report-html` | score → Dashboard；「开干」绑 ai_coding_ready | `scripts/fill-report-html.mjs` |
 | 多 Agent 精填 | `fill-truths-agents` | 按模板完整档 + Plan 批次【推荐】 | [fill-truths-agents.md](fill-truths-agents.md) |
-| 自动填充 | `fill-truths-auto` | **legacy**：仅 `.fill-work` 草稿 | [fill-truths-auto.md](fill-truths-auto.md) |
+| 自动填充 | `fill-truths-auto` | **仅脚本、对话不推荐** | [fill-truths-auto.md](fill-truths-auto.md) → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | 契约填充 | `fill-truths` | 完整档；默认 agents | [fill-truths.md](fill-truths.md) · [fill-workers.md](fill-workers.md) |
 
 ## 填充引擎 `Q_FILL_ENGINE`
