@@ -15,7 +15,7 @@ harness-eng **0.6.1-dev**（0.6.0 列车已收口）对齐矩阵：Trae **中高
 
 | 维度 | Cursor（高） | Trae 0.6.0 基线（中高） | 同级要补的 |
 |---|---|---|---|
-| Rules | `.cursor/rules/*.mdc` 保留 `alwaysApply` / `globs` | `.trae/rules/*.md`，**保留**官方 FM（P0 hotfix）；人验加载中 | 真人会话确认作用域不丢 |
+| Rules | `.cursor/rules/*.mdc` 保留 `alwaysApply` / `globs` | `.trae/rules/*.md`，**保留**官方 FM（P0 hotfix）；**消费仓须刷新** `sync.mjs` | 刷新后真人会话确认作用域不丢 |
 | Hooks | 原生 `beforeShellExecution` 等 | Claude 系 `PreToolUse` / `PostToolUse` / `Stop` + adapter | 事件对照表经实测，外加 `.githooks` 兜底 |
 | MCP | `.cursor/mcp.json` | `.trae/mcp.json`（项目 MCP / Beta 以官方为准） | 启用条件写死、fill 路径对齐 |
 | Skills | `.cursor/skills/` 一等公民 | `.trae/skills/` **一等公民**（docs PASS；适配卡已去掉「若宿主支持」） | 真人会话确认可发现 / 可点名 |
@@ -42,21 +42,23 @@ P0 spike（0.6.1-dev）已落地的工程项：
 仍等人 / 未做：
 
 - `l5-sync-golden` 未另钉一份 Trae 专用黄金树（T-P1-4 余项）
-- 项目 MCP 须 IDE 启用（T-P0-2 partial）；hooks matcher `Bash` vs `RunCommand`（T-P0-3 风险）
+- **消费仓须刷新**实例化 `scripts/agent-config/sync.mjs`（T-P0-1 docs PASS，2026-09-12 磁盘仍无 FM）
+- 项目 MCP：**IDE 已消费** `.trae/mcp.json`（T-P0-2 partial↑）；缺服面板报错 + disable-switch 对照未做
+- hooks matcher `Bash` vs `RunCommand`（T-P0-3 **待新会话**）
 - **不**改矩阵 中高→高（等 T-P1-5 + 人确认）
 
 ## P0 必须先验证的产品事实
 
 工程扩面之前先钉事实。每条写清 **通过标准**；未过不改矩阵、不宣称同级。
 
-**0.6.1-dev 状态（2026-09-12 官方文档 + harness hotfix）** → 全文：[TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md) · 人验：[TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)。
+**0.6.1-dev 状态（2026-09-12 官方文档 + Trae CN 实机回传）** → 全文：[TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md) · 人验：[TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)。
 
 | ID | 要验证 | 通过标准 | 0.6.1-dev 状态 |
 |---|---|---|---|
-| **T-P0-1** rules load | Trae 是否把 `.trae/rules/*.md`（含子目录）当项目规则加载；**官方 FM** `alwaysApply` / `globs` 是否生效；嵌套目录是否生效 | 官方路径 + 真实 Trae 会话中规则被注入；对照 Cursor `.mdc` 记「加载范围 + 失败形态」 | **docs PASS**；harness 已停剥 FM。人验 Apply to Specific Files 仍开放 |
-| **T-P0-2** project MCP / Beta | `.trae/mcp.json` 是否必须打开项目 MCP / Beta；与 Cursor `.cursor/mcp.json` 的操作差在哪 | 官方或实测：启用开关、路径、未开时的失败形态 | **partial**：路径 +「磁盘产物须 IDE 启用」已写死；**等人** Trae 面板确认 |
-| **T-P0-3** hooks event map | Claude 族 `PreToolUse` / `PostToolUse` / `Stop`（及 matcher `Bash` / `Edit\|Write` / `mcp__mysql`）在 Trae 是否真触发 | 对照表经实测；至少一条门禁生效；**不**改写成 Cursor 扁平协议 | **docs PASS structure**（`.trae/hooks.json`）；**风险** `Bash` ≠ Trae `RunCommand`。映射草案在实证页；**不**在本 spike 改 matcher |
-| **T-P0-4** skills first-class | `.trae/skills/` 是否一等公民（项目 skills 可发现、可点名） | 官方或实测：发现规则与 Cursor 对等或明确差集；适配卡去掉「若宿主支持」 | **docs PASS**；「若宿主支持」已删 |
+| **T-P0-1** rules load | Trae 是否把 `.trae/rules/*.md`（含子目录）当项目规则加载；**官方 FM** `alwaysApply` / `globs` 是否生效；嵌套目录是否生效 | 官方路径 + 真实 Trae 会话中规则被注入；对照 Cursor `.mdc` 记「加载范围 + 失败形态」 | **docs PASS**；tmpl / render 已停剥 FM。**消费仓须刷新**实例化 `sync.mjs`（2026-09-12 Trae CN：磁盘仍无 FM）。UI Apply to Specific Files 仍开放 |
+| **T-P0-2** project MCP / Beta | `.trae/mcp.json` 是否必须打开项目 MCP / Beta；与 Cursor `.cursor/mcp.json` 的操作差在哪 | 官方或实测：启用开关、路径、未开时的失败形态 | **partial↑**：**IDE 已消费**文件（gitlab / chrome-devtools / Apifox_Dao_Ru）。缺 7 台 + disable-switch 对照仍开放 |
+| **T-P0-3** hooks event map | Claude 族 `PreToolUse` / `PostToolUse` / `Stop`（及 matcher `Bash` / `Edit\|Write` / `mcp__mysql`）在 Trae 是否真触发 | 对照表经实测；至少一条门禁生效；**不**改写成 Cursor 扁平协议 | **docs PASS structure**；2026-09-12 **inconclusive**（Bash / 中途改 RunCommand 均无可见 systemMessage）。**待新会话**再测。**不**改 matcher |
+| **T-P0-4** skills first-class | `.trae/skills/` 是否一等公民（项目 skills 可发现、可点名） | 官方或实测：发现规则与 Cursor 对等或明确差集；适配卡去掉「若宿主支持」 | **PASS**（会话：`harness-eng` 可见可点名；`release-eng` 因 `disable-model-invocation` 隐藏） |
 
 P0 文档产出已在 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。T-P0-1 的 strip-FM 是文档揭示的明确 harness bug，本 spike **已按宿主分支修好**（Claude/Qoder 仍 strip）。
 
@@ -110,10 +112,10 @@ Spike（P0 产品事实） → Parity（P1 工程） → Polish（P2 体验）
 
 全部勾上才允许 T-P1-5 把矩阵写成 **高**。
 
-- [x] T-P0-1：官方加载路径 + FM 已记录；harness 停剥 FM；**人验**加载形态仍开放（见实证页）
-- [ ] T-P0-2：项目 MCP 路径已写；**IDE 启用**等人 Trae 面板
-- [ ] T-P0-3：hooks **结构** docs PASS；**matcher / RunCommand** 等人验
-- [x] T-P0-4：skills 官方一等公民；适配卡已去掉「若宿主支持」
+- [x] T-P0-1：官方加载路径 + FM 已记录；harness 停剥 FM；**消费仓刷新**仍开放（见实证页实机回传）
+- [ ] T-P0-2：项目 MCP 路径已写；**IDE 已消费**文件（2026-09-12）；面板缺服 / disable-switch 仍开放
+- [ ] T-P0-3：hooks **结构** docs PASS；**matcher / RunCommand** 待新会话
+- [x] T-P0-4：skills 官方一等公民 + **会话 PASS**（`.trae/skills/` 可发现 / 按需）
 - [x] T-P1-1：globs / alwaysApply **已保留**（Trae 专用路径；Claude/Qoder 仍 strip）；人验见 MANUAL
 - [ ] T-P1-2：原生 hooks + `.githooks` 对 Trae-only 仓可回归
 - [ ] T-P1-3：MCP 文档与 `mcp-paths` / fill-mcp / calibrate-live 一致

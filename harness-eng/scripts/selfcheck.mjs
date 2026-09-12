@@ -3207,9 +3207,13 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/alwaysApply/.test(traeAd) && /globs/.test(traeAd), "trae adapter documents native FM");
   assert(/RunCommand/.test(traeAd), "trae adapter notes RunCommand matcher risk");
   assert(/TRAE-P0-EVIDENCE/.test(traeAd), "trae adapter links evidence");
+  assert(/刷新/.test(traeAd) && /sync\.mjs/.test(traeAd), "trae adapter notes consumer sync.mjs refresh");
 
   const parity061 = fs.readFileSync(path.join(skillRoot, "host/TRAE-PARITY.md"), "utf8");
   assert(/TRAE-P0-EVIDENCE/.test(parity061) && /0\.6\.1-dev/.test(parity061), "TRAE-PARITY links evidence + 0.6.1-dev");
+  assert(/消费仓/.test(parity061) && /刷新/.test(parity061), "TRAE-PARITY T-P0-1 consumer refresh required");
+  assert(/IDE 已消费|已消费/.test(parity061), "TRAE-PARITY T-P0-2 IDE consumes file");
+  assert(/新会话/.test(parity061), "TRAE-PARITY T-P0-3 pending new session");
   const aiTools061 = readDoc("ai-tools.md");
   assert(/中高/.test(aiTools061), "ai-tools.md still marks Trae as 中高");
   assert(!/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools061), "matrix Trae not bumped to 高");
@@ -3217,10 +3221,22 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   const render061 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
   assert(/preserveFrontmatter/.test(render061), "render.mjs Trae preserveFrontmatter branch");
   const syncTmpl061 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/function toHostMd\s*\(\s*rule\s*,\s*host\s*\)/.test(syncTmpl061), "toHostMd takes (rule, host)");
   assert(/host === "trae"/.test(syncTmpl061), "sync.mjs.tmpl toHostMd branches by trae");
+  assert(/host === "trae"[\s\S]{0,200}rule\.raw/.test(syncTmpl061), "trae toHostMd preserve uses rule.raw");
+
+  assert(/实机回传 2026-09-12 Trae CN/.test(evidence), "EVIDENCE has 2026-09-12 Trae CN session section");
+  assert(/实例化/.test(evidence) && /sync\.mjs/.test(evidence), "EVIDENCE records T-P0-1 consumer sync.mjs drift");
+  assert(/mcp_gitlab/.test(evidence) && /mcp_Apifox_Dao_Ru/.test(evidence), "EVIDENCE records IDE-consumed MCP names");
+  assert(/disable-model-invocation/.test(evidence), "EVIDENCE records T-P0-4 SKILL.md FM honor");
+
+  assert(/sync\.mjs/.test(manual) && /刷新|重写|落地/.test(manual), "MANUAL has consumer sync.mjs refresh recipe");
+  assert(/新.*会话/.test(manual) && /git commit/.test(manual), "MANUAL hooks probe in new session");
+  assert(/dry-run/.test(manual), "MANUAL keeps git commit --dry-run probe");
 
   const changelog061 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   assert(/^## 0\.6\.1-dev\b/m.test(changelog061), "CHANGELOG 0.6.1-dev section");
+  assert(/刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
   const roadmap061 = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
   assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
   const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");

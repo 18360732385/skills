@@ -11,8 +11,10 @@
 ### 产品
 
 - **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；matcher `Bash` vs `RunCommand` 风险）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
-- **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)
-- **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；matcher 风险；链到实证页
+- **实机回传**（2026-09-12 Trae CN）：T-P0-1 消费仓磁盘 FAIL（实例化 `sync.mjs` 仍旧 strip）；T-P0-2 **IDE 已消费** `mcp.json`；T-P0-3 待新会话；T-P0-4 会话 PASS
+- **升级注意**：消费仓必须 **刷新** `scripts/agent-config/sync.mjs`（从 tmpl 重落地）后再 sync，`.trae/rules` 才会带 FM
+- **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)（含消费仓刷新配方 + 新会话 hooks 探测）
+- **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；matcher 风险；链到实证页；消费仓刷新 `sync.mjs`
 - **hotfix**：镜像到 Trae **保留** frontmatter（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）
 - **fixture**：`scripts/fixtures/mature-trae/`（无 `.cursor/rules` 仍 MATURE）
 
