@@ -1,8 +1,23 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.5.6 → 0.5.7 → 0.5.8`（当前 **0.5.8**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
+**列车**：`… → 0.5.7 → 0.5.8 → 0.5.9`（当前 **0.5.9**；报告 `ui.version` **0.2.24**，≠ skill_version）。  
 > 历史条目里「后续（0.3.0）/ P3」许愿已过期；已落地以 **0.3.0+** 节为准，勿当路线图。
+
+## 0.5.9 — 2026-09-12（audit P1：热路径索引 · land 入口 · fill CLI · fixture）
+
+### 产品
+
+- **P1-1 热路径**：新增 [AGENT-INDEX.md](AGENT-INDEX.md)（必读 / 按需表）；[fill/README.md](fill/README.md) 索引全部 fill-* 规格与脚本；SKILL 填充行先指向索引
+- **P1-2 `_meta` schema_version**：`morph-required.yaml` / `score-policy.yaml.tmpl` 补 schema 注释（≠ skill_version）；domains / domain-packs 沿用 0.5.8 标注
+- **P1-3 统一写盘入口**：`scripts/land.mjs` — 读 meta（新路径 + 遗留回退）；`agent_config` 时拒直渲生成宿主路径并走 `sync.mjs`；否则委托 `render.mjs`
+- **P1-4 fixture**：`mature-claude`（无 `.cursor/rules` 仍 MATURE）、`qoder-hooks`（S_HOOKS）、`stack-node`（非 Java S_STACK）；`lib/detect-signals.mjs` 薄探针
+- **P1-5 fill CLI**：规范入口 `fill-inventory.mjs --domain` + 既有 `fill-merge.mjs --domain`；域脚本改为别名（api merge 额外旗标仍留在 `fill-merge-api.mjs`）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → `0.5.9`
+- selfcheck → `scripts/selfcheck.mjs`
 
 ## 0.5.8 — 2026-09-12（detect 多宿主诚实 + selfcheck 稳定名 + Codex P2 期望）
 

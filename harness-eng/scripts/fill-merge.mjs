@@ -6,7 +6,7 @@
  *   node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --check
  *   node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --target <ssot.md> --write
  *
- * Prefer this over fill-merge-<domain>.mjs when adding domains; thin wrappers remain for compat.
+ * Canonical merge entry (0.5.9+). Prefer --domain over fill-merge-<id>.mjs aliases.
  * Domain list: templates/_meta/domains.yaml
  */
 import { fileURLToPath } from "url";

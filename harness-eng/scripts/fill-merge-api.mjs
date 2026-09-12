@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * fill-merge-api — merge docs/api/.fill-work fragments into SSOT (no npm deps).
- * Compat (0.3.7+): prefer `fill-merge.mjs --domain api` for check/write;
- * keep this wrapper for --enrich-dto / --module / --auto-fill.
+ * Compat (0.3.7+ / 0.5.9): prefer `fill-merge.mjs --domain api` for check/write;
+ * keep this script for --enrich-dto / --module / --auto-fill extras.
  *
  * Usage:
  *   node scripts/fill-merge-api.mjs --inventory inv.json --work-dir <root>/docs/api/.fill-work --check

@@ -9,7 +9,7 @@
 1. Fingerprint → 类型 `NEW_EMPTY`
 2. 提问：`Q_NAME` / `Q_DESC` / globs / `Q_SEED` / `Q_GLOB_PROFILE`；阶梯 L2；域 api、db
 3. 展示 WritePlan + 渲染预览 — **停住等确认**（闸门词表：[write-plan.md](write-plan.md)）
-4. 确认后优先 `scripts/render.mjs` 写入；写 `harness-meta.yaml`
+4. 确认后优先 `scripts/land.mjs` 写入（非 L5 委托 render）；写 `harness-meta.yaml`
 5. ladder 自检；分级移交 TODO
 
 **期望产出：** 确认前零写入；确认后 L0–L2（仅所选域）；无参考仓业务 `Pn`/真密。

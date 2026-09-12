@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-api — Spring Controller → inventory JSON + shards (no npm deps).
+ * Alias (0.5.9+): prefer `fill-inventory.mjs --domain api`.
  *
  * Usage:
  *   node scripts/fill-inventory-api.mjs --root <TARGET> [--modules sms-entrance,sms-safe]

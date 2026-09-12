@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-db — CREATE TABLE from SQL dirs + Entity/Mapper comment enrich (no npm deps).
+ * Alias (0.5.9+): prefer `fill-inventory.mjs --domain db`.
  *
  * Usage:
  *   node scripts/fill-inventory-db.mjs --root <TARGET> [--sql-root file] [--out db-inv.json]
+ *   node scripts/fill-inventory.mjs --domain db --root <TARGET> […]
  *
  * 0.2.9: also scans Java Entity (@TableField comment / JavaDoc) and Mapper XML <result>.
  */

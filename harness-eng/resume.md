@@ -22,7 +22,7 @@
 - [ ] 3 展示推荐包：目标阶梯默认 = max(meta.ladder, 用户指定)；模式=resume
 - [ ] 4 条件提问（缺口相关；可「全部推荐」）— 每批≤5
 - [ ] 5 WritePlan：仅缺口路径；已有同构 → skip；harness-meta/gitignore → merge
-- [ ] 6 确认闸门后 render：params.on_exists=skip
+- [ ] 6 确认闸门后 `scripts/land.mjs --mode resume`（非 L5 委托 render；L5 走 sync）：params.on_exists=skip
 - [ ] 7 自检 + 更新 meta.ladder / last_mode=resume + 移交 TODO
 ```
 

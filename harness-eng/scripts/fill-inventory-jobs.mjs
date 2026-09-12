@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-jobs — SyncTaskCode / @Scheduled / yml cron → inventory JSON (0.3.6+)
+ * Alias (0.5.9+): prefer `fill-inventory.mjs --domain jobs`.
  *
  * Usage:
  *   node scripts/fill-inventory-jobs.mjs --root <TARGET>

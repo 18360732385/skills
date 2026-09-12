@@ -1,4 +1,5 @@
 # Morph template_completeness required checks (0.3.8+)
+# schema_version: 0.3.8 — 形态完成度检查 schema（≠ skill_version；技能号见 manifest.yaml）
 # Loaded by fill-score.mjs. kind: re | named
 # - re: RegExp from pattern (+ optional flags)
 # - named: resolve via NAMED_TESTS in fill-score (JS hooks; still code to add)

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-redis — heuristic Redis key patterns from Java sources (no npm deps).
+ * Alias (0.5.9+): prefer `fill-inventory.mjs --domain redis`.
  *
  * Usage:
  *   node scripts/fill-inventory-redis.mjs --root <TARGET> [--source-root <rel>] [--out redis-inv.json]

@@ -10,6 +10,7 @@ description: >-
 
 Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持久约束。  
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
+**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。  
 一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](write-plan.md)。  
@@ -17,9 +18,9 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 
 ## 流程
 
-1. **探测 → 推荐包 → 提问 → WritePlan → 确认闸门 → 才写盘**（预授权例外见 write-plan）。
-2. 只渲染 [templates/](templates/) 与 fill 规格允许的本仓抽取；密文只从本仓已有文件抽取（[fill.md](fill.md)）。
-3. `MATURE` 默认 **audit**；写盘模式须用户点名 land / upgrade / resume / pipeline / fill-*。
+1. **探测 → 推荐包 → 提问 → WritePlan → 确认闸门 → 才写盘**（预授权例外见 write-plan）。最短路径见 QUICKSTART。
+2. 只渲染 [templates/](templates/) 与 fill 规格允许的本仓抽取；密文只从本仓已有文件抽取（先 [fill/README.md](fill/README.md)）。
+3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/land.mjs`。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](write-plan.md#windows-json-传参gotcha-ssot)。
 6. **工程轮**回复末尾附可视化**会话仪表盘**（四台 + mermaid；何时 SHOW/HIDE 见 [session-dashboard.md](session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。纯 meta / 版本 / 手册问答**不附**整块。
@@ -37,10 +38,10 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 | **打分家族** | `fill-score`（默认双轴）· `fill-morph` · `fill-gate` | [fill-score.md](fill-score.md) · [fill-morph.md](fill-morph.md) · [fill-gate.md](fill-gate.md) |
 | **填充计划** | `fill-plan` | [fill-plan.md](fill-plan.md) |
 | **多 Agent 精填** | `fill-truths-agents` | [fill-truths-agents.md](fill-truths-agents.md) |
-| **契约填充** | `fill-truths` | [fill.md](fill.md) |
-| **MCP 装配** | `fill-mcp` | [fill-mcp.md](fill-mcp.md) |
+| **契约填充** | `fill-truths` | [fill/README.md](fill/README.md) → [fill.md](fill.md) |
+| **MCP 装配** | `fill-mcp` | [fill/README.md](fill/README.md) → [fill-mcp.md](fill-mcp.md) |
 
-legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-html` → 见「分支 → Read」与 [fill.md](fill.md)。
+legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-html` → 见「分支 → Read」与 [fill/README.md](fill/README.md)。
 
 未指定：`MATURE`→audit；`PARTIAL`/已有 meta 未满阶→**resume**；**大仓首次**→**pipeline**（L4，`fill_engine=agents`）；否则→land（大仓默认 L4）。  
 阶梯：L0 协作入口 · L1 契约骨架 · L2 知识回流 · L3 规划与软门禁 · L4 工具连接样例 · L5 配置 SSOT 管线（详 [glossary.md](glossary.md) / [ladder.md](ladder.md)）。
@@ -60,12 +61,12 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 - [ ] 2 判定类型；输出 RecommendedProfile（recommended-profile.md）
 - [ ] 3 条件提问（优先 questions-next.mjs + questions.yaml；失败再 Read questions.md；每批≤5；可「全部推荐」）
 - [ ] 4 WritePlan（白话摘要 + 预览）— 等待确认（闸门见 write-plan.md）
-- [ ] 5 确认后 scripts/render.mjs；空仓 on_exists=fail；半成品改 resume 语义 on_exists=skip
+- [ ] 5 确认后 `scripts/land.mjs`（L5/`agent_config` 走 sync，勿直渲生成宿主路径；非 L5 委托 render）；空仓 on_exists=fail；半成品改 resume 语义 on_exists=skip
 - [ ] 6 ladder 自检；写/合并 harness-meta（skill_version 与 manifest 一致）
 - [ ] 7 分级移交 TODO
 ```
 
-细节链：Read [detect.md](detect.md) → [questions.yaml](questions.yaml) / [questions.md](questions.md) → [write-plan.md](write-plan.md) + [prefill.md](prefill.md) → render → [ladder.md](ladder.md)。
+细节链：Read [detect.md](detect.md) → [questions.yaml](questions.yaml) / [questions.md](questions.md) → [write-plan.md](write-plan.md) + [prefill.md](prefill.md) → **land.mjs** → [ladder.md](ladder.md)。
 
 ## 硬闸门（正目标）
 
@@ -89,7 +90,7 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 | 冲突 / merge / mcp | [conflict-policy.md](conflict-policy.md) |
 | 流水线骨架战役 | [pipeline.md](pipeline.md) |
 | 流水线填充战役（骨架 Done 后） | [pipeline-fill.md](pipeline-fill.md) |
-| 填充总则与子模式 | [fill.md](fill.md) |
+| 填充总则与子模式 | [fill/README.md](fill/README.md) → [fill.md](fill.md) |
 | 打分 / score-policy / 覆盖裁决 | [fill-score.md](fill-score.md) · [glossary.md](glossary.md)「覆盖裁决」 |
 | 形态诊断 | [fill-morph.md](fill-morph.md) · glossary 形态轴 |
 | 开干闸 | [fill-gate.md](fill-gate.md) · glossary 开干轴 |
@@ -102,4 +103,5 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 | HTML 报告 | `scripts/fill-report-html.mjs`（`--help`）；score 后【推荐】 |
 | 会话仪表盘 | [session-dashboard.md](session-dashboard.md) · `scripts/session-dash.mjs`（工程轮末尾；meta 轮省略） |
 | 模板清单 / 版本 | [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) · [CHANGELOG.md](CHANGELOG.md) |
-| 渲染脚本 | `scripts/render.mjs`（`--help` / 目录即环境） |
+| 写盘入口 | **`scripts/land.mjs`**（`--mode land|resume|upgrade`；L5 拒直渲生成宿主路径） |
+| 渲染脚本（非 L5 委托） | `scripts/render.mjs`（`--help` / 目录即环境） |
