@@ -1,5 +1,6 @@
 ﻿/**
- * Build human-facing `ui` projection from fill-score JSON (Dashboard v2 / 0.2.24+).
+ * Build human-facing `ui` projection from fill-score JSON.
+ * `ui.version` = report_schema（报告壳；现 0.2.24）。≠ skill_version。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
  * 0.2.23：决策台瘦身——徽章二态；decision_kpis + morph_strip；域故事卡默认关。
@@ -883,6 +884,7 @@ export function buildReportUi(score, opts = {}) {
   const composite_score = buildCompositeScore(s, pipeline_progress);
   return {
     version: "0.2.24",
+    report_schema: "0.2.24",
     headline: buildHeadline(s),
     verdict: buildVerdict(s),
     gap_to_ready: buildGapToReady(s),

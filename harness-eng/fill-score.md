@@ -44,7 +44,7 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 默认写出：`docs/harness-eng/report-latest.html`、`docs/harness-eng/score-latest.json`。  
 audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标达标率** / 骨架就绪 / 语义抽检 / 文档形态分 / 相对代码覆盖 / 公式上限 / **模板完整度**），英文 ID 放「技术细节」。  
-报告壳 `ui.version`（现 0.2.24）**≠** `skill_version`；术语见 [glossary.md](glossary.md)。
+报告优先对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 同值，现 0.2.24）。**报告壳版本 ≠ skill**。术语见 [glossary.md](glossary.md)。
 
 ### 报告字段速查
 

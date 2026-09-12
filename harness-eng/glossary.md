@@ -26,7 +26,7 @@
 | **补空壳真相** | `seed-truths` | 索引表加导航行 + `01-*.md` 空壳（**无**字段级契约） |
 | **填充计划** | `fill-plan` | 目标/批次/Done；进度 SSOT（`docs/harness-eng/fill-plan.yaml`） |
 | **多 Agent 精填** | `fill-truths-agents` | 按 Plan 批次 + 模板完整档写深度真相【推荐】 |
-| **自动填充** | `fill-truths-auto` | **legacy**；仅 `--work-only` 草稿 |
+| **自动填充** | `fill-truths-auto` | **仅脚本、对话不推荐**；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | **填充引擎** | `Q_FILL_ENGINE` | `agents`【推荐】/ `hybrid`（可选）/ `auto`（legacy） |
 | **inventory 默认路径** | — | `docs/<domain>/.fill-work/inventory*.json`（fill-score 可自动发现） |
 | **续跑** | `resume` | 已有一半 harness：读 meta/指纹，**只补缺口**（幂等） |
@@ -60,7 +60,9 @@
 | `score-policy.yaml` | `coverage_mode` + `coverage_targets` + `density` + `gate_profile`/`gate` |
 | `formula_ceiling` / `domain_caps` | 形态贴顶信号 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
-| `ui.version` | 报告壳（现 **0.2.24**）；≠ `skill_version` |
+| `skill_version` | 技能号（manifest / meta；当前列车 **0.5.x**） |
+| `report_schema` | 报告投影 schema（现 **0.2.24**；JSON 仍暴露 `ui.version` 同值） |
+| `ui.version` | 报告壳别名 = `report_schema`；**报告壳版本 ≠ skill** |
 
 ## 常用词
 

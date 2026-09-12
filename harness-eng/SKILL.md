@@ -41,7 +41,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 | **契约填充** | `fill-truths` | [fill/README.md](fill/README.md) → [fill.md](fill.md) |
 | **MCP 装配** | `fill-mcp` | [fill/README.md](fill/README.md) → [fill-mcp.md](fill-mcp.md) |
 
-legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-html` → 见「分支 → Read」与 [fill/README.md](fill/README.md)。
+legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见「分支 → Read」与 [fill/README.md](fill/README.md)。
 
 未指定：`MATURE`→audit；`PARTIAL`/已有 meta 未满阶→**resume**；**大仓首次**→**pipeline**（L4，`fill_engine=agents`）；否则→land（大仓默认 L4）。  
 阶梯：L0 协作入口 · L1 契约骨架 · L2 知识回流 · L3 规划与软门禁 · L4 工具连接样例 · L5 配置 SSOT 管线（详 [glossary.md](glossary.md) / [ladder.md](ladder.md)）。
@@ -98,7 +98,7 @@ legacy / 脚本：`fill-truths-auto` · `fill-calibrate-live` · `fill-report-ht
 | 多 Agent worker | [fill-workers.md](fill-workers.md) · [fill-truths-agents.md](fill-truths-agents.md) |
 | 加契约域 / packs / morph | [domain-extend.md](domain-extend.md) · `templates/_meta/domains.yaml` · `domain-packs.yaml` · `morph-required.yaml` |
 | AI 工具面 | [ai-tools.md](ai-tools.md) · [sync-hosts.md](sync-hosts.md) · `templates/ai-tools/adapters/` |
-| 自动填充（legacy） | [fill-truths-auto.md](fill-truths-auto.md) |
+| 自动填充（仅脚本、对话不推荐） | [fill-truths-auto.md](fill-truths-auto.md) → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | live 校准 | `scripts/fill-calibrate-live.mjs`（`--help`） |
 | HTML 报告 | `scripts/fill-report-html.mjs`（`--help`）；score 后【推荐】 |
 | 会话仪表盘 | [session-dashboard.md](session-dashboard.md) · `scripts/session-dash.mjs`（工程轮末尾；meta 轮省略） |

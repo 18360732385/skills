@@ -51,6 +51,14 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.5.9 → 0.5.10 迁移要点
+
+1. **meta**：`skill_version` → `0.5.10`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Codex**：仍为部分对齐（P2），但**不默认**进「全部推荐」（仅 `.codex/` 探测或显式勾选）
+3. **皆无探测**：`ai_tools` 为空，追问一次；不默认 Cursor、不因此只写 `.cursor/` 适配
+4. **报告叙事**：优先 `skill_version` + `report_schema`（`ui.version` 仍为 JSON 别名）
+5. **legacy**：`fill-truths-auto` 见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
+
 ## 0.5.8 → 0.5.9 迁移要点
 
 1. **meta**：`skill_version` → `0.5.9`（resume / upgrade 写 meta 时对齐 manifest）

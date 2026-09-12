@@ -10,7 +10,7 @@
 |---|---|---|---|
 | `cursor` | Cursor | `.cursor/` | 已由 L0 rules/AGENTS 覆盖；另写 `.cursor/rules/00-harness-ssot.mdc` 指针（可选加强） |
 | `claude` | Claude Code | `CLAUDE.md` / `.claude/` | 根 `CLAUDE.md` + L3+ 全量 `.claude/rules/*.md` 镜像 |
-| `codex` | Codex | `.codex/` | 根 `AGENTS.md` + `.codex/harness.md`；hooks/MCP **部分对齐**（见适配卡） |
+| `codex` | Codex（**部分对齐·不默认**） | `.codex/` | 根 `AGENTS.md` + `.codex/harness.md`；hooks/MCP **部分对齐**（见适配卡）；未探测不进「全部推荐」 |
 | `qoder` | Qoder | `.qoder/` | `.qoder/rules/00-harness-ssot.md` + L3+ 全量 rules 镜像（`.md`） |
 | `trae` | Trae | `.trae/` | `.trae/rules/00-harness-ssot.md` + L3+ 全量 rules 镜像（`.md`） |
 | `workbuddy` | WorkBuddy / CodeBuddy | `.codebuddy/` / `CODEBUDDY.md` | `CODEBUDDY.md` + rules 镜像 + L3+ Claude 系 hooks 全家桶 |
@@ -38,12 +38,12 @@
 Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
   A) Cursor【推荐：已探测 .cursor】
   B) Claude Code
-  C) Codex
+  C) Codex（部分对齐·不默认）
   D) Qoder
   E) Trae
   F) WorkBuddy
   G) 自定义（请写：工具名=…; 入口路径=…）
-不确定请回复：全部推荐（= 仅已探测项；若无探测则默认 Cursor）
+不确定请回复：全部推荐（= 仅已探测项；无探测则空，追问一次，不默认 Cursor；Codex 仅探测到 .codex/ 或显式勾选才纳入）
 ```
 
 ## 对齐矩阵（0.5.7）
@@ -57,7 +57,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 | `qoder` | **高** | L3+ 全量 `.qoder/rules/*.md` 镜像 + Claude 族 hooks |
 | `workbuddy` | **高** | L3+ rules 镜像 + CodeBuddy hooks 全家桶 |
 | `trae` | **中高** | L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` |
-| `codex` | **部分（P2）** | 仅薄指针 + 基础 commit gate；**不全量镜像** rules；hooks / MCP / skills **未**与 Cursor/Claude 对等 |
+| `codex` | **部分（P2）·不默认** | 仅薄指针 + 基础 commit gate；**不全量镜像** rules；hooks / MCP / skills **未**与 Cursor/Claude 对等；未探测不进「全部推荐」 |
 
 自定义入口-only 工具：只保证入口指针（及同目录 `1x` 指针），不装 hooks/MCP。
 

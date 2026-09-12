@@ -18,7 +18,7 @@
 | 深真全 | [truth-quality.md](../truth-quality.md) | draft vs SSOT |
 | MCP 装配 | [fill-mcp.md](../fill-mcp.md) | 填充硬前置（需 db·redis） |
 | 流水线填充战役 | [pipeline-fill.md](../pipeline-fill.md) | 骨架 Done 之后 |
-| 自动填充 | [fill-truths-auto.md](../fill-truths-auto.md) | **legacy** 仅 `.fill-work` |
+| 自动填充 | [fill-truths-auto.md](../fill-truths-auto.md) → [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) | **仅脚本、对话不推荐** |
 
 ## 脚本（规范入口）
 
@@ -41,7 +41,7 @@ node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir
 | `acceptance-check.mjs` | 语义闸 |
 | `fill-report-html.mjs` | HTML 报告 |
 | `fill-calibrate-live.mjs` | MCP 不可用时直连 |
-| `fill-truths-auto.mjs` | legacy 草稿 |
+| `fill-truths-auto.mjs` | 薄转调 archive；**仅脚本、对话不推荐** |
 | `fill-dto-fields.mjs` | api merge `--enrich-dto` 辅助 |
 
 ## 推荐最短填充

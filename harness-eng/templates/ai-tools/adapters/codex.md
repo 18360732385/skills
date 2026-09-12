@@ -1,6 +1,6 @@
 # Adapter: Codex（部分对齐 · P2）
 
-对齐程度：**部分（P2）**。与 Cursor/Claude/Qoder/WorkBuddy（高）或 Trae（中高）不同，**不要**假设 Codex 已全量同步 rules / hooks / MCP / skills。矩阵见 [ai-tools.md](../../../ai-tools.md)。
+对齐程度：**部分（P2）·不默认**。与 Cursor/Claude/Qoder/WorkBuddy（高）或 Trae（中高）不同，**不要**假设 Codex 已全量同步 rules / hooks / MCP / skills。**未探测到 `.codex/` 时不进「全部推荐」**；勿因习惯勾选。矩阵见 [ai-tools.md](../../../ai-tools.md)。
 
 - **目录**: `.codex/`；主指令仍优先根 `AGENTS.md`
 - **Rules**: 薄指针 `.codex/harness.md` + `contract-sync.md`（无全量镜像，故 **始终**保留该指针）；**暂不全量镜像** `.mdc`

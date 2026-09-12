@@ -90,9 +90,25 @@ function questionEligible(q, ctx) {
   return true;
 }
 
+function getByPath(obj, dotted) {
+  if (!obj || !dotted) return undefined;
+  const parts = String(dotted).split(".");
+  let cur = obj;
+  for (const p of parts) {
+    if (cur == null || typeof cur !== "object") return undefined;
+    cur = cur[p];
+  }
+  return cur;
+}
+
 function pickRecommended(q, ctx) {
   if (q.recommended !== undefined) return q.recommended;
-  if (q.recommended_fallback && Array.isArray(q.recommended_fallback))
+  if (q.recommended_from) {
+    const from = getByPath(ctx, q.recommended_from);
+    if (Array.isArray(from) && from.length) return from;
+    if (from != null && !Array.isArray(from) && from !== "") return from;
+  }
+  if (q.recommended_fallback !== undefined && Array.isArray(q.recommended_fallback))
     return q.recommended_fallback;
   if (q.options) {
     const hit = q.options.find((o) => o.recommended === true);
