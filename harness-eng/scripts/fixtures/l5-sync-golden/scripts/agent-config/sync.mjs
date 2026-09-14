@@ -2,6 +2,9 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
+ * HARNESS_SYNC_TMPL_ID: 0.6.3-dev
+ * HARNESS_ENG_VERSION: 0.6.3-dev
+ *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
  *   node scripts/agent-config/sync.mjs --check  # 只校验漂移，有差异时退出码 1
@@ -24,6 +27,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
+const HARNESS_SYNC_TMPL_ID = "0.6.3-dev";
+const HARNESS_ENG_VERSION = "0.6.3-dev";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = ["cursor","claude"];
@@ -350,7 +355,7 @@ if (CHECK_ONLY) {
     console.error("请执行：node scripts/agent-config/sync.mjs");
     process.exit(1);
   }
-  console.log(`[agent-config] 无漂移（${plan.size} 个生成物与 SSOT 一致）`);
+  console.log(`[agent-config] 无漂移（${plan.size} 个生成物与 SSOT 一致；${HARNESS_SYNC_TMPL_ID}/${HARNESS_ENG_VERSION}）`);
 } else {
   console.log(
     `[agent-config] 生成完成：写入 ${diffs.length} 个文件，清理 ${stale.length} 个过期文件，共管理 ${plan.size} 个生成物`

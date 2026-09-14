@@ -1,8 +1,23 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2`（当前 **0.6.2**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3-dev`（当前 **0.6.3-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。
+
+## 0.6.3-dev — 2026-09-14（sync.mjs freshness gate）
+
+Audit P0-1。技能升级后消费仓实例化 `scripts/agent-config/sync.mjs` 不再静默沿用旧 tmpl（Trae FM strip 等）。**不**改 Trae 矩阵、**不**重开 Codex。
+
+### 产品
+
+- **Freshness gate**：`templates/agent-config/sync.mjs.tmpl` 与落地脚本同带 `HARNESS_SYNC_TMPL_ID` / `HARNESS_ENG_VERSION`（与 skill 号一致）。`node scripts/harness.mjs --check-freshness --root <TARGET>`：无 consumer 脚本 skip（exit 0）；落后则打印刷新步骤并 **exit 1**
+- **L5 land/upgrade/resume**：`agent-config-sync` 已存在时 **replace**（不因 `on_exists=skip` 留下过期脚本）。刷新路径：land/render `agent-config-sync` → `node scripts/agent-config/sync.mjs`。见 [TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md) §0 · [conflict-policy.md](modes/conflict-policy.md) · [QUICKSTART.md](QUICKSTART.md)
+- **安装 URL**：生产装/升指向 `tree/main/harness-eng`。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升（勿从 `V0.6.X` 装生产）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.3-dev`**
+- 0.6.2 会话仪表盘钉号不回退
 
 ## 0.6.2 — 2026-09-14（会话仪表盘去掉 mermaid）
 

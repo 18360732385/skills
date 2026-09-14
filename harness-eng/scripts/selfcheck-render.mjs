@@ -236,6 +236,32 @@ function main() {
     throw new Error("L5 must not emit 1x-contract-sync for full-mirror hosts");
   }
 
+  // 9) L5 on_exists=skip still replaces existing consumer sync.mjs (freshness restore)
+  const tmpSkip = fs.mkdtempSync(path.join(os.tmpdir(), "harness-l5-sync-skip-"));
+  fs.mkdirSync(path.join(tmpSkip, "scripts", "agent-config"), { recursive: true });
+  fs.writeFileSync(
+    path.join(tmpSkip, "scripts", "agent-config", "sync.mjs"),
+    "#!/usr/bin/env node\n// HARNESS_SYNC_TMPL_ID: 0.5.0-stale\n",
+    "utf8"
+  );
+  writeParams(tmp, {
+    ladder: "L5",
+    domains: [],
+    agents_variant: "solo",
+    include_optional: [],
+    ai_tools: ["cursor"],
+    on_exists: "skip",
+    placeholders: { ...placeholders, LADDER_TARGET: "L5" },
+    files: [],
+  });
+  const dry9 = runDry(tmpSkip, tmp, ["--manifest", MANIFEST]);
+  const syncRow = dry9.results.find((x) => String(x.target || "").replace(/\\/g, "/") === "scripts/agent-config/sync.mjs");
+  if (!syncRow || syncRow.action !== "replace") {
+    fs.rmSync(tmpSkip, { recursive: true, force: true });
+    throw new Error(`L5 skip should replace agent-config-sync, got ${syncRow && syncRow.action}`);
+  }
+  fs.rmSync(tmpSkip, { recursive: true, force: true });
+
   try {
     fs.unlinkSync(tmp);
   } catch (_) {}
@@ -257,6 +283,7 @@ function main() {
           "ai-tools-adapters-custom",
           "include-optional-boolean",
           "l5-trae-ssot-00-harness",
+          "l5-skip-replaces-agent-config-sync",
         ],
       },
       null,
