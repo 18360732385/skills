@@ -36,8 +36,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.0-dev M1: harness CLI · ROADMAP · G6 freeze · version pin ---
 {
-  assert(fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "ROADMAP-0.6.0.md");
-  const roadmap = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
+  assert(fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "ROADMAP-0.6.0.md stub");
+  assert(fs.existsSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md")), "archive/ROADMAP-0.6.0.md body");
+  assert(/archive\/ROADMAP-0\.6\.0/.test(fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8")), "ROADMAP root is stub");
+  const roadmap = fs.readFileSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/G1/.test(roadmap) && /G7/.test(roadmap), "ROADMAP has G1–G7");
   assert(/M1/.test(roadmap) && /M4/.test(roadmap), "ROADMAP has M1–M4");
   assert(/pipeline-skeleton/.test(roadmap), "ROADMAP names pipeline-skeleton");
@@ -255,7 +257,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/fill\/fill-score\.md/.test(skillM2), "SKILL points fill/fill-score.md");
   assert(/host\/ai-tools\.md/.test(skillM2), "SKILL points host/ai-tools.md");
 
-  const roadmapM2 = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
+  const roadmapM2 = fs.readFileSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T2\.1/.test(roadmapM2) && /\[x\].*T2\.5/.test(roadmapM2), "ROADMAP G2 T2.1–T2.5 checked");
 
   const changelogM2 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -427,7 +429,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(scanSignals(qoderFixM3).S_HOOKS, "qoder-hooks still S_HOOKS");
   assert(scanSignals(stackFixM3).S_STACK && !scanSignals(stackFixM3).MATURE, "stack-node still S_STACK only");
 
-  const roadmapM3 = readRel("ROADMAP-0.6.0.md");
+  const roadmapM3 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T3\.1/.test(roadmapM3) && /\[x\].*T3\.3/.test(roadmapM3), "ROADMAP G3 T3.1–T3.3 checked");
   assert(/\[x\].*T4\.1/.test(roadmapM3) && /\[x\].*T4\.3/.test(roadmapM3), "ROADMAP G4 T4.1–T4.3 checked");
 
@@ -507,7 +509,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
   assert(verLine && verLine[1] === "0.6.3-dev", "manifest version exactly 0.6.3-dev");
 
-  const roadmapM4 = readRel("ROADMAP-0.6.0.md");
+  const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
   assert(/\[x\].*T7\.1/.test(roadmapM4) && /\[x\].*T7\.3/.test(roadmapM4), "ROADMAP G7 T7.1–T7.3 checked");
   assert(/列车已收口|列车完成|正式 0\.6\.0.*收口/.test(roadmapM4), "ROADMAP notes train complete");
@@ -536,7 +538,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.1: Trae 高 formal pin (evidence · MCP panel PASS · matrix 高) ---
 {
-  const evidence = fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md"), "utf8");
+  assert(fs.existsSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md")), "host TRAE-P0-EVIDENCE stub");
+  assert(/archive\/TRAE-P0-EVIDENCE/.test(fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md"), "utf8")), "EVIDENCE host file is stub");
+  const evidence = fs.readFileSync(path.join(skillRoot, "archive/TRAE-P0-EVIDENCE.md"), "utf8");
   assert(/T-P0-1/.test(evidence) && /T-P0-4/.test(evidence), "TRAE-P0-EVIDENCE has T-P0-1…4");
   assert(/docs PASS/.test(evidence) && /partial/.test(evidence), "TRAE-P0-EVIDENCE statuses");
   assert(/RunCommand/.test(evidence) && /alwaysApply/.test(evidence), "TRAE-P0-EVIDENCE cites FM + RunCommand");
@@ -594,7 +598,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.6\.1-dev/.test(changelog061), "CHANGELOG folds 0.6.1-dev notes");
   assert(/刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
   assert(/00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1 notes L5 SSOT 00");
-  const roadmap061 = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
+  const roadmap061 = fs.readFileSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
   assert(/0\.6\.1/.test(roadmap061) && /高/.test(roadmap061), "ROADMAP notes 0.6.1 Trae 高 pin");
   const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");

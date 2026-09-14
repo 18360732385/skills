@@ -18,7 +18,8 @@
 | 公开入口文案统一为 `harness.mjs`（无「确认后 render」主路径） | 有 |
 | `host/ai-tools.md` / 手册矩阵标题为 0.6.x | 有 |
 | QUICKSTART / 手册含 Trae skills 路径示例（示例≠唯一） | 有 |
-| 历史增量表迁 `archive/VERIFY-history-through-0.6.0.md`；热路径 VERIFY 留桩 | 有 |
+| 历史增量表迁 `_history/.../VERIFY-history-through-0.6.0.md`；热路径 VERIFY 留桩 | 有 |
+| ROADMAP / Trae EVIDENCE / CHANGELOG 0.5.x 热路径减脂 | 有 |
 | `session-dash.mjs --help` 退出 0 | 有 |
 | 无 score 时仪表盘精简（含「精简」） | 有 |
 | `lib/selfcheck/checks-0.6.mjs` 承接 0.6.x；入口仍 `selfcheck.mjs` | 有 |
@@ -51,7 +52,7 @@
 
 ## 历史增量（已归档）
 
-完整表见 [archive/VERIFY-history-through-0.6.0.md](archive/VERIFY-history-through-0.6.0.md)。
+完整表见仓库 [`_history/harness-eng-docs-archive/VERIFY-history-through-0.6.0.md`](../_history/harness-eng-docs-archive/VERIFY-history-through-0.6.0.md)。
 
 | 里程碑 | 关键词（selfcheck 对照） | 归档 |
 |---|---|---|

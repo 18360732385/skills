@@ -1,10 +1,8 @@
-# archive/fill-truths-auto
+# fill-truths-auto（已迁出热 archive）
 
-**仅脚本、对话不推荐。** 不在技能热路径。默认填充仍是 [fill-truths-agents.md](../../fill-truths-agents.md) + [fill-plan.md](../../fill-plan.md)。
+规格与脚本全文在仓库：
 
-| 文件 | 说明 |
-|---|---|
-| [fill-truths-auto.md](fill-truths-auto.md) | 历史规格（legacy 草稿） |
-| [fill-truths-auto.mjs](fill-truths-auto.mjs) | 实现；也可经根 `scripts/fill-truths-auto.mjs` 薄转调 |
+- [`_history/harness-eng-docs-archive/fill-truths-auto.md`](../../../_history/harness-eng-docs-archive/fill-truths-auto.md)
+- [`_history/harness-eng-docs-archive/fill-truths-auto.mjs`](../../../_history/harness-eng-docs-archive/fill-truths-auto.mjs)
 
-根目录 [fill-truths-auto.md](../../fill-truths-auto.md) 是指针 stub。
+**对话不推荐**；默认填充仍是 [fill-truths-agents](../../fill/fill-truths-agents.md)。根 stub：[fill-truths-auto.md](../../fill-truths-auto.md)。

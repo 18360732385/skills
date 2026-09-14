@@ -231,15 +231,18 @@ assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not left
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-assert(/## 0\.5\.2/.test(changelog), "CHANGELOG 0.5.2");
-assert(/## 0\.5\.3/.test(changelog), "CHANGELOG 0.5.3");
-assert(/## 0\.5\.4/.test(changelog), "CHANGELOG 0.5.4");
-assert(/## 0\.5\.5/.test(changelog), "CHANGELOG 0.5.5");
-assert(/## 0\.5\.6/.test(changelog), "CHANGELOG 0.5.6");
-assert(/## 0\.5\.7/.test(changelog), "CHANGELOG 0.5.7");
-assert(/## 0\.5\.8/.test(changelog), "CHANGELOG 0.5.8");
-assert(/## 0\.5\.9/.test(changelog), "CHANGELOG 0.5.9");
-assert(/## 0\.5\.10/.test(changelog), "CHANGELOG 0.5.10");
+const changelog05x = fs.readFileSync(path.join(skillRoot, "archive/CHANGELOG-0.5.x.md"), "utf8");
+assert(/## 0\.5\.2/.test(changelog05x), "archive CHANGELOG 0.5.2");
+assert(/## 0\.5\.3/.test(changelog05x), "archive CHANGELOG 0.5.3");
+assert(/## 0\.5\.4/.test(changelog05x), "archive CHANGELOG 0.5.4");
+assert(/## 0\.5\.5/.test(changelog05x), "archive CHANGELOG 0.5.5");
+assert(/## 0\.5\.6/.test(changelog05x), "archive CHANGELOG 0.5.6");
+assert(/## 0\.5\.7/.test(changelog05x), "archive CHANGELOG 0.5.7");
+assert(/## 0\.5\.8/.test(changelog05x), "archive CHANGELOG 0.5.8");
+assert(/## 0\.5\.9/.test(changelog05x), "archive CHANGELOG 0.5.9");
+assert(/## 0\.5\.10/.test(changelog05x), "archive CHANGELOG 0.5.10");
+assert(/archive\/CHANGELOG-0\.5\.x/.test(changelog), "hot CHANGELOG points archive/CHANGELOG-0.5.x");
+assert(!/^## 0\.5\.10/m.test(changelog), "hot CHANGELOG dropped 0.5.x sections");
 assert(/## 0\.6\.2/.test(changelog), "CHANGELOG 0.6.2");
 assert(/## 0\.6\.3-dev/.test(changelog), "CHANGELOG 0.6.3-dev");
 
@@ -395,8 +398,12 @@ assert(
   "archive README no stale 0.3 hot-path line"
 );
 assert(
-  fs.existsSync(path.join(skillRoot, "archive/VERIFY-history-through-0.2.27.md")),
-  "VERIFY history archived"
+  fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/VERIFY-history-through-0.2.27.md")),
+  "VERIFY history 0.2.27 in _history"
+);
+assert(
+  !fs.existsSync(path.join(skillRoot, "archive/VERIFY-history-through-0.2.27.md")),
+  "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
 assert(/验收记录（0\.6\.3-dev）/.test(verifyMd) && /当前 \*\*0\.6\.3-dev\*\*/.test(verifyMd), "VERIFY is 0.6.3-dev");
@@ -404,8 +411,9 @@ assert(!/当前 \*\*0\.6\.2\*\*/.test(verifyMd), "VERIFY current pin not leftove
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
-assert(fs.existsSync(path.join(skillRoot, "archive/VERIFY-history-through-0.6.0.md")), "VERIFY 0.6 history archive exists");
+assert(fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/VERIFY-history-through-0.6.0.md")), "VERIFY 0.6 history in _history");
 assert(/VERIFY-history-through-0\.6\.0/.test(verifyMd), "VERIFY points to 0.6 history archive");
+assert(/_history\/harness-eng-docs-archive/.test(verifyMd), "VERIFY points _history docs archive");
 assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
@@ -473,8 +481,12 @@ assert(/fill-report-html\.mjs/.test(skill), "SKILL points report to script");
 
 assert(!fs.existsSync(path.join(skillRoot, "OPTIMIZATION-PROPOSAL-0.2.x.md")), "OPTIMIZATION not in skill root");
 assert(
-  fs.existsSync(path.join(skillRoot, "archive/OPTIMIZATION-PROPOSAL-0.2.x.md")),
-  "OPTIMIZATION archived"
+  fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/OPTIMIZATION-PROPOSAL-0.2.x.md")),
+  "OPTIMIZATION in _history docs archive"
+);
+assert(
+  !fs.existsSync(path.join(skillRoot, "archive/OPTIMIZATION-PROPOSAL-0.2.x.md")),
+  "OPTIMIZATION not in harness-eng/archive hot pack"
 );
 
 // --- fill-merge scripts --help smoke ---
