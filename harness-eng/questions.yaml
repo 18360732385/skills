@@ -140,7 +140,7 @@ batches:
           - { value: claude, label: Claude Code }
           - { value: codex, label: Codex（部分对齐·不默认 / P2；L5 sync 不全量分发） }
           - { value: qoder, label: Qoder }
-          - { value: trae, label: Trae }
+          - { value: trae, label: Trae（高；未探测也可进「全部推荐」·非 Codex 吓退脚注） }
           - { value: workbuddy, label: WorkBuddy }
           - { value: custom, label: 自定义（工具名=…; 入口路径=…） }
         recommended_from: fingerprint.detected_ai_tools

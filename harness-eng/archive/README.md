@@ -21,5 +21,5 @@
 - `VERIFY-history-through-0.2.27.md` — 0.2.x 增量验收表沉积（当前验收见根 `VERIFY.md`）
 - [CHANGELOG-through-0.4.md](CHANGELOG-through-0.4.md) — 0.4.0 及更早 CHANGELOG 正文
 - [fill-truths-auto/](fill-truths-auto/INDEX.md) — legacy 自动填充（仅脚本、对话不推荐）
-- `selfcheck/` — 近期归档（0.4.0 / 0.5.0 / 0.5.1）；更早 0.2.x–0.3.x 见 [selfcheck/legacy/INDEX.md](selfcheck/legacy/INDEX.md)（仅指针）
+- `selfcheck/` — 仅指针（0.4.0 / 0.5.0 / 0.5.1 与更早全文已在 `_history/harness-eng-selfcheck-legacy/`）
 - **热路径**：`scripts/selfcheck.mjs`（稳定名；断言当前 manifest 版本）

@@ -22,6 +22,9 @@
 | `session-dash.mjs --help` 退出 0 | 有 |
 | 无 score 时仪表盘精简（含「精简」） | 有 |
 | `lib/selfcheck/checks-0.6.mjs` 承接 0.6.x；入口仍 `selfcheck.mjs` | 有 |
+| archive/selfcheck 仅指针；0.4/0.5 bulk 在 `_history` | 有 |
+| Trae T-P2-2…4（脚注·交叉链·未生成/未实证） | 有 |
+| `lib/selfcheck/checks-0.5.mjs` + `checks-0.6.mjs` | 有 |
 
 ## 0.6.2 增量验收（会话仪表盘去掉 mermaid）
 
