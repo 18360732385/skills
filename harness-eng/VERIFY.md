@@ -1,24 +1,31 @@
-﻿# harness-eng 验收记录（0.6.1-dev）
+﻿# harness-eng 验收记录（0.6.1）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.1-dev**（Trae P0 spike）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.1**（Trae **高**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
 
-## 0.6.1-dev 增量验收（Trae P0）
+## 0.6.1 增量验收（Trae 高）
 
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 | `node scripts/selfcheck-render.mjs` | 烟测 |
-| manifest / meta / questions 为 `0.6.1-dev` | 有 |
-| [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表 | 有 |
+| manifest / meta / questions 为 `0.6.1` | 有 |
+| [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表；T-P0-2 MCP 面板 PASS | 有 |
 | Trae 镜像保留 `alwaysApply` / `globs`；Claude/Qoder 仍 strip | 有 |
-| `mature-trae` 无 `.cursor/rules` 仍 MATURE | 有 |
-| 适配卡去掉「若宿主支持」；矩阵 Trae 仍 **中高** | 有 |
-| 未改矩阵 中高→高 | 有 |
+| `mature-trae` 无 `.cursor/rules` 仍 MATURE；L5 sync 路径已钉 | 有 |
+| 适配卡去掉「若宿主支持」；矩阵 Trae **高** | 有 |
+| 矩阵 中高→高（T-P1-5） | 有 |
 | L5 计划含 SSOT `00-harness-ssot.mdc`（含 Trae-only）；1x 仍 omit | 有 |
+
+## 0.6.1-dev 增量验收（Trae P0，已折叠）
+
+| 检查 | 结果 |
+|---|---|
+| 0.6.1-dev spike 笔记保留在 CHANGELOG 小节 | 有 |
+| Trae P0 实证 + `mature-trae` | 有 |
 
 ## 0.6.0 增量验收（M4）
 

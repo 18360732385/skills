@@ -1,18 +1,18 @@
 # Trae P0 真人会话清单（短）
 
-给**本机已装 Trae IDE** 的同学。对照日文档见 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。做完在本页打勾或把结果贴回 PR。**不要**据此把矩阵改成高。
+给**本机已装 Trae IDE** 的同学。对照日文档见 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。做完在本页打勾或把结果贴回 PR。0.6.1 矩阵已是 **高**；hooks PASS **单独不授权**升号（须 MCP 面板）。
 
 仓库至少有：`.trae/rules/`（含 frontmatter）、`.trae/hooks.json`、`.trae/mcp.json`（或 `.example` 拷成真文件）。
 
-2026-09-12 Trae CN 回传见实证页「实机回传」。权威仓 **c-be-sms-ai**：**Round A** 刷新后 T-P0-1 **磁盘 + 行为 PASS**（刷新前磁盘 FAIL，根因仍是实例化 `sync.mjs` 仍旧）。**Round C** T-P0-3 **本机行为 FAIL**（事后判 **matcher 误诊**：当时 `Bash` 对不上 `RunCommand`）。先做第 0 节再验规则；hooks 复测见第 3 节。
+2026-09-12 Trae CN 回传见实证页「实机回传」。权威仓 **c-be-sms-ai**：**Round A** 刷新后 T-P0-1 **磁盘 + 行为 PASS**（刷新前磁盘 FAIL，根因仍是实例化 `sync.mjs` 仍旧）。**Round C** T-P0-3 **本机行为 FAIL**（事后判 **matcher 误诊**：当时 `Bash` 对不上 `RunCommand`）。**2026-09-14 Hooks 复测 PASS**（T-P0-3 / T-P1-2）。**2026-09-14 MCP 面板 PASS**（T-P0-2）。先做第 0 节再验规则；hooks 配方见第 3 节。
 
 **通道纪律（强制）**：Trae hooks 探测 **只认 `.trae/hooks.json`**。**永远不要**把 `.cursor/hooks.json` 的 `beforeShellExecution` 当作 Trae 证据（Round B 打到 Cursor 通道 = 无效）。
 
-## 0. 消费仓刷新（0.6.1-dev 升级后必做）
+## 0. 消费仓刷新（0.6.1 升级后必做）
 
 技能 tmpl（`templates/agent-config/sync.mjs.tmpl` 的 `toHostMd(rule, host)`）已对 trae **保留** FM，但 L5 **已落地的** `scripts/agent-config/sync.mjs` **不会**随 skill 升级自动更新。旧脚本会继续无条件剥 FM，把 `alwaysApply` / `globs` 降成正文 `> 适用路径` / `> 始终应用`。
 
-1. 升级 `harness-eng` 到 **0.6.1-dev**（或含 `toHostMd(rule, host)` + `host === "trae"` 保留分支的版本）
+1. 升级 `harness-eng` 到 **0.6.1**（或含 `toHostMd(rule, host)` + `host === "trae"` 保留分支的版本）
 2. 再 land / render L5，让 `scripts/agent-config/sync.mjs` **从 tmpl 重写 / 刷新落地**
 3. 跑 `node scripts/agent-config/sync.mjs`
 4. 检查 `.trae/rules/*.md` 顶部是否有 YAML `alwaysApply` / `globs`（不是正文引用块）
@@ -43,11 +43,13 @@
 - [ ] 与 Cursor `.cursor/mcp.json` 的操作差（多一步开关？路径不同？）写一句
 - [ ] 若会话只挂上部分 server：到 Settings MCP 面板抄启动失败报错（缺服 ≠ 文件没被 IDE 吃）
 
-2026-09-12 Trae CN：磁盘 ✓；IDE **已消费**文件（`mcp_gitlab` / `mcp_chrome-devtools` / `mcp_Apifox_Dao_Ru`）；缺 mysql×4、redis×3、sonarqube；disable-switch 对照未做。T-P0-2 保持 **partial↑** 直到面板报错 + 关开关对照有人勾。
+2026-09-12 Trae CN：磁盘 ✓；IDE **已消费**文件（`mcp_gitlab` / `mcp_chrome-devtools` / `mcp_Apifox_Dao_Ru`）。**2026-09-14 MCP 面板 PASS**：Settings 显示 **12** 台；**ON** gitlab / Apifox 导入 / chrome-devtools；其余 **OFF via toggle**（在场，不是缺文件）。早先「缺 7 台」是误读。T-P0-2 **PASS**。
 
-## 3. Hooks：只认 `.trae/hooks.json`（必须新会话）
+## 3. Hooks：只认 `.trae/hooks.json`（**PASS** · 2026-09-14）
 
-T-P1-2 后生成物门禁 matcher 是 **`Bash|RunCommand`**（官方终端 `tool_name` = **`RunCommand`**）。Round C 当时 matcher 仍是 Claude 族 **`Bash`**，对不上 `RunCommand`，**很可能是误诊**成「宿主从未调用」。**不要**据此把矩阵改成高。
+- [x] **Hooks 探测 PASS**（c-be-sms-ai / Trae CN）：Settings → Hooks 已启用项目 hooks；matcher **`Bash|RunCommand`** → `shell-gate git-commit-soft-gate.js`；`git commit --dry-run` 注入 `additionalContext`；软门禁 **allow**（不阻断）。详见实证页「Hooks 复测 PASS」。hooks PASS **单独不授权**升 **高**。
+
+T-P1-2 后生成物门禁 matcher 是 **`Bash|RunCommand`**（官方终端 `tool_name` = **`RunCommand`**）。Round C 当时 matcher 仍是 Claude 族 **`Bash`**，对不上 `RunCommand`，**是误诊**成「宿主从未调用」。配方留下面，给别的消费仓复跑。
 
 **通道（强制）**：
 
@@ -56,19 +58,23 @@ T-P1-2 后生成物门禁 matcher 是 **`Bash|RunCommand`**（官方终端 `tool
 - **Settings → Hooks** 必须**启用项目 hooks**（磁盘有 `.trae/hooks.json` ≠ 面板已开）
 - `.githooks` 仍是兜底（`pre-commit` + gate `--git`），不替代 Trae 原生 hook 复测
 
-**探测配方**（T-P1-2 后）：
+**探测配方**（T-P1-2 后；权威仓已 PASS，仍可用）：
 
 1. 升级 skill → land/render L5 **刷新** `sync.mjs` → `node scripts/agent-config/sync.mjs`（让 `.trae/hooks.json` 带上 `RunCommand`）
 2. Trae **Settings → Hooks** 启用**项目** hooks
-3. **新开** Trae Agent 会话（中途改 `hooks.json` **可能不热加载**）
-4. stage 一份会被门禁盯到的生成物（例：`.claude` 下 GENERATED 文件）
+3. **新开** Trae Agent 会话（中途改 `hooks.json` **可能不热加载**）。2026-09-14 权威仓当次会话已加载 `hooks.json`，新会话非硬性。
+4. stage 一份会被门禁盯到的生成物（例：`.claude/hooks/claude-adapter.js`，不要只 stage SSOT `docs/agent-config/`）
 5. 让 Agent 经 **Trae 终端工具**（`RunCommand`）跑 `git commit --dry-run`
 6. 期望 hook 注入 `systemMessage` 和/或 `hookSpecificOutput.additionalContext`（软提醒，不阻断）
 7. `Stop` 检查清单是否在会话结束时跑一次
 
+可选一行（CRLF 暂存坑）：仅 CRLF 差的文件 `git add` 后可能空暂存（权威仓 `.claude/rules/00-harness-ssot.md` 踩过）→ 换有实质 diff 的生成物，如 `.claude/hooks/claude-adapter.js`。
+
 **PostToolUse 干扰 caveat**：Edit 路径静默 **不是**「hooks 没跑」的证据——`after-edit-reminder` 对不匹配路径本就返回 `{}`。先用手工 stdin 跑同一脚本对照，再解释 live 静默。
 
 2026-09-12 Round C（正确通道 `.trae/hooks.json`，matcher 当时仍是 `Bash`）：手工 stdin Claude payload ✓ 注入；live `Shell` + `git commit --dry-run` ✗；live Exec `RunCommand` ✗。**T-P0-3 本机行为 FAIL**。事后判 **matcher 误诊**（`Bash` 永不匹配 `RunCommand`）。上半场 `Bash` / 中途临时 `RunCommand` 亦未见 systemMessage（中途改可能不热加载；Settings → Hooks 当时未核）。
+
+**2026-09-14 Hooks 复测 PASS**（权威仓 c-be-sms-ai）：Settings → Hooks 已开；matcher `Bash|RunCommand`；staged `.claude/hooks/claude-adapter.js` + `git commit --dry-run` → `additionalContext` 注入、软 allow、dry-run 跑完。
 
 ## 4. Skills（可选补一句）
 

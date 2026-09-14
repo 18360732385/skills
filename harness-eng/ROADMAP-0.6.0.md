@@ -102,7 +102,9 @@
 
 **Trae 中高 → 高**（旁路立项）：脚手架已共享 SSOT + Claude 族 hooks；缺口是原生执行与实证宿主行为，不是「还没写适配」。跟踪清单：[host/TRAE-PARITY.md](host/TRAE-PARITY.md)。
 
-**0.6.1-dev Trae P0 spike 已开工**（2026-09-12）：官方实证 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)；镜像保留 Trae frontmatter；`mature-trae` fixture。**不**在本切片把矩阵改成高（T-P1-5 等人 Trae 会话确认 hooks/MCP）。**不塞进已收口的 0.6.0**。G6 仍只管 Codex P2 冻结，与本条无关。
+**0.6.1-dev Trae P0 spike 已开工**（2026-09-12）：官方实证 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)；镜像保留 Trae frontmatter；`mature-trae` fixture。**不塞进已收口的 0.6.0**。G6 仍只管 Codex P2 冻结，与本条无关。
+
+**0.6.1 已正式钉号**（2026-09-14）：矩阵 Trae **高**（Hooks live PASS + MCP 面板 PASS + T-P1）。仍 **不假装** Cursor 协议。
 
 ## Agent 用法（M1 起）
 

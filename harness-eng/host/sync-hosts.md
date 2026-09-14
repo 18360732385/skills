@@ -28,7 +28,7 @@
 | claude | `adapters/claude.md` | **高** |
 | qoder | `adapters/qoder.md` | **高** |
 | workbuddy | `adapters/workbuddy.md` | **高** |
-| trae | `adapters/trae.md` | **中高**（同级缺口见 [TRAE-PARITY.md](TRAE-PARITY.md)） |
+| trae | `adapters/trae.md` | **高**（不假装 Cursor 协议；见 [TRAE-PARITY.md](TRAE-PARITY.md)） |
 | codex | `adapters/codex.md`（P2：部分对齐） | **部分（P2）** — 勿当成已全量同步 |
 
 对齐矩阵 SSOT：[ai-tools.md](ai-tools.md)。L3+ / L5 全量镜像宿主不再强制冗余 `1x-contract-sync`；Codex 仍写 `.codex/contract-sync.md`。L5 宿主 rules 目录由 **sync 托管**：plan 外的 `1x-contract-sync` 与宿主 `00-harness-ssot` 孤儿会被清掉；alwaysApply 指针必须先在 **`docs/agent-config/rules/00-harness-ssot.mdc`**。

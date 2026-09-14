@@ -19,6 +19,8 @@
 多选时**每个对应真密路径都写同一份 `mcpServers`**（内容一致）。路径解析 SSOT：`scripts/lib/mcp-paths.mjs`。  
 `fill-calibrate-live` 按优先级读取：`.cursor/mcp.json` → `.mcp.json` → `.trae/mcp.json` → `.qoder/mcp.json`。
 
+**Trae 启用**：写完 `.trae/mcp.json` 后须在 IDE **Settings → MCP** 用开关启用各 server。磁盘产物 ≠ 已接入；面板里 **OFF via toggle** 的条目仍在场（不是缺文件 / 不是启动失败）。无协议变更：主路径仍是 `.trae/mcp.json`，不改到 `.cursor/mcp.json`。
+
 ## 触发
 
 - **MCP 装配**（fill-mcp）
