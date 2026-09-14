@@ -54,7 +54,7 @@
 ## 章节级 merge 预览（0.4.0+）
 
 Markdown/MDC 的 merge 按 **H2 章节**合并：已有章节原样保留，缺失章节追加并打 `（harness-eng 补齐）` 标记。  
-确认闸门前先跑 `render.mjs --dry-run`：merge 文件的日志条目带 `mergePreview.append`（将追加章节）/ `mergePreview.keep`（已存在、保留不动），WritePlan 文件表须照此列出；真实写盘后 merge 日志同样回写 `mergePreview` 便于审计。
+确认闸门前先跑 `scripts/harness.mjs --dry-run`（或内部 `render.mjs --dry-run`）：merge 文件的日志条目带 `mergePreview.append`（将追加章节）/ `mergePreview.keep`（已存在、保留不动），WritePlan 文件表须照此列出；真实写盘后 merge 日志同样回写 `mergePreview` 便于审计。
 
 ## 正目标
 

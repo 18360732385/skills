@@ -16,7 +16,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 # 需要指定宿主时加上：--agent <host>
 ```
 
-装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；其他按该宿主文档）。更新同 URL 再执行一次即可。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。详情见手册「2. 如何安装和更新」。
+装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；Trae：`~/.trae/skills/` 或项目 `.trae/skills/`——**示例≠唯一安装目标**；其他按该宿主文档）。更新同 URL 再执行一次即可。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。详情见手册「2. 如何安装和更新」。
 L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --root <TARGET>`；落后则 land/upgrade 刷新 `scripts/agent-config/sync.mjs`，再 `node scripts/agent-config/sync.mjs`。
 
 ## 你要做什么？

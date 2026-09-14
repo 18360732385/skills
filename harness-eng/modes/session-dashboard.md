@@ -89,7 +89,7 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 ```bash
 node scripts/session-dash.mjs --root <TARGET> \
   --mode pipeline --phase "WritePlan 待确认" --preauth no \
-  [--pending "等待确认"] [--next "确认后 render"] [--json] \
+  [--pending "等待确认"] [--next "确认后 harness.mjs"] [--json] \
   [--intent engineering|meta]
 ```
 
