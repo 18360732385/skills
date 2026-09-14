@@ -3319,7 +3319,15 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/TRAE-P0-EVIDENCE/.test(parity061) && /0\.6\.1-dev/.test(parity061), "TRAE-PARITY links evidence + 0.6.1-dev");
   assert(/消费仓/.test(parity061) && /刷新/.test(parity061), "TRAE-PARITY T-P0-1 consumer refresh required");
   assert(/IDE 已消费|已消费/.test(parity061), "TRAE-PARITY T-P0-2 IDE consumes file");
-  assert(/新会话/.test(parity061), "TRAE-PARITY T-P0-3 pending new session");
+  assert(/新会话/.test(parity061), "TRAE-PARITY still records 新会话 recipe caveat");
+  assert(/Hooks 复测 PASS|live PASS/.test(parity061), "TRAE-PARITY records hooks live PASS");
+  assert(/单独不授权/.test(parity061), "TRAE-PARITY: hooks PASS alone does not authorize 高");
+  assert(/^- \[x\] T-P0-3/m.test(parity061), "TRAE-PARITY checks T-P0-3");
+  assert(/^- \[x\] T-P1-2/m.test(parity061), "TRAE-PARITY checks T-P1-2");
+  assert(/^- \[ \] T-P0-2/m.test(parity061), "TRAE-PARITY leaves T-P0-2 open");
+  assert(/^- \[ \] T-P1-3/m.test(parity061), "TRAE-PARITY leaves T-P1-3 open");
+  assert(/^- \[ \] T-P1-4/m.test(parity061), "TRAE-PARITY leaves T-P1-4 open");
+  assert(/^- \[ \] T-P1-5/m.test(parity061), "TRAE-PARITY leaves T-P1-5 open");
   const aiTools061 = readDoc("ai-tools.md");
   assert(/中高/.test(aiTools061), "ai-tools.md still marks Trae as 中高");
   assert(!/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools061), "matrix Trae not bumped to 高");
@@ -3366,11 +3374,17 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/Round C/.test(evidence) && /本机行为 FAIL/.test(evidence), "EVIDENCE Round C T-P0-3 local FAIL");
   assert(/误诊/.test(evidence) && /RunCommand/.test(evidence), "EVIDENCE reclassifies Round C as matcher misdiagnosis");
   assert(/Settings/.test(evidence) && /Hooks/.test(evidence) && /新会话/.test(evidence), "EVIDENCE requires Settings→Hooks + new session retest");
+  assert(/Hooks 复测 PASS/.test(evidence), "EVIDENCE has dated Hooks 复测 PASS section");
+  assert(/2026-09-14/.test(evidence) && /additionalContext|additional_context/.test(evidence), "EVIDENCE 2026-09-14 additionalContext injection");
+  assert(/软/.test(evidence) && /allow|放行|不阻断/.test(evidence), "EVIDENCE hooks retest soft allow");
+  assert(/单独不授权/.test(evidence), "EVIDENCE: hooks PASS alone does not authorize 高");
   assert(/beforeShellExecution/.test(evidence) && /\.cursor\/hooks\.json/.test(evidence), "EVIDENCE Round B invalid Cursor channel");
   assert(/永远不要|勿/.test(manual) && /\.cursor\/hooks\.json/.test(manual) && /beforeShellExecution/.test(manual), "MANUAL forbids Cursor channel as Trae hooks evidence");
   assert(/RunCommand/.test(manual) && /Settings/.test(manual) && /Hooks/.test(manual), "MANUAL probe uses RunCommand + Settings→Hooks");
   assert(/additionalContext|systemMessage/.test(manual), "MANUAL expects systemMessage/additionalContext");
   assert(/\.githooks/.test(manual), "MANUAL keeps .githooks as fallback");
+  assert(/Hooks 复测 PASS|Hooks 探测 PASS/.test(manual), "MANUAL marks Hooks probe PASS");
+  assert(/CRLF/.test(manual), "MANUAL notes CRLF staging pitfall");
   assert(/本机行为 FAIL/.test(parity061) && /误诊/.test(parity061), "TRAE-PARITY T-P0-3 FAIL reclassified as matcher misdiagnosis");
   assert(/Round A/.test(parity061) && /PASS/.test(parity061), "TRAE-PARITY T-P0-1 Round A PASS");
   assert(/RunCommand/.test(traeAd) && /beforeShellExecution/.test(traeAd), "trae adapter documents RunCommand + forbids Cursor channel");
@@ -3384,6 +3398,10 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
     /中高/.test(changelog061) && /不.*矩阵|不把矩阵/.test(changelog061),
     "CHANGELOG 0.6.1-dev keeps Trae 中高 (no bump)"
   );
+  assert(/Hooks 复测 PASS/.test(changelog061) && /2026-09-14/.test(changelog061), "CHANGELOG notes Hooks live PASS after T-P1-2");
+  assert(/单独不授权/.test(changelog061), "CHANGELOG: hooks PASS alone does not authorize 高");
+  assert(/live PASS|Hooks live PASS|Hooks 复测 PASS/.test(traeAd), "trae adapter notes Hooks live PASS");
+  assert(/单独不授权/.test(traeAd), "trae adapter: hooks PASS alone does not authorize 高");
 
   // T-P1-2: adapter soft-allow must emit Trae hookSpecificOutput.additionalContext
   {
