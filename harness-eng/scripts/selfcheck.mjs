@@ -2003,6 +2003,13 @@ assert(/\*\*SHOW\*\*/.test(sessionDashMd) && /\*\*HIDE\*\*/.test(sessionDashMd),
 assert(/当前版本号多少/.test(sessionDashMd), "session-dashboard version-question hide example");
 assert(/WritePlan 确认/.test(sessionDashMd), "session-dashboard mid-session meta still SHOW");
 assert(/含糊/.test(sessionDashMd), "session-dashboard ambiguous defaults HIDE");
+
+assert(!/确认后 render"/.test(sessionDashMd), "session-dashboard next tip uses harness not render");
+assert(/确认后 harness\.mjs/.test(sessionDashMd), "session-dashboard next tip harness.mjs");
+const aiTools063 = fs.readFileSync(path.join(skillRoot, "host/ai-tools.md"), "utf8");
+assert(/对齐矩阵（0\.6\.x）/.test(aiTools063), "ai-tools matrix title 0.6.x");
+assert(!/对齐矩阵（0\.5\.7）/.test(aiTools063), "ai-tools matrix title not stuck at 0.5.7");
+
 assert(/--intent engineering\|meta/.test(sessionDashMd), "session-dashboard documents --intent");
 assert(!/会话内\*\*每一轮\*\*/.test(sessionDashMd), "session-dashboard SSOT no longer every-turn");
 assert(!/quadrantChart|```mermaid/.test(sessionDashMd), "session-dashboard.md no mermaid");

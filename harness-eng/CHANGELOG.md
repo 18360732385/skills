@@ -6,6 +6,8 @@
 
 ## 0.6.3-dev — 2026-09-14（sync.mjs freshness gate）
 
+
+- **热路径去污**：session-dashboard / examples / resume 统一「确认后 `harness.mjs`」；矩阵标题改为 0.6.x；VERIFY 历史钉号标注「历史」；QUICKSTART 补 Trae skills 路径示例
 Audit P0-1。技能升级后消费仓实例化 `scripts/agent-config/sync.mjs` 不再静默沿用旧 tmpl（Trae FM strip 等）。**不**改 Trae 矩阵、**不**重开 Codex。
 
 ### 产品

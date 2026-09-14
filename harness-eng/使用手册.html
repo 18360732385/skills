@@ -717,7 +717,8 @@ https://github.com/18360732385/skills/tree/main/harness-eng
             <tbody>
               <tr><td>Cursor</td><td><code>~/.cursor/skills/</code> 或 <code>~/.cursor/skills-cursor/</code></td></tr>
               <tr><td>Claude Code</td><td><code>~/.claude/skills/</code></td></tr>
-              <tr><td>Codex / Qoder / Trae / 其他</td><td>按该宿主文档</td></tr>
+              <tr><td>Trae</td><td><code>~/.trae/skills/</code> 或项目 <code>.trae/skills/</code>（示例 ≠ 唯一安装目标）</td></tr>
+              <tr><td>Codex / Qoder / 其他</td><td>按该宿主文档</td></tr>
             </tbody>
           </table>
         </div>
@@ -743,7 +744,7 @@ Copy-Item -Recurse -Force &lt;源&gt;\harness-eng &lt;host-skills-dir&gt;\harnes
 
 # macOS / Linux
 cp -R &lt;源&gt;/harness-eng &lt;host-skills-dir&gt;/harness-eng</code></pre>
-        <p>路径示例（非唯一）：Cursor 常见 <code>~/.cursor/skills/harness-eng</code>（或 <code>skills-cursor</code>）；Claude Code 常见 <code>~/.claude/skills/harness-eng</code>；其余按该宿主文档。</p>
+        <p>路径示例（非唯一）：Cursor 常见 <code>~/.cursor/skills/harness-eng</code>（或 <code>skills-cursor</code>）；Claude Code 常见 <code>~/.claude/skills/harness-eng</code>；Trae 常见 <code>~/.trae/skills/harness-eng</code> 或项目 <code>.trae/skills/harness-eng</code>；其余按该宿主文档。</p>
 
         <h3>2.5 前置条件</h3>
         <ul>
@@ -888,7 +889,7 @@ node scripts/selfcheck.mjs</code></pre>
           </table>
         </div>
 
-        <h3>4.5 对齐矩阵（0.5.7+）</h3>
+        <h3>4.5 对齐矩阵（0.6.x）</h3>
         <div class="table-wrap">
           <table>
             <thead><tr><th>工具</th><th>对齐程度</th><th>不要误读成</th></tr></thead>

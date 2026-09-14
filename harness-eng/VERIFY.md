@@ -6,7 +6,7 @@
 
 当前 **0.6.3-dev**（Trae **高**；会话仪表盘无 mermaid；sync.mjs freshness gate）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
 
-## 0.6.3-dev 增量验收（sync.mjs freshness + 安装 URL）
+## 0.6.3-dev 增量验收（sync freshness · 安装 URL · 热路径去污）
 
 | 检查 | 结果 |
 |---|---|
@@ -15,6 +15,9 @@
 | manifest / meta / questions 为 `0.6.3-dev` | 有 |
 | tmpl + golden 含 `HARNESS_SYNC_TMPL_ID`；stale fixture `--check-freshness` 非 0 | 有 |
 | 安装 URL 指向 `main`（非 `V0.6.X`） | 有 |
+| 公开入口文案统一为 `harness.mjs`（无「确认后 render」主路径） | 有 |
+| `host/ai-tools.md` / 手册矩阵标题为 0.6.x | 有 |
+| QUICKSTART / 手册含 Trae skills 路径示例（示例≠唯一） | 有 |
 
 ## 0.6.2 增量验收（会话仪表盘去掉 mermaid）
 
@@ -31,7 +34,7 @@
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 | `node scripts/selfcheck-render.mjs` | 烟测 |
-| manifest / meta / questions 为 `0.6.1` | 有 |
+| （历史）manifest / meta / questions 曾钉 `0.6.1` | 有 |
 | [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表；T-P0-2 MCP 面板 PASS | 有 |
 | Trae 镜像保留 `alwaysApply` / `globs`；Claude/Qoder 仍 strip | 有 |
 | `mature-trae` 无 `.cursor/rules` 仍 MATURE；L5 sync 路径已钉 | 有 |
@@ -52,7 +55,7 @@
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 | `node scripts/selfcheck-render.mjs` | 烟测 |
-| manifest / meta / questions 恰好 `0.6.0`（无 `-dev`） | 有 |
+| （历史）manifest / meta / questions 曾钉 `0.6.0` | 有 |
 | 根 md ≤20 | 有 |
 | `archive/selfcheck/legacy/` 热树只留 INDEX；无 `.mjs` 体积 | 有 |
 | `.skillignore` + archive README「安装 ≠ 全仓」 | 有 |
@@ -71,7 +74,7 @@
 | `l5-sync-golden` 上 `sync.mjs --check` 绿 | 有 |
 | `multi-host-hooks` 多宿主 hooks 信号（S_HOOKS） | 有 |
 | mature-claude / mature-trae / qoder-hooks / stack-node 仍绿 | 有 |
-| 版本仍为 `0.6.0-dev`（未钉 0.6.0）；根 md ≤20 | 有 |
+| （历史）当时版本仍为 `0.6.0-dev`；根 md ≤20 | 有 |
 
 ## 0.6.0-dev 增量验收（M2）
 
@@ -83,7 +86,7 @@
 | `modes/` · `fill/` · `host/` 规格已搬家 | 有 |
 | 热路径旧路径薄 stub（write-plan / detect / fill / pipeline / fill-truths-auto） | 有 |
 | AGENT-INDEX 必读 ≤ 8；SKILL / QUICKSTART 路径已改 | 有 |
-| 版本仍为 `0.6.0-dev`（未钉 0.6.0） | 有 |
+| （历史）当时版本仍为 `0.6.0-dev` | 有 |
 
 ## 0.6.0-dev 增量验收（M1）
 
@@ -94,7 +97,7 @@
 | `land.mjs` 薄别名；`render.mjs --help` 指向 harness | 有 |
 | L5/`agent_config` 不经 render 写 `.cursor/rules` | 有 |
 | ROADMAP + G6「0.6.x 冻结 P2，全量对等另立项」 | 有 |
-| manifest / meta 钉 `0.6.0-dev` | 有 |
+| （历史）manifest / meta 曾钉 `0.6.0-dev` | 有 |
 
 ## 0.5.10 增量验收
 
