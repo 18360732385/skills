@@ -309,7 +309,8 @@ function main() {
     ready: scoreForUi.ready?.ok ?? null,
     formula_ceiling: scoreForUi.formula_ceiling ?? null,
     headline: ui.headline,
-    ui_version: ui.version || null,
+    report_schema: ui.report_schema || ui.version || null,
+    ui_version: ui.version || ui.report_schema || null, // compat alias
     lagging_domain: ui.lagging_domain?.id || null,
     gap_summary: ui.gap_to_ready?.summary || null,
     trend_summary: ui.trend?.summary || null,

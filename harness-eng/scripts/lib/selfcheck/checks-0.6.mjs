@@ -20,7 +20,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const pipeline = readDoc("pipeline.md");
   const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
 
-  // Pack slim + Trae T-P2 (0.6.3-dev P1 rest)
+  // Pack slim + Trae T-P2 (0.6.3 P1 rest)
   {
     const qs = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
     assert(/value: trae, label: Trae（高/.test(qs), "questions Trae label marks 高");
@@ -507,7 +507,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.3-dev", "manifest version exactly 0.6.3-dev");
+  assert(verLine && verLine[1] === "0.6.3", "manifest version exactly 0.6.3");
 
   const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -828,27 +828,27 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!/```\s*mermaid/.test(omitBoth) && !/quadrantChart/.test(omitBoth), "no-score footer still has no mermaid");
 }
 
-// --- 0.6.3-dev: sync.mjs freshness gate; production install URL main ---
+// --- 0.6.3 formal: freshness · report_schema narrative · upgrade three-step ---
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.6.3-dev", "0.6.3-dev manifest pin");
+  assert(manVer063 === "0.6.3", "0.6.3 manifest pin");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.6\.3-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.6\.3/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3-dev/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.3-dev/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.3/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -874,14 +874,22 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(harnessHelp063.status === 0 && /--check-freshness/.test(harnessHelp063.stdout), "harness --help lists --check-freshness");
 
   const changelog063 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.3-dev\b/m.test(changelog063), "CHANGELOG 0.6.3-dev heading");
+  assert(/^## 0\.6\.3\b/m.test(changelog063), "CHANGELOG 0.6.3 heading");
   assert(/freshness|HARNESS_SYNC_TMPL_ID/.test(changelog063), "CHANGELOG notes freshness");
   assert(/tree\/main\/harness-eng/.test(changelog063), "CHANGELOG production install URL main");
   assert(/V0\.6\.X/.test(changelog063) && /合并进/.test(changelog063), "CHANGELOG notes V0.6.X is dev train then merge to main");
 
   const upgrade063 = readDoc("upgrade.md");
-  assert(/0\.6\.2 → 0\.6\.3-dev/.test(upgrade063), "upgrade has 0.6.2 → 0.6.3-dev");
+  assert(/0\.6\.2 → 0\.6\.3/.test(upgrade063), "upgrade has 0.6.2 → 0.6.3");
   assert(/刷新/.test(upgrade063) && /sync\.mjs/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade L5 must refresh sync.mjs");
+
+  assert(/^## 0\.6\.3\b/m.test(changelog063) && !((changelog063.match(/^## 0\.6\.3[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.3 no -dev heading");
+  assert(/兼容别名/.test(changelog063) && /report_schema/.test(changelog063), "CHANGELOG notes report_schema / ui.version alias");
+  assert(/升级三步/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade 0.6.3 has three-step playbook");
+  const gloss063 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
+  assert(/report_schema/.test(gloss063) && /兼容别名/.test(gloss063), "glossary report_schema primary; ui.version alias");
+  assert(!/\| `ui\.version` \|/.test(gloss063), "glossary dropped standalone ui.version row");
+
 
   const agentIdx063 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
   assert(/check-freshness/.test(agentIdx063) && /sync\.mjs/.test(agentIdx063), "AGENT-INDEX notes L5 sync.mjs refresh");

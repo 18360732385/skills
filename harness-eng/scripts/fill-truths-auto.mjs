@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Legacy stub (0.6.3-dev+). Implementation moved to repo _history.
+ * Legacy stub (0.6.3+). Implementation moved to repo _history.
  * See archive/fill-truths-auto/INDEX.md
  */
 import path from "path";

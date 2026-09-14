@@ -2,9 +2,9 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.6.3-dev**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.6.3**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
-**0.6.3-dev**：消费仓 `sync.mjs` freshness gate；生产安装 URL **`main`**。**0.6.2**：会话仪表盘去掉 mermaid（Trae Syntax Error），改纯文本态势。**0.6.1**：Trae **高**（[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)）。**0.6.0 计划**（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
+**0.6.3**（正式）：消费仓 `sync.mjs` freshness gate；报告壳认 `report_schema`；生产装/升 **`main`**。**0.6.2**：会话仪表盘去掉 mermaid（Trae Syntax Error），改纯文本态势。**0.6.1**：Trae **高**（[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)）。**0.6.0 计划**（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
@@ -55,7 +55,7 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 | 契约填充 | `fill-truths` | 见 [fill/fill.md](fill/fill.md) |
 | MCP 装配 | `fill-mcp` | 本仓配置 → 多环境 mcp 矩阵 |
 | live 校准 | `fill-calibrate-live` | MCP 不可用时直连 |
-| HTML 报告 | `fill-report-html` | score → Dashboard（`skill_version` + `report_schema`；报告壳 ≠ skill） |
+| HTML 报告 | `fill-report-html` | score → Dashboard（页脚：`skill_version` + `report_schema`；报告壳 ≠ skill） |
 
 不确定选项时回复：**全部推荐**（协议 [recommended-profile.md](modes/recommended-profile.md)；写盘仍过 [write-plan.md](modes/write-plan.md)）。
 
@@ -79,4 +79,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.3-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version`；**报告壳版本 ≠ skill**）。
+见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.3**）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。

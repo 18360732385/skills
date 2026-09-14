@@ -1,6 +1,6 @@
 /**
  * Consumer `scripts/agent-config/sync.mjs` vs skill `templates/agent-config/sync.mjs.tmpl`
- * freshness (0.6.3-dev+). Marker must appear in BOTH the skill tmpl and instantiated script.
+ * freshness (0.6.3+). Marker must appear in BOTH the skill tmpl and instantiated script.
  */
 import fs from "fs";
 import path from "path";

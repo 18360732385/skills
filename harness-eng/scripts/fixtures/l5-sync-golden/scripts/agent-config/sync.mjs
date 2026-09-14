@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.6.3-dev
- * HARNESS_ENG_VERSION: 0.6.3-dev
+ * HARNESS_SYNC_TMPL_ID: 0.6.3
+ * HARNESS_ENG_VERSION: 0.6.3
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -27,8 +27,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.6.3-dev";
-const HARNESS_ENG_VERSION = "0.6.3-dev";
+const HARNESS_SYNC_TMPL_ID = "0.6.3";
+const HARNESS_ENG_VERSION = "0.6.3";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = ["cursor","claude"];

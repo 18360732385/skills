@@ -1,15 +1,22 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3-dev`（当前 **0.6.3-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3`（当前 **0.6.3**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
 
-## 0.6.3-dev — 2026-09-14（sync freshness · 热路径去污 · VERIFY 瘦身）
+## 0.6.3 — 2026-09-14（正式钉号：freshness · 热路径 · Trae P2 · 报告壳叙事）
+
+> 由 **0.6.3-dev** 钉号。生产装/升仍用 **`main`**。
+
+### 本版要点
+
 
 
 - **热路径去污**：session-dashboard / examples / resume 统一「确认后 `harness.mjs`」；矩阵标题改为 0.6.x；VERIFY 历史钉号标注「历史」；QUICKSTART 补 Trae skills 路径示例
 - **P1 发包再瘦**：`archive/selfcheck` 0.4.0/0.5.0/0.5.1 迁 `_history`；`.skillignore` 排除大体积归档
 - **P1 Trae T-P2-2…4**：提问脚注 / 热路径交叉链 / 审计·仪表盘「未生成≠未实证」
+- **报告壳叙事**：人读/页脚只认 `skill_version` + `report_schema`；`ui.version` 降为兼容别名（勿当 skill）
+- **升级三步**（L5）：装/升 skill（`main`）→ `harness.mjs --check-freshness` → 落后则刷新 `agent-config-sync` 再 `sync.mjs`
 - **热路径减脂（1/7/8/9）**：`archive/` 大块与 fill-truths-auto 全文迁 `_history/harness-eng-docs-archive/`；CHANGELOG 仅留 0.6 列车；`TRAE-P0-EVIDENCE` / `ROADMAP-0.6.0` 正文进 `archive/`（根/host 留 stub）
 - **热路径 CHANGELOG**：仅保留 0.6 列车；0.5.x 迁 `archive/CHANGELOG-0.5.x.md`
 - **P1 selfcheck 再拆**：`lib/selfcheck/checks-0.5.mjs`（0.5.2–0.5.10）
@@ -25,7 +32,7 @@ Audit P0-1。技能升级后消费仓实例化 `scripts/agent-config/sync.mjs` �
 
 ### 版本钉
 
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.3-dev`**
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.3`**（无 `-dev`）
 - 0.6.2 会话仪表盘钉号不回退
 
 ## 0.6.2 — 2026-09-14（会话仪表盘去掉 mermaid）
