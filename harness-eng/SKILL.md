@@ -24,7 +24,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（`land.mjs` 薄别名）。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](modes/recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
-6. **工程轮**回复末尾附可视化**会话仪表盘**（四台 + mermaid；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。纯 meta / 版本 / 手册问答**不附**整块。
+6. **工程轮**回复末尾附可视化**会话仪表盘**（四台摘要 + 可选纯文本态势；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。纯 meta / 版本 / 手册问答**不附**整块。
 
 ## 模式分流
 
@@ -108,3 +108,4 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 | 渲染脚本（内部；非 L5 委托） | `scripts/render.mjs`（`--help` 指向 harness；勿当 Agent 主路径） |
 | 0.6.0 计划（已收口） | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
 | 0.6.1 Trae 高 | [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) · [host/TRAE-PARITY.md](host/TRAE-PARITY.md) |
+| 0.6.2 会话仪表盘 | 去掉 mermaid `quadrantChart`（Trae Syntax Error）；改纯文本态势 |

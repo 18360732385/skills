@@ -1,8 +1,22 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1`（当前 **0.6.1**，Trae **高**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2`（当前 **0.6.2**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。
+
+## 0.6.2 — 2026-09-14（会话仪表盘去掉 mermaid）
+
+0.6.1 跟进。Trae（及部分宿主）渲染 footer `quadrantChart` 会出「Mermaid Syntax Error」；四台表已含覆盖/形态/参考分，象限图多余。
+
+### 产品
+
+- **会话仪表盘**：`renderSessionDashboardMarkdown` 不再输出 mermaid 围栏 / `quadrantChart`。有 score 时改一行纯文本：`施工态势：覆盖 X% × 形态 Y%（Q1 补形态 / Q2 理想区 / Q3 起步 / Q4 补覆盖）`（阈值 0.5）
+- Trae 会话内不再出现 Mermaid Syntax Error UI
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.2`**
+- 0.6.1 Trae 高钉号不回退
 
 ## 0.6.1 — 2026-09-14（Trae 高：P0/P1 收口 · 正式钉号）
 

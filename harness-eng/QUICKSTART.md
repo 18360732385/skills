@@ -42,7 +42,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
 四台读法见 [使用手册.html](使用手册.html) 首页示意与第 6 章。  
-施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + mermaid）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](modes/session-dashboard.md)。
+施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](modes/session-dashboard.md)。
 
 ## 写盘闸门（必记）
 
@@ -82,4 +82,4 @@ node scripts/selfcheck.mjs
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
 0.6.1 Trae 高：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 计划（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.1**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.2**）。
