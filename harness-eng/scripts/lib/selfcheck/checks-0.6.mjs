@@ -20,6 +20,20 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const pipeline = readDoc("pipeline.md");
   const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
 
+  // Pack slim + Trae T-P2 (0.6.3-dev P1 rest)
+  {
+    const qs = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+    assert(/value: trae, label: Trae（高/.test(qs), "questions Trae label marks 高");
+    const rec = readDoc("recommended-profile.md");
+    assert(/勿写成吓退式「中高」/.test(rec), "recommended-profile Trae not scare 中高");
+    const audit = readDoc("audit-report.md");
+    assert(/未生成/.test(audit) && /未实证/.test(audit) && /\.trae\/rules/.test(audit), "audit-report Trae 未生成/未实证");
+    const parity = fs.readFileSync(path.join(skillRoot, "host/TRAE-PARITY.md"), "utf8");
+    assert(/T-P2-2.*✅/.test(parity) && /T-P2-4.*✅/.test(parity), "TRAE-PARITY T-P2-2…4 checked");
+    assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs")), "checks-0.5.mjs present");
+  }
+
+
 // --- 0.6.0-dev M1: harness CLI · ROADMAP · G6 freeze · version pin ---
 {
   assert(fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "ROADMAP-0.6.0.md");
@@ -454,12 +468,16 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(legacyMjsM4.length === 0, "hot package has no legacy selfcheck .mjs bulk");
 
   assert(
-    fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.4.0.mjs")),
-    "hot package may keep 0.4 archived selfcheck"
+    fs.existsSync(path.join(skillRoot, "archive/selfcheck/INDEX.md")),
+    "archive/selfcheck INDEX after pack slim"
   );
   assert(
-    fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.5.1.mjs")),
-    "hot package may keep 0.5 archived selfcheck"
+    !fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.4.0.mjs")),
+    "hot package no longer keeps 0.4 archived selfcheck bulk"
+  );
+  assert(
+    !fs.existsSync(path.join(skillRoot, "archive/selfcheck/selfcheck-0.5.1.mjs")),
+    "hot package no longer keeps 0.5 archived selfcheck bulk"
   );
   assert(
     fs.existsSync(path.join(skillRoot, "archive/fill-truths-auto/INDEX.md")),
@@ -475,6 +493,14 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(
     fs.existsSync(path.join(historyDir, "selfcheck-0.2.10.mjs")),
     "legacy bulk lives in _history (0.2.10)"
+  );
+  assert(
+    fs.existsSync(path.join(historyDir, "selfcheck-0.5.1.mjs")),
+    "0.5.1 bulk lives in _history after pack slim"
+  );
+  assert(
+    fs.existsSync(path.join(historyDir, "selfcheck-0.4.0.mjs")),
+    "0.4.0 bulk lives in _history after pack slim"
   );
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");

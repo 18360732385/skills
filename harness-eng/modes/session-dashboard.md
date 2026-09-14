@@ -112,3 +112,8 @@ node scripts/session-dash.mjs --root <TARGET> \
 ## CLI
 
 `node scripts/session-dash.mjs --help` 列出选项。`--intent meta` 省略输出。目标仓无 `score-latest.json` 且诊断空时，默认输出**精简**仪表盘（非空四台表），减噪；有 score 仍四台全量。
+
+## Trae / 多宿主缺口用语
+
+工程轮若触及 Trae：诊断/任务台可读 `.trae/rules` · `.trae/hooks.json` · `.trae/mcp.json`。  
+**未生成** ≠ **未实证**（后者文件可能已在，只是 IDE 未开或未人验）。详 [audit-report.md](audit-report.md) · [TRAE-PARITY.md](../host/TRAE-PARITY.md)。

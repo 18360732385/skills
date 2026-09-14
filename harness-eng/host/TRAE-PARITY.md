@@ -82,9 +82,9 @@ P0 过关后再动生成器 / fixture / 矩阵。
 | ID | 工作 | 完成判据 |
 |---|---|---|
 | **T-P2-1** 安装路径示例 ✅ | 手册 / QUICKSTART 里 Trae 用户 skills 目录不再只写「按该宿主文档」 | 已给 `~/.trae/skills/` / `.trae/skills/` 示例，并声明「示例 ≠ 唯一安装目标」 |
-| **T-P2-2** 提问脚注 | `Q_AI_TOOL` / 推荐包对 Trae 可见，但不吓退 | 对照 Codex「部分对齐·不默认」的脚注强度：Trae 现为 **高**，勿再写成吓退式「中高」；未探测仍可进「全部推荐」（与 Codex 不默认区分） |
-| **T-P2-3** 热路径交叉链 | Agent 点名 Trae 同级时能落到本清单 | [AGENT-INDEX.md](../AGENT-INDEX.md) 按需表、[host/README.md](README.md)、适配卡各有一行指针（本 PR 已做轻量接线；P2 只补漏） |
-| **T-P2-4** 审计 / 仪表盘可见性 | audit / session-dashboard / WritePlan 对 Trae 路径与 Cursor 同级可读 | 报告列出 `.trae/rules` · `.trae/hooks.json` · `.trae/mcp.json`；缺口用语区分「未生成」与「未实证」 |
+| **T-P2-2** 提问脚注 ✅ | `Q_AI_TOOL` / 推荐包对 Trae 可见，但不吓退 | Trae 标签标明 **高**；与 Codex「不默认」区分；未探测也可进「全部推荐」 |
+| **T-P2-3** 热路径交叉链 ✅ | Agent 点名 Trae 同级时能落到本清单 | AGENT-INDEX · host/README · 适配卡 · write-plan 均有指针 |
+| **T-P2-4** 审计 / 仪表盘可见性 ✅ | audit / session-dashboard / WritePlan 对 Trae 路径与 Cursor 同级可读 | audit-report + session-dashboard 列出路径并区分未生成/未实证 |
 
 ## 非目标
 

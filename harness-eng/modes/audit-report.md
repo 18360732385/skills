@@ -95,3 +95,19 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 2. MCP：仅 example 或真密未入库
 3. `.gitignore` 是否忽略 `.cursor/mcp.json`（建议有）
 4. 非 cursor 工具：契约 sync 镜像文件存在（见 [ai-tools.md](../host/ai-tools.md)）
+
+## Trae 路径可见性（与 Cursor 同级）
+
+报告 / 缺口表对 Trae 至少列出（若 `ai_tools` 含 `trae` 或探测到 `.trae/`）：
+
+| 路径 | 含义 |
+|---|---|
+| `.trae/rules/` | rules 镜像（含 FM） |
+| `.trae/hooks.json` | Claude 族 hooks（matcher 含 `RunCommand`） |
+| `.trae/mcp.json` | MCP；启用靠 IDE Settings 开关 |
+
+缺口用语区分：
+
+- **未生成**：磁盘无该文件 / 目录（land/sync 未写出）
+- **未实证**：文件在，但人验/面板未确认（勿把「toggled off」写成缺失）
+

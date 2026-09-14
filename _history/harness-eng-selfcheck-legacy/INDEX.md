@@ -11,3 +11,13 @@
 | `selfcheck-0.3.0.mjs` … `selfcheck-0.3.10.mjs` | 0.3.x |
 
 勿按本目录排期或当现行验收。
+
+## 0.4.x / 0.5.0–0.5.1（2026-09-14 自 archive 迁入）
+
+| 文件 | 对应技能号 |
+|---|---|
+| `selfcheck-0.4.0.mjs` | 0.4.0 |
+| `selfcheck-0.5.0.mjs` | 0.5.0 |
+| `selfcheck-0.5.1.mjs` | 0.5.1 |
+
+热树 `archive/selfcheck/` 只留指针；现行验收仍是 `harness-eng/scripts/selfcheck.mjs`。

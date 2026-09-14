@@ -128,3 +128,7 @@ Q_SEED: 是
 
 6. 按域追加真实 `Pn`（有翻车后再写）
 7. 将稳定高频翻车压缩进 `00` 薄片表
+
+## Trae 同级
+
+点名 Trae / 多宿主对齐时，先读 [TRAE-PARITY.md](../host/TRAE-PARITY.md)（高；不假装 Cursor 协议）。热路径索引见 [AGENT-INDEX.md](../AGENT-INDEX.md)。
