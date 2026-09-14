@@ -8,6 +8,7 @@
 
 
 - **热路径去污**：session-dashboard / examples / resume 统一「确认后 `harness.mjs`」；矩阵标题改为 0.6.x；VERIFY 历史钉号标注「历史」；QUICKSTART 补 Trae skills 路径示例
+- **P1 selfcheck 分包**：`scripts/lib/selfcheck/checks-0.6.mjs` 承接 0.6.x 断言；入口仍 `selfcheck.mjs`
 - **P1 热路径瘦身**：VERIFY 历史增量表迁 `archive/VERIFY-history-through-0.6.0.md`；`session-dash --help`；无 score 时仪表盘精简一行减噪
 Audit P0-1。技能升级后消费仓实例化 `scripts/agent-config/sync.mjs` 不再静默沿用旧 tmpl（Trae FM strip 等）。**不**改 Trae 矩阵、**不**重开 Codex。
 

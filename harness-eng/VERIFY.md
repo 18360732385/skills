@@ -21,6 +21,7 @@
 | 历史增量表迁 `archive/VERIFY-history-through-0.6.0.md`；热路径 VERIFY 留桩 | 有 |
 | `session-dash.mjs --help` 退出 0 | 有 |
 | 无 score 时仪表盘精简（含「精简」） | 有 |
+| `lib/selfcheck/checks-0.6.mjs` 承接 0.6.x；入口仍 `selfcheck.mjs` | 有 |
 
 ## 0.6.2 增量验收（会话仪表盘去掉 mermaid）
 
