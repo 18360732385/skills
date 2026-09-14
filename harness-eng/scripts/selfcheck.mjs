@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.6.2: session dashboard drops mermaid quadrantChart (Trae Syntax Error); plain-text stance.
  * 0.6.1: Trae 高 formal pin (MCP panel PASS, hooks live PASS, matrix 高).
  * 0.6.0: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures + M4 slim pack / formal pin.
  * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
@@ -13,6 +14,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { buildReportUi } from "./lib/report-ui.mjs";
+import { renderSessionDashboardMarkdown } from "./lib/session-dashboard.mjs";
 import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
@@ -152,7 +154,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.6\.1"(?!-)/.test(qYaml), "questions.yaml version 0.6.1");
+assert(/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml version 0.6.2");
 assert(!/version:\s*"0\.6\.1-dev"/.test(qYaml), "questions.yaml not 0.6.1-dev");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -216,13 +218,13 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.6\.1"(?!-)/.test(manifest), "manifest 0.6.1");
+assert(/version:\s*"0\.6\.2"(?!-)/.test(manifest), "manifest 0.6.2");
 assert(!/version:\s*"0\.6\.1-dev"/.test(manifest), "manifest not 0.6.1-dev");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.6\.1"(?!-)/.test(metaTmpl), "harness-meta 0.6.1");
+assert(/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta 0.6.2");
 assert(!/skill_version:\s*"0\.6\.1-dev"/.test(metaTmpl), "harness-meta not 0.6.1-dev");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
@@ -236,6 +238,7 @@ assert(/## 0\.5\.7/.test(changelog), "CHANGELOG 0.5.7");
 assert(/## 0\.5\.8/.test(changelog), "CHANGELOG 0.5.8");
 assert(/## 0\.5\.9/.test(changelog), "CHANGELOG 0.5.9");
 assert(/## 0\.5\.10/.test(changelog), "CHANGELOG 0.5.10");
+assert(/## 0\.6\.2/.test(changelog), "CHANGELOG 0.6.2");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -388,14 +391,14 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.6\.1）/.test(verifyMd) && /当前 \*\*0\.6\.1\*\*/.test(verifyMd), "VERIFY is 0.6.1");
+assert(/验收记录（0\.6\.2）/.test(verifyMd) && /当前 \*\*0\.6\.2\*\*/.test(verifyMd), "VERIFY is 0.6.2");
 assert(!/当前 \*\*0\.6\.1-dev\*\*/.test(verifyMd), "VERIFY current pin not 0.6.1-dev");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.6\.1(?!-dev)/.test(readme), "README header version 0.6.1");
-assert(/当前 \*\*0\.6\.1\*\*/.test(readme) && !/当前 \*\*0\.6\.1-dev\*\*/.test(readme), "README footer version 0.6.1");
+assert(/当前版本：0\.6\.2(?!-dev)/.test(readme), "README header version 0.6.2");
+assert(/当前 \*\*0\.6\.2\*\*/.test(readme) && !/当前 \*\*0\.6\.2-dev\*\*/.test(readme), "README footer version 0.6.2");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -406,9 +409,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.6\.1\*\*/.test(handbookMd), "使用手册.md version 0.6.1");
-assert(/v0\.6\.1(?!-dev)/.test(handbookHtml) && !/v0\.6\.1-dev/.test(handbookHtml), "使用手册.html version 0.6.1");
-assert(/当前 \*\*0\.6\.1\*\*/.test(quickstartMd) && !/当前 \*\*0\.6\.1-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.1");
+assert(/版本：\*\*0\.6\.2\*\*/.test(handbookMd), "使用手册.md version 0.6.2");
+assert(/v0\.6\.2(?!-dev)/.test(handbookHtml) && !/v0\.6\.2-dev/.test(handbookHtml), "使用手册.html version 0.6.2");
+assert(/当前 \*\*0\.6\.2\*\*/.test(quickstartMd) && !/当前 \*\*0\.6\.2-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.2");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -653,7 +656,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.6\.1"(?!-)/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.1");
+  assert(/version:\s*"0\.6\.2"(?!-)/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.2");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1961,7 +1964,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.6\.1"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.6\.2"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -1998,11 +2001,17 @@ assert(/WritePlan 确认/.test(sessionDashMd), "session-dashboard mid-session me
 assert(/含糊/.test(sessionDashMd), "session-dashboard ambiguous defaults HIDE");
 assert(/--intent engineering\|meta/.test(sessionDashMd), "session-dashboard documents --intent");
 assert(!/会话内\*\*每一轮\*\*/.test(sessionDashMd), "session-dashboard SSOT no longer every-turn");
+assert(!/quadrantChart|```mermaid/.test(sessionDashMd), "session-dashboard.md no mermaid");
+assert(/施工态势/.test(sessionDashMd), "session-dashboard.md documents 施工态势");
+assert(!/四台 \+ mermaid/.test(skill), "SKILL dashboard is 四台摘要 not mermaid");
 assert(/工程轮/.test(handbookMd), "使用手册.md dashboard is engineering-turn gated");
 assert(!/Agent \*\*每一轮\*\*/.test(handbookMd), "使用手册.md no unconditional every-turn dashboard");
+assert(/纯文本施工态势/.test(handbookMd) && !/mermaid 象限图/.test(handbookMd), "使用手册.md dashboard no mermaid chart");
 assert(/工程轮/.test(handbookHtml), "使用手册.html dashboard is engineering-turn gated");
 assert(!/Agent <strong>每一轮<\/strong>/.test(handbookHtml), "使用手册.html no unconditional every-turn dashboard");
+assert(/纯文本态势/.test(handbookHtml) && !/四台摘要 \+ mermaid/.test(handbookHtml), "使用手册.html dashboard no mermaid");
 assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn gated");
+assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.test(quickstartMd), "QUICKSTART dashboard no mermaid");
 {
     const dashRoot = fs.mkdtempSync(path.join(os.tmpdir(), "he-session-dash-"));
   try {
@@ -2043,7 +2052,15 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
       "--root",
       dashRoot,
     ]);
-    assert(dashMd.status === 0 && /quadrantChart/.test(dashMd.stdout || ""), "session-dash renders mermaid");
+    assert(dashMd.status === 0, "session-dash markdown exits 0");
+    assert(
+      !/```\s*mermaid/.test(dashMd.stdout || "") && !/quadrantChart/.test(dashMd.stdout || ""),
+      "session-dash stdout has no mermaid fence"
+    );
+    assert(
+      /施工态势：覆盖 80% × 形态 74%（Q2 理想区）/.test(dashMd.stdout || ""),
+      "session-dash plain-text stance"
+    );
     assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
     assert(/使用手册\.html#s6/.test(dashMd.stdout || ""), "session-dash handbook link");
     const dashEng = runNode([
@@ -3267,7 +3284,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.1", "manifest version exactly 0.6.1");
+  assert(verLine && verLine[1] === "0.6.2", "manifest version exactly 0.6.2");
 
   const roadmapM4 = readRel("ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -3528,6 +3545,62 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
       fs.rmSync(tmpAd, { recursive: true, force: true });
     }
   }
+}
+
+// --- 0.6.2: session dashboard drops mermaid (Trae Syntax Error) ---
+{
+  const changelog062 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.2\b/m.test(changelog062), "CHANGELOG formal 0.6.2 section");
+  assert(/quadrantChart|mermaid/.test(changelog062) && /施工态势/.test(changelog062), "CHANGELOG 0.6.2 notes mermaid drop + 施工态势");
+  const libDash062 = fs.readFileSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs"), "utf8");
+  assert(!/quadrantChart/.test(libDash062) && !/```mermaid/.test(libDash062), "session-dashboard.mjs emits no mermaid");
+  assert(/施工态势/.test(libDash062) && /stanceQuadrant/.test(libDash062), "session-dashboard.mjs plain-text stanceQuadrant");
+  const upgrade062 = readDoc("upgrade.md");
+  assert(/0\.6\.1 → 0\.6\.2/.test(upgrade062), "upgrade has 0.6.1 → 0.6.2");
+
+  const dashSkeleton = {
+    root: "/tmp/he-stance",
+    sessionMode: "audit",
+    sessionPhase: "—",
+    preauth: "—",
+    decision: { ai_coding_ready: false, label: "建议暂缓", blockers: [] },
+    diagnose: { ladder: "L3", domains: "api" },
+    task: { line: "—" },
+    reportPath: null,
+    reportExpectedRel: null,
+    reportExists: false,
+    scorePath: null,
+    handbookPath: "使用手册.html",
+    handbookUrl: null,
+  };
+  const stanceMd = (coverage, morph) =>
+    renderSessionDashboardMarkdown({
+      ...dashSkeleton,
+      trend: { coverage, morph, composite: null, overall: morph == null ? null : morph * 100 },
+    });
+  assert(
+    /施工态势：覆盖 80% × 形态 40%（Q1 补形态）/.test(stanceMd(0.8, 0.4)),
+    "stance Q1 补形态 (high coverage, low morph)"
+  );
+  assert(
+    /施工态势：覆盖 50% × 形态 50%（Q2 理想区）/.test(stanceMd(0.5, 0.5)),
+    "stance Q2 理想区 at 0.5 boundary"
+  );
+  assert(
+    /施工态势：覆盖 0% × 形态 0%（Q3 起步）/.test(stanceMd(0, 0)),
+    "stance Q3 起步 (low coverage, low morph)"
+  );
+  assert(
+    /施工态势：覆盖 49% × 形态 50%（Q4 补覆盖）/.test(stanceMd(0.49, 0.5)),
+    "stance Q4 补覆盖 (low coverage, high morph)"
+  );
+  const omitCoverage = stanceMd(null, 0.8);
+  const omitMorph = stanceMd(0.8, null);
+  const omitBoth = stanceMd(null, null);
+  assert(!/施工态势/.test(omitCoverage), "stance omitted when coverage missing");
+  assert(!/施工态势/.test(omitMorph), "stance omitted when morph missing");
+  assert(!/施工态势/.test(omitBoth), "stance omitted when no score axes");
+  assert(!/```\s*mermaid/.test(omitBoth) && !/quadrantChart/.test(omitBoth), "no-score footer still has no mermaid");
 }
 
 console.log(`ok: ${ok.length}`);

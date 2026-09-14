@@ -6,13 +6,13 @@
 
 **SHOW**（本轮判定为工程轮时）：
 
-1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 条件 mermaid）
+1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选纯文本态势）
 2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`）
 3. 尚无目标根时，仍输出仪表盘，但决策/诊断/趋势台标「—」或「未探测」，任务台写当前阶段
 
 **HIDE**（本轮判定为 meta 时）：
 
-- **省略**整个 `## harness-eng 会话仪表盘` 块（含四台、mermaid、脚注）
+- **省略**整个 `## harness-eng 会话仪表盘` 块（含四台、纯文本态势、脚注）
 - 不要为了「凑脚注」去跑 session-dash；若脚本自检可用 `--intent meta`（无 markdown 输出）
 
 ## 触发
@@ -61,7 +61,9 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 | **任务台** | 下一动作 / pending / fill-plan / next_shards |
 | **趋势台** | 覆盖 ████ · 形态 ████ · 参考分（≠开干） |
 
-（有 score 时附 quadrantChart mermaid）
+施工态势：覆盖 80% × 形态 74%（Q2 理想区）
+
+（有覆盖+形态时一行；缺任一轴则整行省略。象限阈值 0.5：Q1 补形态 / Q2 理想区 / Q3 起步 / Q4 补覆盖）
 
 **详情请查询仪表盘** → 目标仓 [`docs/harness-eng/report-latest.html`](…)（已生成时给 file 链接） · [四台读法（使用手册.html#s6）](../使用手册.html#s6)
 

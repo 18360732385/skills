@@ -51,6 +51,12 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 
+## 0.6.1 → 0.6.2 迁移要点
+
+1. **meta**：`skill_version` → `0.6.2`（resume / upgrade 写 meta 时对齐 manifest）
+2. **会话仪表盘**：工程轮 footer 去掉 mermaid `quadrantChart`（Trae 等宿主 Syntax Error）；有 score 时改一行纯文本施工态势。规格 [session-dashboard.md](session-dashboard.md)
+3. **0.6.1 Trae 高钉号不回退**
+
 ## 0.6.1-dev → 0.6.1 迁移要点
 
 1. **meta**：`skill_version` → `0.6.1`（resume / upgrade 写 meta 时对齐 manifest）
