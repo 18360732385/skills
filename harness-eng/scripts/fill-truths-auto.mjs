@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /**
- * Legacy stub (0.5.10+). Implementation: archive/fill-truths-auto/fill-truths-auto.mjs
- * 仅脚本、对话不推荐。
+ * Legacy stub (0.6.3-dev+). Implementation moved to repo _history.
+ * See archive/fill-truths-auto/INDEX.md
  */
-import { pathToFileURL } from "url";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
-const dest = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../archive/fill-truths-auto/fill-truths-auto.mjs"
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const target = path.resolve(
+  __dirname,
+  "../../../_history/harness-eng-docs-archive/fill-truths-auto.mjs"
 );
-await import(pathToFileURL(dest).href);
+const { default: run } = await import(pathToFileURL(target).href);
+await run(process.argv.slice(2));
