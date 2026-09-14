@@ -14,6 +14,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { buildReportUi } from "./lib/report-ui.mjs";
+import { renderSessionDashboardMarkdown } from "./lib/session-dashboard.mjs";
 import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
@@ -3556,6 +3557,50 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   assert(/施工态势/.test(libDash062) && /stanceQuadrant/.test(libDash062), "session-dashboard.mjs plain-text stanceQuadrant");
   const upgrade062 = readDoc("upgrade.md");
   assert(/0\.6\.1 → 0\.6\.2/.test(upgrade062), "upgrade has 0.6.1 → 0.6.2");
+
+  const dashSkeleton = {
+    root: "/tmp/he-stance",
+    sessionMode: "audit",
+    sessionPhase: "—",
+    preauth: "—",
+    decision: { ai_coding_ready: false, label: "建议暂缓", blockers: [] },
+    diagnose: { ladder: "L3", domains: "api" },
+    task: { line: "—" },
+    reportPath: null,
+    reportExpectedRel: null,
+    reportExists: false,
+    scorePath: null,
+    handbookPath: "使用手册.html",
+    handbookUrl: null,
+  };
+  const stanceMd = (coverage, morph) =>
+    renderSessionDashboardMarkdown({
+      ...dashSkeleton,
+      trend: { coverage, morph, composite: null, overall: morph == null ? null : morph * 100 },
+    });
+  assert(
+    /施工态势：覆盖 80% × 形态 40%（Q1 补形态）/.test(stanceMd(0.8, 0.4)),
+    "stance Q1 补形态 (high coverage, low morph)"
+  );
+  assert(
+    /施工态势：覆盖 50% × 形态 50%（Q2 理想区）/.test(stanceMd(0.5, 0.5)),
+    "stance Q2 理想区 at 0.5 boundary"
+  );
+  assert(
+    /施工态势：覆盖 0% × 形态 0%（Q3 起步）/.test(stanceMd(0, 0)),
+    "stance Q3 起步 (low coverage, low morph)"
+  );
+  assert(
+    /施工态势：覆盖 49% × 形态 50%（Q4 补覆盖）/.test(stanceMd(0.49, 0.5)),
+    "stance Q4 补覆盖 (low coverage, high morph)"
+  );
+  const omitCoverage = stanceMd(null, 0.8);
+  const omitMorph = stanceMd(0.8, null);
+  const omitBoth = stanceMd(null, null);
+  assert(!/施工态势/.test(omitCoverage), "stance omitted when coverage missing");
+  assert(!/施工态势/.test(omitMorph), "stance omitted when morph missing");
+  assert(!/施工态势/.test(omitBoth), "stance omitted when no score axes");
+  assert(!/```\s*mermaid/.test(omitBoth) && !/quadrantChart/.test(omitBoth), "no-score footer still has no mermaid");
 }
 
 console.log(`ok: ${ok.length}`);
