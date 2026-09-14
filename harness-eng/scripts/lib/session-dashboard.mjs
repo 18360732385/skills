@@ -211,7 +211,29 @@ function renderDashboardLinkFooter(data) {
   return `**详情请查询仪表盘** → 定目标根后生成 \`${REPORT_REL}\` · ${handbookPart}`;
 }
 
-export function renderSessionDashboardMarkdown(data) {
+export function renderSessionDashboardMarkdown(data, opts = {}) {
+  const emptyNoise =
+    !data.scorePath &&
+    (data.decision?.label === "未打分" || data.decision?.ai_coding_ready == null) &&
+    (data.diagnose?.ladder === "—" || data.diagnose?.ladder == null) &&
+    (data.trend?.overall == null && data.trend?.coverage == null);
+  if (opts.compactEmpty !== false && emptyNoise) {
+    const bits = [
+      `目标 \`${data.root}\``,
+      `模式 ${data.sessionMode}`,
+      data.sessionPhase && data.sessionPhase !== "—" ? `阶段 ${data.sessionPhase}` : null,
+      data.task?.line || "暂无 score / meta",
+    ].filter(Boolean);
+    return [
+      "---",
+      "## harness-eng 会话仪表盘（精简）",
+      "",
+      bits.join(" · "),
+      "",
+      "尚未打分：说「完整度打分」或先 audit/land。四台详情见手册 #s6。",
+      "---",
+    ].join("\n");
+  }
   const lines = [];
   lines.push("---");
   lines.push("## harness-eng 会话仪表盘");

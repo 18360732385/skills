@@ -398,6 +398,11 @@ assert(!/当前 \*\*0\.6\.2\*\*/.test(verifyMd), "VERIFY current pin not leftove
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
+assert(fs.existsSync(path.join(skillRoot, "archive/VERIFY-history-through-0.6.0.md")), "VERIFY 0.6 history archive exists");
+assert(/VERIFY-history-through-0\.6\.0/.test(verifyMd), "VERIFY points to 0.6 history archive");
+assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
+
+
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
 assert(/当前版本：0\.6\.3-dev/.test(readme), "README header version 0.6.3-dev");
 assert(/当前 \*\*0\.6\.3-dev\*\*/.test(readme), "README footer version 0.6.3-dev");
@@ -2009,6 +2014,24 @@ assert(/确认后 harness\.mjs/.test(sessionDashMd), "session-dashboard next tip
 const aiTools063 = fs.readFileSync(path.join(skillRoot, "host/ai-tools.md"), "utf8");
 assert(/对齐矩阵（0\.6\.x）/.test(aiTools063), "ai-tools matrix title 0.6.x");
 assert(!/对齐矩阵（0\.5\.7）/.test(aiTools063), "ai-tools matrix title not stuck at 0.5.7");
+
+{
+  const dashHelp = runNode([path.join(skillRoot, "scripts/session-dash.mjs"), "--help"]);
+  assert(dashHelp.status === 0, "session-dash --help exits 0");
+  assert(/--intent/.test(dashHelp.stdout || ""), "session-dash --help lists --intent");
+  const emptyDash = runNode([
+    path.join(skillRoot, "scripts/session-dash.mjs"),
+    "--root",
+    path.join(os.tmpdir(), "harness-eng-no-score-" + process.pid),
+    "--mode",
+    "audit",
+  ]);
+  assert(emptyDash.status === 0, "session-dash empty root exits 0");
+  const emptyOut = emptyDash.stdout || "";
+  assert(/精简/.test(emptyOut), "session-dash empty uses compact footer");
+  assert(!/\| \*\*决策台\*\*/.test(emptyOut), "session-dash empty omits four-panel table");
+}
+
 
 assert(/--intent engineering\|meta/.test(sessionDashMd), "session-dashboard documents --intent");
 assert(!/会话内\*\*每一轮\*\*/.test(sessionDashMd), "session-dashboard SSOT no longer every-turn");
