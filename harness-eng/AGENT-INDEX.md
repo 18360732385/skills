@@ -38,4 +38,5 @@
 ## 写盘纪律（一行）
 
 确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton]`（`land.mjs` 薄别名）。  
-非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，生成 `.cursor/rules` 等由目标仓 `node scripts/agent-config/sync.mjs` 发出。勿直接把 `render.mjs` 当 Agent 主路径。
+非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，生成 `.cursor/rules` 等由目标仓 `node scripts/agent-config/sync.mjs` 发出。勿直接把 `render.mjs` 当 Agent 主路径。  
+**升级 L5**：必须刷新 `scripts/agent-config/sync.mjs`（land/upgrade 重渲 `agent-config-sync`）；`node scripts/harness.mjs --check-freshness --root <TARGET>` 对照 skill tmpl。

@@ -60,9 +60,8 @@
 | `score-policy.yaml` | `coverage_mode` + `coverage_targets` + `density` + `gate_profile`/`gate` |
 | `formula_ceiling` / `domain_caps` | 形态贴顶信号 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
-| `skill_version` | 技能号（manifest / meta；当前列车 **0.5.x**） |
-| `report_schema` | 报告投影 schema（现 **0.2.24**；JSON 仍暴露 `ui.version` 同值） |
-| `ui.version` | 报告壳别名 = `report_schema`；**报告壳版本 ≠ skill** |
+| `skill_version` | 技能号（manifest / meta；当前列车见 CHANGELOG） |
+| `report_schema` | **报告壳**投影 schema（现 **0.2.24**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可 |
 
 ## 常用词
 
@@ -98,7 +97,7 @@
 | **live 校准** | MCP 未挂载时用 `fill-calibrate-live` 直连；可按引擎满足填充 MCP 闸 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
 | **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
-| **会话仪表盘** | 工程轮回复末尾的四台 markdown + mermaid（meta / 版本问答省略）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
+| **会话仪表盘** | 工程轮回复末尾的四台 markdown 摘要 + 可选纯文本态势（无 mermaid；meta / 版本问答省略）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |
 | **score-history** | `docs/harness-eng/score-history.jsonl`：历次 overall/coverage/ready 追加日志 |
 | **progress.yaml** | `docs/harness-eng/progress.yaml`：填充进度状态（`--write-progress`） |

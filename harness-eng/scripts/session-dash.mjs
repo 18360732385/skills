@@ -12,17 +12,41 @@
  *     [--next "下一动作"]
  *     [--intent engineering|meta]
  *     [--json]
+ *     [--help]
  *
  * --intent engineering (default): render the four-panel footer.
  * --intent meta: omit markdown (json: { omitted: true, reason: "meta" }).
+ * 无 score 且诊断空时默认精简一行（减噪）；--json 仍输出完整结构。
  */
 import { buildSessionDashboard, renderSessionDashboardMarkdown } from "./lib/session-dashboard.mjs";
 
+const HELP = `session-dash — harness-eng 会话仪表盘（工程轮末尾四台摘要）
+
+用法:
+  node scripts/session-dash.mjs --root <TARGET> [选项]
+
+选项:
+  --root <path>              目标仓根（可读 score / meta）
+  --mode <name>              会话模式（audit|land|pipeline|…）
+  --phase <text>             当前阶段文案
+  --preauth yes|no|是        是否已预授权
+  --pending <text>           待办提示
+  --next <text>              下一动作（例：确认后 harness.mjs）
+  --intent engineering|meta  engineering=渲染；meta=省略（默认 engineering）
+  --json                     输出 JSON
+  --help, -h                 显示本帮助
+
+说明:
+  SHOW/HIDE 由 Agent 按 modes/session-dashboard.md 判断；本脚本只负责渲染。
+  无 score / 诊断空时默认精简一行，避免空四台噪音。
+`;
+
 function parseArgs(argv) {
-  const out = { json: false, intent: "engineering" };
+  const out = { json: false, intent: "engineering", help: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--root") out.root = argv[++i];
+    if (a === "--help" || a === "-h") out.help = true;
+    else if (a === "--root") out.root = argv[++i];
     else if (a === "--mode") out.sessionMode = argv[++i];
     else if (a === "--phase") out.sessionPhase = argv[++i];
     else if (a === "--preauth") {
@@ -44,6 +68,10 @@ function parseArgs(argv) {
 
 function main() {
   const args = parseArgs(process.argv);
+  if (args.help) {
+    process.stdout.write(HELP);
+    return;
+  }
   if (args.intent === "meta") {
     if (args.json) {
       process.stdout.write(JSON.stringify({ omitted: true, reason: "meta" }, null, 2) + "\n");

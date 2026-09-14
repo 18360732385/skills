@@ -50,6 +50,24 @@
 ## render 参数
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
+**例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
+
+## 0.6.2 → 0.6.3 迁移要点
+
+1. **meta**：`skill_version` → `0.6.3`（resume / upgrade 写 meta 时对齐 manifest）
+2. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness  
+3. **报告壳**：页脚与文档只认 `skill_version` + `report_schema`（`ui.version` 兼容别名，勿当 skill）
+4. **Trae**：升 skill 后仍须刷新实例化 `sync.mjs`（见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md) §0）
+
+
+## 0.6.1 → 0.6.2 迁移要点
+
+1. **meta**：`skill_version` → `0.6.2`（resume / upgrade 写 meta 时对齐 manifest）
+2. **会话仪表盘**：工程轮 footer 去掉 mermaid `quadrantChart`（Trae 等宿主 Syntax Error）；有 score 时改一行纯文本施工态势。规格 [session-dashboard.md](session-dashboard.md)
+3. **0.6.1 Trae 高钉号不回退**
 
 ## 0.6.1-dev → 0.6.1 迁移要点
 
@@ -78,7 +96,7 @@
 1. **meta**：`skill_version` → `0.5.10`（resume / upgrade 写 meta 时对齐 manifest）
 2. **Codex**：仍为部分对齐（P2），但**不默认**进「全部推荐」（仅 `.codex/` 探测或显式勾选）
 3. **皆无探测**：`ai_tools` 为空，追问一次；不默认 Cursor、不因此只写 `.cursor/` 适配
-4. **报告叙事**：优先 `skill_version` + `report_schema`（`ui.version` 仍为 JSON 别名）
+4. **报告叙事**：人读/页脚只认 `skill_version` + `report_schema`（`ui.version` = 兼容别名，勿当 skill）
 5. **legacy**：`fill-truths-auto` 见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
 
 ## 0.5.8 → 0.5.9 迁移要点

@@ -16,7 +16,8 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 # 需要指定宿主时加上：--agent <host>
 ```
 
-装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；其他按该宿主文档）。更新同 URL 再执行一次即可。详情见手册「2. 如何安装和更新」。
+装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；Trae：`~/.trae/skills/` 或项目 `.trae/skills/`——**示例≠唯一安装目标**；其他按该宿主文档）。更新同 URL 再执行一次即可。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。详情见手册「2. 如何安装和更新」。
+L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --root <TARGET>`；落后则 land/upgrade 刷新 `scripts/agent-config/sync.mjs`，再 `node scripts/agent-config/sync.mjs`。
 
 ## 你要做什么？
 
@@ -42,7 +43,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
 四台读法见 [使用手册.html](使用手册.html) 首页示意与第 6 章。  
-施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + mermaid）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](modes/session-dashboard.md)。
+施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](modes/session-dashboard.md)。
 
 ## 写盘闸门（必记）
 
@@ -82,4 +83,4 @@ node scripts/selfcheck.mjs
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
 0.6.1 Trae 高：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 计划（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.1**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.3**）。

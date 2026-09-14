@@ -6,13 +6,13 @@
 
 **SHOW**（本轮判定为工程轮时）：
 
-1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 条件 mermaid）
-2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`）
+1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选纯文本态势）
+2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`；`--help` 看选项；无 score 时精简一行）
 3. 尚无目标根时，仍输出仪表盘，但决策/诊断/趋势台标「—」或「未探测」，任务台写当前阶段
 
 **HIDE**（本轮判定为 meta 时）：
 
-- **省略**整个 `## harness-eng 会话仪表盘` 块（含四台、mermaid、脚注）
+- **省略**整个 `## harness-eng 会话仪表盘` 块（含四台、纯文本态势、脚注）
 - 不要为了「凑脚注」去跑 session-dash；若脚本自检可用 `--intent meta`（无 markdown 输出）
 
 ## 触发
@@ -61,7 +61,9 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 | **任务台** | 下一动作 / pending / fill-plan / next_shards |
 | **趋势台** | 覆盖 ████ · 形态 ████ · 参考分（≠开干） |
 
-（有 score 时附 quadrantChart mermaid）
+施工态势：覆盖 80% × 形态 74%（Q2 理想区）
+
+（有覆盖+形态时一行；缺任一轴则整行省略。象限阈值 0.5：Q1 补形态 / Q2 理想区 / Q3 起步 / Q4 补覆盖）
 
 **详情请查询仪表盘** → 目标仓 [`docs/harness-eng/report-latest.html`](…)（已生成时给 file 链接） · [四台读法（使用手册.html#s6）](../使用手册.html#s6)
 
@@ -87,7 +89,7 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 ```bash
 node scripts/session-dash.mjs --root <TARGET> \
   --mode pipeline --phase "WritePlan 待确认" --preauth no \
-  [--pending "等待确认"] [--next "确认后 render"] [--json] \
+  [--pending "等待确认"] [--next "确认后 harness.mjs"] [--json] \
   [--intent engineering|meta]
 ```
 
@@ -106,3 +108,12 @@ node scripts/session-dash.mjs --root <TARGET> \
 | audit 只读 | 缺口摘要进任务台 | 不强制生成 |
 
 开干结论**两处一致**：只看 `ai_coding_ready`（见 [glossary.md](../glossary.md)）。
+
+## CLI
+
+`node scripts/session-dash.mjs --help` 列出选项。`--intent meta` 省略输出。目标仓无 `score-latest.json` 且诊断空时，默认输出**精简**仪表盘（非空四台表），减噪；有 score 仍四台全量。
+
+## Trae / 多宿主缺口用语
+
+工程轮若触及 Trae：诊断/任务台可读 `.trae/rules` · `.trae/hooks.json` · `.trae/mcp.json`。  
+**未生成** ≠ **未实证**（后者文件可能已在，只是 IDE 未开或未人验）。详 [audit-report.md](audit-report.md) · [TRAE-PARITY.md](../host/TRAE-PARITY.md)。

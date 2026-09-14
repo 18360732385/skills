@@ -1,6 +1,6 @@
 /**
  * Chat footer dashboard for harness-eng engineering turns (0.5.3+; gated 0.5.4+).
- * Mirrors report-latest.html four panels in markdown + mermaid.
+ * Mirrors report-latest.html four panels in markdown (plain-text stance; no mermaid).
  * When to SHOW/HIDE: session-dashboard.md (agent decides; --intent on session-dash.mjs).
  */
 import fs from "fs";
@@ -69,6 +69,16 @@ function yesNo(ok) {
 function shortPath(p) {
   if (!p) return "—";
   return String(p).replace(/\\/g, "/");
+}
+
+/** Coverage × morph stance; thresholds 0.5. No mermaid (Trae Syntax Error). */
+function stanceQuadrant(coverage, morph) {
+  const highC = coverage >= 0.5;
+  const highM = morph >= 0.5;
+  if (highC && !highM) return "Q1 补形态";
+  if (highC && highM) return "Q2 理想区";
+  if (!highC && !highM) return "Q3 起步";
+  return "Q4 补覆盖";
 }
 
 /**
@@ -201,7 +211,29 @@ function renderDashboardLinkFooter(data) {
   return `**详情请查询仪表盘** → 定目标根后生成 \`${REPORT_REL}\` · ${handbookPart}`;
 }
 
-export function renderSessionDashboardMarkdown(data) {
+export function renderSessionDashboardMarkdown(data, opts = {}) {
+  const emptyNoise =
+    !data.scorePath &&
+    (data.decision?.label === "未打分" || data.decision?.ai_coding_ready == null) &&
+    (data.diagnose?.ladder === "—" || data.diagnose?.ladder == null) &&
+    (data.trend?.overall == null && data.trend?.coverage == null);
+  if (opts.compactEmpty !== false && emptyNoise) {
+    const bits = [
+      `目标 \`${data.root}\``,
+      `模式 ${data.sessionMode}`,
+      data.sessionPhase && data.sessionPhase !== "—" ? `阶段 ${data.sessionPhase}` : null,
+      data.task?.line || "暂无 score / meta",
+    ].filter(Boolean);
+    return [
+      "---",
+      "## harness-eng 会话仪表盘（精简）",
+      "",
+      bits.join(" · "),
+      "",
+      "尚未打分：说「完整度打分」或先 audit/land。四台详情见手册 #s6。",
+      "---",
+    ].join("\n");
+  }
   const lines = [];
   lines.push("---");
   lines.push("## harness-eng 会话仪表盘");
@@ -252,17 +284,8 @@ export function renderSessionDashboardMarkdown(data) {
   if (data.trend.coverage != null && data.trend.morph != null) {
     const cx = Math.round(data.trend.coverage * 100);
     const my = Math.round(data.trend.morph * 100);
-    lines.push("```mermaid");
-    lines.push("quadrantChart");
-    lines.push("    title 施工态势（覆盖 × 形态）");
-    lines.push("    x-axis 低覆盖 --> 高覆盖");
-    lines.push("    y-axis 低形态 --> 高形态");
-    lines.push("    quadrant-1 补形态");
-    lines.push("    quadrant-2 理想区");
-    lines.push("    quadrant-3 起步");
-    lines.push("    quadrant-4 补覆盖");
-    lines.push(`    当前仓: [${cx / 100}, ${my / 100}]`);
-    lines.push("```");
+    const q = stanceQuadrant(data.trend.coverage, data.trend.morph);
+    lines.push(`施工态势：覆盖 ${cx}% × 形态 ${my}%（${q}）`);
     lines.push("");
   }
 

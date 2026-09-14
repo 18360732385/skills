@@ -6,6 +6,7 @@
  *   node scripts/harness.mjs --root <TARGET> --params <params.json>
  *       [--mode land|resume|upgrade|pipeline-skeleton]
  *       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
+ *   node scripts/harness.mjs --check-freshness --root <TARGET>
  *
  * Reads harness-meta (docs/harness-eng/ then .cursor/ fallback).
  * If agent_config true (params or meta or ladder L5):
@@ -24,6 +25,11 @@ import { spawnSync } from "child_process";
 import { findHarnessMetaFile } from "./lib/harness-meta.mjs";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { resolveAgentConfig } from "./lib/hooks-checks.mjs";
+import {
+  compareSyncFreshness,
+  formatFreshnessMessage,
+  runFreshnessCheck,
+} from "./lib/sync-freshness.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
@@ -61,6 +67,7 @@ function parseArgs(argv) {
     mode: "land",
     noSync: false,
     help: false,
+    checkFreshness: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -71,6 +78,7 @@ function parseArgs(argv) {
     else if (a === "--manifest") out.manifest = argv[++i];
     else if (a === "--mode") out.mode = String(argv[++i] || "land");
     else if (a === "--no-sync") out.noSync = true;
+    else if (a === "--check-freshness") out.checkFreshness = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -82,6 +90,7 @@ function printHelp() {
   node scripts/harness.mjs --root <TARGET> --params <params.json>
       [--mode land|resume|upgrade|pipeline-skeleton]
       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
+  node scripts/harness.mjs --check-freshness --root <TARGET>
 
 Canonical Agent write entry (0.6.0+). land.mjs is a thin alias.
   non-L5: delegates to render.mjs (same --root/--params/--dry-run/--manifest/--backup)
@@ -89,6 +98,8 @@ Canonical Agent write entry (0.6.0+). land.mjs is a thin alias.
     node scripts/agent-config/sync.mjs
     in the target (unless --no-sync or --dry-run).
   pipeline-skeleton: skeleton campaign write only — 不跑 fill-* / pipeline-fill.
+  --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与目标仓
+    scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
 `);
 }
 
@@ -189,6 +200,10 @@ export function main(argv = process.argv) {
     printHelp();
     process.exit(0);
   }
+  const skillRoot = path.resolve(__dirname, "..");
+  if (args.checkFreshness && args.root && !args.params) {
+    process.exit(runFreshnessCheck(args.root, skillRoot));
+  }
   if (!args.root || !args.params) {
     printHelp();
     process.exit(1);
@@ -205,6 +220,9 @@ export function main(argv = process.argv) {
   announceMode(mode);
 
   if (!agentConfig) {
+    if (args.checkFreshness) {
+      process.exit(runFreshnessCheck(args.root, skillRoot));
+    }
     process.exit(forward(runRender(args)));
   }
 
@@ -213,9 +231,22 @@ export function main(argv = process.argv) {
     `harness: agent_config=true（mode=${mode}）。生成宿主路径由 sync 发出，render 不得直写 .cursor/rules 等。`
   );
 
+  const beforeFresh = compareSyncFreshness(args.root, skillRoot);
   const rendered = runRender(args);
   const renderStatus = forward(rendered);
   if (renderStatus !== 0) process.exit(renderStatus);
+
+  const afterFresh = compareSyncFreshness(args.root, skillRoot);
+  if (beforeFresh.status === "stale" && afterFresh.status === "fresh") {
+    console.error("harness: 已从 skill tmpl 刷新 scripts/agent-config/sync.mjs（agent-config-sync）。");
+  }
+  if (!args.dryRun && (afterFresh.status === "stale" || afterFresh.status === "error")) {
+    console.error(formatFreshnessMessage(afterFresh, args.root));
+    process.exit(1);
+  }
+  if (args.checkFreshness && afterFresh.status === "fresh") {
+    console.error(`harness: sync.mjs freshness OK（HARNESS_SYNC_TMPL_ID=${afterFresh.skillId}）。`);
+  }
 
   if (args.dryRun) {
     console.error("harness: --dry-run，跳过 sync。确认后在目标仓执行：node scripts/agent-config/sync.mjs");

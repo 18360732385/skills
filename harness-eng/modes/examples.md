@@ -54,7 +54,7 @@
 1. 列出候选根 → `Q_TARGET_ROOT` 确认；写入仅限该根
 2. Fingerprint → `NEW_CODE_NO_HARNESS`；`S_SECRETS_LEAK` 若 README/yml 命中 → 警告
 3. `Q_MODULES=solo` → `AGENTS.root.solo.md.tmpl`；`Q_GLOB_PROFILE=focused`（大仓）
-4. WritePlan 含渲染预览与密钥移交 P0；确认后再 `render.mjs`
+4. WritePlan 含渲染预览与密钥移交 P0；确认后再跑 `scripts/harness.mjs`（勿把 `render.mjs` 当主路径）
 5. 分级移交：P0 处理泄露文件；P1 建议 `seed-truths`
 
 **期望产出：** 骨架落在正确根；solo 文案无「见分册」；不自动删 README 密；不拷参考仓业务红线。
