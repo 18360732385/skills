@@ -109,4 +109,4 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 | 0.6.0 计划（已收口） | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
 | 0.6.1 Trae 高 | [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) · [host/TRAE-PARITY.md](host/TRAE-PARITY.md) |
 | 0.6.2 会话仪表盘 | 去掉 mermaid `quadrantChart`（Trae Syntax Error）；改纯文本态势 |
-| 0.6.3-dev freshness | `harness.mjs --check-freshness`；L5 升阶必须刷新 `sync.mjs` |
+| 0.6.3 freshness | `harness.mjs --check-freshness`；L5 升阶必须刷新 `sync.mjs` |

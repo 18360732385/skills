@@ -1,6 +1,7 @@
 ﻿/**
  * Build human-facing `ui` projection from fill-score JSON.
- * `ui.version` = report_schema（报告壳；现 0.2.24）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.2.24）。≠ skill_version。
+ * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
  * 0.2.23：决策台瘦身——徽章二态；decision_kpis + morph_strip；域故事卡默认关。

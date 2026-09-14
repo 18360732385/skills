@@ -1,4 +1,4 @@
-# harness-eng 发包排除清单（G5 / 0.6.3-dev+）
+# harness-eng 发包排除清单（G5 / 0.6.3+）
 # 安装 ≠ 全仓。现行 skills CLI 未必识别；权威是热树减脂 + 本清单。
 
 archive/selfcheck/legacy/**

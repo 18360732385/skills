@@ -1,7 +1,7 @@
-version: "0.6.3-dev"
+version: "0.6.3"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
-# 0.6.3-dev: consumer sync.mjs freshness gate; production install URL main.
+# 0.6.3: consumer sync.mjs freshness gate; production install URL main.
 # 0.6.2: session dashboard drops mermaid quadrantChart (Trae Syntax Error); plain-text stance.
 # 0.6.1: Trae 高 formal pin (FM preserve, SSOT 00, RunCommand hooks + live PASS, MCP panel PASS).
 # 0.6.0: harness.mjs public CLI; doc topology; fill convergence; slim pack; Codex P2 freeze.

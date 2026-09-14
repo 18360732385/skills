@@ -1456,7 +1456,7 @@
     if (mode) bits.push("模式 " + mode);
     if (ladder) bits.push("阶梯 " + ladder);
     if (skillVer) bits.push("skill " + skillVer);
-    if (ui.version) bits.push("report " + ui.version);
+    var rs = ui.report_schema || ui.version; if (rs) bits.push("report_schema " + rs + "（报告壳 ≠ skill）");
     if (generatedAt) bits.push(generatedAt);
     $("subtitle").textContent = bits.join(" · ");
     show($("hdr"));
