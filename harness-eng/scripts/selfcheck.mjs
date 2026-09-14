@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.6.3-dev: consumer sync.mjs freshness gate + install URL V0.6.X.
+ * 0.6.3-dev: consumer sync.mjs freshness gate; production install URL main.
  * 0.6.2: session dashboard drops mermaid quadrantChart (Trae Syntax Error); plain-text stance.
  * 0.6.1: Trae 高 formal pin (MCP panel PASS, hooks live PASS, matrix 高).
  * 0.6.0: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures + M4 slim pack / formal pin.
@@ -428,7 +428,8 @@ for (const [label, text] of [
   assert(/宿主的用户 skills 目录/.test(text), `${label} host-agnostic install wording`);
   assert(!/装到 ~\/\.cursor\/skills\/harness-eng/.test(text), `${label} no Cursor-only install dest`);
   assert(!/npx skills add[^\n]*--agent cursor/.test(text), `${label} CLI not --agent cursor only`);
-  assert(/tree\/V0\.6\.X\/harness-eng/.test(text), `${label} install URL V0.6.X`);
+  assert(/tree\/main\/harness-eng/.test(text), `${label} install URL main`);
+  assert(!/tree\/V0\.6\.X\/harness-eng/.test(text), `${label} install URL not V0.6.X`);
 }
 assert(!/重启 Cursor/.test(readme), "README no restart Cursor");
 assert(/6\.0 对话内会话仪表盘/.test(handbookMd), "使用手册.md session dashboard section");
@@ -3606,7 +3607,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   assert(!/```\s*mermaid/.test(omitBoth) && !/quadrantChart/.test(omitBoth), "no-score footer still has no mermaid");
 }
 
-// --- 0.6.3-dev: sync.mjs freshness gate + install URL V0.6.X ---
+// --- 0.6.3-dev: sync.mjs freshness gate; production install URL main ---
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
@@ -3653,7 +3654,9 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const changelog063 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   assert(/^## 0\.6\.3-dev\b/m.test(changelog063), "CHANGELOG 0.6.3-dev heading");
-  assert(/freshness|HARNESS_SYNC_TMPL_ID/.test(changelog063) && /V0\.6\.X/.test(changelog063), "CHANGELOG notes freshness + V0.6.X");
+  assert(/freshness|HARNESS_SYNC_TMPL_ID/.test(changelog063), "CHANGELOG notes freshness");
+  assert(/tree\/main\/harness-eng/.test(changelog063), "CHANGELOG production install URL main");
+  assert(/V0\.6\.X/.test(changelog063) && /合并进/.test(changelog063), "CHANGELOG notes V0.6.X is dev train then merge to main");
 
   const upgrade063 = readDoc("upgrade.md");
   assert(/0\.6\.2 → 0\.6\.3-dev/.test(upgrade063), "upgrade has 0.6.2 → 0.6.3-dev");

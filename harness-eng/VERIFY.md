@@ -14,7 +14,7 @@
 | `node scripts/selfcheck-render.mjs` | 烟测 |
 | manifest / meta / questions 为 `0.6.3-dev` | 有 |
 | tmpl + golden 含 `HARNESS_SYNC_TMPL_ID`；stale fixture `--check-freshness` 非 0 | 有 |
-| 安装 URL 提 `V0.6.X`（非仅 `main`） | 有 |
+| 安装 URL 指向 `main`（非 `V0.6.X`） | 有 |
 
 ## 0.6.2 增量验收（会话仪表盘去掉 mermaid）
 

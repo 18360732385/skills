@@ -4,7 +4,7 @@
 
 **当前版本：0.6.3-dev**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
 
-**0.6.3-dev**：消费仓 `sync.mjs` freshness gate + 安装 URL `V0.6.X`。**0.6.2**：会话仪表盘去掉 mermaid（Trae Syntax Error），改纯文本态势。**0.6.1**：Trae **高**（[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)）。**0.6.0 计划**（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
+**0.6.3-dev**：消费仓 `sync.mjs` freshness gate；生产安装 URL **`main`**。**0.6.2**：会话仪表盘去掉 mermaid（Trae Syntax Error），改纯文本态势。**0.6.1**：Trae **高**（[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)）。**0.6.0 计划**（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
@@ -18,7 +18,7 @@
 
 本仓路径：`harness-eng/`（拷到宿主用户 skills 目录后为 `<host-skills-dir>/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。
 
-**一句话安装（推荐）：** 对 Agent 说「帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：https://github.com/18360732385/skills/tree/V0.6.X/harness-eng」；或 `npx skills add https://github.com/18360732385/skills/tree/V0.6.X/harness-eng -g`（需要时按宿主加 `--agent`）。装完新开会话后再点名。0.6 列车跟 **`V0.6.X`**；已发布快照可见 `main`。
+**一句话安装（推荐）：** 对 Agent 说「帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：https://github.com/18360732385/skills/tree/main/harness-eng」；或 `npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g`（需要时按宿主加 `--agent`）。装完新开会话后再点名。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。
 
 ### 跨仓 / 用户 skills
 

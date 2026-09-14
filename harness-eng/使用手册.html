@@ -702,10 +702,10 @@
         <h3>2.1 一句话安装（推荐）</h3>
         <p>对当前对话里的 Agent 说：</p>
         <pre><code>帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：
-https://github.com/18360732385/skills/tree/V0.6.X/harness-eng
+https://github.com/18360732385/skills/tree/main/harness-eng
 保证目录内直接有 SKILL.md，装完告诉我实际路径。</code></pre>
         <p>也可自己跑 CLI（全局；若提示复制/软链，优先 <strong>Copy</strong>）。<code>--agent</code> 按你用的宿主传，不要默认写成某一家：</p>
-        <pre><code>npx skills add https://github.com/18360732385/skills/tree/V0.6.X/harness-eng -g
+        <pre><code>npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 # 需要指定宿主时加上：--agent &lt;host&gt;</code></pre>
         <p>装好后：<strong>新开 Agent 会话</strong>，再显式点名 <strong>harness-eng</strong>。</p>
         <p>常见用户 skills 目录（示例，以宿主实际加载目录与官方文档为准）：</p>
@@ -721,11 +721,11 @@ https://github.com/18360732385/skills/tree/V0.6.X/harness-eng
             </tbody>
           </table>
         </div>
-        <p>0.6 列车安装用 <code>V0.6.X</code>（当前 tip）；已发布快照可见 <code>main</code>。</p>
+        <p>生产装/升用上面的 <code>main</code>。0.6 系列开发在 <code>V0.6.X</code>，合并进 <code>main</code> 后生产再装/升。</p>
 
         <h3>2.2 一句话更新</h3>
         <pre><code>帮我更新本机的 harness-eng skill：从
-https://github.com/18360732385/skills/tree/V0.6.X/harness-eng
+https://github.com/18360732385/skills/tree/main/harness-eng
 覆盖安装到你当前 Agent 宿主的用户 skills 目录（保留备份或直接覆盖均可），完成后核对 SKILL.md / manifest 版本。</code></pre>
         <p>或再次执行上面的 <code>npx skills add ...</code>（按宿主传 <code>--agent</code>），然后新开会话。目标仓 <code>docs/harness-eng/harness-meta.yaml</code> 的 <code>skill_version</code> 可随后续 resume / upgrade 对齐。</p>
 

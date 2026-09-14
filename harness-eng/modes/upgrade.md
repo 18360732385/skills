@@ -56,7 +56,7 @@
 
 1. **meta**：`skill_version` → `0.6.3-dev`（resume / upgrade 写 meta 时对齐 manifest）
 2. **L5 必刷新 `sync.mjs`**：land/upgrade/resume 重渲 `agent-config-sync`；或 `harness.mjs --check-freshness` 落后则按 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md) §0 复制 tmpl → 再 sync
-3. **安装**：0.6 列车 skill URL 用 `tree/V0.6.X/harness-eng`
+3. **安装**：生产装/升 skill URL 用 `tree/main/harness-eng`。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升
 4. **0.6.2 会话仪表盘钉号不回退**
 
 ## 0.6.1 → 0.6.2 迁移要点

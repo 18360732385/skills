@@ -20,7 +20,7 @@ node scripts/harness.mjs --check-freshness --root <TARGET>
 
 刷新（任选，然后跑 sync）：
 
-1. 升级 `harness-eng` 到当前列车（0.6 跟 **V0.6.X** / **0.6.3-dev**）
+1. 从 **`main`** 升级 `harness-eng`（生产装/升勿用 `V0.6.X`；0.6 系列开发在该分支，合并进 `main` 后再装）
 2. land / upgrade（L5）重渲 artifact `agent-config-sync`（已存在则 **replace**，不因 `on_exists=skip` 留下过期脚本），或把 `templates/agent-config/sync.mjs.tmpl` 渲染/复制为 `scripts/agent-config/sync.mjs`
 3. 跑 `node scripts/agent-config/sync.mjs`
 4. 再跑 `--check-freshness` 应为 OK；检查 `.trae/rules/*.md` 顶部是否有 YAML `alwaysApply` / `globs`（不是正文引用块）
