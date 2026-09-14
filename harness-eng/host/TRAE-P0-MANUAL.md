@@ -8,17 +8,25 @@
 
 **通道纪律（强制）**：Trae hooks 探测 **只认 `.trae/hooks.json`**。**永远不要**把 `.cursor/hooks.json` 的 `beforeShellExecution` 当作 Trae 证据（Round B 打到 Cursor 通道 = 无效）。
 
-## 0. 消费仓刷新（0.6.1 升级后必做）
+## 0. 消费仓刷新（升级后必做 · freshness gate）
 
-技能 tmpl（`templates/agent-config/sync.mjs.tmpl` 的 `toHostMd(rule, host)`）已对 trae **保留** FM，但 L5 **已落地的** `scripts/agent-config/sync.mjs` **不会**随 skill 升级自动更新。旧脚本会继续无条件剥 FM，把 `alwaysApply` / `globs` 降成正文 `> 适用路径` / `> 始终应用`。
+技能 tmpl（`templates/agent-config/sync.mjs.tmpl` 的 `toHostMd(rule, host)`）已对 trae **保留** FM，但 L5 **已落地的** `scripts/agent-config/sync.mjs` **不会**随 skill 升级自动更新——除非 land/upgrade **重渲** `agent-config-sync`。旧脚本会继续无条件剥 FM，把 `alwaysApply` / `globs` 降成正文 `> 适用路径` / `> 始终应用`。
 
-1. 升级 `harness-eng` 到 **0.6.1**（或含 `toHostMd(rule, host)` + `host === "trae"` 保留分支的版本）
-2. 再 land / render L5，让 `scripts/agent-config/sync.mjs` **从 tmpl 重写 / 刷新落地**
+对照（技能根执行，落后 **exit 1**）：
+
+```bash
+node scripts/harness.mjs --check-freshness --root <TARGET>
+```
+
+刷新（任选，然后跑 sync）：
+
+1. 升级 `harness-eng` 到当前列车（0.6 跟 **V0.6.X** / **0.6.3-dev**）
+2. land / upgrade（L5）重渲 artifact `agent-config-sync`（已存在则 **replace**，不因 `on_exists=skip` 留下过期脚本），或把 `templates/agent-config/sync.mjs.tmpl` 渲染/复制为 `scripts/agent-config/sync.mjs`
 3. 跑 `node scripts/agent-config/sync.mjs`
-4. 检查 `.trae/rules/*.md` 顶部是否有 YAML `alwaysApply` / `globs`（不是正文引用块）
+4. 再跑 `--check-freshness` 应为 OK；检查 `.trae/rules/*.md` 顶部是否有 YAML `alwaysApply` / `globs`（不是正文引用块）
 5. **重开** Trae 会话后再验规则面板 / 注入（见第 1 节）
 
-未做本步时，T-P0-1 磁盘侧会 FAIL，即使技能仓 tmpl 已修。
+未做本步时，T-P0-1 磁盘侧会 FAIL，即使技能仓 tmpl 已修。详见 [conflict-policy.md](../modes/conflict-policy.md) · [QUICKSTART.md](../QUICKSTART.md)。
 
 ## 1. Rules：Apply to Specific Files
 

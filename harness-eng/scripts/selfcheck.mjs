@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.6.3-dev: consumer sync.mjs freshness gate + install URL V0.6.X.
  * 0.6.2: session dashboard drops mermaid quadrantChart (Trae Syntax Error); plain-text stance.
  * 0.6.1: Trae 高 formal pin (MCP panel PASS, hooks live PASS, matrix 高).
  * 0.6.0: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures + M4 slim pack / formal pin.
@@ -154,8 +155,8 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml version 0.6.2");
-assert(!/version:\s*"0\.6\.1-dev"/.test(qYaml), "questions.yaml not 0.6.1-dev");
+assert(/version:\s*"0\.6\.3-dev"/.test(qYaml), "questions.yaml version 0.6.3-dev");
+assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -218,14 +219,14 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.6\.2"(?!-)/.test(manifest), "manifest 0.6.2");
-assert(!/version:\s*"0\.6\.1-dev"/.test(manifest), "manifest not 0.6.1-dev");
+assert(/version:\s*"0\.6\.3-dev"/.test(manifest), "manifest 0.6.3-dev");
+assert(!/version:\s*"0\.6\.2"(?!-)/.test(manifest), "manifest not leftover 0.6.2");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta 0.6.2");
-assert(!/skill_version:\s*"0\.6\.1-dev"/.test(metaTmpl), "harness-meta not 0.6.1-dev");
+assert(/skill_version:\s*"0\.6\.3-dev"/.test(metaTmpl), "harness-meta 0.6.3-dev");
+assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -239,6 +240,7 @@ assert(/## 0\.5\.8/.test(changelog), "CHANGELOG 0.5.8");
 assert(/## 0\.5\.9/.test(changelog), "CHANGELOG 0.5.9");
 assert(/## 0\.5\.10/.test(changelog), "CHANGELOG 0.5.10");
 assert(/## 0\.6\.2/.test(changelog), "CHANGELOG 0.6.2");
+assert(/## 0\.6\.3-dev/.test(changelog), "CHANGELOG 0.6.3-dev");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -391,14 +393,14 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.6\.2）/.test(verifyMd) && /当前 \*\*0\.6\.2\*\*/.test(verifyMd), "VERIFY is 0.6.2");
-assert(!/当前 \*\*0\.6\.1-dev\*\*/.test(verifyMd), "VERIFY current pin not 0.6.1-dev");
+assert(/验收记录（0\.6\.3-dev）/.test(verifyMd) && /当前 \*\*0\.6\.3-dev\*\*/.test(verifyMd), "VERIFY is 0.6.3-dev");
+assert(!/当前 \*\*0\.6\.2\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.2");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.6\.2(?!-dev)/.test(readme), "README header version 0.6.2");
-assert(/当前 \*\*0\.6\.2\*\*/.test(readme) && !/当前 \*\*0\.6\.2-dev\*\*/.test(readme), "README footer version 0.6.2");
+assert(/当前版本：0\.6\.3-dev/.test(readme), "README header version 0.6.3-dev");
+assert(/当前 \*\*0\.6\.3-dev\*\*/.test(readme), "README footer version 0.6.3-dev");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -409,9 +411,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.6\.2\*\*/.test(handbookMd), "使用手册.md version 0.6.2");
-assert(/v0\.6\.2(?!-dev)/.test(handbookHtml) && !/v0\.6\.2-dev/.test(handbookHtml), "使用手册.html version 0.6.2");
-assert(/当前 \*\*0\.6\.2\*\*/.test(quickstartMd) && !/当前 \*\*0\.6\.2-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.2");
+assert(/版本：\*\*0\.6\.3-dev\*\*/.test(handbookMd), "使用手册.md version 0.6.3-dev");
+assert(/v0\.6\.3-dev/.test(handbookHtml), "使用手册.html version 0.6.3-dev");
+assert(/当前 \*\*0\.6\.3-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.3-dev");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -426,6 +428,7 @@ for (const [label, text] of [
   assert(/宿主的用户 skills 目录/.test(text), `${label} host-agnostic install wording`);
   assert(!/装到 ~\/\.cursor\/skills\/harness-eng/.test(text), `${label} no Cursor-only install dest`);
   assert(!/npx skills add[^\n]*--agent cursor/.test(text), `${label} CLI not --agent cursor only`);
+  assert(/tree\/V0\.6\.X\/harness-eng/.test(text), `${label} install URL V0.6.X`);
 }
 assert(!/重启 Cursor/.test(readme), "README no restart Cursor");
 assert(/6\.0 对话内会话仪表盘/.test(handbookMd), "使用手册.md session dashboard section");
@@ -656,7 +659,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.6\.2"(?!-)/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.2");
+  assert(/version:\s*"0\.6\.3-dev"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.3-dev");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -3284,7 +3287,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.2", "manifest version exactly 0.6.2");
+  assert(verLine && verLine[1] === "0.6.3-dev", "manifest version exactly 0.6.3-dev");
 
   const roadmapM4 = readRel("ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -3601,6 +3604,79 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   assert(!/施工态势/.test(omitMorph), "stance omitted when morph missing");
   assert(!/施工态势/.test(omitBoth), "stance omitted when no score axes");
   assert(!/```\s*mermaid/.test(omitBoth) && !/quadrantChart/.test(omitBoth), "no-score footer still has no mermaid");
+}
+
+// --- 0.6.3-dev: sync.mjs freshness gate + install URL V0.6.X ---
+{
+  const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
+  assert(manVer063 === "0.6.3-dev", "0.6.3-dev manifest pin");
+
+  const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.6\.3-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
+  assert(tmplId === manVer063, "tmpl marker matches manifest version");
+
+  const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
+  const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3-dev/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  const goldFresh = runNode(
+    [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
+    { cwd: skillRoot }
+  );
+  assert(goldFresh.status === 0, "check-freshness passes on golden");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.3-dev/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+
+  const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
+  assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
+  const staleFresh = runNode(
+    [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", stale063],
+    { cwd: skillRoot }
+  );
+  assert(staleFresh.status !== 0, "check-freshness fails on stale fixture");
+  const staleOut = staleFresh.stderr + staleFresh.stdout;
+  assert(/落后|过期|stale|HARNESS_SYNC_TMPL_ID/.test(staleOut), "stale freshness names marker");
+  assert(/agent-config-sync|sync\.mjs\.tmpl/.test(staleOut), "stale freshness names refresh via tmpl / agent-config-sync");
+  assert(/node scripts\/agent-config\/sync\.mjs/.test(staleOut), "stale freshness tells to run sync.mjs");
+  assert(/--check-freshness/.test(staleOut), "stale freshness re-check command");
+
+  const empty063 = path.join(skillRoot, "scripts/fixtures/new-empty");
+  const skipFresh = runNode(
+    [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", empty063],
+    { cwd: skillRoot }
+  );
+  assert(skipFresh.status === 0, "check-freshness skip (no consumer sync) exits 0");
+
+  const harnessHelp063 = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
+  assert(harnessHelp063.status === 0 && /--check-freshness/.test(harnessHelp063.stdout), "harness --help lists --check-freshness");
+
+  const changelog063 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.3-dev\b/m.test(changelog063), "CHANGELOG 0.6.3-dev heading");
+  assert(/freshness|HARNESS_SYNC_TMPL_ID/.test(changelog063) && /V0\.6\.X/.test(changelog063), "CHANGELOG notes freshness + V0.6.X");
+
+  const upgrade063 = readDoc("upgrade.md");
+  assert(/0\.6\.2 → 0\.6\.3-dev/.test(upgrade063), "upgrade has 0.6.2 → 0.6.3-dev");
+  assert(/刷新/.test(upgrade063) && /sync\.mjs/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade L5 must refresh sync.mjs");
+
+  const agentIdx063 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(/check-freshness/.test(agentIdx063) && /sync\.mjs/.test(agentIdx063), "AGENT-INDEX notes L5 sync.mjs refresh");
+
+  const manual063 = fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-MANUAL.md"), "utf8");
+  assert(/--check-freshness/.test(manual063), "TRAE-P0-MANUAL §0 has --check-freshness");
+  assert(/agent-config-sync|replace/.test(manual063), "MANUAL names land/upgrade replace path");
+
+  const conflict063 = readDoc("conflict-policy.md");
+  assert(/HARNESS_SYNC_TMPL_ID/.test(conflict063) && /check-freshness/.test(conflict063), "conflict-policy stale sync.mjs row");
+
+  const qs063b = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
+  assert(/check-freshness/.test(qs063b), "QUICKSTART one-liner check-freshness");
+
+  const render063 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/agent-config-sync/.test(render063) && /replace/.test(render063), "render.mjs replace agent-config-sync when exists");
+
+  const libFresh = fs.readFileSync(path.join(skillRoot, "scripts/lib/sync-freshness.mjs"), "utf8");
+  assert(/HARNESS_SYNC_TMPL_ID/.test(libFresh) && /runFreshnessCheck/.test(libFresh), "lib/sync-freshness.mjs");
 }
 
 console.log(`ok: ${ok.length}`);

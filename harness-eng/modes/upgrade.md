@@ -50,6 +50,14 @@
 ## render 参数
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
+**例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
+
+## 0.6.2 → 0.6.3-dev 迁移要点
+
+1. **meta**：`skill_version` → `0.6.3-dev`（resume / upgrade 写 meta 时对齐 manifest）
+2. **L5 必刷新 `sync.mjs`**：land/upgrade/resume 重渲 `agent-config-sync`；或 `harness.mjs --check-freshness` 落后则按 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md) §0 复制 tmpl → 再 sync
+3. **安装**：0.6 列车 skill URL 用 `tree/V0.6.X/harness-eng`
+4. **0.6.2 会话仪表盘钉号不回退**
 
 ## 0.6.1 → 0.6.2 迁移要点
 

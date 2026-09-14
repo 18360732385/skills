@@ -8,15 +8,16 @@
 
 ```text
 帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：
-https://github.com/18360732385/skills/tree/main/harness-eng
+https://github.com/18360732385/skills/tree/V0.6.X/harness-eng
 ```
 
 ```bash
-npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
+npx skills add https://github.com/18360732385/skills/tree/V0.6.X/harness-eng -g
 # 需要指定宿主时加上：--agent <host>
 ```
 
-装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；其他按该宿主文档）。更新同 URL 再执行一次即可。详情见手册「2. 如何安装和更新」。
+装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；其他按该宿主文档）。更新同 URL 再执行一次即可。0.6 列车跟 **`V0.6.X`**；已发布快照可见 `main`。详情见手册「2. 如何安装和更新」。
+L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --root <TARGET>`；落后则 land/upgrade 刷新 `scripts/agent-config/sync.mjs`，再 `node scripts/agent-config/sync.mjs`。
 
 ## 你要做什么？
 
@@ -82,4 +83,4 @@ node scripts/selfcheck.mjs
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
 0.6.1 Trae 高：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 计划（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.2**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.3-dev**）。

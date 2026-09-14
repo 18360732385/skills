@@ -519,6 +519,13 @@ function expandFromManifest(manifestPath, params, root) {
   const files = [];
 
   function actionForTarget(targetRel, entryId, entry) {
+    const relNorm = String(targetRel || "").replace(/\\/g, "/");
+    // L5 consumer sync.mjs is skill-tmpl identity: land/upgrade/resume 必须从 tmpl 重写，
+    // 否则 on_exists=skip 会留下过期脚本（Trae FM strip 等静默旧行为）。
+    if (entryId === "agent-config-sync" || relNorm === "scripts/agent-config/sync.mjs") {
+      const absSync = path.join(root, relNorm);
+      return fs.existsSync(absSync) ? "replace" : "create";
+    }
     if (entryId === "gitignore-snippet") return "merge";
     if (entryId === "harness-meta") {
       migrateHarnessMetaIfNeeded(root);
@@ -970,6 +977,18 @@ function applyOne(root, item, placeholders, dryRun, log) {
       );
     }
     log.push(entry);
+    return;
+  }
+
+  if (action === "replace") {
+    ensureDir(abs);
+    fs.writeFileSync(abs, rendered, "utf8");
+    log.push({
+      target: targetRel,
+      action: "replace",
+      status: "written",
+      unresolvedPlaceholders: unresolvedPlaceholders.length ? unresolvedPlaceholders : undefined,
+    });
     return;
   }
 

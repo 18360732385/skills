@@ -25,6 +25,7 @@
 | L3+ / L5 全量镜像宿主已有冗余 `1x-contract-sync.md` | **render/resume `skip`，不自动删除**（移交 TODO 可手工清）。**L5 再跑 sync** 时，托管 rules 目录里不在 plan 的 1x / 宿主 `00-harness-ssot` 孤儿会被当 stale 清掉——这是故意的；缺 00 应回灌 SSOT，勿 git restore 宿主副本 | 用户书面要求才 backup-create / 在未跑 sync 前保留 |
 | L5 托管 rules 目录所有权 | **sync**：`.cursor/.trae/.qoder/.claude/.codebuddy/rules/` 以 sync plan 为准；render 不直渲这些前缀（`SYNC_MANAGED_RULE_PREFIXES`） | — |
 | L5 生成物（带 GENERATED 标记）已存在且内容异构 | 勿手改对齐；改 SSOT 后跑 `node scripts/agent-config/sync.mjs`；漂移校验 `sync.mjs --check` | backup-create（仅用户书面要求） |
+| L5 消费仓 `scripts/agent-config/sync.mjs` 落后于 skill tmpl（`HARNESS_SYNC_TMPL_ID` 不一致或无标记） | land/upgrade/resume **replace** 重渲 `agent-config-sync`；`harness.mjs --check-freshness` 落后则非 0。然后再 `node scripts/agent-config/sync.mjs` | 手工把 `templates/agent-config/sync.mjs.tmpl` 渲染/复制为 `scripts/agent-config/sync.mjs` |
 | 文件内容含疑似密码/Token | **拒绝写入同路径** | 提示移出 git |
 | `docs/superpowers/archive/**` 业务正文 | 永不从本 skill 覆盖 | — |
 

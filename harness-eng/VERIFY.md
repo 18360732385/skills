@@ -1,10 +1,20 @@
-﻿# harness-eng 验收记录（0.6.2）
+﻿# harness-eng 验收记录（0.6.3-dev）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.2**（Trae **高**；会话仪表盘无 mermaid）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.3-dev**（Trae **高**；会话仪表盘无 mermaid；sync.mjs freshness gate）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` 0.2.24；**报告壳版本 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+
+## 0.6.3-dev 增量验收（sync.mjs freshness + 安装 URL）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `node scripts/selfcheck-render.mjs` | 烟测 |
+| manifest / meta / questions 为 `0.6.3-dev` | 有 |
+| tmpl + golden 含 `HARNESS_SYNC_TMPL_ID`；stale fixture `--check-freshness` 非 0 | 有 |
+| 安装 URL 提 `V0.6.X`（非仅 `main`） | 有 |
 
 ## 0.6.2 增量验收（会话仪表盘去掉 mermaid）
 
