@@ -4,10 +4,11 @@
 **列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3-dev`（当前 **0.6.3-dev**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。
 
-## 0.6.3-dev — 2026-09-14（sync.mjs freshness gate）
+## 0.6.3-dev — 2026-09-14（sync freshness · 热路径去污 · VERIFY 瘦身）
 
 
 - **热路径去污**：session-dashboard / examples / resume 统一「确认后 `harness.mjs`」；矩阵标题改为 0.6.x；VERIFY 历史钉号标注「历史」；QUICKSTART 补 Trae skills 路径示例
+- **P1 热路径瘦身**：VERIFY 历史增量表迁 `archive/VERIFY-history-through-0.6.0.md`；`session-dash --help`；无 score 时仪表盘精简一行减噪
 Audit P0-1。技能升级后消费仓实例化 `scripts/agent-config/sync.mjs` 不再静默沿用旧 tmpl（Trae FM strip 等）。**不**改 Trae 矩阵、**不**重开 Codex。
 
 ### 产品

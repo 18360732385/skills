@@ -7,7 +7,7 @@
 **SHOW**（本轮判定为工程轮时）：
 
 1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选纯文本态势）
-2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`）
+2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`；`--help` 看选项；无 score 时精简一行）
 3. 尚无目标根时，仍输出仪表盘，但决策/诊断/趋势台标「—」或「未探测」，任务台写当前阶段
 
 **HIDE**（本轮判定为 meta 时）：
@@ -108,3 +108,7 @@ node scripts/session-dash.mjs --root <TARGET> \
 | audit 只读 | 缺口摘要进任务台 | 不强制生成 |
 
 开干结论**两处一致**：只看 `ai_coding_ready`（见 [glossary.md](../glossary.md)）。
+
+## CLI
+
+`node scripts/session-dash.mjs --help` 列出选项。`--intent meta` 省略输出。目标仓无 `score-latest.json` 且诊断空时，默认输出**精简**仪表盘（非空四台表），减噪；有 score 仍四台全量。
