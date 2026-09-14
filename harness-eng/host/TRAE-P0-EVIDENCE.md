@@ -1,6 +1,6 @@
 # Trae P0 官方实证（2026-09-12）
 
-对照日：**2026-09-12**（官方 + 上半场 / Round A–C）；Hooks 复测翻盘日：**2026-09-14**。权威仓 **c-be-sms-ai**。**不**把矩阵 Trae 从中高改成高（Hooks 复测已 PASS；T-P1-5 仍等 MCP T-P0-2 / T-P1-3 / T-P1-4。hooks PASS **单独不授权**升 **高**）。
+对照日：**2026-09-12**（官方 + 上半场 / Round A–C）；Hooks 复测翻盘日：**2026-09-14**；MCP 面板翻盘日：**2026-09-14**。权威仓 **c-be-sms-ai**。0.6.1 矩阵 Trae **高**（P0 全过 + T-P1 齐）。hooks PASS **单独不授权**升 **高**——本版另有 MCP 面板 PASS。
 
 交叉：[TRAE-PARITY.md](TRAE-PARITY.md) · [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md) · [adapters/trae.md](../templates/ai-tools/adapters/trae.md)。
 
@@ -11,18 +11,18 @@
 | 项目规则 | https://docs.trae.ai/ide/rules | 项目规则在 `.trae/rules/`；frontmatter 原生 `alwaysApply` / `globs` / `description`；子目录最多 **3 层**；另可导入根 `AGENTS.md` / `CLAUDE.md` / `CLAUDE.local.md`（开关） |
 | 项目 Skills | https://docs.trae.ai/ide/skills | 项目 skills 在 **`.trae/skills/`**（一等公民）；按需加载（先扫 description，相关才读正文）；亦见可选 `.agents/skills/` |
 | Hooks | https://docs.trae.ai/ide/hook-configuration-reference | 项目 hooks 在 **`.trae/hooks.json`**；事件含 SessionStart、UserPromptSubmit、PreToolUse、PostToolUse、Stop、Notification；`matcher` 匹配 Trae `tool_name`（终端为 **`RunCommand`**）；亦可导入 Claude Code hooks |
-| MCP | 官方强调 Settings → Add MCP servers | harness 仍写 **`.trae/mcp.json`**：磁盘产物 **+ 必须在 IDE 里启用**；T-P0-2 余项等人确认 |
+| MCP | 官方强调 Settings → Add MCP servers | harness 仍写 **`.trae/mcp.json`**：磁盘产物 **+ 必须在 IDE Settings 开关启用**。**T-P0-2 PASS**（2026-09-14 面板：12 台在场；启用靠 toggle） |
 
 ## T-P0-1…4 状态
 
 | ID | 状态 | 官方事实 | Harness 现状 | 剩余 |
 |---|---|---|---|---|
 | **T-P0-1** | **docs + 磁盘 + 行为 PASS**（刷新后） | Trae 把 `.trae/rules/*.md`（含子目录，最多 3 层）当项目规则；YAML frontmatter 原生 `alwaysApply` / `globs` / `description`。UI 激活方式会改 `alwaysApply`，并按模式要求配 `description` 或 `globs`（如 Apply to Specific Files → `globs`） | **技能仓已修**：镜像到 Trae **不再剥 FM**（`render.mjs` / L5 tmpl `toHostMd(rule, host)`；Claude/Qoder 仍 strip）。**消费仓实例化** `scripts/agent-config/sync.mjs` 不会随 skill 升级自动更新 | **Round A**（c-be-sms-ai，SSOT/sync 刷新后）：磁盘 13 份 + 选择性注入 PASS。刷新前磁盘 FAIL 仍见上半场表。升级后仍须按 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md) 第 0 节刷新 |
-| **T-P0-2** | **partial↑**（IDE 已消费文件） | 文档强调 Settings → Add MCP servers；项目 MCP 路径 harness 写 **`.trae/mcp.json`**（另有 `.example`） | 路径已落盘（L4+ / L5 sync）；**磁盘产物 ≠ 已启用**（关开关对照未做） | **实机回传**：Trae 已挂上部分 server。余项：Settings 面板缺服报错 + disable-switch |
-| **T-P0-3** | **docs + 本机行为 PASS**（2026-09-14 Hooks 复测；Round C 当时 FAIL = **matcher 误诊**） | 项目 hooks 路径 **`.trae/hooks.json`** 正确；事件族含 PreToolUse / PostToolUse / Stop（及 SessionStart / UserPromptSubmit / Notification）。`matcher` 匹配 **Trae `tool_name`**（终端 **`RunCommand`**） | **T-P1-2 已落地** + **实机 PASS**：门禁 matcher **`Bash\|RunCommand`**；`additionalContext` 注入；软放行不阻断。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底 | Settings → Hooks 已启用。**不**因 hooks PASS 升矩阵（T-P0-2 / T-P1-3 / T-P1-4 仍开放） |
+| **T-P0-2** | **PASS**（2026-09-14 MCP 面板） | 文档强调 Settings → Add MCP servers；项目 MCP 路径 harness 写 **`.trae/mcp.json`**（另有 `.example`） | 路径已落盘（L4+ / L5 sync）；**磁盘产物 ≠ 已启用**（启用靠 Settings 开关） | **MCP 面板 PASS**：Settings MCP 显示 **12** 台 workspace servers（来自 `.trae/mcp.json`）。**ON**：gitlab、Apifox 导入、chrome-devtools。**OFF via toggle**（在场、非缺失）：sonarqube、redis-local/uat/test/dev、mysql-local（其余 mysql-* 多半在滚动区）。早先「缺 7 台」是误读为启动缺失 |
+| **T-P0-3** | **docs + 本机行为 PASS**（2026-09-14 Hooks 复测；Round C 当时 FAIL = **matcher 误诊**） | 项目 hooks 路径 **`.trae/hooks.json`** 正确；事件族含 PreToolUse / PostToolUse / Stop（及 SessionStart / UserPromptSubmit / Notification）。`matcher` 匹配 **Trae `tool_name`**（终端 **`RunCommand`**） | **T-P1-2 已落地** + **实机 PASS**：门禁 matcher **`Bash\|RunCommand`**；`additionalContext` 注入；软放行不阻断。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底 | Settings → Hooks 已启用。hooks PASS **单独不授权**升 **高**（本版另有 MCP 面板 PASS） |
 | **T-P0-4** | **PASS**（docs + 会话） | `.trae/skills/` 是项目 skills **一等公民**；按需加载；可选 `.agents/skills/` | 适配卡已去掉「若宿主支持」；生成路径仍为 `.trae/skills/` | **实机回传**：`harness-eng` 可见可点名；`release-eng` 因 `disable-model-invocation: true` 隐藏 |
 
-未过项**不**改矩阵、不宣称同级。T-P1-5（中高→高）**不**因 hooks PASS 单独授权；仍等 MCP T-P0-2 / T-P1-3 / T-P1-4。Hooks 复测已 PASS（2026-09-14；见下）。
+P0 全过。T-P1-5（中高→高）**不**因 hooks PASS 单独授权；本版另有 MCP 面板 PASS + T-P1-3 / T-P1-4 后升 **高**。Hooks 复测已 PASS（2026-09-14；见下）。MCP 面板已 PASS（2026-09-14；见下）。
 
 ## 实机回传 2026-09-12 Trae CN
 
@@ -127,7 +127,7 @@ host === "trae" → 保留 rule.raw 的 FM    （旧生成器，约 17:53）    
 
 ## 2026-09-14 Trae CN · Hooks 复测 PASS（T-P0-3 / T-P1-2）
 
-权威仓 **c-be-sms-ai** / Trae CN。#19（matcher `Bash|RunCommand` + adapter `additionalContext`）落地后真人 live 复测。**文档以此轮为准翻盘 T-P0-3、勾 T-P1-2。** 矩阵仍 **中高**（hooks PASS **单独不授权**升 **高**）。
+权威仓 **c-be-sms-ai** / Trae CN。#19（matcher `Bash|RunCommand` + adapter `additionalContext`）落地后真人 live 复测。**文档以此轮为准翻盘 T-P0-3、勾 T-P1-2。** hooks PASS **单独不授权**升 **高**（矩阵等到同日 MCP 面板 PASS）。
 
 前提：
 
@@ -153,10 +153,23 @@ host === "trae" → 保留 rule.raw 的 FM    （旧生成器，约 17:53）    
 
 坑：先暂存 `.claude/rules/00-harness-ssot.md` 失败——仅 CRLF 差在 `git add` 时被规范化掉；改暂存 `claude-adapter.js` 成功。测完暂存已清空。
 
-**T-P0-3 / T-P1-2 升级：本机行为 PASS**（`additionalContext` 通道有效；软放行）。Round C FAIL 归档为 matcher 误诊。**不**升矩阵。
+**T-P0-3 / T-P1-2 升级：本机行为 PASS**（`additionalContext` 通道有效；软放行）。Round C FAIL 归档为 matcher 误诊。hooks PASS **单独不授权**升矩阵。
+
+## 2026-09-14 Trae CN · MCP 面板 PASS（T-P0-2）
+
+权威仓 **c-be-sms-ai** / Trae CN。Settings → MCP 面板对照磁盘 `.trae/mcp.json`。**文档以此轮为准勾 T-P0-2。**
+
+| 观测 | 事实 |
+|---|---|
+| 面板台数 | **12** 台 workspace servers（来自 `.trae/mcp.json`） |
+| **ON** | gitlab、Apifox 导入、chrome-devtools |
+| **OFF via toggle** | 在场、**不是**缺失：sonarqube、redis-local / redis-uat / redis-test / redis-dev、mysql-local（其余 mysql-* 多半在滚动区） |
+| 结论 | IDE **消费**该文件；启用靠 Settings 开关。早先「缺 7 台」是误读为启动缺失，实际是 toggled off |
+
+**T-P0-2 升级：PASS**（文件被 IDE 吃到；enablement = Settings toggles）。**不假装** Trae 走 Cursor `.cursor/mcp.json` 协议。
 
 ## 明确不在本页范围
 
-- 不改矩阵 Trae **中高 → 高**（hooks 已 PASS；仍等 MCP T-P0-2 / T-P1-3 / T-P1-4。hooks PASS **单独不授权**升 **高**）
+- 不因 hooks PASS **单独**把矩阵 Trae **中高 → 高**（须 MCP 面板 PASS + T-P1；0.6.1 已齐后升 **高**）
 - 不把 Trae hooks 改成 Cursor 扁平 `beforeShellExecution`
 - 不把 MCP 主路径改到 `.cursor/mcp.json` 或根 `.mcp.json`

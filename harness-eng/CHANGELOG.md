@@ -1,31 +1,41 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev`（当前 **0.6.1-dev**，Trae P0 spike）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
-> 0.6.1-dev 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1`（当前 **0.6.1**，Trae **高**）。报告对照 **`skill_version` + `report_schema`**（JSON 仍暴露 `ui.version` **0.2.24**；**报告壳版本 ≠ skill**）。  
+> 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.4.0 及更早见 [archive/CHANGELOG-through-0.4.md](archive/CHANGELOG-through-0.4.md)。
 
-## 0.6.1-dev — 2026-09-12（Trae P0 spike：官方实证 · FM 保留 · mature-trae）
+## 0.6.1 — 2026-09-14（Trae 高：P0/P1 收口 · 正式钉号）
 
-**不**把矩阵 Trae 中高改成高（hooks PASS **单独不授权**升 **高**；T-P1-5 仍等 MCP T-P0-2 / T-P1-3 / T-P1-4）。
+矩阵 Trae **中高 → 高**。**不假装** Trae 走 Cursor 协议。hooks PASS **单独不授权**升 **高**；本版另有 MCP 面板 PASS + T-P1-3 / T-P1-4。**不**重开 0.6.0。
 
 ### 产品
 
-- **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；官方终端 **`RunCommand`**）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
-- **实机回传**（2026-09-12 Trae CN）：T-P0-1 消费仓磁盘 FAIL（实例化 `sync.mjs` 仍旧 strip）；T-P0-2 **IDE 已消费** `mcp.json`；T-P0-3 待新会话；T-P0-4 会话 PASS
-- **实机回传续**（2026-09-12 Trae CN · c-be-sms-ai）：Round A 刷新后 T-P0-1 **磁盘+行为 PASS**（13 份、认 `globs`、无 `1x`）；Round C T-P0-3 **本机行为 FAIL**（`.trae/hooks.json` 当时 matcher=`Bash`）。事后判 **matcher 误诊**（`Bash` 永不匹配 `RunCommand`）
-- **T-P1-2 hooks**：`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`（门禁 matcher `Bash|RunCommand`）；`claude-adapter.js` 软放行同时写 `systemMessage` + `hookSpecificOutput.additionalContext`。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底。消费仓须 sync + **Settings → Hooks 启用项目 hooks**。**不**升矩阵
-- **Hooks 复测 PASS**（2026-09-14 Trae CN · c-be-sms-ai）：T-P1-2 后 live PreToolUse matcher `Bash|RunCommand` 注入 `additionalContext`；软 allow。勾 T-P0-3 / T-P1-2。hooks PASS **单独不授权**升 **高**（T-P0-2 / T-P1-3 / T-P1-4 仍开放）
-- **升级注意**：消费仓必须 **刷新** `scripts/agent-config/sync.mjs`（从 tmpl 重落地）后再 sync，`.trae/rules` 才会带 FM，`.trae/hooks.json` 才会带 `RunCommand`
-- **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)（含消费仓刷新配方 + 新会话 hooks 探测；禁止用 Cursor `beforeShellExecution` 当 Trae 证据）
-- **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；T-P1-2 matcher `RunCommand`；链到实证页；消费仓刷新 `sync.mjs`
-- **hotfix**：镜像到 Trae **保留** frontmatter（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）
-- **L5 00-harness-ssot via SSOT**：只要选了 cursor/trae/qoder/claude/workbuddy，render 必写 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 00 / 冗余 1x 仍由 sync 托管（清 stale 正确，勿 git restore）。人审见 [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)
-- **fixture**：`scripts/fixtures/mature-trae/`（无 `.cursor/rules` 仍 MATURE）
+- **FM 保留**：镜像到 Trae **保留** `alwaysApply` / `globs`（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）。消费仓须 **刷新** `scripts/agent-config/sync.mjs` 后再 sync
+- **L5 00-harness-ssot via SSOT**：render 必写 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 00 / 冗余 1x 仍由 sync 托管（清 stale 正确，勿 git restore）
+- **RunCommand hooks + live PASS**（2026-09-14 Trae CN · c-be-sms-ai）：门禁 matcher `Bash|RunCommand`；`additionalContext` 注入【流程提醒】agent-config；软 allow；dry-run 跑完。勾 T-P0-3 / T-P1-2。Settings → Hooks 启用项目 hooks
+- **MCP 面板 PASS**（2026-09-14 Trae CN · c-be-sms-ai）：Settings MCP 显示 **12** 台 workspace servers（来自 `.trae/mcp.json`）。**ON**：gitlab、Apifox 导入、chrome-devtools。**OFF via toggle**（在场、非缺失）：sonarqube、redis-local/uat/test/dev、mysql-local（其余 mysql-* 多半在滚动区）。IDE **消费**文件；启用靠 Settings 开关。早先「缺 7 台」是误读。**T-P0-2 PASS**
+- **T-P1-3**：`ai-tools.md` / fill-mcp / `mcp-paths.mjs` 写清 `.trae/mcp.json` + IDE Settings 启用；无协议变更
+- **T-P1-4**：`mature-trae` + selfcheck 钉 Trae L5 sync 路径（薄断言；无巨型黄金树）
+- **T-P1-5**：矩阵 / 适配卡 / QUICKSTART / 手册 / selfcheck「中高」断言改为 **高**
 
 ### 版本钉
 
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.1-dev`**
-- ROADMAP 注明 0.6.1 Trae spike 已开工；0.6.0 列车不重开
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.1`**
+- 0.6.0 列车不重开
+
+### 0.6.1-dev — 2026-09-12（spike 笔记，已折叠）
+
+**当时不**把矩阵 Trae 中高改成高（hooks PASS **单独不授权**升 **高**；T-P1-5 仍等 MCP T-P0-2 / T-P1-3 / T-P1-4）。
+
+- **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 当时 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；官方终端 **`RunCommand`**）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
+- **实机回传**（2026-09-12 Trae CN）：T-P0-1 消费仓磁盘 FAIL（实例化 `sync.mjs` 仍旧 strip）；T-P0-2 **IDE 已消费** `mcp.json`；T-P0-3 待新会话；T-P0-4 会话 PASS
+- **实机回传续**（2026-09-12 Trae CN · c-be-sms-ai）：Round A 刷新后 T-P0-1 **磁盘+行为 PASS**（13 份、认 `globs`、无 `1x`）；Round C T-P0-3 **本机行为 FAIL**（`.trae/hooks.json` 当时 matcher=`Bash`）。事后判 **matcher 误诊**（`Bash` 永不匹配 `RunCommand`）
+- **T-P1-2 hooks**：`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`（门禁 matcher `Bash|RunCommand`）；`claude-adapter.js` 软放行同时写 `systemMessage` + `hookSpecificOutput.additionalContext`。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底。消费仓须 sync + **Settings → Hooks 启用项目 hooks**
+- **Hooks 复测 PASS**（2026-09-14 Trae CN · c-be-sms-ai）：T-P1-2 后 live PreToolUse matcher `Bash|RunCommand` 注入 `additionalContext`；软 allow。勾 T-P0-3 / T-P1-2。hooks PASS **单独不授权**升 **高**
+- **升级注意**：消费仓必须 **刷新** `scripts/agent-config/sync.mjs`（从 tmpl 重落地）后再 sync
+- **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)
+- **hotfix**：镜像到 Trae **保留** frontmatter；L5 00 via SSOT；`mature-trae` fixture
+- 中间号钉 **`0.6.1-dev`**；0.6.0 列车不重开
 
 ## 0.6.0 — 2026-09-12（M1–M4：统一入口 · 文档拓扑 · fill 内聚 · 发包减脂 · 正式钉号）
 
