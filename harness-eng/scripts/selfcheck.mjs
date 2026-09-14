@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.6.1-dev: Trae P0 spike (evidence, FM-preserve, mature-trae); matrix Trae stays 中高.
+ * 0.6.1: Trae 高 formal pin (MCP panel PASS, hooks live PASS, matrix 高).
  * 0.6.0: M1 harness CLI + M2 doc topology + M3 fill convergence / golden fixtures + M4 slim pack / formal pin.
  * 0.5.10: P2 Codex 不默认, no-detect ≠ Cursor, report_schema, archives.
  * 0.5.9: P1 hot-path index, land.mjs, fill --domain, fixtures, schema_version.
@@ -152,8 +152,8 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.6\.1-dev"/.test(qYaml), "questions.yaml version 0.6.1-dev");
-assert(!/version:\s*"0\.6\.0"(?!-)/.test(qYaml), "questions.yaml not frozen 0.6.0");
+assert(/version:\s*"0\.6\.1"(?!-)/.test(qYaml), "questions.yaml version 0.6.1");
+assert(!/version:\s*"0\.6\.1-dev"/.test(qYaml), "questions.yaml not 0.6.1-dev");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
 assert(
@@ -216,14 +216,14 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.6\.1-dev"/.test(manifest), "manifest 0.6.1-dev");
-assert(!/version:\s*"0\.6\.0"(?!-)/.test(manifest), "manifest not frozen 0.6.0");
+assert(/version:\s*"0\.6\.1"(?!-)/.test(manifest), "manifest 0.6.1");
+assert(!/version:\s*"0\.6\.1-dev"/.test(manifest), "manifest not 0.6.1-dev");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.6\.1-dev"/.test(metaTmpl), "harness-meta 0.6.1-dev");
-assert(!/skill_version:\s*"0\.6\.0"(?!-)/.test(metaTmpl), "harness-meta not frozen 0.6.0");
+assert(/skill_version:\s*"0\.6\.1"(?!-)/.test(metaTmpl), "harness-meta 0.6.1");
+assert(!/skill_version:\s*"0\.6\.1-dev"/.test(metaTmpl), "harness-meta not 0.6.1-dev");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -388,14 +388,14 @@ assert(
   "VERIFY history archived"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.6\.1-dev）/.test(verifyMd) && /当前 \*\*0\.6\.1-dev\*\*/.test(verifyMd), "VERIFY is 0.6.1-dev");
-assert(!/当前 \*\*0\.6\.0-dev\*\*/.test(verifyMd), "VERIFY current pin not 0.6.0-dev");
+assert(/验收记录（0\.6\.1）/.test(verifyMd) && /当前 \*\*0\.6\.1\*\*/.test(verifyMd), "VERIFY is 0.6.1");
+assert(!/当前 \*\*0\.6\.1-dev\*\*/.test(verifyMd), "VERIFY current pin not 0.6.1-dev");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.6\.1-dev/.test(readme), "README header version 0.6.1-dev");
-assert(/当前 \*\*0\.6\.1-dev\*\*/.test(readme) && !/当前 \*\*0\.6\.0-dev\*\*/.test(readme), "README footer version 0.6.1-dev");
+assert(/当前版本：0\.6\.1(?!-dev)/.test(readme), "README header version 0.6.1");
+assert(/当前 \*\*0\.6\.1\*\*/.test(readme) && !/当前 \*\*0\.6\.1-dev\*\*/.test(readme), "README footer version 0.6.1");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -406,9 +406,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.6\.1-dev\*\*/.test(handbookMd), "使用手册.md version 0.6.1-dev");
-assert(/v0\.6\.1-dev/.test(handbookHtml) && !/v0\.6\.0(?!-dev)/.test(handbookHtml), "使用手册.html version 0.6.1-dev");
-assert(/当前 \*\*0\.6\.1-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.1-dev");
+assert(/版本：\*\*0\.6\.1\*\*/.test(handbookMd), "使用手册.md version 0.6.1");
+assert(/v0\.6\.1(?!-dev)/.test(handbookHtml) && !/v0\.6\.1-dev/.test(handbookHtml), "使用手册.html version 0.6.1");
+assert(/当前 \*\*0\.6\.1\*\*/.test(quickstartMd) && !/当前 \*\*0\.6\.1-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.1");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -653,7 +653,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.6\.1-dev"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.1-dev");
+  assert(/version:\s*"0\.6\.1"(?!-)/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.1");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1961,7 +1961,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.6\.1-dev"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.6\.1"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -2114,7 +2114,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   const aiTools057 = readDoc("ai-tools.md");
   assert(/对齐矩阵/.test(aiTools057), "ai-tools.md has 对齐矩阵");
   assert(/部分（P2）|部分对齐（P2）/.test(aiTools057), "ai-tools.md marks Codex as partial P2");
-  assert(/中高/.test(aiTools057), "ai-tools.md marks Trae as 中高");
+  assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools057), "ai-tools.md marks Trae as 高");
   assert(
     /跳过|不再强制|omit|不另写/.test(aiTools057) && /1x-contract-sync|契约 sync/.test(aiTools057),
     "ai-tools.md documents skip/omit 1x for full-mirror hosts"
@@ -3267,7 +3267,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.1-dev", "manifest version exactly 0.6.1-dev");
+  assert(verLine && verLine[1] === "0.6.1", "manifest version exactly 0.6.1");
 
   const roadmapM4 = readRel("ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -3296,7 +3296,7 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(!/全家桶对等已落地|全量 sync 已/.test(codexM4 + aiToolsM4), "G6 no new Codex parity claim");
 }
 
-// --- 0.6.1-dev: Trae P0 spike (evidence · FM-preserve · mature-trae) ---
+// --- 0.6.1: Trae 高 formal pin (evidence · MCP panel PASS · matrix 高) ---
 {
   const evidence = fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md"), "utf8");
   assert(/T-P0-1/.test(evidence) && /T-P0-4/.test(evidence), "TRAE-P0-EVIDENCE has T-P0-1…4");
@@ -3316,21 +3316,24 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/刷新/.test(traeAd) && /sync\.mjs/.test(traeAd), "trae adapter notes consumer sync.mjs refresh");
 
   const parity061 = fs.readFileSync(path.join(skillRoot, "host/TRAE-PARITY.md"), "utf8");
-  assert(/TRAE-P0-EVIDENCE/.test(parity061) && /0\.6\.1-dev/.test(parity061), "TRAE-PARITY links evidence + 0.6.1-dev");
+  assert(/TRAE-P0-EVIDENCE/.test(parity061) && /0\.6\.1/.test(parity061), "TRAE-PARITY links evidence + 0.6.1");
+  assert(/0\.6\.1-dev/.test(parity061), "TRAE-PARITY still records 0.6.1-dev spike lineage");
   assert(/消费仓/.test(parity061) && /刷新/.test(parity061), "TRAE-PARITY T-P0-1 consumer refresh required");
   assert(/IDE 已消费|已消费/.test(parity061), "TRAE-PARITY T-P0-2 IDE consumes file");
   assert(/新会话/.test(parity061), "TRAE-PARITY still records 新会话 recipe caveat");
   assert(/Hooks 复测 PASS|live PASS/.test(parity061), "TRAE-PARITY records hooks live PASS");
   assert(/单独不授权/.test(parity061), "TRAE-PARITY: hooks PASS alone does not authorize 高");
+  assert(/不假装/.test(parity061) && /Cursor 协议/.test(parity061), "TRAE-PARITY keeps 不假装 Cursor 协议");
+  assert(/^- \[x\] T-P0-2/m.test(parity061), "TRAE-PARITY checks T-P0-2");
   assert(/^- \[x\] T-P0-3/m.test(parity061), "TRAE-PARITY checks T-P0-3");
   assert(/^- \[x\] T-P1-2/m.test(parity061), "TRAE-PARITY checks T-P1-2");
-  assert(/^- \[ \] T-P0-2/m.test(parity061), "TRAE-PARITY leaves T-P0-2 open");
-  assert(/^- \[ \] T-P1-3/m.test(parity061), "TRAE-PARITY leaves T-P1-3 open");
-  assert(/^- \[ \] T-P1-4/m.test(parity061), "TRAE-PARITY leaves T-P1-4 open");
-  assert(/^- \[ \] T-P1-5/m.test(parity061), "TRAE-PARITY leaves T-P1-5 open");
+  assert(/^- \[x\] T-P1-3/m.test(parity061), "TRAE-PARITY checks T-P1-3");
+  assert(/^- \[x\] T-P1-4/m.test(parity061), "TRAE-PARITY checks T-P1-4");
+  assert(/^- \[x\] T-P1-5/m.test(parity061), "TRAE-PARITY checks T-P1-5");
   const aiTools061 = readDoc("ai-tools.md");
-  assert(/中高/.test(aiTools061), "ai-tools.md still marks Trae as 中高");
-  assert(!/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools061), "matrix Trae not bumped to 高");
+  assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools061), "ai-tools.md marks Trae as 高");
+  assert(/Settings/.test(aiTools061) && /\.trae\/mcp\.json/.test(aiTools061), "ai-tools.md Trae MCP + Settings enable");
+  assert(!/\|\s*`trae`\s*\|\s*\*\*中高\*\*/.test(aiTools061), "matrix Trae no longer 中高");
 
   const render061 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
   assert(/preserveFrontmatter/.test(render061), "render.mjs Trae preserveFrontmatter branch");
@@ -3349,13 +3352,15 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/dry-run/.test(manual), "MANUAL keeps git commit --dry-run probe");
 
   const changelog061 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.1-dev\b/m.test(changelog061), "CHANGELOG 0.6.1-dev section");
+  assert(/^## 0\.6\.1\b/m.test(changelog061), "CHANGELOG formal 0.6.1 section");
+  assert(/0\.6\.1-dev/.test(changelog061), "CHANGELOG folds 0.6.1-dev notes");
   assert(/刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
-  assert(/00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1-dev notes L5 SSOT 00");
+  assert(/00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1 notes L5 SSOT 00");
   const roadmap061 = fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8");
   assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
+  assert(/0\.6\.1/.test(roadmap061) && /高/.test(roadmap061), "ROADMAP notes 0.6.1 Trae 高 pin");
   const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-  assert(/0\.6\.1-dev/.test(verify061) && /mature-trae|Trae P0/.test(verify061), "VERIFY has 0.6.1-dev Trae P0 section");
+  assert(/0\.6\.1/.test(verify061) && /mature-trae|Trae P0/.test(verify061), "VERIFY has 0.6.1 Trae P0 section");
 
   assert(/2026-09-12/.test(evidence) && /stale|过期/.test(evidence), "EVIDENCE records 2026-09-12 sync stale cleanup");
   assert(/git restore|从 git 恢复/.test(evidence) && /❌/.test(evidence), "EVIDENCE marks git-restore orphans as wrong");
@@ -3388,20 +3393,50 @@ assert(/工程轮/.test(quickstartMd), "QUICKSTART dashboard is engineering-turn
   assert(/本机行为 FAIL/.test(parity061) && /误诊/.test(parity061), "TRAE-PARITY T-P0-3 FAIL reclassified as matcher misdiagnosis");
   assert(/Round A/.test(parity061) && /PASS/.test(parity061), "TRAE-PARITY T-P0-1 Round A PASS");
   assert(/RunCommand/.test(traeAd) && /beforeShellExecution/.test(traeAd), "trae adapter documents RunCommand + forbids Cursor channel");
-  assert(/Round C/.test(changelog061) && /本机行为 FAIL/.test(changelog061), "CHANGELOG 0.6.1-dev notes Round C FAIL");
+  assert(/Round C/.test(changelog061) && /本机行为 FAIL/.test(changelog061), "CHANGELOG notes Round C FAIL");
   assert(
     /误诊/.test(changelog061) && /RunCommand/.test(changelog061),
     "CHANGELOG reclassifies Round C as matcher misdiagnosis + RunCommand fix"
   );
   assert(/Settings/.test(changelog061) && /Hooks/.test(changelog061), "CHANGELOG requires Settings→Hooks enable project");
   assert(
-    /中高/.test(changelog061) && /不.*矩阵|不把矩阵/.test(changelog061),
-    "CHANGELOG 0.6.1-dev keeps Trae 中高 (no bump)"
+    /中高\s*→\s*高|中高 → 高/.test(changelog061) && /MCP 面板 PASS|T-P0-2 PASS/.test(changelog061),
+    "CHANGELOG 0.6.1 records Trae 高 + MCP panel PASS"
   );
   assert(/Hooks 复测 PASS/.test(changelog061) && /2026-09-14/.test(changelog061), "CHANGELOG notes Hooks live PASS after T-P1-2");
   assert(/单独不授权/.test(changelog061), "CHANGELOG: hooks PASS alone does not authorize 高");
   assert(/live PASS|Hooks live PASS|Hooks 复测 PASS/.test(traeAd), "trae adapter notes Hooks live PASS");
   assert(/单独不授权/.test(traeAd), "trae adapter: hooks PASS alone does not authorize 高");
+  assert(/\*\*高\*\*/.test(traeAd) && !/\*\*中高\*\*/.test(traeAd), "trae adapter alignment 高");
+  assert(/Settings/.test(traeAd) && /开关|toggle/.test(traeAd), "trae adapter MCP Settings toggles");
+
+  assert(/MCP 面板 PASS|Settings MCP/.test(evidence) && /\b12\b/.test(evidence), "EVIDENCE MCP panel 12 servers");
+  assert(/gitlab/.test(evidence) && /chrome-devtools/.test(evidence) && /Apifox/.test(evidence), "EVIDENCE MCP ON trio");
+  assert(/sonarqube/.test(evidence) && /redis/.test(evidence) && /mysql/.test(evidence), "EVIDENCE MCP OFF via toggle");
+  assert(/T-P0-2/.test(evidence) && /\*\*PASS\*\*/.test(evidence), "EVIDENCE marks T-P0-2 PASS");
+  assert(/开关|toggle/.test(evidence) && /误读|toggled off/.test(evidence), "EVIDENCE explains earlier 缺 7 台 misread");
+
+  const fillMcp061 = readDoc("fill-mcp.md");
+  assert(/\.trae\/mcp\.json/.test(fillMcp061) && /Settings/.test(fillMcp061), "fill-mcp.md Trae path + Settings enable");
+  const mcpPaths061 = fs.readFileSync(path.join(skillRoot, "scripts/lib/mcp-paths.mjs"), "utf8");
+  assert(/\.trae\/mcp\.json/.test(mcpPaths061) && /Settings/.test(mcpPaths061), "mcp-paths.mjs documents Settings enable");
+  const syncHosts061 = readDoc("sync-hosts.md");
+  assert(/trae[\s\S]{0,80}\*\*高\*\*/.test(syncHosts061) || /\|\s*trae\s*\|[^\n]*\*\*高\*\*/.test(syncHosts061), "sync-hosts.md Trae 高");
+  const qs061 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
+  assert(/Trae \*\*高\*\*/.test(qs061) || /\*\*Trae 高\*\*/.test(qs061), "QUICKSTART Trae 高");
+  assert(/Trae \*\*高\*\*/.test(handbookMd) || /Trae<\/td><td><strong>高<\/strong>/.test(handbookHtml), "手册 Trae 高");
+
+  // T-P1-4: thin Trae L5 sync path nails (no huge golden tree)
+  assert(/\.trae\/rules\/\$\{rule\.name/.test(syncTmpl061), "sync.mjs.tmpl distributes Trae L5 rules");
+  assert(/\.trae\/hooks\.json/.test(syncTmpl061), "sync.mjs.tmpl L5 Trae hooks path");
+  assert(/\.trae\/mcp\.json/.test(syncTmpl061), "sync.mjs.tmpl L5 Trae MCP path");
+  const renderSelfcheck061 = fs.readFileSync(path.join(skillRoot, "scripts/selfcheck-render.mjs"), "utf8");
+  assert(/l5-trae-ssot-00-harness/.test(renderSelfcheck061), "selfcheck-render nails L5 Trae SSOT 00");
+  const matureTraeReadme061 = fs.readFileSync(
+    path.join(skillRoot, "scripts/fixtures/mature-trae/README.fixture.md"),
+    "utf8"
+  );
+  assert(/L5|sync/.test(matureTraeReadme061) && /\.trae\/rules/.test(matureTraeReadme061), "mature-trae README nails L5 sync paths");
 
   // T-P1-2: adapter soft-allow must emit Trae hookSpecificOutput.additionalContext
   {

@@ -6,7 +6,7 @@ AI 工具面与多宿主同步。对齐矩阵与 L5 生成指针。
 |---|---|
 | [ai-tools.md](ai-tools.md) | `Q_AI_TOOL` / 对齐矩阵 / Codex P2 冻结 |
 | [sync-hosts.md](sync-hosts.md) | L5 宿主目录生成与适配卡索引 |
-| [TRAE-PARITY.md](TRAE-PARITY.md) | Trae 中高→高缺口清单（0.6.1-dev P0 spike） |
+| [TRAE-PARITY.md](TRAE-PARITY.md) | Trae 高（0.6.1；不假装 Cursor 协议） |
 | [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md) | T-P0-1…4 官方实证（2026-09-12） |
 | [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md) | Trae IDE 人验短清单 |
 | [adapters/](../templates/ai-tools/adapters/) | 各宿主路径适配卡 |

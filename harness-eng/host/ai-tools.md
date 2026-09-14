@@ -58,7 +58,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 | `claude` | **高** | L3+ 全量 `.claude/rules/*.md` 镜像 + Claude 族 hooks |
 | `qoder` | **高** | L3+ 全量 `.qoder/rules/*.md` 镜像 + Claude 族 hooks |
 | `workbuddy` | **高** | L3+ rules 镜像 + CodeBuddy hooks 全家桶 |
-| `trae` | **中高** | L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json`。中高→高跟踪 [TRAE-PARITY.md](TRAE-PARITY.md)（不假装 Cursor 协议） |
+| `trae` | **高** | L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` **+ IDE Settings 开关启用**（不假装 Cursor 协议）。跟踪 [TRAE-PARITY.md](TRAE-PARITY.md) |
 | `codex` | **部分（P2）·不默认** | 仅薄指针 + 基础 commit gate；**不全量镜像** rules；hooks / MCP / skills **未**与 Cursor/Claude 对等；未探测不进「全部推荐」。**0.6.x 冻结 P2**，全量对等另立项（[ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)） |
 
 自定义入口-only 工具：只保证入口指针（及同目录 `1x` 指针），不装 hooks/MCP。
@@ -113,7 +113,8 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 | `claude` / `qoder` / `workbuddy` | `.mcp.json.example` | `.mcp.json` |
 | `trae` | `.trae/mcp.json.example` | `.trae/mcp.json` |
 
-路径 SSOT：`scripts/lib/mcp-paths.mjs`。calibrate-live 按优先级读真密。
+路径 SSOT：`scripts/lib/mcp-paths.mjs`。calibrate-live 按优先级读真密。  
+**Trae**：磁盘写 `.trae/mcp.json` 后须在 IDE **Settings → MCP** 用开关启用；面板里 toggled-off 的 server **仍在场**（不是缺文件）。2026-09-14 实证见 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。
 
 ### hooks 家族
 

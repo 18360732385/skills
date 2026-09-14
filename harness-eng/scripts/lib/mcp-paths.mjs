@@ -4,7 +4,8 @@
  * 约定（与 ai-tools.md 一致）：
  * - cursor → .cursor/mcp.json
  * - claude / qoder / workbuddy → 根 .mcp.json（官方主路径）
- * - trae → .trae/mcp.json
+ * - trae → .trae/mcp.json（磁盘产物 + 必须在 IDE Settings → MCP 开关启用；
+ *   toggled-off ≠ 缺文件。无协议变更：不改到 .cursor/mcp.json）
  *
  * fill-mcp 经确认可写入下列真密路径；calibrate-live 按优先级读取第一个存在的文件。
  */

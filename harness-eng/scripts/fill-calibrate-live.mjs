@@ -9,6 +9,7 @@
  *
  * Connection (no inventing secrets):
  *   1) mcp 真密（按优先级）：.cursor/mcp.json → .mcp.json → .trae/mcp.json → .qoder/mcp.json
+ *      Trae：.trae/mcp.json 须在 IDE Settings → MCP 开关启用（磁盘产物 ≠ 已接入）
  *   2) application-<profile>.yml (or application.yml)
  *
  * Prefer fill-mcp + host MCP when available. This is the fallback path (0.2.10+; multi-path 0.5.2+).
