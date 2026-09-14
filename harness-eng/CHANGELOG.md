@@ -6,14 +6,15 @@
 
 ## 0.6.1-dev — 2026-09-12（Trae P0 spike：官方实证 · FM 保留 · mature-trae）
 
-**不**把矩阵 Trae 中高改成高（T-P1-5 等 Settings → Hooks + matcher `RunCommand` 新会话复测 PASS + MCP）。
+**不**把矩阵 Trae 中高改成高（hooks PASS **单独不授权**升 **高**；T-P1-5 仍等 MCP T-P0-2 / T-P1-3 / T-P1-4）。
 
 ### 产品
 
 - **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；官方终端 **`RunCommand`**）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
 - **实机回传**（2026-09-12 Trae CN）：T-P0-1 消费仓磁盘 FAIL（实例化 `sync.mjs` 仍旧 strip）；T-P0-2 **IDE 已消费** `mcp.json`；T-P0-3 待新会话；T-P0-4 会话 PASS
 - **实机回传续**（2026-09-12 Trae CN · c-be-sms-ai）：Round A 刷新后 T-P0-1 **磁盘+行为 PASS**（13 份、认 `globs`、无 `1x`）；Round C T-P0-3 **本机行为 FAIL**（`.trae/hooks.json` 当时 matcher=`Bash`）。事后判 **matcher 误诊**（`Bash` 永不匹配 `RunCommand`）
-- **T-P1-2 hooks**：`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`（门禁 matcher `Bash|RunCommand`）；`claude-adapter.js` 软放行同时写 `systemMessage` + `hookSpecificOutput.additionalContext`。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底。消费仓须 sync + **Settings → Hooks 启用项目 hooks** + **新会话**复测。**不**升矩阵
+- **T-P1-2 hooks**：`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`（门禁 matcher `Bash|RunCommand`）；`claude-adapter.js` 软放行同时写 `systemMessage` + `hookSpecificOutput.additionalContext`。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底。消费仓须 sync + **Settings → Hooks 启用项目 hooks**。**不**升矩阵
+- **Hooks 复测 PASS**（2026-09-14 Trae CN · c-be-sms-ai）：T-P1-2 后 live PreToolUse matcher `Bash|RunCommand` 注入 `additionalContext`；软 allow。勾 T-P0-3 / T-P1-2。hooks PASS **单独不授权**升 **高**（T-P0-2 / T-P1-3 / T-P1-4 仍开放）
 - **升级注意**：消费仓必须 **刷新** `scripts/agent-config/sync.mjs`（从 tmpl 重落地）后再 sync，`.trae/rules` 才会带 FM，`.trae/hooks.json` 才会带 `RunCommand`
 - **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)（含消费仓刷新配方 + 新会话 hooks 探测；禁止用 Cursor `beforeShellExecution` 当 Trae 证据）
 - **适配卡**：skills 一等公民；rules FM 支持；hooks 路径确认；T-P1-2 matcher `RunCommand`；链到实证页；消费仓刷新 `sync.mjs`
