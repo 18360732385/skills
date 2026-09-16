@@ -12,8 +12,8 @@
 3. **需要** → **必须问用户**：「本主题涉及前端 UI（<列出依据>），是否进入原型与交互设计环节？」
    - 用户否 → `proto=skipped_by_user`（可带风险备注）→ 直接下一环
    - 用户是 → `proto=entered` → 步骤 4
-4. **调起原型 skill**：优先 `stage-bindings.yaml` 的 `proto` 绑定（推荐默认 `prototype`，仍可被用户改绑）。未绑 → 推荐 1～3 个候选（首选 `prototype`）由用户点名（可顺手 rebind）。
-5. 子 skill 完成后校验产物契约（见 [stages.md](stages.md) 环 6）：原型/线框 + 主路径交互说明 + 用户确认标记。
+4. **切断调起原型 skill**：按 [binding.md](binding.md) lookup；优先 yaml 的 `proto` 绑定。未绑 → 推荐 1～3 个候选（首选 `prototype`）由用户点名（可顺手 rebind）。
+5. 子 skill 结束后按 [artifacts.md](artifacts.md) **proto** 节勾选校验。
 
 ## 硬约束
 

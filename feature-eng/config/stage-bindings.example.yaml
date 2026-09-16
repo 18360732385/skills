@@ -1,7 +1,6 @@
 # stage-bindings.yaml 示例与字段说明（示例文件；真实绑定见同目录 stage-bindings.yaml）
 #
-# 重要：下列 skill 名均为【推荐默认】，不是强制。
-# init / rebind 时必须先展示「推荐包」让用户选择：一键采用 / 逐环修改 / 指定其他 skill。
+# 推荐包名单（SSOT）。下列为推荐默认；首问规则见 skill binding.md。
 
 version: 1
 

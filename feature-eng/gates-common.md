@@ -9,12 +9,12 @@
 
 ## 共享理解闸（环 1 末）
 
-- 通过：grill 类 skill 自认 frontier 已空，且用户确认达成共享理解。
+- 通过：用户显式确认可进设计（同义表述可接受）；写 `gates.shared_understanding` 时间戳。
 - 失败：继续澄清；不得进环 2。
 
 ## 设计确认闸（环 2 末）
 
-- 通过：F 为分段确认完成；B 为短设计获用户显式 yes。
+- 通过：B = 短设计获用户显式 yes；F = 整体方案获用户显式 yes，或分段清单**每一段**获 yes。写 `gates.design_confirmed` 时间戳。
 - 失败：回到设计；不得进环 3/4。
 
 ## 开干闸（环 5 末，计划侧）
@@ -28,18 +28,18 @@
 
 ## Pre-Impl 闸（环 7b）
 
-- F 通过：Proto（若 entered）已获用户确认 **且** `testcases.md` 已落盘并覆盖验收项。
-- B 通过：Proto 规则同上；**无** TestDesign 要求。
-- 失败：停；列缺失产物；不得进环 8。
+- F 通过：[artifacts.md](artifacts.md) 中 proto（若 entered）与 testdesign 两节勾选全过。
+- B 通过：proto（若 entered）勾选全过；**无** TestDesign 要求。
+- 失败：停；按勾选表列缺失项；不得进环 8。
 
 ## Gate 闸（环 9）
 
-- 通过：机械轨（仓库 hooks：SQL/收口/契约软提醒）已处理；语义轨（绑定 review skill）对照 Spec/短设计验收无未决 blocker。
+- 通过：[artifacts.md](artifacts.md) gate 节勾选全过（机械轨 + 语义轨无未决 blocker）。
 - 失败：回环 8 修；不得进环 10 / 10′。
 
 ## Verify 闸（环 10，仅 F）
 
-- 通过：`test-report.md` 每条用例有 `pass|fail|blocked` 结论；无 `fail`，或用户显式接受残留并记入 progress。
+- 通过：[artifacts.md](artifacts.md) verify 节勾选全过（含每条用例结论与残留规则）。
 - 失败：进环 10b 排障（先复现再改），修完回本环复测失败项。
 
 ## Close 闸（环 11）

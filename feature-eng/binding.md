@@ -2,10 +2,10 @@
 
 ## 原则
 
-- 流程只定义环节、硬闸、产物形状（见 [stages.md](stages.md)）；**不写死**环节用哪个 skill。
+- 流程只定义环节、硬闸（见 [stages.md](stages.md)、[gates-common.md](gates-common.md)）；产物形状见 [artifacts.md](artifacts.md)；**不写死**环节用哪个 skill。
 - 运行时环节执行者只来自 `config/stage-bindings.yaml`（SSOT；sync 后工作副本在 `.cursor/skills/feature-eng/config/`）。
 - 绑定**入库**，团队共用一套映射；个人差异走 `rebind` 提 MR，不改本地副本。
-- **推荐 ≠ 强制**：yaml 里的默认值与 [init.md](init.md) 推荐包只是建议；init/rebind **首问必须让用户选**（一键采用推荐 / 逐环改 / 指定其他 skill）。
+- **推荐 ≠ 强制**：`config/stage-bindings.yaml` 与推荐包 SSOT [`config/stage-bindings.example.yaml`](config/stage-bindings.example.yaml) 里的 skill 名都是建议，不是死绑；init/rebind **首问**须用户选（一键采用推荐 / 逐环改 / 指定其他 skill）。
 
 ## 可绑环节（键名固定）
 
@@ -21,14 +21,16 @@
    → 阻断：提示「该环节未绑定 skill，请运行 feature-eng init 或 rebind」
 3. skill 已填但当前环境不可调起（未安装）
    → 阻断：协助安装（须用户同意）或提示 rebind；可提示推荐包中的替代名
-4. 调起该 skill，传入本环输入指针：
+4. 切断调起（真上下文边界）：用子代理，或请用户在新会话点名该 skill。
+   父会话只传输入指针后停在调度，等子 skill 结束再进步骤 5：
    - runs/<slug>/ 路径
    - 上一环产物路径
-   - 本环产物期望（来自 stages.md：路径 + 形状）
+   - 本环产物期望（[artifacts.md](artifacts.md) 当前环勾选表）
    - 本环截断/回退指令（见下节「同 skill 多环」与「implement 回退」）
-5. 子 skill 自主跑完（越界判定见 SKILL.md 控制器边界节）
-6. 校验本环约定产物 → 过 → advance；缺 → 停并列缺失项
+5. 子 skill 结束后：只 Read artifacts 当前节勾选 → 全 ✓ 则 [advance.md](advance.md)；缺则停并列缺失项
 ```
+
+切断完成标准：子 skill 在子代理或新会话中跑完；父会话在步骤 5 才读产物。越界判定见 SKILL.md 控制器边界节。
 
 ## 同 skill 多环（brainstorming × design / spec）
 
@@ -36,7 +38,7 @@
 
 | 当前环 | 允许做到 | 禁止 |
 |---|---|---|
-| design | 澄清问题、方案对比、分段设计确认（聊天内设计获用户 yes） | 写 `docs/superpowers/specs/`；调起 `writing-plans`；写业务代码 |
+| design | 澄清问题、方案对比；聊天内设计须用户 yes（F 可分段，每段 yes） | 写 `docs/superpowers/specs/`；调起 `writing-plans`；写业务代码 |
 | spec | 将已确认设计落盘为 `docs/superpowers/specs/YYYY-MM-DD-<主题>-设计.md`；自审；等用户审 Spec | 调起 `writing-plans`；实现；重开整段设计访谈（除非用户要求返工） |
 
 域定稿（ADR/CONTEXT）仍走 `domain` 绑定，不由 brainstorming 代做。
@@ -49,7 +51,7 @@
    - **其次**：无子代理或用户选择 → `executing-plans`
 3. 用户也可指定其他实现类 skill（须已装或同意安装）。
 4. 选定后写入本轮会话选用；**不**因单次选择改 yaml（改默认用 rebind）。
-5. 实现 skill 内部的 TDD / review 由其自行决定；控制器只验代码与单测等本环产物存在性（形状见 stages.md）。
+5. 实现 skill 内部的 TDD / review 由其自行决定；控制器只按 [artifacts.md](artifacts.md) implement 节勾选校验。
 
 ## 临时覆盖
 

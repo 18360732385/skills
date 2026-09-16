@@ -1,8 +1,7 @@
 # feature-eng 环节 → skill 绑定（SSOT，入库）
 # 本文件由 feature-eng init / rebind 维护；手工改亦可，改后须跑：
 #   node scripts/agent-config/sync.mjs
-# 语义：下列值为【推荐默认】，不是死绑。init / rebind 首问必须展示推荐包，
-#   用户可「一键采用推荐」或逐环改绑 / 指定其他 skill；skill: null = 未绑定。
+# 下列为推荐默认；首问规则见 skill binding.md。skill: null = 未绑定。
 # 可绑环节键名固定为下列 11 个；控制器自有环节不在此列。
 
 version: 1

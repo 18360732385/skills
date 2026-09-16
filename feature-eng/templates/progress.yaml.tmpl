@@ -33,11 +33,11 @@ tasks: []
 #    depends_on: []
 #    status: pending | doing | done
 
-# 各闸通过时间（ISO）；无时间戳 = 未过
+# 各闸通过时间（ISO）；无时间戳 = 未过（通过条件见 gates-common.md）
 gates:
   triage: null
-  shared_understanding: null
-  design_confirmed: null
+  shared_understanding: null   # 用户显式确认可进设计
+  design_confirmed: null       # B: 短设计 yes；F: 整体或每段 yes
   go: null
   pre_impl: null
   gate: null

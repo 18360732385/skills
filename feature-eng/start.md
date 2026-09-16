@@ -15,10 +15,10 @@
 3. **分诊**：读需求描述 + 仓库现状，提议 S/B/F 并给依据（改动面、是否新子系统、是否改公共接口、是否需 ADR）。**用户确认**其一。
 4. **建过程态**：创建 `docs/superpowers/runs/<slug>/`，按 `templates/progress.yaml.tmpl` 写 `progress.yaml`，按 `templates/links.md.tmpl` 写 `links.md`。
 5. **登记索引**（仅 F，或用户要求登记时）：`docs/superpowers/README.md` 进行中表按日期倒序插入主题行（Spec/Plan 列先 `—`，环 4/5 产出后回写）。无 README 则跳过并说明。
-6. **进入下一环**：按路径裁剪表（[stages.md](stages.md)）确定首个执行环，按 [binding.md](binding.md) lookup 调起子 skill。
+6. **进入下一环**：按路径裁剪表（[stages.md](stages.md)）确定首个执行环，按 [binding.md](binding.md) lookup **切断**调起。用户声称本环完成 → [advance.md](advance.md)。
 
 ## 硬闸
 
 - 用户未确认分诊前，禁止创建 runs 目录与调起任何子 skill。
 - 控制器只建目录与模板文件；澄清/设计正文由子 skill 产出。
-- 绑定是推荐选用结果；本主题若要换厨师，先 rebind 或接受 implement 环的 SDD/executing-plans 询问。
+- 换绑走 rebind；implement 回退询问见 [binding.md](binding.md)。

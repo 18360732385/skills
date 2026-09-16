@@ -24,5 +24,5 @@
 ## 规则
 
 - 只压缩、不决策；未决项如实列出，不替用户拍板。
-- 写完后提示用户：新会话点名 `feature-eng resume` 即可续跑。
+- 写完后提示用户：新会话点名 `feature-eng resume` 续跑（只看进度则点名 skill 即可，未指定走 status）。
 - handoff **不**替代 close；主题完成仍走环 11。

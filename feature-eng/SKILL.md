@@ -10,24 +10,21 @@ disable-model-invocation: true
 
 版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
 
-Skill = **开发流程仪式（控制器）**。流程定稿与产物契约见 [stages.md](stages.md)；环节与 skill **解耦**，运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（值为**推荐选用结果**，init/rebind 首问可改）。过程态在 `docs/superpowers/runs/<slug>/`（非契约 SSOT）。对用户优先中文。
+Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](stages.md)；产物校验见 [artifacts.md](artifacts.md)；环节与 skill **解耦**，运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（init/rebind **首问**可改；见 [binding.md](binding.md)）。过程态在 `docs/superpowers/runs/<slug>/`（非契约 SSOT）。对用户优先中文。
 
 ## 控制器边界（最高优先级）
 
 一句话：**调度员不进厨房**——feature-eng 是调度员，子 skill 是厨师。各模式文件的越界判定均回本节，不各自复述。
 
-| 允许 | 禁止 |
-|---|---|
-| 分诊路径、维护 progress、判断下一环 | 改业务代码 / 写测试实现 / 画原型正文 / 写用例正文 |
-| 检查硬闸（产物存在、用户已确认） | 改写、截断、覆盖子 skill 的**领域**运行逻辑 |
-| 调起绑定到的子 skill 并传入输入指针与环截断指令 | 在子 skill 执行中途插嘴、替它做领域决策 |
-| 子 skill 结束后校验约定产物并 advance | 把子 skill 职责内联重做一遍冒充完成 |
-| 记录环节状态与回链 | 跳过硬闸、伪造产物勾选 |
-| init/rebind 展示推荐包并请用户选择 | 静默按推荐包写盘、未问用户就改绑 |
+只做：分诊与下一环判断；维护 progress / links；按 [artifacts.md](artifacts.md) 当前环勾选表验产物；**切断**调起绑定 skill（子代理或新会话，只传指针与截断）；子 skill 结束后 advance；init/rebind **首问**展示推荐包并写用户所选绑定。
 
-说明：对 `brainstorming`（design/spec）传入「截断到本环」是控制器职责，**不是**改写子 skill 正文；见 [binding.md](binding.md)。
+硬轨（不可改写为正述时保留）：改业务代码或子 skill 领域产物正文；跳过硬闸或伪造产物勾选；未完成首问就写盘/改绑。
+
+说明：对 `brainstorming`（design/spec）传入「截断到本环」是控制器职责（传指针与截断），见 [binding.md](binding.md)。
 
 ## 模式分流
+
+人侧记住四类：`start` · `resume` · `close` · `init`/`rebind`。
 
 | 意图 | 模式 | Read |
 |---|---|---|
@@ -35,11 +32,10 @@ Skill = **开发流程仪式（控制器）**。流程定稿与产物契约见 [
 | 改环节↔skill 映射 | `rebind` | [rebind.md](rebind.md) |
 | 新主题开工 | `start` | [start.md](start.md) |
 | 续跑进行中主题 | `resume` | [resume.md](resume.md) |
-| 只读看进度 | `status` | [status.md](status.md) |
-| 当前环完成、推进下一环 | `advance` | [advance.md](advance.md) |
 | 收口归档 | `close` | [close.md](close.md) |
 
-未指定：无 `config/stage-bindings.yaml` → `init`；有未完成 `runs/` → `resume`；否则问用户。
+`start`/`resume` 之后用户声称当前环完成 → Read [advance.md](advance.md)（不必点名 `advance`）。  
+未指定：无 `config/stage-bindings.yaml` → `init`；有未完成 `runs/` → [status.md](status.md)；否则问用户（`start` 还是 `init`）。点名 `status`/`advance` 仍走对应文件。
 
 ## 硬闸（闸名索引；通过条件正文只活在指针文件）
 
@@ -52,13 +48,14 @@ Skill = **开发流程仪式（控制器）**。流程定稿与产物契约见 [
 | Verify 闸（仅 F） | 环 10 末 | [gates-common.md](gates-common.md) |
 | Close 闸 | 环 11 | [close.md](close.md) |
 
-闸不过：停并列缺失项；禁止跳过闸或伪造产物勾选。
+闸不过：停并列缺失项。硬轨见上节（跳过闸 / 伪造勾选）。
 
 ## 旁路（按需 Read）
 
 | 何时 | Read |
 |---|---|
-| 环节表 / S·B·F 裁剪 / 产物契约 | [stages.md](stages.md) |
+| 环节表 / S·B·F 裁剪 | [stages.md](stages.md) |
+| 当前环产物勾选 | [artifacts.md](artifacts.md)（只读当前 stage 节） |
 | 各环硬闸通过条件 | [gates-common.md](gates-common.md) |
 | 5→6 Proto 自判与询问 | [proto-bridge.md](proto-bridge.md) |
 | 绑定 lookup / 推荐包 / 截断与回退 | [binding.md](binding.md) |

@@ -1,6 +1,6 @@
-# stages — 环节表与产物契约（流程定稿 v0.3）
+# stages — 环节表与路径裁剪（流程定稿 v0.3）
 
-本页是 feature-eng 的**流程正文**：环节顺序、进入条件、产物形状。执行者一律写「绑定 skill」或「控制器」；具体 skill 名见 `config/stage-bindings.yaml`（解耦规则见 [binding.md](binding.md)）。
+本页是 feature-eng 的**流程正文**：路径定义、环节顺序、进入条件、路径裁剪。产物形状与校验勾选见 [artifacts.md](artifacts.md)。执行者一律写「绑定 skill」或「控制器」；具体 skill 名见 `config/stage-bindings.yaml`（解耦规则见 [binding.md](binding.md)）。
 
 ## 路径
 
@@ -30,7 +30,7 @@
 | 10 | 验证 Verify | 绑定 skill + 按用例逐项 | **仅 F** | 测试报告（用例 pass/fail/blocked） | runs `test-report.md` |
 | 10′ | 冒烟（非 F） | 可选 quick QA | B 建议、不强制 | 可选记录 | runs |
 | 10b | 排障 Diagnose | 绑定 skill | 按需；先复现再改 | 复现笔记 | runs |
-| 11 | 收口 Close | 控制器 + rule 18/19 | 验证策略满足或用户接受残留 | superpowers 归档、pitfalls 三问 | `docs/superpowers/` 等 |
+| 11 | 收口 Close | 控制器（收口正文见 [close.md](close.md)） | 验证策略满足或用户接受残留 | superpowers 归档、pitfalls 三问 | `docs/superpowers/` 等 |
 
 ## 路径裁剪
 
@@ -48,14 +48,6 @@
 | 10′ 冒烟 | ✗ | 建议 | 可并入 10 |
 | 11 收口 | 记结论 | 精简 | ✓ |
 
-## 产物契约（控制器只认这些）
-
-**环 6 Proto**：可打开的原型或线框 + 主路径交互说明 + 用户「原型确认」标记。控制器不规定视觉工具。
-
-**环 7 TestDesign**（仅 F，集成测试）：用例文档字段 = 用例 ID、模块/场景、前置、步骤、数据、期望、优先级、关联需求/任务 ID；覆盖 Spec 验收项与功能联动面。**明确排除**单测/实现级用例（那是环 8 TDD 的事）。
-
-**环 10 Verify**（仅 F）：按 `testcases.md` 逐项执行；报告每条用例 `pass|fail|blocked` + 失败证据链接 + 汇总通过率。存在未接受 `fail` 不得 close。
-
 ## progress.yaml 字段
 
-字段 SSOT 为 `templates/progress.yaml.tmpl`（含注释）；本页不复述。
+字段 SSOT 为 `templates/progress.yaml.tmpl`（含注释）；本页不复述。校验勾选见 [artifacts.md](artifacts.md)。
