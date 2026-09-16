@@ -1,12 +1,12 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev`（当前 **0.6.4-dev**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4`（当前 **0.6.4**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
 
-## 0.6.4-dev — 2026-09-16（CodeBuddy / WorkBuddy 官方对齐）
+## 0.6.4 — 2026-09-16（正式钉号：CodeBuddy/WorkBuddy 官方对齐）
 
-> 开发钉号。生产装/升仍用 **`main`**（本列车合并进 main 后再装）。**不**改 Trae 矩阵、**不**重开 Codex。
+> 由 **0.6.4-dev** 钉号。生产装/升仍用 **`main`**。**不**改 Trae 矩阵、**不**重开 Codex。
 
 ### 本版要点
 
@@ -20,7 +20,8 @@
 
 ### 版本钉
 
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.4-dev`**
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.4`**（无 `-dev`）
+- 0.6.3 freshness / 报告壳钉号不回退
 
 ## 0.6.3 — 2026-09-14（正式钉号：freshness · 热路径 · Trae P2 · 报告壳叙事）
 

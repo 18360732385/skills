@@ -6,7 +6,7 @@
 
 ## 0. 消费仓刷新（升级后必做 · freshness gate）
 
-0.6.4-dev 起 rules 为扁平 `.md` 且保留 FM；旧消费仓若仍是 `<name>/RULE.mdc`，必须刷新实例化 `scripts/agent-config/sync.mjs` 再跑 sync。
+**0.6.4** 起 rules 为扁平 `.md` 且保留 FM；旧消费仓若仍是 `<name>/RULE.mdc`，必须刷新实例化 `scripts/agent-config/sync.mjs` 再跑 sync。
 
 ```bash
 node scripts/harness.mjs --check-freshness --root <TARGET>

@@ -73,7 +73,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
   - **跳过 / 不另写 `1x`**：L3+ 全量镜像或 L5 `sync.mjs` 分发规则的 claude / qoder / trae / workbuddy（land/resume 不强制再写 alwaysApply 1x；已有文件 resume `skip`，不自动删）
   - **Cursor**：不另写 `1x`（已有真实 `11\|12\|13\|16`）
   - L5（`agent_config: true`）下，全量镜像宿主 **omit** 冗余 1x；Codex 仍保留指针
-- **全量 rules 镜像（0.5.1+ / 0.5.2+ claude；0.6.4-dev workbuddy 扁平）**：L3+ 镜像到 qoder/trae/claude/workbuddy（`.md`；trae/workbuddy **保留 FM**）；L5 由 `sync.mjs` 分发
+- **全量 rules 镜像（0.5.1+ / 0.5.2+ claude；**0.6.4** workbuddy 扁平）**：L3+ 镜像到 qoder/trae/claude/workbuddy（`.md`；trae/workbuddy **保留 FM**）；L5 由 `sync.mjs` 分发
 - audit / detect：入口仍要在；`1x` 缺失不再作为 L3+/L5 全量镜像宿主的缺口（改看本宿主 `*-sync*`）；Codex 仍要 `contract-sync.md`
 
 ## 契约 sync 镜像路径
