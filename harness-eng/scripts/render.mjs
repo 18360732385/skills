@@ -239,7 +239,7 @@ function stripFrontmatter(src) {
 /**
  * Cursor .mdc → 宿主 .md。
  * - qoder/claude：strip frontmatter，globs/alwaysApply 降级为正文提示。
- * - trae：保留 YAML frontmatter（官方原生 alwaysApply / globs / description）。
+ * - trae / workbuddy(codebuddy)：保留 YAML frontmatter（alwaysApply / globs / description）。
  */
 function transformMdcToHostMd(raw, { preserveFrontmatter = false } = {}) {
   if (preserveFrontmatter) return raw;
@@ -670,7 +670,7 @@ function expandFromManifest(manifestPath, params, root) {
 
 /**
  * 将已展开的 .cursor/rules/*.mdc 镜像到 qoder/trae/workbuddy。
- * qoder/claude → .md（strip FM）；trae → .md（保留 FM）；workbuddy → rules/<name>/RULE.mdc。
+ * qoder/claude → .md（strip FM）；trae/workbuddy → .md（保留 FM）。
  */
 function expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root) {
   if (agentConfig) return [];
@@ -715,8 +715,8 @@ function expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root
     if (tools.has("workbuddy")) {
       pushMirror(
         `${f.id || stem}-mirror-workbuddy`,
-        `.codebuddy/rules/${stem}/RULE.mdc`,
-        undefined
+        `.codebuddy/rules/${stem}.md`,
+        "mdc-to-host-md"
       );
     }
   }
@@ -953,7 +953,8 @@ function applyOne(root, item, placeholders, dryRun, log) {
   if (item.contentTransform === "mdc-to-host-md") {
     const rel = String(targetRel || "").replace(/\\/g, "/");
     rendered = transformMdcToHostMd(rendered, {
-      preserveFrontmatter: rel.startsWith(".trae/rules/"),
+      preserveFrontmatter:
+        rel.startsWith(".trae/rules/") || rel.startsWith(".codebuddy/rules/"),
     });
   }
   const unresolvedPlaceholders = findUnresolvedPlaceholders(rendered);

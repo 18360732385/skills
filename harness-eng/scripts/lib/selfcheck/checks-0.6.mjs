@@ -507,7 +507,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.3", "manifest version exactly 0.6.3");
+  assert(verLine && verLine[1] === "0.6.4-dev", "manifest version exactly 0.6.4-dev");
 
   const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -829,26 +829,27 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 }
 
 // --- 0.6.3 formal: freshness · report_schema narrative · upgrade three-step ---
+// (historical docs stay; current skill pin moved to 0.6.4-dev — freshness still asserted with current id)
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.6.3", "0.6.3 manifest pin");
+  assert(manVer063 === "0.6.4-dev", "current manifest pin (0.6.4-dev; 0.6.3 formal retained in CHANGELOG)");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.6\.3/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.6\.4-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.3/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4-dev/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.3/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.4-dev/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -910,5 +911,73 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const libFresh = fs.readFileSync(path.join(skillRoot, "scripts/lib/sync-freshness.mjs"), "utf8");
   assert(/HARNESS_SYNC_TMPL_ID/.test(libFresh) && /runFreshnessCheck/.test(libFresh), "lib/sync-freshness.mjs");
 }
+
+// --- 0.6.4-dev: CodeBuddy/WorkBuddy official alignment ---
+{
+  const syncTmpl064 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/host === "trae" \|\| host === "workbuddy"/.test(syncTmpl064), "sync toHostMd preserves FM for workbuddy");
+  assert(
+    syncTmpl064.includes('.codebuddy/rules/${rule.name.replace(/\\.mdc$/, ".md")}') ||
+      syncTmpl064.includes(".codebuddy/rules/${rule.name.replace(/\\.mdc$/, \".md\")}"),
+    "sync emits flat .codebuddy/rules/<stem>.md"
+  );
+  assert(!/codebuddy\/rules\/\$\{rule\.name\.replace\([^)]*\)\}\/RULE\.mdc/.test(syncTmpl064), "sync workbuddy path no longer RULE.mdc");
+  assert(/RULE\.mdc/.test(syncTmpl064) && /prune|清理|扁平/.test(syncTmpl064), "sync header notes RULE.mdc prune migration");
+  assert(/permissions/.test(syncTmpl064) && /settings\.local/.test(syncTmpl064), "sync documents permissions / no settings.local");
+  assert(/\/hooks/.test(syncTmpl064) || /hooks 面板/.test(syncTmpl064), "sync header notes /hooks panel");
+  assert(/defaultMode/.test(syncTmpl064) && /Read\(\.\/\.env\)/.test(syncTmpl064), "sync merges minimal permissions defaults");
+
+  const render064 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(
+    render064.includes(".codebuddy/rules/${stem}.md") || render064.includes('.codebuddy/rules/${stem}.md'),
+    "render mirrors workbuddy to flat .md"
+  );
+  assert(
+    /preserveFrontmatter:[\s\S]*codebuddy\/rules\//.test(render064) ||
+      /codebuddy\/rules\//.test(render064) && /preserveFrontmatter/.test(render064),
+    "render preserveFrontmatter covers codebuddy"
+  );
+  assert(/rel\.startsWith\("\.codebuddy\/rules\/"\)/.test(render064), "render preserveFrontmatter branch includes .codebuddy/rules");
+
+  const wbAd = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/workbuddy.md"), "utf8");
+  assert(/\.codebuddy\/rules\/<stem>\.md/.test(wbAd), "workbuddy adapter flat .md");
+  assert(/alwaysApply/.test(wbAd) && /globs/.test(wbAd), "workbuddy adapter documents FM");
+  assert(/\/hooks/.test(wbAd) && /Bash/.test(wbAd), "workbuddy adapter /hooks + Bash");
+  assert(/\$CODEBUDDY_PROJECT_DIR/.test(wbAd), "workbuddy adapter CODEBUDDY_PROJECT_DIR");
+  assert(/settings\.local\.json/.test(wbAd) && /\*\*不\*\*生成/.test(wbAd), "workbuddy adapter no settings.local generation");
+  assert(/agents\//.test(wbAd) && /非目标/.test(wbAd), "workbuddy adapter agents non-goal");
+  assert(/\.mcp\.json/.test(wbAd) && /local > project > user/.test(wbAd), "workbuddy adapter MCP priority");
+
+  assert(fs.existsSync(path.join(skillRoot, "host/CODEBUDDY-PARITY.md")), "CODEBUDDY-PARITY.md");
+  assert(fs.existsSync(path.join(skillRoot, "host/CODEBUDDY-P0-MANUAL.md")), "CODEBUDDY-P0-MANUAL.md");
+  const parity064 = fs.readFileSync(path.join(skillRoot, "host/CODEBUDDY-PARITY.md"), "utf8");
+  const manual064 = fs.readFileSync(path.join(skillRoot, "host/CODEBUDDY-P0-MANUAL.md"), "utf8");
+  assert(/扁平/.test(parity064) && /RULE\.mdc/.test(parity064), "PARITY covers flat vs RULE.mdc");
+  assert(/\/hooks/.test(manual064) && /Bash/.test(manual064), "MANUAL covers /hooks + Bash");
+  assert(/check-freshness/.test(manual064), "MANUAL has freshness");
+  assert(/permissions/.test(manual064) && /settings\.local/.test(manual064), "MANUAL permissions priority");
+
+  const agentIdx064 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(/CODEBUDDY-PARITY/.test(agentIdx064), "AGENT-INDEX links CODEBUDDY-PARITY");
+  const hostReadme064 = fs.readFileSync(path.join(skillRoot, "host/README.md"), "utf8");
+  assert(/CODEBUDDY-PARITY/.test(hostReadme064) && /CODEBUDDY-P0-MANUAL/.test(hostReadme064), "host README links CodeBuddy docs");
+  const aiTools064 = readDoc("ai-tools.md");
+  assert(/CODEBUDDY-PARITY/.test(aiTools064), "ai-tools links CODEBUDDY-PARITY");
+  const syncHosts064 = fs.readFileSync(path.join(skillRoot, "host/sync-hosts.md"), "utf8");
+  assert(/CODEBUDDY-PARITY/.test(syncHosts064), "sync-hosts links CODEBUDDY-PARITY");
+
+  const changelog064 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.4-dev\b/m.test(changelog064), "CHANGELOG 0.6.4-dev heading");
+  const upgrade064 = readDoc("upgrade.md");
+  assert(/0\.6\.3 → 0\.6\.4-dev/.test(upgrade064), "upgrade has 0.6.3 → 0.6.4-dev");
+
+  const hooksChecks064 = fs.readFileSync(path.join(skillRoot, "scripts/lib/hooks-checks.mjs"), "utf8");
+  assert(/workbuddy:\s*CLAUDE_STYLE\["commit-gate"\]/.test(hooksChecks064), "hooks-checks workbuddy stays CLAUDE_STYLE");
+  assert(/matcher:\s*"Bash"/.test(hooksChecks064), "CLAUDE_STYLE Bash retained");
+
+  assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools064), "Trae matrix still 高");
+  assert(/冻结/.test(aiTools064) && /Codex|codex/.test(aiTools064), "Codex still frozen");
+}
+
 
 }
