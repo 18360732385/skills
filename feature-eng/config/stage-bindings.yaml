@@ -1,0 +1,21 @@
+# feature-eng 环节 → skill 绑定（SSOT，入库）
+# 本文件由 feature-eng init / rebind 维护；手工改亦可，改后须跑：
+#   node scripts/agent-config/sync.mjs
+# 语义：下列值为【推荐默认】，不是死绑。init / rebind 首问必须展示推荐包，
+#   用户可「一键采用推荐」或逐环改绑 / 指定其他 skill；skill: null = 未绑定。
+# 可绑环节键名固定为下列 11 个；控制器自有环节不在此列。
+
+version: 1
+
+stages:
+  grill:      { skill: grill-me }                        # 环 1 澄清（仅 grilling；定稿走 domain）
+  design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认（见 binding.md）
+  domain:     { skill: domain-modeling }                 # 环 3 定稿（ADR/CONTEXT）
+  spec:       { skill: brainstorming }                   # 环 4 规格：仅写 Spec 段（同名 skill，靠截断区分）
+  plan:       { skill: writing-plans }                   # 环 5 计划
+  proto:      { skill: prototype }                       # 环 6 原型（条件进入；非 Superpowers）
+  testdesign: { skill: lynxce-test-cases }               # 环 7 集成测试设计（仅 F）
+  implement:  { skill: subagent-driven-development }     # 环 8 优先 SDD；不可用则 executing-plans（见 binding.md）
+  review:     { skill: code-review }                     # 环 9 语义轨评审
+  verify:     { skill: qa }                              # 环 10 集成验证（仅 F）
+  diagnose:   { skill: systematic-debugging }            # 环 10b 排障（按需）

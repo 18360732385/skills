@@ -1,0 +1,24 @@
+# stage-bindings.yaml 示例与字段说明（示例文件；真实绑定见同目录 stage-bindings.yaml）
+#
+# 重要：下列 skill 名均为【推荐默认】，不是强制。
+# init / rebind 时必须先展示「推荐包」让用户选择：一键采用 / 逐环修改 / 指定其他 skill。
+
+version: 1
+
+# stages.<环节键>.skill：
+#   - 字符串：子 skill 名（用户点名可调起的名字；本仓/本机已安装或 init 时协助安装）
+#   - null：未绑定。运行到该环节时控制器阻断并提示 init / rebind
+# 可选扩展字段（暂未启用，预留）：source（安装来源）、allow_override（本环临时覆盖）
+
+stages:
+  grill:      { skill: grill-me }                        # 环 1 澄清：grilling；ADR/术语在 domain
+  design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认
+  domain:     { skill: domain-modeling }                 # 环 3 定稿：CONTEXT + ADR
+  spec:       { skill: brainstorming }                   # 环 4 规格（仅 F）：只写 Spec 段
+  plan:       { skill: writing-plans }                   # 环 5 计划：任务拆分 + 依赖边
+  proto:      { skill: prototype }                       # 环 6 原型与交互：条件进入
+  testdesign: { skill: lynxce-test-cases }               # 环 7 集成测试设计（仅 F）
+  implement:  { skill: subagent-driven-development }     # 环 8 优先 SDD，其次 executing-plans
+  review:     { skill: code-review }                     # 环 9 语义轨评审
+  verify:     { skill: qa }                              # 环 10 集成验证（仅 F）
+  diagnose:   { skill: systematic-debugging }            # 环 10b 排障：先复现再改
