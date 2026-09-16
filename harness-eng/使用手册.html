@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.6.4-dev</title>
+  <title>harness-eng 使用手册 · v0.6.4</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.6.4-dev</div>
+    <div class="ver">v0.6.4</div>
   </header>
 
   <div class="shell">
@@ -848,7 +848,7 @@ node scripts/selfcheck.mjs</code></pre>
           <div class="tool">
             <div class="name">WorkBuddy / CodeBuddy</div>
             <div class="id">workbuddy · .codebuddy/</div>
-            <p><code>CODEBUDDY.md</code> + rules 镜像 + L3+ Claude 系 hooks 全家桶</p>
+            <p><code>CODEBUDDY.md</code> + 扁平 <code>.codebuddy/rules/*.md</code>（保留 FM）+ L3+ hooks；改 settings 后须 <strong>/hooks</strong>；MCP 根 <code>.mcp.json</code></p>
           </div>
         </div>
         <p>提问对应 <code>Q_AI_TOOL</code>，<strong>可多选</strong>。未探测到任何工具时，「全部推荐」的 <code>ai_tools</code> 为空，须追问一次；<strong>不</strong>默认 Cursor，也不把 Codex 塞进默认包。Codex 选项标注 <strong>部分对齐·不默认</strong>。</p>
@@ -867,7 +867,7 @@ node scripts/selfcheck.mjs</code></pre>
               <tr><td rowspan="4"><strong>Claude 族</strong></td><td><code>claude</code></td><td><code>.claude/settings.json</code> + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
               <tr><td><code>qoder</code></td><td><code>.qoder/settings.json</code> + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
               <tr><td><code>trae</code></td><td><code>.trae/hooks.json</code> + adapter</td><td><code>.trae/mcp.json.example</code></td></tr>
-              <tr><td><code>workbuddy</code></td><td><code>.codebuddy/settings.json</code> 全家桶 + adapter</td><td>根 <code>.mcp.json.example</code></td></tr>
+              <tr><td><code>workbuddy</code></td><td><code>.codebuddy/settings.json</code> 全家桶 + adapter；热加载须 <strong>/hooks</strong></td><td>根 <code>.mcp.json</code> / <code>.example</code></td></tr>
               <tr><td><strong>部分对齐·不默认</strong></td><td><code>codex</code></td><td>基础 commit gate</td><td>见 adapters/codex.md</td></tr>
               <tr><td><strong>兜底</strong></td><td>任意 L3+</td><td colspan="2">建议 <code>git config core.hooksPath .githooks</code></td></tr>
             </tbody>
@@ -882,7 +882,7 @@ node scripts/selfcheck.mjs</code></pre>
             <tbody>
               <tr><td>MCP 多路径</td><td><code>.cursor/mcp.json</code> ∥ 根 <code>.mcp.json</code> ∥ <code>.trae/mcp.json</code></td></tr>
               <tr><td>Claude rules 镜像</td><td>L3+ 全量 <code>.claude/rules/*.md</code></td></tr>
-              <tr><td>CodeBuddy 升格</td><td><code>workbuddy</code> hooks 家族 + 根 MCP example</td></tr>
+              <tr><td>CodeBuddy 0.6.4</td><td>扁平 <code>.codebuddy/rules/*.md</code>（保留 FM）；<code>/hooks</code> 面板；根 <code>.mcp.json</code>；settings 优先级 CLI &gt; local &gt; project &gt; user；见 <a href="host/CODEBUDDY-PARITY.md">CODEBUDDY-PARITY.md</a></td></tr>
               <tr><td>适配卡</td><td><a href="templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td></tr>
               <tr><td>L5 生成引擎</td><td><a href="host/sync-hosts.md">sync-hosts.md</a> + <code>sync.mjs</code></td></tr>
             </tbody>
@@ -1146,7 +1146,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.6.4-dev</strong>）与目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.6.4</strong>）与目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1191,7 +1191,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.6.4-dev
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.6.4
         </div>
       </section>
     </main>

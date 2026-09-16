@@ -52,14 +52,17 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
-## 0.6.3 → 0.6.4-dev 迁移要点
+## 0.6.3 → 0.6.4 迁移要点
 
-1. **meta**：`skill_version` → `0.6.4-dev`（resume / upgrade 写 meta 时对齐 manifest）
+1. **meta**：`skill_version` → `0.6.4`（resume / upgrade 写 meta 时对齐 manifest）
 2. **CodeBuddy rules**：由 `.codebuddy/rules/<name>/RULE.mdc` 改为扁平 `.codebuddy/rules/<stem>.md`，**保留** alwaysApply / globs / description frontmatter（与 Trae 同策略）。升级后须刷新 `sync.mjs` 再跑 sync；旧 RULE.mdc 目录会被托管前缀 prune
 3. **hooks**：改 `.codebuddy/settings.json` 后须在 IDE **`/hooks` 面板**确认应用（仅保存文件 ≠ 热生效）；matcher 仍为 Claude 系 **Bash**；命令可用 `$CODEBUDDY_PROJECT_DIR`
 4. **MCP / permissions**：根 `.mcp.json`；首次连接需审批；优先级 local > project > user；密钥用 `${VAR}`。settings 优先级：CLI > `settings.local.json` > `settings.json` > `~/.codebuddy/settings.json`。**不**生成 `settings.local.json`；`.codebuddy/agents/` 非目标
-5. **文档**：[CODEBUDDY-PARITY.md](../host/CODEBUDDY-PARITY.md) · [CODEBUDDY-P0-MANUAL.md](../host/CODEBUDDY-P0-MANUAL.md)
-6. **升级三步**仍适用：装/升 skill → `--check-freshness` → 落后则刷新 `agent-config-sync` 再 `sync.mjs`
+5. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness  
+6. **文档**：[CODEBUDDY-PARITY.md](../host/CODEBUDDY-PARITY.md) · [CODEBUDDY-P0-MANUAL.md](../host/CODEBUDDY-P0-MANUAL.md)
 
 ## 0.6.2 → 0.6.3 迁移要点
 

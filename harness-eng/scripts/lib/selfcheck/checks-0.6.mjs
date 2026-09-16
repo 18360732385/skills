@@ -507,7 +507,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.4-dev", "manifest version exactly 0.6.4-dev");
+  assert(verLine && verLine[1] === "0.6.4", "manifest version exactly 0.6.4");
 
   const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -829,27 +829,27 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 }
 
 // --- 0.6.3 formal: freshness · report_schema narrative · upgrade three-step ---
-// (historical docs stay; current skill pin moved to 0.6.4-dev — freshness still asserted with current id)
+// (historical docs stay; current skill pin moved to 0.6.4 — freshness still asserted with current id)
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.6.4-dev", "current manifest pin (0.6.4-dev; 0.6.3 formal retained in CHANGELOG)");
+  assert(manVer063 === "0.6.4", "current manifest pin (0.6.4; 0.6.3 formal retained in CHANGELOG)");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.6\.4-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.6\.4/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4-dev/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.4-dev/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.4/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -912,7 +912,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/HARNESS_SYNC_TMPL_ID/.test(libFresh) && /runFreshnessCheck/.test(libFresh), "lib/sync-freshness.mjs");
 }
 
-// --- 0.6.4-dev: CodeBuddy/WorkBuddy official alignment ---
+// --- 0.6.4: CodeBuddy/WorkBuddy official alignment ---
 {
   const syncTmpl064 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(/host === "trae" \|\| host === "workbuddy"/.test(syncTmpl064), "sync toHostMd preserves FM for workbuddy");
@@ -967,9 +967,18 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/CODEBUDDY-PARITY/.test(syncHosts064), "sync-hosts links CODEBUDDY-PARITY");
 
   const changelog064 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.4-dev\b/m.test(changelog064), "CHANGELOG 0.6.4-dev heading");
+  assert(/^## 0\.6\.4\b/m.test(changelog064), "CHANGELOG 0.6.4 heading");
+  assert(/^## 0\.6\.4\b/m.test(changelog064) && !((changelog064.match(/^## 0\.6\.4[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.4 no -dev heading");
+  assert(/正式钉号：CodeBuddy\/WorkBuddy/.test(changelog064), "CHANGELOG 0.6.4 formal pin subtitle");
+  assert(/由 \*\*0\.6\.4-dev\*\* 钉号/.test(changelog064), "CHANGELOG notes promoted from 0.6.4-dev");
+  assert(/（无 `-dev`）/.test(changelog064), "CHANGELOG pins without -dev");
   const upgrade064 = readDoc("upgrade.md");
-  assert(/0\.6\.3 → 0\.6\.4-dev/.test(upgrade064), "upgrade has 0.6.3 → 0.6.4-dev");
+  assert(/0\.6\.3 → 0\.6\.4/.test(upgrade064), "upgrade has 0.6.3 → 0.6.4");
+  assert(/升级三步/.test(upgrade064) && /check-freshness/.test(upgrade064) && /\*\*`main`\*\*|\*\*main\*\*/.test(upgrade064), "upgrade 0.6.4 L5 three-step (main · check-freshness · refresh sync)");
+  const verify064 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/正式钉号/.test(verify064) && /0\.6\.3 → 0\.6\.4/.test(verify064), "VERIFY formal pin acceptance rows");
+  const summary064 = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
+  assert(/版本：\*\*0\.6\.4\*\*/.test(summary064), "使用手册-摘要 version 0.6.4");
 
   const hooksChecks064 = fs.readFileSync(path.join(skillRoot, "scripts/lib/hooks-checks.mjs"), "utf8");
   assert(/workbuddy:\s*CLAUDE_STYLE\["commit-gate"\]/.test(hooksChecks064), "hooks-checks workbuddy stays CLAUDE_STYLE");

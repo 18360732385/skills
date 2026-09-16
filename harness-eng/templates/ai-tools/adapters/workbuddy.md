@@ -1,6 +1,6 @@
 # Adapter: WorkBuddy / CodeBuddy
 
-对齐程度：**高**（L3+ rules 镜像 + hooks 全家桶）。L3+ / L5 不再另写冗余 `1x-contract-sync`。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。  
+对齐程度：**高**（L3+ rules 镜像 + hooks 全家桶；基线 **0.6.4**）。L3+ / L5 不再另写冗余 `1x-contract-sync`。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。  
 官方对齐说明：[CODEBUDDY-PARITY.md](../../../host/CODEBUDDY-PARITY.md) · 人验：[CODEBUDDY-P0-MANUAL.md](../../../host/CODEBUDDY-P0-MANUAL.md)。
 
 - **目录**: `.codebuddy/` + 根 `CODEBUDDY.md`

@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.6.4-dev
- * HARNESS_ENG_VERSION: 0.6.4-dev
+ * HARNESS_SYNC_TMPL_ID: 0.6.4
+ * HARNESS_ENG_VERSION: 0.6.4
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -23,7 +23,7 @@
  *   的文件会被当 stale 清理。这是故意的：L3+/L5 全量镜像宿主不再写 1x-contract-sync.md；
  *   宿主侧 00-harness-ssot 孤儿也不属于 plan（由 SSOT docs/agent-config/rules/00-harness-ssot.mdc
  *   分发）。缺 00 时先 land/render 把 SSOT 指针写上再 sync，勿 git restore 宿主孤儿。
- * - CodeBuddy 0.6.4-dev：rules 改为扁平 `.codebuddy/rules/<stem>.md`（保留 FM）。旧布局
+ * - CodeBuddy 0.6.4：rules 改为扁平 `.codebuddy/rules/<stem>.md`（保留 FM）。旧布局
  *   `.codebuddy/rules/<name>/RULE.mdc` 及空目录会在托管前缀下被 prune（故意迁移清理）。
  * - 不生成 settings.local.json / .codebuddy/agents/（非目标）。hooks 改 settings.json 后须在
  *   IDE `/hooks` 面板确认应用（仅保存文件 ≠ 热生效）。$CODEBUDDY_PROJECT_DIR 仍可用。
@@ -35,8 +35,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.6.4-dev";
-const HARNESS_ENG_VERSION = "0.6.4-dev";
+const HARNESS_SYNC_TMPL_ID = "0.6.4";
+const HARNESS_ENG_VERSION = "0.6.4";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = ["cursor","claude"];
