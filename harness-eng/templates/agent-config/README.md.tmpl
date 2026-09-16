@@ -13,7 +13,7 @@
 
 | 路径 | 说明 |
 |---|---|
-| `rules/*.mdc` | Cursor 原生 frontmatter 规则；其他工具生成时自动 strip / 降级 |
+| `rules/*.mdc` | Cursor 原生 frontmatter 规则；qoder/claude strip；trae/workbuddy 保留 FM |
 | `hooks/hooks.config.json` | hook 资产与各工具事件映射；无等价事件机制的工具不生成、不降级模拟 |
 | `hooks/*.js` | 统一 Cursor 协议脚本；Claude 族（claude/qoder/trae）经 `claude-adapter.js` 双向翻译 |
 | `mcp/servers.json` | （可选）MCP server SSOT；**含密即 vendored_shared 团队约定**，example_only 仓勿建 |
@@ -29,4 +29,4 @@
 | qoder | `.qoder/rules/*.md` | `.qoder/settings.json` hooks | 根 `.mcp.json` |
 | trae | `.trae/rules/*.md` | `.trae/hooks.json` | `.trae/mcp.json` |
 | claude | `.claude/rules/*.md` | `.claude/settings.json` | 根 `.mcp.json` |
-| workbuddy | `.codebuddy/rules/<name>/RULE.mdc` | `.codebuddy/settings.json` | 根 `.mcp.json` |
+| workbuddy | `.codebuddy/rules/<stem>.md`（保留 FM） | `.codebuddy/settings.json` | 根 `.mcp.json` |

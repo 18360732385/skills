@@ -27,7 +27,7 @@
 | cursor | `adapters/cursor.md` | **高** |
 | claude | `adapters/claude.md` | **高** |
 | qoder | `adapters/qoder.md` | **高** |
-| workbuddy | `adapters/workbuddy.md` | **高** |
+| workbuddy | `adapters/workbuddy.md` · [CODEBUDDY-PARITY.md](CODEBUDDY-PARITY.md) | **高** |
 | trae | `adapters/trae.md` | **高**（不假装 Cursor 协议；见 [TRAE-PARITY.md](TRAE-PARITY.md)） |
 | codex | `adapters/codex.md`（P2：部分对齐） | **部分（P2）** — 勿当成已全量同步 |
 

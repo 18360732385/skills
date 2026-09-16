@@ -433,9 +433,14 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
       "codebuddy settings Claude-style family hooks"
     );
     assert(
-      fs.existsSync(path.join(tmpA, ".codebuddy/rules/00-project-docs-overview/RULE.mdc")),
-      "L4 mirrors rules to codebuddy RULE.mdc"
+      fs.existsSync(path.join(tmpA, ".codebuddy/rules/00-project-docs-overview.md")),
+      "L4 mirrors rules to codebuddy flat .md"
     );
+    const cbL4Rule = fs.readFileSync(
+      path.join(tmpA, ".codebuddy/rules/00-project-docs-overview.md"),
+      "utf8"
+    );
+    assert(/^---/.test(cbL4Rule), "L4 codebuddy preserves frontmatter");
     assert(fs.existsSync(path.join(tmpA, ".mcp.json.example")), "L4 root mcp example for qoder/claude");
     assert(fs.existsSync(path.join(tmpA, ".trae/mcp.json.example")), "L4 trae mcp example");
     const preCommit = fs.readFileSync(path.join(tmpA, ".githooks/pre-commit"), "utf8");
@@ -651,9 +656,14 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
     const cbSync = JSON.parse(fs.readFileSync(path.join(tmpB, ".codebuddy/settings.json"), "utf8"));
     assert(cbSync.hooks && cbSync.hooks.PreToolUse, "L5 sync codebuddy settings hooks");
     assert(
-      fs.existsSync(path.join(tmpB, ".codebuddy/rules/00-project-docs-overview/RULE.mdc")),
-      "L5 sync codebuddy rules"
+      fs.existsSync(path.join(tmpB, ".codebuddy/rules/00-project-docs-overview.md")),
+      "L5 sync codebuddy flat .md rules"
     );
+    const cbL5Rule = fs.readFileSync(
+      path.join(tmpB, ".codebuddy/rules/00-project-docs-overview.md"),
+      "utf8"
+    );
+    assert(/^---/.test(cbL5Rule), "L5 sync codebuddy preserves frontmatter");
     const preCommitB = fs.readFileSync(path.join(tmpB, ".githooks/pre-commit"), "utf8");
     assert(
       /\.\.\/docs\/agent-config\/hooks\/git-commit-soft-gate\.js/.test(preCommitB),
@@ -916,7 +926,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.6\.3"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.6\.4"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"

@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.6.3
- * HARNESS_ENG_VERSION: 0.6.3
+ * HARNESS_SYNC_TMPL_ID: 0.6.4
+ * HARNESS_ENG_VERSION: 0.6.4
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -13,12 +13,20 @@
  * - 手改只发生在 docs/agent-config/；已启用工具的 rules/hooks/mcp/settings/skills
  *   与 CLAUDE.md 均为生成物（含 GENERATED 标记），手改会被本脚本覆盖。
  * - rules 的 .mdc frontmatter 为 Cursor 原生格式；qoder/claude 生成时 strip 元数据，
- *   path-scoped 语义以正文自然语言保留。trae 保留 alwaysApply / globs / description
- *   （官方项目规则 frontmatter）。
+ *   path-scoped 语义以正文自然语言保留。trae / workbuddy(codebuddy) 保留 alwaysApply /
+ *   globs / description（官方项目规则 frontmatter；CodeBuddy CLI 亦认 paths）。
  * - 各工具目录中未被本脚本管理的内容（如 docs/harness-eng/harness-meta.yaml、
  *   遗留 .cursor/harness-meta.yaml、mcp.local.json 等运行时数据）不受影响。
  * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
  *   （Claude 系）；trae → .trae/hooks.json。均经 claude-adapter 翻译统一脚本。
+ * - 托管 rules 目录（.cursor/.trae/.qoder/.claude/.codebuddy/rules）里不在本脚本 plan
+ *   的文件会被当 stale 清理。这是故意的：L3+/L5 全量镜像宿主不再写 1x-contract-sync.md；
+ *   宿主侧 00-harness-ssot 孤儿也不属于 plan（由 SSOT docs/agent-config/rules/00-harness-ssot.mdc
+ *   分发）。缺 00 时先 land/render 把 SSOT 指针写上再 sync，勿 git restore 宿主孤儿。
+ * - CodeBuddy 0.6.4：rules 改为扁平 `.codebuddy/rules/<stem>.md`（保留 FM）。旧布局
+ *   `.codebuddy/rules/<name>/RULE.mdc` 及空目录会在托管前缀下被 prune（故意迁移清理）。
+ * - 不生成 settings.local.json / .codebuddy/agents/（非目标）。hooks 改 settings.json 后须在
+ *   IDE `/hooks` 面板确认应用（仅保存文件 ≠ 热生效）。$CODEBUDDY_PROJECT_DIR 仍可用。
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -27,8 +35,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.6.3";
-const HARNESS_ENG_VERSION = "0.6.3";
+const HARNESS_SYNC_TMPL_ID = "0.6.4";
+const HARNESS_ENG_VERSION = "0.6.4";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = ["cursor","claude"];
@@ -90,9 +98,9 @@ function loadRules() {
     .map((f) => ({ name: f, raw: fs.readFileSync(path.join(dir, f), "utf8"), ...parseRule(fs.readFileSync(path.join(dir, f), "utf8")) }));
 }
 
-/** Cursor .mdc → 宿主 .md。trae 保留 FM；qoder/claude strip 并降级为正文提示。 */
+/** Cursor .mdc → 宿主 .md。trae/workbuddy 保留 FM；qoder/claude strip 并降级为正文提示。 */
 function toHostMd(rule, host) {
-  if (host === "trae") {
+  if (host === "trae" || host === "workbuddy") {
     return rule.raw.replace(FM_RE, (m) => m + "\n" + HEADER_MD);
   }
   const bits = [];
@@ -117,9 +125,9 @@ function planRules() {
     if (has("claude")) {
       put(`.claude/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule, "claude"));
     }
-    // codebuddy：每条规则一个文件夹，内含 RULE.mdc
+    // codebuddy：扁平 .md（保留 FM；对齐官方 CLI rules/*.md）
     if (has("workbuddy")) {
-      put(`.codebuddy/rules/${rule.name.replace(/\.mdc$/, "")}/RULE.mdc`, withHeader);
+      put(`.codebuddy/rules/${rule.name.replace(/\.mdc$/, ".md")}`, toHostMd(rule, "workbuddy"));
     }
   }
 }
@@ -194,11 +202,19 @@ function planHooks() {
       (tool === "qoder" || tool === "workbuddy") && ssotExists("settings.json")
         ? JSON.parse(readSsot("settings.json"))
         : {};
-    putJson(`${dir}/settings.json`, {
+    const out = {
       _generated: HEADER_JSON,
       ...base,
       hooks: events,
-    });
+    };
+    // workbuddy：缺 permissions 时补最小默认；已有 permissions 不覆盖（不 wipe 用户/SSOT）
+    if (tool === "workbuddy" && !out.permissions) {
+      out.permissions = {
+        defaultMode: "default",
+        deny: ["Read(./.env)", "Read(./secrets/**)"],
+      };
+    }
+    putJson(`${dir}/settings.json`, out);
     copy(dir, ids, needAdapter);
   }
 
@@ -238,13 +254,22 @@ function planMcp() {
 }
 
 function planSettings() {
-  // qoder settings 已在 planHooks 与 hooks 合并写出；此处仅 cursor（无 hooks 段时）
+  // qoder/workbuddy settings 已在 planHooks 与 hooks 合并写出；此处补无 hooks 时的落盘
   if (!ssotExists("settings.json")) return;
   const settings = JSON.parse(readSsot("settings.json"));
   if (has("cursor")) putJson(".cursor/settings.json", { _generated: HEADER_JSON, ...settings });
-  // qoder：若未装配 hooks，仍写出 settings
   if (has("qoder") && !plan.has(".qoder/settings.json")) {
     putJson(".qoder/settings.json", { _generated: HEADER_JSON, ...settings });
+  }
+  if (has("workbuddy") && !plan.has(".codebuddy/settings.json")) {
+    const out = { _generated: HEADER_JSON, ...settings };
+    if (!out.permissions) {
+      out.permissions = {
+        defaultMode: "default",
+        deny: ["Read(./.env)", "Read(./secrets/**)"],
+      };
+    }
+    putJson(".codebuddy/settings.json", out);
   }
 }
 
@@ -336,8 +361,24 @@ function apply() {
   const stale = staleFiles();
   if (!CHECK_ONLY) {
     for (const rel of stale) fs.rmSync(path.join(ROOT, rel));
+    // 迁出旧 RULE.mdc 目录后清掉空文件夹（尤其 .codebuddy/rules/<name>/）
+    for (const dir of MANAGED_DIRS) pruneEmptyDirs(dir);
   }
   return { diffs, stale };
+}
+
+function pruneEmptyDirs(relDir) {
+  const abs = path.join(ROOT, relDir);
+  if (!fs.existsSync(abs)) return;
+  for (const e of fs.readdirSync(abs, { withFileTypes: true })) {
+    if (!e.isDirectory()) continue;
+    const child = `${relDir}/${e.name}`.replace(/\\/g, "/");
+    pruneEmptyDirs(child);
+    const childAbs = path.join(ROOT, child);
+    if (fs.existsSync(childAbs) && fs.readdirSync(childAbs).length === 0) {
+      fs.rmdirSync(childAbs);
+    }
+  }
 }
 
 planRules();

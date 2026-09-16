@@ -1,10 +1,27 @@
-﻿# harness-eng 验收记录（0.6.3）
+﻿# harness-eng 验收记录（0.6.4）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.3**（Trae **高**；会话仪表盘无 mermaid / 无分精简；session-dashboard；sync.mjs freshness gate）。报告对照 **`skill_version` + `report_schema`**（0.2.24；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.4**（CodeBuddy 扁平 rules+FM；Trae **高**；会话仪表盘无 mermaid / 无分精简；session-dashboard；sync.mjs freshness gate）。报告对照 **`skill_version` + `report_schema`**（0.2.24；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+
+## 0.6.4 增量验收（正式钉号 · CodeBuddy / WorkBuddy 官方对齐）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `node scripts/selfcheck-render.mjs` | 烟测 |
+| manifest / meta / questions 为 `0.6.4`（无 `-dev`） | 有 |
+| CHANGELOG 正式标题 `## 0.6.4`（非 `## 0.6.4-dev`）；含「由 **0.6.4-dev** 钉号」 | 有 |
+| VERIFY / README / QUICKSTART / 手册当前钉 **0.6.4** | 有 |
+| workbuddy rules → `.codebuddy/rules/<stem>.md` 且保留 FM | 有 |
+| hooks matcher 仍 Bash；文档含 `/hooks` 面板 + `$CODEBUDDY_PROJECT_DIR` | 有 |
+| 根 `.mcp.json`；permissions 合并不 wipe；不生成 settings.local / agents | 有 |
+| settings 优先级：CLI > local > project > user | 有 |
+| `host/CODEBUDDY-PARITY.md` · `CODEBUDDY-P0-MANUAL.md` 基线 **0.6.4** | 有 |
+| upgrade `## 0.6.3 → 0.6.4`：meta · 扁平 rules+FM · `/hooks` · L5 三步（main → check-freshness → 刷新 sync） | 有 |
+| 安装 URL 仍 `main`；Trae 矩阵不改；Codex 不重开 | 有 |
 
 ## 0.6.3 增量验收（正式钉号 · freshness · 报告壳）
 
