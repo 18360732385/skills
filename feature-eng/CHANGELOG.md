@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.2.4-dev | 2026-09-17 | P0：AGENT-INDEX 热路径索引；VERIFY 验收桩；scripts/selfcheck.mjs 最小静态断言；钉号 0.2.4-dev（不改环节语义/默认绑定） |
 | 0.2.3 | 2026-09-17 | 过程态迁至 `docs/runs/{active\|archive}/`（与 superpowers 平级）；close 物理归档；人读文件中文短名（回链/测试用例/测试报告/交接/术语增量等），机读保留 `progress.yaml`；L2 为 `审核-<stage>.md`；旧 `docs/superpowers/runs` 兼容提示 |
 | 0.2.2 | 2026-09-17 | 过闸后按 `handoff_policy`（auto\|confirm）**主动**调起下一 skill；advance 拆 L1（artifacts）/ L2（新建 gates-review.md，subagent 优先）；硬闸短确认卡片；用户不再默认手切 skill |
 | 0.2.1 | 2026-09-17 | init/rebind/status 首问固定中文名+skill+产物表；Proto 桥改为展示结论可推翻（需 UI 仍硬问）；新增 domain-bridge（默认 design→spec，条件进定稿）；禁止主题术语写根 CONTEXT.md，改 `context-delta.md` |
