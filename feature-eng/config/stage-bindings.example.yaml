@@ -8,6 +8,8 @@ version: 1
 defaults:
   invoke: strict                 # strict | inline — 见 binding.md
   commit_policy: user_authorized # user_authorized | follow_plan — 见 binding 宿主 commit 策略
+  handoff_policy: confirm        # auto | confirm — 过闸后主动调起；express 主题常覆盖为 auto
+  review_policy: subagent        # subagent | inline — L2 语义审核；无 Task 则降级 inline
 
 # stages.<环节键>.skill：
 #   - 字符串：子 skill 名（用户点名可调起的名字；本仓/本机已安装或 init 时协助安装）
@@ -18,12 +20,12 @@ defaults:
 #   source / allow_override         # 预留
 
 stages:
-  grill:      { skill: grill-me }                        # 环 1 澄清：grilling；ADR/术语在 domain
+  grill:      { skill: grill-me }                        # 环 1 澄清：grilling；术语草稿随 runs，禁止根 CONTEXT
   design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认
-  domain:     { skill: domain-modeling }                 # 环 3 定稿：CONTEXT + ADR
+  domain:     { skill: domain-modeling }                 # 环 3 定稿：仅 domain=entered；ADR + context-delta
   spec:       { skill: brainstorming }                   # 环 4 规格（仅 F）：只写 Spec 段
   plan:       { skill: writing-plans }                   # 环 5 计划：任务拆分 + 依赖边
-  proto:      { skill: prototype }                       # 环 6 原型与交互：条件进入
+  proto:      { skill: prototype }                       # 环 6 原型与交互：仅 proto=entered
   testdesign: { skill: lynxce-test-cases }               # 环 7 集成测试设计（仅 F）
   implement:  { skill: subagent-driven-development }     # 环 8 优先 SDD，其次 executing-plans
   review:     { skill: code-review }                     # 环 9 语义轨评审

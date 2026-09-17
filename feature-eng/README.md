@@ -4,7 +4,9 @@
 
 入口与仪式：[SKILL.md](SKILL.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
 
-0.2 要点：`invoke`（strict|inline）、`run_mode`（guided|express）、写盘权责收口、指针卡片、口令协议——详见 CHANGELOG。
+0.2.2 要点：过闸主动调起下一 skill（`handoff_policy`）；L1/L2 环间审核（`gates-review.md`）——详见 CHANGELOG。
+0.2.1 要点：init 中文环节表；domain 条件桥；Proto 可推翻；禁根 CONTEXT。
+0.2.0 要点：`invoke` / `run_mode` / 写盘权责 / 指针卡片 / 口令协议。
 
 ## 可移植性
 

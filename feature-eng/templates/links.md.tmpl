@@ -1,10 +1,12 @@
 # links — {{slug}}
 
-> 产物回链总表；**仅控制器**（start / advance / close / handoff / proto-bridge）维护；厨师只回报路径。close 时须补齐。
+> 产物回链总表；**仅控制器**（start / advance / close / handoff / proto-bridge / domain-bridge）维护；厨师只回报路径。close 时须补齐。
+> 禁止主题术语写入仓库根 `CONTEXT.md`。
 
 ## 决策与术语
 - ADR：
-- CONTEXT.md 涉及小节：
+- context-delta（`runs/<slug>/context-delta.md` 或 Spec 术语小节）：
+- domain 桥：`skipped | skipped_by_user | entered` —
 
 ## 规划
 - Spec：
@@ -15,6 +17,7 @@
 - 原型目录：
 - 交互说明：
 - 用户确认时间：
+- proto 桥：`skipped | skipped_by_user | entered` —
 
 ## 测试（仅 F）
 - 用例文档：`testcases.md`
@@ -23,6 +26,8 @@
 
 ## 其他
 - env_verified：
+- L2 reviews：`review-<stage>.md` —
+- pending_invoke：
 - QA 报告：
 - handoff：
 - 跨仓前端提示（若有）：

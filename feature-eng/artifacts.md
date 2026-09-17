@@ -1,12 +1,14 @@
-# artifacts — 产物契约（控制器校验 SSOT）
+# artifacts — 产物契约（L1 形状 SSOT）
 
-控制器只认本页勾选表。`advance` / `status` / lookup 校验时：**只 Read 当前 `progress.stage` 对应一节**（不要整页通读）。
+本页 = **L1 机械/形状**勾选。语义必过项见 [gates-review.md](gates-review.md)（**L2**）。`advance` 须 **L1 ∧ L2**（适用时）都过才推进。
 
-通过条件：该节每一项均为 ✓（文件存在、字段非空、或链接可打开）。缺任一项 → 不过，并列缺失项。闸通过条件仍见 [gates-common.md](gates-common.md)；本页只管**产物形状**。
+控制器校验时：**只 Read 当前 `progress.stage` 对应一节**（不要整页通读）。
+
+通过条件（L1）：该节每一项均为 ✓（文件存在、字段非空、或链接可打开）。缺任一项 → 不过，并列缺失项。闸通过条件仍见 [gates-common.md](gates-common.md)。
 
 路径 / 目录约定摘要见 [stages.md](stages.md) 环节表；字段级苛求以本页为准。
 
-**回写规则**：勾选中凡「写入 progress / links / artifacts.* / gates.*」均由 **advance（或 start/close/handoff/proto-bridge）** 执行；子 skill 只产出领域文件并**回报路径**。
+**回写规则**：勾选中凡「写入 progress / links / artifacts.* / gates.*」均由 **advance（或 start/close/handoff/proto-bridge/domain-bridge）** 执行；子 skill 只产出领域文件并**回报路径**；L2 审核只写 `review-*.md`。
 
 ---
 
@@ -15,25 +17,34 @@
 - [ ] `runs/<slug>/progress.yaml` 存在
 - [ ] `path` 为 `spike|bounded|full`（用户已确认后写入）
 - [ ] `run_mode` 为 `guided|express`；`invoke` 为 `strict|inline`
+- [ ] `handoff_policy` 为 `auto|confirm`；`review_policy` 为 `subagent|inline`
 - [ ] `stage` 已设
 - [ ] `runs/<slug>/links.md` 存在
 
 ## grill（环 1）
 
 - [ ] 用户显式确认可进设计（同义可）→ advance 写 `gates.shared_understanding`
-- [ ] 若产出术语/ADR 草稿：厨师回报路径 → advance 写入 `links.md` 或 `artifacts` 注释区（无草稿则 advance 注明「本环无落盘」）
+- [ ] 若产出术语/ADR 草稿：厨师回报路径 → advance 写入 `links.md` 或 `artifacts` 注释区（无草稿则 advance 注明「本环无落盘」）；**禁止**写仓库根 `CONTEXT.md`
 - [ ] `express`：可与 design 同轮；总确认一次即可同时满足本项与 design 的确认项
 
 ## design（环 2）
 
 - [ ] 用户显式 yes（B：短设计一次；F：整体一次，或分段清单每段一次；`express`：与 grill 合并的一次总 yes）→ advance 写 `gates.design_confirmed`
 - [ ] 设计确认摘要可指认：聊天结论复述，或 `runs/<slug>/design-notes.md` 非空
+- [ ] → 通过后进入 [domain-bridge.md](domain-bridge.md)（勿直接假定进 domain）
 
-## domain（环 3）
+## domain-bridge（环 2→3）
 
-- [ ] 若有不可逆决策：至少 1 个 ADR 路径在 `artifacts.adr`（advance 回写），且文件存在
-- [ ] 若无不可逆决策：advance 在 progress / links 注明「本环跳过 ADR」且用户已知晓
-- [ ] 若改了术语：`CONTEXT.md`（或团队等价）已更新且 links 有指针（advance 回写）
+- [ ] `domain` 为 `skipped|skipped_by_user|entered` 之一（控制器写入）
+- [ ] 结论块已向用户展示（见 domain-bridge）；`skipped` 可推翻、非强制二选一
+- [ ] `skipped` / `skipped_by_user` 时 progress 或 links 有一句理由
+- [ ] `entered` 时下一 stage 为 `domain`；否则 F→`spec`（B 按裁剪表）
+
+## domain（环 3，仅 `domain=entered`）
+
+- [ ] 若有不可逆决策：至少 1 个 ADR 路径在 `artifacts.adr`（advance 回写），且文件存在于 `docs/adr/`
+- [ ] 若改了术语：`runs/<slug>/context-delta.md` 非空，或 Spec 内术语小节可指认，且 links 有指针（advance 回写）
+- [ ] **未**将本主题术语写入仓库根 `CONTEXT.md`
 
 ## spec（环 4，仅 F）
 
@@ -51,8 +62,9 @@
 ## proto-bridge（环 5→6）
 
 - [ ] `proto` 为 `skipped|skipped_by_user|entered` 之一（控制器写入）
+- [ ] 结论块已向用户展示（见 [proto-bridge.md](proto-bridge.md)）；不需要时非强制二选一、可推翻
 - [ ] `skipped` / `skipped_by_user` 时 progress 或 links 有一句理由
-- [ ] 若判定为「本仓无前端但 Spec/Plan 含菜单或页面」：理由须含 **跨仓提示**（见 [proto-bridge.md](proto-bridge.md)）
+- [ ] 若判定为「本仓无前端但 Spec/Plan 含菜单或页面」或边界模糊：理由须含 **跨仓提示**（若适用）
 
 ## proto（环 6，仅 `proto=entered`）
 

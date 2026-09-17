@@ -1,15 +1,15 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.0"
+version: "0.2.2"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false
 description: >-
-  开发流程控制器 skill：分诊 S/B/F；环节与 skill 解耦（config/stage-bindings.yaml 入库）；
-  绑定为推荐包（init/rebind 首问必选）；人侧入口 start/resume/close/init|rebind；
-  invoke strict|inline；run_mode guided|express；progress/links 仅控制器写；
-  调起传指针卡片；过程态 docs/superpowers/runs/<slug>/；产物校验 artifacts.md；
-  Proto 自判桥（含跨仓提示）；TestDesign 与 Verify 仅 F；close 为 skill 内收口规则。
+  开发流程控制器 skill：分诊 S/B/F；环节与 skill 解耦；绑定推荐包（中文名+产物表）；
+  invoke strict|inline；handoff_policy auto|confirm（过闸后主动调起下一 skill）；
+  review_policy subagent|inline（L2 语义审核）；artifacts=L1、gates-review=L2；
+  domain 条件桥；Proto 展示结论可推翻；禁止主题写根 CONTEXT.md；
+  过程态 docs/superpowers/runs/<slug>/；TestDesign/Verify 仅 F；close 内收口。
 
 modes:
   - init

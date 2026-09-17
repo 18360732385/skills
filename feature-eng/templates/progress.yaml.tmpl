@@ -15,10 +15,21 @@ run_mode: guided
 # strict | inline（调起策略；见 binding.md；可跟 defaults.invoke）
 invoke: strict
 
-# triage | grill | design | domain | spec | plan | proto-bridge | proto | testdesign
+# auto | confirm（过闸后是否立即调起下一 skill；见 advance.md）
+# 推导：express→auto；guided→confirm；可被 defaults.handoff_policy / 首问覆盖
+handoff_policy: confirm
+
+# subagent | inline（环间 L2 语义审核；见 gates-review.md）
+# 默认 subagent；宿主无 Task 能力则降级 inline
+review_policy: subagent
+
+# triage | grill | design | domain-bridge | domain | spec | plan | proto-bridge | proto | testdesign
 # | pre-impl | implement | gate | verify | close | done
 # 旁态（按需，不在主链）：smoke（B 路径冒烟）| diagnose（排障，先复现再改）
 stage: triage
+
+# domain 桥结果：skipped | skipped_by_user | entered（见 domain-bridge.md；默认常 skipped）
+domain: null
 
 # proto 桥结果：skipped | skipped_by_user | entered（S 路径无此字段含义）
 proto: null
@@ -28,6 +39,7 @@ artifacts:
   spec: null         # docs/superpowers/specs/...
   plan: null         # docs/superpowers/plans/...
   proto: null        # 原型目录或文件
+  context_delta: null # runs/<slug>/context-delta.md（禁止根 CONTEXT.md）
   testcases: null    # runs/<slug>/testcases.md（仅 F）
   test_report: null  # runs/<slug>/test-report.md（仅 F）
   qa_report: null    # 外部 QA 报告路径（可选）
