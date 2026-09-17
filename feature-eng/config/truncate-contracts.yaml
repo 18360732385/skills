@@ -1,0 +1,34 @@
+# feature-eng design/spec 截断契约（机读 SSOT）
+# 当 design 与 spec 同绑 brainstorming（或同名 skill）时，lookup 必须附加本契约，避免一口气写到 plan。
+# 人读摘要见 binding.md「同 skill 多环」；改本文件后 selfcheck 会核对键齐全。
+
+version: 1
+
+# 推荐同绑 skill（非强制；实际以 stage-bindings.yaml 为准）
+shared_skill_hint: brainstorming
+
+stages:
+  design:
+    allow:
+      - 澄清问题
+      - 方案对比
+      - 聊天内设计（须用户 yes；F 可分段，每段 yes）
+    forbid:
+      - 写 docs/superpowers/specs/
+      - 调起 writing-plans
+      - 写业务代码
+    notes: |
+      express 时 grill+design 可同轮，但仍须一次总确认后才由 advance 写
+      shared_understanding + design_confirmed；随后仍跑 domain-bridge → spec。
+
+  spec:
+    allow:
+      - 将已确认设计落盘为 docs/superpowers/specs/YYYY-MM-DD-<主题>-设计.md
+      - 自审
+      - 等用户审 Spec
+    forbid:
+      - 调起 writing-plans
+      - 实现
+      - 重开整段设计访谈（除非用户要求返工）
+    notes: |
+      spec 与 plan 仍分环。域定稿（ADR / 术语增量.md）仅 domain=entered 时走 domain 绑定。

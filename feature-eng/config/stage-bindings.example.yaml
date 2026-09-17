@@ -4,18 +4,29 @@
 
 version: 1
 
+# 主题级默认（可被 progress 覆盖；start 未问及时采用此处）
+defaults:
+  invoke: strict                 # strict | inline — 见 binding.md
+  commit_policy: user_authorized # user_authorized | follow_plan — 见 binding 宿主 commit 策略
+  handoff_policy: confirm        # auto | confirm — 过闸后主动调起；express 主题常覆盖为 auto
+  review_policy: subagent        # subagent | inline — L2 语义审核；无 Task 则降级 inline
+  close_pitfalls: optional       # off | optional | on — close 时 pitfalls lint；默认 optional 不强制（见 close.md）
+
 # stages.<环节键>.skill：
 #   - 字符串：子 skill 名（用户点名可调起的名字；本仓/本机已安装或 init 时协助安装）
 #   - null：未绑定。运行到该环节时控制器阻断并提示 init / rebind
-# 可选扩展字段（暂未启用，预留）：source（安装来源）、allow_override（本环临时覆盖）
+# 可选扩展：
+#   input_contract: [字段名, ...]   # lookup 写入指针卡片的必传字段
+#   output_hint: "路径模式说明"     # 期望产物提示
+#   source / allow_override         # 预留
 
 stages:
-  grill:      { skill: grill-me }                        # 环 1 澄清：grilling；ADR/术语在 domain
+  grill:      { skill: grill-me }                        # 环 1 澄清：grilling；术语草稿随 runs，禁止根 CONTEXT
   design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认
-  domain:     { skill: domain-modeling }                 # 环 3 定稿：CONTEXT + ADR
+  domain:     { skill: domain-modeling }                 # 环 3 定稿：仅 domain=entered；ADR + 术语增量.md
   spec:       { skill: brainstorming }                   # 环 4 规格（仅 F）：只写 Spec 段
   plan:       { skill: writing-plans }                   # 环 5 计划：任务拆分 + 依赖边
-  proto:      { skill: prototype }                       # 环 6 原型与交互：条件进入
+  proto:      { skill: prototype }                       # 环 6 原型与交互：仅 proto=entered
   testdesign: { skill: lynxce-test-cases }               # 环 7 集成测试设计（仅 F）
   implement:  { skill: subagent-driven-development }     # 环 8 优先 SDD，其次 executing-plans
   review:     { skill: code-review }                     # 环 9 语义轨评审
