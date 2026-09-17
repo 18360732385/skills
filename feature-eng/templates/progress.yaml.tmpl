@@ -9,6 +9,12 @@ updated_at: "{{date}}"
 # spike | bounded | full（分诊闸：用户确认后写入）
 path: null
 
+# guided | express（start 首问；见 start.md）
+run_mode: guided
+
+# strict | inline（调起策略；见 binding.md；可跟 defaults.invoke）
+invoke: strict
+
 # triage | grill | design | domain | spec | plan | proto-bridge | proto | testdesign
 # | pre-impl | implement | gate | verify | close | done
 # 旁态（按需，不在主链）：smoke（B 路径冒烟）| diagnose（排障，先复现再改）
@@ -37,12 +43,15 @@ tasks: []
 gates:
   triage: null
   shared_understanding: null   # 用户显式确认可进设计
-  design_confirmed: null       # B: 短设计 yes；F: 整体或每段 yes
+  design_confirmed: null       # B: 短设计 yes；F: 整体或每段 yes；express: 可与上一闸同一次总 yes
   go: null
   pre_impl: null
   gate: null
   verify: null
   close: null
+
+# implement 可选环境核验：null | skipped | verified（路径/说明可放 links）
+env_verified: null
 
 # 用户显式接受的残留（verify 有 fail 仍 close 时记录）
 accepted_residual: null

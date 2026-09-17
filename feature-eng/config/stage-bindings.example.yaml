@@ -4,10 +4,18 @@
 
 version: 1
 
+# 主题级默认（可被 progress 覆盖；start 未问及时采用此处）
+defaults:
+  invoke: strict                 # strict | inline — 见 binding.md
+  commit_policy: user_authorized # user_authorized | follow_plan — 见 binding 宿主 commit 策略
+
 # stages.<环节键>.skill：
 #   - 字符串：子 skill 名（用户点名可调起的名字；本仓/本机已安装或 init 时协助安装）
 #   - null：未绑定。运行到该环节时控制器阻断并提示 init / rebind
-# 可选扩展字段（暂未启用，预留）：source（安装来源）、allow_override（本环临时覆盖）
+# 可选扩展：
+#   input_contract: [字段名, ...]   # lookup 写入指针卡片的必传字段
+#   output_hint: "路径模式说明"     # 期望产物提示
+#   source / allow_override         # 预留
 
 stages:
   grill:      { skill: grill-me }                        # 环 1 澄清：grilling；ADR/术语在 domain

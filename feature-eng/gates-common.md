@@ -9,12 +9,13 @@
 
 ## 共享理解闸（环 1 末）
 
-- 通过：用户显式确认可进设计（同义表述可接受）；写 `gates.shared_understanding` 时间戳。
+- 通过：用户显式确认可进设计（同义表述可接受）；advance 写 `gates.shared_understanding` 时间戳。
 - 失败：继续澄清；不得进环 2。
+- `express`：可与设计确认闸合并为**一次总 yes**（同时写两闸时间戳）；仍须用户显式确认，不得默认静默通过。
 
 ## 设计确认闸（环 2 末）
 
-- 通过：B = 短设计获用户显式 yes；F = 整体方案获用户显式 yes，或分段清单**每一段**获 yes。写 `gates.design_confirmed` 时间戳。
+- 通过：B = 短设计获用户显式 yes；F = 整体方案获用户显式 yes，或分段清单**每一段**获 yes；`express` = 与 grill 合并的一次总 yes。advance 写 `gates.design_confirmed` 时间戳。
 - 失败：回到设计；不得进环 3/4。
 
 ## 开干闸（环 5 末，计划侧）
@@ -24,7 +25,7 @@
 
 ## Proto 桥（环 5→6）
 
-- 规则见 [proto-bridge.md](proto-bridge.md)；桥本身不写码，只决定 `proto=skipped|skipped_by_user|entered`。
+- 规则见 [proto-bridge.md](proto-bridge.md)；桥本身不写码，只决定 `proto=skipped|skipped_by_user|entered`（含跨仓前端提示）。
 
 ## Pre-Impl 闸（环 7b）
 

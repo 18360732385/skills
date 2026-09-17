@@ -4,6 +4,8 @@
 
 入口与仪式：[SKILL.md](SKILL.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
 
+0.2 要点：`invoke`（strict|inline）、`run_mode`（guided|express）、写盘权责收口、指针卡片、口令协议——详见 CHANGELOG。
+
 ## 可移植性
 
 - **首发仓**：`c-be-sms-ai`（`source_repo` 见 manifest）。

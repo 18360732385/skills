@@ -2,6 +2,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.2.0 | 2026-09-17 | 宿主适配与仪式加速：`invoke` strict\|inline + 指针卡片；`run_mode` guided\|express；progress/links **仅控制器**写、厨师回报路径；advance 口令协议；Proto 跨仓前端提示；implement 分 code_complete / 可选 env_verified，Verify 强制环境证据；handoff 环≥5 主动提议；defaults.commit_policy / 可选 input_contract |
 | 0.1.6 | 2026-09-16 | writing-for-agents P2：lookup 切断调起（子代理/新会话）；人侧入口收为 start/resume/close/init\|rebind（未指定走 status；环完成挂 advance）；README 瘦成指针 |
 | 0.1.5 | 2026-09-16 | writing-for-agents P1：产物契约拆至 artifacts.md（按环勾选、advance 只读当前节）；抬高校验 demand；控制器边界改正述+三条硬轨；gates Pre-Impl/Gate/Verify 回链 artifacts |
 | 0.1.4 | 2026-09-16 | writing-for-agents P0：stages/close 去 rule 18/19 沉积；推荐包单源改 `stage-bindings.example.yaml`（删 init 表）；「推荐≠强制」收束至 binding.md；锐化共享理解闸 / 设计确认闸 / resume 腐烂条件 |

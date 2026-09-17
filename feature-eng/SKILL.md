@@ -16,9 +16,18 @@ Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](stag
 
 一句话：**调度员不进厨房**——feature-eng 是调度员，子 skill 是厨师。各模式文件的越界判定均回本节，不各自复述。
 
-只做：分诊与下一环判断；维护 progress / links；按 [artifacts.md](artifacts.md) 当前环勾选表验产物；**切断**调起绑定 skill（子代理或新会话，只传指针与截断）；子 skill 结束后 advance；init/rebind **首问**展示推荐包并写用户所选绑定。
+只做：分诊与下一环判断；维护 `progress.yaml` / `links.md`；按 [artifacts.md](artifacts.md) 当前环勾选表验产物；按 `invoke` 策略调起绑定 skill（只传指针与截断）；子 skill 结束后 advance；init/rebind **首问**展示推荐包并写用户所选绑定；`start` 首问可定 `run_mode` / `invoke`。
 
-硬轨（不可改写为正述时保留）：改业务代码或子 skill 领域产物正文；跳过硬闸或伪造产物勾选；未完成首问就写盘/改绑。
+### 写盘权责（SSOT）
+
+| 谁 | 可写 | 不可写 |
+|---|---|---|
+| **控制器**（start / advance / close / handoff / proto-bridge） | `progress.yaml`、`links.md`、runs 模板骨架、`handoff.md`、gates 时间戳、`artifacts.*` 指针字段 | 领域产物正文、业务代码 |
+| **子 skill（厨师）** | ADR / Spec / Plan / 原型 / testcases / 代码 / 单测等**领域文件** | `progress.yaml`、`links.md`、gates 时间戳 |
+
+子 skill 结束标准：回报**产物路径列表**（可选自检建议）；真正 ✓/✗ 与回写 progress/links **仅 advance**（或 start/close/handoff/proto-bridge 自有步骤）。
+
+硬轨（不可改写为正述时保留）：改业务代码或子 skill 领域产物正文；跳过硬闸或伪造产物勾选；未完成首问就写盘/改绑；**子 skill 代写 `progress.yaml` / `links.md`**。
 
 说明：对 `brainstorming`（design/spec）传入「截断到本环」是控制器职责（传指针与截断），见 [binding.md](binding.md)。
 
@@ -58,7 +67,7 @@ Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](stag
 | 当前环产物勾选 | [artifacts.md](artifacts.md)（只读当前 stage 节） |
 | 各环硬闸通过条件 | [gates-common.md](gates-common.md) |
 | 5→6 Proto 自判与询问 | [proto-bridge.md](proto-bridge.md) |
-| 绑定 lookup / 推荐包 / 截断与回退 | [binding.md](binding.md) |
+| 绑定 lookup / 推荐包 / 截断 / `invoke` / 指针卡片 | [binding.md](binding.md) |
 | 会话过长 / 中断续跑 | [handoff.md](handoff.md) |
 | 进度 / 回链 / 用例 / 报告格式 | `templates/`（progress.yaml · links.md · testcases.md · test-report.md） |
 | 追溯设计依据（默认勿打开） | [docs/superpowers/archive/specs/2026-09-04-feature-eng开发流程控制器-设计.md](../../../docs/superpowers/archive/specs/2026-09-04-feature-eng开发流程控制器-设计.md) |

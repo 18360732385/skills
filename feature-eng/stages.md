@@ -50,4 +50,4 @@
 
 ## progress.yaml 字段
 
-字段 SSOT 为 `templates/progress.yaml.tmpl`（含注释）；本页不复述。校验勾选见 [artifacts.md](artifacts.md)。
+字段 SSOT 为 `templates/progress.yaml.tmpl`（含 `path` / `run_mode` / `invoke` / `env_verified` 等注释）；本页不复述。校验勾选见 [artifacts.md](artifacts.md)。调起策略见 [binding.md](binding.md)；express 边界见 [start.md](start.md)。

@@ -16,15 +16,17 @@
    - **采用推荐包**（未装项进入步骤 4 安装确认）
    - **逐环调整**（进入步骤 3）
    - **全部自行指定**（进入步骤 3，无默认预填）
+   同屏可问（可默认）：`defaults.invoke`（`strict`|`inline`）、`defaults.commit_policy`（`user_authorized`|`follow_plan`）。用户跳过则写 example 默认值。
 3. **逐环提问**（仅当用户未一键采用时）：对 11 个可绑环节依次展示：
    - 环节职责（引 [stages.md](stages.md)）+ 产物勾选摘要（引 [artifacts.md](artifacts.md) 对应节，不展开全文）
    - example 中的推荐 skill + 扫描候选
    - 用户选定，或「暂不绑定」（`skill: null`）
+   - 可选：该环 `input_contract`（薄 skill 建议补必传字段；可跳过）
 4. **安装缺失**：选中但当前环境没有的 skill，给出安装方式并**经用户同意**后执行；安装失败则该环写 `null` 并说明。
    - 完成标准：每个非 null 绑定能在已安装列表中**按名命中**；未命中 → 改 `null`。
-5. **预览 diff**：写盘前展示新旧绑定对照；用户确认后写入 `config/stage-bindings.yaml`。
+5. **预览 diff**：写盘前展示新旧绑定对照（含 `defaults`）；用户确认后写入 `config/stage-bindings.yaml`。
 6. **生成**：默认代跑 `node scripts/agent-config/sync.mjs`；失败则提示用户手工执行。
-7. **收尾**：提示「后续 start/resume 沿用本绑定；改映射用 rebind。推荐包只是起点（见 [binding.md](binding.md)）。」
+7. **收尾**：提示「后续 start/resume 沿用本绑定；改映射用 rebind。推荐包只是起点（见 [binding.md](binding.md)）。start 仍可按主题覆盖 `invoke` / `run_mode`。」
 
 ## 硬闸
 

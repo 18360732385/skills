@@ -6,6 +6,10 @@
 
 version: 1
 
+defaults:
+  invoke: strict
+  commit_policy: user_authorized
+
 stages:
   grill:      { skill: grill-me }                        # 环 1 澄清（仅 grilling；定稿走 domain）
   design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认（见 binding.md）
