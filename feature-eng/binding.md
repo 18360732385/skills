@@ -53,27 +53,41 @@
 
 ## lookup（每个需子 skill 的环节通用）
 
+### 绑定 skill 可调起（预检 checklist）
+
+调起前**逐项**核对；任一项失败 → **阻断**，把对应失败文案原样贴给用户（可附推荐包替代名）：
+
+| # | 检查 | 失败时复制给用户 |
+|---|---|---|
+| A | `config/stage-bindings.yaml` 存在且含 `stages.<环节>` 键 | 「绑定配置缺失或无此环节键，请运行 feature-eng init 或检查 stage-bindings.yaml」 |
+| B | `stages.<环节>.skill` 非 `null`、非空 | 「该环节未绑定 skill，请运行 feature-eng init 或 rebind」 |
+| C | 绑定 skill **当前宿主可调起**（已安装 / 可点名） | 「绑定 skill `<name>` 当前不可调起（未安装或宿主无法点名）。请安装（须用户同意）或 rebind；推荐包见 `config/stage-bindings.example.yaml`」 |
+| D | 若本环为 `design`/`spec` 且与同 skill 多环：已读截断契约并写入指针卡片 | 「缺少 design/spec 截断指令：见 [config/truncate-contracts.yaml](config/truncate-contracts.yaml) 与下节『同 skill 多环』」 |
+| E | 若本环为 `implement`：已完成回退询问（SDD / executing-plans） | 「implement 未确认执行 skill：见下节『implement 回退』」 |
+
+预检通过后再进入调起步骤。`start` / `advance` 调下一环前同样适用本表。
+
 ```text
-1. 读 stage-bindings.yaml 中 stages.<环节>.skill
-2. skill 为 null / 键缺失
-   → 阻断：提示「该环节未绑定 skill，请运行 feature-eng init 或 rebind」
-3. skill 已填但当前环境不可调起（未安装）
-   → 阻断：协助安装（须用户同意）或提示 rebind；可提示推荐包中的替代名
+1. 读 stage-bindings.yaml 中 stages.<环节>.skill（跑上表 A–E）
+2. A/B 失败 → 阻断（上表文案）
+3. C 失败 → 阻断；协助安装（须用户同意）或提示 rebind；可提示推荐包替代名
 4. 控制器主动调起（按 progress.invoke）：
    - 输出指针卡片（上节）
    - inline → 同会话戴厨师帽执行
    - strict → 主动 Task；仅无 Task 时退回用户新会话点名
-   另附：本环截断/回退指令（见下节「同 skill 多环」与「implement 回退」）
+   另附：本环截断/回退指令（见下节「同 skill 多环」与「implement 回退」；机读 [config/truncate-contracts.yaml](config/truncate-contracts.yaml)）
    若 stages.<环节> 含 input_contract：把必传字段一并写入指针卡片
 5. 子 skill 结束后：收取「产物路径列表」→ 进入 [advance.md](advance.md)
    （L1 → L2 → 硬闸 → 写盘 → handoff_policy 调下一环）
 ```
 
-完成标准：子 skill 跑完并回报路径；父会话在 advance 中做 L1/L2。越界判定见 SKILL.md。
+完成标准：预检通过；子 skill 跑完并回报路径；父会话在 advance 中做 L1/L2。越界判定见 SKILL.md。
 
 ## 同 skill 多环（brainstorming × design / spec）
 
-`design` 与 `spec` 推荐都绑 `brainstorming`（Superpowers 无独立 writing-specs）。调起时**必须**附加截断指令，避免一口气写到 plan：
+`design` 与 `spec` 推荐都绑 `brainstorming`（Superpowers 无独立 writing-specs）。调起时**必须**附加截断指令，避免一口气写到 plan。
+
+**机读契约**：[config/truncate-contracts.yaml](config/truncate-contracts.yaml)（`stages.design` / `stages.spec` 的 allow/forbid；lookup 预检 D 项）。人读摘要：
 
 | 当前环 | 允许做到 | 禁止 |
 |---|---|---|

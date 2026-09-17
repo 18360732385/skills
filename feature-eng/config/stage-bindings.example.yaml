@@ -10,6 +10,7 @@ defaults:
   commit_policy: user_authorized # user_authorized | follow_plan — 见 binding 宿主 commit 策略
   handoff_policy: confirm        # auto | confirm — 过闸后主动调起；express 主题常覆盖为 auto
   review_policy: subagent        # subagent | inline — L2 语义审核；无 Task 则降级 inline
+  close_pitfalls: optional       # off | optional | on — close 时 pitfalls lint；默认 optional 不强制（见 close.md）
 
 # stages.<环节键>.skill：
 #   - 字符串：子 skill 名（用户点名可调起的名字；本仓/本机已安装或 init 时协助安装）

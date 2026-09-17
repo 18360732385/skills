@@ -7,7 +7,7 @@
 
 ## 步骤
 
-1. **绑定就绪检查**：读 `stage-bindings.yaml`。按即将分诊的路径，标出关键环若为 `null` 的缺口（见下表）。有缺口 → **红字提示**，建议先 `rebind`/`init`；用户坚持继续则仅能跑到第一个未绑环前。
+1. **绑定就绪检查**：读 `stage-bindings.yaml`。按即将分诊的路径，标出关键环若为 `null` 的缺口（见下表）。有缺口 → **红字提示**（失败文案见 [binding.md](binding.md)「绑定 skill 可调起」预检 A/B），建议先 `rebind`/`init`；用户坚持继续则仅能跑到第一个未绑环前。首个执行环调起前再跑完整预检 A–E。
    - 任意路径常用：`grill` / `design`（按需）  
    - B/F：`implement`、`review`；条件 `proto` / `domain`（仅 entered 时才调起）  
    - **仅 F**：`spec`、`plan`、`testdesign`、`verify` 不应为 null（否则 Full 跑不通）

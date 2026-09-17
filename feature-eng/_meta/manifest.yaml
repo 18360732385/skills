@@ -1,6 +1,6 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.4-dev"
+version: "0.2.4"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false
@@ -21,6 +21,7 @@ modes:
 config:
   - config/stage-bindings.yaml
   - config/stage-bindings.example.yaml
+  - config/truncate-contracts.yaml
 
 templates:
   - templates/progress.yaml.tmpl

@@ -2,11 +2,11 @@
 
 用户点名的开发流程控制器（`disable-model-invocation: true`）。与 [`release-eng`](../release-eng/) 同级、互不替代。
 
-入口与仪式：[SKILL.md](SKILL.md)。Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
+入口与仪式：[SKILL.md](SKILL.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。
 
-0.2.4-dev 要点：AGENT-INDEX 热路径；VERIFY + selfcheck；钉号（不改环节语义/默认绑定）。  
+0.2.4 要点：正式钉号；P0 索引/selfcheck；P1 lookup 预检 + truncate-contracts + QUICKSTART；P2 status-scan + close_pitfalls（不改默认绑定 skill 名）。一页纸：[QUICKSTART.md](QUICKSTART.md)。  
 0.2.3 要点：过程态 `docs/runs/{active|archive}/`（与 superpowers 平级）；人读中文短名 + `progress.yaml` 机读；close 归档。  
 0.2.2 要点：过闸主动调起；L1/L2 环间审核。  
 0.2.1 要点：init 中文环节表；domain 条件桥；Proto 可推翻；禁根 CONTEXT。  
