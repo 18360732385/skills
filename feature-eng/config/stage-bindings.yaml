@@ -15,7 +15,7 @@ defaults:
 stages:
   grill:      { skill: grill-me }                        # 环 1 澄清（术语草稿随 runs；禁止根 CONTEXT）
   design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认（见 binding.md）
-  domain:     { skill: domain-modeling }                 # 环 3 定稿：仅 domain=entered（ADR + context-delta）
+  domain:     { skill: domain-modeling }                 # 环 3 定稿：仅 domain=entered（ADR + 术语增量.md）
   spec:       { skill: brainstorming }                   # 环 4 规格：仅写 Spec 段（同名 skill，靠截断区分）
   plan:       { skill: writing-plans }                   # 环 5 计划
   proto:      { skill: prototype }                       # 环 6 原型：仅 proto=entered

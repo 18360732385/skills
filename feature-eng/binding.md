@@ -38,15 +38,15 @@
 
 ```text
 【feature-eng 指针】
-- slug / runs: docs/superpowers/runs/<slug>/
+- slug / runs: docs/runs/active/<slug>/
 - path / stage / run_mode / invoke / handoff_policy: …
 - 绑定 skill: <name>
 - 上一环产物: <paths>
-- 上一环 L2 结论: runs/.../review-<prev>.md（若有）
+- 上一环 L2 结论: …/审核-<prev>.md（若有）
 - 本环产物期望: 见 artifacts.md「<stage>」勾选（L1）
-- 本环语义期望: 见 gates-review.md「离开 <stage>」（完成后由 L2 审）
+- 本环语义期望: 见 gates-review.md「离开 <stage>」
 - 截断/回退: <design|spec 截断或 implement 回退要点>
-- 厨师结束请回报: 产物路径列表（勿改 progress.yaml / links.md）
+- 厨师结束请回报: 产物路径列表（勿改 progress.yaml / 回链.md）
 ```
 
 `strict` 且无 Task 时提示用户复制本卡片到新会话；其余情况由控制器主动调起。
@@ -80,7 +80,7 @@
 | design | 澄清问题、方案对比；聊天内设计须用户 yes（F 可分段，每段 yes） | 写 `docs/superpowers/specs/`；调起 `writing-plans`；写业务代码 |
 | spec | 将已确认设计落盘为 `docs/superpowers/specs/YYYY-MM-DD-<主题>-设计.md`；自审；等用户审 Spec | 调起 `writing-plans`；实现；重开整段设计访谈（除非用户要求返工） |
 
-域定稿（ADR / `context-delta.md`）仅在 `domain=entered` 时走 `domain` 绑定，不由 brainstorming 代做；默认经 [domain-bridge.md](domain-bridge.md) 跳过。禁止写仓库根 `CONTEXT.md`。
+域定稿（ADR / `术语增量.md`）仅在 `domain=entered` 时走 `domain` 绑定，不由 brainstorming 代做；默认经 [domain-bridge.md](domain-bridge.md) 跳过。禁止写仓库根 `CONTEXT.md`。
 
 `run_mode: express` 时 grill+design 可同轮产出，但仍须一次总确认后才由 advance 写 `shared_understanding` + `design_confirmed`；随后仍跑 domain-bridge（多数 skipped）→ spec；spec 与 plan **仍分环**（见 [start.md](start.md)）。
 

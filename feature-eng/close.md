@@ -4,9 +4,9 @@
 
 ## 前置闸
 
-- F：`test-report.md` 无 `fail`，或用户显式接受残留（progress 记 `accepted_residual`）。
+- F：`测试报告.md` 无 `fail`，或用户显式接受残留（progress 记 `accepted_residual`）。
 - B：Gate 已过；冒烟为建议项，不强制。
-- S：只记结论，不走本页 superpowers 归档。
+- S：只记结论，不走本页 superpowers 归档；若有 `docs/runs/active/<slug>/` 可直接移入 archive 或删除（与用户确认）。
 
 ## 步骤（B/F）
 
@@ -19,7 +19,7 @@
    - `git mv` 入 `docs/superpowers/archive/specs|plans/`（目录不存在则先建）  
    - 若有 `docs/superpowers/README.md` 进行中表：删本主题行 → 写入 `ARCHIVE.md`（日期倒序；「提交」列填代表性实现 commit 链接，若有）  
    - 若有变更记录文件：追加一行  
-   - 无 README/ARCHIVE 约定：至少把 Spec/Plan 移入 archive（或 runs 内注明最终路径），并向用户说明本仓索引约定缺失
+   - 无 README/ARCHIVE 约定：至少把 Spec/Plan 移入 archive，并向用户说明本仓索引约定缺失
 
 3. **pitfalls 回流（skill 内三问）**  
    - 本轮是否修了/确认了智能体易再犯的错误做法？  
@@ -27,7 +27,11 @@
    - **可选增强**：若存在 `node scripts/agent-kb/lint-pitfalls.mjs`，改台账后代跑；失败则列错并停  
    - 无 pitfalls 台账：三问仍要口头/写入 runs 小结，并注明「本仓无 L2 pitfalls」
 
-4. **runs 收尾**：progress `stage=done` + updated_at；`links.md` 补齐最终产物指针。
+4. **runs 收尾与归档**  
+   - `progress.yaml`：`stage=done` + updated_at；`回链.md` 补齐最终产物指针  
+   - `git mv docs/runs/active/<slug> → docs/runs/archive/<slug>`（`archive/` 不存在则先建）  
+   - 若有 `docs/runs/README.md` 进行中表：删本主题行  
+   - 若主题仍在旧路径 `docs/superpowers/runs/<slug>/`：迁到 `docs/runs/archive/<slug>/` 并注明已从旧路径迁移
 
 5. 输出交付摘要：路径、各环节产物、测试报告通过率（F）、残留风险、本仓跳过的可选增强项。
 
@@ -35,3 +39,4 @@
 
 - 在适用范围内，superpowers 最小收口未完成时，禁止宣称「已交付」。
 - 实现已合入但索引仍标「进行中」（有 README 表时）= 漏收口；必须先补收口再当作交付完成。
+- active 未移入 archive 视为 runs 收口未完成（B/F）。

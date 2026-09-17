@@ -1,15 +1,13 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.2"
+version: "0.2.3"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false
 description: >-
-  开发流程控制器 skill：分诊 S/B/F；环节与 skill 解耦；绑定推荐包（中文名+产物表）；
-  invoke strict|inline；handoff_policy auto|confirm（过闸后主动调起下一 skill）；
-  review_policy subagent|inline（L2 语义审核）；artifacts=L1、gates-review=L2；
-  domain 条件桥；Proto 展示结论可推翻；禁止主题写根 CONTEXT.md；
-  过程态 docs/superpowers/runs/<slug>/；TestDesign/Verify 仅 F；close 内收口。
+  开发流程控制器：过程态 docs/runs/{active|archive}/<slug>/（与 superpowers 平级）；
+  机读 progress.yaml；人读文档中文短名（回链/测试用例/测试报告/交接等）；
+  handoff_policy 主动调起；L1/L2 环间审核；domain 条件桥；Proto 可推翻。
 
 modes:
   - init
@@ -26,8 +24,11 @@ config:
 
 templates:
   - templates/progress.yaml.tmpl
-  - templates/links.md.tmpl
-  - templates/testcases.md.tmpl
-  - templates/test-report.md.tmpl
+  - templates/回链.md.tmpl
+  - templates/测试用例.md.tmpl
+  - templates/测试报告.md.tmpl
+  - templates/runs-README.md.tmpl
 
-runs_root: docs/superpowers/runs/
+runs_root: docs/runs/
+runs_active: docs/runs/active/
+runs_archive: docs/runs/archive/
