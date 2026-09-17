@@ -2,7 +2,7 @@
 
 未指定且已有未完成 `docs/runs/active/` 时默认走本页。输出：
 
-1. 进行中主题列表（`docs/runs/active/` 下 `stage != done`）；若发现旧路径 `docs/superpowers/runs/` 残留，单独列出并提示迁移。
+1. 进行中主题列表（`docs/runs/active/` 下 `stage != done`）；若发现旧路径 `docs/superpowers/runs/` 残留，单独列出并提示迁移。机读扫描可跑：`node scripts/status-scan.mjs`（列出 slug/stage/path；无 active 时友好提示）。
 2. **绑定健康**（只读）：用固定表（环 / **中文名** / 键名 / 当前 skill / 相对推荐包差异）；`null` **标红**并建议 `rebind`/`init`。中文名 SSOT：[stages.md](stages.md)。
 3. 指定主题（或唯一主题）的：
    - 目录：`docs/runs/active/<slug>/`（或兼容旧路径）

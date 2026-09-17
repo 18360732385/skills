@@ -24,8 +24,13 @@
 3. **pitfalls 回流（skill 内三问）**  
    - 本轮是否修了/确认了智能体易再犯的错误做法？  
    - 若存在 `docs/agent-kb/pitfalls.md`（或等价台账）：已有 `Pn` → 落点是否仍准；根因消除 → 标「已根治」；无则按台账格式追加（域、触发路径必填）  
-   - **可选增强**：若存在 `node scripts/agent-kb/lint-pitfalls.mjs`，改台账后代跑；失败则列错并停  
-   - 无 pitfalls 台账：三问仍要口头/写入 runs 小结，并注明「本仓无 L2 pitfalls」
+   - **pitfalls lint 开关** `close_pitfalls`（读自本主题 `progress.close_pitfalls`，缺省则 `defaults.close_pitfalls`，再缺省 **`optional`**）：  
+     | 值 | 行为 |
+     |---|---|
+     | **`off`** | 不跑 `lint-pitfalls`；三问仍做 |
+     | **`optional`**（默认） | 若存在 `node scripts/agent-kb/lint-pitfalls.mjs` 则改台账后代跑；失败列错并停；无脚本则跳过并注明 |
+     | **`on`** | **要求**存在 lint 脚本且通过；无脚本或失败 → 阻断 close（用户可显式降为 optional/off 写入 progress 后重试） |
+   - 无 pitfalls 台账：三问仍要口头/写入 runs 小结，并注明「本仓无 L2 pitfalls」；`on` 时仍须有脚本（否则阻断）
 
 4. **runs 收尾与归档**  
    - `progress.yaml`：`stage=done` + updated_at；`回链.md` 补齐最终产物指针  

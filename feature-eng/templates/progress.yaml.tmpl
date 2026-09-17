@@ -28,6 +28,9 @@ handoff_policy: confirm
 # 默认 subagent；宿主无 Task 能力则降级 inline
 review_policy: subagent
 
+# off | optional | on（close 时 pitfalls lint；缺省跟 defaults.close_pitfalls，再缺省 optional）
+# close_pitfalls: optional
+
 # triage | grill | design | domain-bridge | domain | spec | plan | proto-bridge | proto | testdesign
 # | pre-impl | implement | gate | verify | close | done
 # 旁态（按需，不在主链）：smoke（B 路径冒烟）| diagnose（排障，先复现再改）

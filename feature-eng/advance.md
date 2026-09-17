@@ -32,7 +32,7 @@
 6. **过** → 写 gates、下一 stage、updated_at；算下一环。环数 ≥5 或上下文过长 → 提议 [handoff.md](handoff.md)。
 7. **主动进入下一环**（`handoff_policy`）：
    - 下一环是桥/闸 → 直接跑对应文件
-   - 需 skill：`auto` 立即 lookup；`confirm` 短卡片后再 lookup；用户否 → `回链.md` 记 `pending_invoke`
+   - 需 skill：先过 [binding.md](binding.md)「绑定 skill 可调起」预检 A–E；`auto` 立即 lookup；`confirm` 短卡片后再 lookup；用户否 → `回链.md` 记 `pending_invoke`
 8. **不过** → stage 不变。
 
 ## 硬约束

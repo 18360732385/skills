@@ -8,8 +8,8 @@ disable-model-invocation: true
 
 # feature-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.4-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
-**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.4**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
+**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。
 
 Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](stages.md)；产物形状见 [artifacts.md](artifacts.md)（L1）；环间语义见 [gates-review.md](gates-review.md)（L2）；环节与 skill **解耦**，运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（init/rebind **首问**可改；见 [binding.md](binding.md)）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。
 
@@ -63,6 +63,7 @@ Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](stag
 | L2 审核 | [gates-review.md](gates-review.md) |
 | 硬闸 / 短确认卡片 | [gates-common.md](gates-common.md) |
 | 定稿桥 / Proto 桥 | domain-bridge / proto-bridge |
-| lookup / 主动调起 | [binding.md](binding.md) |
+| lookup / 主动调起 / 截断契约 | [binding.md](binding.md) · [config/truncate-contracts.yaml](config/truncate-contracts.yaml) |
+| 一页纸 | [QUICKSTART.md](QUICKSTART.md) |
 | 交接 | [handoff.md](handoff.md) |
 | 模板 | `templates/`（progress.yaml · 回链.md · 测试用例.md · 测试报告.md · runs-README.md） |
