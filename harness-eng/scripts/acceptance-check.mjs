@@ -133,15 +133,15 @@ function checkApiSection(body, file, gold) {
     }
   }
 
-  // 0.2.26: 示例值列 — 金标空单元格 = blocker；显式未知/—/N/A/无 算已填
+  // 0.2.26+: 字段表 — 示例值 / 说明 /（若有）枚举·备注
   for (const secName of ["请求参数", "响应参数"]) {
-    const ex = checkExampleColumn(body, secName);
-    if (ex.issue) {
+    const issues = checkParamFieldTable(body, secName);
+    for (const it of issues) {
       const item = {
-        id: "api-empty-examples",
+        id: it.id,
         file,
         title,
-        detail: `${secName}: ${ex.issue}`,
+        detail: `${secName}: ${it.issue}`,
       };
       if (gold) blockers.push(item);
       else warnings.push(item);
@@ -150,57 +150,132 @@ function checkApiSection(body, file, gold) {
   return { blockers, warnings };
 }
 
-/** Parse markdown tables under ### 请求参数 / ### 响应参数 for 示例值 column. */
-function checkExampleColumn(body, sectionTitle) {
+const OK_PLACEHOLDER = /^(未知|—|–|-|N\/A|n\/a|无|暂无|null|NULL|\(空\))$/;
+/** 说明列禁止的占位/套话（「—」「未知」在说明中不算已填） */
+const BAD_DESC =
+  /^(未知|—|–|-|N\/A|n\/a|无|暂无|null|NULL|\(空\)|同请求|同上|见上|对象|列表|TODO(?:\(harness-eng\))?)$/i;
+const SKIP_PARAM_NAME = /^(—|–|-|无|无参数|无请求体|（无\s*body）|\(无\s*body\)|n\/a)$/i;
+
+/** Parse first markdown table under ### 请求参数 / ### 响应参数. */
+function parseParamTable(body, sectionTitle) {
   const sec = body.match(
     new RegExp(`###\\s*${sectionTitle}([\\s\\S]*?)(?=###\\s*|##\\s+\\d+\\.|$)`, "i")
   );
-  if (!sec) return { issue: null }; // other rules may catch missing section
+  if (!sec) return { skip: true };
   const block = sec[1];
-  // find first markdown table
-  const tableMatch = block.match(/\|[^\n]+\|[\r\n]+\|[:\s-|]+\|([\s\S]*?)(?=\n\s*\n|\n###|\n##|$)/);
+  const tableMatch = block.match(
+    /\|[^\n]+\|[\r\n]+\|[:\s-|]+\|([\s\S]*?)(?=\n\s*\n|\n###|\n##|$)/
+  );
   if (!tableMatch) {
-    // no table — skip (void/stream may have prose only)
-    if (/void|stream|无参数|无请求体|HttpServletResponse/i.test(block)) return { issue: null };
-    return { issue: "missing parameter table" };
+    if (/void|stream|无参数|无请求体|HttpServletResponse/i.test(block)) return { skip: true };
+    return { issues: [{ id: "api-empty-examples", issue: "missing parameter table" }] };
   }
   const headerLine = block.match(/\|[^\n]+\|/);
-  if (!headerLine) return { issue: "missing parameter table header" };
+  if (!headerLine) {
+    return { issues: [{ id: "api-empty-examples", issue: "missing parameter table header" }] };
+  }
   const headers = headerLine[0]
     .split("|")
     .map((c) => c.trim())
     .filter(Boolean);
-  const exIdx = headers.findIndex((h) => /示例/.test(h));
-  if (exIdx < 0) return { issue: "missing 示例值 column" };
-
   const rows = [];
   for (const line of block.split(/\r?\n/)) {
     if (!/^\|/.test(line)) continue;
-    if (/^\|\s*:?-{2,}/.test(line)) continue; // separator
+    if (/^\|\s*:?-{2,}/.test(line)) continue;
     if (line === headerLine[0]) continue;
     const cells = line
       .split("|")
       .map((c) => c.trim())
       .filter((_, i, arr) => i > 0 && i < arr.length - 1);
     if (cells.length < 2) continue;
-    // skip if looks like header repeat
-    if (cells.some((c) => /参数名|类型|必填|说明|示例/.test(c)) && cells.length === headers.length)
+    if (
+      cells.some((c) => /参数名|类型|必填|说明|示例|枚举|备注/.test(c)) &&
+      cells.length === headers.length
+    ) {
       continue;
+    }
     rows.push(cells);
   }
-  if (!rows.length) return { issue: null };
+  return { headers, rows, block };
+}
 
-  const okPlaceholder = /^(未知|—|–|-|N\/A|n\/a|无|暂无|null|NULL|\(空\))$/;
-  let empty = 0;
-  for (const cells of rows) {
-    const v = (cells[exIdx] ?? "").replace(/`/g, "").trim();
-    if (!v) empty++;
-    else if (okPlaceholder.test(v)) {
-      /* explicit unknown counts as filled */
+/**
+ * 字段表检查：示例值（必有列）· 说明含义 · 若有枚举/备注列则禁空单元格。
+ * 金标下由调用方升 blocker。
+ */
+function checkParamFieldTable(body, sectionTitle) {
+  const parsed = parseParamTable(body, sectionTitle);
+  if (parsed.skip) return [];
+  if (parsed.issues) return parsed.issues;
+
+  const { headers, rows } = parsed;
+  const out = [];
+  if (!rows.length) return out;
+
+  const nameIdx = headers.findIndex((h) => /参数名|字段名|名称/.test(h));
+  const descIdx = headers.findIndex((h) => /^说明$/.test(h) || h === "说明");
+  const exIdx = headers.findIndex((h) => /示例/.test(h));
+  const enumIdx = headers.findIndex((h) => /^枚举$/.test(h));
+  const remarkIdx = headers.findIndex((h) => /^备注$/.test(h));
+
+  if (exIdx < 0) {
+    out.push({ id: "api-empty-examples", issue: "missing 示例值 column" });
+  } else {
+    let empty = 0;
+    for (const cells of rows) {
+      const v = (cells[exIdx] ?? "").replace(/`/g, "").trim();
+      if (!v) empty++;
+    }
+    if (empty > 0) {
+      out.push({
+        id: "api-empty-examples",
+        issue: `${empty}/${rows.length} rows have empty 示例值`,
+      });
     }
   }
-  if (empty > 0) return { issue: `${empty}/${rows.length} rows have empty 示例值` };
-  return { issue: null };
+
+  if (descIdx >= 0) {
+    let bad = 0;
+    for (const cells of rows) {
+      const name = (cells[nameIdx >= 0 ? nameIdx : 0] ?? "").replace(/`/g, "").trim();
+      if (SKIP_PARAM_NAME.test(name)) continue;
+      const raw = (cells[descIdx] ?? "").replace(/`/g, "").trim();
+      if (!raw || BAD_DESC.test(raw) || (name && raw.toLowerCase() === name.toLowerCase())) {
+        bad++;
+      }
+    }
+    if (bad > 0) {
+      out.push({
+        id: "api-empty-desc",
+        issue: `${bad} rows have empty/tautology/boilerplate 说明`,
+      });
+    }
+  }
+
+  for (const [idx, label, id] of [
+    [enumIdx, "枚举", "api-empty-enum-remark"],
+    [remarkIdx, "备注", "api-empty-enum-remark"],
+  ]) {
+    if (idx < 0) continue;
+    let empty = 0;
+    for (const cells of rows) {
+      const name = (cells[nameIdx >= 0 ? nameIdx : 0] ?? "").replace(/`/g, "").trim();
+      if (SKIP_PARAM_NAME.test(name)) continue;
+      const v = (cells[idx] ?? "").replace(/`/g, "").trim();
+      if (!v) empty++;
+      else if (OK_PLACEHOLDER.test(v)) {
+        /* ok */
+      }
+    }
+    if (empty > 0) {
+      out.push({
+        id,
+        issue: `${empty}/${rows.length} rows have empty ${label}`,
+      });
+    }
+  }
+
+  return out;
 }
 
 function checkApiFile(file, text, gold) {

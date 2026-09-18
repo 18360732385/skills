@@ -56,8 +56,10 @@ function extractMethodSnippet(text, methodName, maxLines = 8) {
 }
 
 function parseParamsTable(paramsSrc) {
+  const header =
+    "| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |\n|---|---|---|---|---|---|---|";
   if (!paramsSrc || !paramsSrc.trim()) {
-    return "| 参数名 | 类型 | 注解 | 说明 |\n|---|---|---|---|\n| — | — | — | 无显式参数 |";
+    return `${header}\n| — | — | 否 | 无显式参数 | — | — | — |`;
   }
   const rows = [];
   const parts = paramsSrc.split(",");
@@ -70,12 +72,13 @@ function parseParamsTable(paramsSrc) {
     if (!mm) continue;
     const typ = mm[1].replace(/\s+/g, " ").trim();
     const name = mm[2];
-    rows.push(`| ${name} | ${typ} | ${ann || "—"} | — |`);
+    const remark = ann ? `注解 ${ann}` : "—";
+    rows.push(`| ${name} | ${typ} | 否 | 未知 | — | ${remark} | 未知 |`);
   }
   if (!rows.length) {
-    return "| 参数名 | 类型 | 注解 | 说明 |\n|---|---|---|---|\n| — | — | — | 解析失败 |";
+    return `${header}\n| — | — | 否 | 解析失败 | — | — | 未知 |`;
   }
-  return ["| 参数名 | 类型 | 注解 | 说明 |", "|---|---|---|---|", ...rows].join("\n");
+  return [header.split("\n")[0], header.split("\n")[1], ...rows].join("\n");
 }
 
 function readEndpointSource(root, evidence) {
@@ -95,7 +98,7 @@ export function endpointToMarkdown(ep, index, root) {
   if (!apiPath.startsWith("/")) apiPath = `/${apiPath}`;
 
   let paramsTable =
-    "| 参数名 | 类型 | 注解 | 说明 |\n|---|---|---|---|\n| — | — | — | TODO(harness-eng) |";
+    "| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |\n|---|---|---|---|---|---|---|\n| — | — | 否 | TODO(harness-eng) | — | — | 未知 |";
   let logic = `- Controller: \`${ep.controller || "?"}\`\n- Method: \`${ep.method || "?"}\``;
   if (text && method) {
     const methodRe = new RegExp(
@@ -117,6 +120,8 @@ export function endpointToMarkdown(ep, index, root) {
 
   return `## ${index}. ${title}
 
+> quality: heuristic — fill-auto-api 骨架；须 agents 精填后经 acceptance 再 promote
+
 **功能描述：** ${title}  
 **接口地址：** ${apiPath}  
 **请求方式：** ${http}  
@@ -129,8 +134,10 @@ ${logic}
 ${paramsTable}${bodyHint}
 
 ### 响应参数
-返回类型：\`${ret}\`
 
+| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |
+|---|---|---|---|---|---|---|
+| — | ${ret} | 否 | 返回类型占位；须展开业务字段 | — | — | 未知 |
 `;
 }
 

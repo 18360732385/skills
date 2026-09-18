@@ -1,10 +1,26 @@
-﻿# harness-eng 验收记录（0.6.4）
+﻿# harness-eng 验收记录（0.6.5）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.4**（CodeBuddy 扁平 rules+FM；Trae **高**；会话仪表盘无 mermaid / 无分精简；session-dashboard；sync.mjs freshness gate）。报告对照 **`skill_version` + `report_schema`**（0.2.24；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.5**（API 字段表 7 列金标 + acceptance 说明/枚举/备注；sync --check EOL-agnostic；CodeBuddy 扁平 rules+FM；Trae **高**；session-dashboard；sync freshness）。报告对照 **`skill_version` + `report_schema`**（0.2.24；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+
+## 0.6.5 增量验收（正式钉号 · API 字段表 + sync EOL）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `node scripts/selfcheck-render.mjs` | 烟测 |
+| manifest / meta / questions 为 `0.6.5`（无 `-dev`） | 有 |
+| CHANGELOG 正式标题 `## 0.6.5`（非 `## 0.6.5-dev`） | 有 |
+| VERIFY / README / QUICKSTART / 手册当前钉 **0.6.5** | 有 |
+| api-doc / api-index 模板默认 7 列；旧 5 列兼容说明 | 有 |
+| acceptance：`api-empty-desc` · `api-empty-enum-remark`；good/bad 夹具金标 | 有 |
+| fill-auto-api 7 列 + `quality: heuristic` | 有 |
+| sync.mjs.tmpl `sameText` EOL-agnostic；`l5-sync-golden --check` 绿 | 有 |
+| tmpl / golden `HARNESS_SYNC_TMPL_ID=0.6.5`；upgrade `## 0.6.4 → 0.6.5` | 有 |
+| 安装 URL 仍 `main`；Trae / CodeBuddy / Codex 钉号不回退 | 有 |
 
 ## 0.6.4 增量验收（正式钉号 · CodeBuddy / WorkBuddy 官方对齐）
 

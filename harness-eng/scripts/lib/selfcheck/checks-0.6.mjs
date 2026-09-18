@@ -507,7 +507,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.4", "manifest version exactly 0.6.4");
+  assert(verLine && verLine[1] === "0.6.5", "manifest version exactly 0.6.5");
 
   const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -829,27 +829,27 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 }
 
 // --- 0.6.3 formal: freshness · report_schema narrative · upgrade three-step ---
-// (historical docs stay; current skill pin moved to 0.6.4 — freshness still asserted with current id)
+// (historical docs stay; current skill pin moved to 0.6.5 — freshness still asserted with current id)
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.6.4", "current manifest pin (0.6.4; 0.6.3 formal retained in CHANGELOG)");
+  assert(manVer063 === "0.6.5", "current manifest pin (0.6.5; 0.6.3 formal retained in CHANGELOG)");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.6\.4/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.5/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.6\.5/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.4/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.5/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.4/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.5/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -978,7 +978,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const verify064 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/正式钉号/.test(verify064) && /0\.6\.3 → 0\.6\.4/.test(verify064), "VERIFY formal pin acceptance rows");
   const summary064 = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
-  assert(/版本：\*\*0\.6\.4\*\*/.test(summary064), "使用手册-摘要 version 0.6.4");
+  assert(/WorkBuddy\/CodeBuddy（\*\*0\.6\.4\*\*）/.test(summary064), "使用手册-摘要 keeps CodeBuddy 0.6.4 baseline note");
 
   const hooksChecks064 = fs.readFileSync(path.join(skillRoot, "scripts/lib/hooks-checks.mjs"), "utf8");
   assert(/workbuddy:\s*CLAUDE_STYLE\["commit-gate"\]/.test(hooksChecks064), "hooks-checks workbuddy stays CLAUDE_STYLE");
@@ -986,6 +986,46 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools064), "Trae matrix still 高");
   assert(/冻结/.test(aiTools064) && /Codex|codex/.test(aiTools064), "Codex still frozen");
+}
+
+// --- 0.6.5: API field-table 7-col + sync EOL-agnostic ---
+{
+  const apiDoc = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/api/templates/api-doc-template.md"),
+    "utf8"
+  );
+  assert(/枚举 \| 备注 \| 示例值/.test(apiDoc), "api-doc-template 7-col baseline");
+  assert(/字段表硬约束/.test(apiDoc) && /说明必填/.test(apiDoc), "api-doc-template hard constraints");
+  assert(/###\s*请求参数/.test(apiDoc) && /###\s*响应参数/.test(apiDoc), "api-doc-template ### 请求/响应参数");
+
+  const apiIdx = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/api/templates/api-index-template.md"),
+    "utf8"
+  );
+  assert(/字段表约定/.test(apiIdx), "api-index-template field-table convention");
+
+  const acceptSrc065 = fs.readFileSync(path.join(skillRoot, "scripts/acceptance-check.mjs"), "utf8");
+  assert(/api-empty-desc/.test(acceptSrc065) && /api-empty-enum-remark/.test(acceptSrc065), "acceptance 0.6.5 field rules");
+  assert(/checkParamFieldTable/.test(acceptSrc065), "acceptance checkParamFieldTable");
+
+  const syncTmpl065 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/function sameText/.test(syncTmpl065), "sync.mjs.tmpl sameText EOL-agnostic");
+
+  const changelog065 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.5\b/m.test(changelog065), "CHANGELOG 0.6.5 heading");
+  assert(/^## 0\.6\.5\b/m.test(changelog065) && !((changelog065.match(/^## 0\.6\.5[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.5 no -dev heading");
+  assert(/正式钉号：API 字段表/.test(changelog065), "CHANGELOG 0.6.5 formal pin subtitle");
+  assert(/sameText|EOL/.test(changelog065), "CHANGELOG notes sync EOL fix");
+
+  const upgrade065 = readDoc("upgrade.md");
+  assert(/0\.6\.4 → 0\.6\.5/.test(upgrade065), "upgrade has 0.6.4 → 0.6.5");
+  assert(/升级三步/.test(upgrade065) && /check-freshness/.test(upgrade065), "upgrade 0.6.5 keeps L5 three-step");
+
+  const verify065 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/0\.6\.5 增量验收/.test(verify065) && /0\.6\.4 → 0\.6\.5/.test(verify065), "VERIFY 0.6.5 formal pin acceptance rows");
+
+  const summary065 = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
+  assert(/版本：\*\*0\.6\.5\*\*/.test(summary065), "使用手册-摘要 version 0.6.5");
 }
 
 

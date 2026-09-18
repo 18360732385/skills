@@ -1,8 +1,25 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4`（当前 **0.6.4**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5`（当前 **0.6.5**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.6.5 — 2026-09-17（正式钉号：API 字段表金标 + sync EOL）
+
+> 0.6.4 跟进。**不**改 Trae 矩阵、**不**重开 Codex、**不**回退 CodeBuddy 扁平 rules。
+
+### 本版要点
+
+- **API 模板**：新建/大改默认 7 列 `| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |`；说明/枚举/备注分列硬约束；旧 5 列兼容 acceptance。索引模板补「字段表约定」
+- **acceptance**：新增 `api-empty-desc`（说明空/套话/同参数名）、`api-empty-enum-remark`（有枚举/备注列则禁空单元格）；金标升 blocker
+- **fill-auto-api**：输出 7 列骨架并标 `quality: heuristic`（须 agents 精填后再 promote）
+- **truth-quality / fill-workers**：出入参与 worker 答案卡对齐 7 列 + 说明硬约束
+- **sync --check**：`sameText()` 两侧规范化 CRLF/LF，避免 Windows autocrlf / HEADER 注入造成假漂移（`l5-sync-golden` 绿）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.5`**（无 `-dev`）
+- 0.6.4 CodeBuddy / Trae 高钉号不回退
 
 ## 0.6.4 — 2026-09-16（正式钉号：CodeBuddy/WorkBuddy 官方对齐）
 

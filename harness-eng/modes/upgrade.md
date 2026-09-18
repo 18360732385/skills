@@ -52,6 +52,16 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.6.4 → 0.6.5 迁移要点
+
+1. **meta**：`skill_version` → `0.6.5`（resume / upgrade 写 meta 时对齐 manifest）
+2. **API 契约**：新建/大改接口字段表改用 7 列（说明 / 枚举 / 备注 / 示例值分列）；旧 5 列仍可过 acceptance，但金标会拦空说明/套话。精填走 agents；`fill-auto-api` 仅为 heuristic 骨架
+3. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness（本版 sync `--check` 已 EOL-agnostic，减少假漂移）
+4. **CodeBuddy / Trae**：无强制迁移；沿用 0.6.4 / 0.6.1 钉号
+
 ## 0.6.3 → 0.6.4 迁移要点
 
 1. **meta**：`skill_version` → `0.6.4`（resume / upgrade 写 meta 时对齐 manifest）

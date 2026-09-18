@@ -30,7 +30,7 @@
 
 | 层级 | 含义 |
 |---|---|
-| 文件内全 | 模板必填章齐（api：描述/地址/方法/逻辑/入参/出参/**示例值**/变更；func：服务类+方法；db：DDL+变更；redis：模式/TTL/读写/Value） |
+| 文件内全 | 模板必填章齐（api：描述/地址/方法/逻辑/入参/出参/**示例值**/变更；新建优先 **说明/枚举/备注** 分列；func：服务类+方法；db：DDL+变更；redis：模式/TTL/读写/Value） |
 | 模块内全 | inventory 条目全有真相，或 Plan 显式 `sample_n` / `deferred` |
 | 仓内全（大仓） | **不是**千级接口一天齐；而是 **P0 金标域契约域闭环**（api+func+相关表+相关 key；有 Scheduler 时含 jobs）= 局部达标 |
 
@@ -55,7 +55,9 @@ inventory → docs/<domain>/.fill-work/   # draft（agents | heuristic）
 | `api-echo-desc` | 功能描述含「域接口」且「处理」路径回声 | blocker |
 | `api-fake-export` | 非 export 路径/标题却写「导出 Excel」类假逻辑 | blocker |
 | `api-shallow-resp` | 出参仅 `code/msg/data` 外壳且无子字段 | warning（金标=blocker） |
-| `api-empty-examples` | 请求/响应参数表缺「示例值」列，或数据行示例值为空 | warning（**金标=blocker**）；显式 `未知`/`—`/`N/A`/`无` 算已填 |
+| `api-empty-examples` | 请求/响应参数表缺「示例值」列，或数据行示例值为空 | warning（**金标=blocker**）；显式 `未知`/`—`/`N/A`/`无` 算已填；7 列（含枚举/备注）与旧 5 列均识别 |
+| `api-empty-desc` | 「说明」空、仅为 `—`/`未知`/TODO、仅重复参数名、或套话（同请求/同上/对象/列表） | warning（**金标=blocker**） |
+| `api-empty-enum-remark` | 表头已含「枚举」或「备注」列，但数据行该单元格为空（须填或 `—`） | warning（**金标=blocker**）；旧 5 列无此列则跳过 |
 | `api-logic-thin` | 无「功能逻辑」或有效步骤 &lt; 2 | blocker |
 | `api-no-evidence` | 无 `**evidence:**` | blocker |
 | `func-empty-semantics` | 方法说明空或等于方法名 | blocker |
@@ -69,6 +71,6 @@ inventory → docs/<domain>/.fill-work/   # draft（agents | heuristic）
 
 **api 功能描述**：`[角色]在[场景]做[动作]，得到[结果]`。  
 **api 逻辑**：编号步骤，含分支/约束/落库/错误码之一。  
-**出入参**：展开业务字段；表须含 **示例值** 列（无证据写 `未知`/`—`，**禁止空单元格**）。  
+**出入参**：展开业务字段；表须含 **示例值** 列（无证据写 `未知`/`—`，**禁止空单元格**）。新建/大改推荐 `| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |`：说明须有中文含义（禁空、禁仅重复参数名、禁「同请求/对象」、禁说明列写 `未知`/`—`）；有枚举/备注列时单元格不可空。旧 5 列仍兼容。  
 **出参**：展开业务字段或标明 stream/void。  
 完整卡见 [fill-workers.md](../fill/fill-workers.md)。

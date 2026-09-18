@@ -89,10 +89,10 @@ node scripts/fill-dto-batch.mjs --root <TARGET>
 
 仅替换「请求参数」下仍为 TODO/空表的章节；**仅注入本接口 bodyType/返回类型**；不编造字段。
 
-## Worker 答案卡（api · 0.2.26）
+## Worker 答案卡（api · 0.2.26+）
 
 ```text
-你是 fill-truths-agents worker（harness-eng 0.2.26）。
+你是 fill-truths-agents worker（harness-eng）。
 只处理本 shard：docs/api/.fill-work/<shard-id>.json
 只写入：docs/api/.fill-work/<shard-id>.md
 质量规格：skill truth-quality.md（深·真·全）。
@@ -101,9 +101,13 @@ node scripts/fill-dto-batch.mjs --root <TARGET>
 必填：业务语义描述、接口地址、请求方式、evidence（path#method）、
 功能逻辑（≥2 有效步，含分支或约束）、请求参数表、响应参数表（展开 data）。
 参数表必须含「示例值」列：每行填具体样例，或显式「未知」/「—」；禁止空单元格。
-有 DTO 时展开字段表；无证据写 TODO(harness-eng)。
+新建/大改推荐 7 列：| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |
+说明须有中文含义（禁空、禁仅重复参数名、禁「同请求/对象」、禁说明写「未知」）；
+枚举/备注无则填「—」（若表头有这两列则不可空单元格）。
+fill-auto-api 骨架带 quality: heuristic，须本 worker 精填后再 acceptance。
+有 DTO 时展开字段表；无证据写 TODO(harness-eng)（仅草稿；金标说明列不可留 TODO）。
 只写本 shard `.fill-work` fragment；字段/URL/密码只从本仓证据抽取。
-完成后回报：written_path, endpoint_count, todo_count, empty_example_rows。
+完成后回报：written_path, endpoint_count, todo_count, empty_example_rows, empty_desc_rows。
 ```
 ## Worker prompt（func）
 
