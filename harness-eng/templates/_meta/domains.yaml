@@ -19,9 +19,9 @@ domains:
     optional: false
     pack: api
     scan_fill_work: true
-    hook_code: ["/\/controllers?\//", "packages/api-client/", "packages/types/", "packages/queries/"]
+    hook_code: ["/\/controllers?\//", "/packages\/api-client\//", "/packages\/types\//", "/packages\/queries\//"]
     hook_docs: "docs/api/modules/"
-    hook_tip: "rule 12：先同步 docs/api/modules 模块真相"
+    hook_tip: "rule 12：先同步 docs/api/modules；前端契约包（api-client/types/queries）变更亦须先真相后代码"
   func:
     kind: contract
     ladder: L1

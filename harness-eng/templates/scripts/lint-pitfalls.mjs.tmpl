@@ -10,6 +10,7 @@
  *  5. 触发路径/关键词：必填
  *  6. 落点列的相对 Markdown 链接：目标文件/目录必须存在
  *  7. 速查一致性：每个 Pn 须同时出现在「路径速查」与「域速查」；速查里的 Pn 必须存在
+ *  8. Never do↔Pn（warn）：根 AGENTS Never do 的 → Pn 须在台账；无回链行 warn（不 fail）
  * 退出码：0 通过；1 有错误。
  */
 import fs from "node:fs";
@@ -119,6 +120,36 @@ for (const id of seen.keys()) {
 for (const id of new Set([...pathIds, ...domainIds])) {
   if (!seen.has(id)) err(`速查表引用了不存在的 ${id}`);
 }
+
+// 8：Never do ↔ Pn（warn only；缺回链不挡交付，避免老仓立刻挂死）
+/** Scan root AGENTS.md Never do section for → Pn backlinks; warn if missing from ledger. */
+function warnNeverDoPnBacklinks() {
+  const agentsPath = path.join(ROOT, "AGENTS.md");
+  if (!fs.existsSync(agentsPath)) return;
+  const agents = fs.readFileSync(agentsPath, "utf8");
+  const neverIdx = agents.search(/^##\s+Never do\b/m);
+  if (neverIdx < 0) return;
+  const rest = agents.slice(neverIdx);
+  const nextH2 = rest.search(/\n##\s+/);
+  const block = nextH2 > 0 ? rest.slice(0, nextH2) : rest;
+  const refs = [...block.matchAll(/→\s*(P\d+)/g)].map((m) => m[1]);
+  const missing = [...new Set(refs)].filter((id) => !seen.has(id));
+  if (missing.length) {
+    console.warn(
+      `pitfalls lint warn：AGENTS Never do 回链未在台账出现：${missing.join(", ")}`
+    );
+  }
+  const bullets = block.split(/\r?\n/).filter((l) => /^-\s+/.test(l.trim()));
+  const noBacklink = bullets.filter(
+    (l) => !/TODO\(harness-eng\)/.test(l) && !/→\s*P\d+/.test(l)
+  );
+  if (noBacklink.length) {
+    console.warn(
+      `pitfalls lint warn：Never do 有 ${noBacklink.length} 行无「→ Pn」回链（格式：一句话 → Pn）`
+    );
+  }
+}
+warnNeverDoPnBacklinks();
 
 if (errors.length > 0) {
   console.error(`pitfalls lint 失败（${errors.length} 项）：`);

@@ -64,7 +64,7 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 - [ ] 4 WritePlan（白话摘要 + 预览）— 等待确认（闸门见 write-plan.md）
 - [ ] 5 确认后 `scripts/harness.mjs`（`--mode land`；L5/`agent_config` 走 sync，勿直渲生成宿主路径；非 L5 委托 render）；空仓 on_exists=fail；半成品改 resume 语义 on_exists=skip
 - [ ] 6 ladder 自检；写/合并 harness-meta（skill_version 与 manifest 一致）
-- [ ] 7 分级移交 TODO
+- [ ] 7 分级移交 TODO（P1：精填分册 AGENTS；P1：Pn 回流 / 路径速查 / Never do↔Pn；若 Q_APIFOX：设 APIFOX_PROJECT_ID）
 ```
 
 细节链：Read [detect.md](modes/detect.md) → [questions.yaml](questions.yaml) / [questions.md](modes/questions.md) → [write-plan.md](modes/write-plan.md) + [prefill.md](modes/prefill.md) → **harness.mjs** → [ladder.md](modes/ladder.md)。

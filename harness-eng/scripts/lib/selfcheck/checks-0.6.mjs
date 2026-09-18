@@ -7,7 +7,7 @@ import os from "os";
 import path from "path";
 import { renderSessionDashboardMarkdown } from "../session-dashboard.mjs";
 import { DOC_MOVES, ROOT_STUBS, ROOT_KEEP, ROOT_MD_MAX } from "../doc-paths.mjs";
-import { HOOK_DEFS } from "../hooks-checks.mjs";
+import { HOOK_DEFS, buildContractChecksJs } from "../hooks-checks.mjs";
 import { scanSignals } from "../detect-signals.mjs";
 
 export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
@@ -507,7 +507,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.5", "manifest version exactly 0.6.5");
+  assert(verLine && verLine[1] === "0.6.7", "manifest version exactly 0.6.7");
 
   const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -829,27 +829,27 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 }
 
 // --- 0.6.3 formal: freshness · report_schema narrative · upgrade three-step ---
-// (historical docs stay; current skill pin moved to 0.6.5 — freshness still asserted with current id)
+// (historical docs stay; current skill pin moved to 0.6.7 — freshness still asserted with current id)
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.6.5", "current manifest pin (0.6.5; 0.6.3 formal retained in CHANGELOG)");
+  assert(manVer063 === "0.6.7", "current manifest pin (0.6.7; 0.6.3 formal retained in CHANGELOG)");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.5/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.6\.5/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.7/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.6\.7/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.5/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.7/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.5/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.7/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -988,7 +988,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/冻结/.test(aiTools064) && /Codex|codex/.test(aiTools064), "Codex still frozen");
 }
 
-// --- 0.6.5: API field-table 7-col + sync EOL-agnostic ---
+// --- 0.6.5: API field-table 7-col + sync EOL-agnostic (historical pin retained) ---
 {
   const apiDoc = fs.readFileSync(
     path.join(skillRoot, "templates/docs/api/templates/api-doc-template.md"),
@@ -1012,21 +1012,209 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/function sameText/.test(syncTmpl065), "sync.mjs.tmpl sameText EOL-agnostic");
 
   const changelog065 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.5\b/m.test(changelog065), "CHANGELOG 0.6.5 heading");
-  assert(/^## 0\.6\.5\b/m.test(changelog065) && !((changelog065.match(/^## 0\.6\.5[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.5 no -dev heading");
+  assert(/^## 0\.6\.5\b/m.test(changelog065), "CHANGELOG keeps 0.6.5 heading");
   assert(/正式钉号：API 字段表/.test(changelog065), "CHANGELOG 0.6.5 formal pin subtitle");
   assert(/sameText|EOL/.test(changelog065), "CHANGELOG notes sync EOL fix");
 
   const upgrade065 = readDoc("upgrade.md");
   assert(/0\.6\.4 → 0\.6\.5/.test(upgrade065), "upgrade has 0.6.4 → 0.6.5");
-  assert(/升级三步/.test(upgrade065) && /check-freshness/.test(upgrade065), "upgrade 0.6.5 keeps L5 three-step");
 
   const verify065 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-  assert(/0\.6\.5 增量验收/.test(verify065) && /0\.6\.4 → 0\.6\.5/.test(verify065), "VERIFY 0.6.5 formal pin acceptance rows");
-
-  const summary065 = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
-  assert(/版本：\*\*0\.6\.5\*\*/.test(summary065), "使用手册-摘要 version 0.6.5");
+  assert(/0\.6\.5 增量验收/.test(verify065) && /0\.6\.4 → 0\.6\.5/.test(verify065), "VERIFY keeps 0.6.5 acceptance rows");
 }
+
+// --- 0.6.6: OpenAPI bridge + thick module AGENTS (historical pin retained) ---
+{
+  const changelog066 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.6\b/m.test(changelog066), "CHANGELOG keeps 0.6.6 heading");
+  assert(/OpenAPI|分册厚/.test(changelog066), "CHANGELOG 0.6.6 OpenAPI + thick AGENTS");
+
+  const upgrade066 = readDoc("upgrade.md");
+  assert(/0\.6\.5 → 0\.6\.6/.test(upgrade066), "upgrade has 0.6.5 → 0.6.6");
+  assert(/Q_APIFOX|OpenAPI/.test(upgrade066), "upgrade 0.6.6 notes OpenAPI bridge");
+  assert(/on_exists=skip/.test(upgrade066), "upgrade 0.6.6 notes skip existing module AGENTS");
+
+  const verify066 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/0\.6\.6 增量验收/.test(verify066) && /0\.6\.5 → 0\.6\.6/.test(verify066), "VERIFY keeps 0.6.6 acceptance rows");
+
+  const q066 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(/Q_APIFOX/.test(q066), "questions has Q_APIFOX");
+  assert(/value:\s*frontend/.test(q066), "questions Q_MODULE_AGENTS has frontend");
+
+  const man066 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  assert(/id:\s*openapi-md-to-openapi/.test(man066), "manifest openapi pack");
+  assert(/OPENAPI_BRIDGE_TIP/.test(man066), "manifest OPENAPI_BRIDGE_TIP placeholder");
+
+  for (const f of [
+    "templates/scripts/apifox/md-to-openapi.mjs",
+    "templates/scripts/apifox/sync-to-apifox.mjs",
+    "templates/scripts/apifox/import-openapi-overwrite.mjs",
+    "templates/scripts/apifox/README.md",
+    "templates/scripts/apifox/.apifox.env.example",
+    "templates/docs/api/generated/README.md",
+    "templates/agents/AGENTS.module.frontend.md.tmpl",
+  ]) {
+    assert(fs.existsSync(path.join(skillRoot, f)), `0.6.6 file exists: ${f}`);
+  }
+
+  const mdOpen = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/apifox/md-to-openapi.mjs"),
+    "utf8"
+  );
+  assert(!/sms-ai|8705117|todo-recommend|juneyao/i.test(mdOpen), "md-to-openapi de-domainized");
+  assert(/OPENAPI_TITLE/.test(mdOpen), "md-to-openapi uses OPENAPI_TITLE");
+
+  const syncApifox = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/apifox/sync-to-apifox.mjs"),
+    "utf8"
+  );
+  assert(!/8705117/.test(syncApifox), "sync-to-apifox no default project id");
+  assert(/APIFOX_PROJECT_ID/.test(syncApifox), "sync-to-apifox requires APIFOX_PROJECT_ID");
+
+  const modTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/agents/AGENTS.module.md.tmpl"),
+    "utf8"
+  );
+  assert(/改动路径速查/.test(modTmpl) && /模块定位/.test(modTmpl), "module AGENTS thick sections");
+  assert(
+    /分册真相/.test(fs.readFileSync(path.join(skillRoot, "templates/agents/AGENTS.root.md.tmpl"), "utf8")),
+    "root AGENTS 分册真相 block"
+  );
+  assert(
+    /solo 厚节|改动路径速查/.test(
+      fs.readFileSync(path.join(skillRoot, "templates/agents/AGENTS.root.solo.md.tmpl"), "utf8")
+    ),
+    "solo root has thick sections"
+  );
+
+  assert(
+    /AGENTS\.module\.frontend\.md\.tmpl/.test(
+      fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8")
+    ),
+    "render supports frontend module template"
+  );
+  assert(
+    /OPENAPI_BRIDGE_TIP/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/hooks-checks.mjs"), "utf8")),
+    "hooks-checks fills OPENAPI_BRIDGE_TIP"
+  );
+
+  assert(/精填分册 AGENTS/.test(readDoc("prefill.md")), "prefill P1 thick module AGENTS handoff");
+  assert(/分册 AGENTS 空壳|改动路径速查/.test(readDoc("audit-report.md")), "audit heuristic for thin module AGENTS");
+  assert(/Q_APIFOX|OpenAPI/.test(readDoc("ladder.md")), "ladder notes OpenAPI optional companion");
+  const gloss066 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
+  assert(/OpenAPI 桥/.test(gloss066) && /根薄分册厚/.test(gloss066), "glossary OpenAPI + thick AGENTS");
+
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-openapi-"));
+  try {
+    const modDir = path.join(tmpRoot, "docs/api/modules");
+    fs.mkdirSync(modDir, { recursive: true });
+    fs.copyFileSync(
+      path.join(skillRoot, "scripts/fixtures/acceptance-api-good.md"),
+      path.join(modDir, "01-demo.md")
+    );
+    const destScriptDir = path.join(tmpRoot, "scripts/apifox");
+    fs.mkdirSync(destScriptDir, { recursive: true });
+    fs.copyFileSync(
+      path.join(skillRoot, "templates/scripts/apifox/md-to-openapi.mjs"),
+      path.join(destScriptDir, "md-to-openapi.mjs")
+    );
+    const r = runNode([path.join(destScriptDir, "md-to-openapi.mjs")], {
+      cwd: tmpRoot,
+      env: { ...process.env, OPENAPI_TITLE: "Harness Demo API" },
+    });
+    assert(r.status === 0, `md-to-openapi smoke exit 0: ${r.stderr || r.stdout}`);
+    const outJson = path.join(tmpRoot, "docs/api/generated/openapi.json");
+    assert(fs.existsSync(outJson), "md-to-openapi wrote openapi.json");
+    const oas = JSON.parse(fs.readFileSync(outJson, "utf8"));
+    assert(oas.paths && Object.keys(oas.paths).length > 0, "openapi smoke has paths");
+    assert(oas.info?.title === "Harness Demo API", "openapi title from env");
+  } finally {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  }
+}
+
+// --- 0.6.7: Pn reflux ops + FE/BE contract gate profile ---
+{
+  const changelog067 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.7\b/m.test(changelog067), "CHANGELOG 0.6.7 heading");
+  assert(
+    /^## 0\.6\.7\b/m.test(changelog067) &&
+      !((changelog067.match(/^## 0\.6\.7[^\n]*/m) || [""])[0].includes("-dev")),
+    "CHANGELOG formal 0.6.7 no -dev heading"
+  );
+  assert(/Pn 回流|前后端契约/.test(changelog067), "CHANGELOG 0.6.7 Pn + FE gate");
+
+  const upgrade067 = readDoc("upgrade.md");
+  assert(/0\.6\.6 → 0\.6\.7/.test(upgrade067), "upgrade has 0.6.6 → 0.6.7");
+  assert(/hook_code|GLOB_API|路径速查/.test(upgrade067), "upgrade 0.6.7 notes gate + Pn");
+
+  const verify067 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/0\.6\.7 增量验收/.test(verify067) && /0\.6\.6 → 0\.6\.7/.test(verify067), "VERIFY 0.6.7 formal pin acceptance rows");
+
+  const domYaml = fs.readFileSync(path.join(skillRoot, "templates/_meta/domains.yaml"), "utf8");
+  assert(/packages\\\/api-client/.test(domYaml), "domains api hook_code has packages/api-client regex");
+
+  const checksJs = buildContractChecksJs(["api"]);
+  assert(/new RegExp/.test(checksJs), "buildContractChecksJs emits RegExp for api packages");
+  const fn = new Function(`const CONTRACT_CHECKS = ${checksJs}; return CONTRACT_CHECKS;`);
+  const arr = fn();
+  assert(Array.isArray(arr) && arr[0]?.id === "api", "CONTRACT_CHECKS api block");
+  assert(
+    arr[0].code("web/packages/api-client/client.ts") === true,
+    "nested packages/api-client hits CONTRACT_CHECKS"
+  );
+  assert(
+    arr[0].code("sms-ai-web/packages/types/index.ts") === true,
+    "nested packages/types hits CONTRACT_CHECKS"
+  );
+  assert(arr[0].code("README.md") === false, "unrelated path misses CONTRACT_CHECKS");
+  assert(/前端契约包|api-client/.test(arr[0].tip), "api tip mentions frontend packages");
+
+  assert(/packages\/api-client/.test(readDoc("detect.md")), "detect GLOB_API frontend profile");
+  assert(/GLOB_API/.test(readDoc("recommended-profile.md")) && /api-client/.test(readDoc("recommended-profile.md")), "recommended-profile GLOB_API row");
+
+  const rule12 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/12-api-doc-sync.mdc.tmpl"),
+    "utf8"
+  );
+  assert(/前端消费层|api-client/.test(rule12), "rule12 frontend consumer gate");
+
+  assert(
+    /踩坑回流/.test(fs.readFileSync(path.join(skillRoot, "templates/agents/AGENTS.root.md.tmpl"), "utf8")),
+    "root AGENTS 踩坑回流 section"
+  );
+  assert(
+    /踩坑回流/.test(fs.readFileSync(path.join(skillRoot, "templates/agents/AGENTS.root.solo.md.tmpl"), "utf8")),
+    "solo AGENTS 踩坑回流 section"
+  );
+
+  const pitTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/agent-kb/pitfalls.md"),
+    "utf8"
+  );
+  assert(/docs\/api/.test(pitTmpl) && /待补/.test(pitTmpl), "pitfalls path index skeleton");
+  assert(/Never do.*→ Pn|→ Pn/.test(pitTmpl), "pitfalls Never do↔Pn writing rule");
+
+  assert(
+    /warnNeverDoPnBacklinks/.test(
+      fs.readFileSync(path.join(skillRoot, "templates/scripts/lint-pitfalls.mjs.tmpl"), "utf8")
+    ),
+    "lint-pitfalls has warnNeverDoPnBacklinks"
+  );
+
+  assert(/Pn 回流|路径速查/.test(readDoc("prefill.md")), "prefill P1 Pn reflux");
+  assert(/Never do 无 Pn|路径速查空壳/.test(readDoc("audit-report.md")), "audit Never do / path-index heuristics");
+
+  const gloss067 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
+  assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
+
+  assert(
+    /版本：\*\*0\.6\.7\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
+    "使用手册-摘要 version 0.6.7"
+  );
+  assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
+}
+
 
 
 }

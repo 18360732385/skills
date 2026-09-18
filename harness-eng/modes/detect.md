@@ -103,8 +103,10 @@ Fingerprint 摘要须打印：**应有 MCP 矩阵**（列表）+ **已有 mcp.js
 | 栈线索 | `{{GLOB_FUNC}}` 示例 | `{{GLOB_API}}` 示例 | `{{GLOB_DB}}` 示例 |
 |---|---|---|---|
 | Maven/Java | `**/src/main/java/**/*.java,docs/func/**` | `**/controller/**/*.java,docs/api/**` | `**/db/migration/**,docs/db/**,**/entity/**/*.java` |
-| Maven + 手写 SQL（`S_SQL_DIR` 或 `S_NO_FLYWAY`） | 同上 | 同上 | `**/mapper/**/*.java,**/*Mapper.xml,**/domain/**/*.java,file/**/*.sql,docs/db/**` |
+| Maven/Java + `S_FRONTEND`（域含 api） | 同上 | 上列 **追加** `**/packages/api-client/**,**/packages/types/**,**/packages/queries/**`（或探测到的等价前端契约包路径） | 同上 |
+| Maven + 手写 SQL（`S_SQL_DIR` 或 `S_NO_FLYWAY`） | 同上 | 同上（含前端追加规则） | `**/mapper/**/*.java,**/*Mapper.xml,**/domain/**/*.java,file/**/*.sql,docs/db/**` |
 | Node/TS | `src/**/*.ts,docs/func/**` | `**/routes/**,**/api/**,docs/api/**` | `**/migrations/**,docs/db/**` |
+| Node/TS + `S_FRONTEND`（域含 api） | 同上 | 上列 **追加** `**/packages/api-client/**,**/packages/types/**,**/packages/queries/**` | 同上 |
 | 未知 | 问用户 | 问用户 | 问用户 |
 
 Redis：`docs/redis/**` + 探测到的 cache/redis 目录。  

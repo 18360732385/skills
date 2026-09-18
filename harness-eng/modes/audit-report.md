@@ -71,6 +71,9 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 | `.cursor/mcp.json` 含明文密且被跟踪 | 按 meta.`mcp_tracking`：`example_only`→反模式；`vendored_shared`→注明约定例外 |
 | `S_SECRETS_LEAK`（README/yml） | |
 | 根 AGENTS 与分册严重漂移且无冲突裁决 | |
+| **分册 AGENTS 空壳**（`agents_variant=modules` 时分册仍大面积 `TODO(harness-eng)` 且无「改动路径速查」实表） | L0 **内容**缺口（不拦阶梯）；移交精填分册 |
+| **Never do 无 Pn 回链**（红线行存在却无 `→ P\d+`） | L2 内容缺口；Never do 须 `一句话 → Pn` |
+| **路径速查空壳**（仍仅示例 / 大面积「待补」，且活跃 Pn ≥3） | L2 运营缺口；从 Never do / 改动路径补速查 |
 | **meta.ai_tools 与入口/镜像 rules 不一致**（入口缺失必记；`1x-contract-sync` 仅对 Codex / L0–L2 未镜像宿主必查。L3+/L5 全量镜像宿主看本宿主 `*-sync*`，缺 1x 不记此反模式） | |
 | `pitfalls.md` 稳定 ID 重号（`Pn` 重复、语义不同） | |
 | **pitfalls 未过 lint**（有 `lint-pitfalls.mjs` 却未跑 / 7 列或速查不一致） | |

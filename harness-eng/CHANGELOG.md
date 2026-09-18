@@ -1,8 +1,37 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5`（当前 **0.6.5**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7`（当前 **0.6.7**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.6.7 — 2026-09-18（正式钉号：Pn 回流运营 + 前后端契约门禁剖面）
+
+> 0.6.6 跟进。**不**改 Trae 矩阵、**不**重开 Codex、**不**回退 CodeBuddy 扁平 rules。
+
+### 本版要点
+
+- **Pn 回流运营**：根 AGENTS「踩坑回流」三问；pitfalls 路径速查通用骨架；Never do↔Pn 单写纪律；lint warn 校验回链；audit / prefill 移交
+- **前后端契约门禁剖面**：api `hook_code` 对 `packages/api-client|types|queries` 改 **regex**（嵌套 monorepo 可命中）；`S_FRONTEND`+api 时【推荐】GLOB_API 追加前端契约包；rule 12 对齐消费层
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.7`**（无 `-dev`）
+- 0.6.6 OpenAPI / 分册厚 / 0.6.5 API 7 列 / Trae 高钉号不回退
+
+## 0.6.6 — 2026-09-18（正式钉号：OpenAPI 闭环 + 分册厚 SSOT）
+
+> 0.6.5 跟进。**不**改 Trae 矩阵、**不**重开 Codex、**不**回退 CodeBuddy 扁平 rules。
+
+### 本版要点
+
+- **OpenAPI / Apifox 可选桥**（L1 伴生，`Q_APIFOX`）：去域化 `scripts/apifox/`（md→openapi→覆盖导入）；契约 SSOT 仍为 `docs/api/modules`；soft-gate `OPENAPI_BRIDGE_TIP` 软提醒
+- **分册 AGENTS 厚 SSOT**：根「分册真相」声明 + 通用/Spring/前端分册厚骨架（定位、动手前、改动路径速查、Never do↔Pn）；solo 根收厚节
+- **施工仪式**：land 移交 P1 精填分册；WritePlan 预览分册；audit 空壳启发式；upgrade `0.6.5 → 0.6.6`（已有分册 on_exists=skip）
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.6`**（无 `-dev`）
+- 0.6.5 API 7 列 / 0.6.4 CodeBuddy / Trae 高钉号不回退
 
 ## 0.6.5 — 2026-09-17（正式钉号：API 字段表金标 + sync EOL）
 

@@ -63,7 +63,8 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
   assert(/\{\{CONTRACT_CHECKS_JS\}\}/.test(gateTmpl), "extended gate has CONTRACT_CHECKS_JS");
   assert(/\{\{DB_MIGRATION_DIR\}\}/.test(gateTmpl), "extended gate has DB_MIGRATION_DIR");
-  assert(!/sms-ai|apifox/i.test(gateTmpl), "extended gate de-domainized (no sms-ai/apifox)");
+  assert(/\{\{OPENAPI_BRIDGE_TIP\}\}/.test(gateTmpl), "extended gate has OPENAPI_BRIDGE_TIP");
+  assert(!/sms-ai|juneyao/i.test(gateTmpl), "extended gate de-domainized (no sms-ai/juneyao)");
   assert(/--git/.test(gateTmpl), "extended gate supports --git mode");
   const guardTmpl = fs.readFileSync(
     path.join(skillRoot, "templates/hooks/mcp-mysql-guard.js.tmpl"),
@@ -926,7 +927,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.6\.5"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.6\.7"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"

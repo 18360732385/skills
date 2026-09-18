@@ -16,7 +16,8 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 | `rule14` | 默认 **是** |
 | `rule21` | 探测到 `S_SLF4J`（Java + SLF4J）→ 【推荐】**是**；非 Java 栈默认否（行为包，非契约域） |
 | `rule17` | 探测到 `S_FRONTEND` → 【推荐】**是**；否则默认否（前端协作包，非契约域） |
-| `module_agents_template` | 分册且探测到 `S_SPRING` → 【推荐】`spring`；否则 `default` |
+| `GLOB_API`（placeholders） | 域含 `api` 且 `S_FRONTEND` → 【推荐】在栈默认 API globs 上 **追加** `**/packages/api-client/**,**/packages/types/**,**/packages/queries/**`（或探测到的等价路径）；写入 `placeholders.GLOB_API`；与 commit-gate `hook_code` regex 对齐 |
+| `module_agents_template` | 分册且探测到 `S_SPRING` → 【推荐】`spring`；分册且前端模块 / `S_FRONTEND` 选 frontend 分册时 → `frontend`；否则 `default` |
 | `db_migration` | db 域且 `S_NO_FLYWAY` / `S_SQL_DIR` → 【推荐】`manual_sql`；否则 `flyway` |
 | `agent_config` | `S_MULTI_TOOL`（AI 工具 ≥2）或 `S_AGENT_CONFIG` → 【推荐】**是**（L5 配置 SSOT 管线；`Q_AGENT_CONFIG`）；单工具仓默认否 |
 | `hooks_family` | L3+ 默认 `commit-gate-extended, after-edit, stop-checklist`；装配 mysql MCP 再加 `mysql-guard`（`Q_HOOKS_FAMILY`；extended 与基础 commit 门禁互斥） |

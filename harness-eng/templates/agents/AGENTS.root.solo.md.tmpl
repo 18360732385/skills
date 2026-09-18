@@ -1,10 +1,20 @@
 # {{REPO_NAME}} — AGENTS.md
 
-> AI 协作总入口。本仓**暂无**分册 `AGENTS.md`；契约真相见 `docs/func|api|db|redis|jobs`（按已启用域）。
+> AI 协作总入口。本仓**暂无**分册 `AGENTS.md`；契约真相见 `docs/func|api|db|redis|jobs`（按已启用域）。  
+> **solo 模式**：定位 / 改动路径等「厚」约定写在本文件下方，勿写「见分册」。
 
 ## Critical
 
 TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必须在仓库根执行某工具）。
+
+## 模块定位（solo 厚节）
+
+| 项 | 说明 |
+|---|---|
+| 职责 | TODO(harness-eng): {{REPO_DESC}} |
+| 边界 | TODO(harness-eng): 本仓做什么 / 不做什么 |
+| 技术栈 | TODO(harness-eng) |
+| 入口 / 端口 | TODO(harness-eng) |
 
 ## Commands
 
@@ -25,7 +35,7 @@ TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必
 
 ## 给智能体的文档优先级
 
-1. 本文件 — 命令与红线
+1. 本文件 — 命令、红线与（solo）模块厚约定
 2. （本仓暂无分册 AGENTS）— 模块约定以本文件 + 契约真相为准
 3. `.cursor/rules/` — 同步与行为约束
 4. `docs/func` → `docs/api` → `docs/db` → `docs/redis` → `docs/jobs`（先索引再真相；按已启用域）
@@ -35,15 +45,32 @@ TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必
 
 > **冲突裁决**：本文件 / 契约真相以**磁盘最新文件**为准；动手前 Read 重读，勿沿用会话早期摘要。
 
+## 改动路径速查（solo 厚节）
+
+| 需求 | 优先改动 |
+|---|---|
+| 新业务能力 | TODO(harness-eng) + `docs/func/modules/…` |
+| 新 / 改 REST | TODO(harness-eng) + `docs/api/modules/…` |
+| 表结构 | TODO(harness-eng) + `docs/db/table/…` |
+| Redis Key | TODO(harness-eng) + `docs/redis/keys/…` |
+| 定时任务 | TODO(harness-eng) + `docs/jobs/tasks/…` |
+
 ## 协作约定
 
 - Commit / MR 标题与描述优先中文（可夹杂 `fix` / `docs` 等意图词）
 - `docs/agent-kb/**` 文件名固定英文；规划文档文件名尽量中文
 
+## 踩坑回流
+
+时机见 alwaysApply `00`「交付收口」与 [agent-kb README](docs/agent-kb/README.md) **三问**；格式见 path rule `19`。  
+根 Never do **只写一句话 + `→ Pn`**；现象 / 排障细节只写 [pitfalls](docs/agent-kb/pitfalls.md)，**勿双写**。新 `Pn` 须同步「路径速查」与「域速查」，并跑 `node scripts/agent-kb/lint-pitfalls.mjs`。
+
 ## Never do
 
+> 红线**一句话**写在此；现象 / 排障细节以 [pitfalls](docs/agent-kb/pitfalls.md) 对应 `Pn` 为正文，**勿在两处各写细节**。格式：`一句话 → Pn`。
+
 - Commit API keys、生产密码、含密配置
-- TODO(harness-eng): 追加本仓域红线（鉴权、迁移、SSOT 边界等）— **勿抄他仓业务条**
+- TODO(harness-eng): 追加本仓域红线（鉴权、迁移、SSOT 边界等）— 格式：`一句话 → Pn`；**勿抄他仓业务条**
 
 ## Cursor rules
 

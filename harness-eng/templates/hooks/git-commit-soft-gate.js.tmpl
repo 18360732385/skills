@@ -312,6 +312,19 @@ function buildAgentMessageParts(root, staged) {
   if (migParts.length) {
     parts.push(migParts.join("\n"));
   }
+
+  const openapiTip = "{{OPENAPI_BRIDGE_TIP}}".trim();
+  if (openapiTip) {
+    const apiTouched = staged.some(
+      (f) =>
+        f.startsWith("docs/api/") ||
+        /\/controller\//.test(f) ||
+        /Controller\.(java|kt|ts|js)$/.test(f)
+    );
+    if (apiTouched) {
+      parts.push(openapiTip);
+    }
+  }
   return parts;
 }
 

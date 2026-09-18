@@ -1,26 +1,45 @@
-﻿# harness-eng 验收记录（0.6.5）
+# harness-eng 验收记录（0.6.7）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.5**（API 字段表 7 列金标 + acceptance 说明/枚举/备注；sync --check EOL-agnostic；CodeBuddy 扁平 rules+FM；Trae **高**；session-dashboard；sync freshness）。报告对照 **`skill_version` + `report_schema`**（0.2.24；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.7**（Pn 回流运营 + 前后端契约门禁剖面；OpenAPI 桥；分册厚 SSOT；API 7 列；CodeBuddy；Trae **高**；session-dashboard；sync freshness）。报告对照 **`skill_version` + `report_schema`**（0.2.24；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
 
-## 0.6.5 增量验收（正式钉号 · API 字段表 + sync EOL）
+## 0.6.7 增量验收（正式钉号 · Pn 回流 + 前后端契约门禁）
 
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 | `node scripts/selfcheck-render.mjs` | 烟测 |
-| manifest / meta / questions 为 `0.6.5`（无 `-dev`） | 有 |
-| CHANGELOG 正式标题 `## 0.6.5`（非 `## 0.6.5-dev`） | 有 |
-| VERIFY / README / QUICKSTART / 手册当前钉 **0.6.5** | 有 |
+| manifest / meta / questions 为 `0.6.7`（无 `-dev`） | 有 |
+| CHANGELOG 正式标题 `## 0.6.7`（非 `## 0.6.7-dev`） | 有 |
+| VERIFY / README / QUICKSTART / 手册当前钉 **0.6.7** | 有 |
+| api `hook_code` 含 `packages/api-client|types|queries` **regex**；nested path 可命中 | 有 |
+| `S_FRONTEND`+api：detect/recommended GLOB_API 前端契约包剖面；rule 12 消费层门禁 | 有 |
+| 根 AGENTS「踩坑回流」；pitfalls 路径速查骨架；lint Never do↔Pn warn | 有 |
+| upgrade `## 0.6.6 → 0.6.7`；tmpl / golden `HARNESS_SYNC_TMPL_ID=0.6.7` | 有 |
+| 安装 URL 仍 `main`；Trae / CodeBuddy / Codex / 0.6.6 钉号不回退 | 有 |
+
+## 0.6.6 增量验收（正式钉号 · OpenAPI 闭环 + 分册厚 SSOT）
+
+| 检查 | 结果 |
+|---|---|
+| CHANGELOG 正式标题 `## 0.6.6` | 有 |
+| `templates/scripts/apifox/` 去域化；`Q_APIFOX`；`OPENAPI_BRIDGE_TIP` | 有 |
+| 分册厚模板 module / spring / frontend；根「分册真相」 | 有 |
+| upgrade `## 0.6.5 → 0.6.6` | 有 |
+
+## 0.6.5 增量验收（正式钉号 · API 字段表 + sync EOL）
+
+| 检查 | 结果 |
+|---|---|
+| CHANGELOG 正式标题 `## 0.6.5` | 有 |
 | api-doc / api-index 模板默认 7 列；旧 5 列兼容说明 | 有 |
 | acceptance：`api-empty-desc` · `api-empty-enum-remark`；good/bad 夹具金标 | 有 |
 | fill-auto-api 7 列 + `quality: heuristic` | 有 |
 | sync.mjs.tmpl `sameText` EOL-agnostic；`l5-sync-golden --check` 绿 | 有 |
-| tmpl / golden `HARNESS_SYNC_TMPL_ID=0.6.5`；upgrade `## 0.6.4 → 0.6.5` | 有 |
-| 安装 URL 仍 `main`；Trae / CodeBuddy / Codex 钉号不回退 | 有 |
+| upgrade `## 0.6.4 → 0.6.5` | 有 |
 
 ## 0.6.4 增量验收（正式钉号 · CodeBuddy / WorkBuddy 官方对齐）
 
@@ -48,19 +67,8 @@
 | manifest / meta / questions 为 `0.6.3` | 有 |
 | tmpl + golden 含 `HARNESS_SYNC_TMPL_ID`；stale fixture `--check-freshness` 非 0 | 有 |
 | 安装 URL 指向 `main`（非 `V0.6.X`） | 有 |
-| 公开入口文案统一为 `harness.mjs`（无「确认后 render」主路径） | 有 |
-| `host/ai-tools.md` / 手册矩阵标题为 0.6.x | 有 |
-| QUICKSTART / 手册含 Trae skills 路径示例（示例≠唯一） | 有 |
-| 历史增量表迁 `_history/.../VERIFY-history-through-0.6.0.md`；热路径 VERIFY 留桩 | 有 |
-| ROADMAP / Trae EVIDENCE / CHANGELOG 0.5.x 热路径减脂 | 有 |
-| 报告页脚 / 文档以 `report_schema` 为主；`ui.version` 仅为别名 | 有 |
-| 升级三步写入 upgrade（check-freshness → 刷新 sync） | 有 |
-| `session-dash.mjs --help` 退出 0 | 有 |
-| 无 score 时仪表盘精简（含「精简」） | 有 |
-| `lib/selfcheck/checks-0.6.mjs` 承接 0.6.x；入口仍 `selfcheck.mjs` | 有 |
-| archive/selfcheck 仅指针；0.4/0.5 bulk 在 `_history` | 有 |
-| Trae T-P2-2…4（脚注·交叉链·未生成/未实证） | 有 |
-| `lib/selfcheck/checks-0.5.mjs` + `checks-0.6.mjs` | 有 |
+| 报告壳叙事认 `report_schema`（**报告壳 ≠ skill**） | 有 |
+| upgrade `## 0.6.2 → 0.6.3`：meta · 三步（main → check-freshness → 刷新 sync）· 报告壳 | 有 |
 
 ## 0.6.2 增量验收（会话仪表盘去掉 mermaid）
 
@@ -96,4 +104,3 @@
 | **0.6.0-dev M3** 黄金集 | M3 · l5-sync-golden · 黄金 | 同上「M3」节 |
 | **0.6.0-dev M2** 文档拓扑 | M2 · 根目录 | 同上「M2」节 |
 | 0.6.1-dev / 0.5.10…0.5.2 | 见归档全文 | 同上 |
-

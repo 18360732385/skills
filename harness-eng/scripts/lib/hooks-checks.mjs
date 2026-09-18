@@ -356,6 +356,18 @@ export function buildHookPlaceholders({ params, agentConfig, existing }) {
       ? `../docs/agent-config/hooks/${HOOK_DEFS[gate].script}`
       : HOOK_DEFS[gate].script
   );
+  const openapiOn =
+    params &&
+    (params.openapi_bridge === true ||
+      params.openapi_bridge === "true" ||
+      (Array.isArray(params.include_optional) &&
+        params.include_optional.some((id) => String(id).startsWith("openapi-"))));
+  put(
+    "OPENAPI_BRIDGE_TIP",
+    openapiOn
+      ? "【OpenAPI 桥】api/controller 变更后可跑：node scripts/apifox/sync-to-apifox.mjs（须设 APIFOX_PROJECT_ID；永不拦截提交）"
+      : ""
+  );
   return out;
 }
 

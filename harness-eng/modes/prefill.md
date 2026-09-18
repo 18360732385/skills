@@ -21,7 +21,20 @@
 
 ## 与渲染预览
 
-WritePlan 必须展示预填后的 `AGENTS.md` Critical/Commands 前约 20 行，供用户确认后再写入。见 [write-plan.md](write-plan.md)。
+WritePlan 必须展示预填后的 `AGENTS.md` Critical/Commands 前约 20 行，供用户确认后再写入。  
+若 `agents_variant=modules`：另预览**一份**分册 `AGENTS.md` 的「模块定位 / 改动路径速查」前约 30 行（厚 SSOT 骨架）。见 [write-plan.md](write-plan.md)。
+
+## 分级移交（land / resume / upgrade）
+
+写盘 Done 后打印移交 TODO，至少含：
+
+| 优先级 | 项 |
+|---|---|
+| P0 | README/yml 疑似密钥（若探测到） |
+| **P1** | **精填分册 AGENTS**（定位表、改动路径速查实表、Never do 一句话↔`Pn`；勿抄他仓业务条） |
+| **P1** | **Pn 回流**：从 Critical/Commands/Never do 补 `docs/agent-kb/pitfalls.md` **路径速查**；Never do 一律 `一句话 → Pn`；改台账后跑 lint |
+| P1 | seed-truths / fill-plan（大仓） |
+| P2 | OpenAPI 桥：设 `APIFOX_PROJECT_ID` 后跑 `node scripts/apifox/sync-to-apifox.mjs`（若 `Q_APIFOX`） |
 
 ## Q_SEED=否
 

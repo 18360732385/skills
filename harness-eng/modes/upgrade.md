@@ -52,6 +52,28 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.6.6 → 0.6.7 迁移要点
+
+1. **meta**：`skill_version` → `0.6.7`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Pn 回流**：新 land 根 AGENTS 含「踩坑回流」；pitfalls 路径速查骨架加厚。**已有 `pitfalls.md` / AGENTS `on_exists=skip` 不覆盖**；可人工合并速查骨架与 Never do↔Pn 纪律
+3. **前后端契约门禁**：api 域 `hook_code` 对 nested `packages/api-client|types|queries` 改 regex；`S_FRONTEND`+api 时【推荐】刷新 `GLOB_API`（追加前端契约包）并重渲 rule 12 / soft-gate
+4. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness
+5. **0.6.6 OpenAPI / 分册厚**：无强制回退
+
+## 0.6.5 → 0.6.6 迁移要点
+
+1. **meta**：`skill_version` → `0.6.6`（resume / upgrade 写 meta 时对齐 manifest）
+2. **OpenAPI / Apifox 可选桥**：`Q_APIFOX=yes` 时 land/upgrade 写入 `scripts/apifox/` + `docs/api/generated/`；契约 SSOT 仍为 `docs/api/modules`。消费仓须自设 `APIFOX_PROJECT_ID`（见 `.apifox.env.example`）
+3. **分册 AGENTS 厚 SSOT**：新 land 使用加厚的 module / spring / **frontend** 模板；根 AGENTS 含「分册真相」声明。**已有分册 `on_exists=skip` 不覆盖用户正文**；仅新 land 或用户点名 replace 才换厚模板
+4. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness
+5. **CodeBuddy / Trae / 0.6.5 API 7 列**：无强制回退；沿用既有钉号
+
 ## 0.6.4 → 0.6.5 迁移要点
 
 1. **meta**：`skill_version` → `0.6.5`（resume / upgrade 写 meta 时对齐 manifest）

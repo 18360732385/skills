@@ -2,6 +2,11 @@
 
 > AI 协作总入口。分册约定见各模块 `AGENTS.md`；契约真相见 `docs/func|api|db|redis|jobs`（按已启用域）。
 
+> **分册真相（避免三处漂移）**  
+> - 后端 / 服务模块约定 → 对应分册 `**/AGENTS.md`（定位、编码、迁移、改动路径）  
+> - 前端模块约定 → 前端分册 `AGENTS.md`（栈禁令、api-client 同步）  
+> - **本文件只保留**：仓库命令、Never do（一句话 + Pn 回链）、Planning corpus 摘要、rules 索引；文档优先级见 alwaysApply `00`
+
 ## Critical
 
 TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必须在仓库根执行某工具）。
@@ -40,10 +45,18 @@ TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必
 - Commit / MR 标题与描述优先中文（可夹杂 `fix` / `docs` 等意图词）
 - `docs/agent-kb/**` 文件名固定英文；规划文档文件名尽量中文
 
+## 踩坑回流
+
+时机见 alwaysApply `00`「交付收口」与 [agent-kb README](docs/agent-kb/README.md) **三问**；格式见 path rule `19`。  
+根 Never do **只写一句话 + `→ Pn`**；现象 / 排障细节只写 [pitfalls](docs/agent-kb/pitfalls.md)，**勿双写**。新 `Pn` 须同步「路径速查」与「域速查」，并跑 `node scripts/agent-kb/lint-pitfalls.mjs`。
+
 ## Never do
 
+> 红线**一句话**写在此；现象 / 排障细节以 [pitfalls](docs/agent-kb/pitfalls.md) 对应 `Pn` 为正文，**勿在两处各写细节**。格式：`一句话 → Pn`。
+
 - Commit API keys、生产密码、含密配置
-- TODO(harness-eng): 追加本仓域红线（鉴权、迁移、SSOT 边界等）— **勿抄他仓业务条**
+- 勿手改各宿主生成物（`.cursor/` / `.claude/` / `.trae/` 等 rules·hooks·mcp）；SSOT 为 `docs/agent-config/`（若 L5）→ 改后跑 sync
+- TODO(harness-eng): 追加本仓域红线（鉴权、迁移、SSOT 边界等）— 格式：`一句话 → Pn`；**勿抄他仓业务条**
 
 ## Cursor rules
 

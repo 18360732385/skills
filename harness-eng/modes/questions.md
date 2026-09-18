@@ -38,7 +38,10 @@ Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘�
 `Q_FILL_ENGINE`：`agents`【大仓推荐】/ `hybrid`（可选薄草稿）/ `auto`（legacy）（见 [fill-truths-agents.md](../fill/fill-truths-agents.md) · [fill-plan.md](../fill/fill-plan.md)）。  
 大仓 / pipeline 默认 `Q_LADDER=L4`（见 [recommended-profile.md](recommended-profile.md)）。  
 `Q_MODULES` → manifest：`solo`→`agents-root-solo`；`few`/`all`→`agents-root`+`agents-module`。  
-`Q_RULE14=true` → params `include_optional: ["rule-14"]`（**数组**，勿写布尔进 render params）。  
+`Q_MODULE_AGENTS`：`default` / `spring` / `frontend` → `params.module_agents_template`。  
+`Q_FRONTEND_RULE` / `S_FRONTEND`+域含 `api` → 【推荐】`placeholders.GLOB_API` 追加前端契约包 globs（见 [recommended-profile.md](recommended-profile.md) / [detect.md](detect.md)）；与 rule 17、api `hook_code` regex 同剖面。  
+`Q_RULE14=true` → params `include_optional` 含 `"rule-14"`（**数组**，勿写布尔进 render params）。  
+`Q_APIFOX=true` → `include_optional` 追加 `openapi-md-to-openapi` / `openapi-sync` / `openapi-import` / `openapi-readme` / `openapi-env-example` / `openapi-generated-readme`，且 `openapi_bridge: true`（soft-gate 注入 `OPENAPI_BRIDGE_TIP`）。  
 resume 写盘：`on_exists=skip`（见 [resume.md](resume.md)）。  
 fill 确认协议见 [fill.md](../fill/fill.md)。
 

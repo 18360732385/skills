@@ -73,7 +73,10 @@
 | **过程包** | 如 `docs/releases`（发版过程域；非 fill-score）；detect 脚注，不进 L1 契约齐套 |
 | **协作包** | 如前端 rule 17（模板 0.4.0+）/ `*-web` 分册；非契约 morph 域 |
 | **行为包** | 非契约的行为约束规则（如 rule 21 日志 / 中文注释）；`domains.yaml` packs `kind: behavior`；不进 fill-score 权重；detect `S_SLF4J` 推荐 |
-| **分册变体** | 模块 AGENTS 模板变体：`Q_MODULE_AGENTS=spring` → `AGENTS.module.spring.md.tmpl`（Maven 根执行 / 迁移纪律 / 分层）；render 参数 `module_agents_template` |
+| **分册变体** | 模块 AGENTS 模板变体：`Q_MODULE_AGENTS=default\|spring\|frontend` → 对应厚分册 tmpl（定位 / 改动路径速查 / Never do↔Pn）；render 参数 `module_agents_template`；**根薄分册厚** |
+| **OpenAPI 桥** | L1 可选伴生（`Q_APIFOX`）：`scripts/apifox/` 将 `docs/api/modules` 导出 OpenAPI 并覆盖导入 Apifox；不进 L1 齐套；soft-gate `OPENAPI_BRIDGE_TIP` |
+| **Pn 回流** | 修了智能体易再犯错误做法后：追加/核对 `pitfalls.md`（路径速查 + 台账）+ 根 Never do 只一句话 `→ Pn`；lint `warnNeverDoPnBacklinks` |
+| **前后端契约剖面** | `S_FRONTEND`+api：`GLOB_API` 追加 api-client/types/queries；commit-gate `hook_code` 用 regex 命中 nested `packages/…` |
 | **manual_sql** | db 迁移模式之一：无 Flyway 依赖、人工按序执行迁移脚本；`Q_DB_MIGRATION` 选定并写入 `docs/db/db.md` 声明；detect `S_NO_FLYWAY` / `S_SQL_DIR` 推荐 |
 | **真相** | `modules/`、`table/`、`keys/`、`tasks/` 下具体文档（SSOT） |
 | **索引** | `func.md` / `api.md` / `jobs.md` 等导航，不是 SSOT |

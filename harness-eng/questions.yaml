@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.6.5"
+version: "0.6.7"
 
 all_recommend_phrases:
   - 全部推荐
@@ -83,11 +83,12 @@ batches:
           - { value: few, label: 根+少分册, recommended_when: "large_repo", meta: agents_variant=modules(subset) }
           - { value: all, label: 每模块一份, meta: agents_variant=modules(all) }
       - id: Q_MODULE_AGENTS
-        text: 分册模板变体？（仅 Q_MODULES≠solo 时适用；Spring 后端模块选 spring）
+        text: 分册模板变体？（仅 Q_MODULES≠solo 时适用；Spring 后端选 spring；前端选 frontend）
         type: choice
         options:
           - { value: default, label: 通用分册（默认） }
           - { value: spring, label: Spring 后端分册, recommended_when: "S_SPRING" }
+          - { value: frontend, label: 前端分册, recommended_when: "S_FRONTEND" }
       - id: Q_STACK
         text: 技术栈是否如推断？
         type: confirm
@@ -250,6 +251,16 @@ batches:
       - id: Q_SECRETS_HANDOFF
         text: S_SECRETS_LEAK — 移交 P0 人工处理（skill 不删密）
         type: info
+
+  - id: batch-2-openapi
+    when: "ladder >= L1"
+    max: 2
+    questions:
+      - id: Q_APIFOX
+        text: 是否安装 OpenAPI→Apifox 可选桥（scripts/apifox；契约 SSOT 仍为 docs/api）？
+        type: boolean
+        recommended_when: "domains_has_api"
+        note: Q_APIFOX=yes → include_optional 加入 openapi-*；params.openapi_bridge=true
 
   - id: batch-3-l3l4
     when: "ladder >= L3 || mode == upgrade"
@@ -423,21 +434,26 @@ transitions:
     next: batch-1-foreign
   - from: batch-1-partial
     next: batch-2-contracts
+  - from: batch-2-contracts
+    next: batch-2-openapi
+  - from: batch-1-new-b
+    when: "ladder >= L1"
+    next: batch-2-openapi
+  - from: batch-2-openapi
+    when: "ladder >= L3"
+    next: batch-3-l3l4
+  - from: batch-2-openapi
+    when: "mode == pipeline"
+    next: batch-fill
   - from: batch-0-global
     when: "mode == seed-truths"
     next: batch-seed-truths
   - from: batch-0-global
     when: "mode == fill-score || mode == fill-morph || mode == fill-gate || mode == fill-truths || mode == fill-truths-agents || mode == fill-mcp || mode == pipeline || mode == fill-plan"
     next: batch-fill
-  - from: batch-1-new-b
-    when: "ladder >= L3"
-    next: batch-3-l3l4
   - from: batch-1-partial
     when: "ladder >= L3"
     next: batch-3-l3l4
-  - from: batch-1-new-b
-    when: "mode == pipeline"
-    next: batch-fill
   - from: batch-1-partial
     when: "mode == pipeline"
     next: batch-fill

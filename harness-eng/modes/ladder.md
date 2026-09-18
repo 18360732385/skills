@@ -5,8 +5,8 @@
 
 | 阶 | 中文名 | 交付物 | 成功标准 |
 |---|---|---|---|
-| **L0** | 协作入口 | 根 AGENTS（solo 或分册，分册可选 spring 变体）、`harness-meta.yaml`、Karpathy alwaysApply、00 文档总览 alwaysApply、可选 rule 14 / 21（行为包）/ 17（前端协作包） | 新 Agent 能找到命令入口与红线占位；冲突裁决写清 |
-| **L1** | 契约骨架 | 所选契约域（func/api/db/redis/**jobs**…，见 `domains.yaml`）索引骨架 + templates + 真相子目录 README；对应 sync rules（11/12/13/16/**20**） | 改契约前读真相、改后回写有 path rule |
+| **L0** | 协作入口 | 根 AGENTS（solo 或分册：通用 / spring / **frontend** 厚变体）、`harness-meta.yaml`、Karpathy alwaysApply、00 文档总览 alwaysApply、可选 rule 14 / 21（行为包）/ 17（前端协作包） | 新 Agent 能找到命令入口与红线占位；冲突裁决写清；**根薄分册厚** |
+| **L1** | 契约骨架 | 所选契约域（func/api/db/redis/**jobs**…，见 `domains.yaml`）索引骨架 + templates + 真相子目录 README；对应 sync rules（11/12/13/16/**20**）；**可选** OpenAPI→Apifox 桥（`Q_APIFOX`，不进齐套） | 改契约前读真相、改后回写有 path rule |
 | **L2** | 知识回流 | `docs/agent-kb` 四文件 + rule 19 | pitfalls 表头含域列；有回流说明 |
 | **L3** | 规划与软门禁 | superpowers README/ARCHIVE + rule 18 + hooks 软提醒（Cursor 原生和/或 `.githooks`） | 进行中表存在；commit 软提醒不拦截；WritePlan 附烟测 |
 | **L4** | 工具连接样例 | `mcp.json.example` + `mcp-usage-guide.md`（无密）+ gitignore snippet 提示 | 无明文密码入库（或 meta `mcp_tracking=vendored_shared`）；建议 ignore `.cursor/mcp.json`；**真连与多环境矩阵属 fill-mcp / 填充 MCP 闸，不并入 L0** |
@@ -35,6 +35,7 @@
 
 - [ ] （可选）`docs/releases` → 脚注 release-eng
 - [ ] （可选）前端 path rule / 分册 → 脚注，不进 fill-score 契约域权重
+- [ ] （可选，`Q_APIFOX`）`scripts/apifox/` + `docs/api/generated/` — OpenAPI 导出桥；不进 L1 齐套
 
 ### L2
 

@@ -1,6 +1,8 @@
-version: "0.6.5"
+version: "0.6.7"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
+# 0.6.7: Pn reflux ops + FE/BE contract gate profile (GLOB_API nested packages).
+# 0.6.6: OpenAPI/Apifox optional bridge + thick module AGENTS SSOT.
 # 0.6.5: API field-table 7-col + acceptance desc/enum-remark; sync --check EOL-agnostic.
 # 0.6.4: CodeBuddy/WorkBuddy official alignment (flat .md rules + FM; hooks/MCP/permissions docs).
 # 0.6.3: consumer sync.mjs freshness gate; production install URL main.
@@ -53,6 +55,7 @@ placeholders:
   - HOOKS_CODEBUDDY_GROUPS
   - HOOKS_CONFIG_ENTRIES
   - GITHOOKS_GATE_SCRIPT
+  - OPENAPI_BRIDGE_TIP
 
 files:
   # L0 — pick one agents-root* by agents_variant (solo | modules)
@@ -75,7 +78,7 @@ files:
     template: agents/AGENTS.module.md.tmpl
     target: "{{MODULE_DIR}}/AGENTS.md"
     placeholders: [MODULE_NAME, MODULE_DIR, REPO_DESC]
-    note: One per module directory from Q_MODULES (few/all)；skip when solo；params.module_agents_template=spring 时改用 agents/AGENTS.module.spring.md.tmpl（Q_MODULE_AGENTS）
+    note: One per module directory from Q_MODULES (few/all)；skip when solo；params.module_agents_template=spring|frontend 时改用对应厚分册 tmpl（Q_MODULE_AGENTS）
     when:
       agents_variant: modules
   - id: harness-meta
@@ -114,6 +117,44 @@ files:
     note: 前端协作包（非契约域）；Include when Q_FRONTEND_RULE=yes（detect S_FRONTEND 推荐）
 
   # L1 contract domains → templates/_meta/domain-packs.yaml (render expandDomainPackEntries)
+
+  # L1 optional companion — OpenAPI / Apifox bridge（Q_APIFOX；不进 L1 齐套）
+  - id: openapi-md-to-openapi
+    ladder: L1
+    template: scripts/apifox/md-to-openapi.mjs
+    target: scripts/apifox/md-to-openapi.mjs
+    optional: true
+    note: Include when Q_APIFOX=yes（domains 含 api 时推荐）
+  - id: openapi-sync
+    ladder: L1
+    template: scripts/apifox/sync-to-apifox.mjs
+    target: scripts/apifox/sync-to-apifox.mjs
+    optional: true
+    note: Include when Q_APIFOX=yes
+  - id: openapi-import
+    ladder: L1
+    template: scripts/apifox/import-openapi-overwrite.mjs
+    target: scripts/apifox/import-openapi-overwrite.mjs
+    optional: true
+    note: Include when Q_APIFOX=yes
+  - id: openapi-readme
+    ladder: L1
+    template: scripts/apifox/README.md
+    target: scripts/apifox/README.md
+    optional: true
+    note: Include when Q_APIFOX=yes
+  - id: openapi-env-example
+    ladder: L1
+    template: scripts/apifox/.apifox.env.example
+    target: scripts/apifox/.apifox.env.example
+    optional: true
+    note: Include when Q_APIFOX=yes
+  - id: openapi-generated-readme
+    ladder: L1
+    template: docs/api/generated/README.md
+    target: docs/api/generated/README.md
+    optional: true
+    note: Include when Q_APIFOX=yes
 
   # L2
   - id: kb-readme

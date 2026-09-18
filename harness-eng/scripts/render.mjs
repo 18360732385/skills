@@ -615,7 +615,9 @@ function expandFromManifest(manifestPath, params, root) {
       const moduleTmpl =
         params.module_agents_template === "spring"
           ? "agents/AGENTS.module.spring.md.tmpl"
-          : e.template;
+          : params.module_agents_template === "frontend"
+            ? "agents/AGENTS.module.frontend.md.tmpl"
+            : e.template;
       for (const dir of moduleDirs) {
         const name = path.basename(dir);
         const target = `${dir}/AGENTS.md`;
