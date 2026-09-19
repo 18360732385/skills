@@ -1,14 +1,29 @@
-# feature-eng 验收记录（0.2.5-dev）
+# feature-eng 验收记录（0.2.6-dev）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测（含夹具行为断言）。真实 init/start/advance/close 仍须在目标仓由 Agent 执行并遵守硬闸。
 
 ## 版本
 
-当前 **0.2.5-dev**（相对 0.2.4：最小夹具 + 行为自检）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前 **0.2.6-dev**（相对 0.2.5-dev：`modes/` 迁入 + 薄 CLI）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 本版**不**改动环节语义与默认绑定 skill 名。
 
-## 0.2.5-dev 增量验收
+## 0.2.6-dev 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.2.6-dev** | 有 |
+| CHANGELOG 含 `## 0.2.6-dev` 且保留 `## 0.2.5-dev` | 有 |
+| 模式 md 位于 `modes/`（含 init/start/advance/close/status/resume/rebind/…） | 有 |
+| 根目录无残留模式 md（仅入口/索引/CHANGELOG/VERIFY） | 有 |
+| `scripts/feature.mjs --help` / `modes` / `status` | 有 |
+| SKILL / AGENT-INDEX / QUICKSTART 链接指向 `modes/` | 有 |
+| 边界文案仍含「调度员不进厨房」 | 有 |
+
+## 继承基线（0.2.5-dev）
+
+## 0.2.5-dev 增量验收（继承）
 
 | 检查 | 结果 |
 |---|---|
@@ -44,6 +59,8 @@
 
 ```bash
 cd feature-eng && node scripts/selfcheck.mjs
-# 可选：对夹具根
-node scripts/status-scan.mjs   # cwd=scripts/fixtures/init-skeleton
+node scripts/feature.mjs modes
+node scripts/feature.mjs status --cwd scripts/fixtures/init-skeleton
+# 可选直调：
+# node scripts/status-scan.mjs   # cwd=scripts/fixtures/init-skeleton
 ```

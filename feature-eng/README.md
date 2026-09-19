@@ -4,8 +4,9 @@
 
 入口与仪式：[SKILL.md](SKILL.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
 
-验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。
+验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`。
 
+0.2.6-dev 要点：`modes/` 迁入模式 md + 薄 CLI `scripts/feature.mjs`（modes/status；调度员不进厨房）；叠在 0.2.5-dev 夹具/自检之上。  
 0.2.5-dev 要点：最小夹具（`scripts/fixtures/init-skeleton` / `progress-bad`）+ selfcheck 行为断言（progress 形状/枚举、模板↔夹具契约、status-scan 夹具烟测）；V0.6.X 开发钉（不改默认绑定 skill 名）。  
 0.2.4 要点：正式钉号；P0 索引/selfcheck；P1 lookup 预检 + truncate-contracts + QUICKSTART；P2 status-scan + close_pitfalls。一页纸：[QUICKSTART.md](QUICKSTART.md)。  
 0.2.3 要点：过程态 `docs/runs/{active|archive}/`（与 superpowers 平级）；人读中文短名 + `progress.yaml` 机读；close 归档。  
@@ -19,4 +20,4 @@
 - **本仓可用**：skill + `config/` + `templates/` 已齐；改 SSOT 后须跑 `node scripts/agent-config/sync.mjs`（若目标仓有该管线）。
 - **迁到他仓**：整目录拷贝；`stage-bindings.yaml` 需按目标仓工具链重新 `init`。
 - 过程态：`docs/runs/`（与 `docs/superpowers/` 平级）；语料仍在 superpowers。旧路径 `docs/superpowers/runs/` 仅兼容提示迁移。
-- **收口**：`close.md` 为 skill 内规则（含 active→archive）；契约目录 / pitfalls lint 为可选增强。
+- **收口**：[modes/close.md](modes/close.md) 为 skill 内规则（含 active→archive）；契约目录 / pitfalls lint 为可选增强。

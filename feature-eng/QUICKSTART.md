@@ -13,7 +13,7 @@ init（首次绑 11 环）
           → close（active → archive）
 ```
 
-续跑：`resume`。只看进度：`status`（可跑 `node scripts/status-scan.mjs`）。改绑：`rebind`。
+续跑：`resume`。只看进度：`status`（`node scripts/feature.mjs status`）。改绑：`rebind`。列模式：`node scripts/feature.mjs modes`。
 
 ## 路径一句话
 
@@ -29,4 +29,4 @@ init（首次绑 11 环）
 2. **progress / 回链 仅控制器写**——厨师只回报产物路径列表。
 3. **自动调起 ≠ 替用户 yes 硬闸**。
 
-详情：[SKILL.md](SKILL.md) · [binding.md](binding.md) · [stages.md](stages.md)
+详情：[SKILL.md](SKILL.md) · [binding.md](modes/binding.md) · [stages.md](modes/stages.md)

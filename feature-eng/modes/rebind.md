@@ -1,6 +1,6 @@
 # rebind — 修改环节绑定
 
-改 `config/stage-bindings.yaml` 的映射；**不跑**业务流程、**不动** `runs/` 进度。推荐包 SSOT：[`config/stage-bindings.example.yaml`](config/stage-bindings.example.yaml)；「推荐 ≠ 强制」见 [binding.md](binding.md)。
+改 `config/stage-bindings.yaml` 的映射；**不跑**业务流程、**不动** `runs/` 进度。推荐包 SSOT：[`config/stage-bindings.example.yaml`](../config/stage-bindings.example.yaml)；「推荐 ≠ 强制」见 [binding.md](binding.md)。
 
 ## 步骤
 
