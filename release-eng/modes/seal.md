@@ -23,8 +23,8 @@ node .cursor/skills/release-eng/scripts/release-seal-check.mjs --root . --note d
 3. [write-plan.md](write-plan.md) 展示将改路径（状态字段、`notes/{identity}/`→`archive/{identity}/`、`releases.md`、`ARCHIVE.md`）+ seal-check 结论 → **确认词之后**才执行下列动作  
 4. 文首状态改为 `已上线`；填写上线日期与执行人  
 5. `git mv`：**整夹** `docs/releases/notes/<identity>/` → `docs/releases/archive/<identity>/`（含 md + `sql/`/`config/`/`jobs/`；identity = 发版分支名归一化）  
-6. 从 [releases.md](../../../docs/releases/releases.md) 进行中表移除该行  
-7. 追加到 [ARCHIVE.md](../../../docs/releases/ARCHIVE.md)  
+6. 从 [releases.md](../../../../docs/releases/releases.md) 进行中表移除该行  
+7. 追加到 [ARCHIVE.md](../../../../docs/releases/ARCHIVE.md)  
 
 ## Done
 

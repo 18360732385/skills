@@ -13,7 +13,7 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
           → seal（seal-check → 归档）
 ```
 
-只读检查：`audit`。已上线归档：`seal`。骨架缺失：[bootstrap.md](bootstrap.md) 从 fixtures 种子。
+只读检查：`audit`。已上线归档：`seal`。骨架缺失：[bootstrap.md](modes/bootstrap.md) 从 fixtures 种子。模式索引：[modes/README.md](modes/README.md)。
 列模式 / 转发脚本：`node scripts/release.mjs modes`。
 
 ## 模式一句话
@@ -31,4 +31,4 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 2. **确认词才写盘**——WritePlan / note-merge / seal 搬迁须过确认（或同会话预授权）；audit 永不写盘。
 3. **非 harness land**——不对齐 harness 自动 land；跨仓靠整目录拷贝 + 点名仪式。
 
-详情：[SKILL.md](SKILL.md) · [gates-common.md](gates-common.md) · [freeze.md](freeze.md)
+详情：[SKILL.md](SKILL.md) · [modes/README.md](modes/README.md) · [gates-common.md](modes/gates-common.md) · [freeze.md](modes/freeze.md)

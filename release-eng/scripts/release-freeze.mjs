@@ -12,7 +12,7 @@
  * 首次发版：分层候选（SQL 全 migration；配置仅 application-prod.yml 键；任务仅 SyncTaskCode；其余 path→layerSuppressed）。
  * 增量：路径 + yml/Java 键级·任务级 diff；双源去重（基线树 ∪ archive artifacts）。
  * --prior auto|none|<path>；--prior-since <identity|YYYY-MM-DD> 截断 archive 并集。
- * 截断5（提交：前 3 后 2、hash 取前 8 位）/ 合并来源去重全量（origin/ 归一、一句话）/ SQL序 / gitlabUrl：见 freeze.md。
+ * 截断5（提交：前 3 后 2、hash 取前 8 位）/ 合并来源去重全量（origin/ 归一、一句话）/ SQL序 / gitlabUrl：见 modes/freeze.md。
  * Exit 0=ok 1=error（含逾期硬闸 overdueHardGate）
  */
 import { spawnSync } from "child_process";
