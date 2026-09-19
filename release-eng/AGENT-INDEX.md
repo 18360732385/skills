@@ -3,7 +3,7 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。
 
-**拓扑（0.3.18-dev）**：根目录模式 md（prepare / resume / audit / seal）· `scripts/` 仪式 CLI · `fixtures/docs/releases/` 骨架种子。  
+**拓扑（0.3.19-dev）**：根目录模式 md（prepare / resume / audit / seal）· `scripts/release.mjs` 统一薄入口 · `scripts/` 仪式脚本 · `fixtures/docs/releases/` 骨架种子。  
 **非 harness land**（`harness_land: false`）——无自动 land 流水线；靠用户点名仪式。
 
 ## 必读（写盘 / 定版前）≤8
@@ -26,6 +26,7 @@
 | 新建发版单 | [prepare.md](prepare.md) |
 | 同版本身份续跑 | [resume.md](resume.md) |
 | 只读检查 / prior·freeze 体检 | [audit.md](audit.md) · freeze `--format audit-json` |
+| 统一薄 CLI | `node scripts/release.mjs --help` · `modes`（转发 push-gate/freeze/seal-check） |
 | 一页纸 | [QUICKSTART.md](QUICKSTART.md) |
 | 双轨研判 AI | [ai-track.md](ai-track.md) · `scripts/release-ai-track.mjs` |
 | 骨架 bootstrap | [bootstrap.md](bootstrap.md) · `fixtures/docs/releases/` |

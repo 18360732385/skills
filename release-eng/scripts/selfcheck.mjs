@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * release-eng selfcheck (0.3.18-dev)：静态断言 + 纯函数/形断言。
+ * release-eng selfcheck (0.3.19-dev)：静态断言 + 纯函数/形断言。
  * 覆盖：manifest · 模式文件 · 关键脚本 · fixtures 种子 ·
  * AGENT-INDEX / QUICKSTART / VERIFY · 钉号链 ·
  * identityFromBranch · 截断5 · shortCommitHash · artifacts.json 形 ·
- * seal-check --help。
+ * seal-check --help · release.mjs --help/modes。
  *
  * 非 harness land：不对齐 harness 自动 land 流水线。
  */
@@ -33,11 +33,12 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.3.18-dev";
+const PIN = "0.3.19-dev";
 
 const MODES = ["prepare.md", "resume.md", "audit.md", "seal.md"];
 
 const SCRIPTS = [
+  "scripts/release.mjs",
   "scripts/release-format.mjs",
   "scripts/release-push-gate.mjs",
   "scripts/release-freeze.mjs",
@@ -61,7 +62,7 @@ const FIXTURE_SEED = [
 const manifest = read("_meta/manifest.yaml");
 assert(manifest != null, "manifest.yaml exists");
 assert(
-  manifest != null && /version:\s*"0\.3\.18-dev"/.test(manifest),
+  manifest != null && /version:\s*"0\.3\.19-dev"/.test(manifest),
   `manifest version == ${PIN}`
 );
 assert(
@@ -111,7 +112,7 @@ assert(
 );
 assert(skill != null && /VERIFY\.md/.test(skill), "SKILL links VERIFY");
 assert(
-  skill != null && /0\.3\.18-dev/.test(skill),
+  skill != null && /0\.3\.19-dev/.test(skill),
   `SKILL pins ${PIN}`
 );
 
@@ -119,7 +120,7 @@ assert(exists("AGENT-INDEX.md"), "AGENT-INDEX.md exists");
 const index = read("AGENT-INDEX.md") || "";
 assert(/必读/.test(index), "AGENT-INDEX has 必读");
 assert(/按需/.test(index), "AGENT-INDEX has 按需");
-assert(/0\.3\.18-dev/.test(index), `AGENT-INDEX pins ${PIN}`);
+assert(/0\.3\.19-dev/.test(index), `AGENT-INDEX pins ${PIN}`);
 assert(
   /非 harness land|harness_land:\s*false|harness land/.test(index),
   "AGENT-INDEX marks non-harness-land"
@@ -155,8 +156,12 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
+  changelog != null && /^##\s+0\.3\.19-dev\b/m.test(changelog),
+  "CHANGELOG has ## 0.3.19-dev heading"
+);
+assert(
   changelog != null && /^##\s+0\.3\.18-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.3.18-dev heading"
+  "CHANGELOG retains ## 0.3.18-dev heading"
 );
 assert(
   changelog != null && changelog.includes(PIN),
@@ -164,7 +169,7 @@ assert(
 );
 
 // =====================================================================
-// 0.3.18-dev：纯函数 / 形断言（超出「文件存在」）
+// 0.3.18-dev 继承：纯函数 / 形断言（超出「文件存在」）
 // =====================================================================
 const formatUrl = pathToFileURL(
   path.join(skillRoot, "scripts/release-format.mjs")
@@ -309,6 +314,63 @@ assert(
 );
 const pushHelp = spawnHelp("scripts/release-push-gate.mjs");
 assert(pushHelp.status === 0, "push-gate --help exit 0");
+
+// --- release.mjs thin CLI (0.3.19-dev) ---
+assert(exists("scripts/release.mjs"), "release.mjs exists");
+assert(
+  manifest != null && /scripts\/release\.mjs/.test(manifest),
+  "manifest lists scripts/release.mjs"
+);
+const releaseCli = read("scripts/release.mjs") || "";
+assert(/prepare/.test(releaseCli) && /seal/.test(releaseCli), "release.mjs mentions prepare/seal");
+assert(/modes/.test(releaseCli), "release.mjs has modes");
+assert(/不代写盘|不写盘|永不写盘/.test(releaseCli), "release.mjs states no write / audit read-only");
+
+function spawnRelease(argv) {
+  return spawnSync(process.execPath, [path.join(skillRoot, "scripts/release.mjs"), ...argv], {
+    cwd: skillRoot,
+    encoding: "utf8",
+  });
+}
+const relHelp = spawnRelease(["--help"]);
+assert(relHelp.status === 0, "release.mjs --help exit 0");
+const relHelpOut = `${relHelp.stdout || ""}${relHelp.stderr || ""}`;
+assert(/modes/.test(relHelpOut), "release.mjs --help mentions modes");
+assert(
+  /prepare/.test(relHelpOut) &&
+    /resume/.test(relHelpOut) &&
+    /audit/.test(relHelpOut) &&
+    /seal/.test(relHelpOut),
+  "release.mjs --help lists prepare/resume/audit/seal"
+);
+assert(
+  /push-gate|freeze|seal-check/.test(relHelpOut),
+  "release.mjs --help lists script subcommands"
+);
+
+const relModes = spawnRelease(["modes"]);
+assert(relModes.status === 0, "release.mjs modes exit 0");
+const modesOut = `${relModes.stdout || ""}`;
+assert(/prepare/.test(modesOut) && /seal/.test(modesOut), "release.mjs modes lists prepare/seal");
+assert(/prepare\.md/.test(modesOut), "release.mjs modes shows prepare.md");
+assert(/push-gate/.test(modesOut) && /seal-check/.test(modesOut), "release.mjs modes lists script aliases");
+
+const relPrep = spawnRelease(["prepare", "--help"]);
+assert(relPrep.status === 0, "release.mjs prepare --help exit 0");
+assert(/prepare\.md/.test(`${relPrep.stdout || ""}`), "prepare --help points to prepare.md");
+
+const relSealFwd = spawnRelease(["seal-check", "--", "--help"]);
+assert(relSealFwd.status === 0, "release.mjs seal-check -- --help exit 0");
+assert(
+  /Usage|--note|--root/i.test(`${relSealFwd.stdout || ""}${relSealFwd.stderr || ""}`),
+  "release.mjs forwards seal-check --help"
+);
+
+assert(/release\.mjs/.test(skill || ""), "SKILL mentions release.mjs");
+assert(/release\.mjs/.test(index), "AGENT-INDEX mentions release.mjs");
+assert(/release\.mjs/.test(quick), "QUICKSTART mentions release.mjs");
+assert(/release\.mjs/.test(readme), "README mentions release.mjs");
+assert(/release\.mjs/.test(verify), "VERIFY mentions release.mjs");
 
 // --- report ---
 const total = ok.length + fail.length;
