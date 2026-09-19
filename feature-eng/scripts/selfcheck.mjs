@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.7-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.6-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 模式文件 · feature.mjs 薄 CLI · 11 绑定键非空 · example 对齐 · 模板 ·
  * SKILL 边界 · 禁根 CONTEXT · AGENT-INDEX · QUICKSTART · truncate-contracts ·
  * status-scan · close_pitfalls · CHANGELOG · fixtures（init / progress-bad / advance-gate /
@@ -31,7 +31,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.7-dev";
+const PIN = "0.2.6-dev";
 
 const MODES = [
   "modes/init.md",
@@ -114,7 +114,7 @@ function stageSkillMap(yamlText) {
 const manifest = read("_meta/manifest.yaml");
 assert(manifest != null, "manifest.yaml exists");
 assert(
-  manifest != null && /version:\s*"0\.2\.7-dev"/.test(manifest),
+  manifest != null && /version:\s*"0\.2\.6-dev"/.test(manifest),
   `manifest version == ${PIN}`
 );
 for (const m of [
@@ -232,7 +232,7 @@ assert(
 assert(skill != null && /写盘权责/.test(skill), "SKILL 写盘权责");
 assert(skill != null && /控制器边界/.test(skill), "SKILL 控制器边界");
 assert(
-  skill != null && /0\.2\.7-dev/.test(skill),
+  skill != null && /0\.2\.6-dev/.test(skill),
   `SKILL pins ${PIN}`
 );
 assert(
@@ -301,7 +301,7 @@ assert(
   "QUICKSTART has advance/close"
 );
 assert(/\bS\b/.test(quick) && /\bB\b/.test(quick) && /\bF\b/.test(quick), "QUICKSTART has S/B/F");
-assert(/0\.2\.7-dev/.test(index), `AGENT-INDEX mentions ${PIN}`);
+assert(/0\.2\.6-dev/.test(index), `AGENT-INDEX mentions ${PIN}`);
 
 // --- status-scan ---
 assert(exists("scripts/status-scan.mjs"), "status-scan.mjs exists");
@@ -329,12 +329,8 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
-  changelog != null && /^##\s+0\.2\.7-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.2.7-dev heading"
-);
-assert(
   changelog != null && /^##\s+0\.2\.6-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.6-dev heading"
+  "CHANGELOG has ## 0.2.6-dev heading"
 );
 assert(
   changelog != null && /^##\s+0\.2\.5-dev\b/m.test(changelog),
@@ -358,7 +354,7 @@ assert(/QUICKSTART|truncate-contracts|close_pitfalls|status-scan/.test(verify), 
 const readme = read("README.md") || "";
 assert(/VERIFY\.md/.test(readme), "README mentions VERIFY");
 assert(/selfcheck\.mjs/.test(readme), "README mentions selfcheck.mjs");
-assert(/0\.2\.7-dev/.test(readme), `README pins ${PIN}`);
+assert(/0\.2\.6-dev/.test(readme), `README pins ${PIN}`);
 assert(/QUICKSTART\.md/.test(readme), "README links QUICKSTART");
 
 
@@ -678,7 +674,7 @@ assert(/feature\.mjs/.test(index), "AGENT-INDEX mentions feature.mjs");
 
 
 // =====================================================================
-// 0.2.7-dev：加厚夹具 — advance-gate / bindings-bad / close-ready
+// 0.2.6-dev：加厚夹具（原 0.2.6-dev 切片并入） — advance-gate / bindings-bad / close-ready
 // =====================================================================
 const FIX_ADV = "scripts/fixtures/advance-gate";
 const FIX_BIND_BAD = "scripts/fixtures/bindings-bad";
