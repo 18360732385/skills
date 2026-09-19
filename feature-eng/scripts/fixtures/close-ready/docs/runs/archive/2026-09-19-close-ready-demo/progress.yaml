@@ -1,0 +1,44 @@
+# feature-eng fixture：close 后 archive 态（stage=done + gates.close）
+slug: "2026-09-19-close-ready-demo"
+title: "close-ready 夹具"
+created_at: "2026-09-19"
+updated_at: "2026-09-19T18:00:00+08:00"
+
+path: bounded
+run_mode: guided
+invoke: strict
+handoff_policy: confirm
+review_policy: subagent
+stage: done
+
+domain: skipped
+proto: skipped
+
+artifacts:
+  adr: []
+  spec: "docs/superpowers/archive/specs/2026-09-19-close-ready-demo-设计.md"
+  plan: "docs/superpowers/archive/plans/2026-09-19-close-ready-demo-实施计划.md"
+  proto: null
+  context_delta: null
+  testcases: null
+  test_report: null
+  qa_report: null
+
+tasks:
+  - id: T1
+    title: "夹具任务"
+    depends_on: []
+    status: done
+
+gates:
+  triage: "2026-09-19T10:00:00+08:00"
+  shared_understanding: "2026-09-19T11:00:00+08:00"
+  design_confirmed: "2026-09-19T12:00:00+08:00"
+  go: "2026-09-19T13:00:00+08:00"
+  pre_impl: "2026-09-19T14:00:00+08:00"
+  gate: "2026-09-19T15:00:00+08:00"
+  verify: null
+  close: "2026-09-19T18:00:00+08:00"
+
+env_verified: skipped
+accepted_residual: null

@@ -3,7 +3,8 @@
  * feature-eng selfcheck (0.2.6-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 模式文件 · feature.mjs 薄 CLI · 11 绑定键非空 · example 对齐 · 模板 ·
  * SKILL 边界 · 禁根 CONTEXT · AGENT-INDEX · QUICKSTART · truncate-contracts ·
- * status-scan · close_pitfalls · CHANGELOG · fixtures（init 骨架 / progress 形状）。
+ * status-scan · close_pitfalls · CHANGELOG · fixtures（init / progress-bad / advance-gate /
+ * bindings-bad / close-ready）。
  */
 import fs from "fs";
 import path from "path";
@@ -630,7 +631,7 @@ assert(/\btriage\b/.test(scanOut), "status-scan prints fixture stage=triage");
 assert(/\bbounded\b/.test(scanOut), "status-scan prints fixture path=bounded");
 
 
-// --- feature.mjs thin CLI (0.2.6-dev) ---
+// --- feature.mjs thin CLI (自 0.2.6-dev；本版只加厚夹具) ---
 assert(exists("scripts/feature.mjs"), "feature.mjs exists");
 const featureCli = read("scripts/feature.mjs") || "";
 assert(/调度员不进厨房/.test(featureCli), "feature.mjs mentions 调度员不进厨房");
@@ -670,6 +671,268 @@ assert(/modes\//.test(index), "AGENT-INDEX links modes/");
 assert(/modes\//.test(quick), "QUICKSTART links modes/");
 assert(/feature\.mjs/.test(skill || ""), "SKILL mentions feature.mjs");
 assert(/feature\.mjs/.test(index), "AGENT-INDEX mentions feature.mjs");
+
+
+// =====================================================================
+// 0.2.6-dev：加厚夹具（原 0.2.6-dev 切片并入） — advance-gate / bindings-bad / close-ready
+// =====================================================================
+const FIX_ADV = "scripts/fixtures/advance-gate";
+const FIX_BIND_BAD = "scripts/fixtures/bindings-bad";
+const FIX_CLOSE = "scripts/fixtures/close-ready";
+const ADV_SLUG = "2026-09-19-advance-gate-demo";
+const CLOSE_SLUG = "2026-09-19-close-ready-demo";
+const advProgressRel = `${FIX_ADV}/docs/runs/active/${ADV_SLUG}/progress.yaml`;
+const advHuilianRel = `${FIX_ADV}/docs/runs/active/${ADV_SLUG}/回链.md`;
+const bindNullRel = `${FIX_BIND_BAD}/stage-bindings.null-skill.yaml`;
+const bindMissingRel = `${FIX_BIND_BAD}/stage-bindings.missing-key.yaml`;
+const closeProgressRel = `${FIX_CLOSE}/docs/runs/archive/${CLOSE_SLUG}/progress.yaml`;
+const closeHuilianRel = `${FIX_CLOSE}/docs/runs/archive/${CLOSE_SLUG}/回链.md`;
+
+function nestedScalar(text, parentKey, childKey) {
+  const start = text.search(new RegExp(`^${parentKey}:\\s*$`, "m"));
+  if (start < 0) return undefined;
+  const from = text.slice(start);
+  const firstNl = from.indexOf("\n");
+  const body = firstNl < 0 ? "" : from.slice(firstNl + 1);
+  const nextTop = body.search(/^[a-zA-Z_][\w]*:/m);
+  const block = nextTop < 0 ? body : body.slice(0, nextTop);
+  const m = block.match(new RegExp(`^\\s+${childKey}\\s*:\\s*(.*)$`, "m"));
+  if (!m) return undefined;
+  let v = m[1].trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1);
+  }
+  if (v === "null" || v === "~" || v === "") return null;
+  return v;
+}
+
+function isIsoTimestamp(v) {
+  if (v == null || typeof v !== "string") return false;
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v);
+}
+
+function validateBindingsIntegrity(yamlText, label) {
+  const issues = [];
+  if (!yamlText) {
+    issues.push(`${label}: missing text`);
+    return issues;
+  }
+  const map = stageSkillMap(yamlText);
+  for (const k of BINDING_KEYS) {
+    if (!new RegExp(`^\\s*${k}\\s*:`, "m").test(yamlText)) {
+      issues.push(`${label}: missing key ${k}`);
+      continue;
+    }
+    const skill = map[k];
+    if (skill == null || skill === "null" || skill.length === 0) {
+      issues.push(`${label}: ${k}.skill null/empty`);
+    }
+  }
+  return issues;
+}
+
+assert(exists(advProgressRel), "advance-gate fixture progress.yaml exists");
+assert(exists(advHuilianRel), "advance-gate fixture 回链.md exists");
+assert(exists(bindNullRel), "bindings-bad null-skill sample exists");
+assert(exists(bindMissingRel), "bindings-bad missing-key sample exists");
+assert(exists(closeProgressRel), "close-ready fixture progress.yaml exists");
+assert(exists(closeHuilianRel), "close-ready fixture 回链.md exists");
+assert(
+  !exists(`${FIX_CLOSE}/docs/runs/active/${CLOSE_SLUG}/progress.yaml`),
+  "close-ready must live under archive not active"
+);
+
+const advProgress = read(advProgressRel) || "";
+const advIssues = validateProgressShape(advProgress, "advance-gate progress");
+assert(
+  advIssues.length === 0,
+  advIssues.length === 0
+    ? "advance-gate progress shape OK"
+    : `advance-gate progress shape: ${advIssues[0]}`
+);
+assert(
+  readScalar(advProgress, "slug") === ADV_SLUG,
+  "advance-gate progress.slug matches dir"
+);
+assert(
+  readScalar(advProgress, "stage") === "plan",
+  "advance-gate progress.stage == plan"
+);
+assert(
+  readScalar(advProgress, "path") === "bounded",
+  "advance-gate progress.path == bounded"
+);
+assert(
+  readScalar(advProgress, "domain") === "skipped",
+  "advance-gate progress.domain == skipped"
+);
+assert(
+  nestedScalar(advProgress, "artifacts", "spec") != null &&
+    /specs\//.test(nestedScalar(advProgress, "artifacts", "spec")),
+  "advance-gate artifacts.spec filled"
+);
+assert(
+  nestedScalar(advProgress, "artifacts", "plan") != null &&
+    /plans\//.test(nestedScalar(advProgress, "artifacts", "plan")),
+  "advance-gate artifacts.plan filled"
+);
+assert(
+  isIsoTimestamp(nestedScalar(advProgress, "gates", "triage")),
+  "advance-gate gates.triage is ISO timestamp"
+);
+assert(
+  isIsoTimestamp(nestedScalar(advProgress, "gates", "shared_understanding")),
+  "advance-gate gates.shared_understanding is ISO timestamp"
+);
+assert(
+  isIsoTimestamp(nestedScalar(advProgress, "gates", "design_confirmed")),
+  "advance-gate gates.design_confirmed is ISO timestamp"
+);
+assert(
+  nestedScalar(advProgress, "gates", "go") === null,
+  "advance-gate gates.go still null (ready for advance)"
+);
+assert(
+  nestedScalar(advProgress, "gates", "close") === null,
+  "advance-gate gates.close still null"
+);
+const advHuilian = read(advHuilianRel) || "";
+assert(advHuilian.includes(ADV_SLUG), "advance-gate 回链 mentions slug");
+assert(/## 规划/.test(advHuilian), "advance-gate 回链 has ## 规划");
+assert(
+  /CONTEXT\.md/.test(advHuilian) && /禁止/.test(advHuilian),
+  "advance-gate 回链 bans root CONTEXT.md"
+);
+
+const scanAdv = spawnSync(process.execPath, [scanBin], {
+  cwd: path.join(skillRoot, FIX_ADV),
+  encoding: "utf8",
+});
+assert(scanAdv.status === 0, "status-scan on advance-gate exit 0");
+const scanAdvOut = `${scanAdv.stdout || ""}${scanAdv.stderr || ""}`;
+assert(scanAdvOut.includes(ADV_SLUG), "status-scan prints advance-gate slug");
+assert(/\bplan\b/.test(scanAdvOut), "status-scan prints advance-gate stage=plan");
+
+const liveBindIssues = validateBindingsIntegrity(bindings, "live bindings");
+assert(
+  liveBindIssues.length === 0,
+  liveBindIssues.length === 0
+    ? "live stage-bindings integrity OK"
+    : `live bindings: ${liveBindIssues[0]}`
+);
+const nullSkillYaml = read(bindNullRel) || "";
+const nullIssues = validateBindingsIntegrity(nullSkillYaml, "null-skill");
+assert(
+  nullIssues.some((i) => /implement\.skill/.test(i)),
+  "bindings-bad null-skill rejects implement.skill null"
+);
+assert(
+  nullIssues.length >= 1,
+  `bindings-bad null-skill has issues (${nullIssues.length})`
+);
+const missingYaml = read(bindMissingRel) || "";
+const missingIssues = validateBindingsIntegrity(missingYaml, "missing-key");
+assert(
+  missingIssues.some((i) => /missing key diagnose/.test(i)),
+  "bindings-bad missing-key rejects absent diagnose"
+);
+assert(
+  missingIssues.length >= 1,
+  `bindings-bad missing-key has issues (${missingIssues.length})`
+);
+assert(
+  nullIssues.length > 0 && missingIssues.length > 0,
+  "bindings-bad samples are rejected by integrity validator"
+);
+
+const closeProgress = read(closeProgressRel) || "";
+const closeIssues = validateProgressShape(closeProgress, "close-ready progress");
+assert(
+  closeIssues.length === 0,
+  closeIssues.length === 0
+    ? "close-ready progress shape OK"
+    : `close-ready progress shape: ${closeIssues[0]}`
+);
+assert(
+  readScalar(closeProgress, "slug") === CLOSE_SLUG,
+  "close-ready progress.slug matches dir"
+);
+assert(
+  readScalar(closeProgress, "stage") === "done",
+  "close-ready progress.stage == done"
+);
+assert(
+  readScalar(closeProgress, "path") === "bounded",
+  "close-ready progress.path == bounded"
+);
+assert(
+  readScalar(closeProgress, "domain") === "skipped",
+  "close-ready progress.domain == skipped"
+);
+assert(
+  readScalar(closeProgress, "proto") === "skipped",
+  "close-ready progress.proto == skipped"
+);
+assert(
+  isIsoTimestamp(nestedScalar(closeProgress, "gates", "close")),
+  "close-ready gates.close is ISO timestamp"
+);
+assert(
+  isIsoTimestamp(nestedScalar(closeProgress, "gates", "triage")),
+  "close-ready gates.triage is ISO timestamp"
+);
+assert(
+  isIsoTimestamp(nestedScalar(closeProgress, "gates", "go")),
+  "close-ready gates.go is ISO timestamp"
+);
+assert(
+  isIsoTimestamp(nestedScalar(closeProgress, "gates", "gate")),
+  "close-ready gates.gate is ISO timestamp"
+);
+assert(
+  nestedScalar(closeProgress, "artifacts", "spec") != null,
+  "close-ready artifacts.spec filled"
+);
+assert(
+  nestedScalar(closeProgress, "artifacts", "plan") != null,
+  "close-ready artifacts.plan filled"
+);
+const closeHuilian = read(closeHuilianRel) || "";
+assert(closeHuilian.includes(CLOSE_SLUG), "close-ready 回链 mentions slug");
+assert(/archive/.test(closeHuilian), "close-ready 回链 mentions archive");
+assert(
+  /CONTEXT\.md/.test(closeHuilian) && /禁止/.test(closeHuilian),
+  "close-ready 回链 bans root CONTEXT.md"
+);
+
+const fixReadme = read("scripts/fixtures/README.md") || "";
+assert(/advance-gate/.test(fixReadme), "fixtures README lists advance-gate");
+assert(/bindings-bad/.test(fixReadme), "fixtures README lists bindings-bad");
+assert(/close-ready/.test(fixReadme), "fixtures README lists close-ready");
+
+const featStatusAdv = spawnSync(
+  process.execPath,
+  [
+    path.join(skillRoot, "scripts/feature.mjs"),
+    "status",
+    "--cwd",
+    path.join(skillRoot, FIX_ADV),
+  ],
+  { cwd: skillRoot, encoding: "utf8" }
+);
+assert(featStatusAdv.status === 0, "feature.mjs status on advance-gate exit 0");
+assert(
+  `${featStatusAdv.stdout || ""}`.includes(ADV_SLUG),
+  "feature.mjs status prints advance-gate slug"
+);
+
+assert(
+  /不写 progress|不进厨房/.test(featureCli),
+  "feature.mjs still declares no-write / 调度员不进厨房"
+);
 
 // --- report ---
 const total = ok.length + fail.length;

@@ -6,7 +6,7 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`。
 
-0.2.6-dev 要点：`modes/` 迁入模式 md + 薄 CLI `scripts/feature.mjs`（modes/status；调度员不进厨房）；叠在 0.2.5-dev 夹具/自检之上。  
+0.2.6-dev 要点：`modes/` + 薄 CLI `feature.mjs` + 加厚夹具（`advance-gate` / `bindings-bad` / `close-ready`）与行为自检；叠在 0.2.5-dev 之上。  
 0.2.5-dev 要点：最小夹具（`scripts/fixtures/init-skeleton` / `progress-bad`）+ selfcheck 行为断言（progress 形状/枚举、模板↔夹具契约、status-scan 夹具烟测）；V0.6.X 开发钉（不改默认绑定 skill 名）。  
 0.2.4 要点：正式钉号；P0 索引/selfcheck；P1 lookup 预检 + truncate-contracts + QUICKSTART；P2 status-scan + close_pitfalls。一页纸：[QUICKSTART.md](QUICKSTART.md)。  
 0.2.3 要点：过程态 `docs/runs/{active|archive}/`（与 superpowers 平级）；人读中文短名 + `progress.yaml` 机读；close 归档。  

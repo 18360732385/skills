@@ -31,6 +31,7 @@
 | 推荐包示例 | [config/stage-bindings.example.yaml](config/stage-bindings.example.yaml) |
 | 模板 | `templates/`（progress.yaml · 回链.md · 测试用例.md · 测试报告.md · runs-README.md） |
 | modes 索引 | [modes/README.md](modes/README.md) · `node scripts/feature.mjs modes` |
+| selfcheck 夹具 | [scripts/fixtures/](scripts/fixtures/)（init-skeleton · progress-bad · advance-gate · bindings-bad · close-ready） |
 | 清单权威号 | [`_meta/manifest.yaml`](_meta/manifest.yaml) |
 
 ## 写盘纪律（一行）

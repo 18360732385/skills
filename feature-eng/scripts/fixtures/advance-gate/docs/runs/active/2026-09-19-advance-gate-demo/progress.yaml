@@ -1,0 +1,44 @@
+# feature-eng fixture：plan 环末、即将 advance（gates 时间戳 + L1 产物已填）
+slug: "2026-09-19-advance-gate-demo"
+title: "advance-gate 夹具"
+created_at: "2026-09-19"
+updated_at: "2026-09-19T14:30:00+08:00"
+
+path: bounded
+run_mode: guided
+invoke: strict
+handoff_policy: confirm
+review_policy: subagent
+stage: plan
+
+domain: skipped
+proto: null
+
+artifacts:
+  adr: []
+  spec: "docs/superpowers/specs/2026-09-19-advance-gate-demo-设计.md"
+  plan: "docs/superpowers/plans/2026-09-19-advance-gate-demo-实施计划.md"
+  proto: null
+  context_delta: null
+  testcases: null
+  test_report: null
+  qa_report: null
+
+tasks:
+  - id: T1
+    title: "夹具任务"
+    depends_on: []
+    status: pending
+
+gates:
+  triage: "2026-09-19T10:00:00+08:00"
+  shared_understanding: "2026-09-19T11:00:00+08:00"
+  design_confirmed: "2026-09-19T12:00:00+08:00"
+  go: null
+  pre_impl: null
+  gate: null
+  verify: null
+  close: null
+
+env_verified: null
+accepted_residual: null
