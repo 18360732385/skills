@@ -15,6 +15,7 @@
 - 一页纸：[QUICKSTART.md](QUICKSTART.md)
 - Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)
 - 验收：[VERIFY.md](VERIFY.md)
+- 模式规格：[modes/README.md](modes/README.md)
 
 ## 如何烟测
 
@@ -24,13 +25,13 @@ node scripts/release.mjs --help
 node scripts/release.mjs modes
 ```
 
-须 `PASS … (release-eng 0.3.19-dev)` 且 exit 0。覆盖：manifest 钉号 · 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / artifacts 形 · seal-check `--help`。
+须 `PASS … (release-eng 0.3.19-dev)` 且 exit 0。覆盖：manifest 钉号 · `modes/` 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / artifacts 形 · seal-check `--help` · release.mjs modes。
 
 ## 可移植性
 
 - **首发仓**：`c-be-sms-ai`（`source_repo` 见 manifest）。  
 - **本仓可用**：skill + `fixtures/docs/releases/` + `scripts/` 已齐；bootstrap 空仓从 fixtures 复制。  
-- **迁到他仓**：须整目录拷贝（含 `fixtures/`、`scripts/`、模式 md）；目标仓无 `docs/releases/` 时靠 fixtures 种子。  
+- **迁到他仓**：须整目录拷贝（含 `fixtures/`、`scripts/`、`modes/`）；目标仓无 `docs/releases/` 时靠 fixtures 种子。  
 - **非 harness-eng land**（`harness_land: false`）：有 VERIFY / selfcheck 作**最小安全皮带**，但对齐的是发版仪式门禁，**不**对齐 harness 自动 land 流水线。跨仓推广靠人工拷贝 + 点名仪式，不靠 harness 编排。
 
 ## `首次发版`

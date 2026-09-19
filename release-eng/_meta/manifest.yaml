@@ -9,8 +9,9 @@ description: >-
   双轨研判（release-ai-track prompt/merge）；首次分层；逾期硬闸；prior 并集；
   Asia/Shanghai；截断5（前3后2、hash前8位）；摘要分支级聚合并入元信息；来源分支功能一句话（origin/ 归一去重）；
   版本身份=发版分支归一化（日期解耦）；jobs 汇总单文件；yml 注释键上一行；目录包仅本版新增制品（不含 candidates）；键级diff；note-merge；seal-check；prod。
-  0.3.19-dev：统一 release.mjs 薄入口；继承 0.3.18-dev P0 门禁包（AGENT-INDEX / QUICKSTART / VERIFY / selfcheck），非 harness land。
+  0.3.19-dev：统一 release.mjs 薄入口 + 模式 md 迁入 modes/；继承 0.3.18-dev P0 门禁包，非 harness land。
 
+modes_dir: modes/
 modes:
   - prepare
   - resume

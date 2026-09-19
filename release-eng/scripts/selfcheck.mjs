@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * release-eng selfcheck (0.3.19-dev)：静态断言 + 纯函数/形断言。
- * 覆盖：manifest · 模式文件 · 关键脚本 · fixtures 种子 ·
+ * 覆盖：manifest · modes/ 模式文件 · 关键脚本 · fixtures 种子 ·
  * AGENT-INDEX / QUICKSTART / VERIFY · 钉号链 ·
  * identityFromBranch · 截断5 · shortCommitHash · artifacts.json 形 ·
  * seal-check --help · release.mjs --help/modes。
@@ -35,7 +35,25 @@ function exists(rel) {
 
 const PIN = "0.3.19-dev";
 
-const MODES = ["prepare.md", "resume.md", "audit.md", "seal.md"];
+const MODES = [
+  "modes/prepare.md",
+  "modes/resume.md",
+  "modes/audit.md",
+  "modes/seal.md",
+];
+
+const MODE_SPECS = [
+  "modes/freeze.md",
+  "modes/write-plan.md",
+  "modes/gates-common.md",
+  "modes/git-gates.md",
+  "modes/questions.md",
+  "modes/ai-track.md",
+  "modes/bootstrap.md",
+  "modes/recommended.md",
+  "modes/idempotency.md",
+  "modes/README.md",
+];
 
 const SCRIPTS = [
   "scripts/release.mjs",
@@ -84,10 +102,17 @@ assert(
   "manifest fixtures == fixtures/docs/releases/"
 );
 
-// --- mode files ---
+// --- mode files (under modes/) ---
 for (const f of MODES) {
   assert(exists(f), `mode file ${f}`);
 }
+for (const f of MODE_SPECS) {
+  assert(exists(f), `mode spec ${f}`);
+}
+assert(
+  manifest != null && /modes_dir:\s*modes\//.test(manifest),
+  "manifest modes_dir == modes/"
+);
 
 // --- key scripts ---
 for (const s of SCRIPTS) {
@@ -352,12 +377,12 @@ const relModes = spawnRelease(["modes"]);
 assert(relModes.status === 0, "release.mjs modes exit 0");
 const modesOut = `${relModes.stdout || ""}`;
 assert(/prepare/.test(modesOut) && /seal/.test(modesOut), "release.mjs modes lists prepare/seal");
-assert(/prepare\.md/.test(modesOut), "release.mjs modes shows prepare.md");
+assert(/modes\/prepare\.md/.test(modesOut), "release.mjs modes shows modes/prepare.md");
 assert(/push-gate/.test(modesOut) && /seal-check/.test(modesOut), "release.mjs modes lists script aliases");
 
 const relPrep = spawnRelease(["prepare", "--help"]);
 assert(relPrep.status === 0, "release.mjs prepare --help exit 0");
-assert(/prepare\.md/.test(`${relPrep.stdout || ""}`), "prepare --help points to prepare.md");
+assert(/modes\/prepare\.md/.test(`${relPrep.stdout || ""}`), "prepare --help points to modes/prepare.md");
 
 const relSealFwd = spawnRelease(["seal-check", "--", "--help"]);
 assert(relSealFwd.status === 0, "release.mjs seal-check -- --help exit 0");
@@ -366,6 +391,10 @@ assert(
   "release.mjs forwards seal-check --help"
 );
 
+assert(/modes\//.test(skill || ""), "SKILL links modes/");
+assert(/modes\//.test(index), "AGENT-INDEX links modes/");
+assert(/modes\//.test(quick), "QUICKSTART links modes/");
+assert(/modes\/README/.test(index), "AGENT-INDEX links modes/README");
 assert(/release\.mjs/.test(skill || ""), "SKILL mentions release.mjs");
 assert(/release\.mjs/.test(index), "AGENT-INDEX mentions release.mjs");
 assert(/release\.mjs/.test(quick), "QUICKSTART mentions release.mjs");

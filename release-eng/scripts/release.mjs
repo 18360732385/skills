@@ -22,26 +22,26 @@ const skillRoot = path.resolve(__dirname, "..");
 const MODES = [
   {
     name: "prepare",
-    doc: "prepare.md",
+    doc: "modes/prepare.md",
     desc: "新建发版单：首问 → push-gate → freeze → 问卷 → WritePlan",
     scripts: ["push-gate", "freeze", "note-merge"],
   },
   {
     name: "resume",
-    doc: "resume.md",
+    doc: "modes/resume.md",
     desc: "同版本身份续跑（刷新 draft / 补问卷 / 再定版）",
     scripts: ["freeze", "note-merge"],
   },
   {
     name: "audit",
-    doc: "audit.md",
+    doc: "modes/audit.md",
     desc: "只读体检 prior·freeze（不写盘）",
     scripts: ["freeze"],
     hint: "典型：freeze --format audit-json",
   },
   {
     name: "seal",
-    doc: "seal.md",
+    doc: "modes/seal.md",
     desc: "已上线：seal-check 通过后 notes→archive",
     scripts: ["seal-check"],
   },
@@ -103,7 +103,7 @@ function listModes() {
     const ok = fs.existsSync(path.join(__dirname, file)) ? "✓" : "✗";
     console.log(`  ${alias}\tscripts/${file} ${ok}`);
   }
-  console.log("\n详情：SKILL.md 模式分流 · QUICKSTART.md");
+  console.log("\n详情：modes/README.md · SKILL.md 模式分流 · QUICKSTART.md");
 }
 
 function printModeHelp(modeName) {
@@ -183,7 +183,7 @@ if (["prepare", "resume", "audit", "seal"].includes(cmd)) {
     process.exit(0);
   }
   console.error(
-    `模式 ${cmd} 无直接子参数（仪式由 Agent 按 ${cmd}.md 执行）。\n查看指引：node scripts/release.mjs ${cmd} --help\n或转发脚本：node scripts/release.mjs <script> -- <args...>`
+    `模式 ${cmd} 无直接子参数（仪式由 Agent 按 modes/${cmd}.md 执行）。\n查看指引：node scripts/release.mjs ${cmd} --help\n或转发脚本：node scripts/release.mjs <script> -- <args...>`
   );
   process.exit(1);
 }

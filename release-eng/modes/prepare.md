@@ -9,7 +9,7 @@
 4. 版本身份 `<slug>` = **发版分支名归一化**（去 `origin/`、`/` → `-`；与 `发版日期` 解耦；同路径 → [idempotency.md](idempotency.md)）  
 5. [questions.md](questions.md) 至其 Done（增量用 `draft`/`configKeys`/`jobKeys`；首次用分层 draft + `inventory`；目标 **`prod`**；尊重 `aiNoise` 默认不勾）  
 6. [write-plan.md](write-plan.md)：【推荐】同参再跑 `--format draft-md` 贴进预览 → 确认词（或预授权）  
-7. 【推荐】`release-note-merge.mjs`（优先 `--freeze-json` 带 aiTrack 的 JSON）将 freeze **`draft`** + Git 定版写入**目录包**自动段 + **`artifacts.json`**，并拷贝本版新增的 `sql/`/`config/`/`jobs/`（← draft；不含 candidates；`--dry-run` 可先看）。**勿**默认写入 `draftSuppressed`；状态 `已定版`；回写 [releases.md](../../../docs/releases/releases.md)  
+7. 【推荐】`release-note-merge.mjs`（优先 `--freeze-json` 带 aiTrack 的 JSON）将 freeze **`draft`** + Git 定版写入**目录包**自动段 + **`artifacts.json`**，并拷贝本版新增的 `sql/`/`config/`/`jobs/`（← draft；不含 candidates；`--dry-run` 可先看）。**勿**默认写入 `draftSuppressed`；状态 `已定版`；回写 [releases.md](../../../../docs/releases/releases.md)  
 
 ```bash
 node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/notes/<slug>/<slug>.md --freeze-json /tmp/freeze-with-ai.json --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
