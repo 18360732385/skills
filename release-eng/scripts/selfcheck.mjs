@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * release-eng selfcheck (0.3.20-dev)：静态断言 + 纯函数/形断言。
+ * release-eng selfcheck (0.3.19-dev)：静态断言 + 纯函数/形断言。
  * 覆盖：manifest · modes/ 模式文件 · 关键脚本 · fixtures 种子 ·
  * AGENT-INDEX / QUICKSTART / VERIFY · 钉号链 ·
  * identityFromBranch · 截断5 · shortCommitHash · artifacts.json 形 ·
@@ -33,7 +33,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.3.20-dev";
+const PIN = "0.3.19-dev";
 
 const MODES = [
   "modes/prepare.md",
@@ -80,7 +80,7 @@ const FIXTURE_SEED = [
 const manifest = read("_meta/manifest.yaml");
 assert(manifest != null, "manifest.yaml exists");
 assert(
-  manifest != null && /version:\s*"0\.3\.20-dev"/.test(manifest),
+  manifest != null && /version:\s*"0\.3\.19-dev"/.test(manifest),
   `manifest version == ${PIN}`
 );
 assert(
@@ -137,7 +137,7 @@ assert(
 );
 assert(skill != null && /VERIFY\.md/.test(skill), "SKILL links VERIFY");
 assert(
-  skill != null && /0\.3\.20-dev/.test(skill),
+  skill != null && /0\.3\.19-dev/.test(skill),
   `SKILL pins ${PIN}`
 );
 
@@ -145,7 +145,7 @@ assert(exists("AGENT-INDEX.md"), "AGENT-INDEX.md exists");
 const index = read("AGENT-INDEX.md") || "";
 assert(/必读/.test(index), "AGENT-INDEX has 必读");
 assert(/按需/.test(index), "AGENT-INDEX has 按需");
-assert(/0\.3\.20-dev/.test(index), `AGENT-INDEX pins ${PIN}`);
+assert(/0\.3\.19-dev/.test(index), `AGENT-INDEX pins ${PIN}`);
 assert(
   /非 harness land|harness_land:\s*false|harness land/.test(index),
   "AGENT-INDEX marks non-harness-land"
@@ -181,12 +181,8 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
-  changelog != null && /^##\s+0\.3\.20-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.3.20-dev heading"
-);
-assert(
   changelog != null && /^##\s+0\.3\.19-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.3.19-dev heading"
+  "CHANGELOG has ## 0.3.19-dev heading"
 );
 assert(
   changelog != null && /^##\s+0\.3\.18-dev\b/m.test(changelog),
@@ -344,7 +340,7 @@ assert(
 const pushHelp = spawnHelp("scripts/release-push-gate.mjs");
 assert(pushHelp.status === 0, "push-gate --help exit 0");
 
-// --- release.mjs thin CLI (0.3.20-dev) ---
+// --- release.mjs thin CLI (0.3.19-dev) ---
 assert(exists("scripts/release.mjs"), "release.mjs exists");
 assert(
   manifest != null && /scripts\/release\.mjs/.test(manifest),

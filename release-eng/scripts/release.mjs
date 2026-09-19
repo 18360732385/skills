@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * release-eng 统一薄入口（0.3.20-dev）。
+ * release-eng 统一薄入口（0.3.19-dev）。
  *
  * 只做：模式/子命令帮助 + 转发到既有 scripts/*。
  * 不写盘、不代答确认词、不跑完整 prepare 仪式（Agent 仍按模式 md 调度）。

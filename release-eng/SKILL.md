@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # release-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.3.20-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.3.19-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`（`modes` / 脚本转发）。
 
 Skill = **发版仪式**。真相在 `docs/releases/`（过程域；术语见根 [CONTEXT.md](../../../CONTEXT.md)）。对用户优先中文。  
