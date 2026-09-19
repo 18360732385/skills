@@ -1,0 +1,20 @@
+# INTENTIONALLY BROKEN — selfcheck 负例：缺 diagnose 键
+version: 1
+defaults:
+  invoke: strict
+  commit_policy: user_authorized
+  handoff_policy: confirm
+  review_policy: subagent
+  close_pitfalls: optional
+stages:
+  grill:      { skill: grill-me }
+  design:     { skill: brainstorming }
+  domain:     { skill: domain-modeling }
+  spec:       { skill: brainstorming }
+  plan:       { skill: writing-plans }
+  proto:      { skill: prototype }
+  testdesign: { skill: lynxce-test-cases }
+  implement:  { skill: subagent-driven-development }
+  review:     { skill: code-review }
+  verify:     { skill: qa }
+  # diagnose intentionally omitted

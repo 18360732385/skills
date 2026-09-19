@@ -1,5 +1,17 @@
 # feature-eng CHANGELOG
 
+## 0.2.7-dev — 2026-09-19
+
+V0.6.X 开发钉。相对 0.2.6-dev：**不**改环节语义与默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。
+
+- **加厚夹具**：`scripts/fixtures/advance-gate/`（plan 环末、gates ISO 时间戳 + L1 产物已填）；`bindings-bad/`（null-skill / missing-key 负例）；`close-ready/`（archive · stage=done · gates.close）
+- **行为自检**：`scripts/selfcheck.mjs` 对上述夹具做形状/时间戳/绑定完整性断言（非仅文件存在）；status-scan / feature.mjs status 对 advance-gate 烟测
+- **文档**：VERIFY / README / SKILL / AGENT-INDEX / manifest 钉 **0.2.7-dev**
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.7-dev | 2026-09-19 | 加厚 fixtures + selfcheck；V0.6.X 开发钉 |
+
 ## 0.2.6-dev — 2026-09-19
 
 V0.6.X 开发钉。相对 0.2.5-dev：**不**改环节语义与默认绑定 skill 名。叠在 #39（0.2.5-dev 夹具/自检）之上。
@@ -33,6 +45,7 @@ V0.6.X 开发钉。相对 0.2.4：**不**改环节语义与默认绑定 skill �
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.2.7-dev | 2026-09-19 | 加厚 fixtures + selfcheck；V0.6.X 开发钉 |
 | 0.2.6-dev | 2026-09-19 | modes/ 迁入 + feature.mjs 薄 CLI；V0.6.X 开发钉 |
 | 0.2.5-dev | 2026-09-19 | 夹具 + 行为自检；V0.6.X 开发钉（不改默认绑定 skill 名） |
 | 0.2.4 | 2026-09-17 | 正式钉号；P0 索引/selfcheck + P1 预检/截断/QUICKSTART + P2 status-scan / close_pitfalls（不改默认绑定 skill 名） |

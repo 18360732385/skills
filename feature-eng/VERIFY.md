@@ -1,14 +1,29 @@
-# feature-eng 验收记录（0.2.6-dev）
+# feature-eng 验收记录（0.2.7-dev）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测（含夹具行为断言）。真实 init/start/advance/close 仍须在目标仓由 Agent 执行并遵守硬闸。
 
 ## 版本
 
-当前 **0.2.6-dev**（相对 0.2.5-dev：`modes/` 迁入 + 薄 CLI）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前 **0.2.7-dev**（相对 0.2.6-dev：加厚 fixtures + selfcheck 行为断言）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
 
-本版**不**改动环节语义与默认绑定 skill 名。
+本版**不**改动环节语义与默认绑定 skill 名；`harness_land` 仍为 false；`feature.mjs` 不写盘。
 
-## 0.2.6-dev 增量验收
+## 0.2.7-dev 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测（断言数 > 0.2.6-dev ≈215） |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.2.7-dev** | 有 |
+| CHANGELOG 含 `## 0.2.7-dev` 且保留 `## 0.2.6-dev` | 有 |
+| `scripts/fixtures/advance-gate/`：gates 时间戳 + L1 产物已填 + stage=plan | 有 |
+| `scripts/fixtures/bindings-bad/`：null-skill / missing-key 负例被校验拒绝 | 有 |
+| `scripts/fixtures/close-ready/`：archive + stage=done + gates.close | 有 |
+| selfcheck 行为断言（非仅文件存在）覆盖上述夹具 | 有 |
+| 默认绑定 skill 名未改；feature.mjs 仍声明不写 progress | 有 |
+
+## 继承基线（0.2.6-dev）
+
+## 0.2.6-dev 增量验收（继承）
 
 | 检查 | 结果 |
 |---|---|
@@ -61,6 +76,7 @@
 cd feature-eng && node scripts/selfcheck.mjs
 node scripts/feature.mjs modes
 node scripts/feature.mjs status --cwd scripts/fixtures/init-skeleton
+node scripts/feature.mjs status --cwd scripts/fixtures/advance-gate
 # 可选直调：
-# node scripts/status-scan.mjs   # cwd=scripts/fixtures/init-skeleton
+# node scripts/status-scan.mjs   # cwd=scripts/fixtures/init-skeleton|advance-gate
 ```
