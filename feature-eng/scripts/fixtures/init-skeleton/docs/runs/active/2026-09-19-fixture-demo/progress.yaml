@@ -1,0 +1,40 @@
+# feature-eng fixture：start 建盘后 triage 态（形状金标）
+slug: "2026-09-19-fixture-demo"
+title: "fixture 演示"
+created_at: "2026-09-19"
+updated_at: "2026-09-19"
+
+path: bounded
+run_mode: guided
+invoke: strict
+handoff_policy: confirm
+review_policy: subagent
+stage: triage
+
+domain: null
+proto: null
+
+artifacts:
+  adr: []
+  spec: null
+  plan: null
+  proto: null
+  context_delta: null
+  testcases: null
+  test_report: null
+  qa_report: null
+
+tasks: []
+
+gates:
+  triage: null
+  shared_understanding: null
+  design_confirmed: null
+  go: null
+  pre_impl: null
+  gate: null
+  verify: null
+  close: null
+
+env_verified: null
+accepted_residual: null

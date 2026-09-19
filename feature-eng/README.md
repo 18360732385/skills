@@ -6,7 +6,8 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。
 
-0.2.4 要点：正式钉号；P0 索引/selfcheck；P1 lookup 预检 + truncate-contracts + QUICKSTART；P2 status-scan + close_pitfalls（不改默认绑定 skill 名）。一页纸：[QUICKSTART.md](QUICKSTART.md)。  
+0.2.5-dev 要点：最小夹具（`scripts/fixtures/init-skeleton` / `progress-bad`）+ selfcheck 行为断言（progress 形状/枚举、模板↔夹具契约、status-scan 夹具烟测）；V0.6.X 开发钉（不改默认绑定 skill 名）。  
+0.2.4 要点：正式钉号；P0 索引/selfcheck；P1 lookup 预检 + truncate-contracts + QUICKSTART；P2 status-scan + close_pitfalls。一页纸：[QUICKSTART.md](QUICKSTART.md)。  
 0.2.3 要点：过程态 `docs/runs/{active|archive}/`（与 superpowers 平级）；人读中文短名 + `progress.yaml` 机读；close 归档。  
 0.2.2 要点：过闸主动调起；L1/L2 环间审核。  
 0.2.1 要点：init 中文环节表；domain 条件桥；Proto 可推翻；禁根 CONTEXT。  

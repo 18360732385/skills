@@ -1,5 +1,16 @@
 # feature-eng CHANGELOG
 
+## 0.2.5-dev — 2026-09-19
+
+V0.6.X 开发钉。相对 0.2.4：**不**改环节语义与默认绑定 skill 名。
+
+- **P0 夹具**：`scripts/fixtures/init-skeleton/`（start 建盘后 triage 态：`progress.yaml` + `回链.md` + runs README）与 `scripts/fixtures/progress-bad/`（缺字段负例）
+- **行为自检**：`scripts/selfcheck.mjs` 校验 progress 模板/夹具顶层键、artifacts/gates 子键、枚举字段；模板↔夹具契约对齐；`status-scan.mjs` 对夹具根 exit 0 并打印 slug/stage/path；负例须被形状校验拒绝
+- **文档**：VERIFY / README / SKILL / AGENT-INDEX / manifest 钉 **0.2.5-dev**
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.5-dev | 2026-09-19 | 夹具 + 行为自检；V0.6.X 开发钉（不改默认绑定 skill 名） |
 ## 0.2.4 — 2026-09-17
 
 正式钉号。相对 0.2.3：**不**改环节语义与默认 skill 名。
@@ -10,6 +21,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.2.5-dev | 2026-09-19 | 夹具 + 行为自检；V0.6.X 开发钉（不改默认绑定 skill 名） |
 | 0.2.4 | 2026-09-17 | 正式钉号；P0 索引/selfcheck + P1 预检/截断/QUICKSTART + P2 status-scan / close_pitfalls（不改默认绑定 skill 名） |
 | 0.2.3 | 2026-09-17 | 过程态迁至 `docs/runs/{active\|archive}/`（与 superpowers 平级）；close 物理归档；人读文件中文短名（回链/测试用例/测试报告/交接/术语增量等），机读保留 `progress.yaml`；L2 为 `审核-<stage>.md`；旧 `docs/superpowers/runs` 兼容提示 |
 | 0.2.2 | 2026-09-17 | 过闸后按 `handoff_policy`（auto\|confirm）**主动**调起下一 skill；advance 拆 L1（artifacts）/ L2（新建 gates-review.md，subagent 优先）；硬闸短确认卡片；用户不再默认手切 skill |
