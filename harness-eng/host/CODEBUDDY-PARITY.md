@@ -33,7 +33,7 @@ harness-eng **0.6.4** 把 WorkBuddy（目录名 `.codebuddy`）生成物对齐�
 
 ## 非目标 / 禁止
 
-- **不**改 Trae 矩阵；**不**重开 Codex
+- **不**改 Trae 矩阵；Codex 另见 [CODEX-PARITY.md](CODEX-PARITY.md)（0.6.8-dev P0）
 - **不**把 IDE GUI「每规则一文件夹 RULE.mdc」当作 harness 默认写出路径（GUI 可另建；sync 以官方 CLI 扁平 `.md` 为准）
 - **不**生成 `settings.local.json`（本地覆盖留给用户；gitignore 由宿主/官方处理）
 - **不**生成 `.codebuddy/agents/`

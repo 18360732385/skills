@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.6.7
- * HARNESS_ENG_VERSION: 0.6.7
+ * HARNESS_SYNC_TMPL_ID: 0.6.8-dev
+ * HARNESS_ENG_VERSION: 0.6.8-dev
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -35,8 +35,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.6.7";
-const HARNESS_ENG_VERSION = "0.6.7";
+const HARNESS_SYNC_TMPL_ID = "0.6.8-dev";
+const HARNESS_ENG_VERSION = "0.6.8-dev";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = {{AI_TOOLS_JSON}};
@@ -293,6 +293,15 @@ function planSkills() {
   }
   for (const dir of dirs) {
     put(`${dir}/skills/GENERATED.md`, SKILLS_MARKER);
+  }
+  // Codex：官方读 .agents/skills；P0 只写轻指针，不全量镜像（勿加入 MANAGED_DIRS，避免 prune 用户 skills）
+  if (has("codex")) {
+    put(
+      ".agents/skills/GENERATED.md",
+      "# GENERATED\n\nCodex 官方技能路径为仓库 `.agents/skills/`（及 `~/.agents/skills`）。\n" +
+        "本文件由 `sync.mjs` 写入的 **轻指针**：P0 **不**从 `docs/agent-config/skills/` 全量镜像到此处。\n" +
+        "需要技能时请按官方 SKILL.md 标准手工放置，或见 `harness-eng/host/CODEX-PARITY.md`。\n"
+    );
   }
 }
 

@@ -11,3 +11,14 @@
 | 踩坑回流 | `docs/agent-kb/` |
 
 本目录文件**不**承载业务红线正文。冲突以 `AGENTS.md` 与契约真相为准。
+
+## 本目录（P0）
+
+| 文件 | 用途 |
+|---|---|
+| `harness.md` | 本指针 |
+| `contract-sync.md` | 契约 sync 薄指针（Codex 始终保留） |
+| `hooks.json` | PreToolUse `^Bash$` + commit gate；须 `/hooks` 信任 |
+| `config.toml.example` | MCP/配置示例；trusted 后拷贝为 `config.toml`（勿提交密钥） |
+
+官方 skills 路径：仓库 `.agents/skills/`（见 harness-eng `host/CODEX-PARITY.md`）。

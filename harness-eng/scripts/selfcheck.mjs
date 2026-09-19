@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.6.8-dev: Codex P0 parity thaw (PARITY/MANUAL/config.toml/hooks regex).
  * 0.6.7: Pn reflux ops + FE/BE contract gate profile.
  * 0.6.4: CodeBuddy/WorkBuddy flat rules.md + FM; hooks/MCP/permissions docs.
  * 0.6.3: consumer sync.mjs freshness gate; production install URL main.
@@ -158,7 +159,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.6\.7"/.test(qYaml), "questions.yaml version 0.6.7");
+assert(/version:\s*"0\.6\.8-dev"/.test(qYaml), "questions.yaml version 0.6.8-dev");
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -222,13 +223,13 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.6\.7"/.test(manifest), "manifest 0.6.7");
+assert(/version:\s*"0\.6\.8-dev"/.test(manifest), "manifest 0.6.8-dev");
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(manifest), "manifest not leftover 0.6.2");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.6\.7"/.test(metaTmpl), "harness-meta 0.6.7");
+assert(/skill_version:\s*"0\.6\.8-dev"/.test(metaTmpl), "harness-meta 0.6.8-dev");
 assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
@@ -247,6 +248,8 @@ assert(/archive\/CHANGELOG-0\.5\.x/.test(changelog), "hot CHANGELOG points archi
 assert(!/^## 0\.5\.10/m.test(changelog), "hot CHANGELOG dropped 0.5.x sections");
 assert(/## 0\.6\.2/.test(changelog), "CHANGELOG 0.6.2");
 assert(/^## 0\.6\.7\b/m.test(changelog) && !((changelog.match(/^## 0\.6\.7[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.7");
+assert(/^## 0\.6\.8-dev\b/m.test(changelog), "CHANGELOG 0.6.8-dev");
+assert(/Codex P0|增量解冻/.test(changelog), "CHANGELOG Codex P0 Chinese entry");
 assert(/^## 0\.6\.6\b/m.test(changelog), "CHANGELOG keeps 0.6.6");
 assert(/^## 0\.6\.5\b/m.test(changelog), "CHANGELOG keeps 0.6.5");
 assert(/## 0\.6\.4/.test(changelog), "CHANGELOG keeps 0.6.4");
@@ -421,7 +424,7 @@ assert(
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.6\.7）/.test(verifyMd) && /当前 \*\*0\.6\.7\*\*/.test(verifyMd) && !/验收记录（0\.6\.5-dev）/.test(verifyMd), "VERIFY is 0.6.7");
+assert(/验收记录（0\.6\.8-dev）/.test(verifyMd) && /当前 \*\*0\.6\.8-dev\*\*/.test(verifyMd) && !/验收记录（0\.6\.5-dev）/.test(verifyMd), "VERIFY is 0.6.8-dev");
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
@@ -434,8 +437,8 @@ assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.6\.7/.test(readme), "README header version 0.6.7");
-assert(/当前 \*\*0\.6\.7\*\*/.test(readme), "README footer version 0.6.7");
+assert(/当前版本：0\.6\.8-dev/.test(readme), "README header version 0.6.8-dev");
+assert(/当前 \*\*0\.6\.8-dev\*\*/.test(readme), "README footer version 0.6.8-dev");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -446,9 +449,9 @@ const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.6\.7\*\*/.test(handbookMd), "使用手册.md version 0.6.7");
-assert(/v0\.6\.7/.test(handbookHtml), "使用手册.html version 0.6.7");
-assert(/当前 \*\*0\.6\.7\*\*/.test(quickstartMd), "QUICKSTART version 0.6.7");
+assert(/版本：\*\*0\.6\.8-dev\*\*/.test(handbookMd), "使用手册.md version 0.6.8-dev");
+assert(/v0\.6\.8-dev/.test(handbookHtml), "使用手册.html version 0.6.8-dev");
+assert(/当前 \*\*0\.6\.8-dev\*\*/.test(quickstartMd), "QUICKSTART version 0.6.8-dev");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
@@ -719,7 +722,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.6\.7"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.7");
+  assert(/version:\s*"0\.6\.8-dev"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.8-dev");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---

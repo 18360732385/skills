@@ -49,7 +49,7 @@ node scripts/harness.mjs --check-freshness --root <TARGET>
 ## 5. 非目标
 
 - [ ] **不要**期望 harness 生成 `.codebuddy/agents/`（非目标）
-- [ ] Trae / Codex 行为本版不变
+- [ ] Trae 行为本版不变；Codex 见 [CODEX-P0-MANUAL.md](CODEX-P0-MANUAL.md)（0.6.8-dev）
 
 ## 回传模板
 
