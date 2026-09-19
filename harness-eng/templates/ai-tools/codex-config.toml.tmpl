@@ -1,0 +1,45 @@
+# Codex 项目配置模板（harness-eng）
+# 落地目标：.codex/config.toml.example → 由人审阅后拷贝/合并为 .codex/config.toml
+#
+# 官方：https://developers.openai.com/codex/mcp
+# - 用户级：~/.codex/config.toml
+# - 项目级：.codex/config.toml —— **仅当项目被信任（trusted）时加载**
+# - MCP 写在 [mcp_servers.<name>]；stdio（command/args）或 http（url）
+# - **切勿**把真实密钥、token、密码写入本文件或提交进 git；用环境变量。
+# - **勿**假设仓库根 .mcp.json 一定对 Codex 生效（那是 Cursor/Claude 族路径）。
+
+# ---------------------------------------------------------------------------
+# 示例 A：stdio MCP（本地进程）
+# ---------------------------------------------------------------------------
+# [mcp_servers.context7]
+# command = "npx"
+# args = ["-y", "@upstash/context7-mcp"]
+# # 可选：允许转发的环境变量名（值来自本机环境，不要把密文写进 toml）
+# env_vars = ["LOCAL_TOKEN"]
+# enabled = true
+# startup_timeout_sec = 10
+# tool_timeout_sec = 60
+
+# ---------------------------------------------------------------------------
+# 示例 B：Streamable HTTP MCP
+# ---------------------------------------------------------------------------
+# [mcp_servers.figma]
+# url = "https://mcp.figma.com/mcp"
+# # 推荐：令牌放在环境变量，这里只写变量名
+# bearer_token_env_var = "FIGMA_OAUTH_TOKEN"
+# # http_headers = { "X-Figma-Region" = "us-east-1" }
+# enabled = true
+
+# ---------------------------------------------------------------------------
+# 可选：项目文档发现调参（通常不必改）
+# ---------------------------------------------------------------------------
+# project_doc_max_bytes = 32768
+# project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]
+
+# ---------------------------------------------------------------------------
+# Hooks：也可写在本文件 inline [[hooks.*]]；本仓库默认用 .codex/hooks.json
+# 非托管 hooks 须在 Codex 内 /hooks 审阅并信任。
+# 官方：https://developers.openai.com/codex/hooks
+# ---------------------------------------------------------------------------
+# [features]
+# hooks = true

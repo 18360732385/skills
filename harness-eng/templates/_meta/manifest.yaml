@@ -1,8 +1,9 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.6.7"
+version: "0.6.8-dev"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
+# 0.6.8-dev: Codex P0 parity (PARITY/MANUAL/config.toml/hooks regex/skills pointer).
 # 0.6.7: Pn reflux ops + FE/BE contract gate profile (GLOB_API nested packages).
 # 0.6.6: OpenAPI/Apifox optional bridge + thick module AGENTS SSOT.
 # 0.6.5: API field-table 7-col + acceptance desc/enum-remark; sync --check EOL-agnostic.
@@ -345,6 +346,13 @@ files:
     when_ai_tools: trae
     when_agent_config: false
     note: Trae 项目级 .trae/mcp.json
+  - id: mcp-codex-config
+    ladder: L4
+    template: ai-tools/codex-config.toml.tmpl
+    target: .codex/config.toml.example
+    when_ai_tools: codex
+    when_agent_config: false
+    note: "Codex project MCP/config via config.toml (trusted only; example never secrets). L5: land example still useful; sync does not invent mcp.json for Codex"
   - id: mcp-readme
     ladder: L4
     template: mcp/mcp-usage-guide.md.tmpl

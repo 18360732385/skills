@@ -111,3 +111,4 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 | 0.6.2 会话仪表盘 | 去掉 mermaid `quadrantChart`（Trae Syntax Error）；改纯文本态势 |
 | 0.6.4 CodeBuddy（正式） | 扁平 `.codebuddy/rules/*.md` 保留 FM；见 [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) |
 | 0.6.3 freshness | `harness.mjs --check-freshness`；L5 升阶必须刷新 `sync.mjs` |
+| 0.6.8-dev Codex P0 | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-P0-MANUAL.md](host/CODEX-P0-MANUAL.md) |

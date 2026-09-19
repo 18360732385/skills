@@ -2,12 +2,13 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "^Bash$",
         "hooks": [
           {
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/superpowers-commit-gate.js\" --codex",
-            "timeout": 8
+            "timeout": 8,
+            "statusMessage": "Checking Bash commit gate"
           }
         ]
       }

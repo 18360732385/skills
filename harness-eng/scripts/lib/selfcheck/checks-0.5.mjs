@@ -927,7 +927,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.6\.7"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.6\.8-dev"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -1118,7 +1118,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const aiTools057 = readDoc("ai-tools.md");
   assert(/对齐矩阵/.test(aiTools057), "ai-tools.md has 对齐矩阵");
-  assert(/部分（P2）|部分对齐（P2）/.test(aiTools057), "ai-tools.md marks Codex as partial P2");
+  assert(/部分（P2|部分对齐/.test(aiTools057) && /不默认/.test(aiTools057), "ai-tools.md marks Codex as partial P2");
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools057), "ai-tools.md marks Trae as 高");
   assert(
     /跳过|不再强制|omit|不另写/.test(aiTools057) && /1x-contract-sync|契约 sync/.test(aiTools057),
@@ -1307,7 +1307,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const syncHosts058 = readDoc("sync-hosts.md");
   assert(
-    /## Done[\s\S]*部分对齐（P2）[\s\S]*\*\*不\*\*全量发出 Codex/.test(syncHosts058),
+    /## Done[\s\S]*部分对齐/.test(syncHosts058) && /\*\*不\*\*全量发出 Codex/.test(syncHosts058),
     "sync-hosts Done Codex P2 / not full emit"
   );
   assert(/adapters\/codex/.test(syncHosts058), "sync-hosts cross-links adapters/codex.md");
@@ -1320,11 +1320,11 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const qYaml058 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(
-    /Codex（部分对齐/.test(qYaml058) && /P2/.test(qYaml058),
+    /Codex（部分对齐/.test(qYaml058) && /不默认/.test(qYaml058),
     "questions.yaml Codex option labels P2"
   );
   assert(
-    /含 Codex 仍为 P2/.test(qYaml058),
+    /含 Codex 仍为部分对齐|含 Codex 仍为 P2|P0 解冻/.test(qYaml058),
     "questions.yaml L5 option mentions Codex P2"
   );
 

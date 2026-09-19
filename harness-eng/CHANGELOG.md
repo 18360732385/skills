@@ -1,8 +1,25 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7`（当前 **0.6.7**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev`（当前 **0.6.8-dev**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.6.8-dev — 2026-09-19（Codex P0 增量解冻：PARITY + config.toml + hooks）
+
+> 0.6.7 跟进。**不**改 Trae / CodeBuddy 矩阵；**不**做 `.mdc` 全量镜像；生产装/升仍用 **`main`**（勿钉 `V0.6.X`）。
+
+### 本版要点
+
+- **Codex P0**：新增 [host/CODEX-PARITY.md](host/CODEX-PARITY.md)（AGENTS/config/MCP/hooks/skills 对照官方；PASS/PARTIAL；明确 **不做** `.mdc` 全量镜像）与 [host/CODEX-P0-MANUAL.md](host/CODEX-P0-MANUAL.md)（trust / `/hooks` / `/mcp` / skills 人验）
+- **config**：`templates/ai-tools/codex-config.toml.tmpl` → `.codex/config.toml.example`（stdio+http 注释示例；trusted-only；无密钥）
+- **hooks**：`codex-hooks.json` matcher 改为 Codex 正则 **`^Bash$`**；文档强调 `/hooks` trust
+- **skills**：文档官方 `.agents/skills`；L5 sync 仅写轻指针 `GENERATED.md`（不全量拷贝）
+- **措辞**：去掉「0.6.x 整列冻结 P2」→ **P0 增量解冻 / 仍不默认进全部推荐**；Cursor 级全家桶同构仍 out of scope
+
+### 版本钉
+
+- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.8-dev`**
+- 安装 URL 仍 **`main`**
 
 ## 0.6.7 — 2026-09-18（正式钉号：Pn 回流运营 + 前后端契约门禁剖面）
 

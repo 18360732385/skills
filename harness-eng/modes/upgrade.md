@@ -52,6 +52,13 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.6.7 → 0.6.8-dev 迁移要点
+
+1. **meta**：`skill_version` → `0.6.8-dev`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Codex（若 `ai_tools` 含 codex）**：确认 `.codex/config.toml.example` 与 hooks matcher `^Bash$`；人验 [CODEX-P0-MANUAL.md](../host/CODEX-P0-MANUAL.md)（trust · `/hooks` · `/mcp`）
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.6.8-dev`）；Codex skills 仅轻指针，不全量镜像
+4. 生产装/升仍用 **`main`**；本号为开发分支增量
+
 ## 0.6.6 → 0.6.7 迁移要点
 
 1. **meta**：`skill_version` → `0.6.7`（resume / upgrade 写 meta 时对齐 manifest）

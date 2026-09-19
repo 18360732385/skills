@@ -116,3 +116,5 @@
 ## 确认闸门（对用户提示语）
 
 词表与固定提示语见 [write-plan.md](modes/write-plan.md)（SSOT）。此处不复述等价词。
+
+| `CODEX-PARITY` | Codex 官方对齐清单（P0；不做 `.mdc` 全量镜像）：[host/CODEX-PARITY.md](host/CODEX-PARITY.md) |

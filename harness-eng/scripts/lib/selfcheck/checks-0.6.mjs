@@ -95,8 +95,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const codex060 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
   const aiTools060 = readDoc("ai-tools.md");
-  assert(/冻结/.test(codex060) && /P2/.test(codex060) && /另立项/.test(codex060), "adapters/codex.md G6 freeze");
-  assert(/冻结/.test(aiTools060) && /P2/.test(aiTools060) && /另立项/.test(aiTools060), "ai-tools.md G6 freeze");
+  // 0.6.8-dev：P0 增量解冻；仍部分对齐·不默认；不做 .mdc 全量镜像（G6「全家桶另立项」精神保留）
+  assert(/不默认/.test(codex060) && /部分对齐|P2/.test(codex060), "adapters/codex.md stays partial/不默认");
+  assert(/不做/.test(codex060) && /mdc/.test(codex060) && /另立项|out of scope/.test(codex060), "adapters/codex.md no full .mdc mirror");
+  assert(!/0\.6\.x 冻结 P2/.test(codex060) && !/整列冻结/.test(codex060), "adapters/codex.md no blanket freeze claim");
+  assert(/不默认/.test(aiTools060) && /CODEX-PARITY/.test(aiTools060), "ai-tools.md Codex P0 + 不默认");
+  assert(!/0\.6\.x 冻结 P2/.test(aiTools060), "ai-tools.md no blanket 0.6.x freeze P2");
 
   const rBadMode = runNode([
     path.join(skillRoot, "scripts/harness.mjs"),
@@ -507,7 +511,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.6.7", "manifest version exactly 0.6.7");
+  assert(verLine && verLine[1] === "0.6.8-dev", "manifest version exactly 0.6.8-dev");
 
   const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -531,9 +535,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const codexM4 = readRel("templates/ai-tools/adapters/codex.md");
   const aiToolsM4 = readDoc("ai-tools.md");
-  assert(/冻结/.test(codexM4) && /P2/.test(codexM4) && /另立项/.test(codexM4), "G6 freeze still in adapters/codex.md");
-  assert(/冻结/.test(aiToolsM4) && /另立项/.test(aiToolsM4), "G6 freeze still in ai-tools.md");
-  assert(!/全家桶对等已落地|全量 sync 已/.test(codexM4 + aiToolsM4), "G6 no new Codex parity claim");
+  assert(/不默认/.test(codexM4) && /部分对齐|P2/.test(codexM4), "G6 spirit: adapters/codex.md still partial");
+  assert(/不做/.test(codexM4) && /mdc/.test(codexM4), "G6 spirit: no .mdc full mirror");
+  assert(/另立项|out of scope/.test(codexM4 + aiToolsM4), "G6 spirit: full Cursor parity out of scope");
+  assert(!/全家桶对等已落地|全量 sync 已/.test(codexM4 + aiToolsM4), "G6 no false full-parity claim");
 }
 
 // --- 0.6.1: Trae 高 formal pin (evidence · MCP panel PASS · matrix 高) ---
@@ -833,23 +838,23 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.6.7", "current manifest pin (0.6.7; 0.6.3 formal retained in CHANGELOG)");
+  assert(manVer063 === "0.6.8-dev", "current manifest pin (0.6.8-dev; 0.6.3 formal retained in CHANGELOG)");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.7/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.6\.7/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.8-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.6\.8-dev/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.7/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.6\.8-dev/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.7/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.6\.8-dev/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -985,7 +990,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/matcher:\s*"Bash"/.test(hooksChecks064), "CLAUDE_STYLE Bash retained");
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools064), "Trae matrix still 高");
-  assert(/冻结/.test(aiTools064) && /Codex|codex/.test(aiTools064), "Codex still frozen");
+  assert(/不默认/.test(aiTools064) && /Codex|codex/.test(aiTools064), "Codex still 不默认 (P0 thaw ok)");
+  assert(!/0\.6\.x 冻结 P2/.test(aiTools064), "no blanket freeze after P0 thaw");
 }
 
 // --- 0.6.5: API field-table 7-col + sync EOL-agnostic (historical pin retained) ---
@@ -1209,10 +1215,68 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
   assert(
-    /版本：\*\*0\.6\.7\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
-    "使用手册-摘要 version 0.6.7"
+    /版本：\*\*0\.6\.8-dev\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
+    "使用手册-摘要 version 0.6.8-dev"
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
+}
+
+// --- 0.6.8-dev: Codex P0 parity thaw ---
+{
+  assert(fs.existsSync(path.join(skillRoot, "host/CODEX-PARITY.md")), "CODEX-PARITY.md");
+  assert(fs.existsSync(path.join(skillRoot, "host/CODEX-P0-MANUAL.md")), "CODEX-P0-MANUAL.md");
+  const parity068 = fs.readFileSync(path.join(skillRoot, "host/CODEX-PARITY.md"), "utf8");
+  const manual068 = fs.readFileSync(path.join(skillRoot, "host/CODEX-P0-MANUAL.md"), "utf8");
+  assert(/PASS|PARTIAL|FAIL/.test(parity068), "CODEX-PARITY has PASS/PARTIAL/FAIL");
+  assert(/不做/.test(parity068) && /mdc/.test(parity068), "CODEX-PARITY explicit no .mdc mirror");
+  assert(/developers\.openai\.com\/codex/.test(parity068), "CODEX-PARITY links official docs");
+  assert(/trust|信任/.test(manual068) && /\/hooks/.test(manual068) && /\/mcp/.test(manual068), "CODEX-P0-MANUAL checklist");
+  assert(/\.agents\/skills/.test(manual068 + parity068), "Codex skills path documented");
+
+  assert(fs.existsSync(path.join(skillRoot, "templates/ai-tools/codex-config.toml.tmpl")), "codex-config.toml.tmpl");
+  const cfgTmpl = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/codex-config.toml.tmpl"), "utf8");
+  assert(/mcp_servers/.test(cfgTmpl) && /command/.test(cfgTmpl) && /url/.test(cfgTmpl), "config tmpl stdio+http examples");
+  assert(/trusted|信任/.test(cfgTmpl) && /密钥|secret|token/i.test(cfgTmpl), "config tmpl trusted + no-secrets note");
+
+  const man068 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  assert(/mcp-codex-config/.test(man068) && /config\.toml\.example/.test(man068), "manifest lands codex config example");
+
+  const hooks068 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json"), "utf8");
+  assert(/"matcher"\s*:\s*"\^Bash\$"/.test(hooks068), "codex-hooks matcher ^Bash$");
+  assert(!/"matcher"\s*:\s*"Bash"/.test(hooks068), "codex-hooks not bare Bash string");
+
+  const adapter068 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
+  assert(/P0|增量解冻/.test(adapter068), "adapter mentions P0 thaw");
+  assert(!/0\.6\.x 冻结 P2/.test(adapter068) && !/本列车不再扩展/.test(adapter068), "adapter no total freeze claim");
+  assert(/\^Bash\$/.test(adapter068) && /\/hooks/.test(adapter068), "adapter documents regex + /hooks trust");
+
+  const aiTools068 = readDoc("ai-tools.md");
+  assert(/CODEX-PARITY/.test(aiTools068) && /增量解冻/.test(aiTools068), "ai-tools P0 thaw + PARITY link");
+  assert(/config\.toml\.example/.test(aiTools068), "ai-tools MCP table has codex config.toml");
+
+  const hostReadme068 = fs.readFileSync(path.join(skillRoot, "host/README.md"), "utf8");
+  assert(/CODEX-PARITY/.test(hostReadme068) && /CODEX-P0-MANUAL/.test(hostReadme068), "host README links Codex docs");
+  const agentIdx068 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(/CODEX-PARITY/.test(agentIdx068), "AGENT-INDEX links CODEX-PARITY");
+  assert(/CODEX-PARITY/.test(fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8")), "ROADMAP stub links CODEX-PARITY");
+
+  const changelog068 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/^## 0\.6\.8-dev\b/m.test(changelog068), "CHANGELOG 0.6.8-dev heading");
+  assert(/Codex P0|增量解冻/.test(changelog068), "CHANGELOG Chinese Codex P0 entry");
+  assert(/\*\*`main`\*\*|\*\*main\*\*/.test(changelog068), "CHANGELOG keeps main install URL");
+
+  const upgrade068 = readDoc("upgrade.md");
+  assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade has 0.6.7 → 0.6.8-dev");
+
+  const verify068 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/0\.6\.8-dev 增量验收/.test(verify068), "VERIFY 0.6.8-dev section");
+
+  const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/0\.6\.8-dev/.test(syncTmpl068), "sync tmpl id 0.6.8-dev");
+  assert(/\.agents\/skills\/GENERATED/.test(syncTmpl068), "sync writes Codex skills light pointer");
+
+  assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools068), "Trae matrix still 高 after Codex P0");
+  assert(/CODEBUDDY-PARITY/.test(aiTools068) || /WorkBuddy/.test(aiTools068), "CodeBuddy still referenced");
 }
 
 // --- root _meta dual-write (skill-package ↔ templates) ---
@@ -1233,3 +1297,4 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/_meta\/manifest\.yaml/.test(agentIndexMeta), "AGENT-INDEX links root _meta/manifest.yaml");
 }
 }
+
