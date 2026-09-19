@@ -3,7 +3,7 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。
 
-**拓扑（0.2.4）**：根目录模式 md（init/rebind/start/resume/status/advance/close）· `config/` 绑定 SSOT · `templates/` 过程态骨架。控制器本身不做具体开发。
+**拓扑（0.2.5-dev）**：根目录模式 md（init/rebind/start/resume/status/advance/close）· `config/` 绑定 SSOT · `templates/` 过程态骨架。控制器本身不做具体开发。
 
 ## 必读（写盘 / 调起前）≤8
 

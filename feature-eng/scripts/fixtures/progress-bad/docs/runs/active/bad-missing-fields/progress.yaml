@@ -1,0 +1,5 @@
+# intentionally incomplete — selfcheck 负例
+slug: "bad-missing-fields"
+title: "缺字段"
+created_at: "2026-09-19"
+# missing: stage, run_mode, invoke, handoff_policy, review_policy, path, gates, artifacts
