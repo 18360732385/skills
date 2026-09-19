@@ -4,7 +4,7 @@
 
 ## 原则（最高优先级）
 
-- 推荐包 SSOT：[`config/stage-bindings.example.yaml`](config/stage-bindings.example.yaml)。「推荐 ≠ 强制」见 [binding.md](binding.md)。
+- 推荐包 SSOT：[`config/stage-bindings.example.yaml`](../config/stage-bindings.example.yaml)。「推荐 ≠ 强制」见 [binding.md](binding.md)。
 - **首问**必停：先展示固定表（中文名 + skill + 产物），再让用户选择；未选不写盘。
 - 用户可选：①一键采用全部推荐 ②逐环改绑 ③某环指定其他已装/待装 skill ④某环暂不绑定（`null`）。
 

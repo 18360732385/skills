@@ -1,8 +1,50 @@
 # release-eng CHANGELOG
 
+## 0.3.19-dev — 2026-09-19（统一薄入口 release.mjs）
+
+### 产品
+
+- **统一薄 CLI** `scripts/release.mjs`：`help` / `modes` / 模式指引（prepare|resume|audit|seal）+ 转发既有脚本（push-gate / freeze / enrich / ai-track / note-merge / seal-check）
+- 入口**不**代写盘、不代答确认词；仪式仍按模式 md 由 Agent 调度（非 harness land）
+- **未**迁模式 md 入 `modes/`（交叉引用约 150 处， churn 高；本切片聚焦统一入口）
+- QUICKSTART / README / AGENT-INDEX / SKILL / VERIFY / selfcheck 同步；钉 **0.3.19-dev**
+
+### 版本钉
+
+- `_meta/manifest.yaml` → `0.3.19-dev`（叠在 #40 / 0.3.18-dev 之上）
+- manifest `scripts` 增列 `scripts/release.mjs`
+
+### 未做（可后续）
+
+- 模式 md 迁入 `modes/`
+- 多宿主 parity / harness 自动 land
+
 版本策略：对外权威号**只认** [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`。  
 本文件只记历史；顶栏不重复钉当前号。可移植性见 [README.md](README.md)。  
 自 `0.3.x` 起：**补丁序**递增（`0.3.1` → `0.3.2` → `0.3.3`…），勿跳升次版本号 unless 明确要求。
+
+## 0.3.18-dev — 2026-09-19（P0 门禁包 / selfcheck）
+
+### 产品
+
+- **P0 门禁包**（对齐 feature-eng 0.2.4/0.2.5-dev 最小安全皮带，**非** harness land）：
+  - [AGENT-INDEX.md](AGENT-INDEX.md)：Agent 热路径（必读/按需、模式、脚本、fixtures）
+  - [QUICKSTART.md](QUICKSTART.md)：一页纸主循环 prepare→push-gate→freeze→WritePlan→seal
+  - [VERIFY.md](VERIFY.md)：本切片验收表
+  - `scripts/selfcheck.mjs`：manifest 钉号 · 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / `shortCommitHash` / artifacts.json 形 · seal-check `--help`
+- README 新增「如何烟测」；**撤回**「无 VERIFY/selfcheck」声明
+- SKILL 链到 AGENT-INDEX / QUICKSTART / VERIFY
+
+### 版本钉
+
+- `_meta/manifest.yaml` → `0.3.18-dev`（开发钉；正式 `0.3.18` 待后续）
+- manifest `scripts` 增列 `scripts/selfcheck.mjs`
+
+### 未做（可后续）
+
+- 模式 md 迁入 `modes/`
+- 统一 `release.mjs` 薄封装
+- 多宿主 parity / harness 自动 land
 
 ## 0.3.17 — 2026-08-25（摘要分支聚合 / 身份分支化 / jobs 汇总单文件 / 渲染细节）
 

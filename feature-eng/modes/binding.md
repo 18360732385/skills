@@ -5,7 +5,7 @@
 - 流程只定义环节、硬闸（见 [stages.md](stages.md)、[gates-common.md](gates-common.md)）；产物形状见 [artifacts.md](artifacts.md)；语义见 [gates-review.md](gates-review.md)；**不写死**环节用哪个 skill。
 - 运行时环节执行者只来自 `config/stage-bindings.yaml`（SSOT；sync 后工作副本在 `.cursor/skills/feature-eng/config/`）。
 - 绑定**入库**，团队共用一套映射；个人差异走 `rebind` 提 MR，不改本地副本。
-- **推荐 ≠ 强制**：`config/stage-bindings.yaml` 与推荐包 SSOT [`config/stage-bindings.example.yaml`](config/stage-bindings.example.yaml) 里的 skill 名都是建议，不是死绑；init/rebind **首问**须用户选（一键采用推荐 / 逐环改 / 指定其他 skill）。
+- **推荐 ≠ 强制**：`config/stage-bindings.yaml` 与推荐包 SSOT [`config/stage-bindings.example.yaml`](../config/stage-bindings.example.yaml) 里的 skill 名都是建议，不是死绑；init/rebind **首问**须用户选（一键采用推荐 / 逐环改 / 指定其他 skill）。
 
 ## 可绑环节（键名固定）
 
@@ -23,7 +23,7 @@
 | **`strict`** | **控制器主动**开 Task/子代理调起绑定 skill；父会话贴指针后停在调度，等子 skill 结束再进步骤 5。**仅当宿主无法开子代理**时，才退回「请用户新会话点名 + 复制指针卡片」 |
 | **`inline`** | **控制器主动**在同会话执行：贴指针卡片 → 明示「本段戴厨师帽」→ 只写领域产物 → 结束回报路径列表 → **仍由 advance 写 progress/links** |
 
-两种策略下控制器都**不**代写领域正文。用户不是默认路由器；`inline` 不是「调度员进厨房写业务」的许可证。写盘权责见 [SKILL.md](SKILL.md)。
+两种策略下控制器都**不**代写领域正文。用户不是默认路由器；`inline` 不是「调度员进厨房写业务」的许可证。写盘权责见 [SKILL.md](../SKILL.md)。
 
 ### 环间交接策略 `handoff_policy`
 
@@ -62,7 +62,7 @@
 | A | `config/stage-bindings.yaml` 存在且含 `stages.<环节>` 键 | 「绑定配置缺失或无此环节键，请运行 feature-eng init 或检查 stage-bindings.yaml」 |
 | B | `stages.<环节>.skill` 非 `null`、非空 | 「该环节未绑定 skill，请运行 feature-eng init 或 rebind」 |
 | C | 绑定 skill **当前宿主可调起**（已安装 / 可点名） | 「绑定 skill `<name>` 当前不可调起（未安装或宿主无法点名）。请安装（须用户同意）或 rebind；推荐包见 `config/stage-bindings.example.yaml`」 |
-| D | 若本环为 `design`/`spec` 且与同 skill 多环：已读截断契约并写入指针卡片 | 「缺少 design/spec 截断指令：见 [config/truncate-contracts.yaml](config/truncate-contracts.yaml) 与下节『同 skill 多环』」 |
+| D | 若本环为 `design`/`spec` 且与同 skill 多环：已读截断契约并写入指针卡片 | 「缺少 design/spec 截断指令：见 [config/truncate-contracts.yaml](../config/truncate-contracts.yaml) 与下节『同 skill 多环』」 |
 | E | 若本环为 `implement`：已完成回退询问（SDD / executing-plans） | 「implement 未确认执行 skill：见下节『implement 回退』」 |
 
 预检通过后再进入调起步骤。`start` / `advance` 调下一环前同样适用本表。
@@ -75,7 +75,7 @@
    - 输出指针卡片（上节）
    - inline → 同会话戴厨师帽执行
    - strict → 主动 Task；仅无 Task 时退回用户新会话点名
-   另附：本环截断/回退指令（见下节「同 skill 多环」与「implement 回退」；机读 [config/truncate-contracts.yaml](config/truncate-contracts.yaml)）
+   另附：本环截断/回退指令（见下节「同 skill 多环」与「implement 回退」；机读 [config/truncate-contracts.yaml](../config/truncate-contracts.yaml)）
    若 stages.<环节> 含 input_contract：把必传字段一并写入指针卡片
 5. 子 skill 结束后：收取「产物路径列表」→ 进入 [advance.md](advance.md)
    （L1 → L2 → 硬闸 → 写盘 → handoff_policy 调下一环）
@@ -87,7 +87,7 @@
 
 `design` 与 `spec` 推荐都绑 `brainstorming`（Superpowers 无独立 writing-specs）。调起时**必须**附加截断指令，避免一口气写到 plan。
 
-**机读契约**：[config/truncate-contracts.yaml](config/truncate-contracts.yaml)（`stages.design` / `stages.spec` 的 allow/forbid；lookup 预检 D 项）。人读摘要：
+**机读契约**：[config/truncate-contracts.yaml](../config/truncate-contracts.yaml)（`stages.design` / `stages.spec` 的 allow/forbid；lookup 预检 D 项）。人读摘要：
 
 | 当前环 | 允许做到 | 禁止 |
 |---|---|---|

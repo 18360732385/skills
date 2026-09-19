@@ -2,7 +2,7 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.6.8-dev**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`templates/_meta/manifest.yaml`）
+**当前版本：0.6.8-dev**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
 **0.6.8-dev**：Codex P0 增量解冻（[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-P0-MANUAL.md](host/CODEX-P0-MANUAL.md)；不做 `.mdc` 全量镜像）。**0.6.7**（正式）：Pn 回流运营 + 前后端契约门禁剖面。**0.6.6**（正式）：OpenAPI/Apifox 可选桥 + 分册 AGENTS 厚 SSOT。**0.6.5**（正式）：API 字段表 7 列金标 + acceptance 说明/枚举/备注；sync `--check` EOL-agnostic。**0.6.4**（正式）：CodeBuddy/WorkBuddy 官方对齐（扁平 `.codebuddy/rules/*.md` 保留 FM；hooks `/hooks` 面板；MCP/permissions 文档；见 [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md)）。**0.6.3**（正式）：消费仓 `sync.mjs` freshness gate；报告壳认 `report_schema`；生产装/升 **`main`**。**0.6.2**：会话仪表盘去掉 mermaid（Trae Syntax Error），改纯文本态势。**0.6.1**：Trae **高**（[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)）。**0.6.0 计划**（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
@@ -79,4 +79,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-见 `templates/_meta/manifest.yaml` 的 `version` 字段（当前 **0.6.8-dev**）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。
+技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.6.8-dev**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。

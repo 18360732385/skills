@@ -4,6 +4,7 @@
 人读一页纸：[QUICKSTART.md](QUICKSTART.md)。闸门词表：[write-plan.md](modes/write-plan.md)。
 
 **拓扑（0.6.0）**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。根目录只留入口、手册与热路径 stub。
+**manifest 双写**：技能包权威 = 根 [`_meta/manifest.yaml`](_meta/manifest.yaml)；落地模板权威 = [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)；两边 `version` 必须一致。
 
 ## 必读（写盘前）≤8
 
@@ -33,7 +34,7 @@
 | Trae 高（0.6.1） | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) |
 | 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` |
 | 会话仪表盘 | [modes/session-dashboard.md](modes/session-dashboard.md) |
-| 版本 / 模板清单 | [CHANGELOG.md](CHANGELOG.md) · [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) |
+| 版本 / 模板清单 | [CHANGELOG.md](CHANGELOG.md) · [`_meta/manifest.yaml`](_meta/manifest.yaml)（技能包）· [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)（落地模板） |
 | 0.6.0 计划 | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
 | L5 / 多宿主黄金夹具 | `scripts/fixtures/l5-sync-golden` · `scripts/fixtures/multi-host-hooks` |
 

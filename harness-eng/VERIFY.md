@@ -31,6 +31,7 @@
 | `S_FRONTEND`+api：detect/recommended GLOB_API 前端契约包剖面；rule 12 消费层门禁 | 有 |
 | 根 AGENTS「踩坑回流」；pitfalls 路径速查骨架；lint Never do↔Pn warn | 有 |
 | upgrade `## 0.6.6 → 0.6.7`；tmpl / golden `HARNESS_SYNC_TMPL_ID=0.6.7` | 有 |
+| 根 `_meta/manifest.yaml` 存在且 version 与 `templates/_meta/manifest.yaml` 一致 | 有 |
 | 安装 URL 仍 `main`；Trae / CodeBuddy / Codex / 0.6.6 钉号不回退 | 有 |
 
 ## 0.6.6 增量验收（正式钉号 · OpenAPI 闭环 + 分册厚 SSOT）

@@ -7,9 +7,11 @@ disable-model-invocation: true
 
 # release-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.3.19-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
+Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`（`modes` / 脚本转发）。
 
 Skill = **发版仪式**。真相在 `docs/releases/`（过程域；术语见根 [CONTEXT.md](../../../CONTEXT.md)）。对用户优先中文。  
+拓扑：根目录模式 md（prepare/resume/audit/seal）· `scripts/release.mjs` 统一薄入口 · `fixtures/docs/releases/` 骨架种子。  
 Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan` · `seal` · `全部推荐` · `gates-common` · `首次发版` · `截断5` · `mergeSources` · `目录包` · `prod` · `SQL序` · `键级diff` · `jobs交叉` · `draft` · `双源去重` · `变更对象` · `artifacts.json` · `双轨研判` · `ai-track` · `逾期未归档` · `confidence` · `draft-md` · `note-merge` · `seal-check` · `Asia/Shanghai` · `来源分支功能` · `上线内容摘要`。
 
 ## 模式分流
@@ -50,4 +52,4 @@ Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan
 | 幂等 | [idempotency.md](idempotency.md) |
 | 发版单章节 | [docs/releases/templates/release-note-template.md](../../../docs/releases/templates/release-note-template.md) |
 | 索引 | [docs/releases/releases.md](../../../docs/releases/releases.md) |
-| 版本 / 可移植 | [`_meta/manifest.yaml`](_meta/manifest.yaml) · [CHANGELOG.md](CHANGELOG.md) · [README.md](README.md) |
+| 版本 / 可移植 / 门禁 | [`_meta/manifest.yaml`](_meta/manifest.yaml) · [CHANGELOG.md](CHANGELOG.md) · [README.md](README.md) · [AGENT-INDEX.md](AGENT-INDEX.md) · [QUICKSTART.md](QUICKSTART.md) · [VERIFY.md](VERIFY.md) · `scripts/selfcheck.mjs` |

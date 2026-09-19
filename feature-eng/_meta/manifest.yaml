@@ -1,6 +1,6 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.4"
+version: "0.2.6-dev"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false
@@ -9,6 +9,7 @@ description: >-
   机读 progress.yaml；人读文档中文短名（回链/测试用例/测试报告/交接等）；
   handoff_policy 主动调起；L1/L2 环间审核；domain 条件桥；Proto 可推翻。
 
+modes_dir: modes/
 modes:
   - init
   - rebind

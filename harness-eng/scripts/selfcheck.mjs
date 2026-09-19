@@ -224,6 +224,15 @@ const manifest = fs.readFileSync(
   "utf8"
 );
 assert(/version:\s*"0\.6\.8-dev"/.test(manifest), "manifest 0.6.8-dev");
+const rootManifestPath = path.join(skillRoot, "_meta/manifest.yaml");
+assert(fs.existsSync(rootManifestPath), "root _meta/manifest.yaml present");
+const rootManifest = fs.readFileSync(rootManifestPath, "utf8");
+assert(/version:\s*"0\.6\.8-dev"/.test(rootManifest), "root _meta manifest 0.6.8-dev");
+{
+  const rv = (rootManifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
+  const tv = (manifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
+  assert(rv === tv, "root _meta version matches templates/_meta");
+}
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(manifest), "manifest not leftover 0.6.2");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
