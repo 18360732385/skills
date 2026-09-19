@@ -1215,6 +1215,21 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
 }
 
-
-
+// --- root _meta dual-write (skill-package ↔ templates) ---
+{
+  const rootMetaPath = path.join(skillRoot, "_meta/manifest.yaml");
+  assert(fs.existsSync(rootMetaPath), "root _meta/manifest.yaml exists");
+  const rootMeta = fs.readFileSync(rootMetaPath, "utf8");
+  const tmplMeta = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  const rootVer = (rootMeta.match(/^version:\s*"([^"]+)"/m) || [])[1];
+  const tmplVer = (tmplMeta.match(/^version:\s*"([^"]+)"/m) || [])[1];
+  assert(!!rootVer, "root _meta has version");
+  assert(!!tmplVer, "templates _meta has version");
+  assert(rootVer === tmplVer, `root/templates _meta version match (${rootVer} === ${tmplVer})`);
+  assert(/description\s*:/.test(rootMeta), "root _meta has description");
+  assert(/description\s*:/.test(tmplMeta), "templates _meta has description");
+  const agentIndexMeta = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(/manifest 双写|技能包权威/.test(agentIndexMeta), "AGENT-INDEX documents manifest dual-write");
+  assert(/_meta\/manifest\.yaml/.test(agentIndexMeta), "AGENT-INDEX links root _meta/manifest.yaml");
+}
 }
