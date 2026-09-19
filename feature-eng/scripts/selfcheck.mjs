@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.5-dev)：静态断言 + 夹具行为断言。
- * 覆盖：manifest · 模式文件 · 11 绑定键非空 · example 对齐 · 模板 ·
+ * feature-eng selfcheck (0.2.6-dev)：静态断言 + 夹具行为断言。
+ * 覆盖：manifest · modes/ 模式文件 · feature.mjs 薄 CLI · 11 绑定键非空 · example 对齐 · 模板 ·
  * SKILL 边界 · 禁根 CONTEXT · AGENT-INDEX · QUICKSTART · truncate-contracts ·
  * status-scan · close_pitfalls · CHANGELOG · fixtures（init 骨架 / progress 形状）。
  */
@@ -30,9 +30,31 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.5-dev";
+const PIN = "0.2.6-dev";
 
 const MODES = [
+  "modes/init.md",
+  "modes/rebind.md",
+  "modes/start.md",
+  "modes/resume.md",
+  "modes/status.md",
+  "modes/advance.md",
+  "modes/close.md",
+];
+
+const MODE_EXTRAS = [
+  "modes/binding.md",
+  "modes/stages.md",
+  "modes/artifacts.md",
+  "modes/gates-common.md",
+  "modes/gates-review.md",
+  "modes/domain-bridge.md",
+  "modes/proto-bridge.md",
+  "modes/handoff.md",
+  "modes/README.md",
+];
+
+const ROOT_MODE_LEAKS = [
   "init.md",
   "rebind.md",
   "start.md",
@@ -40,6 +62,14 @@ const MODES = [
   "status.md",
   "advance.md",
   "close.md",
+  "binding.md",
+  "stages.md",
+  "artifacts.md",
+  "gates-common.md",
+  "gates-review.md",
+  "domain-bridge.md",
+  "proto-bridge.md",
+  "handoff.md",
 ];
 
 const BINDING_KEYS = [
@@ -83,7 +113,7 @@ function stageSkillMap(yamlText) {
 const manifest = read("_meta/manifest.yaml");
 assert(manifest != null, "manifest.yaml exists");
 assert(
-  manifest != null && /version:\s*"0\.2\.5-dev"/.test(manifest),
+  manifest != null && /version:\s*"0\.2\.6-dev"/.test(manifest),
   `manifest version == ${PIN}`
 );
 for (const m of [
@@ -105,10 +135,20 @@ assert(
   "manifest lists truncate-contracts.yaml"
 );
 
-// --- mode files ---
+// --- mode files (under modes/) ---
 for (const f of MODES) {
   assert(exists(f), `mode file ${f}`);
 }
+for (const f of MODE_EXTRAS) {
+  assert(exists(f), `mode extra ${f}`);
+}
+for (const f of ROOT_MODE_LEAKS) {
+  assert(!exists(f), `root must not keep mode leak ${f}`);
+}
+assert(
+  manifest != null && /modes_dir:\s*modes\//.test(manifest),
+  "manifest modes_dir == modes/"
+);
 
 // --- 11 binding keys + non-null skills ---
 const bindings = read("config/stage-bindings.yaml");
@@ -191,7 +231,7 @@ assert(
 assert(skill != null && /写盘权责/.test(skill), "SKILL 写盘权责");
 assert(skill != null && /控制器边界/.test(skill), "SKILL 控制器边界");
 assert(
-  skill != null && /0\.2\.5-dev/.test(skill),
+  skill != null && /0\.2\.6-dev/.test(skill),
   `SKILL pins ${PIN}`
 );
 assert(
@@ -204,7 +244,7 @@ assert(
 );
 
 // --- binding precheck + truncate wire ---
-const binding = read("binding.md") || "";
+const binding = read("modes/binding.md") || "";
 assert(/绑定 skill 可调起/.test(binding), "binding has 绑定 skill 可调起");
 assert(/未绑定 skill/.test(binding), "binding failure copy: 未绑定 skill");
 assert(
@@ -218,19 +258,19 @@ assert(
 assert(/同 skill 多环/.test(binding), "binding has 同 skill 多环");
 
 // start/advance reference precheck
-const start = read("start.md") || "";
+const start = read("modes/start.md") || "";
 assert(
   /绑定 skill 可调起|预检/.test(start),
   "start.md references 预检/可调起"
 );
-const advance = read("advance.md") || "";
+const advance = read("modes/advance.md") || "";
 assert(
   /绑定 skill 可调起|预检 A/.test(advance),
   "advance.md references 预检"
 );
 
 // --- no root CONTEXT rule ---
-const stages = read("stages.md") || "";
+const stages = read("modes/stages.md") || "";
 const hasContextBan =
   (skill != null && /CONTEXT\.md/.test(skill) && /禁止|不可写/.test(skill)) ||
   /禁止[^。\n]*CONTEXT\.md/.test(stages) ||
@@ -260,7 +300,7 @@ assert(
   "QUICKSTART has advance/close"
 );
 assert(/\bS\b/.test(quick) && /\bB\b/.test(quick) && /\bF\b/.test(quick), "QUICKSTART has S/B/F");
-assert(/0\.2\.5-dev/.test(index), `AGENT-INDEX mentions ${PIN}`);
+assert(/0\.2\.6-dev/.test(index), `AGENT-INDEX mentions ${PIN}`);
 
 // --- status-scan ---
 assert(exists("scripts/status-scan.mjs"), "status-scan.mjs exists");
@@ -270,14 +310,14 @@ assert(
   "status-scan looks at docs/runs/active"
 );
 assert(/slug/.test(statusScan) && /stage/.test(statusScan), "status-scan prints slug/stage");
-const statusMd = read("status.md") || "";
+const statusMd = read("modes/status.md") || "";
 assert(
   /status-scan\.mjs/.test(statusMd),
   "status.md links status-scan.mjs"
 );
 
 // --- close_pitfalls docs ---
-const close = read("close.md") || "";
+const close = read("modes/close.md") || "";
 assert(/close_pitfalls/.test(close), "close.md documents close_pitfalls");
 assert(
   /\boff\b/.test(close) && /\boptional\b/.test(close) && /\bon\b/.test(close),
@@ -288,8 +328,12 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
+  changelog != null && /^##\s+0\.2\.6-dev\b/m.test(changelog),
+  "CHANGELOG has ## 0.2.6-dev heading"
+);
+assert(
   changelog != null && /^##\s+0\.2\.5-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.2.5-dev heading"
+  "CHANGELOG retains ## 0.2.5-dev heading"
 );
 assert(
   changelog != null && /^##\s+0\.2\.4\b/m.test(changelog),
@@ -309,7 +353,7 @@ assert(/QUICKSTART|truncate-contracts|close_pitfalls|status-scan/.test(verify), 
 const readme = read("README.md") || "";
 assert(/VERIFY\.md/.test(readme), "README mentions VERIFY");
 assert(/selfcheck\.mjs/.test(readme), "README mentions selfcheck.mjs");
-assert(/0\.2\.5-dev/.test(readme), `README pins ${PIN}`);
+assert(/0\.2\.6-dev/.test(readme), `README pins ${PIN}`);
 assert(/QUICKSTART\.md/.test(readme), "README links QUICKSTART");
 
 
@@ -532,7 +576,7 @@ const fixRunsReadme = read(fixRunsReadmeRel) || "";
 assert(fixRunsReadme.includes(FIX_SLUG), "fixture runs README lists slug");
 
 // artifacts.md triage 契约字段
-const artifactsMd = read("artifacts.md") || "";
+const artifactsMd = read("modes/artifacts.md") || "";
 assert(/##\s*triage/.test(artifactsMd), "artifacts.md has ## triage");
 assert(
   /`path`/.test(artifactsMd) &&
@@ -545,7 +589,7 @@ assert(
 );
 
 // start.md 建盘契约
-const startMd = read("start.md") || "";
+const startMd = read("modes/start.md") || "";
 assert(
   /progress\.yaml/.test(startMd) && /回链\.md/.test(startMd),
   "start.md creates progress.yaml + 回链.md"
@@ -585,6 +629,47 @@ assert(scanOut.includes(FIX_SLUG), "status-scan prints fixture slug");
 assert(/\btriage\b/.test(scanOut), "status-scan prints fixture stage=triage");
 assert(/\bbounded\b/.test(scanOut), "status-scan prints fixture path=bounded");
 
+
+// --- feature.mjs thin CLI (0.2.6-dev) ---
+assert(exists("scripts/feature.mjs"), "feature.mjs exists");
+const featureCli = read("scripts/feature.mjs") || "";
+assert(/调度员不进厨房/.test(featureCli), "feature.mjs mentions 调度员不进厨房");
+assert(/status-scan\.mjs/.test(featureCli), "feature.mjs wraps status-scan");
+assert(/modes/.test(featureCli), "feature.mjs has modes subcommand");
+const featHelp = spawnSync(process.execPath, [path.join(skillRoot, "scripts/feature.mjs"), "--help"], {
+  cwd: skillRoot,
+  encoding: "utf8",
+});
+assert(featHelp.status === 0, "feature.mjs --help exit 0");
+const helpOut = `${featHelp.stdout || ""}${featHelp.stderr || ""}`;
+assert(/modes/.test(helpOut) && /status/.test(helpOut), "feature.mjs --help lists modes/status");
+assert(/调度员不进厨房/.test(helpOut), "feature.mjs --help keeps 调度员不进厨房");
+const featModes = spawnSync(process.execPath, [path.join(skillRoot, "scripts/feature.mjs"), "modes"], {
+  cwd: skillRoot,
+  encoding: "utf8",
+});
+assert(featModes.status === 0, "feature.mjs modes exit 0");
+const modesOut = `${featModes.stdout || ""}`;
+assert(/modes\/init\.md/.test(modesOut), "feature.mjs modes lists modes/init.md");
+assert(/advance/.test(modesOut) && /close/.test(modesOut), "feature.mjs modes lists advance/close");
+const featStatus = spawnSync(
+  process.execPath,
+  [path.join(skillRoot, "scripts/feature.mjs"), "status", "--cwd", path.join(skillRoot, FIX_GOOD)],
+  { cwd: skillRoot, encoding: "utf8" }
+);
+assert(featStatus.status === 0, "feature.mjs status on fixture exit 0");
+const featStatusOut = `${featStatus.stdout || ""}${featStatus.stderr || ""}`;
+assert(featStatusOut.includes(FIX_SLUG), "feature.mjs status prints fixture slug");
+
+// SKILL/INDEX link into modes/
+assert(
+  skill != null && /modes\/init\.md/.test(skill),
+  "SKILL links modes/init.md"
+);
+assert(/modes\//.test(index), "AGENT-INDEX links modes/");
+assert(/modes\//.test(quick), "QUICKSTART links modes/");
+assert(/feature\.mjs/.test(skill || ""), "SKILL mentions feature.mjs");
+assert(/feature\.mjs/.test(index), "AGENT-INDEX mentions feature.mjs");
 
 // --- report ---
 const total = ok.length + fail.length;

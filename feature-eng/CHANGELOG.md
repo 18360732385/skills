@@ -1,5 +1,17 @@
 # feature-eng CHANGELOG
 
+## 0.2.6-dev — 2026-09-19
+
+V0.6.X 开发钉。相对 0.2.5-dev：**不**改环节语义与默认绑定 skill 名。叠在 #39（0.2.5-dev 夹具/自检）之上。
+
+- **modes/**：模式与契约 md 迁入 `modes/`（init/rebind/start/resume/status/advance/close/binding/stages/artifacts/gates-*/domain-bridge/proto-bridge/handoff）；根目录只留入口与索引；`modes/README.md` 索引表
+- **薄 CLI**：`scripts/feature.mjs`（`help` / `modes` / `status`→status-scan）；调度员不进厨房——不写 progress、不调子 skill、不代答硬闸
+- **文档**：SKILL / AGENT-INDEX / QUICKSTART / README / VERIFY / selfcheck 全量改链；钉 **0.2.6-dev**
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.6-dev | 2026-09-19 | modes/ 迁入 + feature.mjs 薄 CLI；V0.6.X 开发钉 |
+
 ## 0.2.5-dev — 2026-09-19
 
 V0.6.X 开发钉。相对 0.2.4：**不**改环节语义与默认绑定 skill 名。
@@ -21,6 +33,7 @@ V0.6.X 开发钉。相对 0.2.4：**不**改环节语义与默认绑定 skill �
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.2.6-dev | 2026-09-19 | modes/ 迁入 + feature.mjs 薄 CLI；V0.6.X 开发钉 |
 | 0.2.5-dev | 2026-09-19 | 夹具 + 行为自检；V0.6.X 开发钉（不改默认绑定 skill 名） |
 | 0.2.4 | 2026-09-17 | 正式钉号；P0 索引/selfcheck + P1 预检/截断/QUICKSTART + P2 status-scan / close_pitfalls（不改默认绑定 skill 名） |
 | 0.2.3 | 2026-09-17 | 过程态迁至 `docs/runs/{active\|archive}/`（与 superpowers 平级）；close 物理归档；人读文件中文短名（回链/测试用例/测试报告/交接/术语增量等），机读保留 `progress.yaml`；L2 为 `审核-<stage>.md`；旧 `docs/superpowers/runs` 兼容提示 |

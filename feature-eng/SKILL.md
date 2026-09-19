@@ -8,10 +8,11 @@ disable-model-invocation: true
 
 # feature-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.5-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
-**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.6-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
+**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/feature.mjs`（`modes` / `status`）。
 
-Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](stages.md)；产物形状见 [artifacts.md](artifacts.md)（L1）；环间语义见 [gates-review.md](gates-review.md)（L2）；环节与 skill **解耦**，运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（init/rebind **首问**可改；见 [binding.md](binding.md)）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。
+Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](modes/stages.md)；产物形状见 [artifacts.md](modes/artifacts.md)（L1）；环间语义见 [gates-review.md](modes/gates-review.md)（L2）；环节与 skill **解耦**，运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（init/rebind **首问**可改；见 [binding.md](modes/binding.md)）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。  
+拓扑：`modes/` 模式规格 · `config/` 绑定 SSOT · `templates/` 过程态骨架 · `scripts/feature.mjs` 薄 CLI。
 
 ## 控制器边界（最高优先级）
 
@@ -33,37 +34,37 @@ Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](stag
 
 | 意图 | 模式 | Read |
 |---|---|---|
-| 首次使用 / 初始化绑定 | `init` | [init.md](init.md) |
-| 改环节↔skill 映射 | `rebind` | [rebind.md](rebind.md) |
-| 新主题开工 | `start` | [start.md](start.md) |
-| 续跑进行中主题 | `resume` | [resume.md](resume.md) |
-| 收口归档 | `close` | [close.md](close.md) |
+| 首次使用 / 初始化绑定 | `init` | [init.md](modes/init.md) |
+| 改环节↔skill 映射 | `rebind` | [rebind.md](modes/rebind.md) |
+| 新主题开工 | `start` | [start.md](modes/start.md) |
+| 续跑进行中主题 | `resume` | [resume.md](modes/resume.md) |
+| 收口归档 | `close` | [close.md](modes/close.md) |
 
-`start`/`resume` 之后用户声称当前环完成 → [advance.md](advance.md)。  
-未指定：无绑定 → `init`；有 `docs/runs/active/` 未完成 → [status.md](status.md)；否则问 `start` 还是 `init`。
+`start`/`resume` 之后用户声称当前环完成 → [advance.md](modes/advance.md)。  
+未指定：无绑定 → `init`；有 `docs/runs/active/` 未完成 → [status.md](modes/status.md)；否则问 `start` 还是 `init`。
 
 ## 硬闸（闸名索引）
 
 | 闸 | 触发时机 | 正文 |
 |---|---|---|
-| 绑定闸 | 调起前 | [binding.md](binding.md) |
-| 分诊闸 | `start` | [gates-common.md](gates-common.md) |
-| 定稿桥 | 设计确认后 | [domain-bridge.md](domain-bridge.md) |
-| Proto 桥 | 环 5 结束 | [proto-bridge.md](proto-bridge.md) |
-| 环间 L1 | advance | [artifacts.md](artifacts.md) |
-| 环间 L2 | advance | [gates-review.md](gates-review.md) |
-| Pre-Impl / Verify / Close | 对应环 | gates-common / close |
+| 绑定闸 | 调起前 | [binding.md](modes/binding.md) |
+| 分诊闸 | `start` | [gates-common.md](modes/gates-common.md) |
+| 定稿桥 | 设计确认后 | [domain-bridge.md](modes/domain-bridge.md) |
+| Proto 桥 | 环 5 结束 | [proto-bridge.md](modes/proto-bridge.md) |
+| 环间 L1 | advance | [artifacts.md](modes/artifacts.md) |
+| 环间 L2 | advance | [gates-review.md](modes/gates-review.md) |
+| Pre-Impl / Verify / Close | 对应环 | [gates-common.md](modes/gates-common.md) / [close.md](modes/close.md) |
 
 ## 旁路（按需 Read）
 
 | 何时 | Read |
 |---|---|
-| 环节表 / 裁剪 / runs 目录约定 | [stages.md](stages.md) |
-| L1 勾选 | [artifacts.md](artifacts.md) |
-| L2 审核 | [gates-review.md](gates-review.md) |
-| 硬闸 / 短确认卡片 | [gates-common.md](gates-common.md) |
-| 定稿桥 / Proto 桥 | domain-bridge / proto-bridge |
-| lookup / 主动调起 / 截断契约 | [binding.md](binding.md) · [config/truncate-contracts.yaml](config/truncate-contracts.yaml) |
+| 环节表 / 裁剪 / runs 目录约定 | [stages.md](modes/stages.md) |
+| L1 勾选 | [artifacts.md](modes/artifacts.md) |
+| L2 审核 | [gates-review.md](modes/gates-review.md) |
+| 硬闸 / 短确认卡片 | [gates-common.md](modes/gates-common.md) |
+| 定稿桥 / Proto 桥 | [domain-bridge.md](modes/domain-bridge.md) / [proto-bridge.md](modes/proto-bridge.md) |
+| lookup / 主动调起 / 截断契约 | [binding.md](modes/binding.md) · [config/truncate-contracts.yaml](config/truncate-contracts.yaml) |
 | 一页纸 | [QUICKSTART.md](QUICKSTART.md) |
-| 交接 | [handoff.md](handoff.md) |
+| 交接 | [handoff.md](modes/handoff.md) |
 | 模板 | `templates/`（progress.yaml · 回链.md · 测试用例.md · 测试报告.md · runs-README.md） |
