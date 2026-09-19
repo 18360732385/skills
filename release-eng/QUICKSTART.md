@@ -1,6 +1,6 @@
 # release-eng 一页纸
 
-点名本 skill → 按意图走模式。热路径索引：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。
+点名本 skill → 按意图走模式。热路径索引：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`（`modes` / `push-gate` / `freeze` / `seal-check` …）。
 
 ## 主循环
 
@@ -14,6 +14,7 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 ```
 
 只读检查：`audit`。已上线归档：`seal`。骨架缺失：[bootstrap.md](bootstrap.md) 从 fixtures 种子。
+列模式 / 转发脚本：`node scripts/release.mjs modes`。
 
 ## 模式一句话
 

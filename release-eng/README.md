@@ -4,13 +4,14 @@
 
 ## 版本
 
-权威号只认 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（当前 **0.3.18-dev**）。  
+权威号只认 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（当前 **0.3.19-dev**）。  
 [CHANGELOG.md](CHANGELOG.md) 为历史；[`docs/releases/releases.md`](../../../docs/releases/releases.md) 过程索引只**引用** manifest，不另钉号。  
 `0.3.x`：**补丁序**（权威号见 manifest），勿用本轮改动跳升 `0.4.0`。
 
 ## 入口
 
 - 仪式入口：[SKILL.md](SKILL.md)
+- 薄 CLI：`node scripts/release.mjs`（modes / 脚本转发；不代写盘）
 - 一页纸：[QUICKSTART.md](QUICKSTART.md)
 - Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)
 - 验收：[VERIFY.md](VERIFY.md)
@@ -19,9 +20,11 @@
 
 ```bash
 cd release-eng && node scripts/selfcheck.mjs
+node scripts/release.mjs --help
+node scripts/release.mjs modes
 ```
 
-须 `PASS … (release-eng 0.3.18-dev)` 且 exit 0。覆盖：manifest 钉号 · 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / artifacts 形 · seal-check `--help`。
+须 `PASS … (release-eng 0.3.19-dev)` 且 exit 0。覆盖：manifest 钉号 · 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / artifacts 形 · seal-check `--help`。
 
 ## 可移植性
 
