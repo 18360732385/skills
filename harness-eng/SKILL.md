@@ -1,8 +1,10 @@
 ---
 name: harness-eng
 description: >-
-  施工仪式：开干闸、形态诊断、覆盖打分、审计、落地、续跑、流水线、升阶、填充（MCP/精填）、报告。
-  用户点名 harness-eng，或说开干 / 形态 / 覆盖 / 贴顶 / gate / 打分，
+  施工仪式：把 Agent Harness 工程化落地到目标仓库——生成/补齐 AGENTS.md、AI 编码规则
+  （如 .cursor/rules）、契约文档（func/api/db/redis/jobs）、hooks、MCP 配置、知识回流与规划目录。
+  用户点名 harness-eng，或说开干 / 落地 / 形态 / 覆盖 / 贴顶 / gate / 打分 / 审计 / 续跑 / 流水线 / 升阶 / 填充，
+  或要求生成 AGENTS.md / 仓库工程化 / AI 协作规则 / 文档与代码同步，
   或定时 / Cron / Scheduler / jobs 契约填充时使用。
 ---
 
@@ -10,7 +12,7 @@ description: >-
 
 Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持久约束。  
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
-**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。  
+**Agent 热路径 · 读侧路由 SSOT**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。  
 拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。  
 一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
@@ -82,33 +84,14 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 
 ## 分支 → Read
 
+读侧路由 SSOT 在 [AGENT-INDEX.md](AGENT-INDEX.md)（必读≤8 + 按需表；本页不再铺全量，防双表漂移）。高频三条指针：
+
 | 何时 | Read |
 |---|---|
 | 写盘确认 / 预授权 / Windows JSON | [write-plan.md](modes/write-plan.md) |
-| 探测 / 指纹 | [detect.md](modes/detect.md) |
-| 推荐包 / 全部推荐 | [recommended-profile.md](modes/recommended-profile.md) |
-| 升阶 | [upgrade.md](modes/upgrade.md) |
-| 冲突 / merge / mcp | [conflict-policy.md](modes/conflict-policy.md) |
-| 流水线骨架战役 | [pipeline.md](modes/pipeline.md) |
-| 流水线填充战役（骨架 Done 后） | [pipeline-fill.md](modes/pipeline-fill.md) |
-| 填充总则与子模式 | [fill/README.md](fill/README.md) → [fill.md](fill/fill.md) |
-| 打分 / score-policy / 覆盖裁决 | [fill-score.md](fill/fill-score.md) · [glossary.md](glossary.md)「覆盖裁决」 |
-| 形态诊断 | [fill-morph.md](fill/fill-morph.md) · glossary 形态轴 |
-| 开干闸 | [fill-gate.md](fill/fill-gate.md) · glossary 开干轴 |
-| 深·真·全 / draft vs SSOT | [truth-quality.md](modes/truth-quality.md) |
-| 多 Agent worker | [fill-workers.md](fill/fill-workers.md) · [fill-truths-agents.md](fill/fill-truths-agents.md) |
-| 加契约域 / packs / morph | [domain-extend.md](modes/domain-extend.md) · `templates/_meta/domains.yaml` · `domain-packs.yaml` · `morph-required.yaml` |
-| AI 工具面 | [ai-tools.md](host/ai-tools.md) · [sync-hosts.md](host/sync-hosts.md) · `templates/ai-tools/adapters/` |
-| 自动填充（仅脚本、对话不推荐） | [fill-truths-auto.md](fill-truths-auto.md) → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
-| live 校准 | `scripts/fill-calibrate-live.mjs`（`--help`） |
-| HTML 报告 | `scripts/fill-report-html.mjs`（`--help`）；score 后【推荐】 |
-| 会话仪表盘 | [session-dashboard.md](modes/session-dashboard.md) · `scripts/session-dash.mjs`（工程轮末尾；meta 轮省略） |
-| 模板清单 / 版本 | [templates/_meta/manifest.yaml](templates/_meta/manifest.yaml) · [CHANGELOG.md](CHANGELOG.md) |
-| 写盘入口 | **`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；`land.mjs` 薄别名；L5 拒直渲生成宿主路径） |
-| 渲染脚本（内部；非 L5 委托） | `scripts/render.mjs`（`--help` 指向 harness；勿当 Agent 主路径） |
-| 0.6.0 计划（已收口） | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
-| 0.6.1 Trae 高 | [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) · [host/TRAE-PARITY.md](host/TRAE-PARITY.md) |
-| 0.6.2 会话仪表盘 | 去掉 mermaid `quadrantChart`（Trae Syntax Error）；改纯文本态势 |
-| 0.6.4 CodeBuddy（正式） | 扁平 `.codebuddy/rules/*.md` 保留 FM；见 [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) |
-| 0.6.3 freshness | `harness.mjs --check-freshness`；L5 升阶必须刷新 `sync.mjs` |
-| 0.6.8-dev Codex P0 | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-P0-MANUAL.md](host/CODEX-P0-MANUAL.md) |
+| 打分 / score-policy / 覆盖裁决 | [fill-score.md](fill/fill-score.md) |
+| AI 工具面 / 多宿主 / 加契约域 | [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md) |
+
+旁路脚本：`scripts/fill-calibrate-live.mjs`（live 校准）· `scripts/fill-report-html.mjs`（HTML 报告，score 后【推荐】），`--help` 自查。  
+写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；`land.mjs` 薄别名；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。  
+版本里程碑（0.6.x 各行：Trae 高 / CodeBuddy / freshness / Codex P0…）查 [CHANGELOG.md](CHANGELOG.md)，本页不铺版本行。
