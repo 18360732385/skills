@@ -6,6 +6,7 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`。
 
+0.2.9-dev 要点：M1–M6 monorepo 摩擦优化（layout/packages/docs_root / verify_commands / 单 Spec API·UI·测试矩阵 / 根 README SSOT / workdir_policy / monorepo_bootstrap 剥离）；叠在 0.2.8-dev 之上。
 0.2.8-dev 要点：O8–O14 摩擦优化（sibling_repos / CORS·Proxy 联调门禁 / 绿地前端 mktemp 配方 / pinned_deps·Node×jsdom / proto 轻量草图 / 会话存储枚举 / api_base_mode）；叠在 0.2.7-dev 之上。
 0.2.7-dev 要点：O1–O7 摩擦优化（chef_mode / repo_bootstrap / authorized_by / env_notes / review_policy 探测 / 中文文件名契约 / close 双归档检查单）；叠在 0.2.6-dev 之上。
 0.2.6-dev 要点：`modes/` + 薄 CLI `feature.mjs` + 加厚夹具（`advance-gate` / `bindings-bad` / `close-ready`）与行为自检；叠在 0.2.5-dev 之上。  

@@ -38,6 +38,15 @@
 - **通过**：Spec（`artifacts.spec`）内有可指认的 **「消费契约」** 小节，**或** 明确链接到 api sibling 的 Spec/OpenAPI（路径或 URL 非空）。回链「跨仓」表已填。
 - **失败**：列缺失；不得过 Shared Understanding 后假装契约已对齐；不得进 Pre-Impl（F+跨仓 web）。
 
+## 同仓 layout / Spec 章节闸（M1 / M3）
+
+适用：`progress.layout=monorepo`，或 `packages` 同时含 `role=api` 与 `role=web`。
+
+- **M1**：`packages` 已填；`docs_root` 默认 `docs/`；**禁止** `sibling_repos` 指向与 `packages[].path` 同仓同路径。
+- **M3**：单 Spec 含可指认 `## API` / `## UI` / `## 测试矩阵`（或等价标题）；两侧路径或声明至少各一。
+- **通过**：上述 L1 勾选成立（见 artifacts spec 节）。
+- **失败**：缺章节或仅一侧 → 不得写 `gates.design_confirmed` 完备宣称；F 路径不得进 Pre-Impl 假装双端已设计。
+
 ## 联调矩阵 CORS / Dev Proxy（O9）
 
 适用：**Full + UI**（本仓有前端树，或 `sibling_repos` 含 web，或 Spec 含页面/联调）。在 **Pre-Impl** 与 **Gate** 检查 `integration_ready`（可写 progress 旁注或 `回链.md`「其他」）：
@@ -92,7 +101,7 @@
 
 ## Pre-Impl 闸（环 7b）
 
-- F 通过：artifacts 中 proto（若 entered）与 testdesign 两节 L1 勾选全过；testdesign/proto 适用时 L2 已过；适用时 O8 消费契约 / O9 联调矩阵已满足。
+- F 通过：artifacts 中 proto（若 entered）与 testdesign 两节 L1 勾选全过；testdesign/proto 适用时 L2 已过；适用时 O8 消费契约 / O9 联调矩阵 / M3 monorepo Spec 章节已满足。
 - B 通过：proto（若 entered）勾选全过；**无** TestDesign 要求；适用时 O9 同上。
 - 失败：停；按勾选表列缺失项；不得进环 8。
 - 通过后按 `handoff_policy` 主动调起 implement。
@@ -105,6 +114,8 @@
 ## Verify 闸（环 10，仅 F）
 
 - 通过：artifacts verify 节 L1 全过 + L2（离开 verify）过（含每条用例结论与残留规则）；`env_notes` 适用时含 `api_base_mode`（O14）与必要的 `pinned_deps`（O11）。
+- **M2**：若 `layout=monorepo` 或 `env_notes.verify_commands` 非空 → **每一条** verify_commands 已 exit 0（报告可指认），缺一不得写 `gates.verify`。
+- **M5**：命令按 `workdir_policy`（默认 `repo_root`）从仓根书写。
 - 失败：进环 10b 排障（先复现再改），修完回本环复测失败项。
 
 ## Close 闸（环 11）

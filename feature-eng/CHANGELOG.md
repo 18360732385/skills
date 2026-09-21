@@ -1,5 +1,21 @@
 # feature-eng CHANGELOG
 
+## 0.2.9-dev — 2026-09-21
+
+V0.6.X 开发钉。相对 0.2.8-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #48（O8–O14）之上。本版落实同仓 monorepo 摩擦优化 **M1–M6**（跨仓 O15–O19 明确不在范围）：
+
+- **M1 layout/packages**：progress `layout: monorepo|multi_repo`（null≈multi）；`packages: [{ path, role: api|web|other }]`；`docs_root` 默认 `docs/`；monorepo 禁止 sibling_repos 指向同仓包路径；start/回链/artifacts
+- **M2 verify_commands**：`env_notes.verify_commands: string[]`；verify L1 全员 exit 0 才写 `gates.verify`；QUICKSTART 双端示例
+- **M3 单 Spec FE+BE**：artifacts monorepo profile 强制 `## API` / `## UI` / `## 测试矩阵`；两侧路径或声明
+- **M4 根 README SSOT**：close L1 根 README 含 backend+frontend 启动；子包 README 短链到根
+- **M5 workdir_policy**：`env_notes.workdir_policy: repo_root`（monorepo 默认）；文档命令从仓根书写
+- **M6 monorepo_bootstrap**：init/start 剥离子包 `docs/runs|superpowers`；可选 `HISTORY-split-repos.md`
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.9-dev | 2026-09-21 | M1–M6 monorepo 摩擦优化；V0.6.X 开发钉 |
+| 0.2.8-dev | 2026-09-21 | O8–O14 摩擦优化；V0.6.X 开发钉 |
+
 ## 0.2.8-dev — 2026-09-21
 
 V0.6.X 开发钉。相对 0.2.7-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #47（O1–O7）之上。本版落实摩擦优化 **O8–O14**：

@@ -77,7 +77,7 @@ gates:
 # implement 可选环境核验：null | skipped | verified（路径/说明可放 回链.md）
 env_verified: null
 
-# 环境备注（O4 / O11 / O14）：运行时与声明目标不一致时必填；结构见下注释
+# 环境备注（O4 / O11 / O14 / M2 / M5）：运行时与声明目标不一致时必填；结构见下注释
 # env_notes:
 #   runtime: "Node 20.11"            # 实际运行版本/工具链
 #   target: ">=22"                   # 项目声明目标（如 package.json engines.node）
@@ -87,9 +87,30 @@ env_verified: null
 #     - name: jsdom
 #       version: "^24.1.3"
 #       reason: "jsdom@30 + Node20 → webidl.util.markAsUncloneable"
+#   verify_commands:                 # M2：同仓多命令验收；每条须 exit 0 才写 gates.verify
+#     - "mvn -f backend test"
+#     - "npm --prefix frontend test"
+#     - "npm --prefix frontend run build"
+#   workdir_policy: "repo_root"      # M5：monorepo 默认 repo_root；文档命令从仓根书写
 env_notes: null
 
+# 布局（M1）：monorepo | multi_repo；null/缺省 = multi_repo（单包或跨仓）
+# layout: monorepo
+layout: null
+
+# 同仓包清单（M1；layout=monorepo 时建议填）：[{ path, role: api|web|other }]
+# packages:
+#   - path: backend
+#     role: api
+#   - path: frontend
+#     role: web
+packages: null
+
+# 典礼文档根（M1）；默认仓库根 docs/
+docs_root: "docs/"
+
 # 跨仓配对（O8，可选）：用户提到配对后端/前端时 start/grill 强制填至少一条
+# layout=monorepo 时禁止 sibling_repos 指向与 packages[].path 同仓同路径（用 packages，勿伪跨仓）
 # sibling_repos:
 #   - url: "https://github.com/org/account-login-java"
 #     role: api          # api | web

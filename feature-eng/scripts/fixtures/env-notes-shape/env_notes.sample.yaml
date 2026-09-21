@@ -1,9 +1,14 @@
-# O11 / O14 字段形状金标（片段）
+# O11 / O14 / M2 / M5 字段形状金标（片段）
 env_notes:
   runtime: "Node 20.11.1"
   target: ">=22"
   mismatch_reason: "CI 仍 Node20；本地对齐 CI"
   api_base_mode: proxy
+  workdir_policy: repo_root
+  verify_commands:
+    - "mvn -f backend test"
+    - "npm --prefix frontend test"
+    - "npm --prefix frontend run build"
   pinned_deps:
     - name: jsdom
       version: "^24.1.3"

@@ -57,6 +57,11 @@
 - [ ] 若有 `docs/superpowers/ARCHIVE.md`：已按日期倒序追加（「提交」列填代表性 commit，若有）
 - [ ] `progress.artifacts.spec|plan` 指针已改为 archive 路径（若原先指向非 archive）
 
+### 根 README 双端启动 SSOT（M4，layout=monorepo 时必勾）
+- [ ] 仓库根 `README.md` 含 **backend** 与 **frontend**（或 `packages` 中 api+web 路径）的启动/运行命令可指认
+- [ ] 子包 README（如 `backend/README.md` / `frontend/README.md`）仅保留**短链**到根 README 对应节（勿另维护漂移的长启动说明）
+- [ ] 非 monorepo → 本小节 N/A，跳过
+
 ### 一致性（可选机检）
 - [ ] 可选：`node scripts/close-check.mjs --cwd <消费仓根> --slug <slug>`（校验 archive 存在、stage=done、gates.close、活跃目录已空）
 - [ ] 交付摘要已输出
@@ -66,3 +71,4 @@
 - 在适用范围内，superpowers 最小收口未完成时，禁止宣称「已交付」。
 - 实现已合入但索引仍标「进行中」（有 README 表时）= 漏收口；必须先补收口再当作交付完成。
 - active 未移入 archive 视为 runs 收口未完成（B/F）。
+- `layout=monorepo` 时根 README 缺 backend 或 frontend 启动命令 → 不得宣称「已交付」（M4）。

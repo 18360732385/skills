@@ -1,0 +1,10 @@
+# M1 字段形状金标（片段）
+layout: monorepo
+packages:
+  - path: backend
+    role: api
+  - path: frontend
+    role: web
+docs_root: "docs/"
+# layout=monorepo 时 sibling_repos 不得指向本仓 backend/frontend
+sibling_repos: null

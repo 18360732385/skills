@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.8-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.9-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 模式文件 · feature.mjs 薄 CLI · 11 绑定键非空 · example 对齐 · 模板 ·
  * SKILL 边界 · 禁根 CONTEXT · AGENT-INDEX · QUICKSTART · truncate-contracts ·
  * status-scan · close_pitfalls · CHANGELOG · fixtures（init / progress-bad / advance-gate /
@@ -31,7 +31,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.8-dev";
+const PIN = "0.2.9-dev";
 
 const MODES = [
   "modes/init.md",
@@ -329,8 +329,12 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
+  changelog != null && /^##\s+0\.2\.9-dev\b/m.test(changelog),
+  "CHANGELOG has ## 0.2.9-dev heading"
+);
+assert(
   changelog != null && /^##\s+0\.2\.8-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.2.8-dev heading"
+  "CHANGELOG retains ## 0.2.8-dev heading"
 );
 assert(
   changelog != null && /^##\s+0\.2\.7-dev\b/m.test(changelog),
@@ -396,6 +400,9 @@ const PROGRESS_TOP_KEYS = [
   "gates",
   "env_verified",
   "env_notes",
+  "layout",
+  "packages",
+  "docs_root",
   "sibling_repos",
   "accepted_residual",
 ];
@@ -537,6 +544,18 @@ assert(
 assert(
   /^env_notes:\s*null\b/m.test(progressTmpl),
   "progress.tmpl has env_notes: null"
+);
+assert(
+  /^layout:\s*null\b/m.test(progressTmpl),
+  "progress.tmpl has layout: null"
+);
+assert(
+  /^packages:\s*null\b/m.test(progressTmpl),
+  "progress.tmpl has packages: null"
+);
+assert(
+  /^docs_root:\s*"docs\/"/m.test(progressTmpl),
+  'progress.tmpl has docs_root: "docs/"'
 );
 
 const fixProgress = read(fixProgressRel) || "";
@@ -1185,6 +1204,107 @@ assert(/O8|sibling_repos/.test(changelog || ""), "CHANGELOG mentions O8/sibling_
 assert(/## 0\.2\.7-dev/.test(changelog || ""), "CHANGELOG retains ## 0.2.7-dev");
 assert(/sibling-repos-shape/.test(fixReadme), "fixtures README lists sibling-repos-shape");
 assert(/env-notes-shape/.test(fixReadme), "fixtures README lists env-notes-shape");
+
+// =====================================================================
+// 0.2.9-dev：M1–M6 monorepo 摩擦优化断言
+// =====================================================================
+
+// M1 layout / packages / docs_root
+assert(/layout:\s*null|layout: monorepo|layout\|multi_repo|monorepo \| multi_repo/.test(progressTmpl), "M1 progress.tmpl has layout");
+assert(/packages:\s*null|packages:/.test(progressTmpl), "M1 progress.tmpl has packages");
+assert(/docs_root/.test(progressTmpl), "M1 progress.tmpl has docs_root");
+assert(/role:\s*api|api\|web\|other/.test(progressTmpl), "M1 progress.tmpl documents role api|web|other");
+assert(/同仓布局|layout \/ packages/.test(huilianTmpl), "M1 回链.tmpl has 同仓布局 section");
+assert(/layout|packages|docs_root/.test(startMd), "M1 start.md has layout/packages");
+assert(/layout|packages|docs_root/.test(artifactsMd), "M1 artifacts.md has layout/packages");
+assert(new RegExp("^layout\\s*:", "m").test(fixProgress), "M1 fixture has layout");
+assert(new RegExp("^packages\\s*:", "m").test(fixProgress), "M1 fixture has packages");
+assert(new RegExp("^docs_root\\s*:", "m").test(fixProgress), "M1 fixture has docs_root");
+assert(new RegExp("^layout\\s*:", "m").test(advProgress), "M1 advance-gate has layout");
+assert(new RegExp("^layout\\s*:", "m").test(closeProgress), "M1 close-ready has layout");
+
+const monoSampleRel = "scripts/fixtures/monorepo-layout-shape/layout.sample.yaml";
+const monoBadRel = "scripts/fixtures/monorepo-layout-shape/layout-conflict.bad.yaml";
+assert(exists(monoSampleRel), "M1 monorepo-layout-shape sample exists");
+assert(exists(monoBadRel), "M1 monorepo conflict bad sample exists");
+const monoSample = read(monoSampleRel) || "";
+const monoBad = read(monoBadRel) || "";
+assert(/layout:\s*monorepo/.test(monoSample), "M1 sample layout=monorepo");
+assert(/path:\s*backend/.test(monoSample) && /path:\s*frontend/.test(monoSample), "M1 sample has backend+frontend paths");
+assert(/role:\s*api/.test(monoSample) && /role:\s*web/.test(monoSample), "M1 sample has api+web roles");
+assert(/docs_root:/.test(monoSample), "M1 sample has docs_root");
+
+function extractPackagePaths(yamlText) {
+  return [...yamlText.matchAll(/path:\s*["']?([^"'\n]+)/g)].map((m) => m[1].trim());
+}
+function extractSiblingHints(yamlText) {
+  // url + spec_path values as strings that might collide with package paths
+  const vals = [];
+  for (const m of yamlText.matchAll(/(?:url|spec_path):\s*["']?([^"'\n]+)/g)) {
+    vals.push(m[1].trim());
+  }
+  return vals;
+}
+function monorepoSiblingConflict(yamlText) {
+  if (!/layout:\s*monorepo/.test(yamlText)) return [];
+  if (!/sibling_repos:\s*\n\s*-/.test(yamlText) && !/sibling_repos:\s*\[/.test(yamlText)) {
+    // null or empty — OK
+    if (/sibling_repos:\s*null/.test(yamlText) || !/sibling_repos:/.test(yamlText)) return [];
+  }
+  const pkgs = extractPackagePaths(yamlText);
+  const hints = extractSiblingHints(yamlText.split(/sibling_repos:/)[1] || "");
+  const issues = [];
+  for (const h of hints) {
+    for (const pk of pkgs) {
+      // same-remote / same-path collision: hint contains package path as path segment
+      if (h === pk || h.endsWith("/" + pk) || h.includes("/" + pk + "/") || h.startsWith("./" + pk) || h === "./" + pk) {
+        issues.push(`sibling points at package path ${pk} via ${h}`);
+      }
+    }
+  }
+  return issues;
+}
+assert(
+  monorepoSiblingConflict(monoSample).length === 0,
+  "M1 good sample has no sibling↔package conflict"
+);
+assert(
+  monorepoSiblingConflict(monoBad).length > 0,
+  "M1 bad sample detected sibling↔package conflict"
+);
+assert(/禁止.*sibling_repos|sibling_repos.*禁止|同仓同路径/.test(progressTmpl + startMd + artifactsMd + gatesCommon), "M1 docs forbid sibling→same-repo packages");
+
+// M2 verify_commands
+assert(/verify_commands/.test(progressTmpl), "M2 progress.tmpl has verify_commands");
+assert(/verify_commands/.test(artifactsMd), "M2 artifacts.md has verify_commands");
+assert(/verify_commands/.test(gatesCommon), "M2 gates-common has verify_commands");
+assert(/mvn -f backend|npm --prefix frontend/.test(quick), "M2 QUICKSTART monorepo dual verify example");
+assert(/verify_commands:/.test(envSample), "M2 env sample has verify_commands");
+assert(/exit 0/.test(artifactsMd + gatesCommon), "M2 L1 requires exit 0 before gates.verify");
+
+// M3 Spec chapters
+assert(/## API/.test(artifactsMd) && /## UI/.test(artifactsMd) && /测试矩阵/.test(artifactsMd), "M3 artifacts Spec API/UI/测试矩阵");
+assert(/monorepo profile|同仓 monorepo|M3/.test(artifactsMd + gatesCommon), "M3 monorepo profile documented");
+
+// M4 root README SSOT
+assert(/根 README|README.*SSOT|backend.*frontend.*启动/.test(close), "M4 close.md root README SSOT L1");
+assert(/短链/.test(close + artifactsMd), "M4 short-link rule for package READMEs");
+
+// M5 workdir_policy
+assert(/workdir_policy/.test(progressTmpl), "M5 progress.tmpl has workdir_policy");
+assert(/workdir_policy/.test(artifactsMd), "M5 artifacts.md has workdir_policy");
+assert(/repo_root/.test(progressTmpl + artifactsMd + quick + envSample), "M5 repo_root default");
+assert(/workdir_policy:\s*repo_root/.test(envSample), "M5 env sample workdir_policy=repo_root");
+
+// M6 monorepo_bootstrap
+assert(/monorepo_bootstrap|剥离/.test(startMd + initMd), "M6 start/init monorepo_bootstrap");
+assert(/docs\/runs|superpowers/.test(startMd + initMd) && /剥离|子包/.test(startMd + initMd), "M6 strip package-level docs/runs|superpowers");
+assert(/HISTORY-split-repos/.test(startMd + initMd + changelog), "M6 HISTORY-split-repos pointer");
+
+assert(/M1|layout/.test(changelog || ""), "CHANGELOG mentions M1/layout");
+assert(/## 0\.2\.8-dev/.test(changelog || ""), "CHANGELOG retains ## 0.2.8-dev (end block)");
+assert(/monorepo-layout-shape/.test(fixReadme), "fixtures README lists monorepo-layout-shape");
+assert(/verify_commands|workdir_policy/.test(fixReadme), "fixtures README mentions M2/M5 fields");
 
 // --- report ---
 const total = ok.length + fail.length;

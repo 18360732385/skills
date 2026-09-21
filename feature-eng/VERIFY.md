@@ -1,14 +1,29 @@
-# feature-eng 验收记录（0.2.8-dev）
+# feature-eng 验收记录（0.2.9-dev）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测（含夹具行为断言）。真实 init/start/advance/close 仍须在目标仓由 Agent 执行并遵守硬闸。
 
 ## 版本
 
-当前 **0.2.8-dev**（O8–O14 摩擦优化；继承 O1–O7 + modes/ + 薄 CLI + 加厚 fixtures）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前 **0.2.9-dev**（M1–M6 monorepo 摩擦优化；继承 O1–O14 + modes/ + 薄 CLI + 加厚 fixtures）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
 
-本版**不**改动环节语义与默认绑定 skill 名；`harness_land` 仍为 false；`feature.mjs` 不写盘。
+本版**不**改动环节语义与默认绑定 skill 名；`harness_land` 仍为 false；`feature.mjs` 不写盘。跨仓 O15–O19 **不在本版范围**。
 
-## 0.2.8-dev 增量验收
+## 0.2.9-dev 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.2.9-dev** | 有 |
+| CHANGELOG 含 `## 0.2.9-dev` 且保留 `## 0.2.8-dev` | 有 |
+| M1：progress `layout`/`packages`/`docs_root`；start/回链；monorepo 禁 sibling→同仓包路径 | 有 |
+| M2：`verify_commands`；verify L1 全员 exit 0；QUICKSTART 双端示例 | 有 |
+| M3：artifacts Spec `## API`/`## UI`/`## 测试矩阵` | 有 |
+| M4：close 根 README SSOT L1 | 有 |
+| M5：`workdir_policy: repo_root` | 有 |
+| M6：init/start monorepo_bootstrap 剥离清单 | 有 |
+| `harness_land: false`；feature.mjs 仍不写盘 | 有 |
+
+## 0.2.8-dev 增量验收（继承）
 
 | 检查 | 结果 |
 |---|---|
@@ -41,7 +56,7 @@
 |---|---|
 | O1–O7：chef_mode / repo_bootstrap / authorized_by / env_notes / review_policy / 中文文件名 / close 双归档 | 有 |
 | close-check 对 close-ready PASS | 有 |
-| 钉号已升至 **0.2.8-dev** | 有 |
+| 钉号已升至 **0.2.9-dev**（本表为 0.2.8 继承基线） | 有 |
 
 ## 继承基线（0.2.6-dev）
 

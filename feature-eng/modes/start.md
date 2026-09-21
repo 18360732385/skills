@@ -29,6 +29,12 @@
    - 在 `回链.md`「跨仓」节展示同表。
    - 本仓为 web 且声明了 api sibling → 后续 Spec 须有「消费契约」小节或链接（闸见 [gates-common.md](gates-common.md)）。
    - 未提配对 → `sibling_repos: null` 即可。
+5b. **同仓布局探测（M1 layout / packages）**：若仓根同时有 `backend/`+`frontend/`（或用户声明 monorepo）：
+   - 写 `layout: monorepo`；`packages: [{ path, role: api|web|other }]`（至少 api+web 各一为宜）；`docs_root: "docs/"`（默认）。
+   - 回链「同仓布局」节同步。
+   - **禁止** `sibling_repos` 指向与 `packages[].path` **同仓同路径**（伪跨仓）；同仓包只用 `packages`。真跨仓另仓仍可用 sibling_repos。
+   - 非同仓 → `layout: null`（≈ multi_repo）或显式 `multi_repo`；`packages: null` 即可。
+5c. **monorepo_bootstrap 剥离（M6）**：合并旧双仓树 / `cp` 进 monorepo 时，检查并**剥离**子包级 `docs/runs`、`docs/superpowers`（典礼只留仓库根 `docs_root`）。可选在根 `docs/HISTORY-split-repos.md` 记旧仓指针。清单勾选见 init「monorepo_bootstrap」。
 6. **仪式选项（可与分诊同屏确认）**：
    - **`run_mode`**：`guided`（默认）| `express`
    - **`invoke`**：`strict`（默认）| `inline`（见 [binding.md](binding.md)）。缺省可跟 `defaults.invoke`。
@@ -38,15 +44,16 @@
 7. **建过程态**：
    - 确保 `docs/runs/active/`（及可选 `docs/runs/README.md`，可用 `templates/runs-README.md.tmpl`）
    - 创建 `docs/runs/active/<slug>/`
-   - 写 `progress.yaml`（自 `templates/progress.yaml.tmpl`；写入已探测的 `chef_mode` / 可能降级后的 `review_policy` / 可选 `sibling_repos`）
-   - 写 `回链.md`（自 `templates/回链.md.tmpl`；同步 chef_mode / review_policy 降级备注 / 跨仓表）
+   - 写 `progress.yaml`（自 `templates/progress.yaml.tmpl`；写入已探测的 `chef_mode` / 可能降级后的 `review_policy` / 可选 `sibling_repos` / `layout`·`packages`·`docs_root`）
+   - 写 `回链.md`（自 `templates/回链.md.tmpl`；同步 chef_mode / review_policy 降级备注 / 跨仓表 / 同仓布局）
    - 可选：在 `docs/runs/README.md` 进行中表插入一行
 8. **登记索引**（仅 F，或用户要求登记时）：`docs/superpowers/README.md` 进行中表按日期倒序插入主题行（Spec/Plan 列先 `—`，环 4/5 产出后回写）。无 README 则跳过并说明。
 9. **进入下一环**：**控制器主动**按 [binding.md](binding.md) lookup 调起首个执行环。若 `chef_mode=controller_proxy`，本环由控制器戴厨师帽产出领域产物，仍经 advance 写盘。若 `handoff_policy=confirm`，先短确认卡片再调起。用户声称本环完成 → [advance.md](advance.md)。
 
-## grill 补充（O8）
+## grill 补充（O8 / M1）
 
-澄清环若用户**新**提及配对仓，而 progress 仍 `sibling_repos: null` → advance 离开 grill 前须补填至少一条，并回写「跨仓」节。
+澄清环若用户**新**提及配对仓，而 progress 仍 `sibling_repos: null` → advance 离开 grill 前须补填至少一条，并回写「跨仓」节。  
+若澄清中确认同仓 FE+BE，而 `layout` 仍 null → 补 `layout: monorepo` + `packages`，并确认 sibling_repos 未指向本仓包路径。
 
 ## `express` 硬边界
 
@@ -64,3 +71,5 @@
 - `review_policy` 因宿主能力降级必须落盘备注，禁止静默。
 - empty-ish 仓不得假装已有业务骨架；须先本地脚手架（见步骤 1）。
 - 用户已提跨仓配对却未填 `sibling_repos` → 不得宣称 start/grill 完成。
+- `layout=monorepo` 且 sibling_repos 指向 `packages[].path` 同仓路径 → 不得宣称 start 完成（改用 packages）。
+- monorepo 合并后子包仍残留 `docs/runs|superpowers` → 须先剥离（M6）再继续典礼。
