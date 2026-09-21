@@ -1,0 +1,8 @@
+# O8 字段形状金标（片段，非完整 progress）
+sibling_repos:
+  - url: "https://github.com/example/account-login-java"
+    role: api
+    spec_path: "docs/superpowers/specs/2026-09-21-account-login-设计.md"
+  - url: "https://github.com/example/account-login-web"
+    role: web
+    spec_path: "docs/superpowers/specs/2026-09-21-account-login-web-设计.md"

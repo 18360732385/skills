@@ -1,6 +1,6 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.7-dev"
+version: "0.2.8-dev"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false

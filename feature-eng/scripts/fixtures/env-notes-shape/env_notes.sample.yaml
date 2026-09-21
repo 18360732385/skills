@@ -1,0 +1,10 @@
+# O11 / O14 字段形状金标（片段）
+env_notes:
+  runtime: "Node 20.11.1"
+  target: ">=22"
+  mismatch_reason: "CI 仍 Node20；本地对齐 CI"
+  api_base_mode: proxy
+  pinned_deps:
+    - name: jsdom
+      version: "^24.1.3"
+      reason: "jsdom@30 + Node20 → webidl.util.markAsUncloneable"

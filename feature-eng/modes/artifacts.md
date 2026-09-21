@@ -19,6 +19,7 @@
 - [ ] `run_mode` 为 `guided|express`；`invoke` 为 `strict|inline`
 - [ ] `handoff_policy` 为 `auto|confirm`；`review_policy` 为 `subagent|inline`
 - [ ] `chef_mode` 为 `bound|controller_proxy`（start 探测后写入）
+- [ ] `sibling_repos` 为 `null` 或非空列表（用户提跨仓配对时非空；见 O8）
 - [ ] `stage` 已设
 - [ ] `docs/runs/active/<slug>/回链.md` 存在
 
@@ -26,6 +27,7 @@
 
 - [ ] 用户显式确认可进设计（同义可）→ advance 写 `gates.shared_understanding`
 - [ ] 若产出术语/ADR 草稿：厨师回报路径 → advance 写入 `回链.md`（无草稿则注明「本环无落盘」）；**禁止**写仓库根 `CONTEXT.md`
+- [ ] 若用户提到配对后端/前端：`sibling_repos` 至少一条，且回链「跨仓」节已填（O8）
 - [ ] `express`：可与 design 同轮；总确认一次即可同时满足本项与 design 的确认项
 
 ## design（环 2）
@@ -52,6 +54,8 @@
 - [ ] `docs/superpowers/specs/YYYY-MM-DD-<主题>-设计.md` 存在
 - [ ] `artifacts.spec` 指向该文件（advance 回写）
 - [ ] 文内含可指认的验收标准小节（非空）
+- [ ] **跨仓 web（O8）**：若 `sibling_repos` 含 `role=api` 且本仓为 web → Spec 有「消费契约」小节或指向 api Spec/OpenAPI 的链接
+- [ ] **web+auth（O13）**：若 Spec 含登录/鉴权/会话 → 必填会话存储枚举一行：`memory | sessionStorage | localStorage(+风险注)`（默认可建议 `memory` 或 `sessionStorage`；`localStorage` 须风险注）
 
 ## plan（环 5）
 
@@ -69,10 +73,21 @@
 
 ## proto（环 6，仅 `proto=entered`）
 
+### 标准（bound + proto skill 可调）
+
 - [ ] 可打开的原型或线框（目录/文件路径非空）→ `artifacts.proto`（advance）
 - [ ] 主路径交互说明（同目录文档或 `回链.md` 指针）非空
 - [ ] 用户「原型确认」已记录（advance 写入 progress / `回链.md` / 或确认原型目录标记）
-- 控制器不规定视觉工具。
+
+### 轻量降级（O12：`proto.skill` null 或 `chef_mode=controller_proxy`）
+
+- [ ] 官方降级产物：`设计笔记.md`（或等价路径写入 `artifacts.proto`）存在
+- [ ] 含 **交互草图**（ASCII/Mermaid/文字线框均可）
+- [ ] 含 **主路径 ≥3 步**
+- [ ] 含关键状态机/状态枚举可指认
+- [ ] 用户确认已记录；**不要求**可点击 HTML（见 gates-common O12）
+
+控制器不规定视觉工具。
 
 ## testdesign（环 7，仅 F）
 
@@ -95,9 +110,11 @@
 
 ## pre-impl（环 7b）
 
-- [ ] 若 `proto=entered`：环 6 勾选表全过
+- [ ] 若 `proto=entered`：环 6 勾选表全过（含 O12 降级条件若适用）
 - [ ] F：环 7 勾选表全过
 - [ ] B：无 TestDesign 要求；Proto 规则同上
+- [ ] **Full+UI（O9）**：`integration_ready` ∈ `cors_ready|proxy_ready|accepted_blocked`（回链或 progress 旁注）
+- [ ] **O8**：跨仓 web 消费契约已满足（若适用）
 - [ ] → 通过后 `stage=implement`，advance 写 `gates.pre_impl`
 
 ## implement（环 8）
@@ -108,11 +125,12 @@
 - [ ] 单测已存在，或用户显式接受「本环无单测」→ advance 记入 `回链.md` / progress
 - [ ] S 仅 throwaway：笔记路径已记；不要求入库代码
 
-### env_verified / `env_notes`（可选）
+### env_verified / `env_notes`（可选；O4 / O11 / O14）
 
 - [ ] 本机/CI 可编译或关键冒烟通过的证据路径（可选）；未做不阻断本环
 - [ ] 未做时 advance 可在 `回链.md` 注明 `env_verified=skipped`
 - [ ] **F 路径**：环境证据改在 **verify** 环强制（见下节）
+- [ ] 前端：推荐在实现期就把 `api_base_mode` / `pinned_deps` 写入 `env_notes`（verify 再核）
 
 ## handoff（环 8b，旁路）
 
@@ -123,6 +141,7 @@
 - [ ] `门禁清单.md` 存在（或 `回链.md` 指向等价清单）
 - [ ] 机械轨已处理（hooks 结果可指认）
 - [ ] 语义轨：绑定 review skill 结论无未决 blocker（或 blocker 列表为空）
+- [ ] **Full+UI（O9）**：`integration_ready` 仍成立
 - [ ] → advance 写 `gates.gate`
 
 ## verify（环 10，仅 F）
@@ -134,6 +153,11 @@
 - [ ] 凡 `fail` / `blocked`：证据链接非空
 - [ ] 汇总：总数 / pass / fail / blocked / 通过率 均非空
 - [ ] **环境证据**：至少一项可指认；纯「代码已写」不算过 Verify
+- [ ] **`env_notes`（O4/O11/O14）**：
+  - 若 runtime ≠ target：含 `runtime` / `target` / `mismatch_reason`
+  - 前端：粘贴 **`api_base_mode: proxy|absolute`**（VITE_*/API 基址策略）
+  - 若钉了测试 DOM/工具链：`pinned_deps: [{ name, version, reason }]`（如 jsdom@^24）
+  - 自检建议：`node -v` 对照 `package.json#engines`；已知坏组合见 VERIFY「Node×jsdom」
 - [ ] 无未接受 `fail`，或 `accepted_residual` 已填用户接受说明
 - [ ] → advance 写 `gates.verify`
 
@@ -151,13 +175,21 @@
 - [ ] 收口步骤与勾选见 [close.md](close.md)（含 active→archive）
 - [ ] → advance/close 写 `gates.close`；`stage=done`；主题目录在 `docs/runs/archive/<slug>/`
 
-## env_notes（O4，伴生字段）
+## env_notes（O4 + O11 + O14，伴生字段）
 
 当 `env_verified` 非 null 且运行时工具链 ≠ 项目声明目标时，`progress.env_notes` 须含：
 
-- `runtime`：实际运行版本（如 OpenJDK 21）
-- `target`：声明目标（如 `pom.xml` `java.version=17`）
+- `runtime`：实际运行版本（如 OpenJDK 21 / Node 20.11）
+- `target`：声明目标（如 `pom.xml` `java.version=17` / `engines.node`）
 - `mismatch_reason`：差异原因（如 apt 无对应包）
 
-同步在 `回链.md`「其他」写一行。无差异时可 `env_notes: null`。
+前端扩展（与 O4 同字段，勿另开平行结构）：
 
+- `api_base_mode`：`proxy` | `absolute`（O14；verify 清单要求粘贴）
+- `pinned_deps`：`[{ name, version, reason }]`（O11；如钉 jsdom 避开 Node20×jsdom30）
+
+同步在 `回链.md`「其他」写一行。无差异且无前端基址/钉依赖时可 `env_notes: null`。
+
+## sibling_repos（O8，伴生字段）
+
+可选列表：`[{ url, role: api|web, spec_path }]`。用户提跨仓配对时强制非空；回链「跨仓」节同步。形状由 selfcheck 夹具覆盖。

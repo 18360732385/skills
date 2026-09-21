@@ -14,12 +14,14 @@
 - Spec：—
 - Plan：—
 - tickets：—
+- 会话存储（web+auth，O13）：`memory | sessionStorage | localStorage(+风险)` — —
 
 ## 原型（若 entered）
 - 原型目录：—
 - 交互说明：—
 - 用户确认时间：—
 - proto 桥：`skipped | skipped_by_user | entered` — —
+- 轻量降级（O12，proto.skill null / controller_proxy）：`设计笔记.md` 草图+主路径 3 步 — —
 
 ## 测试（仅 F）
 - 用例文档：`测试用例.md`
@@ -46,9 +48,18 @@
 | verify | — | — | — |
 | close | — | — | — |
 
+## 跨仓（O8 sibling_repos）
+> 用户提到配对后端/前端时，progress.`sibling_repos` 至少一条；本表回链展示。  
+> 本仓 role=web 且声明了 api sibling → Spec 须有「消费契约」小节或链接（见 gates-common）。
+
+| url | role (api\|web) | spec_path | 备注 |
+|---|---|---|---|
+| — | — | — | — |
+
 ## 其他
 - env_verified：—
-- env_notes（runtime / target / mismatch_reason）：—
+- env_notes（runtime / target / mismatch_reason / api_base_mode / pinned_deps）：—
+- integration_ready（O9：`cors_ready | proxy_ready | accepted_blocked`）：—
 - L2 审核：`审核-<stage>.md` — —
 - pending_invoke：—
 - QA 报告：—

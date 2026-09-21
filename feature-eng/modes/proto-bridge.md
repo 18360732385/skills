@@ -30,6 +30,16 @@
 6. **主动调起原型 skill**：按 [binding.md](binding.md) lookup（控制器主动；不要求用户手切）。未绑 → 推荐 1～3 个候选（首选 `prototype`）由用户点名（可顺手 rebind）。
 7. 子 skill 结束后走 [advance.md](advance.md)（L1+L2）；通过后按 `handoff_policy` 进测设/Pre-Impl。
 
+
+## 绑定缺失时的轻量契约（O12）
+
+步骤 6 若 `stages.proto.skill` 为 `null`，或宿主不可调起且已 `chef_mode=controller_proxy`：
+
+1. **不要**空等可点击 HTML 原型。
+2. 按 [binding.md](binding.md)「Proto 轻量降级」落盘 `设计笔记.md`：交互草图 + 主路径 3 步 + 状态机。
+3. advance 校验走 [artifacts.md](artifacts.md) proto「轻量降级」勾选与 [gates-common.md](gates-common.md) O12。
+4. 仍须用户「原型确认」（对草图确认即可）。
+
 ## 硬约束
 
 - 自判「本仓不需要」时：**禁止**强制二选一「是否跳过」；**必须**展示结论块并允许推翻；**允许**一句跨仓提示。

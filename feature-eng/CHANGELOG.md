@@ -1,5 +1,22 @@
 # feature-eng CHANGELOG
 
+## 0.2.8-dev — 2026-09-21
+
+V0.6.X 开发钉。相对 0.2.7-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #47（O1–O7）之上。本版落实摩擦优化 **O8–O14**：
+
+- **O8 sibling_repos**：progress 可选 `[{ url, role: api|web, spec_path }]`；start/grill 提配对仓则强制填；回链「跨仓」节；web+api sibling → Spec「消费契约」闸
+- **O9 CORS|Proxy**：Full+UI pre_impl/gate 矩阵 `cors_ready|proxy_ready|accepted_blocked`；QUICKSTART Vite proxy / Spring CorsConfigurationSource 片段
+- **O10 绿地前端配方**：QUICKSTART `mktemp`+create-vite+`cp -a`；init/start 对仅 VCS/LICENSE 无 package.json 提示配方
+- **O11 pinned_deps**：env_notes 扩展 `[{ name, version, reason }]`；VERIFY Node×jsdom 坏组合注
+- **O12 proto 轻量草图**：proto.skill null / controller_proxy → `设计笔记.md` 须草图+主路径 3 步；gates-common 不要求可点击 HTML
+- **O13 会话存储**：web+auth Spec 必填 `memory|sessionStorage|localStorage(+风险)`
+- **O14 api_base_mode**：verify 要求 `env_notes.api_base_mode: proxy|absolute`（VITE_*/API 基址）
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.8-dev | 2026-09-21 | O8–O14 摩擦优化；V0.6.X 开发钉 |
+| 0.2.7-dev | 2026-09-21 | O1–O7 摩擦优化；V0.6.X 开发钉 |
+
 ## 0.2.7-dev — 2026-09-21
 
 V0.6.X 开发钉。相对 0.2.6-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #46 基线之上。本版落实摩擦优化 **O1–O7**：
