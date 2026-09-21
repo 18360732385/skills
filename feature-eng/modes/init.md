@@ -12,6 +12,14 @@
 
 若目标仓 **empty-ish**（仅有 `LICENSE` / `.gitignore` 等 GitHub 模板、无业务骨架）：init 仍可写绑定，但 **start 前**须完成本地脚手架 + push（Cloud/SCM 对空仓常 400）。判定规则见 [start.md](start.md) 步骤 1。**模板文件 ≠ 业务骨架**。
 
+### 绿地前端非空目录（O10）
+
+若根目录仅有 VCS / `LICENSE*` / `.gitignore`（及可选占位 README）且 **无 `package.json`**，而用户要 `create-vite` / `create-next-app`：
+
+- **不要**只报「目录必须为空」就失败。
+- **提示**临时目录配方（见 [QUICKSTART.md](../QUICKSTART.md)「绿地前端」）：`mktemp -d` → create → `cp -a` 回仓根。
+- init 本身仍只写绑定；脚手架动作留给 start / 用户确认后的 bootstrap。
+
 ## 步骤
 
 1. **扫描**：列出当前环境可调起的相关 skill（按能力粗分：澄清 / 设计 / 定稿 / 规格 / 计划 / 原型 / 测设 / 实现 / 评审 / 验证 / 排障）。宿主无法枚举时，允许用户手工填写 skill 名。

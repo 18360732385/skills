@@ -31,6 +31,35 @@
 
 `start` 若将 `review_policy` 从 `subagent` 降为 `inline`（宿主无 Task），须在本主题 `回链.md`「仪式与降级」与门禁清单写明，**禁止静默**。L2 仍按 [gates-review.md](gates-review.md) 执行。
 
+## 跨仓契约闸（O8）
+
+适用：`progress.sibling_repos` 非空，且本仓条目（或唯一条目）`role=web`，并声明了至少一条 `role=api` 的 sibling。
+
+- **通过**：Spec（`artifacts.spec`）内有可指认的 **「消费契约」** 小节，**或** 明确链接到 api sibling 的 Spec/OpenAPI（路径或 URL 非空）。回链「跨仓」表已填。
+- **失败**：列缺失；不得过 Shared Understanding 后假装契约已对齐；不得进 Pre-Impl（F+跨仓 web）。
+
+## 联调矩阵 CORS / Dev Proxy（O9）
+
+适用：**Full + UI**（本仓有前端树，或 `sibling_repos` 含 web，或 Spec 含页面/联调）。在 **Pre-Impl** 与 **Gate** 检查 `integration_ready`（可写 progress 旁注或 `回链.md`「其他」）：
+
+| 取值 | 含义 |
+|---|---|
+| `cors_ready` | 后端 CORS 已配（如 Spring `CorsConfigurationSource`）且可被浏览器直连验证 |
+| `proxy_ready` | 前端 Dev Proxy 已配（如 Vite `server.proxy['/api']`）且同源联调可通 |
+| `accepted_blocked` | 联调暂不可用；用户显式接受残留（须写入 `accepted_residual` / 回链备注） |
+
+- **通过**：三者之一已记录。
+- **失败**：sibling 后端 CORS 未就绪 **且** 前端未配 proxy，又无 `accepted_blocked` → Pre-Impl/Gate 失败。
+- Snippet 见 [QUICKSTART.md](../QUICKSTART.md)「CORS 或 Dev Proxy」。
+
+## Proto 轻量降级通过条件（O12）
+
+适用：`proto=entered` 且（`stages.proto.skill` 为 null **或** `chef_mode=controller_proxy`）。
+
+- **通过**：`设计笔记.md`（或 `artifacts.proto` 指向的等价笔记）含 **交互草图** + **主路径 ≥3 步** + 关键状态机/状态枚举可指认。**不要求**可点击 HTML。
+- **失败**：仅有空标题或口头描述无落盘 → 不过 proto 闸。
+- `bound` 且 proto skill 可调起时：仍按 [artifacts.md](artifacts.md) proto 节（可打开原型优先）。
+
 ## 分诊闸（环 0）
 
 - 通过：Agent 提议 S/B/F 并给依据；用户显式确认其一（短确认卡片）。
@@ -38,7 +67,7 @@
 
 ## 共享理解闸（环 1 末）
 
-- 通过：L1+L2（离开 grill）过；用户显式确认可进设计（同义可）；advance 写 `gates.shared_understanding`。
+- 通过：L1+L2（离开 grill）过；用户显式确认可进设计（同义可）；advance 写 `gates.shared_understanding`。若用户已提跨仓配对 → `sibling_repos` 至少一条。
 - 失败：继续澄清；不得进环 2。
 - `express`：可与设计确认闸合并为**一次总 yes**（同时写两闸时间戳）；仍须用户显式确认，不得默认静默通过。
 
@@ -63,19 +92,19 @@
 
 ## Pre-Impl 闸（环 7b）
 
-- F 通过：artifacts 中 proto（若 entered）与 testdesign 两节 L1 勾选全过；testdesign/proto 适用时 L2 已过。
-- B 通过：proto（若 entered）勾选全过；**无** TestDesign 要求。
+- F 通过：artifacts 中 proto（若 entered）与 testdesign 两节 L1 勾选全过；testdesign/proto 适用时 L2 已过；适用时 O8 消费契约 / O9 联调矩阵已满足。
+- B 通过：proto（若 entered）勾选全过；**无** TestDesign 要求；适用时 O9 同上。
 - 失败：停；按勾选表列缺失项；不得进环 8。
 - 通过后按 `handoff_policy` 主动调起 implement。
 
 ## Gate 闸（环 9）
 
-- 通过：artifacts gate 节 L1 全过 + L2（离开 gate）过（机械轨 + 语义轨无未决 blocker）。
+- 通过：artifacts gate 节 L1 全过 + L2（离开 gate）过（机械轨 + 语义轨无未决 blocker）；Full+UI 时 O9 `integration_ready` 仍成立（或 `accepted_blocked`）。
 - 失败：回环 8 修；不得进环 10 / 10′。
 
 ## Verify 闸（环 10，仅 F）
 
-- 通过：artifacts verify 节 L1 全过 + L2（离开 verify）过（含每条用例结论与残留规则）。
+- 通过：artifacts verify 节 L1 全过 + L2（离开 verify）过（含每条用例结论与残留规则）；`env_notes` 适用时含 `api_base_mode`（O14）与必要的 `pinned_deps`（O11）。
 - 失败：进环 10b 排障（先复现再改），修完回本环复测失败项。
 
 ## Close 闸（环 11）

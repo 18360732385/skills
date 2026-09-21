@@ -43,3 +43,59 @@ init（首次绑 11 环）
 
 边界仍有效：proxy 是**显式降级**，不是默认；能装厨师时优先 `bound`。
 
+## 绿地前端（O10：非空目录脚手架）
+
+仓根已有 `.git` / `LICENSE` / `.gitignore` 时，`create-vite` / `create-next-app` 常因「目录非空」取消。用临时目录再拷回：
+
+```bash
+# Vite 示例（按需改 template）
+scaffold_dir=$(mktemp -d)
+npm create vite@latest "$scaffold_dir" -- --template react-ts
+cp -a "$scaffold_dir"/. .
+rm -rf "$scaffold_dir"
+# 保留远程已有 LICENSE/.gitignore；冲突时人工合并后再 commit + push
+```
+
+init/start 遇「仅模板文件、无 package.json」时**提示本配方**，勿只报失败。
+
+## CORS 或 Dev Proxy（O9）
+
+Full+UI 联调二选一（或 `accepted_blocked`）。矩阵见 [gates-common.md](modes/gates-common.md)。
+
+**Vite Dev Proxy（前端仓）：**
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  server: {
+    proxy: {
+      '/api': { target: 'http://localhost:8080', changeOrigin: true },
+    },
+  },
+})
+```
+
+**Spring CORS（后端仓）：**
+
+```java
+@Bean
+CorsConfigurationSource corsConfigurationSource() {
+  var c = new CorsConfiguration();
+  c.setAllowedOrigins(List.of("http://localhost:5173"));
+  c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+  c.setAllowedHeaders(List.of("*"));
+  c.setAllowCredentials(true);
+  var s = new UrlBasedCorsConfigurationSource();
+  s.registerCorsConfiguration("/**", c);
+  return s;
+}
+```
+
+`SecurityFilterChain` 仅 `cors(withDefaults())` **不够**——须有 `CorsConfigurationSource` Bean，或改用前端 proxy。
+
+## 跨仓 / env_notes 速记
+
+- **O8**：配对仓 → `sibling_repos: [{ url, role: api|web, spec_path }]`；web 消费 api → Spec「消费契约」。
+- **O11/O14**：`env_notes.pinned_deps` + `api_base_mode: proxy|absolute`；`node -v` 对照 `engines`。
+- **O12**：proto 无厨师 → `设计笔记.md` 草图+主路径 3 步。
+- **O13**：web+auth Spec → 会话存储 `memory|sessionStorage|localStorage(+风险)`。

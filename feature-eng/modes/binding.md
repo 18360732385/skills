@@ -36,6 +36,16 @@
 
 探测时机：`start` 步骤「绑定就绪检查 + chef_mode 探测」；预检 C 失败且用户坚持继续 Full → 强制 `controller_proxy`。lookup 预检 C 在 `bound` 下仍适用（单环缺失仍阻断或再提示）。无厨师跑 Full 的最小清单见 [QUICKSTART.md](../QUICKSTART.md)。
 
+### Proto 轻量降级产物（O12）
+
+当 `proto=entered` 且（`stages.proto.skill` 为 `null` **或** `chef_mode=controller_proxy`）时，**禁止**假装已有可点击原型。官方降级产物：
+
+- 落盘 `设计笔记.md`（主题 runs 根，或路径写入 `artifacts.proto`）
+- **必须**含：交互草图 + 主路径 ≥3 步 + 关键状态机/状态枚举
+- 闸通过条件见 [gates-common.md](gates-common.md)「Proto 轻量降级」——**草图+状态机**即过，**不要求**可点击 HTML
+- `bound` 且 proto skill 可调起时：仍优先可打开原型（见 [artifacts.md](artifacts.md)）
+
+
 ### 环间交接策略 `handoff_policy`
 
 读自 `progress.handoff_policy`（缺省：`express`→`auto`，`guided`→`confirm`，或 `defaults.handoff_policy`）。

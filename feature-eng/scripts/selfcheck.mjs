@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.7-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.8-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 模式文件 · feature.mjs 薄 CLI · 11 绑定键非空 · example 对齐 · 模板 ·
  * SKILL 边界 · 禁根 CONTEXT · AGENT-INDEX · QUICKSTART · truncate-contracts ·
  * status-scan · close_pitfalls · CHANGELOG · fixtures（init / progress-bad / advance-gate /
@@ -31,7 +31,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.7-dev";
+const PIN = "0.2.8-dev";
 
 const MODES = [
   "modes/init.md",
@@ -329,8 +329,12 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
+  changelog != null && /^##\s+0\.2\.8-dev\b/m.test(changelog),
+  "CHANGELOG has ## 0.2.8-dev heading"
+);
+assert(
   changelog != null && /^##\s+0\.2\.7-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.2.7-dev heading"
+  "CHANGELOG retains ## 0.2.7-dev heading"
 );
 assert(
   changelog != null && /^##\s+0\.2\.6-dev\b/m.test(changelog),
@@ -392,6 +396,7 @@ const PROGRESS_TOP_KEYS = [
   "gates",
   "env_verified",
   "env_notes",
+  "sibling_repos",
   "accepted_residual",
 ];
 const ARTIFACT_KEYS = [
@@ -951,7 +956,7 @@ assert(
 
 
 // =====================================================================
-// 0.2.7-dev：O1–O7 摩擦优化断言
+// 0.2.7-dev：O1–O7 摩擦优化断言（继承）
 // =====================================================================
 process.env.LC_ALL = process.env.LC_ALL || "C.UTF-8";
 process.env.LANG = process.env.LANG || "C.UTF-8";
@@ -1092,6 +1097,94 @@ assert(
 );
 
 assert(/O1|chef_mode/.test(changelog || ""), "CHANGELOG mentions O1/chef_mode");
+
+
+// =====================================================================
+// 0.2.8-dev：O8–O14 摩擦优化断言
+// =====================================================================
+
+// O8 sibling_repos
+assert(/sibling_repos/.test(progressTmpl), "O8 progress.tmpl has sibling_repos");
+assert(/role:\s*api/.test(progressTmpl) || /api\|web/.test(progressTmpl), "O8 progress.tmpl documents role api|web");
+assert(/跨仓/.test(huilianTmpl), "O8 回链.tmpl has 跨仓 section");
+assert(/sibling_repos/.test(startMd), "O8 start.md has sibling_repos");
+assert(/消费契约/.test(gatesCommon), "O8 gates-common has 消费契约");
+assert(/sibling_repos/.test(artifactsMd), "O8 artifacts.md has sibling_repos");
+assert(new RegExp("^sibling_repos\\s*:", "m").test(fixProgress), "O8 fixture has sibling_repos");
+assert(new RegExp("^sibling_repos\\s*:", "m").test(advProgress), "O8 advance-gate has sibling_repos");
+assert(new RegExp("^sibling_repos\\s*:", "m").test(closeProgress), "O8 close-ready has sibling_repos");
+
+const sibSampleRel = "scripts/fixtures/sibling-repos-shape/sibling_repos.sample.yaml";
+assert(exists(sibSampleRel), "O8 sibling-repos-shape sample exists");
+const sibSample = read(sibSampleRel) || "";
+assert(/sibling_repos:/.test(sibSample), "O8 sample has sibling_repos key");
+assert(/role:\s*api/.test(sibSample) && /role:\s*web/.test(sibSample), "O8 sample has api and web roles");
+assert(/spec_path:/.test(sibSample), "O8 sample has spec_path");
+assert(/url:/.test(sibSample), "O8 sample has url");
+function validateSiblingRepos(yamlText) {
+  const issues = [];
+  if (!/sibling_repos:/.test(yamlText)) {
+    issues.push("missing sibling_repos");
+    return issues;
+  }
+  const roles = [...yamlText.matchAll(/role:\s*(\S+)/g)].map((m) => m[1]);
+  for (const r of roles) {
+    if (r !== "api" && r !== "web") issues.push(`bad role ${r}`);
+  }
+  if (!/url:\s*\S+/.test(yamlText)) issues.push("missing url");
+  if (!/spec_path:\s*\S+/.test(yamlText)) issues.push("missing spec_path");
+  return issues;
+}
+const sibIssues = validateSiblingRepos(sibSample);
+assert(
+  sibIssues.length === 0,
+  sibIssues.length === 0 ? "O8 sibling_repos sample shape OK" : `O8 sibling shape: ${sibIssues[0]}`
+);
+assert(
+  validateSiblingRepos("sibling_repos:\n  - url: x\n    role: db\n    spec_path: y").some((i) => /bad role/.test(i)),
+  "O8 rejects role outside api|web"
+);
+
+// O9 CORS / proxy
+assert(/cors_ready|proxy_ready|accepted_blocked/.test(gatesCommon), "O9 gates-common integration matrix");
+assert(/server\.proxy|CorsConfigurationSource|vite\.config/.test(quick), "O9 QUICKSTART has Vite/Spring snippets");
+assert(/integration_ready|cors_ready/.test(artifactsMd + gatesCommon + huilianTmpl), "O9 docs mention integration_ready/cors");
+
+// O10 frontend scaffold
+assert(/mktemp|create vite|create-vite|cp -a/.test(quick), "O10 QUICKSTART mktemp scaffold recipe");
+assert(/package\.json/.test(startMd + initMd) && /mktemp|临时目录|配方/.test(startMd + initMd + quick), "O10 init/start tip non-empty dir recipe");
+
+// O11 pinned_deps
+assert(/pinned_deps/.test(progressTmpl), "O11 progress.tmpl has pinned_deps");
+assert(/pinned_deps/.test(artifactsMd), "O11 artifacts.md has pinned_deps");
+assert(/jsdom|Node×jsdom|webidl/.test(verify), "O11 VERIFY mentions Node×jsdom");
+const envSampleRel = "scripts/fixtures/env-notes-shape/env_notes.sample.yaml";
+assert(exists(envSampleRel), "O11/O14 env-notes-shape sample exists");
+const envSample = read(envSampleRel) || "";
+assert(/pinned_deps:/.test(envSample), "O11 env sample has pinned_deps");
+assert(/name:\s*jsdom/.test(envSample), "O11 env sample pins jsdom");
+assert(/version:/.test(envSample) && /reason:/.test(envSample), "O11 env sample has version+reason");
+
+// O12 proto light sketch
+assert(/轻量降级|设计笔记/.test(binding) && /草图|主路径/.test(binding + gatesCommon), "O12 binding/gates light sketch");
+const protoBridge = read("modes/proto-bridge.md") || "";
+assert(/O12|轻量/.test(protoBridge), "O12 proto-bridge documents light sketch");
+assert(/不要求.*可点击|草图\+状态机|可点击 HTML/.test(gatesCommon + artifactsMd), "O12 no clickable HTML required in proxy mode");
+
+// O13 session storage
+assert(/sessionStorage|localStorage|memory/.test(artifactsMd + huilianTmpl), "O13 session storage enum");
+assert(/web\+auth|会话存储/.test(artifactsMd + huilianTmpl), "O13 web+auth session guidance");
+
+// O14 api_base_mode
+assert(/api_base_mode/.test(progressTmpl), "O14 progress.tmpl has api_base_mode");
+assert(/api_base_mode/.test(artifactsMd), "O14 artifacts.md has api_base_mode");
+assert(/proxy\|absolute|proxy.*absolute/.test(progressTmpl + artifactsMd + verify), "O14 proxy|absolute mode");
+assert(/api_base_mode:\s*proxy/.test(envSample), "O14 env sample has api_base_mode proxy");
+
+assert(/O8|sibling_repos/.test(changelog || ""), "CHANGELOG mentions O8/sibling_repos");
+assert(/## 0\.2\.7-dev/.test(changelog || ""), "CHANGELOG retains ## 0.2.7-dev");
+assert(/sibling-repos-shape/.test(fixReadme), "fixtures README lists sibling-repos-shape");
+assert(/env-notes-shape/.test(fixReadme), "fixtures README lists env-notes-shape");
 
 // --- report ---
 const total = ok.length + fail.length;
