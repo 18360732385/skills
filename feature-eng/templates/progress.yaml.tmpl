@@ -25,8 +25,12 @@ invoke: strict
 handoff_policy: confirm
 
 # subagent | inline（环间 L2 语义审核；见 gates-review.md）
-# 默认 subagent；宿主无 Task 能力则降级 inline
+# 默认 subagent；宿主无 Task 能力则降级 inline（须显式写 gate 备注，见 start.md O5）
 review_policy: subagent
+
+# bound | controller_proxy（start 探测绑定 skill 可调起；不可用则强制 controller_proxy + 警告）
+# 见 binding.md「chef_mode」；controller_proxy = 显式降级：控制器兼代厨师角色落盘产物
+chef_mode: bound
 
 # off | optional | on（close 时 pitfalls lint；缺省跟 defaults.close_pitfalls，再缺省 optional）
 # close_pitfalls: optional
@@ -72,6 +76,13 @@ gates:
 
 # implement 可选环境核验：null | skipped | verified（路径/说明可放 回链.md）
 env_verified: null
+
+# 环境备注（O4）：运行时与声明目标不一致时必填；结构见下注释
+# env_notes:
+#   runtime: "OpenJDK 21"          # 实际运行版本/工具链
+#   target: "17"                   # 项目声明目标（如 pom java.version）
+#   mismatch_reason: "apt 无 openjdk-17，仅有 21"
+env_notes: null
 
 # 用户显式接受的残留（verify 有 fail 仍 close 时记录）
 accepted_residual: null

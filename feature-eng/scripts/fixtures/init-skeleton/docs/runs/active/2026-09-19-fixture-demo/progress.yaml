@@ -9,6 +9,7 @@ run_mode: guided
 invoke: strict
 handoff_policy: confirm
 review_policy: subagent
+chef_mode: bound
 stage: triage
 
 domain: null
@@ -37,4 +38,5 @@ gates:
   close: null
 
 env_verified: null
+env_notes: null
 accepted_residual: null

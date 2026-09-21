@@ -15,6 +15,22 @@
 
 进入下一环且 `handoff_policy=confirm` 时，用同款短卡片（「进入〈中文名〉…」）。
 
+## 硬闸授权 `authorized_by`（O3）
+
+凡用户硬闸（分诊 / 共享理解 / 设计确认 / 开干 / Pre-Impl / Gate / Verify / Close 等需显式确认者），在 `回链.md`「硬闸授权」表记录：
+
+| 合法取值 | 含义 |
+|---|---|
+| `user_chat` | 本会话真实用户确认（短确认卡片回复） |
+| `user_task_<id>` | 任务级授权码（如 `user_task_2026-09-21`）；批量/无人值守任务用此，**不**伪造聊天 |
+| `policy_exception` | 策略例外（须在备注写清依据） |
+
+**禁止**：把「看起来像对话」的假 transcript / 占位笔录（含伪造的「用户：确认」多轮对话）写入授权证据。校验器 / selfcheck 拒绝此类占位。
+
+## review_policy 降级备注（O5）
+
+`start` 若将 `review_policy` 从 `subagent` 降为 `inline`（宿主无 Task），须在本主题 `回链.md`「仪式与降级」与门禁清单写明，**禁止静默**。L2 仍按 [gates-review.md](gates-review.md) 执行。
+
 ## 分诊闸（环 0）
 
 - 通过：Agent 提议 S/B/F 并给依据；用户显式确认其一（短确认卡片）。

@@ -1,19 +1,37 @@
-# feature-eng 验收记录（0.2.6-dev）
+# feature-eng 验收记录（0.2.7-dev）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测（含夹具行为断言）。真实 init/start/advance/close 仍须在目标仓由 Agent 执行并遵守硬闸。
 
 ## 版本
 
-当前 **0.2.6-dev**（modes/ + 薄 CLI + 加厚 fixtures/selfcheck）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前 **0.2.7-dev**（O1–O7 摩擦优化；继承 modes/ + 薄 CLI + 加厚 fixtures）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 本版**不**改动环节语义与默认绑定 skill 名；`harness_land` 仍为 false；`feature.mjs` 不写盘。
 
-## 0.2.6-dev 增量验收
+## 0.2.7-dev 增量验收
 
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.2.6-dev** | 有 |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.2.7-dev** | 有 |
+| CHANGELOG 含 `## 0.2.7-dev` 且保留 `## 0.2.6-dev` | 有 |
+| O1：progress/回链 `chef_mode`；start/binding/QUICKSTART | 有 |
+| O2：start/init `repo_bootstrap`；模板文件 ≠ 业务骨架 | 有 |
+| O3：gates-common `authorized_by`；回链禁伪造聊天；selfcheck 拒假 transcript | 有 |
+| O4：`env_notes` 伴生字段 | 有 |
+| O5：review_policy 降级须写备注（start/gates） | 有 |
+| O6：README 中文文件名契约；selfcheck UTF-8 中文模板名 | 有 |
+| O7：close 双归档 L1；`close-check.mjs` 对 close-ready 夹具 PASS | 有 |
+| `harness_land: false`；feature.mjs 仍不写盘 | 有 |
+
+## 继承基线（0.2.6-dev）
+
+## 0.2.6-dev 增量验收（继承）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.2.6-dev** | 有（本版已升至 0.2.7-dev） |
 | CHANGELOG 含 `## 0.2.6-dev` 且保留 `## 0.2.5-dev` | 有 |
 | 模式 md 位于 `modes/`（含 init/start/advance/close/status/resume/rebind/…） | 有 |
 | 根目录无残留模式 md（仅入口/索引/CHANGELOG/VERIFY） | 有 |
@@ -67,6 +85,7 @@ cd feature-eng && node scripts/selfcheck.mjs
 node scripts/feature.mjs modes
 node scripts/feature.mjs status --cwd scripts/fixtures/init-skeleton
 node scripts/feature.mjs status --cwd scripts/fixtures/advance-gate
+node scripts/close-check.mjs --cwd scripts/fixtures/close-ready --slug 2026-09-19-close-ready-demo
 # 可选直调：
 # node scripts/status-scan.mjs   # cwd=scripts/fixtures/init-skeleton|advance-gate
 ```

@@ -10,7 +10,7 @@
 
 | 值 | 行为 |
 |---|---|
-| **`subagent`**（默认） | 开 Task/子代理；只传产物路径 + 本页当前离开环节节 + 禁止清单。无 Task → 降级 `inline` |
+| **`subagent`**（默认） | 开 Task/子代理；只传产物路径 + 本页当前离开环节节 + 禁止清单。无 Task → **自动降级** `inline`，且须在 `回链.md`/门禁写明（见 [start.md](start.md)、[gates-common.md](gates-common.md)；禁止静默） |
 | **`inline`** | 本会话换「审核帽」：只读标准与产物，不写业务 |
 
 ## 审核输入（指针）

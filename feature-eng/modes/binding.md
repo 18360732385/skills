@@ -25,6 +25,17 @@
 
 两种策略下控制器都**不**代写领域正文。用户不是默认路由器；`inline` 不是「调度员进厨房写业务」的许可证。写盘权责见 [SKILL.md](../SKILL.md)。
 
+### 厨师模式 `chef_mode`（O1）
+
+读自本主题 `progress.chef_mode`（`start` 写入；合法值 **`bound`** | **`controller_proxy`**）。
+
+| 值 | 含义 |
+|---|---|
+| **`bound`** | 路径所需绑定 skill 当前宿主可调起；控制器只调度，厨师写领域产物 |
+| **`controller_proxy`** | 关键绑定 skill 不可调起（未安装 / 宿主无法点名）；**显式降级**：控制器兼代厨师角色落盘产物，并在 `回链.md` 写明。须先警告用户，禁止静默兼代 |
+
+探测时机：`start` 步骤「绑定就绪检查 + chef_mode 探测」；预检 C 失败且用户坚持继续 Full → 强制 `controller_proxy`。lookup 预检 C 在 `bound` 下仍适用（单环缺失仍阻断或再提示）。无厨师跑 Full 的最小清单见 [QUICKSTART.md](../QUICKSTART.md)。
+
 ### 环间交接策略 `handoff_policy`
 
 读自 `progress.handoff_policy`（缺省：`express`→`auto`，`guided`→`confirm`，或 `defaults.handoff_policy`）。

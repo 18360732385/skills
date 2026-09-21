@@ -18,6 +18,7 @@
 - [ ] `path` 为 `spike|bounded|full`（用户已确认后写入）
 - [ ] `run_mode` 为 `guided|express`；`invoke` 为 `strict|inline`
 - [ ] `handoff_policy` 为 `auto|confirm`；`review_policy` 为 `subagent|inline`
+- [ ] `chef_mode` 为 `bound|controller_proxy`（start 探测后写入）
 - [ ] `stage` 已设
 - [ ] `docs/runs/active/<slug>/回链.md` 存在
 
@@ -107,7 +108,7 @@
 - [ ] 单测已存在，或用户显式接受「本环无单测」→ advance 记入 `回链.md` / progress
 - [ ] S 仅 throwaway：笔记路径已记；不要求入库代码
 
-### env_verified（可选）
+### env_verified / `env_notes`（可选）
 
 - [ ] 本机/CI 可编译或关键冒烟通过的证据路径（可选）；未做不阻断本环
 - [ ] 未做时 advance 可在 `回链.md` 注明 `env_verified=skipped`
@@ -149,3 +150,14 @@
 
 - [ ] 收口步骤与勾选见 [close.md](close.md)（含 active→archive）
 - [ ] → advance/close 写 `gates.close`；`stage=done`；主题目录在 `docs/runs/archive/<slug>/`
+
+## env_notes（O4，伴生字段）
+
+当 `env_verified` 非 null 且运行时工具链 ≠ 项目声明目标时，`progress.env_notes` 须含：
+
+- `runtime`：实际运行版本（如 OpenJDK 21）
+- `target`：声明目标（如 `pom.xml` `java.version=17`）
+- `mismatch_reason`：差异原因（如 apt 无对应包）
+
+同步在 `回链.md`「其他」写一行。无差异时可 `env_notes: null`。
+

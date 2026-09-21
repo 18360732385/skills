@@ -30,3 +30,16 @@ init（首次绑 11 环）
 3. **自动调起 ≠ 替用户 yes 硬闸**。
 
 详情：[SKILL.md](SKILL.md) · [binding.md](modes/binding.md) · [stages.md](modes/stages.md)
+
+## 无厨师也能跑完 Full（最小清单）
+
+宿主未装 `stage-bindings` 所指厨师时，`start` 会强制 `chef_mode: controller_proxy`（须警告，勿静默）。最小可跑完 Full：
+
+1. **绑定文件在**：`config/stage-bindings.yaml`（或先 `init`）；关键环非 null（F：`spec`/`plan`/`testdesign`/`implement`/`verify` 等）。
+2. **过程态**：`docs/runs/active/<slug>/{progress.yaml,回链.md}`；`chef_mode: controller_proxy` 已写入回链。
+3. **硬闸授权**：用 `authorized_by: user_task_<id>` 或真实 `user_chat`——**禁止伪造聊天笔录**。
+4. **环间**：控制器戴厨师帽按 [artifacts.md](modes/artifacts.md) 落盘领域产物；仍走 advance L1/L2；`review_policy` 无 Task 则显式降为 `inline`。
+5. **收口**：按 [close.md](modes/close.md) 双归档 L1 检查单（runs + superpowers/archive）。
+
+边界仍有效：proxy 是**显式降级**，不是默认；能装厨师时优先 `bound`。
+
