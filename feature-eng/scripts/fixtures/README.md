@@ -11,3 +11,8 @@
 | `close-ready/` | close 后 archive 形状（`stage=done` + `gates.close`） |
 
 勿把本目录当真实主题 resume/close；`bindings-bad/` 更勿拷进消费仓当正式绑定。
+
+## 0.2.7-dev 字段
+
+progress 含 `chef_mode` / `env_notes`；回链可含「仪式与降级」。中文文件名（`回链.md` 等）为契约；脚本请 UTF-8 / `LC_ALL=C.UTF-8`。
+

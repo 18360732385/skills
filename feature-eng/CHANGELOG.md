@@ -1,5 +1,22 @@
 # feature-eng CHANGELOG
 
+## 0.2.7-dev — 2026-09-21
+
+V0.6.X 开发钉。相对 0.2.6-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #46 基线之上。本版落实摩擦优化 **O1–O7**：
+
+- **O1 chef_mode**：`progress`/`回链` 字段 `bound|controller_proxy`；start 探测绑定可调起，不可用则强制 proxy + 警告；QUICKSTART「无厨师也能跑完 Full」最小清单；binding 文档化
+- **O2 repo_bootstrap**：start/init 空仓预检（LICENSE/.gitignore 等模板 ≠ 业务骨架）；指引本地脚手架 + push（防 Cloud/SCM 400）
+- **O3 authorized_by**：gates-common 合法取值 `user_chat` | `user_task_<id>` | `policy_exception`；回链禁止伪造聊天笔录；selfcheck 拒绝假 transcript 占位
+- **O4 env_notes**：progress 伴生 `env_notes`（runtime / target / mismatch_reason）；模板 + artifacts + 回链
+- **O5 review_policy 探测**：start 无 Task 时 subagent→inline 并写 gate/回链备注（禁止静默）
+- **O6 中文文件名契约**：README 声明中文过程态文件名为契约；selfcheck UTF-8 / 断言模板中文名存在
+- **O7 close 双归档**：close.md 可勾选 L1（runs + superpowers/archive）；`scripts/close-check.mjs` 廉价校验
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.7-dev | 2026-09-21 | O1–O7 摩擦优化；V0.6.X 开发钉 |
+| 0.2.6-dev | 2026-09-19 | modes/ + feature.mjs + 加厚 fixtures/selfcheck；V0.6.X 开发钉 |
+
 ## 0.2.6-dev — 2026-09-19
 
 V0.6.X 开发钉。相对 0.2.5-dev：**不**改环节语义与默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #39（0.2.5-dev 夹具/自检）之上。
