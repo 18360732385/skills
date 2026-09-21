@@ -20,6 +20,8 @@
 - [ ] `handoff_policy` 为 `auto|confirm`；`review_policy` 为 `subagent|inline`
 - [ ] `chef_mode` 为 `bound|controller_proxy`（start 探测后写入）
 - [ ] `sibling_repos` 为 `null` 或非空列表（用户提跨仓配对时非空；见 O8）
+- [ ] `layout` 为 `null|monorepo|multi_repo`；`packages` 为 `null` 或 `[{ path, role: api|web|other }]`；`docs_root` 默认 `docs/`（M1）
+- [ ] 若 `layout=monorepo`：`packages` 建议非空；**禁止** sibling_repos 指向与 packages 同仓同路径
 - [ ] `stage` 已设
 - [ ] `docs/runs/active/<slug>/回链.md` 存在
 
@@ -28,6 +30,7 @@
 - [ ] 用户显式确认可进设计（同义可）→ advance 写 `gates.shared_understanding`
 - [ ] 若产出术语/ADR 草稿：厨师回报路径 → advance 写入 `回链.md`（无草稿则注明「本环无落盘」）；**禁止**写仓库根 `CONTEXT.md`
 - [ ] 若用户提到配对后端/前端：`sibling_repos` 至少一条，且回链「跨仓」节已填（O8）
+- [ ] 若确认同仓 FE+BE：`layout=monorepo` + `packages` + 回链「同仓布局」已填（M1）
 - [ ] `express`：可与 design 同轮；总确认一次即可同时满足本项与 design 的确认项
 
 ## design（环 2）
@@ -55,6 +58,11 @@
 - [ ] `artifacts.spec` 指向该文件（advance 回写）
 - [ ] 文内含可指认的验收标准小节（非空）
 - [ ] **跨仓 web（O8）**：若 `sibling_repos` 含 `role=api` 且本仓为 web → Spec 有「消费契约」小节或指向 api Spec/OpenAPI 的链接
+- [ ] **同仓 monorepo profile（M3）**：若 `layout=monorepo`（或 packages 含 api+web）→ Spec **单文件**须含可指认章节：
+  - [ ] `## API`（或等价「后端 / 接口」）— 含后端路径或声明（如 `backend/src/...`）
+  - [ ] `## UI`（或等价「前端 / 页面」）— 含前端路径或声明（如 `frontend/src/...`）
+  - [ ] `## 测试矩阵` — 两侧验收/用例映射可指认
+  - L1：两侧路径**或**声明至少各一；缺一侧 → 不过 design_confirmed / 不得宣称 Spec 完备
 - [ ] **web+auth（O13）**：若 Spec 含登录/鉴权/会话 → 必填会话存储枚举一行：`memory | sessionStorage | localStorage(+风险注)`（默认可建议 `memory` 或 `sessionStorage`；`localStorage` 须风险注）
 
 ## plan（环 5）
@@ -153,11 +161,13 @@
 - [ ] 凡 `fail` / `blocked`：证据链接非空
 - [ ] 汇总：总数 / pass / fail / blocked / 通过率 均非空
 - [ ] **环境证据**：至少一项可指认；纯「代码已写」不算过 Verify
-- [ ] **`env_notes`（O4/O11/O14）**：
+- [ ] **`env_notes`（O4/O11/O14/M2/M5）**：
   - 若 runtime ≠ target：含 `runtime` / `target` / `mismatch_reason`
   - 前端：粘贴 **`api_base_mode: proxy|absolute`**（VITE_*/API 基址策略）
   - 若钉了测试 DOM/工具链：`pinned_deps: [{ name, version, reason }]`（如 jsdom@^24）
   - 自检建议：`node -v` 对照 `package.json#engines`；已知坏组合见 VERIFY「Node×jsdom」
+  - **同仓多命令（M2）**：若 `layout=monorepo` 或 `verify_commands` 非空 → **每条** `env_notes.verify_commands[]` 须已执行且 **exit 0**，报告中粘贴命令+退出码；缺一不得写 `gates.verify`
+  - **workdir（M5）**：`workdir_policy` 缺省/`repo_root` 时，报告与文档中的命令从仓根书写（`mvn -f backend …` / `npm --prefix frontend …` 或文档内一致的 `cd frontend &&`）
 - [ ] 无未接受 `fail`，或 `accepted_residual` 已填用户接受说明
 - [ ] → advance 写 `gates.verify`
 
@@ -173,9 +183,10 @@
 ## close（环 11）
 
 - [ ] 收口步骤与勾选见 [close.md](close.md)（含 active→archive）
+- [ ] **根 README SSOT（M4）**：若 `layout=monorepo` → 仓库根 `README.md` 含 backend **与** frontend 启动命令；子包 README 仅短链到根（见 close L1）
 - [ ] → advance/close 写 `gates.close`；`stage=done`；主题目录在 `docs/runs/archive/<slug>/`
 
-## env_notes（O4 + O11 + O14，伴生字段）
+## env_notes（O4 + O11 + O14 + M2 + M5，伴生字段）
 
 当 `env_verified` 非 null 且运行时工具链 ≠ 项目声明目标时，`progress.env_notes` 须含：
 
@@ -188,8 +199,21 @@
 - `api_base_mode`：`proxy` | `absolute`（O14；verify 清单要求粘贴）
 - `pinned_deps`：`[{ name, version, reason }]`（O11；如钉 jsdom 避开 Node20×jsdom30）
 
-同步在 `回链.md`「其他」写一行。无差异且无前端基址/钉依赖时可 `env_notes: null`。
+同仓扩展：
+
+- `verify_commands`：`string[]`（M2；monorepo 双端验收命令；每条 exit 0 才允许 `gates.verify`）
+- `workdir_policy`：`repo_root`（M5；monorepo 默认；文档命令从仓根书写）
+
+同步在 `回链.md`「其他」写一行。无差异且无前端基址/钉依赖/多命令时可 `env_notes: null`。
+
+## layout / packages / docs_root（M1，伴生字段）
+
+- `layout`：`monorepo` | `multi_repo` | `null`（缺省≈`multi_repo`）
+- `packages`：`[{ path, role: api|web|other }]` 或 `null`；同仓 FE+BE 时填写
+- `docs_root`：默认 `"docs/"`（典礼在仓库根，勿放子包）
+- **冲突禁令**：`layout=monorepo` 时，`sibling_repos` 不得指向与 `packages[].path` 同仓同路径（用 packages，勿伪跨仓）
+- 回链「同仓布局」节同步。形状由 selfcheck 夹具覆盖。
 
 ## sibling_repos（O8，伴生字段）
 
-可选列表：`[{ url, role: api|web, spec_path }]`。用户提跨仓配对时强制非空；回链「跨仓」节同步。形状由 selfcheck 夹具覆盖。
+可选列表：`[{ url, role: api|web, spec_path }]`。用户提跨仓配对时强制非空；回链「跨仓」节同步。形状由 selfcheck 夹具覆盖。与 M1 冲突禁令见上。

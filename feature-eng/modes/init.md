@@ -12,6 +12,17 @@
 
 若目标仓 **empty-ish**（仅有 `LICENSE` / `.gitignore` 等 GitHub 模板、无业务骨架）：init 仍可写绑定，但 **start 前**须完成本地脚手架 + push（Cloud/SCM 对空仓常 400）。判定规则见 [start.md](start.md) 步骤 1。**模板文件 ≠ 业务骨架**。
 
+### monorepo_bootstrap（M6）
+
+将旧双仓（或拆仓 archive）合并进同仓 `backend/`+`frontend/` 时，init/start 勾选：
+
+- [ ] 子包级 `backend/docs/runs`、`frontend/docs/runs`（及等价路径）已删除或移出（典礼只在仓库根 `docs_root`，默认 `docs/`）
+- [ ] 子包级 `docs/superpowers` 已剥离或迁入根 `docs/superpowers/`（避免双源）
+- [ ] 可选：根 `docs/HISTORY-split-repos.md` 指针旧仓 URL / 最后 SHA（非强制）
+- [ ] `progress.layout=monorepo` + `packages` 已规划（正式写入在 start）
+
+未剥离不得把子包 `docs/runs` 当本主题过程态。
+
 ### 绿地前端非空目录（O10）
 
 若根目录仅有 VCS / `LICENSE*` / `.gitignore`（及可选占位 README）且 **无 `package.json`**，而用户要 `create-vite` / `create-next-app`：

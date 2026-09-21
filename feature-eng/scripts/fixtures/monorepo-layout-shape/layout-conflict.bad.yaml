@@ -1,0 +1,15 @@
+# M1 负例：monorepo 却用 sibling_repos 指同仓包路径
+layout: monorepo
+packages:
+  - path: backend
+    role: api
+  - path: frontend
+    role: web
+docs_root: "docs/"
+sibling_repos:
+  - url: "https://github.com/org/same-mono"
+    role: api
+    spec_path: "backend"
+  - url: "./frontend"
+    role: web
+    spec_path: "frontend/docs/spec.md"

@@ -93,6 +93,43 @@ CorsConfigurationSource corsConfigurationSource() {
 
 `SecurityFilterChain` 仅 `cors(withDefaults())` **不够**——须有 `CorsConfigurationSource` Bean，或改用前端 proxy。
 
+## 同仓 monorepo（M1–M6 速记）
+
+- **M1**：`layout: monorepo` + `packages: [{ path, role: api|web|other }]` + `docs_root: docs/`；**勿**用 sibling_repos 指本仓包路径。
+- **M2 / M5**：`env_notes.verify_commands` 全员 exit 0 才写 `gates.verify`；`workdir_policy: repo_root`（默认），命令从仓根写。
+- **M3**：单 Spec 强制 `## API` / `## UI` / `## 测试矩阵`。
+- **M4**：根 README = 双端启动 SSOT；子包 README 短链到根。
+- **M6**：合并旧仓时剥离子包 `docs/runs|superpowers`；可选 `docs/HISTORY-split-repos.md`。
+
+### monorepo 双端验收示例（M2）
+
+```bash
+# 一律从仓库根（workdir_policy=repo_root）
+mvn -f backend test
+npm --prefix frontend test
+npm --prefix frontend run build
+# 或文档内一致写法：cd frontend && npm test && cd ..
+```
+
+progress 示例：
+
+```yaml
+layout: monorepo
+packages:
+  - path: backend
+    role: api
+  - path: frontend
+    role: web
+docs_root: "docs/"
+env_notes:
+  workdir_policy: repo_root
+  verify_commands:
+    - "mvn -f backend test"
+    - "npm --prefix frontend test"
+    - "npm --prefix frontend run build"
+  api_base_mode: proxy
+```
+
 ## 跨仓 / env_notes 速记
 
 - **O8**：配对仓 → `sibling_repos: [{ url, role: api|web, spec_path }]`；web 消费 api → Spec「消费契约」。

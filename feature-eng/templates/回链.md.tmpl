@@ -48,9 +48,18 @@
 | verify | — | — | — |
 | close | — | — | — |
 
+## 同仓布局（M1 layout / packages）
+> `layout: monorepo | multi_repo`（null≈multi_repo）。同仓 FE+BE 用 `packages`，**勿**用 sibling_repos 指向本仓包目录。  
+> `docs_root` 默认 `docs/`（典礼落在仓库根，勿误放子包 docs）。
+
+| layout | docs_root | packages (path / role) | 备注 |
+|---|---|---|---|
+| — | docs/ | — | — |
+
 ## 跨仓（O8 sibling_repos）
 > 用户提到配对后端/前端时，progress.`sibling_repos` 至少一条；本表回链展示。  
-> 本仓 role=web 且声明了 api sibling → Spec 须有「消费契约」小节或链接（见 gates-common）。
+> 本仓 role=web 且声明了 api sibling → Spec 须有「消费契约」小节或链接（见 gates-common）。  
+> **M1**：`layout=monorepo` 时禁止 sibling_repos 指向与 `packages[].path` 同仓同路径。
 
 | url | role (api\|web) | spec_path | 备注 |
 |---|---|---|---|
@@ -58,7 +67,7 @@
 
 ## 其他
 - env_verified：—
-- env_notes（runtime / target / mismatch_reason / api_base_mode / pinned_deps）：—
+- env_notes（runtime / target / mismatch_reason / api_base_mode / pinned_deps / verify_commands / workdir_policy）：—
 - integration_ready（O9：`cors_ready | proxy_ready | accepted_blocked`）：—
 - L2 审核：`审核-<stage>.md` — —
 - pending_invoke：—

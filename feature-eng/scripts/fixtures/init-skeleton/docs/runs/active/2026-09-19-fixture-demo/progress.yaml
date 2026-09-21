@@ -39,5 +39,8 @@ gates:
 
 env_verified: null
 env_notes: null
+layout: null
+packages: null
+docs_root: "docs/"
 sibling_repos: null
 accepted_residual: null
