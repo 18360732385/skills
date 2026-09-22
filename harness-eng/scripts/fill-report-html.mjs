@@ -87,7 +87,7 @@ Also writes docs/harness-eng/score-latest.json (UTF-8) unless --no-score-copy.
 Appends ${HISTORY_REL} unless --no-history-append or --dry-run.
 --history → docs/harness-eng/history/report-<timestamp>.html
 
-ui fields (0.2.24+): composite_score, pipeline_progress, decision_kpis, morph_strip,
+ui fields (0.2.25+): composite_score, pipeline_progress, decision_kpis, morph_strip,
 show_domain_cards, gap_to_ready, domain_stories, miss_top, gaps_top,
 chart_domains, next_actions[].command, shards[].command,
 diff, trend, run_timeline
@@ -274,7 +274,7 @@ function main() {
     at: new Date().toISOString(),
   });
   const history_series = buildTrendSeries(prior, entry, args.historyLimit);
-  const ui = buildReportUi(scoreForUi, { history_series, run });
+  const ui = buildReportUi(scoreForUi, { history_series, run, root, meta });
   const reportDirRel = "docs/harness-eng";
   const payload = {
     generated_at: entry.at,

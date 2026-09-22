@@ -4,7 +4,7 @@
 
 ## 版本
 
-当前 **0.6.8-dev**（Codex P0 增量解冻；其上为 0.6.7 Pn 回流 + 前后端契约门禁；OpenAPI 桥；分册厚 SSOT；API 7 列；CodeBuddy；Trae **高**；session-dashboard；sync freshness）。报告对照 **`skill_version` + `report_schema`**（0.2.24；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.8-dev**（Codex P0 增量解冻；其上为 0.6.7 Pn 回流 + 前后端契约门禁；OpenAPI 桥；分册厚 SSOT；API 7 列；CodeBuddy；Trae **高**；session-dashboard；sync freshness）。报告对照 **`skill_version` + `report_schema`**（0.2.25；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
 
 ## 0.6.8-dev 增量验收（Codex P0）
 

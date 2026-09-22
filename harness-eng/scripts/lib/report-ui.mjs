@@ -1,13 +1,18 @@
 ﻿/**
  * Build human-facing `ui` projection from fill-score JSON.
- * 报告壳主键：`ui.report_schema`（现 0.2.24）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.2.25）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
  * 0.2.23：决策台瘦身——徽章二态；decision_kpis + morph_strip；域故事卡默认关。
  * 0.2.24：综合评分 + 流水线进度；报告页 Tab/主题/术语悬停由模板承担。
+ * 0.2.25：命令可执行（root/统一 inventory）· warning_shards/residual · 分域中文 · 四态灯。
  */
-import { knownContractDomainIds, domainLabel, loadDomainRegistry } from "./domains.mjs";
+import {
+  knownContractDomainIds,
+  domainLabel,
+  defaultContractDomains,
+} from "./domains.mjs";
 
 const DOMAIN_ZH = {
   api: "接口文档",
@@ -61,6 +66,13 @@ const MISS_ZH = {
   "generic-logic-template": "通用四步逻辑模板",
   "dto-unbound": "DTO 错挂/未绑定",
   "dto-unresolved": "DTO 类未解析",
+  "jobs-no-id": "缺 task_code / 标识",
+  "jobs-no-cron": "缺 Cron 表达式",
+  "jobs-no-scheduler": "缺 Scheduler / 调度入口",
+  "jobs-no-anchors": "缺代码锚点",
+  "jobs-heuristic-in-ssot": "heuristic 误入 SSOT",
+  "jobs-heuristic-unmarked": "heuristic 未标 quality",
+  "jobs-openapi-dump": "jobs 误含 OpenAPI 字段表",
 };
 
 const GLOSSARY = [
@@ -137,6 +149,18 @@ const GLOSSARY = [
     tip: "建议下一批要补的接口/模块分片。",
   },
   {
+    id: "warning_shards",
+    zh: "acceptance 残项",
+    en: "warning_shards",
+    tip: "金标批次已关后仍可能剩 acceptance warnings；用 fill-plan --residual 清。",
+  },
+  {
+    id: "coverage_ready",
+    zh: "覆盖就绪",
+    en: "coverage_ready",
+    tip: "相对 inventory 与 score-policy 的覆盖闸；不替代 ai_coding_ready。",
+  },
+  {
     id: "gap_to_ready",
     zh: "距门槛差距",
     en: "gap_to_ready",
@@ -161,6 +185,86 @@ const GLOSSARY = [
     tip: "真相是否含模板必填章（启发式）；贴 formula_ceiling 但此项低 → fill-truths-agents，勿空追 overall。",
   },
 ];
+
+/** Resolve --root for shell commands; placeholder when unknown. */
+function cmdRoot(root) {
+  const r = root != null && String(root).trim() ? String(root).trim() : "";
+  return r || "<TARGET>";
+}
+
+function domainsCsv(score, meta) {
+  const fromMeta = Array.isArray(meta?.domains) ? meta.domains.filter(Boolean) : [];
+  if (fromMeta.length) return fromMeta.join(",");
+  const fromScore = contractDomainList(score).filter((d) => score?.domains?.[d] != null);
+  if (fromScore.length) return fromScore.join(",");
+  try {
+    return defaultContractDomains().join(",");
+  } catch {
+    return "api,func,db,redis,jobs";
+  }
+}
+
+function preferredInventoryDomain(score, meta) {
+  const gaps = score?.coverage_ready?.gaps;
+  if (Array.isArray(gaps) && gaps.length && gaps[0]?.domain) return String(gaps[0].domain);
+  const metaD = Array.isArray(meta?.domains) ? meta.domains : [];
+  if (metaD.includes("api")) return "api";
+  if (metaD[0]) return metaD[0];
+  return "api";
+}
+
+function preferredAcceptanceDomain(score) {
+  const stories = [];
+  for (const d of contractDomainList(score)) {
+    const x = score.domains?.[d];
+    const q = score.quality?.domains?.[d] ?? x?.score;
+    const cap = score.domain_caps?.[d];
+    if (typeof q === "number" && typeof cap === "number") {
+      stories.push({ d, room: Math.max(0, cap - q) });
+    }
+  }
+  stories.sort((a, b) => b.room - a.room);
+  if (stories[0]?.d) return stories[0].d;
+  if (score?.domains?.api) return "api";
+  const ids = contractDomainList(score);
+  return ids[0] || "api";
+}
+
+function warningShardCount(score) {
+  return Array.isArray(score?.warning_shards) ? score.warning_shards.length : 0;
+}
+
+function hasResidualHint(score) {
+  if (warningShardCount(score) > 0) return true;
+  const blockers = Array.isArray(score?.ai_coding_ready?.blockers)
+    ? score.ai_coding_ready.blockers
+    : [];
+  return blockers.some((b) => String(b).startsWith("acceptance_warnings:"));
+}
+
+function residualCommand(root, score) {
+  const gold =
+    typeof score?.gold_ratio === "number" ||
+    score?.gate_profile === "gold" ||
+    score?.score_policy?.gate_profile === "gold";
+  return `node scripts/fill-plan.mjs --root ${cmdRoot(root)}${gold ? " --residual --gold" : " --residual"}`;
+}
+
+function buildTasksEmptyHint(score) {
+  const blockers = Array.isArray(score?.ai_coding_ready?.blockers)
+    ? score.ai_coding_ready.blockers
+    : [];
+  if (blockers.includes("fill_plan_missing")) {
+    return "暂无分片：先 fill-plan --init，再 inventory / agents。";
+  }
+  if (score?.ready?.coverage_incomplete) {
+    return "暂无分片：先跑 fill-inventory.mjs --domain <域> 生成 inventory。";
+  }
+  if (hasResidualHint(score) && !(score?.next_shards?.length)) {
+    return "无 next_shards；有 acceptance 残项 → 见上方 residual 卡或 fill-plan --residual。";
+  }
+  return "暂无分片任务。先完成 fill-plan / inventory 后再看本台。";
+}
 
 function domainStatus(score, d) {
   const x = score.domains?.[d];
@@ -270,7 +374,7 @@ function buildVerdict(score) {
   };
 }
 
-/** 决策台 KPI：开干闸 + 条件金标（无 SSOT 则省略金标卡） */
+/** 决策台 KPI：开干闸 + 条件金标 + 四态只读灯（不替代开干） */
 function buildDecisionKpis(score) {
   const aiOk = !!score.ai_coding_ready?.ok;
   const kpis = [
@@ -294,6 +398,55 @@ function buildDecisionKpis(score) {
       tone: score.gold_ratio < 0.6 ? "warn" : "ok",
     });
   }
+  const skOk = score.skeleton_ready?.ok;
+  kpis.push({
+    id: "skeleton_ready",
+    label_zh: "骨架",
+    value: skOk === true ? "YES" : skOk === false ? "NO" : "—",
+    sub: "只读灯 · 非开干",
+    tone: skOk === true ? "ok" : skOk === false ? "warn" : "",
+  });
+  const covOk = score.coverage_ready?.ok;
+  kpis.push({
+    id: "coverage_ready",
+    label_zh: "覆盖",
+    value: covOk === true ? "YES" : covOk === false ? "NO" : "—",
+    sub: "只读灯 · 非开干",
+    tone: covOk === true ? "ok" : covOk === false ? "warn" : "",
+  });
+  const semOk = score.semantic_ready?.ok;
+  kpis.push({
+    id: "semantic_ready",
+    label_zh: "语义",
+    value: semOk === true ? "YES" : semOk === false ? "NO" : "—",
+    sub: "只读灯 · 非开干",
+    tone: semOk === true ? "ok" : semOk === false ? "warn" : "",
+  });
+  const plan = score.fill_plan;
+  let planVal = "—";
+  let planTone = "";
+  if (plan?.present === false || plan == null) {
+    planVal = "缺";
+    planTone = "warn";
+  } else if (typeof plan.open_total === "number") {
+    if (plan.open_total === 0) {
+      planVal = "已关";
+      planTone = "ok";
+    } else {
+      planVal = "开" + plan.open_total;
+      planTone = "warn";
+    }
+  } else if (plan?.present) {
+    planVal = "有";
+    planTone = "ok";
+  }
+  kpis.push({
+    id: "fill_plan",
+    label_zh: "Plan",
+    value: planVal,
+    sub: "只读灯 · 非开干",
+    tone: planTone,
+  });
   return kpis;
 }
 
@@ -473,6 +626,7 @@ function buildDomainStories(score) {
 
 function buildChartDomains(score) {
   const labels = [];
+  const labels_zh = [];
   const quality = [];
   const caps = [];
   for (const d of contractDomainList(score)) {
@@ -480,16 +634,20 @@ function buildChartDomains(score) {
     const q = score.quality?.domains?.[d] ?? x?.score;
     if (x == null && q == null) continue;
     labels.push(d);
+    labels_zh.push(domainDisplayName(d));
     quality.push(typeof q === "number" ? q : 0);
     caps.push(
       typeof score.domain_caps?.[d] === "number" ? score.domain_caps[d] : 100
     );
   }
-  return { labels, quality, caps };
+  return { labels, labels_zh, quality, caps };
 }
 
-function buildNextActions(score) {
+function buildNextActions(score, opts = {}) {
   const actions = [];
+  const root = opts.root;
+  const meta = opts.meta || {};
+  const R = cmdRoot(root);
   const aiOk = !!score.ai_coding_ready?.ok;
   const blockers = Array.isArray(score.ai_coding_ready?.blockers)
     ? score.ai_coding_ready.blockers
@@ -498,6 +656,9 @@ function buildNextActions(score) {
   const ceil = score.formula_ceiling;
   const atCeil =
     typeof overall === "number" && typeof ceil === "number" && overall >= ceil - 1;
+  const accDomain = preferredAcceptanceDomain(score);
+  const invDomain = preferredInventoryDomain(score, meta);
+  const domCsv = domainsCsv(score, meta);
 
   if (aiOk) {
     actions.push({
@@ -505,21 +666,30 @@ function buildNextActions(score) {
       detail: "ai_coding_ready=true。形态分贴顶时勿空追 overall≥80。",
       command: null,
     });
-    return actions;
+    if (hasResidualHint(score) && actions.length < 3) {
+      const n = warningShardCount(score);
+      actions.push({
+        title: "清 acceptance 残项（--residual）",
+        detail:
+          (n ? `warning_shards×${n}。` : "") +
+          "开干 YES 仍建议清 warnings；见任务台 residual 卡。",
+        command: residualCommand(root, score),
+      });
+    }
+    return actions.slice(0, 3);
   }
 
   if (blockers.includes("fill_plan_missing")) {
     actions.push({
       title: "初始化 fill-plan",
       detail: "建立目标与批次后再 agents 精填。",
-      command:
-        "node scripts/fill-plan.mjs --root <TARGET> --init --domains api,func,db,redis,jobs",
+      command: `node scripts/fill-plan.mjs --root ${R} --init --domains ${domCsv}`,
     });
   } else if (blockers.includes("fill_plan_open_batches")) {
     actions.push({
       title: "按 Plan 批次继续多 Agent 精填",
       detail: `开放批次≈${score.fill_plan?.open_total ?? "?"}。关批次前勿宣称可 AI coding。`,
-      command: "node scripts/fill-plan.mjs --root <TARGET> --status",
+      command: `node scripts/fill-plan.mjs --root ${R} --status`,
     });
   }
 
@@ -539,7 +709,17 @@ function buildNextActions(score) {
     });
   }
 
-  // 0.3.0: gate 红项 → 可执行 fill 建议
+  if (hasResidualHint(score) && actions.length < 3) {
+    const n = warningShardCount(score);
+    actions.push({
+      title: "清 acceptance 残项（--residual）",
+      detail:
+        (n ? `warning_shards×${n}。` : "") +
+        "金标批次已关后清 warnings；再 fill-score。",
+      command: residualCommand(root, score),
+    });
+  }
+
   for (const b of blockers) {
     if (actions.length >= 3) break;
     if (String(b).startsWith("morph_floor:")) {
@@ -552,15 +732,16 @@ function buildNextActions(score) {
       actions.push({
         title: "清 harness TODO(harness-eng)",
         detail: `${b}。扫面见 gate.todo_scan（gold=harness_docs：真相+索引+AGENTS+agent-kb+rules）。`,
-        command: "node scripts/fill-plan.mjs --root <TARGET> --status",
+        command: `node scripts/fill-plan.mjs --root ${R} --status`,
       });
     } else if (String(b).startsWith("acceptance_warnings:")) {
-      actions.push({
-        title: "清 acceptance warnings（gold）",
-        detail: `${b}。按 truth-quality 精修 api 真相至 warnings=0。`,
-        command:
-          "node scripts/acceptance-check.mjs --root <TARGET> --domain api --gold",
-      });
+      if (!hasResidualHint(score) || warningShardCount(score) === 0) {
+        actions.push({
+          title: "清 acceptance warnings（gold）",
+          detail: `${b}。按 truth-quality 精修 ${accDomain} 真相至 warnings=0。`,
+          command: `node scripts/acceptance-check.mjs --root ${R} --domain ${accDomain} --gold`,
+        });
+      }
     } else if (
       String(b).startsWith("acceptance_blockers:") ||
       String(b).startsWith("gold_ratio:")
@@ -568,8 +749,7 @@ function buildNextActions(score) {
       actions.push({
         title: "清 acceptance blocker / 抬金标",
         detail: `${b}。对 .fill-work 或 SSOT 跑 acceptance-check，过闸再 merge。`,
-        command:
-          "node scripts/acceptance-check.mjs --root <TARGET> --domain api --gold",
+        command: `node scripts/acceptance-check.mjs --root ${R} --domain ${accDomain} --gold`,
       });
     } else if (String(b).startsWith("template_completeness:")) {
       actions.push({
@@ -589,21 +769,23 @@ function buildNextActions(score) {
   ) {
     const tip = covGaps
       .slice(0, 3)
-      .map((g) => `${g.domain}:${Math.round((g.ratio || 0) * 100)}%<${Math.round((g.target || 0) * 100)}%`)
+      .map(
+        (g) =>
+          `${g.domain}:${Math.round((g.ratio || 0) * 100)}%<${Math.round((g.target || 0) * 100)}%`
+      )
       .join("、");
     actions.push({
       title: "按分域补覆盖（all_domains）",
       detail: `coverage_gaps：${tip}。开 fill-plan 对应域批次 → agents。`,
-      command: "node scripts/fill-plan.mjs --root <TARGET> --status",
+      command: `node scripts/fill-plan.mjs --root ${R} --status`,
     });
   }
 
   if (score.ready?.coverage_incomplete) {
     actions.push({
       title: "先跑 inventory（代码清单）",
-      detail: "默认写出 docs/<域>/.fill-work/inventory*.json，再 fill-plan / agents。",
-      command:
-        "node scripts/fill-inventory-api.mjs --root <TARGET> --all-modules",
+      detail: `写出 docs/${invDomain}/.fill-work/inventory*.json，再 fill-plan / agents。`,
+      command: `node scripts/fill-inventory.mjs --domain ${invDomain} --root ${R}`,
     });
   } else if (
     blockers.includes("coverage_ready") ||
@@ -677,22 +859,48 @@ function buildDomains(score) {
   return out;
 }
 
-function buildShards(score) {
+function buildShards(score, opts = {}) {
+  const root = opts.root;
+  const R = cmdRoot(root);
+  const out = [];
   const shards = Array.isArray(score.next_shards) ? score.next_shards : [];
-  return shards.slice(0, 12).map((s) => {
+  for (const s of shards.slice(0, 12)) {
     const id = s.id || "";
     const pkg = s.package || "(root)";
     const count =
       s.count ?? (Array.isArray(s.endpoints) ? s.endpoints.length : null);
-    return {
+    out.push({
       id,
       package: pkg,
       count,
+      kind: "fill",
       title: id || pkg,
       hint: count != null ? `约 ${count} 条` : "待估条目数",
-      command: "node scripts/fill-plan.mjs --root <TARGET> --status",
-    };
-  });
+      command: `node scripts/fill-plan.mjs --root ${R} --status`,
+    });
+  }
+  const warnings = Array.isArray(score.warning_shards) ? score.warning_shards : [];
+  for (const s of warnings.slice(0, 8)) {
+    const id = s.id || s.path || s.file || "residual";
+    const pkg = s.package || s.domain || "acceptance";
+    const count =
+      s.count ??
+      (Array.isArray(s.warnings) ? s.warnings.length : s.items?.length) ??
+      null;
+    out.push({
+      id: String(id),
+      package: String(pkg),
+      count,
+      kind: "residual",
+      title: "残项 · " + (s.title || id),
+      hint:
+        count != null
+          ? `warnings≈${count} · fill-plan --residual`
+          : "acceptance residual · fill-plan --residual",
+      command: residualCommand(root, score),
+    });
+  }
+  return out.slice(0, 16);
 }
 
 function buildDiff(score) {
@@ -866,6 +1074,8 @@ function buildCompositeScore(score, pipeline) {
 /**
  * @param {object} score fill-score JSON
  * @param {object} [opts]
+ * @param {string} [opts.root] target repo root for command paths
+ * @param {object} [opts.meta] harness-meta (domains etc.)
  * @param {object} [opts.history_series] prebuilt trend series
  * @param {object} [opts.run] pipeline run stats
  * @returns {object} ui projection
@@ -873,6 +1083,7 @@ function buildCompositeScore(score, pipeline) {
 export function buildReportUi(score, opts = {}) {
   const s = score && typeof score === "object" ? score : {};
   const cov = s.coverage || {};
+  const actionOpts = { root: opts.root || s.root || null, meta: opts.meta || {} };
   const domains = buildDomains(s);
   const missTop = buildMissTop(s);
   const domainStories = buildDomainStories(s);
@@ -884,8 +1095,8 @@ export function buildReportUi(score, opts = {}) {
   const pipeline_progress = buildPipelineProgress(s);
   const composite_score = buildCompositeScore(s, pipeline_progress);
   return {
-    version: "0.2.24",
-    report_schema: "0.2.24",
+    version: "0.2.25",
+    report_schema: "0.2.25",
     headline: buildHeadline(s),
     verdict: buildVerdict(s),
     gap_to_ready: buildGapToReady(s),
@@ -920,8 +1131,9 @@ export function buildReportUi(score, opts = {}) {
     chart_domains: buildChartDomains(s),
     miss_top: missTop,
     gaps_top: buildGapsTop(s),
-    next_actions: buildNextActions(s),
-    shards: buildShards(s),
+    next_actions: buildNextActions(s, actionOpts),
+    shards: buildShards(s, actionOpts),
+    tasks_empty_hint: buildTasksEmptyHint(s),
     diff,
     trend,
     run_timeline,

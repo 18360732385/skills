@@ -1,7 +1,7 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev`（当前 **0.6.8-dev**）。报告对照 **`skill_version` + `report_schema`**（**0.2.24**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev`（当前 **0.6.8-dev**）。报告对照 **`skill_version` + `report_schema`**（**0.2.25**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
 
 ## 0.6.8-dev — 2026-09-19（Codex P0 增量解冻：PARITY + config.toml + hooks）
@@ -17,6 +17,7 @@
 - **措辞**：去掉「0.6.x 整列冻结 P2」→ **P0 增量解冻 / 仍不默认进全部推荐**；Cursor 级全家桶同构仍 out of scope
 - **金标纪律回捞（去域化，2026-09-22）**：从 c-be-sms-ai 抽可复用施工纪律进模板——`jobs-index-template` / `jobs.md.tmpl` / `job-template`（Never do、调度契约>func/api Cron 摘录、独立开关）；rule `12`/`13` 补判定清单+联动+同步操作表（保留 `{{GLOB_*}}`，不带回 Pn/业务名）；rule `20` 对齐四件套 + Never do。**不**把 AGENTS/pitfalls 真真相塞回 templates
 - **五契约域文案对齐（2026-09-22）**：注册表已是 api/func/db/redis/jobs；清除残留「四域」措辞与漏 `|jobs` 路径；`FALLBACK_CORE` / fill-plan jobs 验收 / questions pipeline 推荐 / 报告 UI 与宿主入口模板统一
+- **报告壳 0.2.25（2026-09-22）**：决策/任务台贯通 `warning_shards`+`--residual`；统一 `fill-inventory.mjs` 命令与 root 替换；分域中文标签；决策四态灯；Tab `#hash`；会话仪表盘 residual 提示
 
 ### 版本钉
 

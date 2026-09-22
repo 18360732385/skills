@@ -551,6 +551,48 @@ if (fs.existsSync(fixture)) {
   assert(ui.verdict.ready_label === "建议可以开干" || ui.verdict.ready_label === "建议暂缓", "verdict binary");
   assert(ui.composite_score && typeof ui.composite_score.value === "number", "ui.composite_score");
   assert(ui.pipeline_progress && Array.isArray(ui.pipeline_progress.steps), "ui.pipeline_progress");
+  assert(ui.report_schema === "0.2.25", "report_schema 0.2.25");
+  assert(ui.chart_domains && Array.isArray(ui.chart_domains.labels_zh), "chart_domains.labels_zh");
+  assert(
+    Array.isArray(ui.decision_kpis) &&
+      ui.decision_kpis.some((k) => k.id === "skeleton_ready") &&
+      ui.decision_kpis.some((k) => k.id === "coverage_ready"),
+    "decision_kpis readiness lights"
+  );
+  const uiInv = buildReportUi({
+    ...scoreObj,
+    ready: { ...(scoreObj.ready || {}), coverage_incomplete: true },
+    ai_coding_ready: { ok: false, blockers: ["coverage_ready"] },
+  });
+  assert(
+    !JSON.stringify(uiInv.next_actions || []).includes("fill-inventory-api"),
+    "next_actions no fill-inventory-api"
+  );
+  assert(
+    /fill-inventory\.mjs/.test(JSON.stringify(uiInv.next_actions || [])),
+    "next_actions uses fill-inventory.mjs"
+  );
+  const uiRes = buildReportUi({
+    ...scoreObj,
+    ai_coding_ready: { ok: true, blockers: [] },
+    warning_shards: [{ id: "w1", path: "docs/api/modules/x.md", count: 2 }],
+  });
+  assert(
+    (uiRes.next_actions || []).some((a) => /residual/.test(a.title + (a.command || ""))),
+    "aiOk still suggests residual when warning_shards"
+  );
+  assert(
+    (uiRes.shards || []).some((s) => s.kind === "residual"),
+    "shards include residual kind"
+  );
+  const reportUiSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/report-ui.mjs"), "utf8");
+  assert(/warning_shards/.test(reportUiSrc) && /residualCommand/.test(reportUiSrc), "report-ui residual path");
+  const reportTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
+    "utf8"
+  );
+  assert(/labels_zh/.test(reportTmpl) && /tabFromHash/.test(reportTmpl), "report tmpl labels_zh + hash");
+  assert(/task\.residual/.test(reportTmpl), "report tmpl residual task style");
 }
 
 // --- 0.2.26 acceptance fixture smoke ---

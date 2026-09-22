@@ -101,7 +101,7 @@ export function buildSessionDashboard(opts = {}) {
   let ui = null;
   if (score) {
     try {
-      ui = buildReportUi(score, { meta: meta || {} });
+      ui = buildReportUi(score, { meta: meta || {}, root: root || null });
     } catch {
       ui = null;
     }
@@ -149,6 +149,17 @@ export function buildSessionDashboard(opts = {}) {
       taskLine = "建议 fill-score 或续跑补缺口";
     } else if (!meta && root) {
       taskLine = "无 meta · 建议 audit 或 land";
+    }
+  }
+
+  if (score?.warning_shards?.length) {
+    const n = score.warning_shards.length;
+    const residualBit = `residual ×${n}`;
+    if (!opts.nextAction && !opts.pending) {
+      taskLine =
+        taskLine && taskLine !== "—"
+          ? `${residualBit} · ${taskLine}`
+          : residualBit;
     }
   }
 

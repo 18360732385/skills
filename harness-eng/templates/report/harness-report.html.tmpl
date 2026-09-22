@@ -871,6 +871,14 @@
     .task h3 { margin: 0 0 4px; font-size: 0.88rem; font-weight: 700; }
     .task h3::before { content: '\25B8 '; color: var(--info); }
     .task .meta { color: var(--muted); font-size: 0.76rem; margin-bottom: 8px; }
+    .task.residual {
+      border-color: var(--warn, #d97706);
+    }
+    .task.residual h3::before { color: var(--warn, #d97706); }
+    .task.residual:hover {
+      border-color: var(--warn, #d97706);
+      box-shadow: 0 0 14px rgba(217,119,6,0.2);
+    }
 
     /* ============================================================
        TIMELINE + DIFF
@@ -1344,7 +1352,7 @@
     var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     applyTheme(prefersDark ? "dark" : "light");
   }
-  function setTab(name) {
+  function setTab(name, skipHash) {
     var id = TAB_ORDER.indexOf(name) >= 0 ? name : "decision";
     document.querySelectorAll(".tab").forEach(function (el) {
       el.classList.toggle("active", el.getAttribute("data-tab") === id);
@@ -1352,6 +1360,15 @@
     document.querySelectorAll(".panel").forEach(function (el) {
       el.classList.toggle("active", el.getAttribute("data-panel") === id);
     });
+    if (!skipHash && window.history && window.history.replaceState) {
+      try {
+        window.history.replaceState(null, "", "#" + id);
+      } catch (e) {}
+    }
+  }
+  function tabFromHash() {
+    var h = (location.hash || "").replace(/^#/, "");
+    if (TAB_ORDER.indexOf(h) >= 0) setTab(h, true);
   }
   function shiftTab(delta) {
     var cur = document.querySelector(".tab.active");
@@ -1370,11 +1387,11 @@
     if (el) el.classList.remove("open");
   }
   function domainBars(chart) {
-    var labels = (chart && chart.labels) || [];
+    var labels = (chart && (chart.labels_zh && chart.labels_zh.length ? chart.labels_zh : chart.labels)) || [];
     var quality = (chart && chart.quality) || [];
     var caps = (chart && chart.caps) || [];
     if (!labels.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">// 暂无分域数据</p>";
-    var w = 420, h = 28 + labels.length * 36, padL = 48, padR = 24, max = 100;
+    var w = 420, h = 28 + labels.length * 36, padL = 72, padR = 24, max = 100;
     var rows = labels.map(function (lab, i) {
       var y = 20 + i * 36;
       var q = Math.max(0, Math.min(100, quality[i] || 0));
@@ -1461,6 +1478,8 @@
   });
   $("tab-prev").addEventListener("click", function () { shiftTab(-1); });
   $("tab-next").addEventListener("click", function () { shiftTab(1); });
+  window.addEventListener("hashchange", function () { tabFromHash(); });
+  tabFromHash();
   $("btn-glossary").addEventListener("click", function () { openModal("modal-glossary"); });
   $("btn-tech").addEventListener("click", function () { openModal("modal-tech"); });
   document.querySelectorAll("[data-close]").forEach(function (btn) {
@@ -1606,8 +1625,9 @@
         if (d.room != null && d.room > 0) bits.push("距上限 " + d.room);
         if (typeof d.coverage_percent === "number") bits.push("覆盖 " + d.coverage_percent + "%");
         if (d.status_label) bits.push(d.status_label);
+        var mark = d.tone === "warn" ? "⚠ " : "";
         return (
-          "<strong>" + esc(d.name_zh || d.id) + "</strong> " +
+          "<strong>" + mark + esc(d.name_zh || d.id) + "</strong> " +
           esc(bits.join(" · "))
         );
       }).join(" · ");
@@ -1649,15 +1669,18 @@
     var shards = ui.shards || [];
     if (shards.length) {
       $("tasks").innerHTML = shards.map(function (s) {
+        var cls = "task" + (s.kind === "residual" ? " residual" : "");
         return (
-          '<div class="task"><h3>' + esc(s.title || s.id) + "</h3>" +
+          '<div class="' + cls + '"><h3>' + esc(s.title || s.id) + "</h3>" +
           '<div class="meta">' + esc(s.package) + " · " + esc(s.hint || "") + "</div>" +
           (s.command ? '<code class="cmd">' + esc(s.command) + "</code>" : "") +
           "</div>"
         );
       }).join("");
     } else {
-      show($("tasks-empty"));
+      var empty = $("tasks-empty");
+      if (empty) empty.textContent = ui.tasks_empty_hint || "暂无分片任务。先完成 fill-plan / inventory 后再看本台。";
+      show(empty);
     }
 
     var trend = ui.trend;
