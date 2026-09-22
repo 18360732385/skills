@@ -311,6 +311,21 @@ files:
     target: .codex/hooks/superpowers-commit-gate.js
     placeholders: [CODE_PREFIXES]
     when_ai_tools: codex
+  - id: hooks-codex-adapter
+    ladder: L3
+    template: hooks/codex-adapter.js
+    target: .codex/hooks/codex-adapter.js
+    when_ai_tools: codex
+  - id: hooks-codex-stop
+    ladder: L3
+    template: hooks/codex-stop-checklist.js.tmpl
+    target: .codex/hooks/codex-stop-checklist.js
+    when_ai_tools: codex
+  - id: codex-rules-repository
+    ladder: L3
+    template: ai-tools/codex/rules/repository.rules
+    target: .codex/rules/repository.rules
+    when_ai_tools: codex
   - id: hooks-githooks-gate
     ladder: L3
     template: hooks/superpowers-commit-gate.js.tmpl

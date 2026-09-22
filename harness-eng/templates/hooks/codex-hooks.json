@@ -1,4 +1,5 @@
 {
+  "description": "harness-eng Codex hooks (fail-open)",
   "hooks": {
     "PreToolUse": [
       {
@@ -6,9 +7,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/superpowers-commit-gate.js\" --codex",
-            "timeout": 8,
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js\" commit-gate superpowers-commit-gate.js",
+            "timeout": 12,
             "statusMessage": "Checking Bash commit gate"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/codex-stop-checklist.js\"",
+            "timeout": 8,
+            "statusMessage": "Delivery soft check"
           }
         ]
       }

@@ -1326,6 +1326,32 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/env_vars\s*=\s*\[/.test(toml) && /MYSQL_PASS/.test(toml), "env var names exported");
   assert(!/s3cret/.test(toml), "secret values never in toml");
   assert(/enabled\s*=\s*false/.test(toml), "servers disabled by default");
+
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/ai-tools/codex/rules/repository.rules")),
+    "codex repository.rules seed"
+  );
+  const rulesSeed = fs.readFileSync(
+    path.join(skillRoot, "templates/ai-tools/codex/rules/repository.rules"),
+    "utf8"
+  );
+  assert(/prefix_rule/.test(rulesSeed) && /git/.test(rulesSeed) && /push/.test(rulesSeed), "rules seed has git push policy");
+  assert(/reset/.test(rulesSeed) && /forbidden|prompt/.test(rulesSeed), "rules seed has destructive git policy");
+  const hooks069 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json"), "utf8");
+  assert(/"Stop"/.test(hooks069), "codex-hooks includes Stop");
+  assert(/"matcher"\s*:\s*"\^Bash\$"/.test(hooks069), "PreToolUse still ^Bash$");
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/hooks/codex-stop-checklist.js.tmpl")),
+    "codex-stop-checklist tmpl"
+  );
+  assert(/hooks-codex-stop|codex-rules-repository/.test(manifest), "manifest wires codex stop + rules");
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/hooks/codex-adapter.js")),
+    "codex-adapter.js"
+  );
+  const ad069 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-adapter.js"), "utf8");
+  assert(/fail-open|exit\(0\)/.test(ad069), "adapter fail-open");
+  assert(/stdin|process\.stdin/.test(ad069), "adapter reads stdin");
 }
 
 // --- root _meta dual-write (skill-package ↔ templates) ---
