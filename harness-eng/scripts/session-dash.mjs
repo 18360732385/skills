@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * session-dash — markdown footer dashboard for harness-eng engineering turns.
- * Agent decides SHOW/HIDE per session-dashboard.md; this script only renders.
+ * session-dash — markdown footer dashboard for harness-eng this-turn engineering steps.
+ * Agent decides SHOW/HIDE per session-dashboard.md (this-turn gate); this script only renders.
  *
  * Usage:
  *   node scripts/session-dash.mjs --root <TARGET>
@@ -20,7 +20,7 @@
  */
 import { buildSessionDashboard, renderSessionDashboardMarkdown } from "./lib/session-dashboard.mjs";
 
-const HELP = `session-dash — harness-eng 会话仪表盘（工程轮末尾四台摘要）
+const HELP = `session-dash — harness-eng 会话仪表盘（本轮工程步进末尾四台摘要）
 
 用法:
   node scripts/session-dash.mjs --root <TARGET> [选项]
@@ -37,7 +37,7 @@ const HELP = `session-dash — harness-eng 会话仪表盘（工程轮末尾四�
   --help, -h                 显示本帮助
 
 说明:
-  SHOW/HIDE 由 Agent 按 modes/session-dashboard.md 判断；本脚本只负责渲染。
+  SHOW/HIDE 由 Agent 按 modes/session-dashboard.md 按本轮判定；本脚本只负责渲染。
   --mode 为本轮意图（必填推荐）；省略时显示「—」，meta.last_mode 仅脚注，不顶替本轮模式。
   无 score / 诊断空时默认精简一行，避免空四台噪音。
 `;
