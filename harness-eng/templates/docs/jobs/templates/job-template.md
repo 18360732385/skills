@@ -4,6 +4,13 @@
 > 调度契约是 jobs 域的 SSOT；索引见 `docs/jobs/jobs.md`。  
 > 业务方法 / REST / Key / 表仍以 `docs/func|api|redis|db` 为准；本文只描述**调度面**。
 
+### 纪律（Never do · 写真相时）
+
+- 只改 Cron / enable 却不同步 Registry 与本文
+- 在 Scheduler 内再加与统一执行器重复的锁（锁由执行器持有）
+- 把 Service 方法清单或 OpenAPI 字段表复制进本文（回链 func/api）
+- 把全局 enable 与本任务独立开关混为一谈
+
 ## 文件命名（强制）
 
 | 项 | 约定 |
@@ -74,7 +81,7 @@
 |---|---|
 | 分布式锁 | `{Key 模式}` → 回链 `docs/redis/keys/…` |
 | checkpoint / job_log | 回链 `docs/db/table/…`（若有） |
-| 执行器 | `{统一执行器}`（锁由执行器持有，Scheduler **勿**再加锁） |
+| 执行器 | `{统一执行器}`（锁由执行器持有；Scheduler **勿**再加锁） |
 
 ## 代码锚点
 

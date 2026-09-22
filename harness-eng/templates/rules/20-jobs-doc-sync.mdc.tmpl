@@ -41,11 +41,18 @@ alwaysApply: false
 
 ## 新增 / 修改任务四件套（强制）
 
-1. 任务码枚举（如 `SyncTaskCode`）
-2. `*Scheduler` 的 `@Scheduled`（及条件装配）
-3. `application*.yml`（或 profile）中 cron / enable
-4. Metadata Registry
-5. **`docs/jobs/tasks/NN-*.md`**（新建时更新 `jobs.md` 导航）
+1. 任务码枚举（或等价常量）
+2. `*Scheduler`（及条件装配）
+3. 配置中的 cron / enable（`application*.yml` 或等价）
+4. Metadata Registry（或等价注册表）
+5. **另须** `docs/jobs/tasks/NN-*.md`（新建时更新 `jobs.md` 导航）
+
+## 纪律（Never do）
+
+- 只改 Cron 却不同步 Registry / jobs 真相
+- 在 Scheduler 内再加与统一执行器重复的锁
+- 把业务方法清单 / OpenAPI 字段表写进 jobs 真相
+- 假定全局 enable=false 时独立开关任务也会停
 
 ## 文档格式约束
 

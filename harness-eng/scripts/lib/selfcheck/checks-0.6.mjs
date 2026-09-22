@@ -1184,6 +1184,36 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     "utf8"
   );
   assert(/前端消费层|api-client/.test(rule12), "rule12 frontend consumer gate");
+  assert(/判定清单/.test(rule12) && /与功能资产/.test(rule12), "rule12 gold discipline checklist");
+  assert(!/sms-ai|juneyao/i.test(rule12), "rule12 stays de-domainized");
+
+  const rule13 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/13-db-doc-sync.mdc.tmpl"),
+    "utf8"
+  );
+  assert(/判定清单/.test(rule13) && /同步操作/.test(rule13), "rule13 gold discipline checklist");
+  assert(/V\[0-9\]\{4\}__\(DDL\|DML\)/.test(rule13), "rule13 flyway name hint");
+  assert(!/sms-ai|juneyao/i.test(rule13), "rule13 stays de-domainized");
+
+  const jobsIdx = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/jobs/templates/jobs-index-template.md"),
+    "utf8"
+  );
+  assert(/纪律（Never do）/.test(jobsIdx), "jobs-index Never do");
+  assert(/调度契约/.test(jobsIdx) && /独立开关/.test(jobsIdx), "jobs-index conflict + independent switch");
+  assert(!/sms-ai|SyncTaskExecutor|juneyao/i.test(jobsIdx), "jobs-index stays de-domainized");
+
+  const jobTruth = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/jobs/templates/job-template.md"),
+    "utf8"
+  );
+  assert(/Never do/.test(jobTruth), "job-template Never do");
+
+  const rule20 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/20-jobs-doc-sync.mdc.tmpl"),
+    "utf8"
+  );
+  assert(/纪律（Never do）/.test(rule20) && /独立开关/.test(rule20), "rule20 Never do");
 
   assert(
     /踩坑回流/.test(fs.readFileSync(path.join(skillRoot, "templates/agents/AGENTS.root.md.tmpl"), "utf8")),

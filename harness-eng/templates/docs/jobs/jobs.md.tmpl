@@ -23,13 +23,14 @@
 | 调度框架 | TODO(harness-eng): 如 Spring `@Scheduled` |
 | 执行器 | TODO(harness-eng): 统一执行器 / 锁 / 审计日志 |
 | 多实例 | TODO(harness-eng): 分布式锁 Key 族（回链 redis） |
-| 新增任务四件套 | 任务码枚举 · Scheduler · yml cron/enable · Metadata Registry · **本域真相** |
+| 新增任务四件套 | 任务码枚举 · Scheduler · 配置 cron/enable · Metadata Registry（**另须**本域真相） |
 
 ### 纪律（Never do）
 
 - 只改 Cron 表达式却不同步 Registry / jobs 真相
 - 在 Scheduler 内再加一层与执行器重复的锁
 - 把业务方法清单 / OpenAPI 字段表写进 jobs 真相
+- 假定全局 `*.enabled=false` 时，带**独立开关**的任务也会停（各 task 开关语义以真相为准）
 
 ---
 
