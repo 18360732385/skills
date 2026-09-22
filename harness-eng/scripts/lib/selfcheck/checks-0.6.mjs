@@ -9,6 +9,7 @@ import { renderSessionDashboardMarkdown } from "../session-dashboard.mjs";
 import { DOC_MOVES, ROOT_STUBS, ROOT_KEEP, ROOT_MD_MAX } from "../doc-paths.mjs";
 import { HOOK_DEFS, buildContractChecksJs } from "../hooks-checks.mjs";
 import { scanSignals } from "../detect-signals.mjs";
+import { jsonServersToCodexToml } from "../codex-mcp-toml.mjs";
 
 export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   // Re-load hot docs so this suite does not depend on outer-scope consts from selfcheck.mjs
@@ -1307,6 +1308,24 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools068), "Trae matrix still 高 after Codex P0");
   assert(/CODEBUDDY-PARITY/.test(aiTools068) || /WorkBuddy/.test(aiTools068), "CodeBuddy still referenced");
+}
+
+// --- 0.6.9: Codex → 高 (incremental; more nails in later tasks) ---
+{
+  const toml = jsonServersToCodexToml({
+    mcpServers: {
+      mysql_dev: {
+        command: "npx",
+        args: ["-y", "@benborla29/mcp-server-mysql"],
+        env: { MYSQL_PASS: "s3cret", MYSQL_HOST: "127.0.0.1" },
+      },
+      context7: { command: "npx", args: ["-y", "@upstash/context7-mcp"] },
+    },
+  });
+  assert(/\[mcp_servers\.mysql_dev\]/.test(toml), "toml has mysql_dev table");
+  assert(/env_vars\s*=\s*\[/.test(toml) && /MYSQL_PASS/.test(toml), "env var names exported");
+  assert(!/s3cret/.test(toml), "secret values never in toml");
+  assert(/enabled\s*=\s*false/.test(toml), "servers disabled by default");
 }
 
 // --- root _meta dual-write (skill-package ↔ templates) ---
