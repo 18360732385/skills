@@ -43,7 +43,7 @@ const HARNESS_SYNC_TMPL_ID = "0.6.8-dev";
 const HARNESS_ENG_VERSION = "0.6.8-dev";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
-const AI_TOOLS = {{AI_TOOLS_JSON}};
+const AI_TOOLS = ["codex"];
 const has = (t) => AI_TOOLS.includes(t);
 
 const HEADER_MD =

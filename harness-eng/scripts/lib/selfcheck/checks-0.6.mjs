@@ -1352,6 +1352,24 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const ad069 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-adapter.js"), "utf8");
   assert(/fail-open|exit\(0\)/.test(ad069), "adapter fail-open");
   assert(/stdin|process\.stdin/.test(ad069), "adapter reads stdin");
+
+  const syncTmpl069 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/planCodexRules|codex\/rules/.test(syncTmpl069), "sync plans codex rules");
+  assert(
+    /config\.toml\.example/.test(syncTmpl069) && /env_vars|jsonServersToCodexToml/.test(syncTmpl069),
+    "sync emits codex toml from mcp"
+  );
+  assert(/\.agents\/skills/.test(syncTmpl069) && !/P0 \*\*不\*\*从/.test(syncTmpl069), "skills full distribute, not P0 pointer-only prose");
+  assert(/MANAGED_DIRS[\s\S]*\.codex\/rules/.test(syncTmpl069), "managed .codex/rules");
+
+  const codexFx = path.join(skillRoot, "scripts/fixtures/l5-sync-codex");
+  assert(fs.existsSync(path.join(codexFx, "scripts/agent-config/sync.mjs")), "l5-sync-codex sync.mjs");
+  assert(fs.existsSync(path.join(codexFx, ".codex/config.toml.example")), "l5-sync-codex config.toml.example");
+  assert(fs.existsSync(path.join(codexFx, ".codex/rules/repository.rules")), "l5-sync-codex rules");
+  const codexCheck = runNode([path.join(codexFx, "scripts/agent-config/sync.mjs"), "--check"], {
+    cwd: codexFx,
+  });
+  assert(codexCheck.status === 0, "l5-sync-codex sync --check exit 0");
 }
 
 // --- root _meta dual-write (skill-package ↔ templates) ---
