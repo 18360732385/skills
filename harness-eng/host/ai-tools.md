@@ -69,10 +69,10 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 - 适配正文只含：指向根 AGENTS、docs 优先级、勿复制密文
 - `ai_tools` 写入 `docs/harness-eng/harness-meta.yaml`（YAML 列表；读侧可回退 `.cursor/`）
 - **契约 sync 指针（0.5.7 收窄）**：只给**拿不到全量 `*-sync*` 镜像**的宿主（`when_full_rules_mirror: false`）；指针含契约域 packs / globs，不复制 Never do / Pn
-  - **仍写 `1x`**：`codex`（`.codex/contract-sync.md`）、自定义入口-only、以及 L0–L2 尚未全量镜像的 claude/qoder/trae/workbuddy
-  - **跳过 / 不另写 `1x`**：L3+ 全量镜像或 L5 `sync.mjs` 分发规则的 claude / qoder / trae / workbuddy（land/resume 不强制再写 alwaysApply 1x；已有文件 resume `skip`，不自动删）
+  - **仍写 `1x`**：自定义入口-only、以及 L0–L2 尚未全量镜像的 claude/qoder/trae/workbuddy、**L0–L2 的 `codex`**
+  - **跳过 / 不另写 `1x`**：L3+ 全量镜像或 L5 `sync.mjs` 分发规则的 claude / qoder / trae / workbuddy；**L3+/L5 的 `codex`**（Starlark+hooks+config 管线）
   - **Cursor**：不另写 `1x`（已有真实 `11\|12\|13\|16`）
-  - L5（`agent_config: true`）下，全量镜像宿主 **omit** 冗余 1x；Codex 仍保留指针
+  - L5（`agent_config: true`）下，全量镜像宿主与 Codex **omit** 冗余 1x/contract-sync
 - **全量 rules 镜像（0.5.1+ / 0.5.2+ claude；**0.6.4** workbuddy 扁平）**：L3+ 镜像到 qoder/trae/claude/workbuddy（`.md`；trae/workbuddy **保留 FM**）；L5 由 `sync.mjs` 分发
 - audit / detect：入口仍要在；`1x` 缺失不再作为 L3+/L5 全量镜像宿主的缺口（改看本宿主 `*-sync*`）；Codex 仍要 `contract-sync.md`
 
@@ -80,7 +80,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 
 | `ai_tools` | 何时写 `1x` | 路径 |
 |---|---|---|
-| `codex` | **始终**（无全量镜像） | `.codex/contract-sync.md` |
+| `codex` | 仅 L0–L2 | `.codex/contract-sync.md` |
 | `claude` / `qoder` / `trae` / `workbuddy` | 仅 L0–L2（`when_full_rules_mirror: false`） | `.claude\|.qoder\|.trae/rules/1x-contract-sync.md`；workbuddy → `.codebuddy/rules/1x-contract-sync.md` |
 | 自定义入口-only | 始终（与入口同目录） | `<entry-dir>/1x-contract-sync.md` |
 | `cursor` | 不写 | 已有 `.cursor/rules/11\|12\|13\|16-*-sync*.mdc`（Cursor 示例，非全宿主唯一权威） |

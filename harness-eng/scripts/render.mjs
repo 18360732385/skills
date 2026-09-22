@@ -133,6 +133,22 @@ const CONTRACT_SYNC_MIRRORS = {
 /** L3+ 直渲镜像或 L5 sync 会分发全量 *-sync* 规则的宿主。Cursor 本身已有 11|12|13|16。 */
 const FULL_RULES_MIRROR_HOSTS = new Set(["claude", "qoder", "trae", "workbuddy"]);
 
+/**
+ * Codex L3+：Starlark rules + hooks + config 管线就绪，省略冗余 contract-sync
+ * （不做 .mdc 镜像，但与「全量镜像宿主」同级 omit 1x）。
+ */
+function hostOmitsContractSync(id, params, agentConfig) {
+  if (id === "codex") {
+    if (agentConfig) return true;
+    const ladder = String((params && params.ladder) || "L0");
+    return (LADDER_ORD[ladder] ?? 0) >= LADDER_ORD.L3;
+  }
+  if (!FULL_RULES_MIRROR_HOSTS.has(id)) return false;
+  if (agentConfig) return true;
+  const ladder = String((params && params.ladder) || "L0");
+  return (LADDER_ORD[ladder] ?? 0) >= LADDER_ORD.L3;
+}
+
 /** when_full_rules_mirror：L3+ 镜像或 L5 agent_config sync 已就位。 */
 function hostGetsFullRulesMirror(id, params, agentConfig) {
   if (!FULL_RULES_MIRROR_HOSTS.has(id)) return false;
@@ -141,10 +157,10 @@ function hostGetsFullRulesMirror(id, params, agentConfig) {
   return (LADDER_ORD[ladder] ?? 0) >= LADDER_ORD.L3;
 }
 
-/** 仍写 1x：Codex / 自定义入口 / L0–L2 未镜像宿主。Cursor 与全量镜像宿主不写。 */
+/** 仍写 1x：自定义入口 / L0–L2 未就绪宿主。Cursor 与 L3+ 全管道宿主不写。 */
 function shouldEmitContractSync(id, params, agentConfig) {
   if (id === "cursor") return false;
-  return !hostGetsFullRulesMirror(id, params, agentConfig);
+  return !hostOmitsContractSync(id, params, agentConfig);
 }
 
 function printHelp() {

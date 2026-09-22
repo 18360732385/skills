@@ -1224,21 +1224,30 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   for (const t of FULL_MIRROR_1X) {
     assert(!l3.targets.includes(t), `L3 full-mirror host skips redundant ${t}`);
   }
-  assert(l3.targets.includes(".codex/contract-sync.md"), "L3 Codex still gets contract-sync pointer");
+  assert(!l3.targets.includes(".codex/contract-sync.md"), "L3 Codex omits contract-sync (full pipeline)");
   assert(
     l3.targets.includes(".claude/rules/11-func-sync-rules.md") ||
       l3.targets.includes(".qoder/rules/11-func-sync-rules.md"),
     "L3 full-mirror hosts still receive *-sync* rules"
+  );
+  assert(
+    l3.targets.includes(".codex/rules/repository.rules") ||
+      l3.targets.includes(".codex/hooks.json"),
+    "L3 Codex receives rules/hooks targets"
   );
 
   const l5 = dryTargets("L5", allTools);
   for (const t of FULL_MIRROR_1X) {
     assert(!l5.targets.includes(t), `L5 omits redundant ${t}`);
   }
-  assert(l5.targets.includes(".codex/contract-sync.md"), "L5 Codex still gets contract-sync pointer");
+  assert(!l5.targets.includes(".codex/contract-sync.md"), "L5 Codex omits contract-sync");
   assert(
     !l5.targets.some((t) => /1x-contract-sync/.test(t) && !t.startsWith(".codex/")),
     "L5 does not emit alwaysApply 1x alongside full mirrored sync rules"
+  );
+  assert(
+    !l5.targets.some((t) => t === ".codex/contract-sync.md"),
+    "L5 does not emit Codex contract-sync either"
   );
   assert(
     l5.targets.includes("docs/agent-config/rules/00-harness-ssot.mdc"),

@@ -6,8 +6,10 @@
  * - claude / qoder / workbuddy → 根 .mcp.json（官方主路径）
  * - trae → .trae/mcp.json（磁盘产物 + 必须在 IDE Settings → MCP 开关启用；
  *   toggled-off ≠ 缺文件。无协议变更：不改到 .cursor/mcp.json）
+ * - codex → `.codex/config.toml.example`（提交）/ `.codex/config.toml`（本机 trusted；建议 gitignore）
  *
  * fill-mcp 经确认可写入下列真密路径；calibrate-live 按优先级读取第一个存在的文件。
+ * Codex 真密为 toml，不在下方 JSON 候选列表。
  */
 import fs from "fs";
 import path from "path";
@@ -27,7 +29,12 @@ export const MCP_EXAMPLE_BY_TOOL = {
   qoder: ".mcp.json.example",
   workbuddy: ".mcp.json.example",
   trae: ".trae/mcp.json.example",
+  codex: ".codex/config.toml.example",
 };
+
+/** Codex 本机真密（toml；建议 gitignore，不进 MCP_SECRET_CANDIDATES JSON 读路径） */
+export const CODEX_CONFIG_TOML = ".codex/config.toml";
+export const CODEX_CONFIG_TOML_EXAMPLE = ".codex/config.toml.example";
 
 /**
  * 按 ai_tools 列出应写入的真密路径（去重、保序）。
