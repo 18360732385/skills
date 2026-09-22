@@ -513,7 +513,7 @@ function buildNextActions(score) {
       title: "初始化 fill-plan",
       detail: "建立目标与批次后再 agents 精填。",
       command:
-        "node scripts/fill-plan.mjs --root <TARGET> --init --domains api,func,db,redis",
+        "node scripts/fill-plan.mjs --root <TARGET> --init --domains api,func,db,redis,jobs",
     });
   } else if (blockers.includes("fill_plan_open_batches")) {
     actions.push({
@@ -574,7 +574,7 @@ function buildNextActions(score) {
     } else if (String(b).startsWith("template_completeness:")) {
       actions.push({
         title: "补模板完整度",
-        detail: `${b}。对照 api/func/db/redis 模板补必填章与示例列。`,
+        detail: `${b}。对照 api/func/db/redis/jobs 模板补必填章与示例列。`,
         command: null,
       });
     }
@@ -929,7 +929,7 @@ export function buildReportUi(score, opts = {}) {
     glossary: GLOSSARY,
     suggest_raw: s.suggest_next || null,
     disclaimer:
-      "本报告不是契约真相。契约见 docs/func|api|db|redis；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。",
+      "本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。",
   };
 }
 

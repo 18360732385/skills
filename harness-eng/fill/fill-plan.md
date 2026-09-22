@@ -16,7 +16,7 @@
 ```yaml
 version: "0.2.18"
 goal: "P0 金标域闭环（深真全 + acceptance 过闸）"
-domains: [api, func, db, redis]
+domains: [api, func, db, redis, jobs]
 done_when:
   - skeleton_ready
   - coverage_ready
@@ -46,6 +46,7 @@ batches:
 | func | 方法说明含业务谓词；结案范围以 Plan `sample_n`/`deferred` 为准 |
 | db | 完整 DDL；COMMENT 或显式未知 |
 | redis | Key 模式 + Value + TTL + 读写方 |
+| jobs | task_code / Cron / Scheduler 入口 / 代码锚点；heuristic 不得升 SSOT |
 
 **`ai_coding_ready`**：分层 ready 全真且开放批次=0。大仓另看 **`gold_ratio`**（局部金标闭环即可）。
 
@@ -64,7 +65,7 @@ batches:
 ## 命令
 
 ```bash
-node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30 --domains api,func,db,redis --modules sms-entrance
+node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30 --domains api,func,db,redis,jobs --modules sms-entrance
 node scripts/fill-plan.mjs --root <TARGET> --status
 node scripts/fill-plan.mjs --root <TARGET> --set <batch-id> --batch-status in_progress
 node scripts/acceptance-check.mjs --root <TARGET> --domain api [--gold]

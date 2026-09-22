@@ -11,7 +11,7 @@ const SKILL_ROOT = path.resolve(__dirname, "../..");
 const DEFAULT_PATH = path.join(SKILL_ROOT, "templates/_meta/domains.yaml");
 const DEFAULT_PACKS_PATH = path.join(SKILL_ROOT, "templates/_meta/domain-packs.yaml");
 
-const FALLBACK_CORE = ["api", "func", "db", "redis"];
+const FALLBACK_CORE = ["api", "func", "db", "redis", "jobs"];
 
 /** Minimal YAML subset for domains.yaml (no npm). */
 export function parseDomainsYaml(raw) {

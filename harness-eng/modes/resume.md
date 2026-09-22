@@ -35,7 +35,7 @@
 ```json
 {
   "ladder": "L4",
-  "domains": ["func", "api", "db", "redis"],
+  "domains": ["func", "api", "db", "redis", "jobs"],
   "agents_variant": "modules",
   "module_dirs": ["sms-entrance", "sms-safe"],
   "include_optional": ["rule-14"],

@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node scripts/seed-truths.mjs --root <TARGET>
- *       [--domains api,func,db,redis] [--modules sms-entrance,sms-safe]
+ *       [--domains api,func,db,redis,jobs] [--modules sms-entrance,sms-safe]
  *       [--dry-run] [--max-db 40] [--max-redis 20]
  *
  * Boundaries: shells + index nav only; never overwrite non-empty truth bodies.
@@ -55,7 +55,7 @@ function parseArgs(argv) {
 function printHelp() {
   console.log(`Usage:
   node scripts/seed-truths.mjs --root <TARGET>
-      [--domains api,func,db,redis] [--modules a,b]
+      [--domains api,func,db,redis,jobs] [--modules a,b]
       [--dry-run] [--max-db 0] [--max-redis 0]
 
 Creates empty 01-*.md shells + appends missing index nav rows.

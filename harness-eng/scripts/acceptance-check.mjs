@@ -3,7 +3,7 @@
  * acceptance-check — 深·真·全 语义闸（0.2.18+）
  *
  * Usage:
- *   node scripts/acceptance-check.mjs --root <TARGET> [--domain api|func|db|redis|all]
+ *   node scripts/acceptance-check.mjs --root <TARGET> [--domain api|func|db|redis|jobs|all]
  *   node scripts/acceptance-check.mjs --files a.md,b.md [--gold]
  *   node scripts/acceptance-check.mjs --work-dir <dir> [--gold]
  *

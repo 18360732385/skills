@@ -1,6 +1,6 @@
 # docs/harness-eng — Harness 施工现场
 
-> **不是**契约 SSOT（契约见 `docs/func|api|db|redis`）。  
+> **不是**契约 SSOT（契约见 `docs/func|api|db|redis|jobs`）。  
 > **不是**知识回流库（踩坑 / 架构见 `docs/agent-kb/`）。  
 > 本目录只放 **harness-eng 施工产物**：安装元数据、MCP 说明、评分快照、可视化报告、可选进度与历史。
 

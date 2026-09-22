@@ -21,7 +21,7 @@
 | `CLAUDE.md` / `.claude/**` | `skip` |
 | `AGENTS.md` | `create`（若已有则 `merge`） |
 | `.cursor/rules/**` | 按阶梯 create |
-| `docs/func|api|db|redis|agent-kb` | 按契约域 / 阶梯 |
+| `docs/func|api|db|redis|jobs` + `docs/agent-kb` | 按契约域 / 阶梯 |
 | WritePlan 风险栏 | 注明「双入口：CLAUDE + AGENTS；冲突以 AGENTS/契约为准（须在 AGENTS 写明）」 |
 
 ### B — 逐步迁 AGENTS
@@ -37,7 +37,7 @@
 | 路径 | 动作 |
 |---|---|
 | `AGENTS.md`、`00`、`karpathy`、`14` | `skip` |
-| `docs/func|api|db|redis` | 按 `Q_CONTRACT` create |
+| `docs/func|api|db|redis|jobs` | 按 `Q_CONTRACT` create |
 | `docs/agent-kb` + rule 19 | 仅当目标阶梯 ≥ L2 |
 | `harness-meta.yaml` | create（`ladder`/`domains` 如实；`agents_variant: none` 可写注释于移交） |
 

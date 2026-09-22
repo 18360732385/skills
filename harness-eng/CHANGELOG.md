@@ -16,6 +16,7 @@
 - **skills**：文档官方 `.agents/skills`；L5 sync 仅写轻指针 `GENERATED.md`（不全量拷贝）
 - **措辞**：去掉「0.6.x 整列冻结 P2」→ **P0 增量解冻 / 仍不默认进全部推荐**；Cursor 级全家桶同构仍 out of scope
 - **金标纪律回捞（去域化，2026-09-22）**：从 c-be-sms-ai 抽可复用施工纪律进模板——`jobs-index-template` / `jobs.md.tmpl` / `job-template`（Never do、调度契约>func/api Cron 摘录、独立开关）；rule `12`/`13` 补判定清单+联动+同步操作表（保留 `{{GLOB_*}}`，不带回 Pn/业务名）；rule `20` 对齐四件套 + Never do。**不**把 AGENTS/pitfalls 真真相塞回 templates
+- **五契约域文案对齐（2026-09-22）**：注册表已是 api/func/db/redis/jobs；清除残留「四域」措辞与漏 `|jobs` 路径；`FALLBACK_CORE` / fill-plan jobs 验收 / questions pipeline 推荐 / 报告 UI 与宿主入口模板统一
 
 ### 版本钉
 

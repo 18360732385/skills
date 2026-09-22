@@ -1,6 +1,6 @@
 # fill-truths（契约填充）
 
-从**本仓**代码（及可选 MCP 扫库）填充 `docs/func|api|db|redis` 真相正文。首发域：**api**。  
+从**本仓**代码（及可选 MCP 扫库）填充 `docs/func|api|db|redis|jobs` 真相正文。首发域：**api**。  
 **填充深度：完整档（唯一默认）**——按仓内/skill 的 `docs/**/templates` 写齐必填章。
 
 ## 触发

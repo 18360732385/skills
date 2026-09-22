@@ -1,6 +1,6 @@
 # Agent knowledge base
 
-> **非契约 SSOT**。契约真相见 `docs/func|api|db|redis`；命令与红线见根 `AGENTS.md`。  
+> **非契约 SSOT**。契约真相见 `docs/func|api|db|redis|jobs`；命令与红线见根 `AGENTS.md`。  
 > 触碰本目录时注入 `.cursor/rules/19-agent-kb.mdc`。  
 > 本目录**文件名用英文**；正文仍优先中文。
 

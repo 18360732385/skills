@@ -67,7 +67,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/fill-plan.mjs --root <TARGET> --init [--domains api,func,db,redis] [--modules a,b] [--gold] [--sample-n 30]
+  node scripts/fill-plan.mjs --root <TARGET> --init [--domains api,func,db,redis,jobs] [--modules a,b] [--gold] [--sample-n 30]
   node scripts/fill-plan.mjs --root <TARGET> --status
   node scripts/fill-plan.mjs --root <TARGET> --set <batch-id> --batch-status in_progress
   node scripts/fill-plan.mjs --root <TARGET> --close <batch-id> [--force-close]
@@ -80,18 +80,18 @@ function planPath(root) {
 }
 
 function defaultAcceptance(domain, gold) {
-  const base =
-    domain === "api"
-      ? [
-          "每接口有 evidence path#method",
-          "请求参数类型 ∈ 本接口请求体/签名声明",
-          "功能逻辑非通用四步模板",
-        ]
-      : domain === "func"
-        ? ["方法说明含业务语义", "禁止无 sample_n 的前N结案"]
-        : domain === "db"
-          ? ["字段 COMMENT 或显式未知", "有业务说明", "有完整 CREATE TABLE"]
-          : ["Key 模式 + Value + TTL", "读写方明确"];
+  const byDomain = {
+    api: [
+      "每接口有 evidence path#method",
+      "请求参数类型 ∈ 本接口请求体/签名声明",
+      "功能逻辑非通用四步模板",
+    ],
+    func: ["方法说明含业务语义", "禁止无 sample_n 的前N结案"],
+    db: ["字段 COMMENT 或显式未知", "有业务说明", "有完整 CREATE TABLE"],
+    redis: ["Key 模式 + Value + TTL", "读写方明确"],
+    jobs: ["task_code / 标识", "Cron 或调度表达式", "Scheduler / 调度入口", "代码锚点"],
+  };
+  const base = byDomain[domain] || [`域 ${domain}：按该域模板必填章写齐`];
   if (gold) {
     return [
       ...base,
@@ -125,7 +125,7 @@ function buildInitial(domains, modules, gold, sampleN) {
   return {
     version: "0.2.19",
     goal: gold
-      ? "P0 金标域四域闭环（深真全 + acceptance 过闸）"
+      ? "P0 金标域契约域闭环（深真全 + acceptance 过闸）"
       : "契约达到 ai_coding_ready（语义验收 + 批次关闭）",
     domains,
     done_when: gold

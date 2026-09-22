@@ -359,11 +359,11 @@ batches:
           - { value: jobs, label: jobs }
         recommended_when_mode:
           fill-truths: [api]
-          fill-truths-agents: [api, func, db, redis]
+          fill-truths-agents: [api, func, db, redis, jobs]
           fill-score: meta.domains
           fill-morph: meta.domains
           fill-gate: meta.domains
-          pipeline: [api, func, db, redis]
+          pipeline: [api, func, db, redis, jobs]
       - id: Q_FILL_MODULES
         text: 点名哪些模块？（大仓必问；pipeline 推荐 all）
         type: text

@@ -1171,7 +1171,7 @@
         <div class="morph-strip hidden" id="morph-strip"></div>
         <div class="diag-grid">
           <div class="chart-box">
-            <h3>四域形态分 vs 分域上限</h3>
+            <h3>分域形态分 vs 分域上限</h3>
             <div id="chart-domains"></div>
           </div>
           <div class="chart-box">
@@ -1390,7 +1390,7 @@
         '<text x="' + (padL + qw + 6) + '" y="' + (y + 12) + '" fill="var(--muted)" font-size="11">' + q + "%</text>"
       );
     }).join("");
-    return '<svg class="chart-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="四域形态分">' + rows + "</svg>";
+    return '<svg class="chart-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="分域形态分">' + rows + "</svg>";
   }
   function missBars(missTop) {
     if (!missTop || !missTop.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">// 无 MISS 项</p>";

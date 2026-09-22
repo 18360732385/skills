@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Agent knowledge base 规则
 
-触碰 `docs/agent-kb/` 时适用。本目录是**仓库知识库**，**不是** `func|api|db|redis` 契约 SSOT。  
+触碰 `docs/agent-kb/` 时适用。本目录是**仓库知识库**，**不是** `func|api|db|redis|jobs` 契约 SSOT。  
 目录与文件名用英文；正文优先中文。
 
 **回流门禁（跨路径）**：本轮修了 / 确认了智能体高频错误做法时，即使未编辑本目录，也须按下方「回流」追加或更新 `pitfalls.md`（与根 AGENTS「踩坑回流」对齐）。rule `19` 默认仅 path-scoped，纯写代码时不会自动注入全文。
@@ -18,7 +18,7 @@ alwaysApply: false
 | 产品明确接受（或关闭）某行为缺口 | 更新 `accepted-gaps.md`（`Gn`） |
 | 修了 / 确认了智能体高频错误做法 | 在 `pitfalls.md` **追加** `Pn`（7 列：状态 / 域 / **触发路径**必填），回链 AGENTS / rule / 真相 |
 | 分层 / 关键边界 / 环境指针变了 | 更新 `architecture-overview.md`（**短文 + 指针**） |
-| 仅契约或分册约定变了 | 改 `docs/func|api|db|redis` 或分册 AGENTS；**不要**把大表抄进本目录 |
+| 仅契约或分册约定变了 | 改 `docs/func|api|db|redis|jobs` 或分册 AGENTS；**不要**把大表抄进本目录 |
 
 ## 文档职责
 

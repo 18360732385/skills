@@ -72,7 +72,7 @@ node scripts/fill-inventory.mjs --domain api --root <T> --all-modules
 node scripts/fill-inventory.mjs --domain db --root <T>
 node scripts/fill-inventory.mjs --domain redis --root <T>
 node scripts/fill-inventory.mjs --domain func --root <T> --all-modules
-node scripts/fill-plan.mjs --root <T> --init --domains api,func,db,redis
+node scripts/fill-plan.mjs --root <T> --init --domains api,func,db,redis,jobs
 # 主 Agent 按 fill-plan / fill-truths-agents / fill-workers 开多会话精填并 merge
 node scripts/fill-calibrate-live.mjs --root <T> --profile test
 node scripts/fill-score.mjs --root <T> --ready-quality 80 --ready-coverage 0.8 --summary-only
