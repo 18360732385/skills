@@ -8,14 +8,16 @@
 
 | Task | Status | Notes |
 |---|---|---|
-| 1 TOML lib | in_progress | |
-| 2 Starlark+Stop | pending | |
-| 3 adapter | pending | |
-| 4 sync tmpl | pending | |
-| 5 contract-sync/mcp-paths | pending | |
-| 6 docs 高 | pending | |
-| 7 0.6.9 | pending | |
+| 1 TOML lib | done | |
+| 2 Starlark+Stop | done | combined with 3 |
+| 3 adapter | done | |
+| 4 sync tmpl | done | |
+| 5 contract-sync/mcp-paths | done | |
+| 6 docs 高 | done | |
+| 7 0.6.9 | in_progress | |
 
 ## Rulings
 
-(none yet)
+- Combined Task 2+3 commit (adapter needed for dry-run).
+- `.agents/skills` not in MANAGED_DIRS — avoid pruning user skills.
+- Codex L3+ omits contract-sync like full-pipeline hosts.

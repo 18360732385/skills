@@ -43,7 +43,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
 四台读法见 [使用手册.html](使用手册.html) 首页示意与第 6 章。  
-施工/审计等**工程轮**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；纯问版本 / 手册 / 技能本身则省略。见 [session-dashboard.md](modes/session-dashboard.md)。
+施工/审计等**本轮工程步进**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；纯问版本 / 手册 / 技能本身 / 跑题则省略（按本轮判定，不按会话历史）。见 [session-dashboard.md](modes/session-dashboard.md)。
 
 ## 写盘闸门（必记）
 
@@ -85,7 +85,7 @@ node scripts/selfcheck.mjs
 PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。先用 Node 写 **UTF-8 无 BOM** 文件，再传路径（SSOT：[write-plan.md](modes/write-plan.md)）：
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.6.8-dev'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.6.9'}}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 
@@ -93,4 +93,4 @@ node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
 0.6.1 Trae 高：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.4 CodeBuddy：[host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md)。0.6.0 计划（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.8-dev**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.6.9**）。

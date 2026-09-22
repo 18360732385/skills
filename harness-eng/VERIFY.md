@@ -1,21 +1,31 @@
-# harness-eng 验收记录（0.6.8-dev）
+# harness-eng 验收记录（0.6.9）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.8-dev**（Codex P0 增量解冻；其上为 0.6.7 Pn 回流 + 前后端契约门禁；OpenAPI 桥；分册厚 SSOT；API 7 列；CodeBuddy；Trae **高**；session-dashboard；sync freshness）。报告对照 **`skill_version` + `report_schema`**（0.2.25；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。
+当前 **0.6.9**（Codex → **高** · 推荐纪律 B；其上为 0.6.8-dev P0 解冻 / 0.6.7 Pn 回流；含 session-dashboard）。报告对照 **`skill_version` + `report_schema`**（0.2.25；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。
+
+## 0.6.9 增量验收（Codex 高）
+
+| 检查项 | 期望 |
+|---|---|
+| manifest / meta 为 `0.6.9` | 有 |
+| CHANGELOG 标题 `## 0.6.9` | 有 |
+| `host/CODEX-PARITY.md` · `CODEX-MANUAL.md`；适配卡 **高** | 有 |
+| `codex-mcp-toml.mjs`；sync 发 toml/rules/hooks/skills | 有 |
+| `codex-adapter.js`；hooks `Stop` + `^Bash$` | 有 |
+| `l5-sync-codex` fixture `--check` | 有 |
+| upgrade `## 0.6.8-dev → 0.6.9` | 有 |
+| 安装 URL 仍 `main`；Trae / CodeBuddy 不回退 | 有 |
+| 会话仪表盘：本轮判定；中途 meta **HIDE**（`session-dashboard.md`） | 有 |
 
 ## 0.6.8-dev 增量验收（Codex P0）
 
 | 检查项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.6.8-dev` | 有 |
 | CHANGELOG 标题 `## 0.6.8-dev`（中文要点） | 有 |
-| `host/CODEX-PARITY.md` · `CODEX-P0-MANUAL.md` | 有 |
 | `templates/ai-tools/codex-config.toml.tmpl`；manifest → `.codex/config.toml.example` | 有 |
-| `codex-hooks.json` matcher `^Bash$`；适配卡不再写「整列冻结 P2」 | 有 |
-| 安装 URL 仍 `main`；Trae / CodeBuddy 不回退 | 有 |
 | upgrade `## 0.6.7 → 0.6.8-dev` | 有 |
 
 ## 0.6.7 增量验收（正式钉号 · Pn 回流 + 前后端契约门禁）

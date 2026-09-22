@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.6.8-dev
- * HARNESS_ENG_VERSION: 0.6.8-dev
+ * HARNESS_SYNC_TMPL_ID: 0.6.9
+ * HARNESS_ENG_VERSION: 0.6.9
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -15,10 +15,14 @@
  * - rules 的 .mdc frontmatter 为 Cursor 原生格式；qoder/claude 生成时 strip 元数据，
  *   path-scoped 语义以正文自然语言保留。trae / workbuddy(codebuddy) 保留 alwaysApply /
  *   globs / description（官方项目规则 frontmatter；CodeBuddy CLI 亦认 paths）。
+ * - Codex：不做 .mdc 镜像。命令策略走 docs/agent-config/codex/rules/*.rules → .codex/rules/；
+ *   MCP → .codex/config.toml.example；hooks → .codex/hooks.json + codex-adapter；
+ *   skills → .agents/skills/（不全量 prune 用户自建 skill 目录）。
  * - 各工具目录中未被本脚本管理的内容（如 docs/harness-eng/harness-meta.yaml、
  *   遗留 .cursor/harness-meta.yaml、mcp.local.json 等运行时数据）不受影响。
  * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
  *   （Claude 系）；trae → .trae/hooks.json。均经 claude-adapter 翻译统一脚本。
+ *   Codex 族：.codex/hooks.json + codex-adapter.js。
  * - 托管 rules 目录（.cursor/.trae/.qoder/.claude/.codebuddy/rules）里不在本脚本 plan
  *   的文件会被当 stale 清理。这是故意的：L3+/L5 全量镜像宿主不再写 1x-contract-sync.md；
  *   宿主侧 00-harness-ssot 孤儿也不属于 plan（由 SSOT docs/agent-config/rules/00-harness-ssot.mdc
@@ -35,8 +39,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.6.8-dev";
-const HARNESS_ENG_VERSION = "0.6.8-dev";
+const HARNESS_SYNC_TMPL_ID = "0.6.9";
+const HARNESS_ENG_VERSION = "0.6.9";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = ["cursor","claude"];
@@ -155,10 +159,18 @@ function buildClaudeStyleEvents(cfg, tool) {
 }
 
 function planHooks() {
+  const scriptsDir = path.join(SSOT, "hooks");
+  const allScripts = fs.existsSync(scriptsDir)
+    ? fs.readdirSync(scriptsDir).filter((f) => f.endsWith(".js"))
+    : [];
+
+  // Codex 可不依赖 hooks.config.json（有默认事件表）
+  if (has("codex")) {
+    planCodexHooks(allScripts, scriptsDir);
+  }
+
   if (!ssotExists("hooks", "hooks.config.json")) return;
   const cfg = JSON.parse(readSsot("hooks", "hooks.config.json"));
-  const scriptsDir = path.join(SSOT, "hooks");
-  const allScripts = fs.readdirSync(scriptsDir).filter((f) => f.endsWith(".js"));
 
   const copy = (toolDir, ids, needAdapter) => {
     for (const s of allScripts) {
@@ -229,7 +241,105 @@ function planHooks() {
   }
 }
 
+/** Codex hooks：优先 SSOT codex/hooks.json，否则默认 PreToolUse(^Bash$)+Stop */
+function planCodexHooks(allScripts, scriptsDir) {
+  if (ssotExists("codex", "hooks.json")) {
+    put(".codex/hooks.json", readSsot("codex", "hooks.json"));
+  } else {
+    const defaultHooks = {
+      _generated: HEADER_JSON,
+      description: "harness-eng Codex hooks (fail-open)",
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: "^Bash$",
+            hooks: [
+              {
+                type: "command",
+                command:
+                  'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" commit-gate superpowers-commit-gate.js',
+                timeout: 12,
+                statusMessage: "Checking Bash commit gate",
+              },
+            ],
+          },
+        ],
+        Stop: [
+          {
+            hooks: [
+              {
+                type: "command",
+                command:
+                  'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-stop-checklist.js"',
+                timeout: 8,
+                statusMessage: "Delivery soft check",
+              },
+            ],
+          },
+        ],
+      },
+    };
+    putJson(".codex/hooks.json", defaultHooks);
+  }
+  for (const s of allScripts) {
+    if (s === "claude-adapter.js") continue;
+    put(`.codex/hooks/${s}`, fs.readFileSync(path.join(scriptsDir, s)));
+  }
+  if (ssotExists("hooks", "codex-adapter.js")) {
+    put(".codex/hooks/codex-adapter.js", readSsot("hooks", "codex-adapter.js"));
+  }
+  if (ssotExists("hooks", "codex-stop-checklist.js")) {
+    put(".codex/hooks/codex-stop-checklist.js", readSsot("hooks", "codex-stop-checklist.js"));
+  }
+}
+
 // ---------- mcp / settings ----------
+
+function redactEnvToNames(env) {
+  if (!env || typeof env !== "object") return [];
+  return Object.keys(env).filter(Boolean);
+}
+
+function escapeTomlString(s) {
+  return JSON.stringify(String(s));
+}
+
+/** Inline MCP JSON → Codex TOML (no secrets). */
+function jsonServersToCodexToml(doc) {
+  const servers = doc?.mcpServers || {};
+  const lines = [
+    "# GENERATED from docs/agent-config/mcp — do not put secrets here",
+    "# Project .codex/config.toml loads only when the workspace is trusted",
+    `# ${HEADER_JSON}`,
+    "",
+  ];
+  for (const [name, server] of Object.entries(servers)) {
+    if (!server || typeof server !== "object") continue;
+    const key = name.replace(/[^a-zA-Z0-9_]/g, "_");
+    lines.push(`[mcp_servers.${key}]`);
+    if (server.command) {
+      lines.push(`command = ${escapeTomlString(server.command)}`);
+      if (Array.isArray(server.args)) {
+        lines.push(`args = [${server.args.map(escapeTomlString).join(", ")}]`);
+      }
+    } else if (server.url) {
+      lines.push(`url = ${escapeTomlString(server.url)}`);
+      if (server.bearer_token_env_var) {
+        lines.push(
+          `bearer_token_env_var = ${escapeTomlString(server.bearer_token_env_var)}`
+        );
+      }
+    }
+    const names = redactEnvToNames(server.env);
+    if (names.length) {
+      lines.push(`env_vars = [${names.map(escapeTomlString).join(", ")}]`);
+    }
+    lines.push("enabled = false");
+    lines.push('default_tools_approval_mode = "prompt"');
+    lines.push("");
+  }
+  return lines.join("\n");
+}
 
 function planMcp() {
   // servers.json 为可选 SSOT（含密时属 vendored_shared 团队约定；example_only 仓勿建）
@@ -242,6 +352,10 @@ function planMcp() {
     }
     // trae：项目级 .trae/mcp.json
     if (has("trae")) putJson(".trae/mcp.json", { _generated: HEADER_JSON, ...servers });
+    // Codex：脱敏投影到 example（真密勿入库）
+    if (has("codex")) {
+      put(".codex/config.toml.example", jsonServersToCodexToml(servers));
+    }
   }
   if (ssotExists("mcp", "servers.example.json")) {
     const example = JSON.parse(readSsot("mcp", "servers.example.json"));
@@ -250,6 +364,20 @@ function planMcp() {
       putJson(".mcp.json.example", { _generated: HEADER_JSON, ...example });
     }
     if (has("trae")) putJson(".trae/mcp.json.example", { _generated: HEADER_JSON, ...example });
+    if (has("codex") && !plan.has(".codex/config.toml.example")) {
+      put(".codex/config.toml.example", jsonServersToCodexToml(example));
+    }
+  }
+}
+
+function planCodexRules() {
+  if (!has("codex")) return;
+  const dir = path.join(SSOT, "codex", "rules");
+  if (!fs.existsSync(dir)) return;
+  for (const file of walk(dir)) {
+    const rel = path.relative(dir, file).split(path.sep).join("/");
+    if (!rel.endsWith(".rules")) continue;
+    put(`.codex/rules/${rel}`, fs.readFileSync(file));
   }
 }
 
@@ -290,9 +418,20 @@ function planSkills() {
     for (const dir of dirs) {
       put(`${dir}/skills/${rel}`, fs.readFileSync(file));
     }
+    // Codex 官方路径 .agents/skills（全量分发；不进 MANAGED_DIRS 以免 prune 用户自建）
+    if (has("codex")) {
+      put(`.agents/skills/${rel}`, fs.readFileSync(file));
+    }
   }
   for (const dir of dirs) {
     put(`${dir}/skills/GENERATED.md`, SKILLS_MARKER);
+  }
+  if (has("codex")) {
+    put(
+      ".agents/skills/GENERATED.md",
+      "# GENERATED\n\nCodex skills SSOT：`docs/agent-config/skills/` → `.agents/skills/`（`sync.mjs`）。\n" +
+        "本文件标记托管树；用户自建 skill 目录不会被 prune。\n"
+    );
   }
 }
 
@@ -326,6 +465,8 @@ const MANAGED_DIRS = [
   has("workbuddy") && ".codebuddy/rules",
   has("workbuddy") && ".codebuddy/hooks",
   has("workbuddy") && ".codebuddy/skills",
+  has("codex") && ".codex/hooks",
+  has("codex") && ".codex/rules",
 ].filter(Boolean);
 
 function staleFiles() {
@@ -387,6 +528,7 @@ function pruneEmptyDirs(relDir) {
 planRules();
 planHooks();
 planMcp();
+planCodexRules();
 planSettings();
 planSkills();
 planClaudeMd();

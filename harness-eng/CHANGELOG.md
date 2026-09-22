@@ -1,8 +1,23 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev`（当前 **0.6.8-dev**）。报告对照 **`skill_version` + `report_schema`**（**0.2.25**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev → 0.6.9`（当前 **0.6.9**）。报告对照 **`skill_version` + `report_schema`**（**0.2.25**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.6.9 — 2026-09-22（Codex → 高：分轨 SSOT · 纪律 B）
+
+> 设计：[docs/superpowers/specs/2026-09-22-codex-full-support-design.md](docs/superpowers/specs/2026-09-22-codex-full-support-design.md)。**不**改 Trae / CodeBuddy 矩阵；生产装/升仍用 **`main`**。
+
+- **会话仪表盘展示时机收紧**：SHOW 改为「本轮」模式步进 / 改盘意图 / 显式读数；中途 meta 与跑题 **HIDE**（不再因「工程会话未结束」硬附）；无目标根时仅 detect/定根轮出精简块。规格 [session-dashboard.md](modes/session-dashboard.md)
+- **对齐**：Codex 矩阵 **高**；推荐纪律 **B**（探测 `.codex/` 或显式勾选）；**不做** `.mdc` 全量镜像
+- **MCP**：`mcp/servers*.json` → `.codex/config.toml.example`（`codex-mcp-toml.mjs` / L5 sync；无密钥；默认 `enabled=false`）
+- **Hooks**：`PreToolUse(^Bash$)` + `Stop` + `codex-adapter.js`
+- **Rules**：Starlark `docs/agent-config/codex/rules/*.rules` → `.codex/rules/`
+- **Skills**：L5 全量 → `.agents/skills/`（不 prune 用户自建）
+- **contract-sync**：L3+/L5 omit；L0–L2 仍写
+- **文档**：[CODEX-PARITY.md](host/CODEX-PARITY.md) · [CODEX-MANUAL.md](host/CODEX-MANUAL.md)；`CODEX-P0-MANUAL` stub
+- **fixture**：`scripts/fixtures/l5-sync-codex`
+- manifest / meta / sync tmpl · golden → **`0.6.9`**
 
 ## 0.6.8-dev — 2026-09-19（Codex P0 增量解冻：PARITY + config.toml + hooks）
 

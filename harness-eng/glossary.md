@@ -100,7 +100,7 @@
 | **live 校准** | MCP 未挂载时用 `fill-calibrate-live` 直连；可按引擎满足填充 MCP 闸 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
 | **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
-| **会话仪表盘** | 工程轮回复末尾的四台 markdown 摘要 + 可选纯文本态势（无 mermaid；meta / 版本问答省略）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
+| **会话仪表盘** | **本轮**工程步进回复末尾的四台 markdown 摘要 + 可选纯文本态势（无 mermaid；meta / 版本 / 跑题省略；按本轮非按会话历史）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |
 | **score-history** | `docs/harness-eng/score-history.jsonl`：历次 overall/coverage/ready 追加日志 |
 | **progress.yaml** | `docs/harness-eng/progress.yaml`：填充进度状态（`--write-progress`） |
@@ -117,4 +117,4 @@
 
 词表与固定提示语见 [write-plan.md](modes/write-plan.md)（SSOT）。此处不复述等价词。
 
-| `CODEX-PARITY` | Codex 官方对齐清单（P0；不做 `.mdc` 全量镜像）：[host/CODEX-PARITY.md](host/CODEX-PARITY.md) |
+| `CODEX-PARITY` | Codex 官方对齐清单（**高**；不做 `.mdc` 全量镜像）：[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [CODEX-MANUAL.md](host/CODEX-MANUAL.md) |

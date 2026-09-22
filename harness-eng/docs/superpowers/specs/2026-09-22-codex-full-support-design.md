@@ -1,6 +1,6 @@
 # Design: Codex 完整支持（对齐程度 → 高）
 
-- **Status:** approved — implementation plan at `docs/superpowers/plans/2026-09-22-codex-full-support.md`
+- **Status:** approved + implemented (0.6.9)
 - **Date:** 2026-09-22
 - **Skill:** harness-eng（目标版本建议 **0.6.9**）
 - **Decisions locked:** 方案 **A**（分轨 SSOT）；推荐纪律 **B**（探测 `.codex/` 或显式勾选才进「全部推荐」）

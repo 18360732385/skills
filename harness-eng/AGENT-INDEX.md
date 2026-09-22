@@ -30,7 +30,7 @@
 | MCP / live 校准 | [fill/fill-mcp.md](fill/fill-mcp.md) · `scripts/fill-calibrate-live.mjs --help` |
 | AI 工具面 / 多宿主 | [host/ai-tools.md](host/ai-tools.md) · [host/sync-hosts.md](host/sync-hosts.md) |
 | CodeBuddy / WorkBuddy（**0.6.4**） | [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md) |
-| Codex P0（**0.6.8-dev**） | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-P0-MANUAL.md](host/CODEX-P0-MANUAL.md) |
+| Codex **高**（**0.6.9**） | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md) |
 | Trae 高（0.6.1） | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) |
 | 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` |
 | 会话仪表盘 | [modes/session-dashboard.md](modes/session-dashboard.md) |

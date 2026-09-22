@@ -57,11 +57,18 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.6.8-dev → 0.6.9 迁移要点
+
+1. **meta**：`skill_version` → `0.6.9`
+2. **Codex（若 `ai_tools` 含 codex）**：确认 `.codex/config.toml.example`、`.codex/rules/`、hooks+adapter、`Stop`；人验 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.6.9`）；skills 全量到 `.agents/skills/`
+4. **装/升 URL** 仍用 **`main`**
+
 ## 0.6.7 → 0.6.8-dev 迁移要点
 
 1. **meta**：`skill_version` → `0.6.8-dev`（resume / upgrade 写 meta 时对齐 manifest）
 2. **Codex（若 `ai_tools` 含 codex）**：确认 `.codex/config.toml.example` 与 hooks matcher `^Bash$`；人验 [CODEX-P0-MANUAL.md](../host/CODEX-P0-MANUAL.md)（trust · `/hooks` · `/mcp`）
-3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.6.8-dev`）；Codex skills 仅轻指针，不全量镜像
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.6.8-dev`）；Codex P0 轻指针（0.6.9 起改为全量 skills）
 4. 生产装/升仍用 **`main`**；本号为开发分支增量
 
 ## 0.6.6 → 0.6.7 迁移要点
@@ -150,7 +157,7 @@
 ## 0.5.9 → 0.5.10 迁移要点
 
 1. **meta**：`skill_version` → `0.5.10`（resume / upgrade 写 meta 时对齐 manifest）
-2. **Codex**：仍为部分对齐（P2），但**不默认**进「全部推荐」（仅 `.codex/` 探测或显式勾选）
+2. **Codex**：矩阵 **高**（推荐纪律 B；仅 `.codex/` 探测或显式勾选进「全部推荐」）
 3. **皆无探测**：`ai_tools` 为空，追问一次；不默认 Cursor、不因此只写 `.cursor/` 适配
 4. **报告叙事**：人读/页脚只认 `skill_version` + `report_schema`（`ui.version` = 兼容别名，勿当 skill）
 5. **legacy**：`fill-truths-auto` 见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
@@ -167,13 +174,13 @@
 1. **meta**：`skill_version` → `0.5.8`（resume / upgrade 写 meta 时对齐 manifest）
 2. **detect**：`S_RULES` / `S_HOOKS` / `MATURE` 按多宿主计（非仅 Cursor）；仅 Claude/Qoder/Trae/CodeBuddy 仓可判 MATURE
 3. **selfcheck**：热路径改为 `scripts/selfcheck.mjs`（旧名 `selfcheck-0.5.2.mjs` 已弃用）
-4. **Codex + L5**：须明示 **P2 / 部分对齐**；sync 不全量分发 Codex rules/hooks/MCP/skills
+4. **Codex + L5**：须明示 **高（纪律 B）**；sync 发出原生 rules/hooks/MCP/skills（不做 `.mdc` 镜像）
 
 ## 0.5.6 → 0.5.7 迁移要点
 
 1. **meta**：`skill_version` → `0.5.7`（resume / upgrade 写 meta 时对齐 manifest）
 2. **契约 sync 指针**：L3+ / L5 全量镜像宿主不再强制写 `1x-contract-sync`；已有文件 resume `skip`、不自动删。Codex 仍写 `.codex/contract-sync.md`
-3. **文档**：对齐矩阵（高 / 中高 / Codex 部分 P2）；模板不再把 `.cursor/rules/11|12|13|16` 当作全宿主唯一权威
+3. **文档**：对齐矩阵（Cursor/Claude/Qoder/Trae/WorkBuddy/Codex 均为 **高**；Codex 纪律 B）；模板不再把 `.cursor/rules/11|12|13|16` 当作全宿主唯一权威
 
 ## 0.5.5 → 0.5.6 迁移要点
 
@@ -190,7 +197,7 @@
 ## 0.5.3 → 0.5.4 迁移要点
 
 1. **meta**：`skill_version` → `0.5.4`（resume / upgrade 写 meta 时对齐 manifest）
-2. **行为**：会话仪表盘仅**工程轮**附末尾；纯 meta / 版本 / 手册问答省略整块（见 [session-dashboard.md](session-dashboard.md)）
+2. **行为**：会话仪表盘仅**本轮工程步进**附末尾；纯 meta / 版本 / 手册 / 跑题省略整块（见 [session-dashboard.md](session-dashboard.md)）
 3. **可选**：`node scripts/session-dash.mjs --root <TARGET> --intent engineering` 核对读数与 `report-latest.html` 一致
 
 ## 0.5.2 → 0.5.3 迁移要点
