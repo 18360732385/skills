@@ -4,7 +4,7 @@
 
 宿主路径细节见适配卡：[templates/ai-tools/adapters/](../templates/ai-tools/adapters/) · 生成引擎见 [sync-hosts.md](sync-hosts.md)。
 
-**0.6.8-dev P0 增量解冻**：Codex 仍部分对齐·**不默认**进「全部推荐」；本版补 PARITY / config.toml.example / hooks regex / skills 路径说明。**仍不做** Cursor `.mdc` 全量镜像与全家桶同构（out of scope）。跟踪 [CODEX-PARITY.md](CODEX-PARITY.md) · [CODEX-P0-MANUAL.md](CODEX-P0-MANUAL.md)。
+**0.6.9**：Codex 升 **高**（原生全家桶）；推荐纪律 **B**（探测或显式勾选）。**仍不做** Cursor `.mdc` 全量镜像。跟踪 [CODEX-PARITY.md](CODEX-PARITY.md) · [CODEX-MANUAL.md](CODEX-MANUAL.md)。
 
 ## 内置工具
 
@@ -12,7 +12,7 @@
 |---|---|---|---|
 | `cursor` | Cursor | `.cursor/` | 已由 L0 rules/AGENTS 覆盖；另写 `.cursor/rules/00-harness-ssot.mdc` 指针（可选加强） |
 | `claude` | Claude Code | `CLAUDE.md` / `.claude/` | 根 `CLAUDE.md` + L3+ 全量 `.claude/rules/*.md` 镜像 |
-| `codex` | Codex（**部分对齐·不默认** · P0 解冻） | `.codex/` | 根 `AGENTS.md` + `.codex/harness.md` + `config.toml.example`；hooks/MCP **部分对齐**（见 [CODEX-PARITY.md](CODEX-PARITY.md)）；未探测不进「全部推荐」 |
+| `codex` | Codex（**高** · 推荐纪律 B） | `.codex/` | 根 `AGENTS.md` + Starlark `.codex/rules` + `config.toml.example` + hooks/adapter + L5 `.agents/skills`；探测或勾选才进「全部推荐」；**不做** `.mdc` 镜像 |
 | `qoder` | Qoder | `.qoder/` | `.qoder/rules/00-harness-ssot.md` + L3+ 全量 rules 镜像（`.md`） |
 | `trae` | Trae | `.trae/` | `.trae/rules/00-harness-ssot.md` + L3+ 全量 rules 镜像（`.md`） |
 | `workbuddy` | WorkBuddy / CodeBuddy | `.codebuddy/` / `CODEBUDDY.md` | `CODEBUDDY.md` + rules 镜像 + L3+ Claude 系 hooks 全家桶 |
@@ -40,7 +40,7 @@
 Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
   A) Cursor【推荐：已探测 .cursor】
   B) Claude Code
-  C) Codex（部分对齐·不默认）
+  C) Codex（高 · 探测或勾选；不做 .mdc 镜像）
   D) Qoder
   E) Trae
   F) WorkBuddy
@@ -48,9 +48,9 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 不确定请回复：全部推荐（= 仅已探测项；无探测则空，追问一次，不默认 Cursor；Codex 仅探测到 .codex/ 或显式勾选才纳入）
 ```
 
-## 对齐矩阵（0.6.x）
+## 对齐矩阵（0.6.9）
 
-契约 SSOT 始终是根 `AGENTS.md` + `docs/**`。下表只描述**宿主脚手架对齐程度**，不要把「已选进 `ai_tools`」读成「全家桶已对等」。
+契约 SSOT 始终是根 `AGENTS.md` + `docs/**`。下表只描述**宿主脚手架对齐程度**。
 
 | 工具 | 对齐程度 | 说明 |
 |---|---|---|
@@ -58,8 +58,8 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 | `claude` | **高** | L3+ 全量 `.claude/rules/*.md` 镜像 + Claude 族 hooks |
 | `qoder` | **高** | L3+ 全量 `.qoder/rules/*.md` 镜像 + Claude 族 hooks |
 | `workbuddy` | **高** | L3+ 扁平 `.codebuddy/rules/*.md`（保留 FM）+ CodeBuddy hooks 全家桶；见 [CODEBUDDY-PARITY.md](CODEBUDDY-PARITY.md) |
-| `trae` | **高** | L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` **+ IDE Settings 开关启用**（不假装 Cursor 协议）。跟踪 [TRAE-PARITY.md](TRAE-PARITY.md) |
-| `codex` | **部分（P2+P0）·不默认** | 薄指针 + 基础 commit gate（matcher `^Bash$`）+ `config.toml.example`；**不全量镜像** `.mdc`；hooks/MCP/skills **未**与 Cursor/Claude 全家桶对等。见 [CODEX-PARITY.md](CODEX-PARITY.md)。全量 Cursor 级对等 **另立项** |
+| `trae` | **高** | L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` **+ IDE Settings 开关启用**。跟踪 [TRAE-PARITY.md](TRAE-PARITY.md) |
+| `codex` | **高**（推荐纪律 B） | 原生 Starlark rules + TOML MCP + hooks/adapter + L5 skills；**不做** `.mdc` 镜像。见 [CODEX-PARITY.md](CODEX-PARITY.md) |
 
 自定义入口-only 工具：只保证入口指针（及同目录 `1x` 指针），不装 hooks/MCP。
 
@@ -91,7 +91,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 |---|---|---|---|
 | **Cursor 族** | `cursor` | `.cursor/hooks.json` | `.cursor/mcp.json` |
 | **Claude 族** | `claude` · `qoder` · `trae` · `workbuddy` | Claude 系 + `claude-adapter.js` | 见下表 |
-| **部分对齐** | `codex` | 仅基础 commit 门禁 | 见适配卡（config.toml） |
+| **Codex 族** | `codex` | `.codex/hooks.json` + `codex-adapter.js` | `.codex/config.toml` |
 
 ## L3 软门禁（跨工具 · 按 ai_tools）
 
@@ -102,7 +102,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 | `qoder` | `.qoder/settings.json` + hooks + adapter |
 | `trae` | `.trae/hooks.json` + hooks + adapter |
 | `workbuddy` | `.codebuddy/settings.json` + hooks + adapter（全家桶） |
-| `codex` | `.codex/hooks.json` + 基础 gate `--codex` |
+| `codex` | `.codex/hooks.json` + adapter + Stop + gate |
 | L3 总是 | `.githooks/pre-commit` + gate `--git` |
 
 ### MCP example / 真密（L4+ · fill-mcp 0.5.2+）
@@ -116,15 +116,15 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 
 路径 SSOT：`scripts/lib/mcp-paths.mjs`（Claude/Cursor/Trae 的 `mcp.json`）；Codex 走 **config.toml**，见适配卡。calibrate-live 按优先级读 `mcp.json` 真密（不含 Codex toml）。  
 **Trae**：磁盘写 `.trae/mcp.json` 后须在 IDE **Settings → MCP** 用开关启用；面板里 toggled-off 的 server **仍在场**（不是缺文件）。2026-09-14 实证见 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。  
-**Codex**：项目 MCP 仅 trusted 加载；会话用 `/mcp`；**勿**假设根 `.mcp.json` 生效。人验见 [CODEX-P0-MANUAL.md](CODEX-P0-MANUAL.md)。
+**Codex**：项目 MCP 仅 trusted 加载；会话用 `/mcp`；**勿**假设根 `.mcp.json` 生效。人验见 [CODEX-MANUAL.md](CODEX-MANUAL.md)。
 
 ### hooks 家族
 
-脚本统一 Cursor 协议；Claude 族经 adapter。占位含 `HOOKS_*_GROUPS` / `HOOKS_CONFIG_ENTRIES`。登记表 `HOOK_DEFS`（含 workbuddy）。
+脚本统一 Cursor 协议；Claude 族经 `claude-adapter`；Codex 族经 `codex-adapter`。占位含 `HOOKS_*_GROUPS` / `HOOKS_CONFIG_ENTRIES`。登记表 `HOOK_DEFS`（含 workbuddy）。
 
 ## L5 配置 SSOT 管线
 
-- 生成物：各 Claude 族目录含 rules/hooks/skills；CodeBuddy 含 hooks/settings/skills；根 `.mcp.json`（claude/qoder/workbuddy）；`.trae/mcp.json`；Codex：`.codex/hooks.json` + `config.toml.example` + skills 轻指针 `.agents/skills/GENERATED.md`（不全量镜像）
+- 生成物：各 Claude 族目录含 rules/hooks/skills；CodeBuddy 含 hooks/settings/skills；根 `.mcp.json`（claude/qoder/workbuddy）；`.trae/mcp.json`；Codex：`.codex/{hooks,rules,config.toml.example}` + `.agents/skills/` 全量分发
 - 默认生成器：`sync.mjs`；可选 Agent 生成见 [sync-hosts.md](sync-hosts.md)
 
 ## 与 fill 并行

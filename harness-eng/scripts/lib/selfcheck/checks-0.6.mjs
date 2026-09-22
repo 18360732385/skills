@@ -96,11 +96,11 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const codex060 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
   const aiTools060 = readDoc("ai-tools.md");
-  // 0.6.8-dev：P0 增量解冻；仍部分对齐·不默认；不做 .mdc 全量镜像（G6「全家桶另立项」精神保留）
-  assert(/不默认/.test(codex060) && /部分对齐|P2/.test(codex060), "adapters/codex.md stays partial/不默认");
-  assert(/不做/.test(codex060) && /mdc/.test(codex060) && /另立项|out of scope/.test(codex060), "adapters/codex.md no full .mdc mirror");
+  // 0.6.9：Codex → 高；纪律 B；不做 .mdc 镜像
+  assert(/\*\*高\*\*|对齐程度：\*\*高\*\*/.test(codex060), "adapters/codex.md is 高");
+  assert(/不做/.test(codex060) && /mdc/.test(codex060), "adapters/codex.md no .mdc mirror");
   assert(!/0\.6\.x 冻结 P2/.test(codex060) && !/整列冻结/.test(codex060), "adapters/codex.md no blanket freeze claim");
-  assert(/不默认/.test(aiTools060) && /CODEX-PARITY/.test(aiTools060), "ai-tools.md Codex P0 + 不默认");
+  assert(/CODEX-PARITY/.test(aiTools060) && /\|\s*`codex`\s*\|\s*\*\*高\*\*/.test(aiTools060), "ai-tools.md Codex 高 + PARITY");
   assert(!/0\.6\.x 冻结 P2/.test(aiTools060), "ai-tools.md no blanket 0.6.x freeze P2");
 
   const rBadMode = runNode([
@@ -536,9 +536,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const codexM4 = readRel("templates/ai-tools/adapters/codex.md");
   const aiToolsM4 = readDoc("ai-tools.md");
-  assert(/不默认/.test(codexM4) && /部分对齐|P2/.test(codexM4), "G6 spirit: adapters/codex.md still partial");
+  assert(/\*\*高\*\*/.test(codexM4), "G6 updated: adapters/codex.md is 高");
   assert(/不做/.test(codexM4) && /mdc/.test(codexM4), "G6 spirit: no .mdc full mirror");
-  assert(/另立项|out of scope/.test(codexM4 + aiToolsM4), "G6 spirit: full Cursor parity out of scope");
+  assert(/不做/.test(codexM4 + aiToolsM4) && /mdc/.test(codexM4 + aiToolsM4), "G6 spirit: no .mdc mirror");
   assert(!/全家桶对等已落地|全量 sync 已/.test(codexM4 + aiToolsM4), "G6 no false full-parity claim");
 }
 
@@ -991,7 +991,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/matcher:\s*"Bash"/.test(hooksChecks064), "CLAUDE_STYLE Bash retained");
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools064), "Trae matrix still 高");
-  assert(/不默认/.test(aiTools064) && /Codex|codex/.test(aiTools064), "Codex still 不默认 (P0 thaw ok)");
+  assert(/推荐纪律 B|探测/.test(aiTools064) && /Codex|codex/.test(aiTools064), "Codex 纪律 B");
   assert(!/0\.6\.x 冻结 P2/.test(aiTools064), "no blanket freeze after P0 thaw");
 }
 
@@ -1255,9 +1255,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 // --- 0.6.8-dev: Codex P0 parity thaw ---
 {
   assert(fs.existsSync(path.join(skillRoot, "host/CODEX-PARITY.md")), "CODEX-PARITY.md");
-  assert(fs.existsSync(path.join(skillRoot, "host/CODEX-P0-MANUAL.md")), "CODEX-P0-MANUAL.md");
+  assert(fs.existsSync(path.join(skillRoot, "host/CODEX-MANUAL.md")), "CODEX-MANUAL.md");
   const parity068 = fs.readFileSync(path.join(skillRoot, "host/CODEX-PARITY.md"), "utf8");
-  const manual068 = fs.readFileSync(path.join(skillRoot, "host/CODEX-P0-MANUAL.md"), "utf8");
+  const manual068 = fs.readFileSync(path.join(skillRoot, "host/CODEX-MANUAL.md"), "utf8");
   assert(/PASS|PARTIAL|FAIL/.test(parity068), "CODEX-PARITY has PASS/PARTIAL/FAIL");
   assert(/不做/.test(parity068) && /mdc/.test(parity068), "CODEX-PARITY explicit no .mdc mirror");
   assert(/developers\.openai\.com\/codex/.test(parity068), "CODEX-PARITY links official docs");
@@ -1277,16 +1277,16 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!/"matcher"\s*:\s*"Bash"/.test(hooks068), "codex-hooks not bare Bash string");
 
   const adapter068 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
-  assert(/P0|增量解冻/.test(adapter068), "adapter mentions P0 thaw");
+  assert(/\*\*高\*\*|对齐程度：\*\*高\*\*/.test(adapter068), "adapter is 高");
   assert(!/0\.6\.x 冻结 P2/.test(adapter068) && !/本列车不再扩展/.test(adapter068), "adapter no total freeze claim");
   assert(/\^Bash\$/.test(adapter068) && /\/hooks/.test(adapter068), "adapter documents regex + /hooks trust");
 
   const aiTools068 = readDoc("ai-tools.md");
-  assert(/CODEX-PARITY/.test(aiTools068) && /增量解冻/.test(aiTools068), "ai-tools P0 thaw + PARITY link");
+  assert(/CODEX-PARITY/.test(aiTools068) && (/0\.6\.9/.test(aiTools068) || /\*\*高\*\*/.test(aiTools068)), "ai-tools 高 + PARITY link");
   assert(/config\.toml\.example/.test(aiTools068), "ai-tools MCP table has codex config.toml");
 
   const hostReadme068 = fs.readFileSync(path.join(skillRoot, "host/README.md"), "utf8");
-  assert(/CODEX-PARITY/.test(hostReadme068) && /CODEX-P0-MANUAL/.test(hostReadme068), "host README links Codex docs");
+  assert(/CODEX-PARITY/.test(hostReadme068) && /CODEX-MANUAL/.test(hostReadme068), "host README links Codex docs");
   const agentIdx068 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
   assert(/CODEX-PARITY/.test(agentIdx068), "AGENT-INDEX links CODEX-PARITY");
   assert(/CODEX-PARITY/.test(fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8")), "ROADMAP stub links CODEX-PARITY");
@@ -1304,7 +1304,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(/0\.6\.8-dev/.test(syncTmpl068), "sync tmpl id 0.6.8-dev");
-  assert(/\.agents\/skills\/GENERATED/.test(syncTmpl068), "sync writes Codex skills light pointer");
+  assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools068), "Trae matrix still 高 after Codex P0");
   assert(/CODEBUDDY-PARITY/.test(aiTools068) || /WorkBuddy/.test(aiTools068), "CodeBuddy still referenced");

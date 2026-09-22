@@ -47,7 +47,7 @@ batches:
           - { value: L2, label: L2 知识回流 }
           - { value: L3, label: L3 规划与软门禁 }
           - { value: L4, label: L4 工具连接样例, recommended_when: "large_repo || mode == pipeline || mode == land" }
-          - { value: L5, label: L5 配置 SSOT 管线（多工具仓推荐；含 Codex 仍为部分对齐·不默认 / P0 解冻）, recommended_when: "S_MULTI_TOOL" }
+          - { value: L5, label: L5 配置 SSOT 管线（多工具仓推荐；含 Codex 为高·纪律 B）, recommended_when: "S_MULTI_TOOL" }
       - id: Q_CONTRACT
         text: 启用哪些契约域？（L1+）
         type: multi
@@ -139,7 +139,7 @@ batches:
         options:
           - { value: cursor, label: Cursor }
           - { value: claude, label: Claude Code }
-          - { value: codex, label: Codex（部分对齐·不默认 / P0 解冻；L5 sync 不全量分发） }
+          - { value: codex, label: Codex（高 · 探测或勾选；不做 .mdc 镜像） }
           - { value: qoder, label: Qoder }
           - { value: trae, label: Trae（高；未探测也可进「全部推荐」·非 Codex 吓退脚注） }
           - { value: workbuddy, label: WorkBuddy }
@@ -147,7 +147,7 @@ batches:
         recommended_from: fingerprint.detected_ai_tools
         recommended_fallback: []
       - id: Q_AGENT_CONFIG
-        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs --check；启用后 .cursor/ 等为生成物）？含 Codex 时 sync 不全量分发其 rules/MCP/skills（P0：hooks/config example + skills 轻指针）
+        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs --check；启用后 .cursor/ 等为生成物）？含 Codex 时 sync 发出原生 rules/hooks/MCP/skills（不做 .mdc 镜像）
         type: boolean
         recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
 
@@ -202,7 +202,7 @@ batches:
         type: boolean
         recommended_when: "S_FRONTEND"
       - id: Q_AGENT_CONFIG
-        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs）？含 Codex 时 sync 不全量分发（P0）
+        text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs）？含 Codex 时 sync 发出原生全家桶（高·纪律 B）
         type: boolean
         recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
 

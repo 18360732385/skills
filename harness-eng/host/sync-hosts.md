@@ -8,7 +8,7 @@
 1. 目标 `ai_tools` 的 rules / hooks 配置 / MCP example（及 L5 skills）路径已对齐 [ai-tools.md](ai-tools.md)
 2. hooks **脚本**与 `claude-adapter.js` 仅从模板/SSOT **拷贝**，不由模型重写
 3. 若启用 Agent 生成：产出须能通过 `node scripts/agent-config/sync.mjs --check`（L5）或与 script 引擎黄金 fixture 一致
-4. 若 `ai_tools` 含 `codex`：已向用户明示 **部分对齐（P0 解冻·仍不默认）** — sync **不**全量发出 Codex rules / MCP / skills（可写 skills 轻指针与 hooks/config example；见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md) · [CODEX-PARITY.md](CODEX-PARITY.md)）
+4. 若 `ai_tools` 含 `codex`：已对齐 **高**（推荐纪律 B）— sync 发出 config.toml.example / hooks+adapter / Starlark rules / `.agents/skills`（**不做** `.mdc` 镜像；见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md) · [CODEX-PARITY.md](CODEX-PARITY.md)）
 
 ## 引擎 `Q_SYNC_ENGINE`
 
@@ -29,9 +29,9 @@
 | qoder | `adapters/qoder.md` | **高** |
 | workbuddy | `adapters/workbuddy.md` · [CODEBUDDY-PARITY.md](CODEBUDDY-PARITY.md) | **高** |
 | trae | `adapters/trae.md` | **高**（不假装 Cursor 协议；见 [TRAE-PARITY.md](TRAE-PARITY.md)） |
-| codex | `adapters/codex.md` · [CODEX-PARITY.md](CODEX-PARITY.md) | **部分（P2+P0）** — 勿当成已全量同步；不做 `.mdc` 镜像 |
+| codex | `adapters/codex.md` · [CODEX-PARITY.md](CODEX-PARITY.md) | **高**（纪律 B；不做 `.mdc` 镜像） |
 
-对齐矩阵 SSOT：[ai-tools.md](ai-tools.md)。L3+ / L5 全量镜像宿主不再强制冗余 `1x-contract-sync`；Codex 仍写 `.codex/contract-sync.md`。L5 宿主 rules 目录由 **sync 托管**：plan 外的 `1x-contract-sync` 与宿主 `00-harness-ssot` 孤儿会被清掉；alwaysApply 指针必须先在 **`docs/agent-config/rules/00-harness-ssot.mdc`**。
+对齐矩阵 SSOT：[ai-tools.md](ai-tools.md)。L3+ / L5 全量镜像宿主与 Codex 不再强制冗余 `1x-contract-sync` / `contract-sync`（L0–L2 Codex 仍写）。L5 宿主 rules 目录由 **sync 托管**：plan 外的 `1x-contract-sync` 与宿主 `00-harness-ssot` 孤儿会被清掉；alwaysApply 指针必须先在 **`docs/agent-config/rules/00-harness-ssot.mdc`**。
 
 ## Agent 模式硬约束
 

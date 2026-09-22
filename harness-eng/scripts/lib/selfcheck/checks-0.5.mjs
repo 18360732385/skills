@@ -966,7 +966,7 @@ assert(/含糊/.test(sessionDashMd), "session-dashboard ambiguous defaults HIDE"
 assert(!/确认后 render"/.test(sessionDashMd), "session-dashboard next tip uses harness not render");
 assert(/确认后 harness\.mjs/.test(sessionDashMd), "session-dashboard next tip harness.mjs");
 const aiTools063 = fs.readFileSync(path.join(skillRoot, "host/ai-tools.md"), "utf8");
-assert(/对齐矩阵（0\.6\.x）/.test(aiTools063), "ai-tools matrix title 0.6.x");
+assert(/对齐矩阵（0\.6\.9|0\.6\.x）/.test(aiTools063), "ai-tools matrix title 0.6.9");
 assert(!/对齐矩阵（0\.5\.7）/.test(aiTools063), "ai-tools matrix title not stuck at 0.5.7");
 
 {
@@ -1126,7 +1126,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const aiTools057 = readDoc("ai-tools.md");
   assert(/对齐矩阵/.test(aiTools057), "ai-tools.md has 对齐矩阵");
-  assert(/部分（P2|部分对齐/.test(aiTools057) && /不默认/.test(aiTools057), "ai-tools.md marks Codex as partial P2");
+  assert(/\|\s*`codex`\s*\|\s*\*\*高\*\*/.test(aiTools057), "ai-tools.md marks Codex as 高");
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools057), "ai-tools.md marks Trae as 高");
   assert(
     /跳过|不再强制|omit|不另写/.test(aiTools057) && /1x-contract-sync|契约 sync/.test(aiTools057),
@@ -1145,9 +1145,9 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   const syncHosts057 = readDoc("sync-hosts.md");
   const codexAd057 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
   assert(/对齐矩阵|部分（P2）|部分对齐（P2）/.test(handbook057), "handbook FAQ/docs mention alignment / Codex P2");
-  assert(/部分对齐|P2/.test(syncHosts057), "sync-hosts.md keeps Codex as P2 / 部分对齐");
-  assert(/部分对齐|P2/.test(codexAd057), "codex adapter stays 部分对齐 P2");
-  assert(!/全量镜像/.test(codexAd057) || /暂不全量|不全量/.test(codexAd057), "codex adapter does not claim full sync");
+  assert(/\*\*高\*\*/.test(syncHosts057) && /codex/i.test(syncHosts057), "sync-hosts.md Codex 高");
+  assert(/对齐程度：\*\*高\*\*|\*\*高\*\*/.test(codexAd057), "codex adapter is 高");
+  assert(/不做/.test(codexAd057) && /mdc/.test(codexAd057), "codex adapter no .mdc mirror");
 
   const conflict057 = readDoc("conflict-policy.md");
   assert(
@@ -1305,56 +1305,52 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   );
 }
 
-// --- 0.5.8 P0-4: Codex / L5 expectation (P2 / 部分对齐) ---
+// --- 0.5.8 P0-4: Codex / L5 expectation (updated 0.6.9 → 高) ---
 {
   const wp058 = readDoc("write-plan.md");
-  assert(/部分对齐|P2/.test(wp058) && /codex/i.test(wp058), "write-plan Codex P2 warning");
+  assert(/高/.test(wp058) && /codex/i.test(wp058) && /纪律 B|不.*全部推荐/.test(wp058), "write-plan Codex 高 + 纪律 B");
   assert(
-    /不全量/.test(wp058) && /hooks/.test(wp058) && /MCP/.test(wp058) && /skills/.test(wp058),
-    "write-plan says sync does not fully emit Codex rules/hooks/MCP/skills"
+    /Starlark|rules/.test(wp058) && /hooks/.test(wp058) && /MCP|toml/i.test(wp058),
+    "write-plan Codex emits native rules/hooks/MCP"
   );
   assert(/adapters\/codex/.test(wp058), "write-plan cross-links adapters/codex.md");
 
   const audit058 = readDoc("audit-report.md");
   assert(
-    /把 Codex \+ L5 当成全量对齐/.test(audit058) && /P2/.test(audit058),
-    "audit anti-pattern Codex+L5 full-parity"
+    /高/.test(audit058) && /mdc/.test(audit058) && /codex/i.test(audit058),
+    "audit anti-pattern Codex .mdc mirror"
   );
   assert(/adapters\/codex/.test(audit058), "audit cross-links adapters/codex.md");
 
   const syncHosts058 = readDoc("sync-hosts.md");
   assert(
-    /## Done[\s\S]*部分对齐/.test(syncHosts058) && /\*\*不\*\*全量发出 Codex/.test(syncHosts058),
-    "sync-hosts Done Codex P2 / not full emit"
+    /## Done[\s\S]*高/.test(syncHosts058) && /codex/i.test(syncHosts058),
+    "sync-hosts Done Codex 高"
   );
   assert(/adapters\/codex/.test(syncHosts058), "sync-hosts cross-links adapters/codex.md");
 
   const ladder058 = readDoc("ladder.md");
   assert(
-    /P2 \/ 部分对齐/.test(ladder058) && /\*\*不\*\*全量分发 Codex/.test(ladder058),
-    "ladder L5 Codex P2 checklist"
+    /codex/i.test(ladder058) && (/高/.test(ladder058) || /CODEX-PARITY|adapters\/codex/.test(ladder058)),
+    "ladder L5 mentions Codex"
   );
 
   const qYaml058 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(
-    /Codex（部分对齐/.test(qYaml058) && /不默认/.test(qYaml058),
-    "questions.yaml Codex option labels P2"
-  );
-  assert(
-    /含 Codex 仍为部分对齐|含 Codex 仍为 P2|P0 解冻/.test(qYaml058),
-    "questions.yaml L5 option mentions Codex P2"
+    /Codex（高/.test(qYaml058),
+    "questions.yaml Codex option labels 高"
   );
 
   const qMd058 = readDoc("questions.md");
   assert(
-    /部分（P2）/.test(qMd058) && /adapters\/codex/.test(qMd058),
-    "questions.md Codex P2 + adapter link"
+    /adapters\/codex/.test(qMd058) && (/高/.test(qMd058) || /Codex|codex/.test(qMd058)),
+    "questions.md Codex + adapter link"
   );
 
   const rpCodex = readDoc("recommended-profile.md");
   assert(
-    /部分对齐（P2）/.test(rpCodex) && /\*\*不\*\*全量发出 Codex/.test(rpCodex),
-    "recommended-profile Codex P2 footnote"
+    /高/.test(rpCodex) && /纪律 B|探测/.test(rpCodex) && /codex/i.test(rpCodex),
+    "recommended-profile Codex 高 footnote"
   );
 
   const heReadmeTmpl = fs.readFileSync(
@@ -1616,7 +1612,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 // --- 0.5.10 P2: Codex 不默认 · ui/report_schema · 皆无探测 ≠ Cursor · CHANGELOG/auto 归档 ---
 {
   const qYaml0510 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-  assert(/不默认/.test(qYaml0510) && /codex/i.test(qYaml0510), "Q_AI_TOOL Codex labeled 不默认");
+  assert(/高/.test(qYaml0510) && /codex/i.test(qYaml0510), "Q_AI_TOOL Codex labeled 高");
   assert(
     /recommended_fallback:\s*\[\s*\]/.test(qYaml0510) &&
       !/recommended_fallback:\s*\[cursor\]/.test(qYaml0510),
@@ -1624,7 +1620,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   );
 
   const rp0510 = readDoc("recommended-profile.md");
-  assert(/部分对齐·不默认|不默认/.test(rp0510) && /codex/i.test(rp0510), "recommended-profile Codex 不默认");
+  assert(/纪律 B|探测/.test(rp0510) && /codex/i.test(rp0510), "recommended-profile Codex 纪律 B");
   assert(
     /皆无则\s*`?\[\]`?|皆无则 \[\]/.test(rp0510) || /皆无[\s\S]{0,40}`\[\]`/.test(rp0510),
     "recommended-profile 皆无 → [] not [cursor]"
@@ -1637,23 +1633,23 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
     "detect.md 无信号 ai_tools [] / 不默认 Cursor"
   );
   assert(!/无信号时推荐包默认 `ai_tools: \[cursor\]`/.test(det0510), "detect.md no cursor-only default");
-  assert(/不默认/.test(det0510) && /codex/i.test(det0510), "detect.md Codex 不默认");
+  assert(/不.*默认|纪律 B|不进「全部推荐」/.test(det0510) && /codex/i.test(det0510), "detect.md Codex 纪律 B");
 
   const aiTools0510 = readDoc("ai-tools.md");
-  assert(/部分对齐·不默认|不默认/.test(aiTools0510), "ai-tools.md Codex 部分对齐·不默认");
+  assert(/\|\s*`codex`\s*\|\s*\*\*高\*\*/.test(aiTools0510) || /推荐纪律 B/.test(aiTools0510), "ai-tools.md Codex 高");
   assert(!/若无探测则默认 Cursor/.test(aiTools0510), "ai-tools.md 全部推荐 no Cursor default");
 
   const qMd0510 = readDoc("questions.md");
-  assert(/不默认/.test(qMd0510) && /codex/i.test(qMd0510), "questions.md Codex 不默认");
+  assert(/不.*默认|纪律 B|不进「全部推荐」/.test(qMd0510) && /codex/i.test(qMd0510), "questions.md Codex 纪律 B");
 
   const handbook0510 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
   const handbookHtml0510 = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
   assert(!/全部推荐」默认偏向 Cursor/.test(handbook0510), "handbook.md no Cursor-default 全部推荐");
   assert(!/全部推荐」默认偏向 Cursor/.test(handbookHtml0510), "handbook.html no Cursor-default 全部推荐");
-  assert(/不默认/.test(handbook0510) && /Codex|codex/.test(handbook0510), "handbook.md Codex 不默认");
+  assert(/不.*默认|纪律 B|塞进默认包/.test(handbook0510) && /Codex|codex/.test(handbook0510), "handbook.md Codex 纪律 B");
 
   const wp0510 = readDoc("write-plan.md");
-  assert(/不默认/.test(wp0510) && /codex/i.test(wp0510), "write-plan Codex 不默认");
+  assert(/纪律 B|不.*全部推荐/.test(wp0510) && /codex/i.test(wp0510), "write-plan Codex 纪律 B");
 
   const gloss0510 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/skill_version/.test(gloss0510) && /report_schema/.test(gloss0510), "glossary skill_version + report_schema");
