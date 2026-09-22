@@ -4,7 +4,7 @@
 
 ## 版本
 
-当前 **0.6.9**（Codex → **高** · 推荐纪律 B；其上为 0.6.8-dev P0 解冻 / 0.6.7 Pn 回流；含 session-dashboard）。报告对照 **`skill_version` + `report_schema`**（0.2.25；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。
+当前 **0.6.9**（Codex → **高** · 推荐纪律 B；其上为 0.6.8-dev P0 解冻 / 0.6.7 Pn 回流；含 session-dashboard）。报告对照 **`skill_version` + `report_schema`**（0.2.26；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。
 
 ## 0.6.9 增量验收（Codex 高）
 

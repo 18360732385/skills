@@ -1674,7 +1674,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   const reportUi0510 = fs.readFileSync(path.join(skillRoot, "scripts/lib/report-ui.mjs"), "utf8");
   assert(/report_schema/.test(reportUi0510), "report-ui.mjs names report_schema");
   const uiObj = buildReportUi({ overall: 0.5, domains: {} });
-  assert(uiObj.version === "0.2.25", "ui.version 0.2.25 for consumers");
+  assert(uiObj.version === "0.2.26", "ui.version 0.2.26 for consumers");
   assert(uiObj.report_schema === uiObj.version, "report_schema aliases ui.version");
 
   const reportTmpl0510 = fs.readFileSync(

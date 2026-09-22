@@ -1,12 +1,13 @@
 ﻿/**
  * Build human-facing `ui` projection from fill-score JSON.
- * 报告壳主键：`ui.report_schema`（现 0.2.25）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.2.26）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
  * 0.2.23：决策台瘦身——徽章二态；decision_kpis + morph_strip；域故事卡默认关。
  * 0.2.24：综合评分 + 流水线进度；报告页 Tab/主题/术语悬停由模板承担。
  * 0.2.25：命令可执行（root/统一 inventory）· warning_shards/residual · 分域中文 · 四态灯。
+ * 0.2.26：CJK 正文 · 减动 · 命令一键复制 · Escape/键盘切台 · 尊重 #hash · 参考分降权 · 残差分层。
  */
 import {
   knownContractDomainIds,
@@ -1095,8 +1096,8 @@ export function buildReportUi(score, opts = {}) {
   const pipeline_progress = buildPipelineProgress(s);
   const composite_score = buildCompositeScore(s, pipeline_progress);
   return {
-    version: "0.2.25",
-    report_schema: "0.2.25",
+    version: "0.2.26",
+    report_schema: "0.2.26",
     headline: buildHeadline(s),
     verdict: buildVerdict(s),
     gap_to_ready: buildGapToReady(s),

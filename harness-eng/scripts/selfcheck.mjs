@@ -553,7 +553,7 @@ if (fs.existsSync(fixture)) {
   assert(ui.verdict.ready_label === "建议可以开干" || ui.verdict.ready_label === "建议暂缓", "verdict binary");
   assert(ui.composite_score && typeof ui.composite_score.value === "number", "ui.composite_score");
   assert(ui.pipeline_progress && Array.isArray(ui.pipeline_progress.steps), "ui.pipeline_progress");
-  assert(ui.report_schema === "0.2.25", "report_schema 0.2.25");
+  assert(ui.report_schema === "0.2.26", "report_schema 0.2.26");
   assert(ui.chart_domains && Array.isArray(ui.chart_domains.labels_zh), "chart_domains.labels_zh");
   assert(
     Array.isArray(ui.decision_kpis) &&
@@ -595,6 +595,11 @@ if (fs.existsSync(fixture)) {
   );
   assert(/labels_zh/.test(reportTmpl) && /tabFromHash/.test(reportTmpl), "report tmpl labels_zh + hash");
   assert(/task\.residual/.test(reportTmpl), "report tmpl residual task style");
+  assert(/cmd-copy|data-copy/.test(reportTmpl), "report tmpl command copy");
+  assert(/prefers-reduced-motion/.test(reportTmpl), "report tmpl reduced-motion");
+  assert(/IBM Plex Sans SC/.test(reportTmpl), "report tmpl CJK body font");
+  assert(/kind-badge/.test(reportTmpl), "report tmpl residual badge");
+  assert(/hashTab|location\.hash/.test(reportTmpl) && !/show\(\$\("deck"\)\);\s*setTab\("decision"\)/.test(reportTmpl), "report tmpl respects hash after paint");
 }
 
 // --- 0.2.26 acceptance fixture smoke ---
