@@ -154,7 +154,8 @@ export function buildSessionDashboard(opts = {}) {
 
   return {
     root: root ? shortPath(root) : "—",
-    sessionMode: opts.sessionMode || meta?.last_mode || "—",
+    sessionMode: opts.sessionMode || "—",
+    metaLastMode: meta?.last_mode || null,
     sessionPhase: opts.sessionPhase || "—",
     preauth: opts.preauth === true ? "是" : opts.preauth === false ? "否" : "—",
     decision: {
@@ -239,7 +240,11 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
   lines.push("## harness-eng 会话仪表盘");
   lines.push("");
   lines.push(
-    `**目标** \`${data.root}\` · **模式** ${data.sessionMode} · **阶段** ${data.sessionPhase} · **预授权** ${data.preauth}`
+    `**目标** \`${data.root}\` · **模式** ${data.sessionMode}${
+      data.metaLastMode && data.metaLastMode !== data.sessionMode
+        ? `（meta.last_mode=${data.metaLastMode}）`
+        : ""
+    } · **阶段** ${data.sessionPhase} · **预授权** ${data.preauth}`
   );
   lines.push("");
   lines.push("| 台 | 读数 |");

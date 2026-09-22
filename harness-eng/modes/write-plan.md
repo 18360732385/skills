@@ -86,8 +86,17 @@ Q_SEED: 是
 
 ## Windows JSON 传参（gotcha SSOT）
 
-`questions-next` / answers / score 等：写 **UTF-8 无 BOM** JSON 文件，再把**路径**传给 node（勿用 PowerShell `node -e` 内联 JSON）。  
-他处（SKILL / pipeline / fill-score）只指针到此，不复述。
+`questions-next` / answers / score / harness params 等：写 **UTF-8 无 BOM** JSON 文件，再把**路径**传给 node。
+
+**禁止**：PowerShell `>` / `Out-File` 重定向（易 UTF-16）；把大段 JSON 塞进命令行参数。  
+**推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
+
+```bash
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.6.8-dev'}}), 'utf8')"
+node scripts/harness.mjs --root <TARGET> --params params.json --mode land
+```
+
+他处（SKILL / pipeline / fill-score / QUICKSTART）只指针到此，不复述长文。
 
 ## 写入方式
 

@@ -1035,12 +1035,20 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "session-dash reads score ai_coding_ready"
     );
     assert(dashJson && dashJson.diagnose?.ladder === "L3", "session-dash reads legacy .cursor meta");
+    assert(dashJson && dashJson.sessionMode === "fill-score", "session-dash --mode wins over meta.last_mode");
+    assert(dashJson && dashJson.metaLastMode === "audit", "session-dash keeps meta.last_mode as footnote field");
     const dashMd = runNode([
       path.join(skillRoot, "scripts/session-dash.mjs"),
       "--root",
       dashRoot,
+      "--mode",
+      "fill-score",
     ]);
     assert(dashMd.status === 0, "session-dash markdown exits 0");
+    assert(
+      /\*\*模式\*\* fill-score/.test(dashMd.stdout || "") && /meta\.last_mode=audit/.test(dashMd.stdout || ""),
+      "session-dash markdown footnotes meta.last_mode"
+    );
     assert(
       !/```\s*mermaid/.test(dashMd.stdout || "") && !/quadrantChart/.test(dashMd.stdout || ""),
       "session-dash stdout has no mermaid fence"

@@ -32,12 +32,13 @@ import {
   BASIC_GATE_IDS,
   buildHookPlaceholders,
   expandHooksFamily,
-  normalizeHooksFamily,
+  resolveHooksFamily,
   resolveAgentConfig,
 } from "./lib/hooks-checks.mjs";
 import {
   HARNESS_META_CANONICAL,
   MCP_USAGE_GUIDE_CANONICAL,
+  findHarnessMetaFile,
   migrateHarnessMetaIfNeeded,
   migrateMcpUsageGuideIfNeeded,
 } from "./lib/harness-meta.mjs";
@@ -494,9 +495,12 @@ function expandFromManifest(manifestPath, params, root) {
   // L5 配置 SSOT 管线：显式 agent_config=true 时即使目标阶梯 < L5 也渲染 L5 包
   const agentConfig = resolveAgentConfig(params);
   const maxOrd = Math.max(LADDER_ORD[targetLadder], agentConfig ? LADDER_ORD.L5 : 0);
-  // hooks 家族选了 extended 门禁时，跳过基础门禁脚本条目（避免双提醒；codex/codebuddy 仍保留基础门禁）
-  const hooksFamily = normalizeHooksFamily(params.hooks_family);
+  // hooks 家族：仓内已有 soft-gate 时强制 extended，避免 upgrade 回落 basic 留下孤儿脚本
+  // （Codex 仍走 hooks-codex-gate 基础脚本，不在 BASIC_GATE_IDS）
+  const hooksFamily = resolveHooksFamily(params, root);
   const skipBasicGate = hooksFamily.includes("commit-gate-extended");
+  // keep params in sync so expandHooksFamily / placeholders 一致
+  params.hooks_family = hooksFamily;
   const domains = new Set(params.domains || []);
   const variant = params.agents_variant || "solo";
   const includeOptional = new Set(normalizeIncludeOptional(params.include_optional));
@@ -666,7 +670,7 @@ function expandFromManifest(manifestPath, params, root) {
   // L3+：非 Cursor 宿主镜像全量 .cursor/rules（L5 由 sync 托管，此处跳过）
   files.push(...expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root));
   // hooks 家族脚本（0.5.0+；L5 → docs/agent-config/hooks/，否则按工具直渲）
-  files.push(...expandHooksFamily(params, agentConfig, actionForTarget));
+  files.push(...expandHooksFamily(params, agentConfig, actionForTarget, root));
   return files;
 }
 
@@ -931,7 +935,46 @@ function mergeJsonHooks(existingText, incomingText) {
   return JSON.stringify(cur, null, 2) + "\n";
 }
 
-function applyOne(root, item, placeholders, dryRun, log) {
+const MCP_GITIGNORE_PATHS = new Set([".cursor/mcp.json", ".mcp.json", ".trae/mcp.json"]);
+
+/** Resolve mcp_tracking from params or existing harness-meta (default example_only). */
+function resolveMcpTracking(params, root) {
+  const fromParams = params && params.mcp_tracking;
+  if (fromParams != null && String(fromParams).trim()) {
+    return String(fromParams).trim();
+  }
+  try {
+    const meta = findHarnessMetaFile(root);
+    if (meta) {
+      const raw = fs.readFileSync(meta.abs, "utf8");
+      const m = raw.match(/mcp_tracking:\s*["']?([A-Za-z0-9_-]+)["']?/);
+      if (m) return m[1];
+    }
+  } catch {
+    /* ignore */
+  }
+  return "example_only";
+}
+
+/**
+ * vendored_shared：团队跟踪共享 mcp.json，勿再追加忽略真密行。
+ * 仍保留 .fill-work/ 等其它 snippet 行。
+ */
+function filterGitignoreSnippet(text, mcpTracking) {
+  if (mcpTracking !== "vendored_shared") return text;
+  return text
+    .split(/\r?\n/)
+    .filter((line) => {
+      const t = line.trim();
+      if (MCP_GITIGNORE_PATHS.has(t)) return false;
+      if (/Do not commit real MCP secrets/i.test(t)) return false;
+      if (/example_only：Do not commit real MCP secrets/i.test(t)) return false;
+      return true;
+    })
+    .join("\n");
+}
+
+function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   const action = item.action || "create";
   const targetRel = item.target;
   if (!targetRel) throw new Error("file entry missing target");
@@ -958,6 +1001,12 @@ function applyOne(root, item, placeholders, dryRun, log) {
       preserveFrontmatter:
         rel.startsWith(".trae/rules/") || rel.startsWith(".codebuddy/rules/"),
     });
+  }
+  if (
+    item.id === "gitignore-snippet" ||
+    targetRel.replace(/\\/g, "/").endsWith(".gitignore")
+  ) {
+    rendered = filterGitignoreSnippet(rendered, opts.mcpTracking || "example_only");
   }
   const unresolvedPlaceholders = findUnresolvedPlaceholders(rendered);
 
@@ -1106,7 +1155,7 @@ function main() {
   }
   Object.assign(
     placeholders,
-    buildHookPlaceholders({ params, agentConfig, existing: placeholders })
+    buildHookPlaceholders({ params, agentConfig, existing: placeholders, root })
   );
   const log = [];
 
@@ -1142,8 +1191,9 @@ function main() {
     });
   }
 
+  const mcpTracking = resolveMcpTracking(params, root);
   for (const item of files) {
-    applyOne(root, item, placeholders, args.dryRun, log);
+    applyOne(root, item, placeholders, args.dryRun, log, { mcpTracking });
   }
 
   const unresolved = [];

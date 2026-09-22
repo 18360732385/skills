@@ -1,5 +1,7 @@
 # harness-eng — suggested gitignore entries
-# Append to repo root .gitignore if missing. Do not commit real MCP secrets.
+# Append to repo root .gitignore if missing.
+# example_only：Do not commit real MCP secrets（下列 mcp.json 真密路径）。
+# vendored_shared：render 会跳过 mcp.json 忽略行（团队约定跟踪共享真密）。
 .cursor/mcp.json
 .mcp.json
 .trae/mcp.json

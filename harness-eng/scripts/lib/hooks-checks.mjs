@@ -3,6 +3,7 @@
  *
  * - HOOK_DEFS： hooks 家族登记表（脚本 / 各工具事件映射 / githooks 能力）
  * - normalizeHooksFamily：Q_HOOKS_FAMILY 答案 → 规范选择（extended 与 basic 门禁互斥）
+ * - resolveHooksFamily：仓内已有 soft-gate 时强制 extended，避免 upgrade 留下 superpowers 孤儿
  * - resolveAgentConfig：params.agent_config 或 ladder>=L5 → 配置 SSOT 管线模式
  * - buildHookPlaceholders：CONTRACT_CHECKS_JS / HOOKS_CURSOR_EVENTS /
  *   HOOKS_CLAUDE_GROUPS / HOOKS_QODER_GROUPS / HOOKS_TRAE_GROUPS /
@@ -132,7 +133,7 @@ export function toolDirName(toolKey) {
   return toolKey === "workbuddy" ? "codebuddy" : toolKey;
 }
 
-/** 与 extended 门禁互斥的基础门禁 manifest 条目 */
+/** 与 extended 门禁互斥的基础门禁 manifest 条目（Codex 仍走 hooks-codex-gate 基础脚本） */
 export const BASIC_GATE_IDS = [
   "hooks-gate",
   "hooks-claude-gate",
@@ -152,6 +153,48 @@ export function normalizeHooksFamily(input) {
   }
   if (sel.length === 0) sel = [...DEFAULT_HOOKS_FAMILY];
   return [...new Set(sel)];
+}
+
+/**
+ * 目标仓是否已装 soft-gate（文件或 hooks.config 引用）。
+ * upgrade 时若 params 未带 hooks_family 会回落到 basic，易留下未接线的 superpowers 孤儿。
+ */
+export function detectSoftGatePresent(root) {
+  if (!root) return false;
+  const candidates = [
+    "docs/agent-config/hooks/git-commit-soft-gate.js",
+    ".cursor/hooks/git-commit-soft-gate.js",
+    ".githooks/git-commit-soft-gate.js",
+    ".claude/hooks/git-commit-soft-gate.js",
+    ".trae/hooks/git-commit-soft-gate.js",
+    ".codebuddy/hooks/git-commit-soft-gate.js",
+  ];
+  for (const rel of candidates) {
+    if (fs.existsSync(path.join(root, rel))) return true;
+  }
+  const cfg = path.join(root, "docs/agent-config/hooks/hooks.config.json");
+  if (fs.existsSync(cfg)) {
+    try {
+      if (/git-commit-soft-gate/.test(fs.readFileSync(cfg, "utf8"))) return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return false;
+}
+
+/**
+ * 解析 hooks 家族：显式 params 优先；若仓内已有 soft-gate 则强制 extended，避免 basic 孤儿脚本。
+ */
+export function resolveHooksFamily(params, root) {
+  let sel = normalizeHooksFamily(params && params.hooks_family);
+  if (root && detectSoftGatePresent(root) && !sel.includes("commit-gate-extended")) {
+    sel = normalizeHooksFamily([
+      "commit-gate-extended",
+      ...sel.filter((k) => k !== "commit-gate"),
+    ]);
+  }
+  return sel;
 }
 
 /** L5 配置 SSOT 管线是否启用：显式 agent_config 或目标阶梯 L5。 */
@@ -296,10 +339,10 @@ function hooksConfigEntriesJson(selection, aiTools) {
 /**
  * 计算 hooks 家族相关占位。已存在于 existing 的键不覆盖（params.placeholders 优先）。
  */
-export function buildHookPlaceholders({ params, agentConfig, existing }) {
+export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
   const ph = existing || {};
   const out = {};
-  const selection = normalizeHooksFamily(params && params.hooks_family);
+  const selection = resolveHooksFamily(params, root);
   const domains = (params && params.domains) || [];
   const aiTools = (params && params.ai_tools) || [];
 
@@ -375,8 +418,8 @@ export function buildHookPlaceholders({ params, agentConfig, existing }) {
  * 选中 hook 的脚本文件条目。
  * L5：单份 SSOT（docs/agent-config/hooks/）；否则按工具直渲副本。
  */
-export function expandHooksFamily(params, agentConfig, actionForTarget) {
-  const selection = normalizeHooksFamily(params && params.hooks_family);
+export function expandHooksFamily(params, agentConfig, actionForTarget, root) {
+  const selection = resolveHooksFamily(params, root);
   const tools = new Set(
     (Array.isArray(params && params.ai_tools) ? params.ai_tools : [])
       .map((t) => String(t || "").trim().toLowerCase())

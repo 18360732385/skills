@@ -58,6 +58,7 @@ batches:
 - [ ] 4 acceptance-check；merge --check/--write；dto-batch；fill-score
 - [ ] 5 过闸 → --close；否则 blocked（或 --force-close 移交）
 - [ ] 6 重复至开放批次=0 或达 max-rounds → 移交
+- [ ] 7 批次全关后若仍有 acceptance warnings：`fill-plan --residual`（或看 score `warning_shards`）清残项
 ```
 
 ## 命令
@@ -68,12 +69,24 @@ node scripts/fill-plan.mjs --root <TARGET> --status
 node scripts/fill-plan.mjs --root <TARGET> --set <batch-id> --batch-status in_progress
 node scripts/acceptance-check.mjs --root <TARGET> --domain api [--gold]
 node scripts/fill-plan.mjs --root <TARGET> --close <batch-id>
+# 金标批次已关、开干已 YES 但仍有 warnings：
+node scripts/fill-plan.mjs --root <TARGET> --residual [--gold]
 # 移交例外：
 node scripts/fill-plan.mjs --root <TARGET> --close <batch-id> --force-close
 ```
+
+## 残项清理（`--residual`）
+
+金标批次已关后，acceptance 仍可能剩 **warnings**（非 blocker）。`--residual` 扫 plan 域（或 `--domains`），输出：
+
+- `warning_shards` / `blocker_shards`（按文件聚合）
+- exit：blockers→1 · 仅 warnings→2 · 干净→0
+
+与 `fill-score` 的 `warning_shards` 同源思路；score 建议下一步会指向本命令。
 
 ## 纪律
 
 - 大仓默认金标 + `sample_n`；精填完成以 Plan 批次关闭 + acceptance 为准
 - close 前跑 acceptance；失败标 `blocked`
 - 金标 close 只接受过 acceptance 的批次；heuristic 草稿保持 draft
+- 开干 YES 不等于零 warning；残项用 `--residual` 清

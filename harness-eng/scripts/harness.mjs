@@ -22,6 +22,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
+import { isCliMain } from "./lib/cli-main.mjs";
 import { findHarnessMetaFile } from "./lib/harness-meta.mjs";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { resolveAgentConfig } from "./lib/hooks-checks.mjs";
@@ -262,9 +263,7 @@ export function main(argv = process.argv) {
   process.exit(syncStatus);
 }
 
-const isMain =
-  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
+if (isCliMain(import.meta.url)) {
   try {
     main();
   } catch (e) {

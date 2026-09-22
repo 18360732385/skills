@@ -116,12 +116,21 @@ export function runFreshnessCheck(targetRoot, skillRoot = DEFAULT_SKILL_ROOT, lo
   const report = compareSyncFreshness(targetRoot, skillRoot);
   if (report.status === "skip") {
     log.error(`harness: --check-freshness skip（目标仓无 ${CONSUMER_SYNC_REL}）。`);
+    log.error(
+      "harness: 模板漂移提醒：技能 API 模板 vs 仓内 docs/api 厚模板可能不一致；upgrade on_exists=skip 以仓为准。"
+    );
     return 0;
   }
   if (report.status === "fresh") {
     log.error(`harness: sync.mjs freshness OK（HARNESS_SYNC_TMPL_ID=${report.skillId}）。`);
+    log.error(
+      "harness: 模板漂移提醒：技能 API 模板 vs 仓内 docs/api 厚模板可能不一致；upgrade on_exists=skip 以仓为准。"
+    );
     return 0;
   }
   log.error(formatFreshnessMessage(report, targetRoot));
+  log.error(
+    "harness: 模板漂移提醒：技能 API 模板 vs 仓内 docs/api 厚模板可能不一致；upgrade on_exists=skip 以仓为准。"
+  );
   return 1;
 }

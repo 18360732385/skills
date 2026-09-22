@@ -12,7 +12,6 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { spawnSync } from "child_process";
 import { mergeApiInventories, loadDomainInventory } from "./lib/inventory-paths.mjs";
 import { createProgress } from "./lib/progress-log.mjs";
 import { writeProgress } from "./lib/progress-file.mjs";
@@ -41,6 +40,10 @@ import {
 } from "./lib/domains.mjs";
 import { loadMorphRequired } from "./lib/morph-required.mjs";
 import { findHarnessMetaFile, findMcpUsageGuideFile } from "./lib/harness-meta.mjs";
+import {
+  runAcceptanceJson,
+  shardsFromAcceptanceItems,
+} from "./lib/acceptance-report.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOMAIN_REGISTRY = loadDomainRegistry();
@@ -49,31 +52,26 @@ const KNOWN_DOMAINS = knownContractDomainIds(DOMAIN_REGISTRY);
 function runGoldAcceptance(root) {
   const apiMods = path.join(root, "docs", "api", "modules");
   if (!fs.existsSync(apiMods)) {
-    return { gold_pass_ratio: null, blockers: null, status: null };
+    return {
+      gold_pass_ratio: null,
+      blockers: null,
+      warnings: null,
+      status: null,
+      warning_shards: [],
+      blocker_shards: [],
+    };
   }
-  const script = path.join(__dirname, "acceptance-check.mjs");
-  const r = spawnSync(
-    process.execPath,
-    [script, "--root", root, "--domain", "api"],
-    { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 }
-  );
-  const stdout = r.stdout || "";
-  try {
-    const i = stdout.indexOf("{");
-    const j = stdout.lastIndexOf("}");
-    if (i >= 0 && j > i) {
-      const parsed = JSON.parse(stdout.slice(i, j + 1));
-      return {
-        gold_pass_ratio: parsed.gold_pass_ratio,
-        blockers: parsed.blockers?.length ?? 0,
-        warnings: parsed.warnings?.length ?? 0,
-        status: r.status,
-      };
-    }
-  } catch {
-    /* ignore */
-  }
-  return { gold_pass_ratio: null, blockers: null, status: r.status };
+  const parsed = runAcceptanceJson(root, { domain: "api" });
+  return {
+    gold_pass_ratio: parsed.gold_pass_ratio,
+    blockers: parsed.blockers.length,
+    warnings: parsed.warnings.length,
+    status: parsed.status,
+    warning_shards: shardsFromAcceptanceItems(parsed.warnings, root),
+    blocker_shards: shardsFromAcceptanceItems(parsed.blockers, root),
+    blocker_items: parsed.blockers,
+    warning_items: parsed.warnings,
+  };
 }
 
 function parseArgs(argv) {
@@ -1156,6 +1154,8 @@ function main() {
     warnings: gold.warnings,
     status: gold.status,
   };
+  report.warning_shards = gold.warning_shards || [];
+  report.blocker_shards = gold.blocker_shards || [];
   report.draft_vs_ssot =
     "SSOT 须过 acceptance；heuristic draft 仅 .fill-work（见 truth-quality.md）";
 
@@ -1237,6 +1237,8 @@ function main() {
       "先 fill-plan --init [--gold]，再按批次 fill-truths-agents；勿用 auto/heuristic 写 SSOT";
   } else if (typeof report.gold_ratio === "number" && report.gold_ratio < 0.6) {
     report.suggest_next = `gold_ratio=${report.gold_ratio} 偏低 → acceptance-check 清 blocker，按 truth-quality 精修金标；勿空追 overall`;
+  } else if (report.warning_shards?.length) {
+    report.suggest_next = `acceptance warnings ×${report.warning_shards.length} → fill-plan --residual 清残项；开干 YES 时仍建议清`;
   } else if (!planClosed) {
     report.suggest_next = `fill-plan 仍有开放批次≈${plan.open_total} → 继续 fill-truths-agents；勿因贴 formula_ceiling 早停`;
   } else if (!semanticOk) {
@@ -1396,6 +1398,12 @@ function main() {
     console.log("next_shards:");
     for (const s of report.next_shards) {
       console.log(`  - ${s.id}: ${s.package} (count=${s.count})`);
+    }
+  }
+  if (report.warning_shards?.length) {
+    console.log("warning_shards（acceptance residual；可 fill-plan --residual）:");
+    for (const s of report.warning_shards.slice(0, 8)) {
+      console.log(`  - ${s.file}: ${(s.issue_ids || []).join(",") || "warn"}`);
     }
   }
   console.log(`建议下一步: ${report.suggest_next}`);

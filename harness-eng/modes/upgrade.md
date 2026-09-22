@@ -5,6 +5,10 @@
 1. 本轮 WritePlan 所列升阶缺口已 `create` / `skip` / `merge`（`on_exists=skip`）
 2. `docs/harness-eng/harness-meta.yaml` 的 `ladder` 已升到目标阶，`last_mode=upgrade`，`skill_version` 与 manifest 一致（若仅有遗留 `.cursor/` meta：先迁到新路径再写）
 3. 目标阶 [ladder.md](ladder.md) 必备项勾选通过；分级移交 TODO 已打印
+4. **升版后必跑 acceptance 摘要**：`node scripts/acceptance-check.mjs --root <TARGET> [--gold]`（或 `fill-plan --residual [--gold]`）  
+   - 打印 blockers / warnings 计数；**blockers>0 → 移交 TODO「acceptance 升严差分」**，勿假装开干仍 YES  
+   - 建议紧接 `fill-score`；若升版前开干 YES、升版后 NO，在移交写明差分原因  
+   - 仅 warnings 且批次已关：走 `fill-plan --residual` 清残项
 
 当前阶梯已齐、只要再升阶时使用。默认 **完整阶 +1**；用户书面「升到 Ln」可一次覆盖中间阶缺口。
 
@@ -24,6 +28,7 @@
 - [ ] 5 WritePlan：仅缺口路径；注明跳阶依据（默认 +1 或用户书面）；含 score-policy `gate_profile` / `coverage_mode` 若需升档
 - [ ] 6 确认闸门后 `scripts/harness.mjs --mode upgrade`（`land.mjs` 薄别名；非 L5 委托 render；L5 走 sync）：params.on_exists=skip
 - [ ] 7 自检 + 更新 meta.ladder / last_mode=upgrade / skill_version + 移交 TODO
+- [ ] 8 **acceptance 摘要**（`--root` + 可选 `--gold`）；blockers>0 写入移交；warnings → `fill-plan --residual`
 ```
 
 ### 0.3.0 开干档迁移（upgrade / resume）

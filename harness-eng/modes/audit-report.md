@@ -37,6 +37,10 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 - [ ] docs/releases（过程域；skill `release-eng`）
 - [ ] 前端协作包（如 rule 17 / `*-web` 分册）
 
+### 模板漂移（脚注，audit / freshness 必提一行）
+- **技能 API 模板**（`templates/docs/api/…`）vs **仓内厚模板**（`docs/api/templates` 或已填 modules）：列数/贴 Apifox 程度可能不同  
+- upgrade `on_exists=skip` **以仓为准**；勿误以为「技能=仓」。freshness 亦打印同款提醒
+
 ### L2
 - [ ] docs/agent-kb 四文件（pitfalls 含「域」列）
 - [ ] rule 19

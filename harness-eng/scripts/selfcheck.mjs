@@ -584,6 +584,355 @@ if (fs.existsSync(fixture)) {
   }
 }
 
+// --- 0.6.8-dev P0: func sep + redis table example + cli-main realpath ---
+{
+  assert(
+    fs.existsSync(path.join(skillRoot, "scripts/lib/cli-main.mjs")),
+    "cli-main.mjs exists"
+  );
+  const cliMain = fs.readFileSync(path.join(skillRoot, "scripts/lib/cli-main.mjs"), "utf8");
+  assert(/realpathSync/.test(cliMain), "cli-main uses realpathSync");
+  assert(
+    /isCliMain/.test(fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8")),
+    "harness.mjs uses isCliMain"
+  );
+  const help = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
+  assert(help.status === 0, "harness --help exit 0");
+  assert(/Usage:|harness\.mjs|--root/.test(help.stdout || help.stderr || ""), "harness --help prints usage");
+
+  const acceptSrc = fs.readFileSync(
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "utf8"
+  );
+  assert(/isAlignSepCell|:?-\{2,\}/.test(acceptSrc), "acceptance skips table align sep");
+  assert(/\\\|\\s\*示例\\s\*\\\|/.test(acceptSrc), "acceptance recognizes table 示例 cell");
+
+  const funcSep = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    path.join(skillRoot, "scripts/fixtures/acceptance-func-sep.md"),
+    "--domain",
+    "func",
+    "--gold",
+    "--json-out",
+    path.join(skillRoot, "scripts/fixtures/.tmp-accept-func.json"),
+  ]);
+  assert(funcSep.status === 0, "func sep fixture gold pass");
+  const funcJsonPath = path.join(skillRoot, "scripts/fixtures/.tmp-accept-func.json");
+  if (fs.existsSync(funcJsonPath)) {
+    const j = JSON.parse(fs.readFileSync(funcJsonPath, "utf8"));
+    assert(
+      !(j.blockers || []).some((b) => b.id === "func-empty-semantics"),
+      "func sep does not trigger func-empty-semantics"
+    );
+    try {
+      fs.unlinkSync(funcJsonPath);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const redisTbl = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    path.join(skillRoot, "scripts/fixtures/acceptance-redis-table.md"),
+    "--domain",
+    "redis",
+    "--gold",
+    "--json-out",
+    path.join(skillRoot, "scripts/fixtures/.tmp-accept-redis.json"),
+  ]);
+  assert(redisTbl.status === 0, "redis table 示例 fixture gold pass");
+  const redisJsonPath = path.join(skillRoot, "scripts/fixtures/.tmp-accept-redis.json");
+  if (fs.existsSync(redisJsonPath)) {
+    const j = JSON.parse(fs.readFileSync(redisJsonPath, "utf8"));
+    assert(
+      !(j.blockers || []).some((b) => b.id === "redis-no-example"),
+      "table 示例 satisfies redis-no-example"
+    );
+    try {
+      fs.unlinkSync(redisJsonPath);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+// --- 0.6.8-dev P1: gitignore vendored_shared · soft-gate · api table parse ---
+{
+  const acceptSrc = fs.readFileSync(
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "utf8"
+  );
+  assert(/splitMdTableRow/.test(acceptSrc), "acceptance splitMdTableRow");
+  assert(/isParamTablePointer/.test(acceptSrc), "acceptance isParamTablePointer");
+  assert(/表行列数不足/.test(acceptSrc), "acceptance reports short table rows");
+
+  const noTrail = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    path.join(skillRoot, "scripts/fixtures/acceptance-api-no-trail.md"),
+    "--domain",
+    "api",
+    "--gold",
+  ]);
+  assert(noTrail.status === 0, "api no-trailing-pipe fixture gold pass");
+
+  const voPtr = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    path.join(skillRoot, "scripts/fixtures/acceptance-api-vo-pointer.md"),
+    "--domain",
+    "api",
+    "--gold",
+  ]);
+  assert(voPtr.status === 0, "api VO pointer fixture gold pass");
+
+  const shortCols = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    path.join(skillRoot, "scripts/fixtures/acceptance-api-short-cols.md"),
+    "--domain",
+    "api",
+    "--gold",
+    "--json-out",
+    path.join(skillRoot, "scripts/fixtures/.tmp-accept-short.json"),
+  ]);
+  assert(shortCols.status === 1, "api short-cols fixture gold blocks");
+  const shortPath = path.join(skillRoot, "scripts/fixtures/.tmp-accept-short.json");
+  if (fs.existsSync(shortPath)) {
+    const j = JSON.parse(fs.readFileSync(shortPath, "utf8"));
+    assert(
+      (j.blockers || []).some((b) => /表行列数不足/.test(String(b.detail || b.issue || ""))),
+      "short-cols reports 表行列数不足"
+    );
+    try {
+      fs.unlinkSync(shortPath);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const hooksLib = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/hooks-checks.mjs"),
+    "utf8"
+  );
+  assert(/resolveHooksFamily/.test(hooksLib), "hooks-checks resolveHooksFamily");
+  assert(/detectSoftGatePresent/.test(hooksLib), "hooks-checks detectSoftGatePresent");
+  assert(
+    /filterGitignoreSnippet|vendored_shared/.test(
+      fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8")
+    ),
+    "render filters gitignore for vendored_shared"
+  );
+
+  const tmpVend = fs.mkdtempSync(path.join(os.tmpdir(), "harness-p1-vend-"));
+  try {
+    fs.writeFileSync(path.join(tmpVend, ".gitignore"), "# existing\n", "utf8");
+    const pVend = path.join(tmpVend, "params.json");
+    fs.writeFileSync(
+      pVend,
+      JSON.stringify({
+        mcp_tracking: "vendored_shared",
+        placeholders: {},
+        files: [
+          {
+            id: "gitignore-snippet",
+            template: "gitignore/harness.gitignore.snippet",
+            target: ".gitignore",
+            action: "merge",
+            mergeMode: "append-lines",
+          },
+        ],
+      }),
+      "utf8"
+    );
+    const rVend = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpVend,
+      "--params",
+      pVend,
+    ]);
+    assert(rVend.status === 0, "vendored_shared render exits 0");
+    const gi = fs.readFileSync(path.join(tmpVend, ".gitignore"), "utf8");
+    assert(!/^\.cursor\/mcp\.json$/m.test(gi), "vendored_shared does not append .cursor/mcp.json");
+    assert(!/^\.mcp\.json$/m.test(gi), "vendored_shared does not append .mcp.json");
+    assert(/\.fill-work\//.test(gi), "vendored_shared still appends fill-work ignore");
+  } finally {
+    try {
+      fs.rmSync(tmpVend, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const tmpEx = fs.mkdtempSync(path.join(os.tmpdir(), "harness-p1-exonly-"));
+  try {
+    fs.writeFileSync(path.join(tmpEx, ".gitignore"), "# existing\n", "utf8");
+    const pEx = path.join(tmpEx, "params.json");
+    fs.writeFileSync(
+      pEx,
+      JSON.stringify({
+        mcp_tracking: "example_only",
+        placeholders: {},
+        files: [
+          {
+            id: "gitignore-snippet",
+            template: "gitignore/harness.gitignore.snippet",
+            target: ".gitignore",
+            action: "merge",
+            mergeMode: "append-lines",
+          },
+        ],
+      }),
+      "utf8"
+    );
+    const rEx = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpEx,
+      "--params",
+      pEx,
+    ]);
+    assert(rEx.status === 0, "example_only gitignore render exits 0");
+    const giEx = fs.readFileSync(path.join(tmpEx, ".gitignore"), "utf8");
+    assert(/^\.cursor\/mcp\.json$/m.test(giEx), "example_only appends .cursor/mcp.json");
+  } finally {
+    try {
+      fs.rmSync(tmpEx, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const tmpSoft = fs.mkdtempSync(path.join(os.tmpdir(), "harness-p1-soft-"));
+  try {
+    fs.mkdirSync(path.join(tmpSoft, ".cursor", "hooks"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpSoft, ".cursor", "hooks", "git-commit-soft-gate.js"),
+      "// existing soft-gate\n",
+      "utf8"
+    );
+    const pSoft = path.join(tmpSoft, "params.json");
+    fs.writeFileSync(
+      pSoft,
+      JSON.stringify({
+        ladder: "L4",
+        domains: ["api"],
+        ai_tools: ["cursor"],
+        agents_variant: "solo",
+        // omit hooks_family → default commit-gate; soft-gate on disk must force extended
+        expandFromManifest: true,
+        on_exists: "skip",
+        placeholders: {
+          PROJECT_NAME: "p1",
+          PROJECT_DESC: "p1",
+          CODE_PREFIXES: "src/",
+          SKILL_VERSION: "0.6.8-dev",
+          CONTRACT_CHECKS_JS: "[]",
+          DB_MIGRATION_DIR: "db/migration/",
+          MIGRATION_ENVS: "",
+          MIGRATION_NAME_RE: JSON.stringify("^V"),
+          JOBS_YML_RE: JSON.stringify("\\.ya?ml$"),
+          MYSQL_GUARD_SERVERS: "mysql-dev",
+          HOOKS_CURSOR_EVENTS: "",
+          HOOKS_CLAUDE_GROUPS: "",
+          HOOKS_QODER_GROUPS: "",
+          HOOKS_TRAE_GROUPS: "",
+          HOOKS_CODEBUDDY_GROUPS: "",
+          HOOKS_CONFIG_ENTRIES: "",
+          GITHOOKS_GATE_SCRIPT: "git-commit-soft-gate.js",
+          OPENAPI_BRIDGE_TIP: "",
+        },
+      }),
+      "utf8"
+    );
+    const rSoft = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpSoft,
+      "--params",
+      pSoft,
+    ]);
+    assert(rSoft.status === 0, "soft-gate present render exits 0");
+    assert(
+      !fs.existsSync(path.join(tmpSoft, ".cursor", "hooks", "superpowers-commit-gate.js")),
+      "soft-gate present does not create orphan superpowers-commit-gate"
+    );
+  } finally {
+    try {
+      fs.rmSync(tmpSoft, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+// --- 0.6.8-dev P2: residual · template drift · session mode · upgrade acceptance ---
+{
+  assert(
+    fs.existsSync(path.join(skillRoot, "scripts/lib/acceptance-report.mjs")),
+    "acceptance-report.mjs exists"
+  );
+  const fillPlanSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-plan.mjs"), "utf8");
+  assert(/--residual/.test(fillPlanSrc) && /collectResidual/.test(fillPlanSrc), "fill-plan has --residual");
+  const scoreSrcP2 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/warning_shards/.test(scoreSrcP2), "fill-score emits warning_shards");
+  assert(
+    /模板漂移/.test(fs.readFileSync(path.join(skillRoot, "modes/audit-report.md"), "utf8")),
+    "audit-report notes 模板漂移"
+  );
+  assert(
+    /模板漂移提醒/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/sync-freshness.mjs"), "utf8")),
+    "freshness prints 模板漂移提醒"
+  );
+  assert(
+    /metaLastMode/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs"), "utf8")),
+    "session-dashboard has metaLastMode footnote"
+  );
+  assert(
+    /acceptance 摘要|acceptance-check/.test(
+      fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")
+    ) && /fill-plan --residual/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "upgrade Done requires acceptance summary"
+  );
+  assert(
+    /UTF-16|writeFileSync/.test(fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8")),
+    "QUICKSTART Windows UTF-8 example"
+  );
+  const helpPlan = runNode([path.join(skillRoot, "scripts/fill-plan.mjs"), "--help"]);
+  assert(helpPlan.status === 0, "fill-plan --help exits 0");
+  assert(/--residual/.test(helpPlan.stdout || ""), "fill-plan --help lists --residual");
+
+  const tmpRes = fs.mkdtempSync(path.join(os.tmpdir(), "harness-p2-res-"));
+  try {
+    fs.mkdirSync(path.join(tmpRes, "docs", "api", "modules"), { recursive: true });
+    fs.copyFileSync(
+      path.join(skillRoot, "scripts/fixtures/acceptance-api-good.md"),
+      path.join(tmpRes, "docs", "api", "modules", "01-good.md")
+    );
+    const rRes = runNode([
+      path.join(skillRoot, "scripts/fill-plan.mjs"),
+      "--root",
+      tmpRes,
+      "--residual",
+      "--domains",
+      "api",
+    ]);
+    assert(rRes.status === 0 || rRes.status === 2, "fill-plan --residual exits 0 or 2");
+    const out = JSON.parse(rRes.stdout || "{}");
+    assert(out.action === "residual", "residual action");
+    assert(Array.isArray(out.warning_shards), "residual has warning_shards");
+  } finally {
+    try {
+      fs.rmSync(tmpRes, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 // --- 0.2.29 Phase A ---
 {
   const invPaths = fs.readFileSync(

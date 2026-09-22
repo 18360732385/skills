@@ -82,19 +82,22 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 | 任务台 | CLI `--pending`/`--next` → 会话上下文 → `fill-plan.yaml` → `next_shards` |
 | 趋势台 | score 的 coverage / overall / ui.composite |
 
-会话字段（模式/阶段/预授权）由 Agent 从当轮上下文填入；脚本 `--mode` / `--phase` / `--preauth` 可覆盖。
+会话字段：
+- **模式**：以本轮 intent / CLI `--mode` 为准（fill-score、audit、pipeline…）；**勿**默认钉死 `meta.last_mode`
+- `meta.last_mode` 仅作脚注（与本轮模式不同时括号注明）
+- 阶段 / 预授权由 Agent 从当轮上下文填入；脚本 `--phase` / `--preauth` 可覆盖
 
 ## 脚本
 
 ```bash
 node scripts/session-dash.mjs --root <TARGET> \
-  --mode pipeline --phase "WritePlan 待确认" --preauth no \
-  [--pending "等待确认"] [--next "确认后 harness.mjs"] [--json] \
+  --mode fill-score --phase "清残项" --preauth yes \
+  [--pending "fill-plan --residual"] [--next "确认后 harness.mjs"] [--json] \
   [--intent engineering|meta]
 ```
 
 - 只读；不写盘
-- Agent 按本页触发规则决定是否调用；`--intent engineering`（默认）渲染仪表盘；`--intent meta` 不输出 markdown（`--json` 时写 `{ omitted: true, reason: "meta" }`）
+- Agent 按本页触发规则决定是否调用；**工程轮务必传 `--mode`（本轮动作）**；`--intent engineering`（默认）渲染仪表盘；`--intent meta` 不输出 markdown（`--json` 时写 `{ omitted: true, reason: "meta" }`）
 - 无 score 时不报错，趋势台写「暂无 score」
 - 脚注固定以 **详情请查询仪表盘** 开头；链到目标仓 `report-latest.html`（已生成）+ skill 内 [使用手册.html#s6](../使用手册.html#s6)
 

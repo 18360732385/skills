@@ -156,6 +156,25 @@ const BAD_DESC =
   /^(未知|—|–|-|N\/A|n\/a|无|暂无|null|NULL|\(空\)|同请求|同上|见上|对象|列表|TODO(?:\(harness-eng\))?)$/i;
 const SKIP_PARAM_NAME = /^(—|–|-|无|无参数|无请求体|（无\s*body）|\(无\s*body\)|n\/a)$/i;
 
+/** Split a markdown table row; tolerate missing trailing `|`. */
+function splitMdTableRow(line) {
+  const raw = String(line || "").trim();
+  if (!raw.startsWith("|")) return [];
+  const inner = raw.endsWith("|") ? raw.slice(1, -1) : raw.slice(1);
+  return inner.split("|").map((c) => c.trim());
+}
+
+/** 见共用 VO / 字段见上方 — 合法指针，无字段表可 skip。 */
+function isParamTablePointer(block) {
+  return (
+    /见\s*[「『"`'][^」』"`']+[」』"`']/i.test(block) ||
+    /字段见\s*(上方|上文|下表|同节|共用)/i.test(block) ||
+    /见\s*(上方|上文).{0,24}(字段|参数表|表)/i.test(block) ||
+    /见\s*[`']?[\w.]+[`']?\s*(VO|DTO|Req|Resp|Request|Response)\b/i.test(block) ||
+    /共用\s*(请求|响应)?\s*(体|VO|DTO|字段)/i.test(block)
+  );
+}
+
 /** Parse first markdown table under ### 请求参数 / ### 响应参数. */
 function parseParamTable(body, sectionTitle) {
   const sec = body.match(
@@ -168,25 +187,21 @@ function parseParamTable(body, sectionTitle) {
   );
   if (!tableMatch) {
     if (/void|stream|无参数|无请求体|HttpServletResponse/i.test(block)) return { skip: true };
+    if (isParamTablePointer(block)) return { skip: true };
     return { issues: [{ id: "api-empty-examples", issue: "missing parameter table" }] };
   }
   const headerLine = block.match(/\|[^\n]+\|/);
   if (!headerLine) {
     return { issues: [{ id: "api-empty-examples", issue: "missing parameter table header" }] };
   }
-  const headers = headerLine[0]
-    .split("|")
-    .map((c) => c.trim())
-    .filter(Boolean);
+  const headers = splitMdTableRow(headerLine[0]).filter(Boolean);
   const rows = [];
+  let shortRows = 0;
   for (const line of block.split(/\r?\n/)) {
     if (!/^\|/.test(line)) continue;
     if (/^\|\s*:?-{2,}/.test(line)) continue;
     if (line === headerLine[0]) continue;
-    const cells = line
-      .split("|")
-      .map((c) => c.trim())
-      .filter((_, i, arr) => i > 0 && i < arr.length - 1);
+    const cells = splitMdTableRow(line);
     if (cells.length < 2) continue;
     if (
       cells.some((c) => /参数名|类型|必填|说明|示例|枚举|备注/.test(c)) &&
@@ -194,7 +209,21 @@ function parseParamTable(body, sectionTitle) {
     ) {
       continue;
     }
+    if (headers.length && cells.length < headers.length) {
+      shortRows++;
+      continue;
+    }
     rows.push(cells);
+  }
+  if (shortRows > 0) {
+    return {
+      issues: [
+        {
+          id: "api-empty-examples",
+          issue: `表行列数不足（${shortRows} 行少于表头 ${headers.length} 列）`,
+        },
+      ],
+    };
   }
   return { headers, rows, block };
 }
@@ -302,9 +331,11 @@ function checkFuncFile(file, text, gold) {
   if (!/###\s*方法清单|方法清单/.test(text)) {
     blockers.push({ id: "func-no-methods", file, detail: "missing 方法清单" });
   }
+  const isAlignSepCell = (c) => /^:?-{2,}:?$/.test(String(c || "").trim());
   const rows = text.match(/\|[^|\n]+\|[^|\n]+\|[^|\n]+\|[^|\n]+\|/g) || [];
   for (const row of rows.slice(0, 40)) {
     const cells = row.split("|").map((c) => c.trim()).filter(Boolean);
+    if (cells.length >= 2 && cells.every(isAlignSepCell)) continue;
     if (cells.length >= 4 && cells[0] === cells[1]) {
       blockers.push({
         id: "func-empty-semantics",
@@ -325,6 +356,7 @@ function checkFuncFile(file, text, gold) {
       let empty = 0;
       for (const row of rows) {
         const cells = row.split("|").map((c) => c.trim()).filter(Boolean);
+        if (cells.length >= 2 && cells.every(isAlignSepCell)) continue;
         if (cells.some((c) => /功能说明|方法签名|参数名/.test(c))) continue;
         const desc = (cells[descIdx] ?? "").replace(/`/g, "").trim();
         if (!desc || /^TODO/i.test(desc)) empty++;
@@ -379,9 +411,10 @@ function checkRedisFile(file, text, gold) {
   if (!/Key 模式|模式/.test(text)) {
     warnings.push({ id: "redis-no-pattern", file, detail: "missing Key 模式" });
   }
-  // 0.2.27: 示例 / live / 显式未知
+  // 0.2.27: 示例 / live / 显式未知；亦认 Key 模式表「示例」列（与 redis-key-template 对齐）
   const hasEx =
     /示例\s*[：:]|live\s*[：:]|SCAN\s*`/i.test(text) ||
+    /\|\s*示例\s*\|\s*[^|\n]+\s*\|/.test(text) ||
     (/未知/.test(text) && /Key\s*模式|模式/.test(text));
   if (!hasEx) {
     const item = {

@@ -12,7 +12,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { isCliMain } from "./cli-main.mjs";
 import { defaultInventoryPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 
@@ -254,9 +254,7 @@ export function main(argv = process.argv) {
   exitFromReport(report);
 }
 
-const isMain =
-  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
+if (isCliMain(import.meta.url)) {
   try {
     main();
   } catch (e) {

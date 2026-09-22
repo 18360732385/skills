@@ -9,7 +9,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { isCliMain } from "./lib/cli-main.mjs";
 
 function parseArgs(argv) {
   const out = { file: null, className: null, sourceRoot: null, help: false };
@@ -127,10 +127,7 @@ function main() {
 }
 
 try {
-  const isMain =
-    process.argv[1] &&
-    path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
-  if (isMain) main();
+  if (isCliMain(import.meta.url)) main();
 } catch (e) {
   console.error(String(e && e.stack ? e.stack : e));
   process.exit(1);

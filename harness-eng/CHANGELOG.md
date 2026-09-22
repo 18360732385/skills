@@ -10,6 +10,11 @@
 
 ### 本版要点
 
+- **P0 Windows junction CLI**：`scripts/lib/cli-main.mjs` 用 `realpathSync` 判定入口；`harness.mjs` / `land.mjs` / inventory·merge 入口不再因 junction 静默 exit 0
+- **P0 acceptance**：`func-empty-semantics` 跳过 Markdown 表对齐分隔行；`redis-no-example` 认 Key 模式表 `| 示例 | … |`（与 `redis-key-template` 对齐）
+- **P1 write DX**：`mcp_tracking=vendored_shared` 时 gitignore snippet **不**追加 mcp 真密 ignore；仓内已有 soft-gate 时 upgrade 强制 `commit-gate-extended`，避免未接线 `superpowers-commit-gate.js` 孤儿
+- **P1 acceptance**：参数表容错无尾 `|`；列数不足报「表行列数不足」；「见『…』VO / 字段见上方」认合法指针 skip
+- **P2 流程 DX**：`fill-plan --residual` + score `warning_shards`；audit/freshness「模板漂移以仓为准」；会话仪表盘模式以本轮 `--mode` 为准（meta.last_mode 脚注）；QUICKSTART Windows UTF-8 示例；upgrade Done 强制 acceptance 摘要
 - **Codex P0**：新增 [host/CODEX-PARITY.md](host/CODEX-PARITY.md)（AGENTS/config/MCP/hooks/skills 对照官方；PASS/PARTIAL；明确 **不做** `.mdc` 全量镜像）与 [host/CODEX-P0-MANUAL.md](host/CODEX-P0-MANUAL.md)（trust / `/hooks` / `/mcp` / skills 人验）
 - **config**：`templates/ai-tools/codex-config.toml.tmpl` → `.codex/config.toml.example`（stdio+http 注释示例；trusted-only；无密钥）
 - **hooks**：`codex-hooks.json` matcher 改为 Codex 正则 **`^Bash$`**；文档强调 `/hooks` trust

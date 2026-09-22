@@ -73,10 +73,20 @@ node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land
 node scripts/fill-inventory.mjs --domain api --root <TARGET>
 node scripts/fill-merge.mjs --domain api --inventory <inv.json> --work-dir <dir> --check
 node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
+node scripts/fill-plan.mjs --root <TARGET> --residual   # 批次已关后清 acceptance warnings
 node scripts/acceptance-check.mjs --root <TARGET> --domain api
 node scripts/fill-score.mjs --root <TARGET>
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
 node scripts/selfcheck.mjs
+```
+
+### Windows 传参（醒目）
+
+PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。先用 Node 写 **UTF-8 无 BOM** 文件，再传路径（SSOT：[write-plan.md](modes/write-plan.md)）：
+
+```bash
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.6.8-dev'}}), 'utf8')"
+node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 
 多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 高**；**Codex 部分对齐·不默认（P2）**（未探测不进「全部推荐」）。详 [ai-tools.md](host/ai-tools.md)。

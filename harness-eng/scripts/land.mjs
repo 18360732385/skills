@@ -8,15 +8,12 @@
  *
  * This file keeps the 0.5.9 command path and re-exports helpers for callers.
  */
-import path from "path";
-import { fileURLToPath } from "url";
+import { isCliMain } from "./lib/cli-main.mjs";
 import { main, isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
 
 export { main, isGeneratedHostPath, resolveLandAgentConfig };
 
-const isMain =
-  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
+if (isCliMain(import.meta.url)) {
   try {
     main();
   } catch (e) {

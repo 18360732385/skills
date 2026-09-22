@@ -1,18 +1,20 @@
 #!/usr/bin/env node
 /**
- * fill-plan — init / status / set / close for docs/harness-eng/fill-plan.yaml
+ * fill-plan — init / status / set / close / residual for docs/harness-eng/fill-plan.yaml
  *
  * Usage:
  *   node scripts/fill-plan.mjs --root <TARGET> --init [--domains a,b] [--modules m1,m2] [--gold] [--sample-n 30]
  *   node scripts/fill-plan.mjs --root <TARGET> --status
  *   node scripts/fill-plan.mjs --root <TARGET> --set <batch-id> --batch-status in_progress
  *   node scripts/fill-plan.mjs --root <TARGET> --close <batch-id> [--force-close]
+ *   node scripts/fill-plan.mjs --root <TARGET> --residual [--gold]   # 金标批次已关后清 acceptance warnings
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { defaultContractDomains } from "./lib/domains.mjs";
+import { collectResidual } from "./lib/acceptance-report.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +23,7 @@ function parseArgs(argv) {
     root: null,
     init: false,
     status: false,
+    residual: false,
     set: null,
     close: null,
     batchStatus: null,
@@ -36,6 +39,7 @@ function parseArgs(argv) {
     if (a === "--root") out.root = argv[++i];
     else if (a === "--init") out.init = true;
     else if (a === "--status") out.status = true;
+    else if (a === "--residual") out.residual = true;
     else if (a === "--set") out.set = argv[++i];
     else if (a === "--close") out.close = argv[++i];
     else if (a === "--domains") out.domains = String(argv[++i] || "").split(",").filter(Boolean);
@@ -67,6 +71,7 @@ function printHelp() {
   node scripts/fill-plan.mjs --root <TARGET> --status
   node scripts/fill-plan.mjs --root <TARGET> --set <batch-id> --batch-status in_progress
   node scripts/fill-plan.mjs --root <TARGET> --close <batch-id> [--force-close]
+  node scripts/fill-plan.mjs --root <TARGET> --residual [--gold] [--domains api,func]
 `);
 }
 
@@ -308,6 +313,38 @@ function main() {
   const p = planPath(root);
   const dir = path.dirname(p);
 
+  if (args.residual) {
+    let domains = args.domains;
+    let planSummary = null;
+    if (fs.existsSync(p)) {
+      const plan = parsePlanYaml(fs.readFileSync(p, "utf8"));
+      planSummary = summarize(plan);
+      if (Array.isArray(plan.domains) && plan.domains.length) domains = plan.domains;
+    }
+    const residual = collectResidual(root, { domains, gold: args.gold });
+    const ok = residual.blockers_n === 0;
+    console.log(
+      JSON.stringify(
+        {
+          ok,
+          action: "residual",
+          path: fs.existsSync(p) ? path.relative(root, p).replace(/\\/g, "/") : null,
+          plan_summary: planSummary,
+          hint:
+            residual.warnings_n > 0 || residual.blockers_n > 0
+              ? "金标批次已关后清残项：按 warning_shards / blocker_shards 精修真相，再 fill-score"
+              : "无 acceptance residual",
+          ...residual,
+        },
+        null,
+        2
+      )
+    );
+    if (residual.blockers_n > 0) process.exitCode = 1;
+    else if (residual.warnings_n > 0) process.exitCode = 2;
+    return;
+  }
+
   if (args.init) {
     fs.mkdirSync(dir, { recursive: true });
     if (fs.existsSync(p)) {
@@ -454,7 +491,7 @@ function main() {
   }
 
   printHelp();
-  throw new Error("Specify --init | --status | --set | --close");
+  throw new Error("Specify --init | --status | --set | --close | --residual");
 }
 
 try {

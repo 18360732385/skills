@@ -38,6 +38,7 @@ const HELP = `session-dash — harness-eng 会话仪表盘（工程轮末尾四�
 
 说明:
   SHOW/HIDE 由 Agent 按 modes/session-dashboard.md 判断；本脚本只负责渲染。
+  --mode 为本轮意图（必填推荐）；省略时显示「—」，meta.last_mode 仅脚注，不顶替本轮模式。
   无 score / 诊断空时默认精简一行，避免空四台噪音。
 `;
 
