@@ -29,7 +29,7 @@
 ## 4. MCP：`config.toml` + `/mcp`
 
 - [ ] 审阅 `.codex/config.toml.example`；trusted 后拷贝/合并为 `.codex/config.toml`（gitignore）
-- [ ] 无明文密钥；用 `env_vars` 名
+- [ ] 本机 `config.toml` 可填连接参数；可提交的 example **无明文密钥**（用 `env_vars` 名）；**勿提交**真密进 git
 - [ ] 写库类默认 `enabled = false`
 - [ ] `/mcp` 可见；**不要**假设根 `.mcp.json` 生效
 

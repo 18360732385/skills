@@ -3,5 +3,5 @@
 - **索引（非 SSOT）**：[`../redis.md`](../redis.md)
 - **真相**：本目录 `NN-{family}.md`
 - 冲突：Key 真相 > 索引
-- **禁止**写入密码 / Token 样例
+- **禁止**把密码 / Token 样例写入本契约文档
 - 新 Key 族：按 [`../templates/redis-key-template.md`](../templates/redis-key-template.md) 创建，并更新 `redis.md`

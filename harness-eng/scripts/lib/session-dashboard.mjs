@@ -230,19 +230,23 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
     (data.diagnose?.ladder === "—" || data.diagnose?.ladder == null) &&
     (data.trend?.overall == null && data.trend?.coverage == null);
   if (opts.compactEmpty !== false && emptyNoise) {
-    const bits = [
-      `目标 \`${data.root}\``,
-      `模式 ${data.sessionMode}`,
-      data.sessionPhase && data.sessionPhase !== "—" ? `阶段 ${data.sessionPhase}` : null,
-      data.task?.line || "暂无 score / meta",
-    ].filter(Boolean);
+    const modeBit =
+      data.metaLastMode && data.metaLastMode !== data.sessionMode
+        ? `**模式** ${data.sessionMode}（meta.last_mode=${data.metaLastMode}）`
+        : `**模式** ${data.sessionMode}`;
+    const nextLine =
+      data.task?.line && data.task.line !== "—"
+        ? `下一动作：${data.task.line}`
+        : "下一动作：说「完整度打分」或先 audit/land";
     return [
       "---",
-      "## harness-eng 会话仪表盘（精简）",
+      "## harness-eng 会话仪表盘（精简） · 未打分",
       "",
-      bits.join(" · "),
+      `**目标** \`${data.root}\` · ${modeBit} · **阶段** ${data.sessionPhase} · **预授权** ${data.preauth}`,
       "",
-      "尚未打分：说「完整度打分」或先 audit/land。四台详情见手册 #s6。",
+      nextLine,
+      "",
+      renderDashboardLinkFooter(data),
       "---",
     ].join("\n");
   }

@@ -26,7 +26,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（`land.mjs` 薄别名）。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](modes/recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
-6. **本轮工程步进**时回复末尾附可视化**会话仪表盘**（四台摘要 + 可选纯文本态势；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。纯 meta / 版本 / 手册 / 跑题 / 非本轮施工**不附**整块（判定按本轮，不按「会话曾点名」）。
+6. **本轮实质施工产出、闸门决策点（出示 WritePlan / 用户确认）、或显式读数**时回复末尾附可视化**会话仪表盘**（四台摘要 + 可选纯文本态势；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。提问批次 / 定根前 / 等确认空轮 / 纯 meta / 版本 / 手册 / 跑题 / 改 skill **不附**整块（判定按本轮里程碑，不按「会话曾点名」）。
 
 ## 模式分流
 
@@ -76,9 +76,10 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 - 写盘前拿到确认闸门等价词（或已预授权后续轮次）
 - 只写入已确认的 `Q_TARGET_ROOT`
 - 本 skill 只写目标仓 `AGENTS` / `.cursor/rules` / `docs`（及 fill-mcp 经确认的 `mcp.json`）
-- MCP 真密：仅 fill-mcp 经确认写入；含密 `mcp.json` 只留在目标仓、不随技能分发
+- MCP 真密：仅 fill-mcp 经确认写入 **local 真密路径**（gitignore）；含密文件不随技能分发；模板/example 只含占位符
+- **密文对用户话术**：不主动要求用户「不要填密码」；**仅**本轮在创建/引导编辑 local 真密配置（`.cursor/mcp.json` / 根 `.mcp.json` / `.trae/mcp.json` / `.codex/config.toml`）时，提醒可本地填写、**勿提交进 git**（优先 env / `${VAR}`）
 - AGENTS：merge 只追加缺章节；已有同名章节正文保留（[conflict-policy.md](modes/conflict-policy.md)）
-- README 疑似密钥：只检测 + 移交人工
+- README 疑似密钥：只检测 + 移交人工（不自动删）
 - SSOT promote：仅过 acceptance；heuristic 标 `quality: heuristic` 且留在 `.fill-work`；宣称可 AI coding 仅看 `ai_coding_ready`
 - **填充 MCP 闸**：域/栈需 db·redis 时，矩阵+（烟测∨calibrate-live）达标后才进入填充（[fill-mcp.md](fill/fill-mcp.md)）
 

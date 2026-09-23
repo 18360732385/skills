@@ -80,7 +80,7 @@
 | **manual_sql** | db 迁移模式之一：无 Flyway 依赖、人工按序执行迁移脚本；`Q_DB_MIGRATION` 选定并写入 `docs/db/db.md` 声明；detect `S_NO_FLYWAY` / `S_SQL_DIR` 推荐 |
 | **真相** | `modules/`、`table/`、`keys/`、`tasks/` 下具体文档（SSOT） |
 | **索引** | `func.md` / `api.md` / `jobs.md` 等导航，不是 SSOT |
-| **mcp_tracking** | `example_only`（L4 默认：真密不入库）\| `vendored_shared`（团队约定跟踪共享 mcp.json；audit 按 meta 判定；提问见 `Q_MCP_TRACKING`） |
+| **mcp_tracking** | `example_only`（L4 默认：真密不入库、本地可填）\| `vendored_shared`（团队约定跟踪共享 mcp.json；audit 按 meta 判定；提问见 `Q_MCP_TRACKING`） |
 | **配置 SSOT 管线** | L5：`docs/agent-config/` 为 rules/hooks/mcp/settings 单一真相源，`scripts/agent-config/sync.mjs` 生成各工具目录，`--check` 校验漂移；meta 记 `agent_config: true` |
 | **hooks 家族** | L3 选装软门禁组（`Q_HOOKS_FAMILY`）：`commit-gate-extended`（契约漏同步/migration 环境/pitfalls lint 五合一）· `mysql-guard` · `after-edit` · `stop-checklist`；全部 fail-open；脚本统一 Cursor 协议，Claude 经 `claude-adapter.js` 翻译 |
 | **pitfalls lint** | `scripts/agent-kb/lint-pitfalls.mjs`：台账 7 列 / ID 递增 / 状态分区 / 封闭域词表 / 速查一致性校验（0.5.0+，L2） |
@@ -100,7 +100,7 @@
 | **live 校准** | MCP 未挂载时用 `fill-calibrate-live` 直连；可按引擎满足填充 MCP 闸 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
 | **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
-| **会话仪表盘** | **本轮**工程步进回复末尾的四台 markdown 摘要 + 可选纯文本态势（无 mermaid；meta / 版本 / 跑题省略；按本轮非按会话历史）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
+| **会话仪表盘** | **本轮**实质产出 / 闸门决策 / 显式读数时回复末尾的四台 markdown 摘要 + 可选纯文本态势（无 mermaid；提问批次 / 定根前 / 等确认空轮 / meta / 跑题省略；按里程碑非按会话历史）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |
 | **score-history** | `docs/harness-eng/score-history.jsonl`：历次 overall/coverage/ready 追加日志 |
 | **progress.yaml** | `docs/harness-eng/progress.yaml`：填充进度状态（`--write-progress`） |

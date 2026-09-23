@@ -9,7 +9,8 @@ server 名：`{engine}-{profile}`（例：`mysql-dev`、`redis-test`）。
 
 ## 安全约定
 
-- **勿**把含真实密码的 `mcp.json` 提交进仓库；用 `mcp.json.example` 复制为本地未跟踪文件，或经 fill-mcp 从本仓配置抽取后确认写入
+- **本地可填**：复制 `mcp.json.example` → 本机真密 `mcp.json`（gitignore）后，按本仓各 profile 填入连接参数；或经 fill-mcp 从本仓配置抽取后确认写入
+- **勿提交**：不要把含真实密码的 `mcp.json` 提交进仓库（`example_only` 默认；团队 `vendored_shared` 另议）
 - 仅为已发现的非生产 profile 配置可写 MCP；**勿**对 pre/prod 配置可写 MCP
 - Redis：避免 `FLUSHDB` / `FLUSHALL`；钉住 `mcp[cli]>=1.9.4,<2`（避免 fastmcp 缺失）
 - 勿使用 npm 包名 `mcp-server-redis`（安全研究 canary）

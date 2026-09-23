@@ -18,7 +18,7 @@
 | `l5-sync-codex` fixture `--check` | 有 |
 | upgrade `## 0.6.8-dev → 0.6.9` | 有 |
 | 安装 URL 仍 `main`；Trae / CodeBuddy 不回退 | 有 |
-| 会话仪表盘：本轮判定；中途 meta **HIDE**（`session-dashboard.md`） | 有 |
+| 会话仪表盘：里程碑 SHOW（实质产出 / 闸门决策 / 显式读数）；提问批次·定根前·等确认空轮 **HIDE**（`session-dashboard.md`） | 有 |
 
 ## 0.6.8-dev 增量验收（Codex P0）
 

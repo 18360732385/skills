@@ -15,7 +15,7 @@
 | `cursor` | `.cursor/mcp.json.example` | `.cursor/mcp.json` |
 | `claude` / `qoder` / `workbuddy` | 根 `.mcp.json.example` | 根 `.mcp.json` |
 | `trae` | `.trae/mcp.json.example` | `.trae/mcp.json` |
-| `codex` | `.codex/config.toml.example` | `.codex/config.toml`（trusted 本机；建议 gitignore；**勿**写密钥进仓库） |
+| `codex` | `.codex/config.toml.example` | `.codex/config.toml`（trusted 本机；建议 gitignore；**勿提交**密钥进仓库） |
 
 多选时 JSON 宿主各写对应真密路径（内容一致）。Codex 为 **TOML** 投影（可用 `scripts/lib/codex-mcp-toml.mjs` / L5 `sync.mjs`）；路径 SSOT：`scripts/lib/mcp-paths.mjs`。  
 `fill-calibrate-live` 按优先级读取 JSON：`.cursor/mcp.json` → `.mcp.json` → `.trae/mcp.json` → `.qoder/mcp.json`（**不含** Codex toml）。
@@ -91,11 +91,12 @@ redis-dev / redis-test / …
 
 WritePlan 须写明：「本轮扫库/SCAN 使用 mysql-{profile} + redis-{profile}」。
 
-## 密文策略（用户裁定）
+## 密文策略
 
-- 从本仓已有配置读取的密码，经确认可写入目标仓 mcp.json
-- 密码只从本仓抽取；他仓密钥不进入本仓；技能模板只含占位符
-- land 默认只提供 example；真密须走本模式并确认
+- **local 真密路径可填**：经确认后，从本仓已有配置抽取的连接参数/密码可写入上表 gitignore 真密文件；用户也可本地自行填写
+- **对用户话术**：不主动说「不要填密码」；**仅**本轮在编辑/引导上述 local 真密文件时，提醒「可本地填 · 勿提交进 git」（优先 env / `${VAR}`）
+- **分发与入库**：他仓密钥不进入本仓；技能模板 / `*.example` / 可提交产物只含占位符；含密文件不随技能分发
+- land 默认只提供 example；真密须走本模式并确认（或用户本地复制 example 后自填）
 
 ## 与 conflict-policy
 

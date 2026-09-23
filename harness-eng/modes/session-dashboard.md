@@ -1,16 +1,16 @@
 # 会话仪表盘（工程轮回复末尾）
 
-> SSOT：仅当**本轮**在做目标仓 harness 施工（或用户本轮明确要读数）时，对用户可见回复的**固定结尾**。纯 meta / 跑题 / 非工程对话**整块省略**。与 `docs/harness-eng/report-latest.html`（施工 HTML 四台）互补：HTML 是持久产物；本节是**会话内**快照。
+> SSOT：仅当**本轮**有目标仓 harness **实质施工产出**、**闸门决策点**、或用户**显式要读数**时，对用户可见回复的**固定结尾**。默认 **HIDE**。提问批次 / 定根前 / 等确认空轮 / 改 skill / 纯 meta **整块省略**。与 `docs/harness-eng/report-latest.html`（施工 HTML 四台）互补：HTML 是持久产物；本节是**会话内**快照。
 
 ## Done
 
-**SHOW**（本轮判定为工程轮时）：
+**SHOW**（本轮命中里程碑时）：
 
-1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选纯文本态势）
-2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`；`--help` 看选项；无 score 时精简一行）
-3. 尚无目标根时：**仅**本轮正在 detect / 定根 / land 提问 → 输出精简仪表盘（任务台写「待确认目标根」）；否则 **HIDE**（勿空表凑脚注）
+1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选纯文本态势；无 score 时精简）
+2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`；`--help` 看选项）
+3. **尚无目标根 → 一律 HIDE**（勿空表凑脚注；定根后再 SHOW）
 
-**HIDE**（本轮判定为非工程轮时）：
+**HIDE**（本轮未命中里程碑时）：
 
 - **省略**整个 `## harness-eng 会话仪表盘` 块（含四台、纯文本态势、脚注）
 - 不要为了「凑脚注」去跑 session-dash；若脚本自检可用 `--intent meta`（无 markdown 输出）
@@ -18,7 +18,8 @@
 ## 触发
 
 Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负责渲染，**不**推断意图。  
-**判定粒度 = 本轮用户意图 + 本轮 Agent 动作**，不是「本会话是否曾点名 harness-eng / 是否曾施工」。
+**判定粒度 = 本轮用户意图 + 本轮 Agent 动作**，不是「本会话是否曾点名 harness-eng / 是否曾施工」。  
+**策略 = 里程碑 SHOW**（实质产出 / 闸门决策 / 显式读数）；沾过模式名不够。
 
 ### 判定顺序（先命中先定）
 
@@ -28,39 +29,51 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 
 ### HIDE（省略整块）— 优先
 
-本轮**不在**做目标仓 harness 施工，例如：
+例如：
 
 - 当前 skill 版本号 / changelog / 怎么安装 / 术语表 / 只读 handbook·QUICKSTART
-- 纯聊 skill 设计、改 skill 源码仓、或其它非目标仓话题
+- 分析 / 设计 / 改 **harness-eng skill 源码**、样式选型、规格讨论
 - 业务写码 / 排错 / Review / 其它 skill，即便本会话早先跑过 land/audit
-- 仅因 description 关键词匹配加载了 harness-eng，但本轮未进入任何模式步骤、也未要读数
-- 工程会话中途跑题或纯 meta（版本、安装、术语），**本轮**未推进施工、未要状态/打分/审计读数
+- 仅因 description 关键词匹配加载了 harness-eng；本轮只 Read 模式文档、无实质产出、未要读数
+- 提问批次 / `questions-next` / RecommendedProfile / fingerprint 说明
+- 仅 detect / 定根讨论、**尚无 `Q_TARGET_ROOT`**
+- 正等 WritePlan 确认、用户本轮无确认且无改计划（含沉默续聊施工概念）
+- 仅口头「打算改」目标仓产物，未确认且未写盘
+- 工程会话中途跑题或纯 meta（版本、安装、术语）
 
 ### SHOW（附仪表盘）— 须本轮成立
 
 本轮须满足**至少一条**（缺则 HIDE）：
 
-- **模式步进**：本轮执行或推进了 `land` / `resume` / `pipeline` / `audit` / `upgrade` / `fill-*` / `fill-score` / `fill-mcp` / `detect` / WritePlan / render / ladder / `seed-truths`（含：出计划等确认、确认后写盘、出审计/打分结论、清残项）
-- **改盘意图**：本轮正在改（或经确认将改）目标仓 harness 产物——AGENTS、rules、`docs/harness-eng`、meta、项目 MCP 接线；**仅口头讨论概念不够**
-- **显式读数**：用户本轮明确要开干闸 / 完整度 / 会话仪表盘 / `report-latest` 读数 / 「现在能不能开干」
+- **实质产出**：本轮已跑并汇报 `harness.mjs` / `land` / `render` / `audit` / `fill-score` / `fill-report-html` / `fill-plan`（关批或写盘）/ `fill-*` 写盘 / `upgrade` / `seed-truths` / `pipeline` 落盘步骤；**或**本轮给出审计结论 / 打分结论 / 开干闸结论（含只读 audit 出缺口清单）
+- **闸门决策点**：**出示 WritePlan** 等确认的那一轮；用户本轮说 **确认** / 改计划后继续 / 继续施工（含预授权后续轮的首写盘轮）
+- **显式读数**：用户本轮明确要开干闸 / 完整度 / 会话仪表盘 / `report-latest` 读数 / 「现在能不能开干」（须已有目标根）
 
 **不够 SHOW 的常见误判**（一律 HIDE）：
 
 - 「会话里曾经 land 过」或「目标仓已有 `harness-meta.yaml`」
-- 「正等 WritePlan 确认」但用户本轮问的是版本/安装/无关问题
+- 「正等 WritePlan 确认」但用户本轮无确认、无改计划（含问版本/安装/无关问题）
 - 点名了 harness-eng 但只问「这是干什么的」
+- 把提问批次 / RecommendedProfile / 仅 Read `detect.md` 当成「模式步进」
+- 无目标根仍附精简仪表盘
 
 ### 边角
 
 | 情形 | 判定 |
 |---|---|
-| 正等 WritePlan 确认，用户本轮问「当前版本号多少」/ 安装 / 术语 | **HIDE**（本轮 meta，不附） |
+| 尚无 `Q_TARGET_ROOT`（含 detect / 定根讨论） | **HIDE** |
+| 提问批次 / RecommendedProfile / fingerprint | **HIDE** |
+| 出示 WritePlan 等确认（该轮） | **SHOW** |
+| 正等 WritePlan 确认，用户本轮无确认且无改计划 | **HIDE** |
 | 正等 WritePlan 确认，用户本轮说「确认」/ 改计划 / 继续施工 | **SHOW** |
+| 本轮跑 audit/fill-score 并出结论 | **SHOW** |
 | 首条只问「当前版本号多少」 | **HIDE** |
-| 同会话先 audit 再聊无关业务 bug | 业务轮 **HIDE**；若再回到 audit/fill 则该轮 **SHOW** |
-| 含糊：无本轮模式步进、无改盘意图、无显式读数 | **HIDE**（默认） |
+| 同会话先 audit 再聊无关业务 bug | 业务轮 **HIDE**；再回到 audit/fill 出结论则该轮 **SHOW** |
+| 含糊：无实质产出、无闸门决策、无显式读数 | **HIDE**（默认） |
 
 ## 格式（固定）
+
+### 全量（有 score / 有诊断信号）
 
 ```markdown
 ---
@@ -85,7 +98,21 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 ---
 ```
 
-**禁止**：把仪表盘插在正文中间；省略四台之一；用 `ready.ok` / overall / 参考分替代「开干」结论。
+### 精简（无 score 且诊断空 · 减噪）
+
+```markdown
+---
+## harness-eng 会话仪表盘（精简） · 未打分
+
+**目标** `…` · **模式** … · **阶段** … · **预授权** 是|否
+
+下一动作：…
+
+**详情请查询仪表盘** → …（与全量同一脚注契约：已生成 file 链 / 未生成预期路径 · 手册 #s6）
+---
+```
+
+**禁止**：把仪表盘插在正文中间；省略四台之一（全量）；精简省略「详情请查询仪表盘」脚注；用 `ready.ok` / overall / 参考分替代「开干」结论。
 
 ## 数据优先级
 
@@ -119,16 +146,17 @@ node scripts/session-dash.mjs --root <TARGET> \
 
 | 场景 | 会话仪表盘 | report-latest.html |
 |---|---|---|
-| 探测 / 提问 / 未打分（工程轮） | 会话态 + 阶梯/meta | 可能不存在 |
-| 纯 meta / 版本 / 手册 / 跑题问答 | **省略** | 不涉及 |
+| 探测 / 提问 / 定根前 / 等确认空轮 | **省略** | 可能不存在 |
+| 出示 WritePlan / 确认后写盘 / 实质产出 | 会话态快照 | 可能不存在 |
+| 纯 meta / 版本 / 手册 / 跑题 / 改 skill | **省略** | 不涉及 |
 | fill-score 后 | 三词 + 四台摘要 | 【推荐】同步生成，脚注链过去 |
-| audit 只读 | 缺口摘要进任务台 | 不强制生成 |
+| audit 只读出结论 | 缺口摘要进任务台 | 不强制生成 |
 
 开干结论**两处一致**：只看 `ai_coding_ready`（见 [glossary.md](../glossary.md)）。
 
 ## CLI
 
-`node scripts/session-dash.mjs --help` 列出选项。`--intent meta` 省略输出。目标仓无 `score-latest.json` 且诊断空时，默认输出**精简**仪表盘（非空四台表），减噪；有 score 仍四台全量。
+`node scripts/session-dash.mjs --help` 列出选项。`--intent meta` 省略输出。目标仓无 `score-latest.json` 且诊断空时，默认输出**精简**仪表盘（标题带「未打分」、下一动作行、与全量同款「详情请查询仪表盘」脚注；非空四台表），减噪；有 score 仍四台全量。
 
 ## Trae / 多宿主缺口用语
 

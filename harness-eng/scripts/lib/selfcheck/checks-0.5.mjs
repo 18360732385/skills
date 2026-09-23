@@ -764,6 +764,8 @@ assert(
   /docs\/harness-eng\/mcp-usage-guide\.md/.test(ladderMd),
   "ladder L4 prefers docs/harness-eng/mcp-usage-guide.md"
 );
+assert(/含「勿提交」/.test(ladderMd) || /勿提交」真密/.test(ladderMd), "ladder L4 guide checks 勿提交 not lecture-dont-fill");
+assert(!/含「勿提交真密」/.test(ladderMd), "ladder dropped exact 勿提交真密 checklist pin");
 assert(/docs\/harness-eng\/harness-meta\.yaml/.test(skill), "SKILL Done prefers new meta path");
 {
   const conflict056 = readDoc("conflict-policy.md");
@@ -776,6 +778,11 @@ assert(
   ),
   "mcp-usage-guide enable steps are host-agnostic"
 );
+{
+  const mcpGuide = fs.readFileSync(path.join(skillRoot, "templates/mcp/mcp-usage-guide.md.tmpl"), "utf8");
+  assert(/本地可填/.test(mcpGuide) && /勿提交/.test(mcpGuide), "mcp-usage-guide local-fill + no-commit");
+  assert(!/不要填写密码|别填密码|主动.*不要填/.test(mcpGuide), "mcp-usage-guide no proactive dont-fill-password");
+}
 assert(
   !/Cursor → Settings → MCP/.test(
     fs.readFileSync(path.join(skillRoot, "templates/mcp/mcp-usage-guide.md.tmpl"), "utf8")
@@ -952,23 +959,32 @@ assert(
 );
 assert(/会话仪表盘/.test(skill), "SKILL mandates session dashboard footer");
 assert(/session-dashboard\.md/.test(skill), "SKILL points session-dashboard.md");
-assert(/本轮工程步进/.test(skill), "SKILL gates dashboard to this-turn engineering steps");
+assert(/实质施工产出/.test(skill) && /闸门决策/.test(skill), "SKILL gates dashboard to milestone SHOW");
+assert(/密文对用户话术/.test(skill) && /不主动要求用户/.test(skill), "SKILL secrets UX: no proactive dont-fill");
+assert(/仅.*local 真密配置/.test(skill) || /仅\*\*本轮在创建/.test(skill), "SKILL secrets UX: remind only on local secret files");
 assert(/不按「会话曾点名」/.test(skill), "SKILL dashboard not gated by session history");
 assert(!/\*\*每轮回复末尾\*\*/.test(skill), "SKILL no unconditional every-turn dashboard");
 const sessionDashMd = readDoc("session-dashboard.md");
 assert(/决策台/.test(sessionDashMd) && /趋势台/.test(sessionDashMd), "session-dashboard four panels");
 assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
+assert(/会话仪表盘（精简） · 未打分/.test(sessionDashMd), "session-dashboard documents compact B format");
 assert(/使用手册\.html#s6/.test(sessionDashMd), "session-dashboard handbook anchor");
 assert(/\*\*SHOW\*\*/.test(sessionDashMd) && /\*\*HIDE\*\*/.test(sessionDashMd), "session-dashboard SHOW/HIDE");
 assert(/当前版本号多少/.test(sessionDashMd), "session-dashboard version-question hide example");
+assert(/里程碑 SHOW/.test(sessionDashMd) && /\*\*实质产出\*\*/.test(sessionDashMd), "session-dashboard milestone SHOW policy");
+assert(/\*\*闸门决策点\*\*/.test(sessionDashMd) && /出示 WritePlan/.test(sessionDashMd), "session-dashboard WritePlan gate is SHOW");
+assert(/提问批次/.test(sessionDashMd) && /尚无目标根 → 一律 HIDE/.test(sessionDashMd), "session-dashboard Q&A and no-root are HIDE");
 assert(
-  /正等 WritePlan 确认，用户本轮问/.test(sessionDashMd) && /本轮 meta，不附/.test(sessionDashMd),
-  "session-dashboard mid-session meta is HIDE"
+  /正等 WritePlan 确认，用户本轮无确认/.test(sessionDashMd),
+  "session-dashboard waiting WritePlan without confirm is HIDE"
 );
+assert(!/\*\*模式步进\*\*/.test(sessionDashMd), "session-dashboard no longer uses broad 模式步进 SHOW");
+assert(!/\*\*改盘意图\*\*/.test(sessionDashMd), "session-dashboard no longer uses soft 改盘意图 SHOW");
 assert(/判定粒度 = 本轮/.test(sessionDashMd), "session-dashboard gates on this-turn not session history");
 assert(/显式读数/.test(sessionDashMd), "session-dashboard SHOW includes explicit readout request");
 assert(/含糊/.test(sessionDashMd), "session-dashboard ambiguous defaults HIDE");
 assert(!/工程上下文未结束/.test(sessionDashMd), "session-dashboard no longer keeps SHOW for unfinished engineering context");
+assert(!/仅\*\*本轮正在 detect/.test(sessionDashMd), "session-dashboard no no-root compact exception");
 
 assert(!/确认后 render"/.test(sessionDashMd), "session-dashboard next tip uses harness not render");
 assert(/确认后 harness\.mjs/.test(sessionDashMd), "session-dashboard next tip harness.mjs");
@@ -990,6 +1006,9 @@ assert(!/对齐矩阵（0\.5\.7）/.test(aiTools063), "ai-tools matrix title not
   assert(emptyDash.status === 0, "session-dash empty root exits 0");
   const emptyOut = emptyDash.stdout || "";
   assert(/精简/.test(emptyOut), "session-dash empty uses compact footer");
+  assert(/未打分/.test(emptyOut), "session-dash compact titles 未打分");
+  assert(/下一动作：/.test(emptyOut), "session-dash compact has 下一动作");
+  assert(/详情请查询仪表盘/.test(emptyOut), "session-dash compact has report footer");
   assert(!/\| \*\*决策台\*\*/.test(emptyOut), "session-dash empty omits four-panel table");
 }
 
@@ -1000,14 +1019,14 @@ assert(!/quadrantChart|```mermaid/.test(sessionDashMd), "session-dashboard.md no
 assert(/施工态势/.test(sessionDashMd), "session-dashboard.md documents 施工态势");
 assert(!/四台 \+ mermaid/.test(skill), "SKILL dashboard is 四台摘要 not mermaid");
 assert(/本轮/.test(handbookMd) && /会话仪表盘/.test(handbookMd), "使用手册.md dashboard is this-turn gated");
-assert(/中途 meta 问\*\*不附\*\*/.test(handbookMd), "使用手册.md mid-session meta hides dashboard");
+assert(/里程碑 SHOW/.test(handbookMd) && /提问批次/.test(handbookMd), "使用手册.md milestone SHOW and Q&A HIDE");
 assert(!/Agent \*\*每一轮\*\*/.test(handbookMd), "使用手册.md no unconditional every-turn dashboard");
 assert(/纯文本施工态势/.test(handbookMd) && !/mermaid 象限图/.test(handbookMd), "使用手册.md dashboard no mermaid chart");
 assert(/本轮/.test(handbookHtml) && /会话仪表盘/.test(handbookHtml), "使用手册.html dashboard is this-turn gated");
-assert(/中途 meta <strong>不附<\/strong>/.test(handbookHtml), "使用手册.html mid-session meta hides dashboard");
+assert(/里程碑 SHOW/.test(handbookHtml) && /提问批次/.test(handbookHtml), "使用手册.html milestone SHOW and Q&A HIDE");
 assert(!/Agent <strong>每一轮<\/strong>/.test(handbookHtml), "使用手册.html no unconditional every-turn dashboard");
 assert(/纯文本态势/.test(handbookHtml) && !/四台摘要 \+ mermaid/.test(handbookHtml), "使用手册.html dashboard no mermaid");
-assert(/本轮工程步进/.test(quickstartMd), "QUICKSTART dashboard is this-turn gated");
+assert(/实质产出|闸门决策|显式读数/.test(quickstartMd), "QUICKSTART dashboard is milestone gated");
 assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.test(quickstartMd), "QUICKSTART dashboard no mermaid");
 {
     const dashRoot = fs.mkdtempSync(path.join(os.tmpdir(), "he-session-dash-"));

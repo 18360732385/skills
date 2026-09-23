@@ -313,6 +313,8 @@ assert(
 const fillMcp = readDoc("fill-mcp.md");
 assert(/fill_mcp_profile/.test(fillMcp), "fill-mcp documents fill_mcp_profile");
 assert(/优先 \*\*`test`\*\*/.test(fillMcp) || /默认 \*\*`test`\*\*/.test(fillMcp), "fill-mcp prefers/defaults test");
+assert(/local 真密路径可填/.test(fillMcp) && /不主动说/.test(fillMcp), "fill-mcp local-fill + no proactive lecture");
+assert(/勿提交进 git/.test(fillMcp), "fill-mcp remind no-commit on local secret files");
 
 const glossary026 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
 assert(/对用户摘要只输出三词|覆盖.*形态.*开干/.test(glossary026), "glossary three-word SSOT");

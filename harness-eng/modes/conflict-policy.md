@@ -14,7 +14,7 @@
 | 已有其他 alwaysApply 总览 | 不删旧；新增 `00` 前先问 | 合并进旧文件 / 双 always（警告上下文膨胀） |
 | `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json`（及遗留 `.qoder/mcp.json`）已存在 | **非 fill-mcp：永不覆盖** | fill-mcp 经 WritePlan 确认后可按 `ai_tools` 覆盖或 backup-create（多路径内容一致） |
 | MCP 跟踪策略 `mcp_tracking` | land/L4 默认 **`example_only`**（`.gitignore` 忽略真密；仅 example 入库） | **`vendored_shared`**：团队约定跟踪共享 `mcp.json`（须写入 harness-meta；audit 不按反模式红灯；仍禁止把个人机绝对路径 / PAT 扩散到技能分发）；**gitignore snippet 不追加** `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json` |
-| 密文写入 docs / mcp | **fill**：源文件已在**本仓**可读 → 允许写入并可入库 | land/seed 不主动扩散密文 |
+| 密文写入 docs / mcp | **fill-mcp**：本仓可读 → 允许写入 **local 真密路径**（gitignore）；契约 docs **不写**明文密码 | land/seed 不把密文写入可提交 example / 技能分发物；**不**对用户主动说「别填密码」 |
 | `docs/harness-eng/harness-meta.yaml` 已存在 | `merge`：脚本对 YAML 做**键级合并**（受管键 `ladder`/`domains`/`skill_version`/… 覆盖；未知用户键保留）；写入只走新路径 | `backup-create` |
 | 仅有遗留 `.cursor/harness-meta.yaml`（或 `.yml`），新路径不存在 | **迁移**：复制/合并到 `docs/harness-eng/harness-meta.yaml`（同一键级合并语义），再按上列写入；**不自动删除**旧文件（遗留只读；可选手工清理） | 保留双份 / 手工删旧 |
 | `docs/harness-eng/mcp-usage-guide.md` 已存在 | `skip`（resume）或按 `on_exists`；写入只走新路径 | `merge` / `backup-create` |
@@ -26,7 +26,7 @@
 | L5 托管 rules 目录所有权 | **sync**：`.cursor/.trae/.qoder/.claude/.codebuddy/rules/` 以 sync plan 为准；render 不直渲这些前缀（`SYNC_MANAGED_RULE_PREFIXES`） | — |
 | L5 生成物（带 GENERATED 标记）已存在且内容异构 | 勿手改对齐；改 SSOT 后跑 `node scripts/agent-config/sync.mjs`；漂移校验 `sync.mjs --check` | backup-create（仅用户书面要求） |
 | L5 消费仓 `scripts/agent-config/sync.mjs` 落后于 skill tmpl（`HARNESS_SYNC_TMPL_ID` 不一致或无标记） | land/upgrade/resume **replace** 重渲 `agent-config-sync`；`harness.mjs --check-freshness` 落后则非 0。然后再 `node scripts/agent-config/sync.mjs` | 手工把 `templates/agent-config/sync.mjs.tmpl` 渲染/复制为 `scripts/agent-config/sync.mjs` |
-| 文件内容含疑似密码/Token | **拒绝写入同路径** | 提示移出 git |
+| 文件内容含疑似密码/Token | **拒绝写入可提交同路径**（example / 契约 docs / 未 gitignore 的跟踪文件） | 提示改走 local 真密路径或移出 git |
 | `docs/superpowers/archive/**` 业务正文 | 永不从本 skill 覆盖 | — |
 
 ## merge 语义

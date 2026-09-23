@@ -16,11 +16,11 @@
  *
  * --intent engineering (default): render the four-panel footer.
  * --intent meta: omit markdown (json: { omitted: true, reason: "meta" }).
- * 无 score 且诊断空时默认精简一行（减噪）；--json 仍输出完整结构。
+ * 无 score 且诊断空时默认精简（未打分 + 下一动作 + 报告脚注）；--json 仍输出完整结构。
  */
 import { buildSessionDashboard, renderSessionDashboardMarkdown } from "./lib/session-dashboard.mjs";
 
-const HELP = `session-dash — harness-eng 会话仪表盘（本轮工程步进末尾四台摘要）
+const HELP = `session-dash — harness-eng 会话仪表盘（本轮里程碑末尾四台摘要）
 
 用法:
   node scripts/session-dash.mjs --root <TARGET> [选项]
@@ -39,7 +39,7 @@ const HELP = `session-dash — harness-eng 会话仪表盘（本轮工程步进�
 说明:
   SHOW/HIDE 由 Agent 按 modes/session-dashboard.md 按本轮判定；本脚本只负责渲染。
   --mode 为本轮意图（必填推荐）；省略时显示「—」，meta.last_mode 仅脚注，不顶替本轮模式。
-  无 score / 诊断空时默认精简一行，避免空四台噪音。
+  无 score / 诊断空时默认精简（未打分标题 + 下一动作 + 详情请查询仪表盘脚注），避免空四台噪音。
 `;
 
 function parseArgs(argv) {

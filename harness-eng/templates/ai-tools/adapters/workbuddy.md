@@ -9,7 +9,7 @@
   - 事件：Claude 系；matcher 终端工具为 **Bash**（保持 CLAUDE_STYLE）
   - 脚本：`.codebuddy/hooks/*.js` + `claude-adapter.js`；命令可用 `$CODEBUDDY_PROJECT_DIR`
   - **热加载**：改 `settings.json` 后须在 IDE **`/hooks` 面板**确认/应用（仅保存文件 ≠ 会话已生效）
-- **MCP**: 根 `.mcp.json`（官方推荐项目级）。首次连接需审批；范围优先级 **local > project > user**；密钥用 `${VAR}`，勿把真密写进 SSOT
+- **MCP**: 根 `.mcp.json`（官方推荐项目级）。首次连接需审批；范围优先级 **local > project > user**；local 可填，密钥优先 `${VAR}`，**勿把真密写进可提交 SSOT**
 - **permissions / settings 优先级**: CLI > `.codebuddy/settings.local.json` > `.codebuddy/settings.json` > `~/.codebuddy/settings.json`。sync 仅在缺省时合并最小 `permissions`（不 wipe）。**不**生成 `settings.local.json`
 - **Skills**: `.codebuddy/skills/`
 - **非目标**: `.codebuddy/agents/`（不由 harness 生成）

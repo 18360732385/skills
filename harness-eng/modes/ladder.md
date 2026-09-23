@@ -9,7 +9,7 @@
 | **L1** | 契约骨架 | 所选契约域（func/api/db/redis/**jobs**…，见 `domains.yaml`）索引骨架 + templates + 真相子目录 README；对应 sync rules（11/12/13/16/**20**）；**可选** OpenAPI→Apifox 桥（`Q_APIFOX`，不进齐套） | 改契约前读真相、改后回写有 path rule |
 | **L2** | 知识回流 | `docs/agent-kb` 四文件 + rule 19 | pitfalls 表头含域列；有回流说明 |
 | **L3** | 规划与软门禁 | superpowers README/ARCHIVE + rule 18 + hooks 软提醒（Cursor 原生和/或 `.githooks`） | 进行中表存在；commit 软提醒不拦截；WritePlan 附烟测 |
-| **L4** | 工具连接样例 | `mcp.json.example` + `mcp-usage-guide.md`（无密）+ gitignore snippet 提示 | 无明文密码入库（或 meta `mcp_tracking=vendored_shared`）；建议 ignore `.cursor/mcp.json`；**真连与多环境矩阵属 fill-mcp / 填充 MCP 闸，不并入 L0** |
+| **L4** | 工具连接样例 | `mcp.json.example` + `mcp-usage-guide.md`（example 无密）+ gitignore snippet 提示 | 真密默认不入库（或 meta `mcp_tracking=vendored_shared`）；建议 ignore 真密 `mcp.json`；**真连与多环境矩阵属 fill-mcp / 填充 MCP 闸，不并入 L0** |
 | **L5** | 配置 SSOT 管线 | `docs/agent-config/`（rules/hooks/mcp/settings）+ `scripts/agent-config/sync.mjs`（`--check` 漂移校验） | 生成物带 GENERATED 标记且勿手改；`sync --check` 无漂移；多工具仓【推荐】（`Q_AGENT_CONFIG` / `S_MULTI_TOOL`） |
 
 ## 自检清单
@@ -60,7 +60,7 @@
 ### L4
 
 - [ ] 仅有 `mcp.json.example`（或未跟踪真密）；按 ai_tools 检查 `.cursor/` / 根 `.mcp.json.example` / `.trae/`
-- [ ] 说明文档 `docs/harness-eng/mcp-usage-guide.md` 含「勿提交真密」（无则回退 `.cursor/mcp-usage-guide.md`；若仍有旧名 `MCP使用说明.md`：新建英文名，旧文件 skip 不删，移交可手工清理）
+- [ ] 说明文档 `docs/harness-eng/mcp-usage-guide.md` 含「勿提交」真密约定（本地可填；无则回退 `.cursor/mcp-usage-guide.md`；若仍有旧名 `MCP使用说明.md`：新建英文名，旧文件 skip 不删，移交可手工清理）
 - [ ] 装后烟测：`.gitignore` 建议含 `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json`（snippet merge，不整文件覆盖）
 - [ ] 非 Cursor 已选工具：rules 目录含全量镜像（qoder/trae/claude 为 `.md`；codebuddy 为 `RULE.mdc`）；**不要求**再写一份 alwaysApply `1x-contract-sync`
 - [ ] Codex 若选用：L0–L2 有 `.codex/contract-sync.md`；L3+/L5 omit（管道就绪）

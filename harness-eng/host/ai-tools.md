@@ -66,7 +66,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 ## 纪律
 
 - 多选时**都**生成对应适配；未选的不删已有用户文件（resume 时 skip）
-- 适配正文只含：指向根 AGENTS、docs 优先级、勿复制密文
+- 适配正文只含：指向根 AGENTS、docs 优先级；**勿**在适配/规则文件粘贴明文密文
 - `ai_tools` 写入 `docs/harness-eng/harness-meta.yaml`（YAML 列表；读侧可回退 `.cursor/`）
 - **契约 sync 指针（0.5.7 收窄）**：只给**拿不到全量 `*-sync*` 镜像**的宿主（`when_full_rules_mirror: false`）；指针含契约域 packs / globs，不复制 Never do / Pn
   - **仍写 `1x`**：自定义入口-only、以及 L0–L2 尚未全量镜像的 claude/qoder/trae/workbuddy、**L0–L2 的 `codex`**

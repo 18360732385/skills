@@ -38,7 +38,7 @@ node scripts/harness.mjs --check-freshness --root <TARGET>
 - [ ] 确认根目录有 `.mcp.json`（不要只留 `.example`）
 - [ ] **首次连接**在面板中审批 server（enableAll / 单项批准以官方为准）
 - [ ] 范围优先级理解：local > project > user
-- [ ] 密钥用环境变量 `${VAR}`，勿把真密提交进仓库
+- [ ] 密钥优先环境变量 `${VAR}`；local `.mcp.json` 可填，**勿把真密提交进仓库**
 
 ## 4. permissions / settings 优先级
 

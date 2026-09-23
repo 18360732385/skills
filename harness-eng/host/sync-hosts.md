@@ -35,7 +35,7 @@
 
 ## Agent 模式硬约束
 
-- **禁止**编造密钥；MCP 真密只复制 SSOT `servers.json` 或 fill-mcp 已确认内容
+- **禁止**编造密钥；MCP 真密只复制 SSOT `servers.json` 或 fill-mcp 已确认内容到 **local 真密路径**（勿写入可提交 example）
 - **禁止**改写 gate / adapter JS 逻辑（只允许路径替换为该宿主 hooks 目录）
 - 无适配卡的自定义工具：只写用户确认的入口指针，不装 hooks/MCP
 - 写盘前仍走 [write-plan.md](../modes/write-plan.md) 确认闸门

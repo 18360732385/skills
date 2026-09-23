@@ -10,6 +10,9 @@
 
 - **报告壳 0.2.26（施工指挥台 UX）**：IBM Plex Sans SC 正文；`prefers-reduced-motion` 关 CRT/glitch；命令一键复制；Escape 关模态；`#hash` 深链生效；←/→ `[` `]` 切台；趋势台参考分视觉降权；残差任务条纹+徽章分层
 - **会话仪表盘展示时机收紧**：SHOW 改为「本轮」模式步进 / 改盘意图 / 显式读数；中途 meta 与跑题 **HIDE**（不再因「工程会话未结束」硬附）；无目标根时仅 detect/定根轮出精简块。规格 [session-dashboard.md](modes/session-dashboard.md)
+- **密文对用户话术收窄**：不主动要求「别填密码」；仅编辑 local 真密配置（`mcp.json` / `.codex/config.toml`）时提醒可本地填、勿提交。技能模板/example/可提交产物仍无密；fill-mcp 经确认写 gitignore 路径。见 [SKILL.md](SKILL.md) · [fill-mcp.md](fill/fill-mcp.md)
+- **会话仪表盘里程碑再收**：SHOW 仅 **实质产出** / **闸门决策**（出示 WritePlan 或用户确认）/ **显式读数**；提问批次、定根前（无根）、等确认空轮、改 skill **HIDE**；取消无根精简例外。规格 [session-dashboard.md](modes/session-dashboard.md)
+- **精简会话仪表盘样式（方案 B）**：无 score 时标题「（精简）· 未打分」+ 加粗元信息行 + 「下一动作」；脚注复用全量 `详情请查询仪表盘`（file 链 / 未生成路径 · 手册 #s6）
 - **对齐**：Codex 矩阵 **高**；推荐纪律 **B**（探测 `.codex/` 或显式勾选）；**不做** `.mdc` 全量镜像
 - **MCP**：`mcp/servers*.json` → `.codex/config.toml.example`（`codex-mcp-toml.mjs` / L5 sync；无密钥；默认 `enabled=false`）
 - **Hooks**：`PreToolUse(^Bash$)` + `Stop` + `codex-adapter.js`

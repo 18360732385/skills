@@ -197,7 +197,7 @@
 ## 0.5.3 → 0.5.4 迁移要点
 
 1. **meta**：`skill_version` → `0.5.4`（resume / upgrade 写 meta 时对齐 manifest）
-2. **行为**：会话仪表盘仅**本轮工程步进**附末尾；纯 meta / 版本 / 手册 / 跑题省略整块（见 [session-dashboard.md](session-dashboard.md)）
+2. **行为**：会话仪表盘仅**本轮里程碑**（实质产出 / 闸门决策 / 显式读数）附末尾；提问批次 / 定根前 / 等确认空轮 / 纯 meta / 版本 / 手册 / 跑题省略整块（见 [session-dashboard.md](session-dashboard.md)）
 3. **可选**：`node scripts/session-dash.mjs --root <TARGET> --intent engineering` 核对读数与 `report-latest.html` 一致
 
 ## 0.5.2 → 0.5.3 迁移要点
