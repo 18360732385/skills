@@ -1,8 +1,24 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev → 0.6.9`（当前 **0.6.9**）。报告对照 **`skill_version` + `report_schema`**（**0.2.26**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev → 0.6.9 → 0.7.0`（当前 **0.7.0**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.0 — 2026-09-23（形态重标定 · gold 可达 · ready 废弃）
+
+### Breaking
+- **形态分**：探针≈75 + 深度≈25 → 满分 **100**；`morph_cap=100`；`formula_ceiling≈100`；JSON `morph_scale: "0.7"`
+- **strict** `morph_floor`: 60 → **75**；**gold** `morph_floor`: 90 → **95**（仍双 95：完成度≥95）
+- **strict semantic**：`generic≤3 && unbound≤2 && tc≥70`（legacy 保持 5/3/50；gold 0/0/95）
+- **`ready.ok` 对外废弃**（JSON 保留 `deprecated: true`）；开干只看 `ai_coding_ready`
+- **report_schema** → **0.3.0**；旧 score-history 与 0.6.x overall **不可比**
+
+### Added
+- `scripts/lib/morph-depth.mjs` 深度档；`scripts/lib/score-policy-migrate.mjs` 字段级迁移 60→75 / gold 90→95
+- `fill-score --migrate-policy`；`harness.mjs` resume/upgrade/land 后自动迁移旧默认 morph_floor
+
+### Docs
+- fill-score / fill-gate / glossary / upgrade 迁移要点对齐 0.7.0
 
 ## 0.6.9 — 2026-09-22（Codex → 高：分轨 SSOT · 纪律 B）
 

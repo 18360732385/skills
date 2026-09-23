@@ -4,7 +4,7 @@
 
 宿主路径细节见适配卡：[templates/ai-tools/adapters/](../templates/ai-tools/adapters/) · 生成引擎见 [sync-hosts.md](sync-hosts.md)。
 
-**0.6.9**：Codex 升 **高**（原生全家桶）；推荐纪律 **B**（探测或显式勾选）。**仍不做** Cursor `.mdc` 全量镜像。跟踪 [CODEX-PARITY.md](CODEX-PARITY.md) · [CODEX-MANUAL.md](CODEX-MANUAL.md)。
+**0.7.0**：Codex 升 **高**（原生全家桶）；推荐纪律 **B**（探测或显式勾选）。**仍不做** Cursor `.mdc` 全量镜像。跟踪 [CODEX-PARITY.md](CODEX-PARITY.md) · [CODEX-MANUAL.md](CODEX-MANUAL.md)。
 
 ## 内置工具
 
@@ -48,7 +48,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 不确定请回复：全部推荐（= 仅已探测项；无探测则空，追问一次，不默认 Cursor；Codex 仅探测到 .codex/ 或显式勾选才纳入）
 ```
 
-## 对齐矩阵（0.6.9）
+## 对齐矩阵（0.7.0）
 
 契约 SSOT 始终是根 `AGENTS.md` + `docs/**`。下表只描述**宿主脚手架对齐程度**。
 

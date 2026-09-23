@@ -31,11 +31,26 @@ import {
   formatFreshnessMessage,
   runFreshnessCheck,
 } from "./lib/sync-freshness.mjs";
+import { migrateScorePolicyFile } from "./lib/score-policy-migrate.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
 
 const MODES = ["land", "resume", "upgrade", "pipeline-skeleton"];
+
+function maybeMigrateScorePolicy(root, mode, dryRun) {
+  if (dryRun) return;
+  if (mode !== "resume" && mode !== "upgrade" && mode !== "land") return;
+  const mig = migrateScorePolicyFile(root);
+  if (mig.changed) {
+    console.error(
+      `harness: score-policy migrated — ${mig.migrations.join("; ")}`
+    );
+  }
+  for (const w of mig.warnings || []) {
+    if (mig.changed || /不可比|旧/.test(w)) console.error(`harness: ${w}`);
+  }
+}
 
 const GENERATED_HOST_EXACT = new Set([
   "CLAUDE.md",
@@ -224,7 +239,9 @@ export function main(argv = process.argv) {
     if (args.checkFreshness) {
       process.exit(runFreshnessCheck(args.root, skillRoot));
     }
-    process.exit(forward(runRender(args)));
+    const st = forward(runRender(args));
+    if (st === 0) maybeMigrateScorePolicy(args.root, mode, args.dryRun);
+    process.exit(st);
   }
 
   refuseGeneratedFiles(params);
@@ -236,6 +253,8 @@ export function main(argv = process.argv) {
   const rendered = runRender(args);
   const renderStatus = forward(rendered);
   if (renderStatus !== 0) process.exit(renderStatus);
+
+  maybeMigrateScorePolicy(args.root, mode, args.dryRun);
 
   const afterFresh = compareSyncFreshness(args.root, skillRoot);
   if (beforeFresh.status === "stale" && afterFresh.status === "fresh") {

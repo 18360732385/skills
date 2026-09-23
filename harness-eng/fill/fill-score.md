@@ -44,35 +44,37 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 默认写出：`docs/harness-eng/report-latest.html`、`docs/harness-eng/score-latest.json`。  
 audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标达标率** / 骨架就绪 / 语义抽检 / 文档形态分 / 相对代码覆盖 / 公式上限 / **模板完整度**），英文 ID 放「技术细节」。  
-报告优先对照 **`skill_version` + `report_schema`**（现 0.2.26；**报告壳 ≠ skill**）。`ui.version` 仅为兼容别名。术语见 [glossary.md](../glossary.md)。
+报告优先对照 **`skill_version` + `report_schema`**（现 0.3.0；**报告壳 ≠ skill**）。`ui.version` 仅为兼容别名。JSON 含 **`morph_scale: "0.7"`**（与 0.6.x 历史 overall 不可比）。术语见 [glossary.md](../glossary.md)。
 
 ### 报告字段速查
 
 | 字段 | 含义 |
 |---|---|
-| `gap_to_ready` | 相对 ready 质量/覆盖门槛还差多少（决策台） |
+| `gap_to_ready` | 相对开干/覆盖门槛还差多少（决策台）；不再绑废弃 `ready.ok` |
 | `domain_stories` | 各域形态/覆盖/空壳一句话；默认一行摘要，故事卡需 `show_domain_cards` |
 | `diff` | `--compare` 分数 Δ（趋势台）；无 compare 时 history 可补「相对上次」 |
 | `suggest_upgrade` | 建议下一 harness 阶与原因 |
 | `run-latest.json` / `round` | 批次轮次；report 默认加载并写入 history |
+| `morph_scale` | 形态尺度版本（`0.7`）；history 不换算 |
 
 ## 双轴分 + 分层 ready
 
 | 轴 | 含义 | 高分条件 |
 |---|---|---|
-| **quality** | 文档形态（0–100，再加权 overall） | 见下「分项」；格式与 **api-doc-template** 对齐 |
+| **quality** | 文档形态（0–100，再加权 overall） | **0.7**：探针≈75 + 深度≈25；见下「分项」 |
 | **coverage** | 相对代码覆盖（有 inventory 时） | api：`docs 已登记接口数 / inventory 接口数` |
 | **template_completeness** | 模板必填章 + 列密度（0–100，独立指标） | 见「模板完整度」；**不进** ready 公式 |
 | **gold_ratio** | acceptance 达标占比（0–1） | 见 [truth-quality.md](../modes/truth-quality.md)；**不进** `ai_coding_ready` 公式 |
 
-**ready.ok（兼容 · 形态/覆盖）**：`quality` 加权 overall ≥ `--ready-quality`（默认 80；可读 meta），且 overall coverage ≥ `--ready-coverage`（默认 0.8；可读 meta）。无 inventory 时 `coverage_incomplete=true`，`ready.ok=false`。开干不看此项。
+**ready.ok（0.7.0 起对外废弃）**：JSON 仍输出且标 `deprecated: true`；摘要/HTML/仪表盘不展示。内部仍可算 quality/coverage 兼容式，**开干不看此项**。
 
 **ai_coding_ready（开干闸）**：`skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed`；若 `gate_profile=strict|gold` 再并入 `gate.*`。  
-- **strict**（**0.3.0**：有 score-policy 未写 profile 亦视为 strict）：缺省 `morph_floor=60` / `todo_scan=truths` / `acceptance_blockers_max=0`。  
-- **gold**（**0.3.3**）：覆盖目标强制 1.0；`morph_floor=90`；`template_completeness_min=95`；`todo_scan=harness_docs`；`acceptance_blockers_max=0`；`acceptance_warnings_max=0`；语义 `generic≤0 && unbound≤0 && tc≥95`。  
-显式 `gate_profile: legacy` 可回退 0.2.28 公式。缺 fill-plan → `ai_coding_ready=false`。新仓【推荐】仍 strict。
+- **strict**（有 score-policy 未写 profile 亦视为 strict）：缺省 `morph_floor=75` / `todo_scan=truths` / `acceptance_blockers_max=0`；语义 `generic≤3 && unbound≤2 && tc≥70`。  
+- **gold**：覆盖目标强制 1.0；`morph_floor=95`；`template_completeness_min=95`；`todo_scan=harness_docs`；`acceptance_blockers_max=0`；`acceptance_warnings_max=0`；语义 `generic≤0 && unbound≤0 && tc≥95`。  
+- **legacy**：语义保持 `generic≤5 && unbound≤3 && tc≥50`。  
+显式 `gate_profile: legacy` 可回退宽松语义。缺 fill-plan → `ai_coding_ready=false`。新仓【推荐】仍 strict。
 
-**形态上限**：`domain_caps` / `formula_ceiling` 只描述形态天花板；抬 caps 不会使 `ai_coding_ready` 变 true。
+**形态上限**：`domain_caps`（各域 **100**）/ `formula_ceiling≈100`；抬 caps 不会使 `ai_coding_ready` 变 true。存量仓 `morph_floor: 60|90` 由 resume/upgrade 或 `fill-score --migrate-policy` 字段级迁到 75/95。
 
 正写摘要三词：**开干** / **覆盖** / **形态**（见 [glossary.md](../glossary.md)）。提问见 `Q_GATE_PROFILE`。
 
@@ -110,17 +112,18 @@ JSON 含 `coverage_ready.gaps` 与 `score_policy`。`gold_ratio` 为大仓金标
 
 缺章 → `miss_histogram` 记 `missing-req-section` 及具体 `req-*`。决策台：贴 `formula_ceiling` 且 `template_completeness` 低 → **fill-truths-agents**。
 
-## 分项（quality 0–100）
+## 分项（quality 0–100 · 0.7.0）
 
-| 域 | 高分条件 | 低分信号 | 天花板（约） |
+| 域 | 探针档（≈75） | 深度档（≈+25，复用 acceptance 启发式） | 满分 |
 |---|---|---|---|
-| api | 真相存在；含真实接口路径；非「占位接口」；少 `TODO(harness-eng)` | 仅空壳 / 占位 / 幽灵端点 | ≈75 |
-| func | 有服务类或方法表非纯 TODO | 全文 TODO | ≈70 |
-| db | 有 CREATE 或字段说明非纯 TODO | 空 SQL 注释块 | ≈80（COMMENT 加分后） |
-| redis | Key 模式非纯 TODO | 仅封装名 | ≈75（Value·TTL 加分后） |
+| api | 路径 / 方法 / 参数章 / 长文 | evidence · 逻辑≥2 步 · 示例值率 · 非 echo 描述 | **100** |
+| func | 服务类 / 方法表 / 长文 | 方法说明率 · 关联 API/表 · evidence | **100** |
+| db | CREATE/字段 · COMMENT≥0.2 · 业务标题 | COMMENT≥0.5 · 业务说明厚度 | **100** |
+| redis | Key 模式 · Value/TTL **章节** | TTL/Value **证据** · Key 示例 | **100** |
+| jobs | 标识 · Cron · Scheduler | 代码锚点 · 非 OpenAPI 误抄 · 标识×Cron | **100** |
 
-权重默认：api 0.35 · func 0.25 · db 0.25 · redis 0.15（缺域则重归一）→ 加权 **formula_ceiling ≈75**。  
-仅 CREATE/Key 时 db≈60、redis≈55；须 COMMENT / value·TTL 证据才能过 pipeline `--ready-quality 70`。某域有索引时域分 ≥ **15**。
+权重默认：api 0.35 · func 0.25 · db 0.25 · redis 0.15（缺域则重归一）→ 加权 **formula_ceiling ≈100**。  
+仅探针无深度时域分约停在 70–75；须深度证据才能冲 90–100 / 过 gold `morph_floor=95`。
 
 ### 格式兼容（与模板一致）
 
@@ -131,7 +134,8 @@ JSON 含 `coverage_ready.gaps` 与 `score_policy`。`gold_ratio` 为大仓金标
 
 ```bash
 node scripts/fill-score.mjs --root <TARGET_ROOT> --modules sms-entrance,sms-safe
-node scripts/fill-score.mjs --root <TARGET_ROOT> --inventory <inv.json> --ready-quality 80 --ready-coverage 0.8
+node scripts/fill-score.mjs --root <TARGET_ROOT> --inventory <inv.json> --ready-coverage 0.8
+node scripts/fill-score.mjs --root <TARGET_ROOT> --migrate-policy   # 字段级迁旧 morph_floor
 node scripts/fill-score.mjs --root <TARGET_ROOT> --compare prev.json
 node scripts/fill-score.mjs --root <TARGET_ROOT> --summary-only
 node scripts/fill-score.mjs --root <TARGET_ROOT> --verbose

@@ -1,12 +1,10 @@
 ﻿/**
  * Build human-facing `ui` projection from fill-score JSON.
- * 报告壳主键：`ui.report_schema`（现 0.2.26）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.3.0）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
- * 0.2.23：决策台瘦身——徽章二态；decision_kpis + morph_strip；域故事卡默认关。
- * 0.2.24：综合评分 + 流水线进度；报告页 Tab/主题/术语悬停由模板承担。
- * 0.2.25：命令可执行（root/统一 inventory）· warning_shards/residual · 分域中文 · 四态灯。
+ * 0.3.0 / skill 0.7.0：形态满分 100（探针+深度）；ready.ok 对外废弃；morph_scale。
  * 0.2.26：CJK 正文 · 减动 · 命令一键复制 · Escape/键盘切台 · 尊重 #hash · 参考分降权 · 残差分层。
  */
 import {
@@ -91,9 +89,9 @@ const GLOSSARY = [
   },
   {
     id: "ready",
-    zh: "形态/覆盖就绪（兼容）",
+    zh: "形态/覆盖就绪（已废弃）",
     en: "ready",
-    tip: "旧字段：形态分+覆盖达阈。不是开干闸；对用户正写用「覆盖/形态/开干」，开干只看 ai_coding_ready。",
+    tip: "0.7.0 起对外废弃；JSON 仍保留 deprecated:true。开干只看 ai_coding_ready。",
   },
   {
     id: "skeleton_ready",
@@ -129,13 +127,19 @@ const GLOSSARY = [
     id: "formula_ceiling",
     zh: "公式上限",
     en: "formula_ceiling",
-    tip: "按当前打分规则，自动填充大致能摸到的顶；贴顶勿空追更高 overall。",
+    tip: "按当前打分规则（0.7 探针+深度）理论顶≈100；贴顶后走 agents，勿空追。",
   },
   {
     id: "domain_caps",
     zh: "分域上限",
     en: "domain_caps",
-    tip: "各域形态分的理论顶。",
+    tip: "各域形态分理论顶（0.7 起均为 100）。",
+  },
+  {
+    id: "morph_scale",
+    zh: "形态尺度",
+    en: "morph_scale",
+    tip: "0.7=探针≈75+深度≈25；与 0.6.x 历史 overall 不可比。",
   },
   {
     id: "miss_histogram",
@@ -294,7 +298,6 @@ function domainStatus(score, d) {
 
 function buildHeadline(score) {
   const aiOk = !!score.ai_coding_ready?.ok;
-  const morphOk = !!score.ready?.ok;
   const overall = score.overall;
   const ceil = score.formula_ceiling;
   const atCeil =
@@ -342,18 +345,14 @@ function buildHeadline(score) {
   if (score.ready?.coverage_incomplete) {
     return "缺 inventory，覆盖率不完整；先 inventory → fill-plan → agents。";
   }
-  if (morphOk && atCeil) {
-    return "形态已贴公式上限，但开干未达；请关 Plan / 过语义 / 清 gate，勿空追 overall≥80。";
-  }
-  if (morphOk) {
-    return "形态/覆盖 compat 已达阈，但开干须等 ai_coding_ready（含 gate）。";
+  if (atCeil) {
+    return "形态已贴公式上限，但开干未达；请关 Plan / 过语义 / 清 gate，勿空追 overall。";
   }
   return "开干=NO；请按 fill-plan 批次 fill-truths-agents 后打分。";
 }
 
 function buildVerdict(score) {
   const aiOk = !!score.ai_coding_ready?.ok;
-  const morphOk = !!score.ready?.ok;
   if (aiOk) {
     return {
       ready_ok: true,
@@ -362,16 +361,11 @@ function buildVerdict(score) {
       ready_hint: "ai_coding_ready=true；可用 AI 协助改业务，仍须人工审契约与代码。",
     };
   }
-  // 徽章仅二态；形态/覆盖中间态只进 hint，不另开第三种标签
-  let hint = "先 fill-plan + agents 过语义闸；勿把旧 ready.ok 当可编码。";
-  if (morphOk) {
-    hint = "形态+覆盖已达阈，但仍差语义或 fill-plan；未达 ai_coding_ready，暂缓开业务改动。";
-  }
   return {
     ready_ok: false,
     ai_coding_ready: false,
     ready_label: "建议暂缓",
-    ready_hint: hint,
+    ready_hint: "先 fill-plan + agents 过语义闸；开干只看 ai_coding_ready（ready.ok 已废弃）。",
   };
 }
 
@@ -664,7 +658,7 @@ function buildNextActions(score, opts = {}) {
   if (aiOk) {
     actions.push({
       title: "可开始业务改动（人工审契约）",
-      detail: "ai_coding_ready=true。形态分贴顶时勿空追 overall≥80。",
+      detail: "ai_coding_ready=true。形态分贴顶时勿空追 overall（尺度 0.7）。",
       command: null,
     });
     if (hasResidualHint(score) && actions.length < 3) {
@@ -1096,8 +1090,9 @@ export function buildReportUi(score, opts = {}) {
   const pipeline_progress = buildPipelineProgress(s);
   const composite_score = buildCompositeScore(s, pipeline_progress);
   return {
-    version: "0.2.26",
-    report_schema: "0.2.26",
+    version: "0.3.0",
+    report_schema: "0.3.0",
+    morph_scale: s.morph_scale || "0.7",
     headline: buildHeadline(s),
     verdict: buildVerdict(s),
     gap_to_ready: buildGapToReady(s),
@@ -1118,7 +1113,8 @@ export function buildReportUi(score, opts = {}) {
     coverage_percent: typeof cov.percent === "number" ? cov.percent : null,
     coverage_covered: cov.covered ?? null,
     coverage_code: cov.code ?? null,
-    ready_rule: s.ai_coding_ready?.rule || s.ready?.rule || null,
+    ready_rule: s.ai_coding_ready?.rule || null,
+    ready_deprecated: s.ready?.deprecated === true,
     ai_coding_ready: !!s.ai_coding_ready?.ok,
     skeleton_ready: !!s.skeleton_ready?.ok,
     semantic_ready: !!s.semantic_ready?.ok,

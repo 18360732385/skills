@@ -12,10 +12,10 @@ import {
   loadDomainRegistry,
 } from "./domains.mjs";
 
-/** 0.3.0: strict 缺省门槛（仅填充仍为 null/未显式关闭的项） */
+/** 0.3.0 / 0.7.0: strict 缺省门槛（仅填充仍为 null/未显式关闭的项） */
 export function applyStrictGateDefaults(gate, explicit = {}) {
   const g = { ...(gate || {}) };
-  if (typeof g.morph_floor !== "number") g.morph_floor = 60;
+  if (typeof g.morph_floor !== "number") g.morph_floor = 75;
   if (!explicit.forbid_harness_todo) g.forbid_harness_todo = true;
   if (!explicit.todo_scan && !g.todo_scan) g.todo_scan = "truths";
   if (
@@ -28,12 +28,12 @@ export function applyStrictGateDefaults(gate, explicit = {}) {
 }
 
 /**
- * 0.3.3: gold 缺省门槛
- * morph≥90 · template_completeness≥95 · TODO 扫面 B · blockers/warnings=0
+ * 0.3.3 / 0.7.0: gold 缺省门槛
+ * morph≥95 · template_completeness≥95 · TODO 扫面 B · blockers/warnings=0
  */
 export function applyGoldGateDefaults(gate, explicit = {}) {
   const g = { ...(gate || {}) };
-  if (typeof g.morph_floor !== "number") g.morph_floor = 90;
+  if (typeof g.morph_floor !== "number") g.morph_floor = 95;
   if (typeof g.template_completeness_min !== "number") {
     g.template_completeness_min = 95;
   }

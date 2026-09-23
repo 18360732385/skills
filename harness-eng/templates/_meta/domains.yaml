@@ -15,7 +15,7 @@ domains:
     truths_dir: modules
     rule_id: "12"
     weight: 0.35
-    morph_cap: 75
+    morph_cap: 100
     optional: false
     pack: api
     scan_fill_work: true
@@ -30,7 +30,7 @@ domains:
     truths_dir: modules
     rule_id: "11"
     weight: 0.25
-    morph_cap: 70
+    morph_cap: 100
     optional: false
     pack: func
     hook_code: ["/\/service\//", "/\/plugin\/tools\//"]
@@ -44,7 +44,7 @@ domains:
     truths_dir: table
     rule_id: "13"
     weight: 0.25
-    morph_cap: 80
+    morph_cap: 100
     optional: false
     pack: db
     migration_modes: [flyway, manual_sql, none]
@@ -61,7 +61,7 @@ domains:
     truths_dir: keys
     rule_id: "16"
     weight: 0.15
-    morph_cap: 75
+    morph_cap: 100
     optional: true
     detect: [S_REDIS, S_STACK_REDIS]
     pack: redis
@@ -76,7 +76,7 @@ domains:
     truths_dir: tasks
     rule_id: "20"
     weight: 0.10
-    morph_cap: 80
+    morph_cap: 100
     optional: true
     detect: [S_JOBS]
     pack: jobs

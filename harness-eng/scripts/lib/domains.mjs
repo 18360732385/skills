@@ -116,7 +116,7 @@ export function loadDomainRegistry(registryPath = DEFAULT_PATH) {
           index: `${id}.md`,
           truths_dir: id === "db" ? "table" : id === "redis" ? "keys" : "modules",
           weight: { api: 0.35, func: 0.25, db: 0.25, redis: 0.15 }[id],
-          morph_cap: { api: 75, func: 70, db: 80, redis: 75 }[id],
+          morph_cap: { api: 100, func: 100, db: 100, redis: 100 }[id],
           optional: id === "redis",
         },
       ])
@@ -253,7 +253,7 @@ export function morphCapsForDomains(domainIds, registry = loadDomainRegistry()) 
   const out = {};
   for (const d of domainIds) {
     const c = Number(registry[d]?.morph_cap);
-    out[d] = Number.isFinite(c) ? c : 75;
+    out[d] = Number.isFinite(c) ? c : 100;
   }
   return out;
 }

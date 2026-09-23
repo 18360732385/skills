@@ -1,9 +1,9 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.6.9"
+version: "0.7.0"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
-# 0.6.9: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
+# 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
 # 0.6.8-dev: Codex P0 parity + gold discipline backport (jobs Never do; rule 12/13 checklists).
 # 0.6.7: Pn reflux ops + FE/BE contract gate profile (GLOB_API nested packages).
 # 0.6.6: OpenAPI/Apifox optional bridge + thick module AGENTS SSOT.

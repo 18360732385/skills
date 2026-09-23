@@ -27,9 +27,9 @@
 
 | 档 | 覆盖 | 形态地板 | 完成度 | TODO 扫面 | 金标 | 语义 |
 |---|---|---|---|---|---|---|
-| legacy | ready_coverage | — | — | — | — | 宽松 |
-| strict【推荐】 | policy targets（常 0.8） | 60 | 可选 | truths | blockers≤0 | 宽松 |
-| gold | **1.0**（code>0 域） | **90** | **≥95** | **harness_docs** | blockers≤0 且 **warnings≤0** | generic/unbound=0 且 tc≥95 |
+| legacy | ready_coverage | — | — | — | — | 宽松（5/3/tc≥50） |
+| strict【推荐】 | policy targets（常 0.8） | **75** | 可选 | truths | blockers≤0 | generic≤3 · unbound≤2 · tc≥70 |
+| gold | **1.0**（code>0 域） | **95** | **≥95** | **harness_docs** | blockers≤0 且 **warnings≤0** | generic/unbound=0 且 tc≥95 |
 
 阈值以目标仓 `score-policy.yaml` + `fill-score` 输出为准。
 

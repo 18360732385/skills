@@ -1,17 +1,28 @@
-# harness-eng 验收记录（0.6.9）
+# harness-eng 验收记录（0.7.0）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.6.9**（Codex → **高** · 推荐纪律 B；其上为 0.6.8-dev P0 解冻 / 0.6.7 Pn 回流；含 session-dashboard）。报告对照 **`skill_version` + `report_schema`**（0.2.26；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.0**（形态重标定 · gold 可达 · ready 废弃；其上 Codex **高** / session-dashboard）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.0 增量验收（形态 · gate · report）
+
+| 检查项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.0` | 有 |
+| CHANGELOG 标题 `## 0.7.0` | 有 |
+| `morph_cap=100`；`morph_scale`；`report_schema` 0.3.0 | 有 |
+| strict `morph_floor` 75；gold 95；ready deprecated | 有 |
+| `score-policy-migrate` / `--migrate-policy` | 有 |
+| upgrade `## 0.6.9 → 0.7.0` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 
 ## 0.6.9 增量验收（Codex 高）
 
 | 检查项 | 期望 |
 |---|---|
-| manifest / meta 为 `0.6.9` | 有 |
-| CHANGELOG 标题 `## 0.6.9` | 有 |
+| manifest / meta 为 `0.6.9`（历史钉） | 有 |
 | `host/CODEX-PARITY.md` · `CODEX-MANUAL.md`；适配卡 **高** | 有 |
 | `codex-mcp-toml.mjs`；sync 发 toml/rules/hooks/skills | 有 |
 | `codex-adapter.js`；hooks `Stop` + `^Bash$` | 有 |

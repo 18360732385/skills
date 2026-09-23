@@ -57,6 +57,15 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.6.9 → 0.7.0 迁移要点
+
+1. **meta**：`skill_version` → `0.7.0`
+2. **score-policy（字段级，不整文件覆盖）**：`morph_floor: 60`→`75`；若 `gate_profile=gold` 且 `morph_floor: 90`→`95`。由 `harness.mjs` resume/upgrade/land 或 `fill-score --migrate-policy` 执行
+3. **形态尺度**：overall 与 0.6.x **不可比**；报告 `report_schema=0.3.0` + `morph_scale=0.7`。history 不换算
+4. **开干**：strict 形态地板 75、semantic 收紧；gold 双 95。`ready.ok` 对外废弃
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.0`）
+6. **装/升 URL** 仍用 **`main`**
+
 ## 0.6.8-dev → 0.6.9 迁移要点
 
 1. **meta**：`skill_version` → `0.6.9`

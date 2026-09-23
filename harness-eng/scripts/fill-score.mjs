@@ -44,6 +44,15 @@ import {
   runAcceptanceJson,
   shardsFromAcceptanceItems,
 } from "./lib/acceptance-report.mjs";
+import {
+  morphDepthBonus,
+  hasRedisValueHeading,
+  hasRedisTtlHeading,
+} from "./lib/morph-depth.mjs";
+import {
+  migrateScorePolicyFile,
+  detectLegacyMorphFloor,
+} from "./lib/score-policy-migrate.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOMAIN_REGISTRY = loadDomainRegistry();
@@ -93,6 +102,7 @@ function parseArgs(argv) {
     json: false,
     focus: "full", // 0.3.1: morph | gate | full — 只裁剪中文摘要
     domains: [], // 0.3.4: CLI override; empty → meta / disk / core
+    migratePolicy: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -108,6 +118,7 @@ function parseArgs(argv) {
         .map((s) => s.trim())
         .filter(Boolean);
     else if (a === "--threshold") out.threshold = Number(argv[++i]) || 80;
+    else if (a === "--migrate-policy") out.migratePolicy = true;
     else if (a === "--inventory") out.inventory = argv[++i];
     else if (a === "--compare") out.compare = argv[++i];
     else if (a === "--ready-quality") {
@@ -370,6 +381,10 @@ function buildChecks(text, domain, policy) {
   return checks;
 }
 
+/**
+ * 0.7.0: probe tier ≈75 + depth tier ≈+25 → max 100.
+ * Depth reuses acceptance-style heuristics (morph-depth.mjs).
+ */
 function scoreTruthFile(text, domain, policy) {
   const raw = text || "";
   let score = 10;
@@ -385,6 +400,7 @@ function scoreTruthFile(text, domain, policy) {
     score -= 25;
     issues.push("占位/TODO 接口地址");
   }
+  // --- probe tier (target ≈75 with base+length) ---
   if (domain === "api") {
     if (hasRealApiPath(raw)) score += 35;
     else issues.push("缺少真实接口路径");
@@ -401,12 +417,13 @@ function scoreTruthFile(text, domain, policy) {
       (/\|\s*方法\s*\|\s*返回/.test(raw) && !/方法清单\s*\n\s*TODO\(harness-eng\)/.test(raw));
     if (hasSvc) score += 30;
     else issues.push("缺少服务类清单");
-    if (hasMethods) score += 25;
+    // 0.7.0: +30 so probe can hit 75 (was +25 → 70)
+    if (hasMethods) score += 30;
     else issues.push("缺少方法清单");
   }
   if (domain === "db") {
     if (/CREATE\s+TABLE/i.test(raw) && !/CREATE TABLE …/.test(raw) && !/-- TODO/.test(raw))
-      score += 45;
+      score += 40;
     else if (/##\s*字段/.test(raw) && !/字段说明\s*\n\s*TODO\(harness-eng\)/.test(raw))
       score += 30;
     else issues.push("无有效建表/字段正文");
@@ -415,40 +432,39 @@ function scoreTruthFile(text, domain, policy) {
     if ((fc.filled > 0 && fc.ratio >= 0.2) || (dens.total > 0 && dens.ratio >= 0.2))
       score += 15;
     else issues.push("缺字段说明/COMMENT");
-    if (fc.ratio >= 0.5 || dens.ratio >= 0.5) score += 5;
+    if (/业务说明|表说明|用途[：:]|表级/.test(raw)) score += 5;
   }
   if (domain === "redis") {
     if (/##\s*Key 模式/.test(raw) && !/从业务调用方补全/.test(raw) && !/模式 \| TODO/i.test(raw))
       score += 40;
     else issues.push("Key 模式未填");
-    if (hasRedisValueEvidence(raw)) score += 12;
-    else issues.push("缺 Value 结构证据");
-    if (hasRedisTtlEvidence(raw)) score += 8;
-    else issues.push("缺 TTL 证据");
+    // probe: section headings only; evidence quality is depth
+    if (hasRedisValueHeading(raw)) score += 10;
+    else issues.push("缺 Value 章节");
+    if (hasRedisTtlHeading(raw)) score += 10;
+    else issues.push("缺 TTL 章节");
   }
   if (domain === "jobs") {
+    // probe ≈75: id+cron+scheduler+length; anchors → depth
     if (/task_code|##\s*标识/i.test(raw)) score += 25;
     else issues.push("缺 task_code/标识");
     if (/##\s*Cron|cronConfigKey|默认表达式/i.test(raw)) score += 25;
     else issues.push("缺 Cron");
     if (/Scheduler|调度入口/i.test(raw)) score += 15;
     else issues.push("缺 Scheduler");
-    if (/##\s*代码锚点|Registry/i.test(raw)) score += 15;
-    else issues.push("缺代码锚点");
-    if (
-      /###\s*请求参数/.test(raw) &&
-      /\|\s*字段\s*\|\s*类型\s*\|/.test(raw) &&
-      /OpenAPI|接口地址/.test(raw)
-    ) {
-      score -= 20;
-      issues.push("疑似把 OpenAPI 抄进 jobs");
-    }
   }
 
   if (raw.length > 800) score += 5;
-  score = Math.max(0, Math.min(100, score));
+  // soft-cap probe before depth (still allow TODO penalties below)
+  const probeScore = Math.min(75, Math.max(0, score));
+  const depth = morphDepthBonus(raw, domain);
+  for (const iss of depth.issues) issues.push(iss);
+  score = Math.max(0, Math.min(100, probeScore + depth.points));
   return {
     score,
+    probe_score: probeScore,
+    depth_score: depth.points,
+    depth_parts: depth.parts,
     issues,
     checks,
     shell: /TODO\(harness-eng\)/i.test(raw) && score < 40,
@@ -947,6 +963,10 @@ function main() {
   if (!args.readyCoverageSet && Number.isFinite(metaFull.ready_coverage)) {
     args.readyCoverage = metaFull.ready_coverage;
   }
+  let policyMigrated = null;
+  if (args.migratePolicy) {
+    policyMigrated = migrateScorePolicyFile(root);
+  }
   const scorePolicy = loadScorePolicy(root);
   const progress = createProgress({ quiet: args.quiet, label: "fill-score" });
   progress.log("start");
@@ -966,9 +986,10 @@ function main() {
   const weights = weightsForDomains(domains, DOMAIN_REGISTRY);
   // 0.2.10: per-domain morphological caps under current scoreTruthFile rules
   // 0.2.26: domain_caps / formula_ceiling are MORPH axis only — NOT ai_coding_ready
+  // 0.7.0: morph_cap=100 (probe≈75 + depth≈25); morph_scale on report
   const domainCaps = morphCapsForDomains(domains, DOMAIN_REGISTRY);
   const formulaCeiling = Math.round(
-    domains.reduce((s, d) => s + (domainCaps[d] || 75) * (weights[d] || 0), 0)
+    domains.reduce((s, d) => s + (domainCaps[d] || 100) * (weights[d] || 0), 0)
   );
   const report = {
     ok: true,
@@ -978,6 +999,7 @@ function main() {
     threshold: args.threshold,
     formula_ceiling: formulaCeiling,
     domain_caps: domainCaps,
+    morph_scale: "0.7",
     domains: {},
     gaps: [],
     quality: {},
@@ -989,6 +1011,18 @@ function main() {
     miss_histogram: {},
     template_completeness: { overall: null, by_domain: {} },
   };
+
+  const legacyFloor = detectLegacyMorphFloor(root);
+  if (legacyFloor) {
+    report.policy_migrate_hint = {
+      ...legacyFloor,
+      message:
+        "旧 morph_floor 默认指纹；resume/upgrade 或 --migrate-policy 将字段级迁移 60→75（gold 90→95）。历史分不可比。",
+    };
+  }
+  if (policyMigrated) {
+    report.policy_migrated = policyMigrated;
+  }
 
   let wSum = 0;
   let overall = 0;
@@ -1107,12 +1141,14 @@ function main() {
   // compat ready.ok still uses overall api coverage vs ready_coverage
   const covOkCompat = covIncomplete ? null : report.coverage.ratio >= args.readyCoverage;
   // 0.2.17: ready.ok = morph+coverage compat only (NOT ai coding gate)
+  // 0.7.0: deprecated for UI; kept in JSON for scripts
   report.ready = {
     ok: qOk && (covIncomplete ? false : covOkCompat),
+    deprecated: true,
     quality_ok: qOk,
     coverage_ok: covOkCompat,
     coverage_incomplete: covIncomplete,
-    rule: `quality>=${args.readyQuality} && coverage>=${args.readyCoverage} (compat; see ai_coding_ready)`,
+    rule: `deprecated 0.7.0; quality>=${args.readyQuality} && coverage>=${args.readyCoverage} (see ai_coding_ready)`,
     ready_quality: args.readyQuality,
     ready_coverage: args.readyCoverage,
   };
@@ -1129,7 +1165,7 @@ function main() {
   const genericN = semScan.miss["generic-logic-template"] || 0;
   const unboundN = semScan.miss["dto-unbound"] || 0;
   const tcOverall = report.template_completeness?.overall ?? 0;
-  // 0.3.3: gold 语义收紧；strict/legacy 保持宽松噪声阈值
+  // 0.7.0: strict semantic tighten; gold unchanged; legacy keeps pre-0.7 loose
   const gateProfile = scorePolicy.gate_profile || "legacy";
   let semanticOk;
   let semanticRule;
@@ -1137,10 +1173,14 @@ function main() {
     semanticOk = genericN <= 0 && unboundN <= 0 && tcOverall >= 95;
     semanticRule =
       "gold: generic_logic<=0 && dto_unbound<=0 && template_completeness>=95";
+  } else if (gateProfile === "strict") {
+    semanticOk = genericN <= 3 && unboundN <= 2 && tcOverall >= 70;
+    semanticRule =
+      "strict: generic_logic<=3 && dto_unbound<=2 && template_completeness>=70";
   } else {
     semanticOk = genericN <= 5 && unboundN <= 3 && tcOverall >= 50;
     semanticRule =
-      "generic_logic<=5 && dto_unbound<=3 && template_completeness>=50";
+      "legacy: generic_logic<=5 && dto_unbound<=3 && template_completeness>=50";
   }
   // 0.2.27: coverage_ready respects score-policy coverage_mode
   const coverageReady = !covIncomplete && !!covEval.ok;

@@ -46,8 +46,8 @@
 | **形态** | `overall` / 域分 / `template_completeness` / `formula_ceiling` | 像不像模板；贴顶后走 agents |
 | **开干** | 仅 `ai_coding_ready` | 建议可以 AI 改业务的唯一闸 |
 
-技术字段（骨架/语义/Plan/gate/gold/ready.ok）见 [fill-score.md](fill/fill-score.md)。  
-`gate_profile`：有 score-policy 未写则 **strict**；无文件则 **legacy**；显式 `legacy` 可回退；显式 **`gold`** 为高门槛档（覆盖 100% / 形态≥90 / 完成度≥95 / TODO 扫面 B / warnings=0）。新仓【推荐】仍 **strict**（`Q_GATE_PROFILE`）。
+技术字段（骨架/语义/Plan/gate/gold；`ready.ok` 已废弃）见 [fill-score.md](fill/fill-score.md)。  
+`gate_profile`：有 score-policy 未写则 **strict**；无文件则 **legacy**；显式 `legacy` 可回退；显式 **`gold`** 为高门槛档（覆盖 100% / 形态≥**95** / 完成度≥95 / TODO 扫面 B / warnings=0）。新仓【推荐】仍 **strict**（`Q_GATE_PROFILE`）。**0.7.0**：形态满分 100（探针+深度）；`morph_scale: "0.7"`；strict 形态地板 **75**。
 
 ### 覆盖裁决（score-policy vs meta）
 
@@ -58,10 +58,11 @@
 | 速查 | 含义 |
 |---|---|
 | `score-policy.yaml` | `coverage_mode` + `coverage_targets` + `density` + `gate_profile`/`gate` |
-| `formula_ceiling` / `domain_caps` | 形态贴顶信号 |
+| `formula_ceiling` / `domain_caps` | 形态贴顶信号（0.7 起 ≈100） |
+| `morph_scale` | 形态尺度（`0.7`）；与旧 history 不可比 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
 | `skill_version` | 技能号（manifest / meta；当前列车见 CHANGELOG） |
-| `report_schema` | **报告壳**投影 schema（现 **0.2.26**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可 |
+| `report_schema` | **报告壳**投影 schema（现 **0.3.0**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可 |
 
 ## 常用词
 

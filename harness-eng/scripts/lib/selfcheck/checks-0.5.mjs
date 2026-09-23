@@ -934,7 +934,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.6\.9"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.7\.0"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -989,7 +989,7 @@ assert(!/仅\*\*本轮正在 detect/.test(sessionDashMd), "session-dashboard no 
 assert(!/确认后 render"/.test(sessionDashMd), "session-dashboard next tip uses harness not render");
 assert(/确认后 harness\.mjs/.test(sessionDashMd), "session-dashboard next tip harness.mjs");
 const aiTools063 = fs.readFileSync(path.join(skillRoot, "host/ai-tools.md"), "utf8");
-assert(/对齐矩阵（0\.6\.9|0\.6\.x）/.test(aiTools063), "ai-tools matrix title 0.6.9");
+assert(/对齐矩阵（0\.7\.0|0\.6\.9|0\.6\.x）/.test(aiTools063), "ai-tools matrix title 0.6.9");
 assert(!/对齐矩阵（0\.5\.7）/.test(aiTools063), "ai-tools matrix title not stuck at 0.5.7");
 
 {
@@ -1082,7 +1082,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "session-dash stdout has no mermaid fence"
     );
     assert(
-      /施工态势：覆盖 80% × 形态 74%（Q2 理想区）/.test(dashMd.stdout || ""),
+      /施工态势：覆盖 80% × 形态 88%（Q2 理想区）/.test(dashMd.stdout || ""),
       "session-dash plain-text stance"
     );
     assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
@@ -1693,7 +1693,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   const reportUi0510 = fs.readFileSync(path.join(skillRoot, "scripts/lib/report-ui.mjs"), "utf8");
   assert(/report_schema/.test(reportUi0510), "report-ui.mjs names report_schema");
   const uiObj = buildReportUi({ overall: 0.5, domains: {} });
-  assert(uiObj.version === "0.2.26", "ui.version 0.2.26 for consumers");
+  assert(uiObj.version === "0.3.0", "ui.version 0.3.0 for consumers");
   assert(uiObj.report_schema === uiObj.version, "report_schema aliases ui.version");
 
   const reportTmpl0510 = fs.readFileSync(

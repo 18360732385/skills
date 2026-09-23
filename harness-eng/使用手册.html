@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.6.9</title>
+  <title>harness-eng 使用手册 · v0.7.0</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.6.9</div>
+    <div class="ver">v0.7.0</div>
   </header>
 
   <div class="shell">
@@ -691,7 +691,7 @@
 
         <div class="callout">
           <div class="label">一句话</div>
-          技能负责「把仓库改造成适合多 AI 工具协作的工程形态」；业务真相仍由你们（或 Agent 按 Plan 精填）写进 <code>docs/**</code>，各工具只挂薄入口。0.6.9 起（Codex 高；其上 0.6.8-dev / 0.6.7）：<strong>Pn 回流</strong>（Never do↔<code>pitfalls</code>）与前后端契约门禁剖面为默认运营纪律；OpenAPI/Apifox 桥见 0.6.6。
+          技能负责「把仓库改造成适合多 AI 工具协作的工程形态」；业务真相仍由你们（或 Agent 按 Plan 精填）写进 <code>docs/**</code>，各工具只挂薄入口。0.7.0 起（Codex 高；其上 0.6.8-dev / 0.6.7）：<strong>Pn 回流</strong>（Never do↔<code>pitfalls</code>）与前后端契约门禁剖面为默认运营纪律；OpenAPI/Apifox 桥见 0.6.6。
         </div>
       </section>
 
@@ -1023,7 +1023,7 @@ node scripts/selfcheck.mjs</code></pre>
         </div>
 
         <h3>6.0 对话内会话仪表盘（工程轮末尾）</h3>
-        <p>0.5.4+（展示时机 <strong>里程碑 SHOW</strong>，较 0.6.9 再收）：点名 harness-eng 且<strong>本轮</strong>有实质施工产出、闸门决策点（出示 WritePlan 或用户确认/继续施工）、或显式要读数时，Agent 回复末尾附四台摘要 + 可选纯文本态势（无 mermaid）。提问批次 / 定根前 / 等确认空轮 / 纯问版本号、安装、手册、术语、改 skill、跑题则<strong>整块省略</strong>（即便同会话早先施工过）。含糊默认不附。脚注固定 <strong>详情请查询仪表盘</strong> → 目标仓 <code>report-latest.html</code>（已生成时）· 本页 <a href="#s6">#s6 四台读法</a>。</p>
+        <p>0.5.4+（展示时机 <strong>里程碑 SHOW</strong>，较 0.7.0 再收）：点名 harness-eng 且<strong>本轮</strong>有实质施工产出、闸门决策点（出示 WritePlan 或用户确认/继续施工）、或显式要读数时，Agent 回复末尾附四台摘要 + 可选纯文本态势（无 mermaid）。提问批次 / 定根前 / 等确认空轮 / 纯问版本号、安装、手册、术语、改 skill、跑题则<strong>整块省略</strong>（即便同会话早先施工过）。含糊默认不附。脚注固定 <strong>详情请查询仪表盘</strong> → 目标仓 <code>report-latest.html</code>（已生成时）· 本页 <a href="#s6">#s6 四台读法</a>。</p>
         <p>脚本：<code>node scripts/session-dash.mjs --root &lt;目标仓&gt; --intent engineering</code> · 规格 <code>session-dashboard.md</code>。</p>
 
         <h3>6.1 怎么生成 / 打开 HTML 仪表盘</h3>
@@ -1146,7 +1146,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.6.9</strong>）与目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.7.0</strong>）与目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1191,7 +1191,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.6.9
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.7.0
         </div>
       </section>
     </main>
