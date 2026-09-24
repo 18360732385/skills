@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.7.5: Codex L5 skills seeds (contract/api/db-doc-sync).
+ * 0.7.6: Codex skills redis/jobs/frontend (+0.7.5 contract/api/db).
  * 0.7.4: Codex hooks codex-hook.cmd + mcp__mysql + HOOK_DEFS.codex.
  * 0.7.3: Codex hooks commandWindows + Stop checklist + gitignore.
  * 0.7.2: hard-delete land.mjs + domain fill shims.
@@ -160,7 +160,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.7\.5"/.test(qYaml), "questions.yaml version 0.7.5");
+assert(/version:\s*"0\.7\.6"/.test(qYaml), "questions.yaml version 0.7.6");
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -206,11 +206,11 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.7\.5"/.test(manifest), "manifest 0.7.5");
+assert(/version:\s*"0\.7\.6"/.test(manifest), "manifest 0.7.6");
 const rootManifestPath = path.join(skillRoot, "_meta/manifest.yaml");
 assert(fs.existsSync(rootManifestPath), "root _meta/manifest.yaml present");
 const rootManifest = fs.readFileSync(rootManifestPath, "utf8");
-assert(/version:\s*"0\.7\.5"/.test(rootManifest), "root _meta manifest 0.7.5");
+assert(/version:\s*"0\.7\.6"/.test(rootManifest), "root _meta manifest 0.7.6");
 {
   const rv = (rootManifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
   const tv = (manifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
@@ -221,7 +221,7 @@ const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.7\.5"/.test(metaTmpl), "harness-meta 0.7.5");
+assert(/skill_version:\s*"0\.7\.6"/.test(metaTmpl), "harness-meta 0.7.6");
 assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
@@ -250,6 +250,7 @@ assert(/^## 0\.7\.0\b/m.test(changelog), "CHANGELOG 0.7.0");
 assert(/^## 0\.7\.3\b/m.test(changelog), "CHANGELOG 0.7.3");
 assert(/^## 0\.7\.4\b/m.test(changelog), "CHANGELOG 0.7.4");
 assert(/^## 0\.7\.5\b/m.test(changelog), "CHANGELOG 0.7.5");
+assert(/^## 0\.7\.6\b/m.test(changelog), "CHANGELOG 0.7.6");
 assert(/^## 0\.7\.2\b/m.test(changelog), "CHANGELOG keeps 0.7.2");
 assert(/^## 0\.6\.8-dev\b/m.test(changelog), "CHANGELOG keeps 0.6.8-dev");
 assert(/Codex P0|增量解冻/.test(changelog), "CHANGELOG Codex P0 Chinese entry");
@@ -429,7 +430,7 @@ assert(
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.7\.5）/.test(verifyMd) && /当前 \*\*0\.7\.5\*\*/.test(verifyMd), "VERIFY is 0.7.5");
+assert(/验收记录（0\.7\.6）/.test(verifyMd) && /当前 \*\*0\.7\.6\*\*/.test(verifyMd), "VERIFY is 0.7.6");
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
@@ -442,7 +443,7 @@ assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.7\.5/.test(readme), "README header version 0.7.5");
+assert(/当前版本：0\.7\.6/.test(readme), "README header version 0.7.6");
 assert(/0\.7\.2/.test(readme), "README mentions 0.7.2");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
@@ -453,13 +454,13 @@ assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.7\.5\*\*/.test(handbookMd), "使用手册.md version 0.7.5");
-assert(/当前 \*\*0\.7\.5\*\*/.test(quickstartMd), "QUICKSTART version 0.7.5");
+assert(/版本：\*\*0\.7\.6\*\*/.test(handbookMd), "使用手册.md version 0.7.6");
+assert(/当前 \*\*0\.7\.6\*\*/.test(quickstartMd), "QUICKSTART version 0.7.6");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(fs.existsSync(path.join(skillRoot, "使用手册.html")), "使用手册.html present");
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
-assert(/v0\.7\.5/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
+assert(/v0\.7\.6/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
 assert(
   /harness\.mjs/.test(handbookHtml) && /fill-inventory\.mjs --domain/.test(handbookHtml),
   "使用手册.html documents unified CLI"
@@ -1133,10 +1134,10 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.7\.5"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.5");
+  assert(/version:\s*"0\.7\.6"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.6");
 }
 
-// --- 0.7.3/0.7.4/0.7.5: Codex hooks + Skills seeds ---
+// --- 0.7.3–0.7.6: Codex hooks + Skills seeds ---
 {
   const codexHooks = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json"), "utf8");
   assert(/commandWindows/.test(codexHooks), "codex-hooks.json has commandWindows");
@@ -1188,7 +1189,14 @@ if (fs.existsSync(fixture)) {
     fs.existsSync(path.join(skillRoot, "scripts/fixtures/l5-sync-codex/.codex/hooks/codex-hook.cmd")),
     "l5-sync-codex has codex-hook.cmd"
   );
-  for (const skill of ["contract-sync", "api-doc-sync", "db-doc-sync"]) {
+  for (const skill of [
+    "contract-sync",
+    "api-doc-sync",
+    "db-doc-sync",
+    "redis-doc-sync",
+    "jobs-doc-sync",
+    "frontend-web",
+  ]) {
     assert(
       fs.existsSync(path.join(skillRoot, `templates/agent-config/skills/${skill}/SKILL.md`)),
       `skill seed ${skill}`
@@ -1201,7 +1209,11 @@ if (fs.existsSync(fixture)) {
     );
   }
   assert(/contract-sync/.test(agentsRoot) && /db-doc-sync/.test(agentsRoot), "AGENTS.root names Codex skills");
+  assert(/redis-doc-sync/.test(agentsRoot) && /jobs-doc-sync/.test(agentsRoot), "AGENTS.root names redis/jobs skills");
+  assert(/frontend-web/.test(agentsRoot), "AGENTS.root names frontend-web skill");
   assert(/agent-config-skill-contract-sync/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest wires skill seeds");
+  assert(/agent-config-skill-redis-doc-sync/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest wires redis skill");
+  assert(/agent-config-skill-frontend-web/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest wires frontend skill");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---

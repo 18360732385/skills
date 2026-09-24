@@ -1,4 +1,4 @@
-# Codex 真人会话清单（0.7.5 · 高）
+# Codex 真人会话清单（0.7.6 · 高）
 
 给本机已装 **Codex CLI / IDE / ChatGPT 桌面 Codex** 的同学。对照：[CODEX-PARITY.md](CODEX-PARITY.md)。
 
@@ -39,8 +39,9 @@
 
 ## 5. Skills
 
-- [ ] L5：`.agents/skills/` 含 `contract-sync` / `api-doc-sync` / `db-doc-sync` 与 `GENERATED.md`
+- [ ] L5：`.agents/skills/` 含 `contract-sync` / `api-doc-sync` / `db-doc-sync` / `redis-doc-sync` / `jobs-doc-sync` / `frontend-web` 与 `GENERATED.md`
 - [ ] `/skills` 或 `$` 可发现
+- [ ] 知悉分层：Skills=域引导；Starlark=命令；soft hooks=提醒；**可选** rulehook 等才做 NL deny（见 PARITY）
 
 ## 6. 已知悉
 
@@ -48,6 +49,7 @@
 - [ ] 推荐纪律 B：无探测不默认勾选 Codex
 - [ ] 应入库 hooks/rules/example；勿入库 `config.toml`
 - [ ] **Windows 限制**：部分 shell 走 `unified_exec` / `command_execution` 时，`PreToolUse(^Bash$)` 可能不触发（官方 hooks「不完全拦截」）；`.githooks` 仍兜底。Stop / 已走 Bash tool 的路径不受此限
+- [ ] **不**默认依赖 rulehook；若自装须 `/hooks` trust，且只放短硬红线
 
 ## 回传模板
 

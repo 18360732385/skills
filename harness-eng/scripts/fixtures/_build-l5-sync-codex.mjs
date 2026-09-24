@@ -48,7 +48,14 @@ fs.copyFileSync(
   path.join(skillRoot, "templates/agent-config/mcp/servers.example.json"),
   path.join(fx, "docs/agent-config/mcp/servers.example.json")
 );
-for (const skill of ["contract-sync", "api-doc-sync", "db-doc-sync"]) {
+for (const skill of [
+  "contract-sync",
+  "api-doc-sync",
+  "db-doc-sync",
+  "redis-doc-sync",
+  "jobs-doc-sync",
+  "frontend-web",
+]) {
   const destDir = path.join(fx, "docs/agent-config/skills", skill);
   fs.mkdirSync(destDir, { recursive: true });
   fs.copyFileSync(
@@ -78,5 +85,8 @@ console.log(
     ".agents/skills/contract-sync/SKILL.md",
     ".agents/skills/api-doc-sync/SKILL.md",
     ".agents/skills/db-doc-sync/SKILL.md",
+    ".agents/skills/redis-doc-sync/SKILL.md",
+    ".agents/skills/jobs-doc-sync/SKILL.md",
+    ".agents/skills/frontend-web/SKILL.md",
   ].map((p) => [p, fs.existsSync(path.join(fx, p))])
 );

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 0.6.x selfcheck suite (M1–M4 · Trae 高 · dashboard · freshness).
  * Invoked from scripts/selfcheck.mjs via runChecks06(helpers).
  */
@@ -486,7 +486,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.7.5", "manifest version exactly 0.7.5");
+  assert(verLine && verLine[1] === "0.7.6", "manifest version exactly 0.7.6");
 
   const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -856,7 +856,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.7.5", "current manifest pin 0.7.5");
+  assert(manVer063 === "0.7.6", "current manifest pin 0.7.6");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(
@@ -1277,8 +1277,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
   assert(
-    /版本：\*\*0\.7\.5\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
-    "使用手册-摘要 version 0.7.5"
+    /版本：\*\*0\.7\.6\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
+    "使用手册-摘要 version 0.7.6"
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
 }
@@ -1291,9 +1291,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const manual068 = fs.readFileSync(path.join(skillRoot, "host/CODEX-MANUAL.md"), "utf8");
   assert(/PASS|PARTIAL|FAIL/.test(parity068), "CODEX-PARITY has PASS/PARTIAL/FAIL");
   assert(/不做/.test(parity068) && /mdc/.test(parity068), "CODEX-PARITY explicit no .mdc mirror");
+  assert(/自然语言规则：分层|L0 SSOT/.test(parity068), "CODEX-PARITY NL layered strategy");
+  assert(/rulehook/.test(parity068) && /不.*默认/.test(parity068), "CODEX-PARITY rulehook optional not default");
   assert(/developers\.openai\.com\/codex/.test(parity068), "CODEX-PARITY links official docs");
   assert(/trust|信任/.test(manual068) && /\/hooks/.test(manual068) && /\/mcp/.test(manual068), "CODEX-P0-MANUAL checklist");
   assert(/\.agents\/skills/.test(manual068 + parity068), "Codex skills path documented");
+  assert(/rulehook/.test(manual068), "CODEX-MANUAL mentions optional rulehook");
 
   assert(fs.existsSync(path.join(skillRoot, "templates/ai-tools/codex-config.toml.tmpl")), "codex-config.toml.tmpl");
   const cfgTmpl = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/codex-config.toml.tmpl"), "utf8");
@@ -1336,6 +1339,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.1 → 0\.7\.2/.test(upgrade068), "upgrade has 0.7.1 → 0.7.2");
   assert(/0\.7\.3 → 0\.7\.4/.test(upgrade068), "upgrade has 0.7.3 → 0.7.4");
   assert(/0\.7\.4 → 0\.7\.5/.test(upgrade068), "upgrade has 0.7.4 → 0.7.5");
+  assert(/0\.7\.5 → 0\.7\.6/.test(upgrade068), "upgrade has 0.7.5 → 0.7.6");
   assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
   assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
 
@@ -1343,10 +1347,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.6\.9 增量验收/.test(verify068), "VERIFY 0.6.9 section");
   assert(/0\.7\.0 增量验收/.test(verify068), "VERIFY 0.7.0 section");
   assert(/0\.7\.2 增量验收/.test(verify068), "VERIFY 0.7.1 section");
-  assert(/0\.7\.5 增量验收/.test(verify068), "VERIFY 0.7.5 section");
+  assert(/0\.7\.6 增量验收/.test(verify068), "VERIFY 0.7.6 section");
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/0\.7\.5/.test(syncTmpl068), "sync tmpl id 0.7.5");
+  assert(/0\.7\.6/.test(syncTmpl068), "sync tmpl id 0.7.6");
   assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools068), "Trae matrix still 高 after Codex P0");

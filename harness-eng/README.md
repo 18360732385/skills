@@ -2,9 +2,9 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.7.5**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
+**当前版本：0.7.6**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
-**0.7.5**：Codex L5 skills 种子（`contract-sync` / `api-doc-sync` / `db-doc-sync`）。**0.7.4**：Codex hooks `commandWindows` + Stop 观察清单 + `.codex/config.toml` gitignore。**0.7.2**：硬删 `land.mjs` 与域 fill shim。**0.7.0**：形态重标定 · Codex → **高**（[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md)；纪律 B；不做 `.mdc` 镜像）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
+**0.7.6**：Codex L5 skills 增补 `redis-doc-sync` / `jobs-doc-sync` / `frontend-web`。**0.7.5**：`contract-sync` / `api-doc-sync` / `db-doc-sync`。**0.7.4**：Codex hooks `commandWindows` + Stop 观察清单 + `.codex/config.toml` gitignore。**0.7.2**：硬删 `land.mjs` 与域 fill shim。**0.7.0**：形态重标定 · Codex → **高**（[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md)；纪律 B；不做 `.mdc` 镜像）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
@@ -79,4 +79,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.7.5**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。
+技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.7.6**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。

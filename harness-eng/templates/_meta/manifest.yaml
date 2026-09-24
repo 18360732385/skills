@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.5"
+version: "0.7.6"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -430,6 +430,19 @@ files:
     ladder: L5
     template: agent-config/skills/api-doc-sync/SKILL.md
     target: docs/agent-config/skills/api-doc-sync/SKILL.md
+  - id: agent-config-skill-redis-doc-sync
+    ladder: L5
+    template: agent-config/skills/redis-doc-sync/SKILL.md
+    target: docs/agent-config/skills/redis-doc-sync/SKILL.md
+  - id: agent-config-skill-jobs-doc-sync
+    ladder: L5
+    template: agent-config/skills/jobs-doc-sync/SKILL.md
+    target: docs/agent-config/skills/jobs-doc-sync/SKILL.md
+  - id: agent-config-skill-frontend-web
+    ladder: L5
+    template: agent-config/skills/frontend-web/SKILL.md
+    target: docs/agent-config/skills/frontend-web/SKILL.md
+    note: 前端协作包（非契约域）；sync → .agents/skills
   - id: agent-config-codex-rules-repository
     ladder: L5
     template: agent-config/codex/rules/repository.rules

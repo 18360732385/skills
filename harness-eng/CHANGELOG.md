@@ -1,8 +1,19 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5`（当前 **0.7.5**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5 → 0.7.6`（当前 **0.7.6**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.6 — 2026-09-24（Codex 域 skills：redis / jobs / frontend）
+
+### Added
+- **L5 skills 种子**：`redis-doc-sync` · `jobs-doc-sync` · `frontend-web`（承接对应 `.mdc` 纪律摘要；**不做**全量镜像）
+- AGENTS「Rules 索引」、manifest `agent-config-skill-*`、fixture / selfcheck 对齐
+
+### Docs / pack
+- CODEX-PARITY / MANUAL / adapters / upgrade `0.7.5 → 0.7.6`
+- **NL 分层**：PARITY 写明 L0 SSOT → L1 Skills → L2 Starlark → L3 soft hooks → L4 可选 rulehook/deny（短硬红线，非默认依赖）
+- P1 剩余：mcp-policy / calibrate 读 toml / 可选 L4 适配器
 
 ## 0.7.5 — 2026-09-24（Codex Skills 种子 · 行为承接）
 
