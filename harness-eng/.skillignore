@@ -1,14 +1,10 @@
-# harness-eng 发包排除清单（G5 / 0.6.3+）
+# harness-eng 发包排除清单（0.7.1+）
 # 安装 ≠ 全仓。现行 skills CLI 未必识别；权威是热树减脂 + 本清单。
+#
+# 大体积历史正文已在仓库 `_history/harness-eng-docs-archive/` 与
+# `_history/harness-eng-selfcheck-legacy/`（不随 skill 子树分发）。
 
 archive/selfcheck/legacy/**
 !archive/selfcheck/legacy/INDEX.md
-archive/CHANGELOG-through-0.4.md
-archive/CHANGELOG-0.5.x.md
-archive/OPTIMIZATION-PROPOSAL-0.2.x.md
-archive/VERIFY-history-through-0.2.27.md
-archive/VERIFY-history-through-0.6.0.md
-archive/ROADMAP-0.6.0.md
-archive/TRAE-P0-EVIDENCE.md
 archive/fill-truths-auto/**
 !archive/fill-truths-auto/INDEX.md

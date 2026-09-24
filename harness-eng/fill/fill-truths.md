@@ -30,7 +30,7 @@
 - [ ] 8 可选 fill-dto-batch；拆页（≥200）；fill-progress；fill-score（ready + template_completeness）
 ```
 
-深度精填见 [fill-truths-agents.md](fill-truths-agents.md)。薄底见 [fill-truths-auto.md](../fill-truths-auto.md)。  
+深度精填见 [fill-truths-agents.md](fill-truths-agents.md)。薄底见 [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md)。  
 执行细节见 [fill-workers.md](fill-workers.md)（**工具无关**：默认串行；并行可选）。
 
 ## 完整档检查清单（api）
@@ -71,7 +71,7 @@ node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir docs/ap
   --target docs/api/modules/01-….md --write --enrich-dto --source-root <java-root>
 ```
 
-`missing` 必须为 `[]`。域脚本 `fill-merge-<domain>.mjs` 为 **弃用** 薄包装。
+`missing` 必须为 `[]`。合并只认 `fill-merge.mjs --domain <id>`。
 
 ## 大文件拆页 / 进度
 

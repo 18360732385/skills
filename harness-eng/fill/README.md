@@ -18,11 +18,11 @@
 | 深真全 | [truth-quality.md](../modes/truth-quality.md) | draft vs SSOT |
 | MCP 装配 | [fill-mcp.md](fill-mcp.md) | 填充硬前置（需 db·redis） |
 | 流水线填充战役 | [pipeline-fill.md](../modes/pipeline-fill.md) | 骨架 Done 之后 |
-| 自动填充 | [fill-truths-auto.md](../fill-truths-auto.md) → [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) | **仅脚本、对话不推荐** |
+| 自动填充 | [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) | **仅脚本、对话不推荐** |
 
 ## 脚本（规范入口）
 
-**只认统一 CLI**（按 `--domain`；域脚本是 **弃用别名 / 薄包装**，只转发 argv）：
+**只认统一 CLI**（按 `--domain`）：
 
 ```bash
 node scripts/fill-inventory.mjs --domain <api|func|db|redis|jobs> --root <TARGET> [域参数…]
@@ -36,9 +36,7 @@ node scripts/fill-merge.mjs --domain api ... --write --enrich-dto --source-root 
 | 脚本 | 用途 |
 |---|---|
 | `fill-inventory.mjs` | **规范** inventory 入口（`--domain`） |
-| `fill-inventory-{api,func,db,redis,jobs}.mjs` | **弃用** shim；只转发 `--domain`，无扫描逻辑 |
 | `fill-merge.mjs` | **规范** merge 入口（`--domain`）；api 旗标 `--enrich-dto` / `--module` / `--auto-fill` |
-| `fill-merge-{api,func,db,redis,jobs}.mjs` | **弃用** shim；只转发 argv（api shim 保留 enrich 旗标） |
 | `fill-score.mjs` | 打分 |
 | `fill-plan.mjs` | 计划 |
 | `acceptance-check.mjs` | 语义闸 |

@@ -1,8 +1,29 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.6.0 → 0.6.1-dev → 0.6.1 → 0.6.2 → 0.6.3 → 0.6.4-dev → 0.6.4 → 0.6.5 → 0.6.6 → 0.6.7 → 0.6.8-dev → 0.6.9 → 0.7.0`（当前 **0.7.0**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
-> 0.6.1 实证：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。0.5.x 见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2`（当前 **0.7.2**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+> 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.2 — 2026-09-24（日落 CLI shim）
+
+### Breaking
+- **删除** `scripts/land.mjs`：写盘只认 `node scripts/harness.mjs`（`[--mode land]`）
+- **删除** 10 个域薄包装：`fill-inventory-{api,func,db,redis,jobs}.mjs`、`fill-merge-{api,func,db,redis,jobs}.mjs`
+- 替代：`fill-inventory.mjs --domain <id>` / `fill-merge.mjs --domain <id>`
+
+### Docs / pack
+- 热路径与 fill 索引只写统一 CLI；upgrade `0.7.1 → 0.7.2` 含命令替换表
+- selfcheck 断言 shim **缺席**；钉号 0.7.2
+
+## 0.7.1 — 2026-09-23（热路径瘦身）
+
+### Docs / pack
+- **Codex 文案**：摘要 / QUICKSTART / README 对齐 **高 · 纪律 B**（去掉残留 P2）
+- **删根/host stub**：`detect`/`fill`/`pipeline`/`write-plan`/`fill-truths-auto`/`ROADMAP-0.6.0`、`CODEX-P0-MANUAL`、`TRAE-P0-EVIDENCE`
+- **手册收敛**：保留 `使用手册.md` + `使用手册-摘要.md`；删除 `使用手册.html`；会话仪表盘链改 md
+- **迁 `_history`**：`archive/` 正文（CHANGELOG-0.5 / ROADMAP / TRAE evidence）· `docs/superpowers` Codex 设计稿 → `superpowers-codex-0.6.9/`
+- **删一次性** `scripts/fixtures/_bump*` / `_patch*` / `_rebuild*`（保留 `_build-l5-sync-codex`）
+- **当时保留**：`land.mjs` 与域 CLI shim（**0.7.2 已硬删**）；运行时兼容（meta 回退 / gate legacy / ready.ok / ui.version）仍保留
 
 ## 0.7.0 — 2026-09-23（形态重标定 · gold 可达 · ready 废弃）
 
@@ -22,7 +43,7 @@
 
 ## 0.6.9 — 2026-09-22（Codex → 高：分轨 SSOT · 纪律 B）
 
-> 设计：[docs/superpowers/specs/2026-09-22-codex-full-support-design.md](docs/superpowers/specs/2026-09-22-codex-full-support-design.md)。**不**改 Trae / CodeBuddy 矩阵；生产装/升仍用 **`main`**。
+> 设计：[`_history/.../superpowers-codex-0.6.9/specs/2026-09-22-codex-full-support-design.md`](../_history/harness-eng-docs-archive/superpowers-codex-0.6.9/specs/2026-09-22-codex-full-support-design.md)。**不**改 Trae / CodeBuddy 矩阵；生产装/升仍用 **`main`**。
 
 - **报告壳 0.2.26（施工指挥台 UX）**：IBM Plex Sans SC 正文；`prefers-reduced-motion` 关 CRT/glitch；命令一键复制；Escape 关模态；`#hash` 深链生效；←/→ `[` `]` 切台；趋势台参考分视觉降权；残差任务条纹+徽章分层
 - **会话仪表盘展示时机收紧**：SHOW 改为「本轮」模式步进 / 改盘意图 / 显式读数；中途 meta 与跑题 **HIDE**（不再因「工程会话未结束」硬附）；无目标根时仅 detect/定根轮出精简块。规格 [session-dashboard.md](modes/session-dashboard.md)

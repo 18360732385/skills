@@ -2,14 +2,13 @@
 /**
  * Shared api merge logic (0.6.0-dev M3).
  * Canonical CLI: fill-merge.mjs --domain api [--enrich-dto] [--module] [--auto-fill].
- * fill-merge-api.mjs is a deprecated argv shim.
  *
  * Usage:
- *   node scripts/fill-merge-api.mjs --inventory inv.json --work-dir <root>/docs/api/.fill-work --check
- *   node scripts/fill-merge-api.mjs --inventory inv.json --work-dir ... --target docs/api/modules/01-x.md --write
- *   node scripts/fill-merge-api.mjs ... --write --enrich-dto --source-root <java-root>
- *   node scripts/fill-merge-api.mjs ... --write --force-write   # skip acceptance (handoff only)
- *   node scripts/fill-merge-api.mjs --help
+ *   node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir <root>/docs/api/.fill-work --check
+ *   node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir ... --target docs/api/modules/01-x.md --write
+ *   node scripts/fill-merge.mjs --domain api ... --write --enrich-dto --source-root <java-root>
+ *   node scripts/fill-merge.mjs --domain api ... --write --force-write   # skip acceptance (handoff only)
+ *   node scripts/fill-merge.mjs --domain api --help
  *
  * Success: missing = inventory − merged(evidence) must be empty; dup evidence fails.
  * 0.2.18+: --write runs acceptance-check on work-dir (blockers → fail) unless --force-write.
@@ -87,14 +86,14 @@ function runAcceptance(workDir, gold, scriptsDir) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/fill-merge-api.mjs --inventory inv.json --work-dir <dir> --check
-  node scripts/fill-merge-api.mjs --inventory inv.json --work-dir <dir> --target <ssot.md> --write
-  node scripts/fill-merge-api.mjs ... --write --enrich-dto --source-root <java-root>
-  node scripts/fill-merge-api.mjs ... --write --force-write
-  node scripts/fill-merge-api.mjs ... --auto-fill --check|--write
+  node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir <dir> --check
+  node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir <dir> --target <ssot.md> --write
+  node scripts/fill-merge.mjs --domain api ... --write --enrich-dto --source-root <java-root>
+  node scripts/fill-merge.mjs --domain api ... --write --force-write
+  node scripts/fill-merge.mjs --domain api ... --auto-fill --check|--write
 
 Options:
-  --inventory   fill-inventory-api JSON
+  --inventory   fill-inventory --domain api JSON
   --work-dir    directory of shard fragments (*.md)
   --target      SSOT module truth path (required with --write)
   --header      optional markdown header file prepended before ## 1.

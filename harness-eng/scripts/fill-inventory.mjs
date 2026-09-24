@@ -5,8 +5,7 @@
  * Usage:
  *   node scripts/fill-inventory.mjs --domain <id> --root <TARGET> [domain args...]
  *
- * Scan logic lives in lib/inventory-<domain>.mjs. Per-domain scripts are
- * deprecated shims that only forward argv.
+ * Scan logic lives in lib/inventory-<domain>.mjs.
  * Domain list: templates/_meta/domains.yaml
  */
 import { fileURLToPath, pathToFileURL } from "url";
@@ -38,8 +37,7 @@ function printHelp() {
   console.log(`Usage:
   node scripts/fill-inventory.mjs --domain <${ids}> --root <TARGET> [domain-specific args]
 
-Canonical inventory entry (0.6.0-dev M3). Implementation: lib/inventory-<domain>.mjs.
-Deprecated shims (argv forward only): fill-inventory-api|func|db|redis|jobs.mjs
+Canonical inventory entry. Implementation: lib/inventory-<domain>.mjs.
 `);
 }
 

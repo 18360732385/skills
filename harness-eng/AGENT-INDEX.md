@@ -3,7 +3,7 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读一页纸：[QUICKSTART.md](QUICKSTART.md)。闸门词表：[write-plan.md](modes/write-plan.md)。
 
-**拓扑（0.6.0）**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。根目录只留入口、手册与热路径 stub。
+**拓扑（0.7.2）**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。根目录只留入口与手册（无旧路径 stub）。
 **manifest 双写**：技能包权威 = 根 [`_meta/manifest.yaml`](_meta/manifest.yaml)；落地模板权威 = [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)；两边 `version` 必须一致。
 
 ## 必读（写盘前）≤8
@@ -13,7 +13,7 @@
 | 闸门 / 预授权 / Windows JSON | [modes/write-plan.md](modes/write-plan.md) |
 | 探测 / 指纹 / MATURE | [modes/detect.md](modes/detect.md) |
 | 推荐包 / 全部推荐 | [modes/recommended-profile.md](modes/recommended-profile.md) |
-| **写盘入口**（land / resume / upgrade / pipeline-skeleton） | **`node scripts/harness.mjs`**（`land.mjs` 薄别名；L5/`agent_config` 走 sync，**勿**直渲生成宿主路径） |
+| **写盘入口**（land / resume / upgrade / pipeline-skeleton） | **`node scripts/harness.mjs`**（L5/`agent_config` 走 sync，**勿**直渲生成宿主路径） |
 | 填充家族（先索引） | [fill/README.md](fill/README.md) |
 | 冲突 / merge / L5 互斥 | [modes/conflict-policy.md](modes/conflict-policy.md) |
 
@@ -31,15 +31,14 @@
 | AI 工具面 / 多宿主 | [host/ai-tools.md](host/ai-tools.md) · [host/sync-hosts.md](host/sync-hosts.md) |
 | CodeBuddy / WorkBuddy（**0.6.4**） | [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md) |
 | Codex **高**（**0.6.9**） | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md) |
-| Trae 高（0.6.1） | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) |
+| Trae 高（0.6.1） | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · 实证 [`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md) |
 | 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` |
 | 会话仪表盘 | [modes/session-dashboard.md](modes/session-dashboard.md) |
 | 版本 / 模板清单 | [CHANGELOG.md](CHANGELOG.md) · [`_meta/manifest.yaml`](_meta/manifest.yaml)（技能包）· [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)（落地模板） |
-| 0.6.0 计划 | [ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) |
 | L5 / 多宿主黄金夹具 | `scripts/fixtures/l5-sync-golden` · `scripts/fixtures/multi-host-hooks` |
 
 ## 写盘纪律（一行）
 
-确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton]`（`land.mjs` 薄别名）。  
+确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton]`。  
 非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，生成 `.cursor/rules` 等由目标仓 `node scripts/agent-config/sync.mjs` 发出。勿直接把 `render.mjs` 当 Agent 主路径。  
 **升级 L5**：必须刷新 `scripts/agent-config/sync.mjs`（land/upgrade 重渲 `agent-config-sync`）；`node scripts/harness.mjs --check-freshness --root <TARGET>` 对照 skill tmpl。

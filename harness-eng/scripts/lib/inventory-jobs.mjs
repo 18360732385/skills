@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-jobs — SyncTaskCode / @Scheduled / yml cron → inventory JSON (0.3.6+)
- * Alias (0.5.9+): prefer `fill-inventory.mjs --domain jobs`.
  *
  * Usage:
- *   node scripts/fill-inventory-jobs.mjs --root <TARGET>
+ *   node scripts/fill-inventory.mjs --domain jobs --root <TARGET>
  *       [--shard-size 20] [--out inv.json] [--quiet]
  *
  * Default --out: docs/jobs/.fill-work/inventory.json
@@ -44,7 +43,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/fill-inventory-jobs.mjs --root <TARGET>
+  node scripts/fill-inventory.mjs --domain jobs --root <TARGET>
       [--shard-size 20] [--out inv.json] [--quiet]
 
 Scans:

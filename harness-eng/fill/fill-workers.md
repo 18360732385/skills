@@ -82,7 +82,7 @@
 ```bash
 node scripts/acceptance-check.mjs --work-dir <work> --domain api
 node scripts/fill-merge.mjs --domain api --inventory inv.json --work-dir <work> --check
-# api 专属旗标挂在统一 CLI（fill-merge-api.mjs 仅为弃用 shim）：
+# api 专属旗标挂在统一 CLI：
 node scripts/fill-merge.mjs --domain api ... --write --enrich-dto --source-root <java-root>
 node scripts/fill-dto-batch.mjs --root <TARGET>
 ```

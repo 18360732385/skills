@@ -92,7 +92,7 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 
 （有覆盖+形态时一行；缺任一轴则整行省略。象限阈值 0.5：Q1 补形态 / Q2 理想区 / Q3 起步 / Q4 补覆盖）
 
-**详情请查询仪表盘** → 目标仓 [`docs/harness-eng/report-latest.html`](…)（已生成时给 file 链接） · [四台读法（使用手册.html#s6）](../使用手册.html#s6)
+**详情请查询仪表盘** → 目标仓 [`docs/harness-eng/report-latest.html`](…)（已生成时给 file 链接） · [四台读法（使用手册.md · 第6章）](../使用手册.md#60-对话内会话仪表盘工程轮末尾)
 
 （尚未生成报告时：脚注写预期路径 +「完整度打分」提示，手册链接仍必带。）
 ---
@@ -140,7 +140,7 @@ node scripts/session-dash.mjs --root <TARGET> \
 - 只读；不写盘
 - Agent 按本页触发规则决定是否调用；**工程轮务必传 `--mode`（本轮动作）**；`--intent engineering`（默认）渲染仪表盘；`--intent meta` 不输出 markdown（`--json` 时写 `{ omitted: true, reason: "meta" }`）
 - 无 score 时不报错，趋势台写「暂无 score」
-- 脚注固定以 **详情请查询仪表盘** 开头；链到目标仓 `report-latest.html`（已生成）+ skill 内 [使用手册.html#s6](../使用手册.html#s6)
+- 脚注固定以 **详情请查询仪表盘** 开头；链到目标仓 `report-latest.html`（已生成）+ skill 内 [使用手册.md 第6章](../使用手册.md#60-对话内会话仪表盘工程轮末尾)
 
 ## 与 HTML 报告关系
 

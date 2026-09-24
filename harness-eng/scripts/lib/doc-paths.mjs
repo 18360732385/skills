@@ -1,5 +1,5 @@
 /**
- * harness-eng 0.6.0-dev M2 document topology.
+ * harness-eng document topology (0.7.1+: no root stubs).
  * Root basename → canonical path relative to skill root.
  * Identity entries (SKILL, glossary, …) omitted; resolveDoc falls back to basename.
  */
@@ -36,30 +36,23 @@ export const DOC_MOVES = {
   "sync-hosts.md": "host/sync-hosts.md",
 };
 
-/** Old-path stubs kept at skill root (thin redirect). Others are fully relinked in-repo. */
-export const ROOT_STUBS = [
-  "write-plan.md",
-  "detect.md",
-  "fill.md",
-  "pipeline.md",
-  "fill-truths-auto.md",
-];
+/** @deprecated 0.7.1: root stubs removed; kept empty for importers. */
+export const ROOT_STUBS = [];
 
-/** Canonical root docs that stay (not stubs, not moved). */
+/** Canonical root docs that stay (not moved). */
 export const ROOT_KEEP = [
   "AGENT-INDEX.md",
   "CHANGELOG.md",
   "glossary.md",
   "QUICKSTART.md",
   "README.md",
-  "ROADMAP-0.6.0.md",
   "SKILL.md",
   "VERIFY.md",
   "使用手册.md",
   "使用手册-摘要.md",
 ];
 
-export const ROOT_MD_MAX = 20;
+export const ROOT_MD_MAX = 12;
 
 export function resolveDocRel(basename) {
   return DOC_MOVES[basename] || basename;

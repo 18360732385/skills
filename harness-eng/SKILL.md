@@ -14,7 +14,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
 **Agent 热路径 · 读侧路由 SSOT**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。  
 拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。  
-一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
+一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](modes/write-plan.md)。  
 **全部推荐**协议 SSOT：[recommended-profile.md](modes/recommended-profile.md)。他处只指针。
@@ -23,7 +23,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 
 1. **探测 → 推荐包 → 提问 → WritePlan → 确认闸门 → 才写盘**（预授权例外见 write-plan）。最短路径见 QUICKSTART。
 2. 只渲染 [templates/](templates/) 与 fill 规格允许的本仓抽取；密文只从本仓已有文件抽取（先 [fill/README.md](fill/README.md)）。
-3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（`land.mjs` 薄别名）。
+3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（0.7.2 起无 `land.mjs`）。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](modes/recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
 6. **本轮实质施工产出、闸门决策点（出示 WritePlan / 用户确认）、或显式读数**时回复末尾附可视化**会话仪表盘**（四台摘要 + 可选纯文本态势；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。提问批次 / 定根前 / 等确认空轮 / 纯 meta / 版本 / 手册 / 跑题 / 改 skill **不附**整块（判定按本轮里程碑，不按「会话曾点名」）。
@@ -94,5 +94,5 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 | AI 工具面 / 多宿主 / 加契约域 | [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md) |
 
 旁路脚本：`scripts/fill-calibrate-live.mjs`（live 校准）· `scripts/fill-report-html.mjs`（HTML 报告，score 后【推荐】），`--help` 自查。  
-写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；`land.mjs` 薄别名；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。  
+写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。  
 版本里程碑（0.6.x 各行：Trae 高 / CodeBuddy / freshness / Codex P0…）查 [CHANGELOG.md](CHANGELOG.md)，本页不铺版本行。

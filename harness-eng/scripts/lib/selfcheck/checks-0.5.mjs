@@ -30,7 +30,6 @@ import { isGeneratedHostPath, resolveLandAgentConfig } from "../../harness.mjs";
 
 export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
-  const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
   const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
   const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
   const glossary = readDoc("glossary.md");
@@ -934,7 +933,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.7\.0"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.7\.2"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -968,7 +967,7 @@ const sessionDashMd = readDoc("session-dashboard.md");
 assert(/决策台/.test(sessionDashMd) && /趋势台/.test(sessionDashMd), "session-dashboard four panels");
 assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
 assert(/会话仪表盘（精简） · 未打分/.test(sessionDashMd), "session-dashboard documents compact B format");
-assert(/使用手册\.html#s6/.test(sessionDashMd), "session-dashboard handbook anchor");
+assert(/使用手册\.md/.test(sessionDashMd) && /第6章|60-对话内会话仪表盘/.test(sessionDashMd), "session-dashboard handbook anchor");
 assert(/\*\*SHOW\*\*/.test(sessionDashMd) && /\*\*HIDE\*\*/.test(sessionDashMd), "session-dashboard SHOW/HIDE");
 assert(/当前版本号多少/.test(sessionDashMd), "session-dashboard version-question hide example");
 assert(/里程碑 SHOW/.test(sessionDashMd) && /\*\*实质产出\*\*/.test(sessionDashMd), "session-dashboard milestone SHOW policy");
@@ -1022,10 +1021,6 @@ assert(/本轮/.test(handbookMd) && /会话仪表盘/.test(handbookMd), "使用�
 assert(/里程碑 SHOW/.test(handbookMd) && /提问批次/.test(handbookMd), "使用手册.md milestone SHOW and Q&A HIDE");
 assert(!/Agent \*\*每一轮\*\*/.test(handbookMd), "使用手册.md no unconditional every-turn dashboard");
 assert(/纯文本施工态势/.test(handbookMd) && !/mermaid 象限图/.test(handbookMd), "使用手册.md dashboard no mermaid chart");
-assert(/本轮/.test(handbookHtml) && /会话仪表盘/.test(handbookHtml), "使用手册.html dashboard is this-turn gated");
-assert(/里程碑 SHOW/.test(handbookHtml) && /提问批次/.test(handbookHtml), "使用手册.html milestone SHOW and Q&A HIDE");
-assert(!/Agent <strong>每一轮<\/strong>/.test(handbookHtml), "使用手册.html no unconditional every-turn dashboard");
-assert(/纯文本态势/.test(handbookHtml) && !/四台摘要 \+ mermaid/.test(handbookHtml), "使用手册.html dashboard no mermaid");
 assert(/实质产出|闸门决策|显式读数/.test(quickstartMd), "QUICKSTART dashboard is milestone gated");
 assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.test(quickstartMd), "QUICKSTART dashboard no mermaid");
 {
@@ -1086,7 +1081,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "session-dash plain-text stance"
     );
     assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
-    assert(/使用手册\.html#s6/.test(dashMd.stdout || ""), "session-dash handbook link");
+    assert(/使用手册\.md/.test(dashMd.stdout || ""), "session-dash handbook link");
     const dashEng = runNode([
       path.join(skillRoot, "scripts/session-dash.mjs"),
       "--root",
@@ -1172,7 +1167,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   const handbook057 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
   const syncHosts057 = readDoc("sync-hosts.md");
   const codexAd057 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
-  assert(/对齐矩阵|部分（P2）|部分对齐（P2）/.test(handbook057), "handbook FAQ/docs mention alignment / Codex P2");
+  assert(/对齐矩阵|纪律 B|\*\*高\*\*/.test(handbook057) && /Codex|codex/.test(handbook057), "handbook FAQ/docs Codex 高 · 纪律 B");
   assert(/\*\*高\*\*/.test(syncHosts057) && /codex/i.test(syncHosts057), "sync-hosts.md Codex 高");
   assert(/对齐程度：\*\*高\*\*|\*\*高\*\*/.test(codexAd057), "codex adapter is 高");
   assert(/不做/.test(codexAd057) && /mdc/.test(codexAd057), "codex adapter no .mdc mirror");
@@ -1405,25 +1400,28 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 {
   assert(fs.existsSync(path.join(skillRoot, "AGENT-INDEX.md")), "AGENT-INDEX.md");
   const agentIndex = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
-  assert(/必读/.test(agentIndex) && /land\.mjs/.test(agentIndex), "AGENT-INDEX has 必读 + land.mjs");
+  assert(/必读/.test(agentIndex) && /harness\.mjs/.test(agentIndex), "AGENT-INDEX has 必读 + harness.mjs");
   assert(/fill\/README\.md/.test(agentIndex), "AGENT-INDEX points fill/README");
   assert(fs.existsSync(path.join(skillRoot, "fill/README.md")), "fill/README.md");
   const fillIdx = fs.readFileSync(path.join(skillRoot, "fill/README.md"), "utf8");
   assert(/fill-inventory\.mjs --domain/.test(fillIdx), "fill index documents unified inventory");
   assert(/fill-merge\.mjs --domain/.test(fillIdx), "fill index documents unified merge");
-  assert(/别名/.test(fillIdx), "fill index says per-domain scripts are aliases");
+  assert(/只认统一 CLI|fill-inventory\.mjs --domain/.test(fillIdx), "fill index unified CLI only");
+  assert(!/fill-inventory-\{api/.test(fillIdx), "fill index has no domain shim rows");
   const skill059 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
   assert(/AGENT-INDEX\.md/.test(skill059), "SKILL points AGENT-INDEX");
   assert(/fill\/README\.md/.test(skill059), "SKILL fill rows point at fill index");
-  assert(/land\.mjs/.test(skill059), "SKILL prefers land.mjs");
+  assert(/harness\.mjs/.test(skill059), "SKILL prefers harness.mjs");
+  assert(!/land\.mjs.*薄别名|薄别名.*land\.mjs/.test(skill059), "SKILL no land.mjs alias");
   const fillMd059 = readDoc("fill.md");
   assert(/fill-inventory\.mjs --domain/.test(fillMd059), "fill.md documents unified inventory");
   const wp059 = readDoc("write-plan.md");
-  assert(/land\.mjs/.test(wp059), "write-plan prefers land.mjs");
+  assert(/harness\.mjs/.test(wp059), "write-plan prefers harness.mjs");
   const conflict059 = readDoc("conflict-policy.md");
-  assert(/land\.mjs/.test(conflict059), "conflict-policy names land.mjs");
+  assert(/harness\.mjs/.test(conflict059), "conflict-policy names harness.mjs");
   const qs059 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
-  assert(/land\.mjs/.test(qs059), "QUICKSTART names land.mjs");
+  assert(/harness\.mjs/.test(qs059), "QUICKSTART names harness.mjs");
+  assert(!/\bland\.mjs\b/.test(qs059), "QUICKSTART does not name land.mjs");
   assert(/fill-inventory\.mjs --domain/.test(qs059), "QUICKSTART unified inventory");
 
   const morphHead = fs.readFileSync(path.join(skillRoot, "templates/_meta/morph-required.yaml"), "utf8");
@@ -1434,12 +1432,13 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   );
   assert(/schema_version/.test(policyHead) && /≠ skill_version|!= skill_version/.test(policyHead), "score-policy schema_version ≠ skill_version");
 
-  assert(fs.existsSync(path.join(skillRoot, "scripts/land.mjs")), "land.mjs");
+  assert(!fs.existsSync(path.join(skillRoot, "scripts/land.mjs")), "land.mjs removed");
+  assert(fs.existsSync(path.join(skillRoot, "scripts/harness.mjs")), "harness.mjs");
   assert(fs.existsSync(path.join(skillRoot, "scripts/fill-inventory.mjs")), "fill-inventory.mjs");
   const invUni = fs.readFileSync(path.join(skillRoot, "scripts/fill-inventory.mjs"), "utf8");
   assert(/--domain/.test(invUni), "fill-inventory --domain");
-  const landHelp = runNode([path.join(skillRoot, "scripts/land.mjs"), "--help"]);
-  assert(landHelp.status === 0 && /--root/.test(landHelp.stdout), "land.mjs --help");
+  const landHelp = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
+  assert(landHelp.status === 0 && /--root/.test(landHelp.stdout), "harness.mjs --help");
   const invHelp = runNode([path.join(skillRoot, "scripts/fill-inventory.mjs"), "--help"]);
   assert(invHelp.status === 0 && /--domain/.test(invHelp.stdout), "fill-inventory.mjs --help");
   const invDbHelp = runNode([
@@ -1550,17 +1549,17 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "utf8"
     );
     const rRefuse = runNode([
-      path.join(skillRoot, "scripts/land.mjs"),
+      path.join(skillRoot, "scripts/harness.mjs"),
       "--root",
       tmpL5,
       "--params",
       pRefuse,
       "--no-sync",
     ]);
-    assert(rRefuse.status !== 0, "land L5 refuses explicit .cursor/rules file");
+    assert(rRefuse.status !== 0, "harness L5 refuses explicit .cursor/rules file");
     assert(
       !fs.existsSync(path.join(tmpL5, ".cursor/rules/00-project-docs-overview.mdc")),
-      "L5 land did not write .cursor/rules via render"
+      "L5 harness did not write .cursor/rules via render"
     );
 
     fs.mkdirSync(path.join(tmpL5, ".cursor"), { recursive: true });
@@ -1586,14 +1585,14 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "utf8"
     );
     const rMeta = runNode([
-      path.join(skillRoot, "scripts/land.mjs"),
+      path.join(skillRoot, "scripts/harness.mjs"),
       "--root",
       tmpL5,
       "--params",
       pMeta,
       "--no-sync",
     ]);
-    assert(rMeta.status !== 0, "land refuses generated host path when legacy meta agent_config");
+    assert(rMeta.status !== 0, "harness refuses generated host path when legacy meta agent_config");
 
     const tmpExpand = fs.mkdtempSync(path.join(os.tmpdir(), "harness-059-l5e-"));
     try {
@@ -1612,22 +1611,22 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
         "utf8"
       );
       const rExp = runNode([
-        path.join(skillRoot, "scripts/land.mjs"),
+        path.join(skillRoot, "scripts/harness.mjs"),
         "--root",
         tmpExpand,
         "--params",
         pExp,
         "--no-sync",
       ]);
-      assert(rExp.status === 0, "land L5 expand --no-sync exits 0");
+      assert(rExp.status === 0, "harness L5 expand --no-sync exits 0");
       assert(
         !fs.existsSync(path.join(tmpExpand, ".cursor/rules/00-project-docs-overview.mdc")),
-        "land L5 --no-sync does not write generated .cursor/rules"
+        "harness L5 --no-sync does not write generated .cursor/rules"
       );
       assert(
         fs.existsSync(path.join(tmpExpand, "scripts/agent-config/sync.mjs")) ||
           fs.existsSync(path.join(tmpExpand, "docs/agent-config")),
-        "land L5 still renders SSOT / sync script"
+        "harness L5 still renders SSOT / sync script"
       );
     } finally {
       fs.rmSync(tmpExpand, { recursive: true, force: true });
@@ -1671,9 +1670,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   assert(/不.*默认|纪律 B|不进「全部推荐」/.test(qMd0510) && /codex/i.test(qMd0510), "questions.md Codex 纪律 B");
 
   const handbook0510 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
-  const handbookHtml0510 = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
   assert(!/全部推荐」默认偏向 Cursor/.test(handbook0510), "handbook.md no Cursor-default 全部推荐");
-  assert(!/全部推荐」默认偏向 Cursor/.test(handbookHtml0510), "handbook.html no Cursor-default 全部推荐");
   assert(/不.*默认|纪律 B|塞进默认包/.test(handbook0510) && /Codex|codex/.test(handbook0510), "handbook.md Codex 纪律 B");
 
   const wp0510 = readDoc("write-plan.md");
@@ -1704,15 +1701,15 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   assert(/report_schema|报告壳 ≠ skill/.test(reportTmpl0510), "report HTML pairs report_schema / 报告壳 ≠ skill");
 
   const changelog0510 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  const changelog05x = fs.readFileSync(path.join(skillRoot, "archive/CHANGELOG-0.5.x.md"), "utf8");
-  assert(/## 0\.5\.10/.test(changelog05x), "archive CHANGELOG-0.5.x has 0.5.10");
+  const changelog05x = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md"), "utf8");
+  assert(/## 0\.5\.10/.test(changelog05x), "_history CHANGELOG-0.5.x has 0.5.10");
   assert(
     /CHANGELOG-0\.5\.x|_history\/harness-eng-docs-archive/.test(changelog0510),
     "hot CHANGELOG points to 0.5 archive or _history"
   );
   const archivedClPath = path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md");
   assert(fs.existsSync(archivedClPath), "_history CHANGELOG-through-0.4.md");
-  assert(fs.existsSync(path.join(skillRoot, "archive/CHANGELOG-0.5.x.md")), "archive/CHANGELOG-0.5.x.md");
+  assert(fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md")), "_history CHANGELOG-0.5.x.md");
   assert(!/^## 0\.5\.10/m.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "hot CHANGELOG no 0.5.10 section");
   if (fs.existsSync(archivedClPath)) {
     const archivedCl = fs.readFileSync(archivedClPath, "utf8");
@@ -1728,9 +1725,9 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   assert(fs.existsSync(autoSpec), "_history fill-truths-auto spec");
   assert(fs.existsSync(autoScript), "_history fill-truths-auto script");
   assert(!fs.existsSync(path.join(skillRoot, "archive/fill-truths-auto/fill-truths-auto.mjs")), "fill-truths-auto.mjs not in archive pack");
-  const autoStub = fs.readFileSync(path.join(skillRoot, "fill-truths-auto.md"), "utf8");
-  assert(/archive\/fill-truths-auto/.test(autoStub), "fill-truths-auto.md stub points archive");
-  assert(/对话不推荐|仅脚本/.test(autoStub), "fill-truths-auto stub 仅脚本、对话不推荐");
+  assert(!fs.existsSync(path.join(skillRoot, "fill-truths-auto.md")), "no root fill-truths-auto stub");
+  const autoIdxText = fs.readFileSync(autoIdx, "utf8");
+  assert(/对话不推荐|仅脚本/.test(autoIdxText), "fill-truths-auto INDEX 仅脚本、对话不推荐");
   const fillIdx0510 = fs.readFileSync(path.join(skillRoot, "fill/README.md"), "utf8");
   assert(/archive\/fill-truths-auto/.test(fillIdx0510), "fill/README points archive fill-truths-auto");
   const skill0510 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");

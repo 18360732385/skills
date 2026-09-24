@@ -16,7 +16,6 @@
  * Else: delegate to render.mjs with the same argv patterns.
  *
  * pipeline-skeleton = skeleton campaign write only (not fill-* / pipeline-fill).
- * land.mjs is a thin alias of this file.
  */
 import fs from "fs";
 import path from "path";
@@ -108,7 +107,7 @@ function printHelp() {
       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
   node scripts/harness.mjs --check-freshness --root <TARGET>
 
-Canonical Agent write entry (0.6.0+). land.mjs is a thin alias.
+Canonical Agent write entry (0.6.0+).
   non-L5: delegates to render.mjs (same --root/--params/--dry-run/--manifest/--backup)
   L5 / agent_config: refuse render into generated host paths; run
     node scripts/agent-config/sync.mjs
@@ -207,7 +206,7 @@ function announceMode(mode) {
     );
     return;
   }
-  console.error(`harness: mode=${mode}。公开入口 scripts/harness.mjs（land.mjs 为薄别名）。`);
+  console.error(`harness: mode=${mode}。公开入口 scripts/harness.mjs。`);
 }
 
 export function main(argv = process.argv) {

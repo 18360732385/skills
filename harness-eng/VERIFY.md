@@ -1,10 +1,32 @@
-# harness-eng 验收记录（0.7.0）
+# harness-eng 验收记录（0.7.2）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.0**（形态重标定 · gold 可达 · ready 废弃；其上 Codex **高** / session-dashboard）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。实证见 [host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.2**（日落 CLI shim；其上 0.7.1 热路径瘦身 · 0.7.0 形态重标定）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.2 增量验收（日落 CLI shim）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.2` | 有 |
+| CHANGELOG 标题 `## 0.7.2` | 有 |
+| `scripts/land.mjs` 缺席 | 有 |
+| 域 `fill-inventory-*` / `fill-merge-*` shim 缺席 | 有 |
+| upgrade `## 0.7.1 → 0.7.2` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.1 增量验收（热路径瘦身）
+
+| 检查项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.1` | 有 |
+| CHANGELOG 标题 `## 0.7.1` | 有 |
+| 无根 stub / 无 `使用手册.html` / 无 host TRAE evidence stub | 有 |
+| archive 正文与 Codex 设计稿在 `_history` | 有 |
+| upgrade `## 0.7.0 → 0.7.1` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 
 ## 0.7.0 增量验收（形态 · gate · report）
 
@@ -120,7 +142,7 @@
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 | `node scripts/selfcheck-render.mjs` | 烟测 |
 | （历史）manifest / meta / questions 曾钉 `0.6.1` | 有 |
-| [TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表；T-P0-2 MCP 面板 PASS | 有 |
+| [`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表；T-P0-2 MCP 面板 PASS | 有 |
 | Trae 镜像保留 `alwaysApply` / `globs`；Claude/Qoder 仍 strip | 有 |
 | `mature-trae` 无 `.cursor/rules` 仍 MATURE；L5 sync 路径已钉 | 有 |
 | 适配卡去掉「若宿主支持」；矩阵 Trae **高** | 有 |

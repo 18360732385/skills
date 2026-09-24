@@ -26,7 +26,7 @@
 - [ ] 3 对照 ladder.md + manifest，列出「当前阶已有 / 升阶缺口」
 - [ ] 4 条件提问（升阶相关；可「全部推荐」）— 每批≤5；若仓已有 score-policy，确认 **`Q_GATE_PROFILE`**（推荐 strict；要兼容则 legacy）
 - [ ] 5 WritePlan：仅缺口路径；注明跳阶依据（默认 +1 或用户书面）；含 score-policy `gate_profile` / `coverage_mode` 若需升档
-- [ ] 6 确认闸门后 `scripts/harness.mjs --mode upgrade`（`land.mjs` 薄别名；非 L5 委托 render；L5 走 sync）：params.on_exists=skip
+- [ ] 6 确认闸门后 `scripts/harness.mjs --mode upgrade`（非 L5 委托 render；L5 走 sync）：params.on_exists=skip
 - [ ] 7 自检 + 更新 meta.ladder / last_mode=upgrade / skill_version + 移交 TODO
 - [ ] 8 **acceptance 摘要**（`--root` + 可选 `--gold`）；blockers>0 写入移交；warnings → `fill-plan --residual`
 ```
@@ -57,6 +57,27 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.1 → 0.7.2 迁移要点
+
+1. **meta**：`skill_version` → `0.7.2`
+2. **写盘**：只认 `node scripts/harness.mjs`（`[--mode land]`）；**删除** `scripts/land.mjs`
+3. **填充 CLI**：只认 `fill-inventory.mjs --domain <id>` / `fill-merge.mjs --domain <id>`；**删除** `fill-inventory-{api,func,db,redis,jobs}.mjs` 与 `fill-merge-{…}.mjs`
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.2`）
+5. **装/升 URL** 仍用 **`main`**
+
+| 旧命令 | 新命令 |
+|---|---|
+| `node scripts/land.mjs …` | `node scripts/harness.mjs …`（可选 `--mode land`） |
+| `node scripts/fill-inventory-<id>.mjs …` | `node scripts/fill-inventory.mjs --domain <id> …` |
+| `node scripts/fill-merge-<id>.mjs …` | `node scripts/fill-merge.mjs --domain <id> …` |
+
+## 0.7.0 → 0.7.1 迁移要点
+
+1. **meta**：`skill_version` → `0.7.1`（文档/发包；无行为 breaking）
+2. **热路径**：根 stub / `使用手册.html` / host TRAE evidence stub 已删；链 `modes/` · `CODEX-MANUAL` · `_history`
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.1`）
+4. **装/升 URL** 仍用 **`main`**
+
 ## 0.6.9 → 0.7.0 迁移要点
 
 1. **meta**：`skill_version` → `0.7.0`
@@ -76,7 +97,7 @@
 ## 0.6.7 → 0.6.8-dev 迁移要点
 
 1. **meta**：`skill_version` → `0.6.8-dev`（resume / upgrade 写 meta 时对齐 manifest）
-2. **Codex（若 `ai_tools` 含 codex）**：确认 `.codex/config.toml.example` 与 hooks matcher `^Bash$`；人验 [CODEX-P0-MANUAL.md](../host/CODEX-P0-MANUAL.md)（trust · `/hooks` · `/mcp`）
+2. **Codex（若 `ai_tools` 含 codex）**：确认 `.codex/config.toml.example` 与 hooks matcher `^Bash$`；人验 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)（trust · `/hooks` · `/mcp`）
 3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.6.8-dev`）；Codex P0 轻指针（0.6.9 起改为全量 skills）
 4. 生产装/升仍用 **`main`**；本号为开发分支增量
 
@@ -141,26 +162,26 @@
 2. **会话仪表盘**：工程轮 footer 去掉 mermaid `quadrantChart`（Trae 等宿主 Syntax Error）；有 score 时改一行纯文本施工态势。规格 [session-dashboard.md](session-dashboard.md)
 3. **0.6.1 Trae 高钉号不回退**
 
-## 0.6.1-dev → 0.6.1 迁移要点
+## 0.6.1-dev → 0.6.1 迁移要点（历史）
 
 1. **meta**：`skill_version` → `0.6.1`（resume / upgrade 写 meta 时对齐 manifest）
-2. **Trae 高**：官方实证 [TRAE-P0-EVIDENCE.md](../host/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**（MCP 走 `.trae/mcp.json` + Settings 开关）
+2. **Trae 高**：官方实证全文 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**（MCP 走 `.trae/mcp.json` + Settings 开关）
 3. **0.6.0 列车不重开**；人验 hooks/MCP 见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md)
 
-## 0.6.0 → 0.6.1-dev 迁移要点
+## 0.6.0 → 0.6.1-dev 迁移要点（历史）
 
 1. **meta**：`skill_version` → `0.6.1`（本版已钉号；中间号曾是 `0.6.1-dev`）
-2. **Trae P0**：官方实证 [TRAE-P0-EVIDENCE.md](../host/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**
+2. **Trae P0**：官方实证全文 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**
 3. **0.6.0 列车不重开**；人验 hooks/MCP 见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md)
 
-## 0.5.10 → 0.6.0 迁移要点
+## 0.5.10 → 0.6.0 迁移要点（历史）
 
 1. **meta**：`skill_version` → `0.6.0`（resume / upgrade 写 meta 时对齐 manifest）
 2. **写盘入口**：Agent 优先 `scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 为薄别名。勿把 `render.mjs` 当主路径
-3. **文档搬家**：规格在 `modes/` · `fill/` · `host/`；热路径旧根路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline`）
-4. **Codex**：0.6.x **冻结 P2**，全量对等另立项（见 [ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)）
+3. **文档搬家**：规格在 `modes/` · `fill/` · `host/`（0.7.1 起根目录不再留旧路径 stub）
+4. **Codex（当时）**：0.6.0 列车曾 **冻结 P2**；**0.6.9+ 已升「高 · 纪律 B」**，勿当现行矩阵（历史路线见 [`_history/.../ROADMAP-0.6.0.md`](../../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)）
 5. **pipeline**：骨架战役用 `--mode pipeline-skeleton`（不跑 fill-*）
-6. **填充 CLI**：只认 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（api `--enrich-dto` 挂统一入口）；域脚本为弃用 shim
+6. **填充 CLI**：只认 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（api `--enrich-dto` 挂统一入口；0.7.2 起域 shim 已删）
 7. **发包**：默认安装 **不含** `archive/selfcheck/legacy` 体积（热树只留 INDEX）；开发全仓可读 `_history/harness-eng-selfcheck-legacy/` 或 git 历史。`fill-truths-auto` 仍见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
 
 ## 0.5.9 → 0.5.10 迁移要点

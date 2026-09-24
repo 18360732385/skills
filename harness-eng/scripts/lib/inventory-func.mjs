@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-func — Service/Component → inventory JSON (no npm deps).
- * Alias (0.5.9+): prefer `fill-inventory.mjs --domain func`.
  *
  * Usage:
- *   node scripts/fill-inventory-func.mjs --root <TARGET>
+ *   node scripts/fill-inventory.mjs --domain func --root <TARGET>
  *       [--modules a,b] [--module a] [--all-modules] [--out inv.json]
  *
  * Default --out: docs/func/.fill-work/inventory.json
@@ -43,7 +42,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/fill-inventory-func.mjs --root <TARGET>
+  node scripts/fill-inventory.mjs --domain func --root <TARGET>
       [--modules sms-entrance,sms-safe] [--module sms-safe]
       [--all-modules] [--out inv.json]
 

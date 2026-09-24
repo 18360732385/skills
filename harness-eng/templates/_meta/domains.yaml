@@ -80,7 +80,7 @@ domains:
     optional: true
     detect: [S_JOBS]
     pack: jobs
-    inventory: fill-inventory-jobs.mjs
+    inventory: fill-inventory.mjs --domain jobs
     scan_fill_work: true
     hook_code: ["/\/scheduler\//", "/\/jobs?\//"]
     hook_docs: "docs/jobs/tasks/"

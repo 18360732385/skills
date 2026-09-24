@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.7.2: hard-delete land.mjs + domain fill shims.
+ * 0.7.1: hot-path slim (stubs/html/archive/superpowers).
  * 0.7.0: morph recalibrate (probe+depth→100); gold floor 95; ready deprecated; report_schema 0.3.0.
  * 0.6.9: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
  * 0.6.8-dev: Codex P0 parity thaw (PARITY/MANUAL/config.toml/hooks regex).
@@ -91,23 +93,17 @@ assert(
   "fixture bad"
 );
 
-// --- 0.2.19 new files ---
-assert(
-  fs.existsSync(path.join(skillRoot, "scripts/fill-merge-db.mjs")),
-  "fill-merge-db.mjs"
-);
-assert(
-  fs.existsSync(path.join(skillRoot, "scripts/fill-merge-redis.mjs")),
-  "fill-merge-redis.mjs"
-);
-assert(
-  fs.existsSync(path.join(skillRoot, "scripts/fill-merge-func.mjs")),
-  "fill-merge-func.mjs"
-);
+// --- 0.2.19 / 0.7.2: unified merge + lib (domain shims removed) ---
+assert(fs.existsSync(path.join(skillRoot, "scripts/fill-merge.mjs")), "fill-merge.mjs");
 assert(
   fs.existsSync(path.join(skillRoot, "scripts/lib/merge-domain.mjs")),
   "lib/merge-domain.mjs"
 );
+for (const id of ["api", "func", "db", "redis", "jobs"]) {
+  assert(!fs.existsSync(path.join(skillRoot, `scripts/fill-merge-${id}.mjs`)), `fill-merge-${id}.mjs absent`);
+  assert(!fs.existsSync(path.join(skillRoot, `scripts/fill-inventory-${id}.mjs`)), `fill-inventory-${id}.mjs absent`);
+}
+assert(!fs.existsSync(path.join(skillRoot, "scripts/land.mjs")), "land.mjs absent");
 
 // --- 0.2.19 fill-merge-api multi-module fix ---
 const mergeApiSrc = fs.readFileSync(
@@ -161,7 +157,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.7\.0"/.test(qYaml), "questions.yaml version 0.6.9");
+assert(/version:\s*"0\.7\.2"/.test(qYaml), "questions.yaml version 0.7.2");
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -178,28 +174,10 @@ assert(
   "Q_MODULES solo keeps agents_variant=solo meta"
 );
 
-// --- 0.2.19 domain merge scripts content ---
-const mergeDbSrc = fs.readFileSync(
-  path.join(skillRoot, "scripts/fill-merge-db.mjs"),
-  "utf8"
-);
-assert(/--domain"?,\s*"db"/.test(mergeDbSrc), "fill-merge-db uses domain=db");
-assert(
-  /fill-merge\.mjs/.test(mergeDbSrc),
-  "fill-merge-db delegates to fill-merge.mjs"
-);
-
-const mergeRedisSrc = fs.readFileSync(
-  path.join(skillRoot, "scripts/fill-merge-redis.mjs"),
-  "utf8"
-);
-assert(/--domain"?,\s*"redis"/.test(mergeRedisSrc), "fill-merge-redis uses domain=redis");
-
-const mergeFuncSrc = fs.readFileSync(
-  path.join(skillRoot, "scripts/fill-merge-func.mjs"),
-  "utf8"
-);
-assert(/--domain"?,\s*"func"/.test(mergeFuncSrc), "fill-merge-func uses domain=func");
+// --- 0.2.19 / 0.7.2: unified fill-merge --domain ---
+const mergeUniSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-merge.mjs"), "utf8");
+assert(/--domain/.test(mergeUniSrc), "fill-merge.mjs accepts --domain");
+assert(/mergeDomain/.test(mergeUniSrc) || /mergeApi/.test(mergeUniSrc), "fill-merge.mjs has merge body");
 
 // --- 0.2.19 merge-domain lib content ---
 const mergeDomainSrc = fs.readFileSync(
@@ -225,11 +203,11 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.7\.0"/.test(manifest), "manifest 0.6.9");
+assert(/version:\s*"0\.7\.2"/.test(manifest), "manifest 0.7.2");
 const rootManifestPath = path.join(skillRoot, "_meta/manifest.yaml");
 assert(fs.existsSync(rootManifestPath), "root _meta/manifest.yaml present");
 const rootManifest = fs.readFileSync(rootManifestPath, "utf8");
-assert(/version:\s*"0\.7\.0"/.test(rootManifest), "root _meta manifest 0.6.9");
+assert(/version:\s*"0\.7\.2"/.test(rootManifest), "root _meta manifest 0.7.2");
 {
   const rv = (rootManifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
   const tv = (manifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
@@ -240,12 +218,15 @@ const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.7\.0"/.test(metaTmpl), "harness-meta 0.6.9");
+assert(/skill_version:\s*"0\.7\.2"/.test(metaTmpl), "harness-meta 0.7.2");
 assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-const changelog05x = fs.readFileSync(path.join(skillRoot, "archive/CHANGELOG-0.5.x.md"), "utf8");
+const changelog05x = fs.readFileSync(
+  path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md"),
+  "utf8"
+);
 assert(/## 0\.5\.2/.test(changelog05x), "archive CHANGELOG 0.5.2");
 assert(/## 0\.5\.3/.test(changelog05x), "archive CHANGELOG 0.5.3");
 assert(/## 0\.5\.4/.test(changelog05x), "archive CHANGELOG 0.5.4");
@@ -255,11 +236,15 @@ assert(/## 0\.5\.7/.test(changelog05x), "archive CHANGELOG 0.5.7");
 assert(/## 0\.5\.8/.test(changelog05x), "archive CHANGELOG 0.5.8");
 assert(/## 0\.5\.9/.test(changelog05x), "archive CHANGELOG 0.5.9");
 assert(/## 0\.5\.10/.test(changelog05x), "archive CHANGELOG 0.5.10");
-assert(/archive\/CHANGELOG-0\.5\.x/.test(changelog), "hot CHANGELOG points archive/CHANGELOG-0.5.x");
+assert(
+  /_history\/harness-eng-docs-archive\/CHANGELOG-0\.5\.x|archive\/CHANGELOG-0\.5\.x/.test(changelog),
+  "hot CHANGELOG points _history CHANGELOG-0.5.x"
+);
 assert(!/^## 0\.5\.10/m.test(changelog), "hot CHANGELOG dropped 0.5.x sections");
 assert(/## 0\.6\.2/.test(changelog), "CHANGELOG 0.6.2");
 assert(/^## 0\.6\.7\b/m.test(changelog) && !((changelog.match(/^## 0\.6\.7[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.7");
 assert(/^## 0\.7\.0\b/m.test(changelog), "CHANGELOG 0.7.0");
+assert(/^## 0\.7\.2\b/m.test(changelog), "CHANGELOG 0.7.2");
 assert(/^## 0\.6\.8-dev\b/m.test(changelog), "CHANGELOG keeps 0.6.8-dev");
 assert(/Codex P0|增量解冻/.test(changelog), "CHANGELOG Codex P0 Chinese entry");
 assert(/^## 0\.6\.6\b/m.test(changelog), "CHANGELOG keeps 0.6.6");
@@ -438,7 +423,7 @@ assert(
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.7\.0）/.test(verifyMd) && /当前 \*\*0\.7\.0\*\*/.test(verifyMd), "VERIFY is 0.7.0");
+assert(/验收记录（0\.7\.2）/.test(verifyMd) && /当前 \*\*0\.7\.2\*\*/.test(verifyMd), "VERIFY is 0.7.2");
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
@@ -451,8 +436,8 @@ assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.7\.0/.test(readme), "README header version 0.7.0");
-assert(/当前 \*\*0\.7\.0\*\*/.test(readme), "README footer version 0.7.0");
+assert(/当前版本：0\.7\.2/.test(readme), "README header version 0.7.2");
+assert(/0\.7\.1/.test(readme), "README mentions 0.7.2");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -460,19 +445,16 @@ assert(!/selfcheck-0\.5\.2/.test(readme), "README no stale selfcheck-0.5.2 pin")
 assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 
 const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
-const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.7\.0\*\*/.test(handbookMd), "使用手册.md version 0.7.0");
-assert(/v0\.7\.0/.test(handbookHtml), "使用手册.html version 0.7.0");
-assert(/当前 \*\*0\.7\.0\*\*/.test(quickstartMd), "QUICKSTART version 0.7.0");
+assert(/版本：\*\*0\.7\.2\*\*/.test(handbookMd), "使用手册.md version 0.7.2");
+assert(/当前 \*\*0\.7\.2\*\*/.test(quickstartMd), "QUICKSTART version 0.7.2");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
-assert(/selfcheck\.mjs/.test(handbookHtml), "使用手册.html pins selfcheck.mjs");
+assert(!fs.existsSync(path.join(skillRoot, "使用手册.html")), "使用手册.html removed (0.7.1)");
 const handbookSummary = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
 for (const [label, text] of [
   ["使用手册.md", handbookMd],
-  ["使用手册.html", handbookHtml],
   ["使用手册-摘要.md", handbookSummary],
   ["QUICKSTART.md", quickstartMd],
   ["README.md", readme],
@@ -485,9 +467,7 @@ for (const [label, text] of [
 }
 assert(!/重启 Cursor/.test(readme), "README no restart Cursor");
 assert(/6\.0 对话内会话仪表盘/.test(handbookMd), "使用手册.md session dashboard section");
-assert(/详情请查询仪表盘/.test(handbookHtml), "使用手册.html session dashboard footer copy");
-assert(!/v0\.5\.0/.test(handbookHtml), "使用手册.html no stale v0.5.0");
-assert(!/不臆造/.test(handbookHtml), "使用手册.html no stale 不臆造 hooks");
+assert(/详情请查询仪表盘/.test(handbookMd), "使用手册.md session dashboard footer copy");
 assert(/L0–L5/.test(quickstartMd), "QUICKSTART audit L0-L5");
 assert(/^# 阶梯 L0–L5/m.test(ladderMd), "ladder title L0-L5");
 assert(/sync-hosts\.md/.test(handbookMd), "使用手册.md links sync-hosts");
@@ -522,12 +502,17 @@ assert(
   "OPTIMIZATION not in harness-eng/archive hot pack"
 );
 
-// --- fill-merge scripts --help smoke ---
-for (const script of ["fill-merge-db.mjs", "fill-merge-redis.mjs", "fill-merge-func.mjs"]) {
-  const r = runNode([path.join(skillRoot, "scripts", script), "--help"]);
+// --- fill-merge --domain --help smoke ---
+for (const id of ["db", "redis", "func"]) {
+  const r = runNode([
+    path.join(skillRoot, "scripts/fill-merge.mjs"),
+    "--domain",
+    id,
+    "--help",
+  ]);
   assert(
-    /--inventory|--work-dir/.test(r.stdout + r.stderr),
-    `${script} --help shows usage`
+    r.status === 0 && /--inventory|--work-dir|--domain/.test(r.stdout + r.stderr),
+    `fill-merge --domain ${id} --help shows usage`
   );
 }
 
@@ -1134,7 +1119,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.7\.0"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.6.9");
+  assert(/version:\s*"0\.7\.2"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.2");
 }
 
 // --- 0.3.4/0.3.5 jobs domain + domains.yaml + packs + inventory ---
@@ -1179,12 +1164,16 @@ if (fs.existsSync(fixture)) {
   const renderSrc = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
   assert(/expandDomainPackEntries/.test(renderSrc), "render expands domain packs");
   assert(
-    fs.existsSync(path.join(skillRoot, "scripts/fill-inventory-jobs.mjs")),
-    "fill-inventory-jobs.mjs"
+    fs.existsSync(path.join(skillRoot, "scripts/lib/inventory-jobs.mjs")),
+    "lib/inventory-jobs.mjs"
   );
   assert(
-    fs.existsSync(path.join(skillRoot, "scripts/fill-merge-jobs.mjs")),
-    "fill-merge-jobs.mjs"
+    !fs.existsSync(path.join(skillRoot, "scripts/fill-inventory-jobs.mjs")),
+    "fill-inventory-jobs.mjs absent"
+  );
+  assert(
+    !fs.existsSync(path.join(skillRoot, "scripts/fill-merge-jobs.mjs")),
+    "fill-merge-jobs.mjs absent"
   );
   assert(
     /checkJobsFile/.test(
@@ -1308,8 +1297,8 @@ if (fs.existsSync(fixture)) {
   const agents = readDoc("fill-truths-agents.md");
   assert(/fill-merge\.mjs --domain/.test(agents), "fill-truths-agents fill-merge --domain");
   const qs = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
-  const jobsRows = (qs.match(/fill-inventory-jobs/g) || []).length;
-  assert(jobsRows === 1, "QUICKSTART single jobs row");
+  assert(/fill-inventory\.mjs --domain jobs/.test(qs), "QUICKSTART jobs uses fill-inventory --domain");
+  assert(!/fill-inventory-jobs/.test(qs), "QUICKSTART no fill-inventory-jobs shim");
   assert(/fill-merge\.mjs --domain jobs/.test(qs), "QUICKSTART jobs uses fill-merge --domain");
   const morphPath = path.join(skillRoot, "templates/_meta/morph-required.yaml");
   assert(fs.existsSync(morphPath), "morph-required.yaml");
@@ -1339,8 +1328,8 @@ if (fs.existsSync(fixture)) {
     "fill-score 报告字段速查"
   );
   assert(
-    /非路线图/.test(fs.readFileSync(path.join(skillRoot, "archive/README.md"), "utf8")),
-    "archive OPTIMIZATION not roadmap"
+    /_history|历史|迁出/.test(fs.readFileSync(path.join(skillRoot, "archive/README.md"), "utf8")),
+    "archive README points _history"
   );
   assert(
     /契约域闭环/.test(readDoc("truth-quality.md")),

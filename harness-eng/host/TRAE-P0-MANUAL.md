@@ -1,6 +1,6 @@
 # Trae P0 真人会话清单（短）
 
-给**本机已装 Trae IDE** 的同学。对照日文档见 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。做完在本页打勾或把结果贴回 PR。0.6.1 矩阵已是 **高**；hooks PASS **单独不授权**升号（须 MCP 面板）。
+给**本机已装 Trae IDE** 的同学。对照日文档见 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。做完在本页打勾或把结果贴回 PR。0.6.1 矩阵已是 **高**；hooks PASS **单独不授权**升号（须 MCP 面板）。
 
 仓库至少有：`.trae/rules/`（含 frontmatter）、`.trae/hooks.json`、`.trae/mcp.json`（或 `.example` 拷成真文件）。
 
@@ -98,7 +98,7 @@ T-P1-2 后生成物门禁 matcher 是 **`Bash|RunCommand`**（官方终端 `tool
 
 - **预期**：各宿主 `1x-contract-sync.md` **消失**（L5 全量镜像，1x 冗余）。不要从 git 捡回来。
 - **若 `.trae/rules/00-harness-ssot.md` 没了**：先确认 SSOT 有 `docs/agent-config/rules/00-harness-ssot.mdc`。没有就 **重新 land/render L5**（让 render 写出 SSOT 00），再 `node scripts/agent-config/sync.mjs`。**不要** `git restore` `.trae/rules/00-harness-ssot.md`（或 qoder/claude/codebuddy 上的同名孤儿）。
-- 判断依据：[TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)「2026-09-12 消费仓 sync stale 清理」。
+- 判断依据：[`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)「2026-09-12 消费仓 sync stale 清理」。
 
 ## 回传格式（可贴 PR）
 

@@ -22,7 +22,7 @@
 | live 校准 | `fill-calibrate-live` | MCP 不可用时直连；可按引擎过 **填充 MCP 闸** | `scripts/fill-calibrate-live.mjs` |
 | HTML 报告 | `fill-report-html` | score → Dashboard；「开干」绑 ai_coding_ready | `scripts/fill-report-html.mjs` |
 | 多 Agent 精填 | `fill-truths-agents` | 按模板完整档 + Plan 批次【推荐】 | [fill-truths-agents.md](fill-truths-agents.md) |
-| 自动填充 | `fill-truths-auto` | **仅脚本、对话不推荐** | [fill-truths-auto.md](../fill-truths-auto.md) → [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) |
+| 自动填充 | `fill-truths-auto` | **仅脚本、对话不推荐** | [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) |
 | 契约填充 | `fill-truths` | 完整档；默认 agents | [fill-truths.md](fill-truths.md) · [fill-workers.md](fill-workers.md) |
 
 ## 填充引擎 `Q_FILL_ENGINE`
@@ -54,7 +54,7 @@
 
 ## 规范 CLI（0.5.9+）
 
-inventory / merge **优先**统一入口（域脚本是别名，见 [fill/README.md](README.md)）：
+inventory / merge **只认**统一入口（见 [fill/README.md](README.md)）：
 
 ```bash
 node scripts/fill-inventory.mjs --domain <api|func|db|redis|jobs> --root <TARGET>
@@ -62,7 +62,7 @@ node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir
 node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --target <ssot.md> --write
 ```
 
-`fill-inventory-*.mjs` / `fill-merge-*.mjs` 仅为 **弃用** 薄包装（只转发 argv）。api 的 `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 CLI：`fill-merge.mjs --domain api`（`fill-merge-api.mjs` 仍可当 shim）。
+api 的 `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 CLI：`fill-merge.mjs --domain api`。
 
 workers：[fill-workers.md](fill-workers.md) · [ai-tools.md](../host/ai-tools.md)。  
 质量：[truth-quality.md](../modes/truth-quality.md)。

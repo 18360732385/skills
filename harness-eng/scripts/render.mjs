@@ -8,7 +8,6 @@
  * Internal renderer. Agent public write entry:
  *   node scripts/harness.mjs --root <TARGET> --params <params.json>
  *       [--mode land|resume|upgrade|pipeline-skeleton]
- *   (land.mjs is a thin alias)
  *
  * Explicit files:
  *   { "placeholders": {...}, "files": [{ "template", "target", "action" }] }
@@ -172,7 +171,6 @@ Internal renderer (not the Agent primary write path).
 Public entry:
   node scripts/harness.mjs --root <TARGET> --params <params.json>
       [--mode land|resume|upgrade|pipeline-skeleton]
-  land.mjs is a thin alias of harness.mjs.
 `);
 }
 

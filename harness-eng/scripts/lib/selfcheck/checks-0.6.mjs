@@ -15,7 +15,6 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   // Re-load hot docs so this suite does not depend on outer-scope consts from selfcheck.mjs
   const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
-  const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
   const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
   const manifest = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const pipeline = readDoc("pipeline.md");
@@ -37,10 +36,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.0-dev M1: harness CLI · ROADMAP · G6 freeze · version pin ---
 {
-  assert(fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "ROADMAP-0.6.0.md stub");
-  assert(fs.existsSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md")), "archive/ROADMAP-0.6.0.md body");
-  assert(/archive\/ROADMAP-0\.6\.0/.test(fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8")), "ROADMAP root is stub");
-  const roadmap = fs.readFileSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md"), "utf8");
+  const roadmapPath = path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md");
+  assert(fs.existsSync(roadmapPath), "_history ROADMAP-0.6.0.md body");
+  assert(!fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "no root ROADMAP stub (0.7.1)");
+  const roadmap = fs.readFileSync(roadmapPath, "utf8");
   assert(/G1/.test(roadmap) && /G7/.test(roadmap), "ROADMAP has G1–G7");
   assert(/M1/.test(roadmap) && /M4/.test(roadmap), "ROADMAP has M1–M4");
   assert(/pipeline-skeleton/.test(roadmap), "ROADMAP names pipeline-skeleton");
@@ -48,9 +47,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/冻结/.test(roadmap) && /P2/.test(roadmap) && /另立项/.test(roadmap), "ROADMAP G6 Codex P2 freeze");
   assert(/非目标|Non-goals|不做/.test(roadmap), "ROADMAP lists non-goals");
 
-  assert(/ROADMAP-0\.6\.0/.test(readme), "README links ROADMAP-0.6.0");
+  assert(/CHANGELOG/.test(readme), "README points CHANGELOG (ROADMAP archived)");
   const agentIndex060 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
-  assert(/ROADMAP-0\.6\.0/.test(agentIndex060), "AGENT-INDEX links ROADMAP-0.6.0");
+  assert(!/\]\(ROADMAP-0\.6\.0\.md\)/.test(agentIndex060), "AGENT-INDEX no root ROADMAP link");
   const changelog060 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   assert(
     /## 0\.6\.0\b/.test(changelog060) && /ROADMAP-0\.6\.0/.test(changelog060),
@@ -67,10 +66,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     "harness --help lists land|resume|upgrade|pipeline-skeleton"
   );
 
-  const landSrc060 = fs.readFileSync(path.join(skillRoot, "scripts/land.mjs"), "utf8");
-  assert(/harness\.mjs/.test(landSrc060), "land.mjs aliases harness.mjs");
-  const landHelp060 = runNode([path.join(skillRoot, "scripts/land.mjs"), "--help"]);
-  assert(landHelp060.status === 0 && /--root/.test(landHelp060.stdout), "land.mjs alias --help");
+  assert(!fs.existsSync(path.join(skillRoot, "scripts/land.mjs")), "land.mjs removed (0.7.2)");
 
   const skill060 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
   const wp060 = readDoc("write-plan.md");
@@ -218,10 +214,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   for (const keep of ROOT_KEEP) {
     assert(rootMds.includes(keep), `root keeps ${keep}`);
   }
-  for (const stub of ROOT_STUBS) {
-    assert(rootMds.includes(stub), `root stub ${stub} exists`);
-  }
-  const unexpected = rootMds.filter((f) => !ROOT_KEEP.includes(f) && !ROOT_STUBS.includes(f));
+  assert(Array.isArray(ROOT_STUBS) && ROOT_STUBS.length === 0, "ROOT_STUBS empty (0.7.1)");
+  const unexpected = rootMds.filter((name) => !ROOT_KEEP.includes(name));
   assert(unexpected.length === 0, `no unexpected root md (${unexpected.join(", ") || "none"})`);
 
   for (const [from, to] of Object.entries(DOC_MOVES)) {
@@ -231,18 +225,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     assert(body.length > 200 && !/^# .+\n\n正文已迁到/.test(body), `${to} is not a stub`);
   }
 
-  for (const stub of ROOT_STUBS) {
-    const text = fs.readFileSync(path.join(skillRoot, stub), "utf8");
-    const lines = text.trim().split(/\n/).length;
-    assert(lines <= 12, `stub ${stub} is thin (≤12 lines, got ${lines})`);
-    if (stub === "fill-truths-auto.md") {
-      assert(/archive\/fill-truths-auto/.test(text), "fill-truths-auto stub → archive");
-    } else {
-      const dest = DOC_MOVES[stub];
-      assert(dest && text.includes(dest), `stub ${stub} points to ${dest}`);
-      assert(/已搬家|迁到/.test(text), `stub ${stub} says 已搬家`);
-    }
-  }
+  assert(!fs.existsSync(path.join(skillRoot, "fill-truths-auto.md")), "no root fill-truths-auto stub");
+  assert(fs.existsSync(path.join(skillRoot, "archive/fill-truths-auto/INDEX.md")), "archive fill-truths-auto INDEX");
 
   assert(fs.existsSync(path.join(skillRoot, "modes/README.md")), "modes/README.md");
   assert(fs.existsSync(path.join(skillRoot, "host/README.md")), "host/README.md");
@@ -262,7 +246,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/fill\/fill-score\.md/.test(skillM2), "SKILL points fill/fill-score.md");
   assert(/host\/ai-tools\.md/.test(skillM2), "SKILL points host/ai-tools.md");
 
-  const roadmapM2 = fs.readFileSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md"), "utf8");
+  const roadmapM2 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T2\.1/.test(roadmapM2) && /\[x\].*T2\.5/.test(roadmapM2), "ROADMAP G2 T2.1–T2.5 checked");
 
   const changelogM2 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
@@ -319,10 +303,6 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 // --- 0.6.0-dev M3: G3 fill engine convergence + G4 golden fixtures ---
 {
   const domains = ["api", "func", "db", "redis", "jobs"];
-  const SHIM_MAX = 30;
-  function lineCount(rel) {
-    return fs.readFileSync(path.join(skillRoot, rel), "utf8").trim().split(/\n/).length;
-  }
   function readRel(rel) {
     return fs.readFileSync(path.join(skillRoot, rel), "utf8");
   }
@@ -335,14 +315,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
 
   for (const id of domains) {
-    const rel = `scripts/fill-inventory-${id}.mjs`;
-    const src = readRel(rel);
-    const n = lineCount(rel);
-    assert(n <= SHIM_MAX, `fill-inventory-${id}.mjs shim ≤${SHIM_MAX} lines (got ${n})`);
-    assert(/fill-inventory\.mjs/.test(src) && /--domain/.test(src), `fill-inventory-${id} forwards --domain`);
     assert(
-      !/CONTROLLER_DIR_NAMES|CREATE\s+TABLE|walkJava|SyncTaskCode/.test(src),
-      `fill-inventory-${id} has no scan logic`
+      !fs.existsSync(path.join(skillRoot, `scripts/fill-inventory-${id}.mjs`)),
+      `fill-inventory-${id}.mjs removed (0.7.2)`
     );
     assert(fs.existsSync(path.join(skillRoot, `scripts/lib/inventory-${id}.mjs`)), `lib/inventory-${id}.mjs`);
   }
@@ -353,12 +328,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/mergeApi/.test(mergeUni060) && /lib\/merge-api\.mjs/.test(mergeUni060), "fill-merge.mjs uses lib/merge-api");
 
   for (const id of domains) {
-    const rel = `scripts/fill-merge-${id}.mjs`;
-    const src = readRel(rel);
-    const n = lineCount(rel);
-    assert(n <= SHIM_MAX, `fill-merge-${id}.mjs shim ≤${SHIM_MAX} lines (got ${n})`);
-    assert(/fill-merge\.mjs/.test(src) && /--domain/.test(src), `fill-merge-${id} forwards --domain`);
-    assert(!/invEvidenceSet|skippedOtherModule|walkMd\(/.test(src), `fill-merge-${id} has no merge body`);
+    assert(
+      !fs.existsSync(path.join(skillRoot, `scripts/fill-merge-${id}.mjs`)),
+      `fill-merge-${id}.mjs removed (0.7.2)`
+    );
   }
 
   const invHelpM3 = runNode([path.join(skillRoot, "scripts/fill-inventory.mjs"), "--help"]);
@@ -374,7 +347,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
 
   const fillIdxM3 = readRel("fill/README.md");
-  assert(/deprecated|弃用|薄包装|shim/i.test(fillIdxM3), "fill/README marks domain scripts deprecated shims");
+  assert(!/弃用.*shim|deprecated shim|域脚本是/i.test(fillIdxM3), "fill/README has no domain shim rows");
+  assert(/只认统一 CLI|fill-inventory\.mjs --domain/.test(fillIdxM3), "fill/README documents unified CLI only");
   assert(/--enrich-dto/.test(fillIdxM3), "fill/README documents api enrich flags on unified merge");
   const fillMdM3 = readDoc("fill.md");
   assert(/--enrich-dto/.test(fillMdM3) && /fill-merge\.mjs --domain api/.test(fillMdM3), "fill.md api enrich on unified CLI");
@@ -434,7 +408,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(scanSignals(qoderFixM3).S_HOOKS, "qoder-hooks still S_HOOKS");
   assert(scanSignals(stackFixM3).S_STACK && !scanSignals(stackFixM3).MATURE, "stack-node still S_STACK only");
 
-  const roadmapM3 = readRel("archive/ROADMAP-0.6.0.md");
+  const roadmapM3 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T3\.1/.test(roadmapM3) && /\[x\].*T3\.3/.test(roadmapM3), "ROADMAP G3 T3.1–T3.3 checked");
   assert(/\[x\].*T4\.1/.test(roadmapM3) && /\[x\].*T4\.3/.test(roadmapM3), "ROADMAP G4 T4.1–T4.3 checked");
 
@@ -512,9 +486,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.7.0", "manifest version exactly 0.7.0");
+  assert(verLine && verLine[1] === "0.7.2", "manifest version exactly 0.7.1");
 
-  const roadmapM4 = readRel("archive/ROADMAP-0.6.0.md");
+  const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
   assert(/\[x\].*T7\.1/.test(roadmapM4) && /\[x\].*T7\.3/.test(roadmapM4), "ROADMAP G7 T7.1–T7.3 checked");
   assert(/列车已收口|列车完成|正式 0\.6\.0.*收口/.test(roadmapM4), "ROADMAP notes train complete");
@@ -544,9 +518,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.1: Trae 高 formal pin (evidence · MCP panel PASS · matrix 高) ---
 {
-  assert(fs.existsSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md")), "host TRAE-P0-EVIDENCE stub");
-  assert(/archive\/TRAE-P0-EVIDENCE/.test(fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md"), "utf8")), "EVIDENCE host file is stub");
-  const evidence = fs.readFileSync(path.join(skillRoot, "archive/TRAE-P0-EVIDENCE.md"), "utf8");
+  const evidencePath = path.resolve(skillRoot, "../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md");
+  assert(fs.existsSync(evidencePath), "_history TRAE-P0-EVIDENCE.md");
+  assert(!fs.existsSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md")), "no host TRAE-P0-EVIDENCE stub");
+  const evidence = fs.readFileSync(evidencePath, "utf8");
   assert(/T-P0-1/.test(evidence) && /T-P0-4/.test(evidence), "TRAE-P0-EVIDENCE has T-P0-1…4");
   assert(/docs PASS/.test(evidence) && /partial/.test(evidence), "TRAE-P0-EVIDENCE statuses");
   assert(/RunCommand/.test(evidence) && /alwaysApply/.test(evidence), "TRAE-P0-EVIDENCE cites FM + RunCommand");
@@ -604,7 +579,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.6\.1-dev/.test(changelog061), "CHANGELOG folds 0.6.1-dev notes");
   assert(/刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
   assert(/00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1 notes L5 SSOT 00");
-  const roadmap061 = fs.readFileSync(path.join(skillRoot, "archive/ROADMAP-0.6.0.md"), "utf8");
+  const roadmap061 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
   assert(/0\.6\.1/.test(roadmap061) && /高/.test(roadmap061), "ROADMAP notes 0.6.1 Trae 高 pin");
   const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
@@ -672,7 +647,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/trae[\s\S]{0,80}\*\*高\*\*/.test(syncHosts061) || /\|\s*trae\s*\|[^\n]*\*\*高\*\*/.test(syncHosts061), "sync-hosts.md Trae 高");
   const qs061 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
   assert(/Trae \*\*高\*\*/.test(qs061) || /\*\*Trae 高\*\*/.test(qs061), "QUICKSTART Trae 高");
-  assert(/Trae \*\*高\*\*/.test(handbookMd) || /Trae<\/td><td><strong>高<\/strong>/.test(handbookHtml), "手册 Trae 高");
+  assert(/Trae[\s\S]{0,40}\*\*高\*\*/.test(handbookMd), "手册 Trae 高");
 
   // T-P1-4: thin Trae L5 sync path nails (no huge golden tree)
   assert(/\.trae\/rules\/\$\{rule\.name/.test(syncTmpl061), "sync.mjs.tmpl distributes Trae L5 rules");
@@ -801,7 +776,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     reportExpectedRel: null,
     reportExists: false,
     scorePath: null,
-    handbookPath: "使用手册.html",
+    handbookPath: "使用手册.md",
     handbookUrl: null,
   };
   const stanceMd = (coverage, morph) =>
@@ -839,23 +814,23 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.7.0", "current manifest pin 0.7.0");
+  assert(manVer063 === "0.7.2", "current manifest pin 0.7.1");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.7\.0/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.7\.0/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.7\.2/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
+  assert(/HARNESS_ENG_VERSION:\s*0\.7\.2/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.7\.0/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.7\.2/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.7\.0/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.7\.2/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -1246,7 +1221,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
   assert(
-    /版本：\*\*0\.7\.0\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
+    /版本：\*\*0\.7\.2\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
     "使用手册-摘要 version 0.7.0"
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
@@ -1289,11 +1264,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/CODEX-PARITY/.test(hostReadme068) && /CODEX-MANUAL/.test(hostReadme068), "host README links Codex docs");
   const agentIdx068 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
   assert(/CODEX-PARITY/.test(agentIdx068), "AGENT-INDEX links CODEX-PARITY");
-  assert(/CODEX-PARITY/.test(fs.readFileSync(path.join(skillRoot, "ROADMAP-0.6.0.md"), "utf8")), "ROADMAP stub links CODEX-PARITY");
+  assert(/CODEX-PARITY/.test(agentIdx068), "AGENT-INDEX links CODEX-PARITY (ROADMAP stub removed)");
 
   const changelog068 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   assert(/^## 0\.6\.9\b/m.test(changelog068), "CHANGELOG 0.6.9 heading");
   assert(/^## 0\.7\.0\b/m.test(changelog068), "CHANGELOG 0.7.0 heading");
+  assert(/^## 0\.7\.2\b/m.test(changelog068), "CHANGELOG 0.7.1 heading");
   assert(/^## 0\.6\.8-dev\b/m.test(changelog068), "CHANGELOG keeps 0.6.8-dev");
   assert(/Codex P0|增量解冻/.test(changelog068), "CHANGELOG Chinese Codex P0 entry");
   assert(/\*\*`main`\*\*|\*\*main\*\*/.test(changelog068), "CHANGELOG keeps main install URL");
@@ -1301,14 +1277,17 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const upgrade068 = readDoc("upgrade.md");
   assert(/0\.6\.8-dev → 0\.6\.9/.test(upgrade068), "upgrade has 0.6.8-dev → 0.6.9");
   assert(/0\.6\.9 → 0\.7\.0/.test(upgrade068), "upgrade has 0.6.9 → 0.7.0");
+  assert(/0\.7\.1 → 0\.7\.2/.test(upgrade068), "upgrade has 0.7.1 → 0.7.2");
+  assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
   assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
 
   const verify068 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/0\.6\.9 增量验收/.test(verify068), "VERIFY 0.6.9 section");
   assert(/0\.7\.0 增量验收/.test(verify068), "VERIFY 0.7.0 section");
+  assert(/0\.7\.2 增量验收/.test(verify068), "VERIFY 0.7.1 section");
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/0\.7\.0/.test(syncTmpl068), "sync tmpl id 0.7.0");
+  assert(/0\.7\.2/.test(syncTmpl068), "sync tmpl id 0.7.1");
   assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools068), "Trae matrix still 高 after Codex P0");

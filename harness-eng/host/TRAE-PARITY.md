@@ -6,8 +6,8 @@ harness-eng **0.6.1**（0.6.0 列车已收口；0.6.1-dev spike 已钉号）对�
 
 **目标（已达成）**：把矩阵 Trae 从 **中高 → 高**，同时 **不假装** Trae 走 Cursor 协议（hooks 仍是 Claude 族；MCP 仍走 `.trae/mcp.json`）。Rules 镜像 **保留** 官方 `alwaysApply` / `globs` frontmatter（0.6.1-dev P0 hotfix）。hooks PASS **单独不授权**升 **高**——本版另有 MCP 面板 PASS + T-P1-3 / T-P1-4。
 
-交叉：[adapters/trae.md](../templates/ai-tools/adapters/trae.md) · [ai-tools.md](ai-tools.md) · [ROADMAP-0.6.0.md](../ROADMAP-0.6.0.md)。  
-**0.6.1-dev Trae P0 spike 已收口为 0.6.1**：官方实证 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md) · 人验清单 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)。
+交叉：[adapters/trae.md](../templates/ai-tools/adapters/trae.md) · [ai-tools.md](ai-tools.md) · 历史路线 [`_history/.../ROADMAP-0.6.0.md`](../../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。  
+**0.6.1-dev Trae P0 spike 已收口为 0.6.1**：官方实证 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md) · 人验清单 [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)。
 
 ## 目标定义
 
@@ -38,7 +38,7 @@ P0 spike（0.6.1-dev → 0.6.1）已落地的工程项：
 - `mature-trae` fixture（无 `.cursor/rules` 仍 MATURE）；适配卡 Skills 已是一等公民
 - 镜像 **保留** Trae frontmatter（不再只剩正文提示）
 - 官方事实页 + 人验清单已写
-- L5 **00-harness-ssot 经 SSOT**：render 保证 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 rules 目录仍由 sync 托管。2026-09-12 消费仓 sync 清 `1x` ✅、清宿主 00 孤儿 ✅；从 git 恢复宿主副本 ❌（见 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)）
+- L5 **00-harness-ssot 经 SSOT**：render 保证 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 rules 目录仍由 sync 托管。2026-09-12 消费仓 sync 清 `1x` ✅、清宿主 00 孤儿 ✅；从 git 恢复宿主副本 ❌（见 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)）
 - selfcheck 钉 Trae L5 sync 路径（`.trae/rules` / `.trae/hooks.json` / `.trae/mcp.json`）+ `selfcheck-render` `l5-trae-ssot-00-harness`
 
 已实证：
@@ -52,7 +52,7 @@ P0 spike（0.6.1-dev → 0.6.1）已落地的工程项：
 
 工程扩面之前先钉事实。每条写清 **通过标准**；未过不改矩阵、不宣称同级。
 
-**0.6.1 状态（2026-09-12 官方文档 + Trae CN 实机回传 + 2026-09-14 面板）** → 全文：[TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md) · 人验：[TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)。
+**0.6.1 状态（2026-09-12 官方文档 + Trae CN 实机回传 + 2026-09-14 面板）** → 全文：[`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md) · 人验：[TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md)。
 
 | ID | 要验证 | 通过标准 | 0.6.1 状态 |
 |---|---|---|---|
@@ -61,7 +61,7 @@ P0 spike（0.6.1-dev → 0.6.1）已落地的工程项：
 | **T-P0-3** hooks event map | Claude 族 `PreToolUse` / `PostToolUse` / `Stop`（及 matcher `RunCommand` / `Edit\|Write` / `mcp__mysql.*`）在 Trae 是否真触发 | 对照表经实测；至少一条门禁生效；**不**改写成 Cursor 扁平协议 | **docs + 本机行为 PASS**（2026-09-14）。Round C **本机行为 FAIL** = **matcher 误诊**。T-P1-2 matcher `Bash\|RunCommand` + `additionalContext` 已实机验证。hooks PASS **单独不授权**升 **高** |
 | **T-P0-4** skills first-class | `.trae/skills/` 是否一等公民（项目 skills 可发现、可点名） | 官方或实测：发现规则与 Cursor 对等或明确差集；适配卡去掉「若宿主支持」 | **PASS**（会话：`harness-eng` 可见可点名；`release-eng` 因 `disable-model-invocation` 隐藏） |
 
-P0 文档产出已在 [TRAE-P0-EVIDENCE.md](TRAE-P0-EVIDENCE.md)。T-P0-1 的 strip-FM 是文档揭示的明确 harness bug，本 spike **已按宿主分支修好**（Claude/Qoder 仍 strip）。
+P0 文档产出已在 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。T-P0-1 的 strip-FM 是文档揭示的明确 harness bug，本 spike **已按宿主分支修好**（Claude/Qoder 仍 strip）。
 
 ## P1 工程向缩小差距
 
@@ -90,7 +90,7 @@ P0 过关后再动生成器 / fixture / 矩阵。
 
 - **不**把 Trae hooks 改成 Cursor 扁平 `beforeShellExecution`
 - **不**把 Trae MCP 改到 `.cursor/mcp.json` 或根 `.mcp.json`（除非 T-P0-2 证明官方已改主路径）
-- **不**做 Codex 全量对等（那是 [ROADMAP G6](../ROADMAP-0.6.0.md) 另立项，与本清单无关）
+- **不**做 Codex `.mdc` 全量镜像（Codex 已 **高 · 纪律 B**；见 [CODEX-PARITY.md](CODEX-PARITY.md)；与历史 [ROADMAP G6](../../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md) 另立项叙述无关）
 - **不**重写使用手册全文、不加新契约域、不重做打分模型
 - **不**重开已收口的 **0.6.0**（升号 **0.6.1**；0.6.1-dev spike 已钉号）
 - **不**因「文件已生成」提前把矩阵改成 **高**

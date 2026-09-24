@@ -14,8 +14,8 @@ import { findHarnessMetaFile } from "./harness-meta.mjs";
 const SCORE_REL = "docs/harness-eng/score-latest.json";
 const REPORT_REL = "docs/harness-eng/report-latest.html";
 const FILL_PLAN_REL = "docs/harness-eng/fill-plan.yaml";
-const HANDBOOK_REL = "使用手册.html";
-const HANDBOOK_ANCHOR = "#s6";
+const HANDBOOK_REL = "使用手册.md";
+const HANDBOOK_ANCHOR = "#60-对话内会话仪表盘工程轮末尾";
 
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -206,7 +206,7 @@ export function buildSessionDashboard(opts = {}) {
 }
 
 function renderDashboardLinkFooter(data) {
-  const handbookLabel = "四台读法（使用手册.html#s6）";
+  const handbookLabel = "四台读法（使用手册.md · 第6章）";
   const handbookPart = data.handbookUrl
     ? `[${handbookLabel}](${data.handbookUrl})`
     : `[${handbookLabel}](${HANDBOOK_REL}${HANDBOOK_ANCHOR})`;

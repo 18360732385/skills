@@ -1,7 +1,7 @@
 # harness-eng 快速开始
 
 一页纸入口。详细闸门与模式见 [SKILL.md](SKILL.md)、[glossary.md](glossary.md)。  
-人读完整说明：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。  
+人读完整说明：[使用手册.md](使用手册.md)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。  
 拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主；热路径见 [AGENT-INDEX.md](AGENT-INDEX.md)。
 
 ## 一句话安装 / 更新
@@ -27,7 +27,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 | 只看缺口、不写盘 | **审计** / audit | 对照 L0–L5，默认不写文件 |
 | 半成品接着补 | **续跑** / resume | 只补缺口，`on_exists=skip` |
 | 按模板深填契约 | **多 Agent 填充** / fill-truths-agents | 须过 **填充 MCP 闸** → Plan 批次 → acceptance → merge → score |
-| 含 Cron / Scheduler | 域含 **jobs** + inventory | `fill-inventory.mjs --domain jobs`（别名 `fill-inventory-jobs`）→ `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT） |
+| 含 Cron / Scheduler | 域含 **jobs** + inventory | `fill-inventory.mjs --domain jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT） |
 | 建填充目标/批次 | **填充计划** / fill-plan | `docs/harness-eng/fill-plan.yaml`（大仓 gold+sample_n） |
 | 仅脚本薄草稿（对话不推荐） | **自动填充** / fill-truths-auto | 归档实现；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | 看能不能开 AI 改业务 | **完整度打分** / fill-score | 打开 **report-latest.html** 决策台 |
@@ -42,7 +42,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 | 「建议暂缓」/ 开干 NO / blockers 非空 | 不可以 |
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
-四台读法见 [使用手册.html](使用手册.html) 首页示意与第 6 章。  
+四台读法见 [使用手册.md](使用手册.md) 第 6 章（会话仪表盘）。  
 施工/审计等**本轮实质产出或闸门决策/显式读数**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；提问批次 / 定根前 / 等确认空轮 / 纯问版本 / 手册 / 技能本身 / 跑题则省略（里程碑判定，不按会话历史）。见 [session-dashboard.md](modes/session-dashboard.md)。
 
 ## 写盘闸门（必记）
@@ -69,7 +69,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 ```bash
 cd <harness-eng技能目录>
 node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land
-# land.mjs 为薄别名；骨架战役用 --mode pipeline-skeleton（不跑 fill-*）
+# 骨架战役用 --mode pipeline-skeleton（不跑 fill-*）
 node scripts/fill-inventory.mjs --domain api --root <TARGET>
 node scripts/fill-merge.mjs --domain api --inventory <inv.json> --work-dir <dir> --check
 node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
@@ -85,12 +85,12 @@ node scripts/selfcheck.mjs
 PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。先用 Node 写 **UTF-8 无 BOM** 文件，再传路径（SSOT：[write-plan.md](modes/write-plan.md)）：
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.0'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.2'}}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 
-多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 高**；**Codex 部分对齐·不默认（P2）**（未探测不进「全部推荐」）。详 [ai-tools.md](host/ai-tools.md)。
+多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 高**；**Codex 高 · 纪律 B**（未探测不进「全部推荐」；不做 `.mdc` 镜像）。详 [ai-tools.md](host/ai-tools.md)。
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
-0.6.1 Trae 高：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md)。0.6.4 CodeBuddy：[host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md)。0.6.0 计划（已收口）：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.0**）。
+Trae：[host/TRAE-PARITY.md](host/TRAE-PARITY.md)。CodeBuddy：[host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md)。  
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.2**）。

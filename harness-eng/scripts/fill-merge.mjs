@@ -9,7 +9,6 @@
  *
  * api extras (--enrich-dto / --module / --auto-fill / --source-root / --out) live on this CLI.
  * Domain list: templates/_meta/domains.yaml
- * Deprecated shims: fill-merge-api|func|db|redis|jobs.mjs (argv forward only).
  */
 import { fileURLToPath } from "url";
 import path from "path";
@@ -71,7 +70,6 @@ function printHelp() {
 
 Options: --gold --force-write --skip-acceptance --header <md>
 api-only: --enrich-dto --source-root --auto-fill --module --out
-Deprecated shims: fill-merge-api|func|db|redis|jobs.mjs (argv forward only).
 `);
 }
 

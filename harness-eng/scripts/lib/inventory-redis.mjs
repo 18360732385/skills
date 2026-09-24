@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-redis — heuristic Redis key patterns from Java sources (no npm deps).
- * Alias (0.5.9+): prefer `fill-inventory.mjs --domain redis`.
  *
  * Usage:
- *   node scripts/fill-inventory-redis.mjs --root <TARGET> [--source-root <rel>] [--out redis-inv.json]
+ *   node scripts/fill-inventory.mjs --domain redis --root <TARGET> [--source-root <rel>] [--out redis-inv.json]
  *
  * 0.2.9: infer valueType / valueFields / ttl from RedisTemplate set / expire / JSON serialize.
  * 0.2.10: default scan all module src/main/java (monorepo); promote REDIS_* / SMS: / dict / captcha keys.
@@ -31,7 +30,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/fill-inventory-redis.mjs --root <TARGET> [--source-root <rel-or-.>] [--out redis-inv.json]
+  node scripts/fill-inventory.mjs --domain redis --root <TARGET> [--source-root <rel-or-.>] [--out redis-inv.json]
 
 Default: scan all <module>/src/main/java under --root (monorepo).
 Pass --source-root to limit (e.g. sms-common/src/main/java or . for whole tree).

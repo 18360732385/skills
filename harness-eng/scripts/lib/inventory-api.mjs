@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
  * fill-inventory-api — Spring Controller → inventory JSON + shards (no npm deps).
- * Alias (0.5.9+): prefer `fill-inventory.mjs --domain api`.
  *
  * Usage:
- *   node scripts/fill-inventory-api.mjs --root <TARGET> [--modules sms-entrance,sms-safe]
+ *   node scripts/fill-inventory.mjs --domain api --root <TARGET> [--modules sms-entrance,sms-safe]
  *       [--module sms-entrance] [--all-modules]
  *       [--controller-root <rel>] [--shard-size 80] [--out inv.json]
  *
@@ -64,7 +63,7 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/fill-inventory-api.mjs --root <TARGET>
+  node scripts/fill-inventory.mjs --domain api --root <TARGET>
       [--modules sms-entrance,sms-safe] [--module sms-entrance] [--all-modules]
       [--controller-root <rel>] [--shard-size 80]
       [--exclude-base-classes BaseController,...] [--out inv.json] [--quiet]

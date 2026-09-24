@@ -1,6 +1,6 @@
 # Adapter: Trae
 
-对齐程度：**高**（L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` + IDE Settings 开关）。L3+ / L5 不再另写冗余 `1x-contract-sync`（sync 清掉宿主 1x 是对的）。L5 的 alwaysApply 指针活在 **`docs/agent-config/rules/00-harness-ssot.mdc`**，再 sync 到 `.trae/rules/`；勿 git restore 宿主 00 孤儿。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。P0 官方实证（2026-09-12 / 2026-09-14）：[TRAE-P0-EVIDENCE.md](../../../host/TRAE-P0-EVIDENCE.md)。同级跟踪：[TRAE-PARITY.md](../../../host/TRAE-PARITY.md)。**不假装** Cursor 协议。hooks PASS **单独不授权**升 **高**（本版另有 MCP 面板 PASS）。
+对齐程度：**高**（L3+ 全量 rules 镜像 + Claude 族 hooks；MCP 走 `.trae/mcp.json` + IDE Settings 开关）。L3+ / L5 不再另写冗余 `1x-contract-sync`（sync 清掉宿主 1x 是对的）。L5 的 alwaysApply 指针活在 **`docs/agent-config/rules/00-harness-ssot.mdc`**，再 sync 到 `.trae/rules/`；勿 git restore 宿主 00 孤儿。矩阵见 [ai-tools.md](../../../host/ai-tools.md)。P0 官方实证（2026-09-12 / 2026-09-14）：[`_history/.../TRAE-P0-EVIDENCE.md`](../../../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。同级跟踪：[TRAE-PARITY.md](../../../host/TRAE-PARITY.md)。**不假装** Cursor 协议。hooks PASS **单独不授权**升 **高**（本版另有 MCP 面板 PASS）。
 
 - **目录**: `.trae/`
 - **Rules**: `.trae/rules/*.md`（**官方原生 frontmatter**：`alwaysApply` / `globs` / `description`；可嵌套最多 3 层）。harness 镜像**保留** FM（不再 strip）。**消费仓**：升级 skill 后须再 land/render L5 **刷新**实例化 `scripts/agent-config/sync.mjs`，否则仍会剥 FM。2026-09-12 Round A（c-be-sms-ai）刷新后磁盘+行为 PASS（13 份、认 `globs`）。另可导入根 `AGENTS.md` / `CLAUDE.md`（官方开关）
