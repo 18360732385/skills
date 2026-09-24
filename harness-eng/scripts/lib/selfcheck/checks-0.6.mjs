@@ -747,6 +747,48 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
           denyOut.hookSpecificOutput.permissionDecisionReason === "blocked",
         "adapter deny path still uses hookSpecificOutput"
       );
+
+      // stop-check must never force Claude-family session continuation
+      fs.writeFileSync(
+        path.join(tmpAd, "stop-followup.js"),
+        [
+          "#!/usr/bin/env node",
+          "process.stdout.write(JSON.stringify({",
+          '  permission: "allow",',
+          '  followup_message: "【交付收口】未提交改动 — should not resume",',
+          "}));",
+          "",
+        ].join("\n"),
+        "utf8"
+      );
+      const stopOut = runNode(
+        [path.join(tmpAd, "claude-adapter.js"), "stop-check", "stop-followup.js"],
+        {
+          cwd: tmpAd,
+          input: JSON.stringify({
+            hook_event_name: "Stop",
+            stop_hook_active: false,
+          }),
+        }
+      );
+      assert(stopOut.status === 0, "adapter stop-check exits 0");
+      let stopJson = {};
+      try {
+        stopJson = JSON.parse(String(stopOut.stdout || "").trim() || "{}");
+      } catch {
+        stopJson = { __parse_error: true };
+      }
+      assert(!stopJson.__parse_error, "adapter stop-check emits JSON");
+      assert(
+        stopJson.decision !== "block" &&
+          !stopJson.reason &&
+          !(stopJson.hookSpecificOutput && stopJson.hookSpecificOutput.additionalContext),
+        "adapter stop-check must not block or inject Stop additionalContext"
+      );
+      assert(
+        Object.keys(stopJson).length === 0,
+        "adapter stop-check returns empty object (observe-only)"
+      );
     } finally {
       fs.rmSync(tmpAd, { recursive: true, force: true });
     }

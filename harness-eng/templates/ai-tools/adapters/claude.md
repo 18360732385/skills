@@ -7,6 +7,7 @@
 - **Hooks**: `.claude/settings.json` 的 `hooks` 段 + `.claude/hooks/*.js` + `claude-adapter.js`
   - 事件：`PreToolUse` · `PostToolUse` · `Stop`
   - 路径可用 `${CLAUDE_PROJECT_DIR}/.claude/hooks/...`
+  - **Stop / stop-checklist**：观察向；`stop-check` 恒 `{}`，**禁止** `decision: "block"`
 - **MCP**: 根 `.mcp.json`（与 Qoder/CodeBuddy 共享）
 - **Skills**: `.claude/skills/`
 - **禁止**: 勿写 Cursor 式 `.claude/hooks.json` / `beforeShellExecution`

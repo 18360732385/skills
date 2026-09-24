@@ -6,6 +6,9 @@
 
 ## 0.7.2 — 2026-09-24（日落 CLI shim）
 
+### Fixed
+- **stop-checklist 不接管会话**：`claude-adapter` 的 `stop-check` 不再把清单映射为 `decision: "block"`（Claude 族 Trae/WorkBuddy/Claude/Qoder 曾因此强制续聊并自行提交）；`stop-delivery-checklist` 改为 stderr 观察向，**永不**返回 `followup_message`；推荐包默认去掉 `stop-checklist`
+
 ### Breaking
 - **删除** `scripts/land.mjs`：写盘只认 `node scripts/harness.mjs`（`[--mode land]`）
 - **删除** 10 个域薄包装：`fill-inventory-{api,func,db,redis,jobs}.mjs`、`fill-merge-{api,func,db,redis,jobs}.mjs`

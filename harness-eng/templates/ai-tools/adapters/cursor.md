@@ -7,6 +7,7 @@
 - **Hooks**: `.cursor/hooks.json` + `.cursor/hooks/*.js`
   - 事件：`beforeShellExecution` · `beforeMCPExecution` · `afterFileEdit` · `stop`
   - 脚本：Cursor 协议 stdin/stdout（无需 adapter）
+  - **stop / stop-checklist**：观察向；**不**返回 `followup_message`（避免自动续一轮）
 - **MCP**: `.cursor/mcp.json`（example: `.cursor/mcp.json.example`）
 - **Skills**: `.cursor/skills/`
 - **禁止**: 无

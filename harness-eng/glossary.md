@@ -83,7 +83,7 @@
 | **索引** | `func.md` / `api.md` / `jobs.md` 等导航，不是 SSOT |
 | **mcp_tracking** | `example_only`（L4 默认：真密不入库、本地可填）\| `vendored_shared`（团队约定跟踪共享 mcp.json；audit 按 meta 判定；提问见 `Q_MCP_TRACKING`） |
 | **配置 SSOT 管线** | L5：`docs/agent-config/` 为 rules/hooks/mcp/settings 单一真相源，`scripts/agent-config/sync.mjs` 生成各工具目录，`--check` 校验漂移；meta 记 `agent_config: true` |
-| **hooks 家族** | L3 选装软门禁组（`Q_HOOKS_FAMILY`）：`commit-gate-extended`（契约漏同步/migration 环境/pitfalls lint 五合一）· `mysql-guard` · `after-edit` · `stop-checklist`；全部 fail-open；脚本统一 Cursor 协议，Claude 经 `claude-adapter.js` 翻译 |
+| **hooks 家族** | L3 选装软门禁组（`Q_HOOKS_FAMILY`）：`commit-gate-extended`（契约漏同步/migration 环境/pitfalls lint 五合一）· `mysql-guard` · `after-edit` · `stop-checklist`（观察向·stderr；**不** `followup_message` / **不** `decision:block`）；全部 fail-open、不接管会话；脚本统一 Cursor 协议，Claude 经 `claude-adapter.js` 翻译 |
 | **pitfalls lint** | `scripts/agent-kb/lint-pitfalls.mjs`：台账 7 列 / ID 递增 / 状态分区 / 封闭域词表 / 速查一致性校验（0.5.0+，L2） |
 | **write-meta-only** | audit 子动作：MATURE 无 meta 时仅写 `docs/harness-eng/harness-meta.yaml`（ladder / domains / ai_tools / mcp_tracking 快照），不渲染模板 |
 | **分册** | 子模块 `AGENTS.md`（`solo` 仅根 / `few` 少册 / `all` 每模块） |

@@ -284,8 +284,8 @@ batches:
           - { value: commit-gate-extended, label: commit-gate-extended（契约漏同步 + migration 环境 + pitfalls lint 五合一） }
           - { value: mysql-guard, label: mysql-guard（MCP MySQL 分环境写库护栏） }
           - { value: after-edit, label: after-edit（migration 命名/混写 + jobs yml 即时提醒） }
-          - { value: stop-checklist, label: stop-checklist（未提交收口盲区） }
-        recommended: [commit-gate-extended, after-edit, stop-checklist]
+          - { value: stop-checklist, label: stop-checklist（观察向·stderr 清单；不续聊/不逼提交） }
+        recommended: [commit-gate-extended, after-edit]
       - id: Q_MCP
         text: example 要哪些 server（mysql/redis/browser）？
         type: multi

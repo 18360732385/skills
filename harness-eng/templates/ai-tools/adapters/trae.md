@@ -7,6 +7,7 @@
 - **Hooks**: `.trae/hooks.json`（`version` + Claude 系嵌套 `hooks`；路径已官方确认）
   - 事件：官方含 `SessionStart` · `UserPromptSubmit` · `PreToolUse` · `PostToolUse` · `Stop` · `Notification`
   - 脚本：`.trae/hooks/*.js` + `claude-adapter.js`
+  - **Stop / stop-checklist**：观察向；adapter `stop-check` 恒 `{}`，**禁止** `decision: "block"`（避免 Hooks 强制续聊/自行提交）
   - **matcher（T-P1-2）**：官方终端 `tool_name` 为 **`RunCommand`**。`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`：提交门禁 `Bash|RunCommand`；mysql-guard `mcp__mysql.*`；after-edit `Edit|Write|MultiEdit`。Claude/Qoder 仍 `Bash`。Round C 本机 FAIL 是 **matcher 误诊**（当时写 `Bash`，永不匹配 `RunCommand`）。**2026-09-14 Hooks live PASS**（c-be-sms-ai：Settings → Hooks 已开；`additionalContext` 注入；软 allow）。hooks PASS **单独不授权**升 **高**。`.githooks` 仍兜底。人验**只认** `.trae/hooks.json`，**勿**用 `.cursor/hooks.json` `beforeShellExecution`。见 [TRAE-P0-MANUAL.md](../../../host/TRAE-P0-MANUAL.md)
 - **MCP**: `.trae/mcp.json`（**磁盘产物 + 必须在 IDE Settings 开关启用**）。2026-09-14 面板：**12** 台 workspace servers 都在；**ON** gitlab / Apifox 导入 / chrome-devtools；其余 **OFF via toggle**（在场、非缺失）。未开面板 ≠ 已接入；**不要**把 toggled-off 读成「启动缺失」
 - **Skills**: `.trae/skills/`（**一等公民**，按需加载）。可选 `.agents/skills/`

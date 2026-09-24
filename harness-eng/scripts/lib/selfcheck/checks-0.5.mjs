@@ -82,6 +82,30 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
   assert(/\{\{MIGRATION_ENVS\}\}/.test(stopTmpl), "stop-checklist has MIGRATION_ENVS");
   assert(
+    !/\bfollowup_message\s*:/.test(stopTmpl),
+    "stop-checklist must not emit followup_message (no auto-continue)"
+  );
+  assert(
+    /stderr\.write|process\.stderr/.test(stopTmpl),
+    "stop-checklist observe-only via stderr"
+  );
+  assert(
+    /不要 git commit/.test(stopTmpl),
+    "stop-checklist reminds not to commit without user confirm"
+  );
+  const adapterTmpl050 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/claude-adapter.js"),
+    "utf8"
+  );
+  assert(
+    /"stop-check"[\s\S]*?fromReply:\s*\(\)\s*=>\s*\(\{\}\)/.test(adapterTmpl050),
+    "claude-adapter stop-check always returns {}"
+  );
+  assert(
+    !/"stop-check"[\s\S]*?decision:\s*"block"/.test(adapterTmpl050),
+    "claude-adapter stop-check must not decision:block"
+  );
+  assert(
     fs.existsSync(path.join(skillRoot, "templates/hooks/claude-adapter.js")),
     "claude-adapter.js template"
   );

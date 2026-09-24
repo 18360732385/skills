@@ -7,7 +7,8 @@
  * - shell-gate    PreToolUse(Bash|RunCommand；视宿主) → {command} → {permission, agent_message}
  * - mcp-guard     PreToolUse(mcp__*)    → {mcp_server_name, tool_name, tool_input} → {permission, ...}
  * - edit-reminder PostToolUse(Edit|Write|MultiEdit) → {file_path, edits} → {additional_context}
- * - stop-check    Stop                  → {status, loop_count} → {followup_message}
+ * - stop-check    Stop                  → run sibling (observe-only); always {}
+ *                 禁止 decision:block / additionalContext（二者都会强制 Claude 族续聊）
  * 任何异常一律静默放行（{}），避免 hook 故障阻塞开发。
  */
 const { spawnSync } = require("child_process");
@@ -123,13 +124,11 @@ const MODES = {
   "stop-check": {
     toPayload: (p) => ({
       status: "completed",
-      // Claude 以 stop_hook_active 防循环，等价于 Cursor 的 loop_limit=1
       loop_count: p?.stop_hook_active ? 1 : 0,
     }),
-    fromReply: (reply) =>
-      reply && reply.followup_message
-        ? { decision: "block", reason: String(reply.followup_message) }
-        : {},
+    // Observe-only: sibling may write stderr; never block/continue the session.
+    // (decision:block and Stop additionalContext both force Claude-family hosts to resume.)
+    fromReply: () => ({}),
   },
 };
 

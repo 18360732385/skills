@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * stop 事件交付收口清单（harness-eng hooks 家族 · stop-checklist）。软提醒，fail-open，loop_limit=1。
- * 覆盖 git 维度的收口盲区：工作区有未提交改动时，commit 门禁的暂存检查根本看不到。
+ * stop 事件交付收口清单（harness-eng hooks 家族 · stop-checklist）。
+ * 观察向、fail-open：只写 stderr，绝不返回 followup_message / decision:block。
+ * （Cursor 的 followup_message 与 Claude 族的 block 都会强制续聊，曾导致 Trae/WorkBuddy 接管会话并自行提交。）
  *
  * 渲染占位：DB_MIGRATION_DIR、MIGRATION_ENVS（空串=关闭）、CODE_PREFIXES。
  */
@@ -28,7 +29,7 @@ function readStdin() {
       } catch {
         /* ignore */
       }
-      resolve(Buffer.concat(chunks).toString("utf8").replace(/^﻿/, ""));
+      resolve(Buffer.concat(chunks).toString("utf8").replace(/^\uFEFF/, ""));
     };
     const timer = setTimeout(done, 2000);
     process.stdin.on("data", (c) => chunks.push(Buffer.from(c, "utf8")));
@@ -55,10 +56,7 @@ function git(cmd, cwd) {
 
 (async () => {
   try {
-    const raw = await readStdin();
-    const payload = JSON.parse(raw || "{}");
-    // loop_limit 由宿主侧（hooks.json / hooks.config.json）配置；此处兜底防循环
-    if (Number(payload.loop_count || 0) >= 1) allow();
+    await readStdin();
 
     let root;
     try {
@@ -84,7 +82,7 @@ function git(cmd, cwd) {
     const migrations = files.filter((f) => f.startsWith(MIGRATION_PREFIX) && f.endsWith(".sql"));
     if (MIGRATION_ENVS && migrations.length) {
       lines.push(
-        `未提交的 migration：${migrations.join("、")} —— 人工同步到 ${MIGRATION_ENVS}，勿只合代码`
+        `未提交的 migration：${migrations.join("、")} —— 交付前人工同步到 ${MIGRATION_ENVS}，勿只合代码`
       );
     }
     const plansUntracked = files.filter((f) => f.startsWith("docs/superpowers/plans/"));
@@ -107,11 +105,19 @@ function git(cmd, cwd) {
       lines.push("业务代码有改动：按 rule 19 三问自检 pitfalls 回流；按 rule 11–16 核对契约同步");
     }
 
-    if (lines.length === 0) allow();
-    out({
-      permission: "allow",
-      followup_message: ["【交付收口清单（未提交改动）】", ...lines.map((l) => `- ${l}`)].join("\n"),
-    });
+    if (lines.length) {
+      const msg = [
+        "【交付收口清单（观察向·不续聊）】",
+        ...lines.map((l) => `- ${l}`),
+        "- 未获用户明确确认前，不要 git commit / push",
+      ].join("\n");
+      try {
+        process.stderr.write(msg + "\n");
+      } catch {
+        /* ignore */
+      }
+    }
+    allow();
   } catch {
     allow();
   }

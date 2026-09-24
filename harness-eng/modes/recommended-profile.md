@@ -20,7 +20,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 | `module_agents_template` | 分册且探测到 `S_SPRING` → 【推荐】`spring`；分册且前端模块 / `S_FRONTEND` 选 frontend 分册时 → `frontend`；否则 `default` |
 | `db_migration` | db 域且 `S_NO_FLYWAY` / `S_SQL_DIR` → 【推荐】`manual_sql`；否则 `flyway` |
 | `agent_config` | `S_MULTI_TOOL`（AI 工具 ≥2）或 `S_AGENT_CONFIG` → 【推荐】**是**（L5 配置 SSOT 管线；`Q_AGENT_CONFIG`）；单工具仓默认否 |
-| `hooks_family` | L3+ 默认 `commit-gate-extended, after-edit, stop-checklist`；装配 mysql MCP 再加 `mysql-guard`（`Q_HOOKS_FAMILY`；extended 与基础 commit 门禁互斥） |
+| `hooks_family` | L3+ 默认 `commit-gate-extended, after-edit`；`stop-checklist` 可选（观察向·不续聊）；装配 mysql MCP 再加 `mysql-guard`（`Q_HOOKS_FAMILY`；extended 与基础 commit 门禁互斥） |
 | `seed` | 默认 **是**（安全预填） |
 | `name` / `desc` | 来自 pom / package.json（无密） |
 | `ai_tools` | 仅已探测项：`.cursor`→`cursor`；`CLAUDE.md`→`claude`；`.codex`→`codex`（**高**；推荐纪律 B）；`.qoder`→`qoder`；`.trae`→`trae`（**高**；脚注勿写成吓退式「中高」）；`.codebuddy`/`CODEBUDDY.md`→`workbuddy`。**Codex 仅**探测到 `.codex/` 或用户显式勾选才进「全部推荐」。皆无则 `[]`，须追问一次 `Q_AI_TOOL`；**不**默认 `[cursor]`。自定义不进「全部推荐」除非用户已写路径。含 `codex` 时脚注「高 · 不做 .mdc 镜像」（见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md)） |

@@ -7,6 +7,7 @@
 - **Hooks**: `.qoder/settings.json` 的 `hooks` 段（**不是** `.qoder/hooks.json`）
   - 事件：Claude 系 `PreToolUse` · `PostToolUse` · `Stop`
   - 脚本：`.qoder/hooks/*.js` + `claude-adapter.js`
+  - **Stop / stop-checklist**：观察向；`stop-check` 恒 `{}`，**禁止**强制续聊
 - **MCP**: 根 `.mcp.json`
 - **Skills**: `.qoder/skills/`
 - **禁止**: 勿生成 Cursor 事件名进 `.qoder/hooks.json`；勿写 `.qoder/mcp.json` 作主路径
