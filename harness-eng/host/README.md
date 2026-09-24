@@ -11,7 +11,8 @@ AI 工具面与多宿主同步。对齐矩阵与 L5 生成指针。
 | [TRAE-P0-MANUAL.md](TRAE-P0-MANUAL.md) | Trae IDE 人验短清单 |
 | [CODEBUDDY-PARITY.md](CODEBUDDY-PARITY.md) | CodeBuddy/WorkBuddy 官方对齐（**0.6.4**） |
 | [CODEBUDDY-P0-MANUAL.md](CODEBUDDY-P0-MANUAL.md) | CodeBuddy IDE/CLI 人验短清单 |
-| [CODEX-PARITY.md](CODEX-PARITY.md) | Codex 官方对齐（**0.6.9 · 高**；不做 `.mdc` 全量镜像） |
+| [CODEX-PARITY.md](CODEX-PARITY.md) | Codex 官方对齐（**0.7.9 · 高**；不做 `.mdc` 全量镜像） |
+| [CODEX-CURSOR-COMPARE.md](CODEX-CURSOR-COMPARE.md) | Codex vs Cursor 维度对照（已对齐 / 刻意差异 / PARTIAL） |
 | [CODEX-MANUAL.md](CODEX-MANUAL.md) | Codex CLI/IDE 人验清单 |
 
 热路径：[../AGENT-INDEX.md](../AGENT-INDEX.md)。

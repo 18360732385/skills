@@ -3,7 +3,7 @@
 harness-eng 将 Codex 标为矩阵 **高**：分轨 SSOT（共享 mcp/hooks/skills + Starlark `codex/rules`），推荐纪律 **B**（探测或显式勾选）。  
 **仍不做** Cursor `.mdc` 全量镜像。
 
-交叉：[adapters/codex.md](../templates/ai-tools/adapters/codex.md) · [ai-tools.md](ai-tools.md) · [CODEX-MANUAL.md](CODEX-MANUAL.md) · [CHANGELOG.md](../CHANGELOG.md)。
+交叉：[adapters/codex.md](../templates/ai-tools/adapters/codex.md) · [ai-tools.md](ai-tools.md) · [CODEX-CURSOR-COMPARE.md](CODEX-CURSOR-COMPARE.md) · [CODEX-MANUAL.md](CODEX-MANUAL.md) · [CHANGELOG.md](../CHANGELOG.md)。
 
 ## 官方参考
 

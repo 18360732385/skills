@@ -1548,9 +1548,15 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
   assert(/prefix_rule/.test(rulesSeed) && /git/.test(rulesSeed) && /push/.test(rulesSeed), "rules seed has git push policy");
   assert(/reset/.test(rulesSeed) && /forbidden|prompt/.test(rulesSeed), "rules seed has destructive git policy");
+  assert(/"git", "push", "--force"/.test(rulesSeed), "rules seed Starlark force-push pattern");
+  assert(/"git", "push", "-f"/.test(rulesSeed), "rules seed Starlark push -f pattern");
+  assert(/"git", "clean", "-xfd"/.test(rulesSeed), "rules seed Starlark clean -xfd");
+  assert(/"git", "clean", "-fd"/.test(rulesSeed), "rules seed Starlark clean -fd");
   const hooks069 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json"), "utf8");
   assert(/"Stop"/.test(hooks069), "codex-hooks includes Stop");
   assert(/"matcher"\s*:\s*"\^Bash\$"/.test(hooks069), "PreToolUse still ^Bash$");
+  assert(/"matcher"\s*:\s*"mcp__mysql"/.test(hooks069), "codex-hooks matcher mcp__mysql");
+  assert(/commandWindows/.test(hooks069) && /codex-hook\.cmd/.test(hooks069), "codex-hooks commandWindows + codex-hook.cmd");
   assert(
     fs.existsSync(path.join(skillRoot, "templates/hooks/codex-stop-checklist.js.tmpl")),
     "codex-stop-checklist tmpl"
@@ -1577,6 +1583,36 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(fs.existsSync(path.join(codexFx, "scripts/agent-config/sync.mjs")), "l5-sync-codex sync.mjs");
   assert(fs.existsSync(path.join(codexFx, ".codex/config.toml.example")), "l5-sync-codex config.toml.example");
   assert(fs.existsSync(path.join(codexFx, ".codex/rules/repository.rules")), "l5-sync-codex rules");
+  const fxRules = fs.readFileSync(path.join(codexFx, ".codex/rules/repository.rules"), "utf8");
+  assert(/"git", "push", "--force"/.test(fxRules), "l5-sync-codex rules force-push forbidden");
+  assert(/"git", "clean", "-xfd"/.test(fxRules), "l5-sync-codex rules clean -xfd forbidden");
+  const fxHooks069 = fs.readFileSync(path.join(codexFx, ".codex/hooks.json"), "utf8");
+  assert(/"matcher"\s*:\s*"\^Bash\$"/.test(fxHooks069), "l5-sync-codex hooks ^Bash$");
+  assert(/"matcher"\s*:\s*"mcp__mysql"/.test(fxHooks069), "l5-sync-codex hooks mcp__mysql");
+  assert(/"Stop"/.test(fxHooks069), "l5-sync-codex hooks Stop");
+  assert(/commandWindows/.test(fxHooks069) && /codex-hook\.cmd/.test(fxHooks069), "l5-sync-codex commandWindows/codex-hook.cmd");
+  assert(
+    !fs.existsSync(path.join(codexFx, ".codex/contract-sync.md")),
+    "l5-sync-codex omits redundant contract-sync"
+  );
+  for (const skill069 of [
+    "contract-sync",
+    "api-doc-sync",
+    "db-doc-sync",
+    "redis-doc-sync",
+    "jobs-doc-sync",
+    "frontend-web",
+  ]) {
+    assert(
+      fs.existsSync(path.join(codexFx, `.agents/skills/${skill069}/SKILL.md`)),
+      `l5-sync-codex six skills: ${skill069}`
+    );
+  }
+  assert(fs.existsSync(path.join(skillRoot, "host/CODEX-CURSOR-COMPARE.md")), "CODEX-CURSOR-COMPARE.md");
+  const compare069 = fs.readFileSync(path.join(skillRoot, "host/CODEX-CURSOR-COMPARE.md"), "utf8");
+  assert(/已对齐/.test(compare069) && /刻意差异/.test(compare069) && /PARTIAL/.test(compare069), "COMPARE has 已对齐/刻意差异/PARTIAL");
+  assert(/不做/.test(compare069) && /mdc/.test(compare069), "COMPARE explicit no mdc mirror");
+  assert(/矩阵/.test(compare069) && /高/.test(compare069), "COMPARE matrix-high verdict");
   const codexCheck = runNode([path.join(codexFx, "scripts/agent-config/sync.mjs"), "--check"], {
     cwd: codexFx,
   });
