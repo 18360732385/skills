@@ -14,8 +14,10 @@ import { findHarnessMetaFile } from "./harness-meta.mjs";
 const SCORE_REL = "docs/harness-eng/score-latest.json";
 const REPORT_REL = "docs/harness-eng/report-latest.html";
 const FILL_PLAN_REL = "docs/harness-eng/fill-plan.yaml";
-const HANDBOOK_REL = "使用手册.md";
-const HANDBOOK_ANCHOR = "#60-对话内会话仪表盘工程轮末尾";
+const HANDBOOK_HTML = "使用手册.html";
+const HANDBOOK_MD = "使用手册.md";
+const HANDBOOK_ANCHOR_HTML = "#s6";
+const HANDBOOK_ANCHOR_MD = "#60-对话内会话仪表盘工程轮末尾";
 
 const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -196,20 +198,24 @@ export function buildSessionDashboard(opts = {}) {
     reportExpectedRel: root ? REPORT_REL : null,
     reportExists,
     scorePath: score && root ? shortPath(path.join(root, SCORE_REL)) : null,
-    handbookPath: fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_REL))
-      ? shortPath(path.join(SKILL_ROOT, HANDBOOK_REL))
-      : HANDBOOK_REL,
-    handbookUrl: fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_REL))
-      ? pathToFileURL(path.join(SKILL_ROOT, HANDBOOK_REL)).href + HANDBOOK_ANCHOR
-      : null,
+    handbookPath: fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_HTML))
+      ? shortPath(path.join(SKILL_ROOT, HANDBOOK_HTML))
+      : fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_MD))
+        ? shortPath(path.join(SKILL_ROOT, HANDBOOK_MD))
+        : HANDBOOK_HTML,
+    handbookUrl: fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_HTML))
+      ? pathToFileURL(path.join(SKILL_ROOT, HANDBOOK_HTML)).href + HANDBOOK_ANCHOR_HTML
+      : fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_MD))
+        ? pathToFileURL(path.join(SKILL_ROOT, HANDBOOK_MD)).href + HANDBOOK_ANCHOR_MD
+        : null,
   };
 }
 
 function renderDashboardLinkFooter(data) {
-  const handbookLabel = "四台读法（使用手册.md · 第6章）";
+  const handbookLabel = "四台读法（使用手册 · 第6章）";
   const handbookPart = data.handbookUrl
     ? `[${handbookLabel}](${data.handbookUrl})`
-    : `[${handbookLabel}](${HANDBOOK_REL}${HANDBOOK_ANCHOR})`;
+    : `[${handbookLabel}](${HANDBOOK_HTML}${HANDBOOK_ANCHOR_HTML})`;
 
   if (data.reportPath && data.reportExists) {
     const reportUrl = pathToFileURL(path.resolve(data.reportPath.replace(/\//g, path.sep))).href;

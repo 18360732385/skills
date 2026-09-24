@@ -16,6 +16,7 @@
 | 域 `fill-inventory-*` / `fill-merge-*` shim 缺席 | 有 |
 | upgrade `## 0.7.1 → 0.7.2` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
+| `使用手册.html` 存在且钉 `v0.7.2` / `#s6` / 统一 CLI | 有 |
 
 ## 0.7.1 增量验收（热路径瘦身）
 
@@ -23,7 +24,7 @@
 |---|---|
 | manifest / meta / questions 为 `0.7.1` | 有 |
 | CHANGELOG 标题 `## 0.7.1` | 有 |
-| 无根 stub / 无 `使用手册.html` / 无 host TRAE evidence stub | 有 |
+| 无根 stub / 无 host TRAE evidence stub（`使用手册.html` 已于 0.7.2 还原） | 有 |
 | archive 正文与 Codex 设计稿在 `_history` | 有 |
 | upgrade `## 0.7.0 → 0.7.1` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |

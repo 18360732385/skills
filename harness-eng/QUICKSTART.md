@@ -1,7 +1,7 @@
 # harness-eng 快速开始
 
 一页纸入口。详细闸门与模式见 [SKILL.md](SKILL.md)、[glossary.md](glossary.md)。  
-人读完整说明：[使用手册.md](使用手册.md)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。  
+人读完整说明：[使用手册.md](使用手册.md) · 浏览器版：[使用手册.html](使用手册.html)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。  
 拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主；热路径见 [AGENT-INDEX.md](AGENT-INDEX.md)。
 
 ## 一句话安装 / 更新
@@ -43,7 +43,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
 四台读法见 [使用手册.md](使用手册.md) 第 6 章（会话仪表盘）。  
-施工/审计等**本轮实质产出或闸门决策/显式读数**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；提问批次 / 定根前 / 等确认空轮 / 纯问版本 / 手册 / 技能本身 / 跑题则省略（里程碑判定，不按会话历史）。见 [session-dashboard.md](modes/session-dashboard.md)。
+施工/审计等**本轮实质产出或闸门决策/显式读数**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；提问批次 / 定根前 / 等确认空轮 / 纯问版本 / 手册 / 技能本身 / 跑题则省略（里程碑判定，不按会话历史）。见 [session-dashboard.md](modes/session-dashboard.md)。浏览器手册：[使用手册.html](使用手册.html#s6)。
 
 ## 写盘闸门（必记）
 

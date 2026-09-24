@@ -74,7 +74,7 @@
 ## 0.7.0 → 0.7.1 迁移要点
 
 1. **meta**：`skill_version` → `0.7.1`（文档/发包；无行为 breaking）
-2. **热路径**：根 stub / `使用手册.html` / host TRAE evidence stub 已删；链 `modes/` · `CODEX-MANUAL` · `_history`
+2. **热路径**：根 stub / host TRAE evidence stub 已删；链 `modes/` · `CODEX-MANUAL` · `_history`（`使用手册.html` 于 **0.7.2** 还原）
 3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.1`）
 4. **装/升 URL** 仍用 **`main`**
 

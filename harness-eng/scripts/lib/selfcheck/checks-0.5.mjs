@@ -967,7 +967,10 @@ const sessionDashMd = readDoc("session-dashboard.md");
 assert(/决策台/.test(sessionDashMd) && /趋势台/.test(sessionDashMd), "session-dashboard four panels");
 assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
 assert(/会话仪表盘（精简） · 未打分/.test(sessionDashMd), "session-dashboard documents compact B format");
-assert(/使用手册\.md/.test(sessionDashMd) && /第6章|60-对话内会话仪表盘/.test(sessionDashMd), "session-dashboard handbook anchor");
+assert(
+  /使用手册\.(html|md)/.test(sessionDashMd) && /第6章|#s6|60-对话内会话仪表盘/.test(sessionDashMd),
+  "session-dashboard handbook anchor"
+);
 assert(/\*\*SHOW\*\*/.test(sessionDashMd) && /\*\*HIDE\*\*/.test(sessionDashMd), "session-dashboard SHOW/HIDE");
 assert(/当前版本号多少/.test(sessionDashMd), "session-dashboard version-question hide example");
 assert(/里程碑 SHOW/.test(sessionDashMd) && /\*\*实质产出\*\*/.test(sessionDashMd), "session-dashboard milestone SHOW policy");
@@ -1081,7 +1084,13 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "session-dash plain-text stance"
     );
     assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
-    assert(/使用手册\.md/.test(dashMd.stdout || ""), "session-dash handbook link");
+    assert(
+      /使用手册/.test(dashMd.stdout || "") &&
+        (/使用手册\.(html|md)/.test(dashMd.stdout || "") ||
+          /%E4%BD%BF%E7%94%A8%E6%89%8B%E5%86%8C\.html/.test(dashMd.stdout || "") ||
+          /#s6|#60-对话内会话仪表盘/.test(dashMd.stdout || "")),
+      "session-dash handbook link"
+    );
     const dashEng = runNode([
       path.join(skillRoot, "scripts/session-dash.mjs"),
       "--root",

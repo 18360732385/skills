@@ -14,7 +14,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
 **Agent 热路径 · 读侧路由 SSOT**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。  
 拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。  
-一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
+一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](modes/write-plan.md)。  
 **全部推荐**协议 SSOT：[recommended-profile.md](modes/recommended-profile.md)。他处只指针。

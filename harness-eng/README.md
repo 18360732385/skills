@@ -7,7 +7,7 @@
 **0.7.2**：硬删 `land.mjs` 与域 fill shim。**0.7.1**：热路径瘦身。**0.7.0**：形态重标定 · Codex → **高** · Pn 回流 / 前后端契约门禁（[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md)；纪律 B；不做 `.mdc` 镜像）。**0.6.9**：Codex 高落地。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
-**使用手册（人读）**：[使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
+**使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
 **拓扑**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主
 
 历史（0.6.0 文档拓扑 / Codex 曾冻结 P2 等）见 [CHANGELOG.md](CHANGELOG.md)；勿当现行矩阵。
@@ -16,7 +16,7 @@
 
 ### 源仓内置
 
-本仓路径：`harness-eng/`（拷到宿主用户 skills 目录后为 `<host-skills-dir>/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.md](使用手册.md)。
+本仓路径：`harness-eng/`（拷到宿主用户 skills 目录后为 `<host-skills-dir>/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。
 
 **一句话安装（推荐）：** 对 Agent 说「帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：https://github.com/18360732385/skills/tree/main/harness-eng」；或 `npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g`（需要时按宿主加 `--agent`）。装完新开会话后再点名。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。
 

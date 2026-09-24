@@ -451,7 +451,15 @@ assert(/版本：\*\*0\.7\.2\*\*/.test(handbookMd), "使用手册.md version 0.7
 assert(/当前 \*\*0\.7\.2\*\*/.test(quickstartMd), "QUICKSTART version 0.7.2");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
-assert(!fs.existsSync(path.join(skillRoot, "使用手册.html")), "使用手册.html removed (0.7.1)");
+assert(fs.existsSync(path.join(skillRoot, "使用手册.html")), "使用手册.html present");
+const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
+assert(/v0\.7\.2/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
+assert(
+  /harness\.mjs/.test(handbookHtml) && /fill-inventory\.mjs --domain/.test(handbookHtml),
+  "使用手册.html documents unified CLI"
+);
+assert(/公开 CLI|harness\.mjs/.test(handbookMd), "使用手册.md documents public CLI");
+assert(/使用手册\.html/.test(handbookMd), "使用手册.md links HTML edition");
 const handbookSummary = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
 for (const [label, text] of [
   ["使用手册.md", handbookMd],
