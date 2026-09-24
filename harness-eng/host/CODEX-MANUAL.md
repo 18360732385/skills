@@ -1,4 +1,4 @@
-# Codex 真人会话清单（0.7.6 · 高）
+# Codex 真人会话清单（0.7.7 · 高）
 
 给本机已装 **Codex CLI / IDE / ChatGPT 桌面 Codex** 的同学。对照：[CODEX-PARITY.md](CODEX-PARITY.md)。
 
@@ -32,10 +32,11 @@
 
 ## 4. MCP：`config.toml` + `/mcp`
 
-- [ ] 审阅 `.codex/config.toml.example`；trusted 后拷贝/合并为 `.codex/config.toml`（gitignore）
-- [ ] 本机 `config.toml` 可填连接参数；可提交的 example **无明文密钥**（用 `env_vars` 名）；**勿提交**真密进 git
-- [ ] 写库类默认 `enabled = false`
+- [ ] 审阅 `.codex/config.toml.example`（`enabled` 来自 `docs/agent-config/mcp/policy.json`）；trusted 后拷贝/合并为 `.codex/config.toml`（gitignore）
+- [ ] 本机 `config.toml` 可填连接参数并可覆盖 `enabled`；可提交的 example **无明文密钥**（用 `env_vars` 名）；**勿提交**真密进 git
+- [ ] 写库类（mysql/redis 等）默认 `enabled = false`；gitlab/chrome 等可按 policy 建议为 `true`
 - [ ] `/mcp` 可见；**不要**假设根 `.mcp.json` 生效
+- [ ] 改启用策略只改 `mcp/policy.json` 后跑 sync（勿手改 GENERATED example）
 
 ## 5. Skills
 

@@ -18,6 +18,7 @@
 | `hooks/*.js` | 统一 Cursor 协议脚本；Claude 族（claude/qoder/trae）经 `claude-adapter.js` 双向翻译 |
 | `mcp/servers.json` | （可选）MCP server SSOT；**含密即 vendored_shared 团队约定**，example_only 仓勿建 |
 | `mcp/servers.example.json` | 无密示例 → `.cursor/mcp.json.example` / 根 `.mcp.json.example` / `.trae/mcp.json.example` / `.codex/config.toml.example` |
+| `mcp/policy.json` | Codex MCP **启用策略**（`enabled` / `approval_mode`；无密钥）；sync 写入 `config.toml.example` |
 | `settings.json` | （可选）`.cursor/settings.json` 与 qoder settings 非 hooks 键的 SSOT |
 | `skills/` | （可选）vendored skills，分发到各工具 `skills/` 与 Codex `.agents/skills/` |
 | `codex/rules/*.rules` | Codex Starlark 命令策略 → `.codex/rules/`（**不是** `.mdc` 镜像） |

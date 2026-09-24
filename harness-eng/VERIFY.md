@@ -1,21 +1,30 @@
-# harness-eng 验收记录（0.7.6）
+﻿# harness-eng 验收记录（0.7.7）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.6**（Codex 域 skills redis/jobs/frontend；其上 0.7.5 contract/api/db · 0.7.4 hooks 生效链 · 0.7.2 日落 CLI shim）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.7**（Codex MCP policy 精细开关；其上 0.7.6 redis/jobs/frontend skills · 0.7.5 contract/api/db · 0.7.4 hooks 生效链）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.7 增量验收（MCP policy）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.7` | 有 |
+| CHANGELOG 标题 `## 0.7.7` | 有 |
+| `templates/agent-config/mcp/policy.json` | 有 |
+| sync tmpl 读 `policy.json` → `enabled` / `approval_mode` | 有 |
+| upgrade `## 0.7.6 → 0.7.7` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.6 增量验收（redis / jobs / frontend skills）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.6` | 有 |
 | CHANGELOG 标题 `## 0.7.6` | 有 |
 | `templates/agent-config/skills/{redis,jobs}-doc-sync` + `frontend-web` | 有 |
 | fixture `.agents/skills/redis-doc-sync` / `jobs-doc-sync` / `frontend-web` | 有 |
 | upgrade `## 0.7.5 → 0.7.6` | 有 |
-| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.5 增量验收（Codex Skills 种子）
 

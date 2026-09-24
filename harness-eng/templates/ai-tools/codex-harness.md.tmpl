@@ -21,7 +21,8 @@
 | `contract-sync.md` | 契约 sync 薄指针（仅 L0–L2；L3+/L5 常 omit） |
 | `hooks.json` | `PreToolUse` `^Bash$` + `mcp__mysql` + `Stop`；含 **`commandWindows`**（经 `codex-hook.cmd`）；须 `/hooks` 信任 |
 | `rules/` | Starlark **命令政策**（≠ 自然语言开发规范） |
-| `config.toml.example` | MCP 示例（无密钥；默认 `enabled=false`） |
+| `config.toml.example` | MCP 示例（无密钥；`enabled` 由 `mcp/policy.json`） |
+| `policy.json`（SSOT） | 按 server / 启发式决定建议启用与审批模式 |
 
 ## MCP 启用仪式（项目级）
 

@@ -1,8 +1,18 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5 → 0.7.6`（当前 **0.7.6**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5 → 0.7.6 → 0.7.7`（当前 **0.7.7**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.7 — 2026-09-24（Codex MCP policy 精细开关）
+
+### Added
+- **`docs/agent-config/mcp/policy.json`**：`defaults` / `heuristics` / 按 server 覆盖 `enabled` + `approval_mode`
+- **`codex-mcp-toml.mjs` / sync**：写库类默认关；gitlab/chrome 等安全工具可建议开；显式 `servers.*` 优先
+- manifest `agent-config-mcp-policy`；`servers.example.json` 含 gitlab + mysql-test + redis-test 便于对照
+
+### Docs / pack
+- fill-mcp / CODEX-PARITY / MANUAL / adapters / upgrade `0.7.6 → 0.7.7`；P1 剩余：calibrate 读 toml / 可选 L4
 
 ## 0.7.6 — 2026-09-24（Codex 域 skills：redis / jobs / frontend）
 
@@ -13,7 +23,7 @@
 ### Docs / pack
 - CODEX-PARITY / MANUAL / adapters / upgrade `0.7.5 → 0.7.6`
 - **NL 分层**：PARITY 写明 L0 SSOT → L1 Skills → L2 Starlark → L3 soft hooks → L4 可选 rulehook/deny（短硬红线，非默认依赖）
-- P1 剩余：mcp-policy / calibrate 读 toml / 可选 L4 适配器
+- P1 当时剩余：mcp-policy / calibrate 读 toml / 可选 L4（**mcp-policy → 0.7.7**）
 
 ## 0.7.5 — 2026-09-24（Codex Skills 种子 · 行为承接）
 

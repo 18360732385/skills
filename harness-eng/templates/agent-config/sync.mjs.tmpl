@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.6
- * HARNESS_ENG_VERSION: 0.7.6
+ * HARNESS_SYNC_TMPL_ID: 0.7.7
+ * HARNESS_ENG_VERSION: 0.7.7
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -16,8 +16,8 @@
  *   path-scoped 语义以正文自然语言保留。trae / workbuddy(codebuddy) 保留 alwaysApply /
  *   globs / description（官方项目规则 frontmatter；CodeBuddy CLI 亦认 paths）。
  * - Codex：不做 .mdc 镜像。命令策略走 docs/agent-config/codex/rules/*.rules → .codex/rules/；
- *   MCP → .codex/config.toml.example；hooks → .codex/hooks.json + codex-adapter；
- *   skills → .agents/skills/（不全量 prune 用户自建 skill 目录）。
+ *   MCP → .codex/config.toml.example（enabled/approval 来自 mcp/policy.json）；hooks → .codex/hooks.json +
+ *   codex-adapter；skills → .agents/skills/（不全量 prune 用户自建 skill 目录）。
  * - 各工具目录中未被本脚本管理的内容（如 docs/harness-eng/harness-meta.yaml、
  *   遗留 .cursor/harness-meta.yaml、mcp.local.json 等运行时数据）不受影响。
  * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
@@ -39,8 +39,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.6";
-const HARNESS_ENG_VERSION = "0.7.6";
+const HARNESS_SYNC_TMPL_ID = "0.7.7";
+const HARNESS_ENG_VERSION = "0.7.7";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = {{AI_TOOLS_JSON}};
@@ -335,18 +335,72 @@ function escapeTomlString(s) {
   return JSON.stringify(String(s));
 }
 
-/** Inline MCP JSON → Codex TOML (no secrets). */
-function jsonServersToCodexToml(doc) {
+function looksWritableDb(name) {
+  const n = String(name).toLowerCase();
+  if (/readonly|read-only|read_only|\bro[-_]/.test(n)) return false;
+  return /mysql|postgres|postgresql|mongo|redis|mariadb/.test(n);
+}
+
+function looksSafeReadonlyTool(name) {
+  const n = String(name).toLowerCase().replace(/_/g, "-");
+  if (/readonly|read-only|read_only|\bro[-_]/.test(n)) return true;
+  return /^(gitlab|chrome(-devtools)?|sonarqube|apifox|context7|node[-_]?repl|filesystem|fetch|memory)$/.test(
+    n
+  );
+}
+
+/** servers[name] > heuristics > defaults；无 policy 时写库关、安全工具开、其余关。 */
+function resolveMcpServerPolicy(name, policy) {
+  const defaults = policy?.defaults || {};
+  const servers = policy?.servers || {};
+  const heur = policy?.heuristics || {};
+  const override = servers[name] || {};
+  let enabled;
+  if (typeof override.enabled === "boolean") {
+    enabled = override.enabled;
+  } else if (heur.enabled === false) {
+    enabled = typeof defaults.enabled === "boolean" ? defaults.enabled : false;
+  } else if (looksWritableDb(name)) {
+    enabled =
+      typeof heur.writable_stores_enabled === "boolean"
+        ? heur.writable_stores_enabled
+        : false;
+  } else if (looksSafeReadonlyTool(name)) {
+    enabled =
+      typeof heur.safe_tools_enabled === "boolean" ? heur.safe_tools_enabled : true;
+  } else {
+    enabled = typeof defaults.enabled === "boolean" ? defaults.enabled : false;
+  }
+  const approval_mode =
+    (typeof override.approval_mode === "string" && override.approval_mode) ||
+    (typeof defaults.approval_mode === "string" && defaults.approval_mode) ||
+    "prompt";
+  return { enabled, approval_mode };
+}
+
+function loadMcpPolicy() {
+  if (!ssotExists("mcp", "policy.json")) return null;
+  try {
+    return JSON.parse(readSsot("mcp", "policy.json"));
+  } catch {
+    return null;
+  }
+}
+
+/** Inline MCP JSON → Codex TOML (no secrets; policy-aware). */
+function jsonServersToCodexToml(doc, policy) {
   const servers = doc?.mcpServers || {};
   const lines = [
     "# GENERATED from docs/agent-config/mcp — do not put secrets here",
     "# Project .codex/config.toml loads only when the workspace is trusted",
+    "# enabled / approval_mode from mcp/policy.json (heuristics + per-server overrides)",
     `# ${HEADER_JSON}`,
     "",
   ];
   for (const [name, server] of Object.entries(servers)) {
     if (!server || typeof server !== "object") continue;
     const key = name.replace(/[^a-zA-Z0-9_]/g, "_");
+    const { enabled, approval_mode } = resolveMcpServerPolicy(name, policy);
     lines.push(`[mcp_servers.${key}]`);
     if (server.command) {
       lines.push(`command = ${escapeTomlString(server.command)}`);
@@ -365,14 +419,15 @@ function jsonServersToCodexToml(doc) {
     if (names.length) {
       lines.push(`env_vars = [${names.map(escapeTomlString).join(", ")}]`);
     }
-    lines.push("enabled = false");
-    lines.push('default_tools_approval_mode = "prompt"');
+    lines.push(`enabled = ${enabled}`);
+    lines.push(`default_tools_approval_mode = ${escapeTomlString(approval_mode)}`);
     lines.push("");
   }
   return lines.join("\n");
 }
 
 function planMcp() {
+  const policy = loadMcpPolicy();
   // servers.json 为可选 SSOT（含密时属 vendored_shared 团队约定；example_only 仓勿建）
   if (ssotExists("mcp", "servers.json")) {
     const servers = JSON.parse(readSsot("mcp", "servers.json"));
@@ -385,7 +440,7 @@ function planMcp() {
     if (has("trae")) putJson(".trae/mcp.json", { _generated: HEADER_JSON, ...servers });
     // Codex：脱敏投影到 example（真密勿入库）
     if (has("codex")) {
-      put(".codex/config.toml.example", jsonServersToCodexToml(servers));
+      put(".codex/config.toml.example", jsonServersToCodexToml(servers, policy));
     }
   }
   if (ssotExists("mcp", "servers.example.json")) {
@@ -396,7 +451,7 @@ function planMcp() {
     }
     if (has("trae")) putJson(".trae/mcp.json.example", { _generated: HEADER_JSON, ...example });
     if (has("codex") && !plan.has(".codex/config.toml.example")) {
-      put(".codex/config.toml.example", jsonServersToCodexToml(example));
+      put(".codex/config.toml.example", jsonServersToCodexToml(example, policy));
     }
   }
 }

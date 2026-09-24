@@ -48,6 +48,10 @@ fs.copyFileSync(
   path.join(skillRoot, "templates/agent-config/mcp/servers.example.json"),
   path.join(fx, "docs/agent-config/mcp/servers.example.json")
 );
+fs.copyFileSync(
+  path.join(skillRoot, "templates/agent-config/mcp/policy.json"),
+  path.join(fx, "docs/agent-config/mcp/policy.json")
+);
 for (const skill of [
   "contract-sync",
   "api-doc-sync",

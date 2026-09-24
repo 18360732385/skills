@@ -57,6 +57,13 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.6 → 0.7.7 迁移要点
+
+1. **meta**：`skill_version` → `0.7.7`
+2. **L5**：确认 `docs/agent-config/mcp/policy.json`；缺则从技能模板补齐；按仓调整 `servers.*` / heuristics
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.7`）后再 `node scripts/agent-config/sync.mjs`
+4. Codex：审阅 `.codex/config.toml.example` 中各 server 的 `enabled`；本机 `config.toml` 可再覆盖
+
 ## 0.7.5 → 0.7.6 迁移要点
 
 1. **meta**：`skill_version` → `0.7.6`
