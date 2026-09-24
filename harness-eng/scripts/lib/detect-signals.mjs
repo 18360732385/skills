@@ -97,6 +97,7 @@ export function scanSignals(root) {
   const S_JOBS = hasNonEmptyIn(path.join(root, "docs", "jobs"));
   const S_KB = hasNonEmptyIn(path.join(root, "docs", "agent-kb"));
   const S_STACK = hasStack(root);
+  const S_RULEHOOK = isFile(path.join(root, ".rulehook", "rulehook.toml"));
   const MATURE = !!(S_AGENTS_ROOT && S_RULES && (S_FUNC || S_API || S_DB || S_REDIS || S_JOBS) && S_KB);
   return {
     S_AGENTS_ROOT,
@@ -110,6 +111,7 @@ export function scanSignals(root) {
     S_JOBS,
     S_KB,
     S_STACK,
+    S_RULEHOOK,
     MATURE,
   };
 }

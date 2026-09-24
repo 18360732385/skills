@@ -33,6 +33,7 @@ import {
   expandHooksFamily,
   resolveHooksFamily,
   resolveAgentConfig,
+  resolveRulehook,
 } from "./lib/hooks-checks.mjs";
 import {
   HARNESS_META_CANONICAL,
@@ -59,6 +60,7 @@ const YAML_MANAGED_KEYS = new Set([
   "ai_tools",
   "installed_at",
   "agent_config",
+  "rulehook",
 ]);
 
 /** pitfalls lint 默认封闭域词表（0.5.0+；可被 params.placeholders.PITFALL_DOMAINS 覆盖）。 */
@@ -494,6 +496,12 @@ function parseManifestFiles(manifestText) {
             : e.when_agent_config === false || e.when_agent_config === "false"
               ? false
               : undefined,
+        when_rulehook:
+          e.when_rulehook === true || e.when_rulehook === "true"
+            ? true
+            : e.when_rulehook === false || e.when_rulehook === "false"
+              ? false
+              : undefined,
       };
     })
     .filter(Boolean);
@@ -508,6 +516,8 @@ function expandFromManifest(manifestPath, params, root) {
   }
   // L5 配置 SSOT 管线：显式 agent_config=true 时即使目标阶梯 < L5 也渲染 L5 包
   const agentConfig = resolveAgentConfig(params);
+  const rulehook = resolveRulehook(params, root);
+  params.rulehook = rulehook;
   const maxOrd = Math.max(LADDER_ORD[targetLadder], agentConfig ? LADDER_ORD.L5 : 0);
   // hooks 家族：仓内已有 soft-gate 时强制 extended，避免 upgrade 回落 basic 留下孤儿脚本
   // （Codex 仍走 hooks-codex-gate 基础脚本，不在 BASIC_GATE_IDS）
@@ -564,6 +574,9 @@ function expandFromManifest(manifestPath, params, root) {
     }
     if (entryId === "hooks-codex-json" || entryId === "hooks-trae-json") {
       return fs.existsSync(path.join(root, targetRel)) ? "merge" : "create";
+    }
+    if (entryId === "rulehook-toml" || entryId === "rulehook-readme") {
+      return fs.existsSync(path.join(root, targetRel)) ? "skip" : "create";
     }
     const abs = path.join(root, targetRel);
     if (defaultAction === "create" && fs.existsSync(abs)) {
@@ -622,6 +635,7 @@ function expandFromManifest(manifestPath, params, root) {
     if (e.domain && !domains.has(e.domain)) continue;
     if (e.when && e.when.agents_variant && e.when.agents_variant !== variant) continue;
     if (e.when_agent_config != null && e.when_agent_config !== agentConfig) continue;
+    if (e.when_rulehook != null && e.when_rulehook !== rulehook) continue;
     if (skipBasicGate && BASIC_GATE_IDS.includes(e.id)) continue;
     if (e.optional && !includeOptional.has(e.id)) continue;
     if (e.when_ai_tools && e.when_ai_tools.length) {
@@ -1159,6 +1173,11 @@ function main() {
   const agentConfig = resolveAgentConfig(params);
   if (placeholders.AGENT_CONFIG == null) {
     placeholders.AGENT_CONFIG = agentConfig ? "true" : "false";
+  }
+  const rulehook = resolveRulehook(params, root);
+  params.rulehook = rulehook;
+  if (placeholders.RULEHOOK == null) {
+    placeholders.RULEHOOK = rulehook ? "true" : "false";
   }
   if (placeholders.PITFALL_DOMAINS == null) {
     placeholders.PITFALL_DOMAINS = DEFAULT_PITFALL_DOMAINS;

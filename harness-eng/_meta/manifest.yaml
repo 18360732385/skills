@@ -1,11 +1,11 @@
-﻿# harness-eng 版本清单（技能包权威号）
+# harness-eng 版本清单（技能包权威号）
 #
 # 约定（与 templates/_meta 双写）：
 # - 技能包权威 = 本文件 `_meta/manifest.yaml`（version / description）
 # - 落地模板权威 = `templates/_meta/manifest.yaml`（files / placeholders / when）
 # - 两边 version 必须一致
 
-version: "0.7.7"
+version: "0.7.9"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: true

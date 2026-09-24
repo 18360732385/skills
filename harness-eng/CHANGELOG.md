@@ -1,8 +1,29 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5 → 0.7.6 → 0.7.7`（当前 **0.7.7**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5 → 0.7.6 → 0.7.7 → 0.7.8 → 0.7.9`（当前 **0.7.9**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.9 — 2026-09-24（可选 L4 rulehook 适配器）
+
+### Added
+- **可选 L4 rulehook**：`Q_RULEHOOK` / meta `rulehook` / 已有 `.rulehook/rulehook.toml` 才落盘；种子 ≤10 条短硬 deny
+- **`mergeRulehookCodexHooks`**（lib + sync tmpl）：存在 toml 时合并 `rulehook hook --target codex` 进 `.codex/hooks.json`，保留 harness soft hooks
+- **不** vendoring Python 包；须本机 PATH 有 `rulehook`；`fail_open`
+
+### Docs / pack
+- PARITY / MANUAL / adapters / rulehook README；upgrade `0.7.8 → 0.7.9`
+- P1 Codex 缺口（mcp-policy / calibrate / L4 rulehook）收口
+
+## 0.7.8 — 2026-09-24（calibrate 读 Codex TOML）
+
+### Added
+- **`parseCodexMcpToml` / `codexTomlToMcpDoc`**：轻量解析 `[mcp_servers.*]`；`env_vars` → `process.env`（可内联 `.env` 表）
+- **`loadMcpCredentials`**：JSON 无可用连接时回退 `.codex/config.toml` → `config.toml.example`；认 `MYSQL_PASSWORD` / `REDIS_URL`
+
+### Docs / pack
+- fill-calibrate-live / fill-mcp / PARITY / MANUAL / ai-tools / adapters；upgrade `0.7.7 → 0.7.8`
+- ~~P1 剩余：可选 L4 rulehook~~ → **0.7.9**
 
 ## 0.7.7 — 2026-09-24（Codex MCP policy 精细开关）
 
@@ -12,7 +33,7 @@
 - manifest `agent-config-mcp-policy`；`servers.example.json` 含 gitlab + mysql-test + redis-test 便于对照
 
 ### Docs / pack
-- fill-mcp / CODEX-PARITY / MANUAL / adapters / upgrade `0.7.6 → 0.7.7`；P1 剩余：calibrate 读 toml / 可选 L4
+- fill-mcp / CODEX-PARITY / MANUAL / adapters / upgrade `0.7.6 → 0.7.7`；P1 当时剩余：calibrate 读 toml / 可选 L4（**calibrate → 0.7.8**）
 
 ## 0.7.6 — 2026-09-24（Codex 域 skills：redis / jobs / frontend）
 

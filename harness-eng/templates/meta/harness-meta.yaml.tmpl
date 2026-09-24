@@ -1,8 +1,10 @@
-﻿# harness-eng install metadata — do not put secrets here
+# harness-eng install metadata — do not put secrets here
 skill: harness-eng
-skill_version: "0.7.7"
+skill_version: "0.7.9"
 # agent_config: true = L5 配置 SSOT 管线已启用（docs/agent-config/ + scripts/agent-config/sync.mjs）；生成物勿手改
 agent_config: {{AGENT_CONFIG}}
+# rulehook: true = 可选 L4 NL deny（.rulehook/rulehook.toml）；默认 false；须本机 CLI
+rulehook: {{RULEHOOK}}
 # mcp_tracking: example_only | vendored_shared（见 conflict-policy；缺省 example_only）
 # mcp_tracking: example_only
 ladder: "{{LADDER_TARGET}}"

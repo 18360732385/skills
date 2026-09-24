@@ -237,6 +237,27 @@ export function resolveAgentConfig(params) {
   return String(params && params.ladder || "") === "L5";
 }
 
+/**
+ * Optional L4 rulehook: explicit params.rulehook, else true if root has .rulehook/rulehook.toml.
+ * Default false when neither.
+ * @param {object} params
+ * @param {string} [root]
+ */
+export function resolveRulehook(params, root) {
+  const v = params && params.rulehook;
+  if (v === true || v === "true") return true;
+  if (v === false || v === "false") return false;
+  if (root) {
+    try {
+      const p = path.join(root, ".rulehook", "rulehook.toml");
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return false;
+}
+
 function indent(text, pad) {
   return text
     .split("\n")

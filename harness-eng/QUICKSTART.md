@@ -1,4 +1,4 @@
-﻿# harness-eng 快速开始
+# harness-eng 快速开始
 
 一页纸入口。详细闸门与模式见 [SKILL.md](SKILL.md)、[glossary.md](glossary.md)。  
 人读完整说明：[使用手册.md](使用手册.md) · 浏览器版：[使用手册.html](使用手册.html)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。  
@@ -85,7 +85,7 @@ node scripts/selfcheck.mjs
 PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。先用 Node 写 **UTF-8 无 BOM** 文件，再传路径（SSOT：[write-plan.md](modes/write-plan.md)）：
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.7'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.9'}}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 
@@ -93,4 +93,4 @@ node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
 Trae：[host/TRAE-PARITY.md](host/TRAE-PARITY.md)。CodeBuddy：[host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.7**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.9**）。

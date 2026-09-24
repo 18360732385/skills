@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.7
- * HARNESS_ENG_VERSION: 0.7.7
+ * HARNESS_SYNC_TMPL_ID: 0.7.9
+ * HARNESS_ENG_VERSION: 0.7.9
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -39,8 +39,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.7";
-const HARNESS_ENG_VERSION = "0.7.7";
+const HARNESS_SYNC_TMPL_ID = "0.7.9";
+const HARNESS_ENG_VERSION = "0.7.9";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = {{AI_TOOLS_JSON}};
@@ -241,10 +241,59 @@ function planHooks() {
   }
 }
 
+/** Optional L4 rulehook — shape matches upstream rulehook adapters/codex.py install(). */
+function isRulehookCommand(command) {
+  return /rulehook['"]?\s+hook\b/.test(String(command || ""));
+}
+
+function mergeRulehookCodexHooks(doc, opts = {}) {
+  if (!doc || typeof doc !== "object") return doc;
+  const hooks = (doc.hooks = doc.hooks || {});
+  const command = opts.command || "rulehook hook --target codex";
+  const timeout = opts.timeout != null ? opts.timeout : 60;
+  const statusMessage = opts.statusMessage || "rulehook: checking rules";
+  const events = ["PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop"];
+  for (const event of events) {
+    const groups = Array.isArray(hooks[event]) ? hooks[event] : [];
+    for (const group of groups) {
+      if (!group || typeof group !== "object") continue;
+      const list = Array.isArray(group.hooks) ? group.hooks : [];
+      group.hooks = list.filter((h) => !isRulehookCommand(h && h.command));
+    }
+    const kept = groups.filter((g) => g && Array.isArray(g.hooks) && g.hooks.length > 0);
+    kept.push({
+      hooks: [
+        {
+          type: "command",
+          command,
+          timeout,
+          statusMessage,
+        },
+      ],
+    });
+    hooks[event] = kept;
+  }
+  return doc;
+}
+
+function wantRulehookMerge() {
+  return fs.existsSync(path.join(ROOT, ".rulehook", "rulehook.toml"));
+}
+
+function finalizeCodexHooksDoc(doc) {
+  if (wantRulehookMerge()) mergeRulehookCodexHooks(doc);
+  return doc;
+}
+
 /** Codex hooks：优先 SSOT codex/hooks.json，否则默认 PreToolUse(^Bash$)+mcp__mysql+Stop */
 function planCodexHooks(allScripts, scriptsDir) {
+  let hooksDoc;
   if (ssotExists("codex", "hooks.json")) {
-    put(".codex/hooks.json", readSsot("codex", "hooks.json"));
+    try {
+      hooksDoc = JSON.parse(readSsot("codex", "hooks.json"));
+    } catch {
+      hooksDoc = { hooks: {} };
+    }
   } else {
     // Unix: bash $(git …). Windows: commandWindows + codex-hook.cmd（避免 PowerShell 嵌套引号）
     const adapterUnix =
@@ -259,7 +308,7 @@ function planCodexHooks(allScripts, scriptsDir) {
       'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-stop-checklist.js"';
     const stopWin =
       "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" --direct codex-stop-checklist.js";
-    const defaultHooks = {
+    hooksDoc = {
       _generated: HEADER_JSON,
       description: "harness-eng Codex hooks (fail-open)",
       hooks: {
@@ -304,8 +353,8 @@ function planCodexHooks(allScripts, scriptsDir) {
         ],
       },
     };
-    putJson(".codex/hooks.json", defaultHooks);
   }
+  putJson(".codex/hooks.json", finalizeCodexHooksDoc(hooksDoc));
   for (const s of allScripts) {
     if (s === "claude-adapter.js") continue;
     put(`.codex/hooks/${s}`, fs.readFileSync(path.join(scriptsDir, s)));

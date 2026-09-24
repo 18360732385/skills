@@ -8,11 +8,13 @@
  *   node scripts/fill-calibrate-live.mjs --root <TARGET> --dry-run
  *
  * Connection (no inventing secrets):
- *   1) mcp 真密（按优先级）：.cursor/mcp.json → .mcp.json → .trae/mcp.json → .qoder/mcp.json
+ *   1) mcp 真密（按优先级）：
+ *      .cursor/mcp.json → .mcp.json → .trae/mcp.json → .qoder/mcp.json
+ *      → `.codex/config.toml` → `.codex/config.toml.example`（env_vars 名 → 本机 process.env）
  *      Trae：.trae/mcp.json 须在 IDE Settings → MCP 开关启用（磁盘产物 ≠ 已接入）
  *   2) application-<profile>.yml (or application.yml)
  *
- * Prefer fill-mcp + host MCP when available. This is the fallback path (0.2.10+; multi-path 0.5.2+).
+ * Prefer fill-mcp + host MCP when available. This is the fallback path (0.2.10+; multi-path 0.5.2+; Codex toml 0.7.8+).
  */
 import fs from "fs";
 import path from "path";
@@ -45,7 +47,7 @@ function printHelp() {
   node scripts/fill-calibrate-live.mjs --root <TARGET> [--profile dev] [--dry-run]
 
 Calibrate docs/db/table via MySQL SHOW CREATE TABLE and docs/redis/keys via Redis SCAN.
-Reads credentials from .cursor/mcp.json | .mcp.json | .trae/mcp.json (or application-<profile>.yml); never invents.
+Reads credentials from mcp.json | .codex/config.toml (env_vars→env) | application-<profile>.yml; never invents.
 Requires mysql2 + ioredis (install once under TEMP/harness-mcp-calibrate).
 `);
 }
@@ -231,7 +233,7 @@ async function main() {
   }
 
   if (!mysqlCfg && !redisCfg) {
-    throw new Error("No mysql/redis connection found in mcp.json or application yml");
+    throw new Error("No mysql/redis connection found in mcp.json / Codex toml / application yml");
   }
 
   const stats = {
@@ -239,6 +241,7 @@ async function main() {
     root,
     dryRun: args.dryRun,
     drivers_from: from,
+    mcp: mcp?.rel || null,
     yml: ymlPath ? path.relative(root, ymlPath).replace(/\\/g, "/") : null,
     db_ok: 0,
     db_miss: 0,

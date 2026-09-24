@@ -57,6 +57,18 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.8 → 0.7.9 迁移要点
+
+1. **meta**：`skill_version` → `0.7.9`；需要 NL deny 时设 `rulehook: true` 或保留已有 `.rulehook/`
+2. **可选**：勾选 Q_RULEHOOK → 落盘种子；本机 `pip install` rulehook；`/hooks` trust
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.9`）；有 `.rulehook/rulehook.toml` 时 sync 会合并 rulehook hooks
+
+## 0.7.7 → 0.7.8 迁移要点
+
+1. **meta**：`skill_version` → `0.7.8`
+2. **Codex-only 仓**：`fill-calibrate-live` 可读 `.codex/config.toml` / example；确保 `MYSQL_*` / `REDIS_URL` 在本机环境，或 toml 内联 env
+3. **L5**：若刷新过 sync tmpl，`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.8`）后再 sync
+
 ## 0.7.6 → 0.7.7 迁移要点
 
 1. **meta**：`skill_version` → `0.7.7`

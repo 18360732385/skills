@@ -7,9 +7,18 @@ import os from "os";
 import path from "path";
 import { renderSessionDashboardMarkdown } from "../session-dashboard.mjs";
 import { DOC_MOVES, ROOT_STUBS, ROOT_KEEP, ROOT_MD_MAX } from "../doc-paths.mjs";
-import { HOOK_DEFS, buildContractChecksJs } from "../hooks-checks.mjs";
+import { HOOK_DEFS, buildContractChecksJs, resolveRulehook } from "../hooks-checks.mjs";
 import { scanSignals } from "../detect-signals.mjs";
-import { jsonServersToCodexToml } from "../codex-mcp-toml.mjs";
+import {
+  jsonServersToCodexToml,
+  parseCodexMcpToml,
+  codexTomlToMcpDoc,
+} from "../codex-mcp-toml.mjs";
+import {
+  extractMysqlRedisFromMcpDoc,
+  loadMcpCredentials,
+} from "../mcp-paths.mjs";
+import { mergeRulehookCodexHooks } from "../codex-rulehook.mjs";
 
 export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   // Re-load hot docs so this suite does not depend on outer-scope consts from selfcheck.mjs
@@ -486,7 +495,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.7.7", "manifest version exactly 0.7.7");
+  assert(verLine && verLine[1] === "0.7.9", "manifest version exactly 0.7.9");
 
   const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -856,7 +865,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.7.7", "current manifest pin 0.7.7");
+  assert(manVer063 === "0.7.9", "current manifest pin 0.7.9");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(
@@ -1276,8 +1285,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const gloss067 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
-  assert(/版本：\*\*0\.7\.7\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
-    "使用手册-摘要 version 0.7.7"
+  assert(/版本：\*\*0\.7\.9\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
+    "使用手册-摘要 version 0.7.9"
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
 }
@@ -1340,6 +1349,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.4 → 0\.7\.5/.test(upgrade068), "upgrade has 0.7.4 → 0.7.5");
   assert(/0\.7\.5 → 0\.7\.6/.test(upgrade068), "upgrade has 0.7.5 → 0.7.6");
   assert(/0\.7\.6 → 0\.7\.7/.test(upgrade068), "upgrade has 0.7.6 → 0.7.7");
+  assert(/0\.7\.7 → 0\.7\.8/.test(upgrade068), "upgrade has 0.7.7 → 0.7.8");
+  assert(/0\.7\.8 → 0\.7\.9/.test(upgrade068), "upgrade has 0.7.8 → 0.7.9");
   assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
   assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
 
@@ -1347,11 +1358,14 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.6\.9 增量验收/.test(verify068), "VERIFY 0.6.9 section");
   assert(/0\.7\.0 增量验收/.test(verify068), "VERIFY 0.7.0 section");
   assert(/0\.7\.2 增量验收/.test(verify068), "VERIFY 0.7.1 section");
-  assert(/0\.7\.7 增量验收/.test(verify068), "VERIFY 0.7.7 section");
+  assert(/0\.7\.7 增量验收/.test(verify068), "VERIFY keeps 0.7.7 section");
+  assert(/0\.7\.8 增量验收/.test(verify068), "VERIFY keeps 0.7.8 section");
+  assert(/0\.7\.9 增量验收/.test(verify068), "VERIFY 0.7.9 section");
   assert(/0\.7\.6 增量验收/.test(verify068), "VERIFY keeps 0.7.6 section");
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/0\.7\.7/.test(syncTmpl068), "sync tmpl id 0.7.7");
+  assert(/0\.7\.9/.test(syncTmpl068), "sync tmpl id 0.7.9");
+  assert(/mergeRulehookCodexHooks/.test(syncTmpl068), "sync tmpl merges rulehook");
   assert(/policy\.json/.test(syncTmpl068) && /resolveMcpServerPolicy/.test(syncTmpl068), "sync tmpl MCP policy-aware");
   assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");
 
@@ -1412,6 +1426,117 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
   assert(/enabled\s*=\s*true/.test(fxToml) && /gitlab/.test(fxToml), "fixture toml enables gitlab via policy");
   assert(/mysql_test[\s\S]*enabled\s*=\s*false/.test(fxToml), "fixture toml keeps mysql-test disabled");
+
+  // 0.7.8: calibrate reads Codex TOML (env_vars → process.env)
+  {
+    const parsed = parseCodexMcpToml(fxToml);
+    const byName = Object.fromEntries(parsed.map((s) => [s.name, s]));
+    assert(byName.mysql_test?.env_vars?.includes("MYSQL_HOST"), "parseCodexMcpToml mysql_test env_vars");
+    assert(byName.redis_test?.env_vars?.includes("REDIS_URL"), "parseCodexMcpToml redis_test env_vars");
+
+    const fakeEnv = {
+      MYSQL_HOST: "127.0.0.1",
+      MYSQL_PORT: "3306",
+      MYSQL_USER: "u",
+      MYSQL_PASSWORD: "p",
+      MYSQL_DB: "testdb",
+      REDIS_URL: "redis://127.0.0.1:6379/0",
+    };
+    const doc = codexTomlToMcpDoc(fxToml, fakeEnv);
+    const extracted = extractMysqlRedisFromMcpDoc(doc);
+    assert(extracted.mysql?.host === "127.0.0.1", "codexTomlToMcpDoc + extract mysql host");
+    assert(extracted.mysql?.password === "p", "extract MYSQL_PASSWORD");
+    assert(extracted.mysql?.database === "testdb", "extract MYSQL_DB");
+    assert(extracted.redisUrl === "redis://127.0.0.1:6379/0", "extract REDIS_URL");
+
+    const passOnly = extractMysqlRedisFromMcpDoc({
+      mcpServers: {
+        mysql_x: {
+          env: {
+            MYSQL_HOST: "h",
+            MYSQL_USER: "u",
+            MYSQL_PASS: "legacy",
+            MYSQL_DB: "d",
+          },
+        },
+      },
+    });
+    assert(passOnly.mysql?.password === "legacy", "extract MYSQL_PASS alias");
+
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-calibrate-toml-"));
+    try {
+      fs.mkdirSync(path.join(tmpRoot, ".codex"), { recursive: true });
+      fs.writeFileSync(path.join(tmpRoot, ".codex", "config.toml"), fxToml, "utf8");
+      const loaded = loadMcpCredentials(tmpRoot, undefined, fakeEnv);
+      assert(loaded?.rel === ".codex/config.toml", "loadMcpCredentials toml-only rel");
+      assert(loaded?.mysql?.host === "127.0.0.1", "loadMcpCredentials toml mysql");
+      assert(loaded?.redisUrl === fakeEnv.REDIS_URL, "loadMcpCredentials toml redis");
+    } finally {
+      fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  }
+
+  // 0.7.9: optional L4 rulehook seed + merge
+  {
+    const rhTomlPath = path.join(skillRoot, "templates/agent-config/rulehook/rulehook.toml");
+    assert(fs.existsSync(rhTomlPath), "rulehook.toml seed");
+    const rhToml = fs.readFileSync(rhTomlPath, "utf8");
+    const ruleCount = (rhToml.match(/^\[\[rules\]\]/gm) || []).length;
+    assert(ruleCount > 0 && ruleCount <= 10, `rulehook seed ≤10 rules (got ${ruleCount})`);
+    assert(/id\s*=\s*"no-test-gaming"/.test(rhToml), "rulehook seed has no-test-gaming");
+    assert(/fail_open\s*=\s*true/.test(rhToml), "rulehook seed fail_open");
+    assert(fs.existsSync(path.join(skillRoot, "templates/agent-config/rulehook/README.md")), "rulehook README");
+    assert(/Q_RULEHOOK/.test(fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8")), "questions Q_RULEHOOK");
+    assert(/when_rulehook:\s*true/.test(manifest), "manifest when_rulehook land");
+    assert(resolveRulehook({}, null) === false, "resolveRulehook default false");
+    assert(resolveRulehook({ rulehook: true }, null) === true, "resolveRulehook explicit true");
+
+    const baseHooks = {
+      hooks: {
+        PreToolUse: [
+          {
+            matcher: "^Bash$",
+            hooks: [{ type: "command", command: "node harness-gate.js", timeout: 12 }],
+          },
+        ],
+        Stop: [{ hooks: [{ type: "command", command: "node stop.js", timeout: 8 }] }],
+      },
+    };
+    mergeRulehookCodexHooks(baseHooks);
+    const pre = JSON.stringify(baseHooks.hooks.PreToolUse);
+    assert(/rulehook hook --target codex/.test(pre), "mergeRulehook adds rulehook command");
+    assert(/\^Bash\$/.test(pre) && /harness-gate\.js/.test(pre), "mergeRulehook keeps harness Bash gate");
+    assert(/rulehook hook --target codex/.test(JSON.stringify(baseHooks.hooks.Stop)), "mergeRulehook adds Stop");
+    assert(/rulehook hook --target codex/.test(JSON.stringify(baseHooks.hooks.UserPromptSubmit)), "mergeRulehook UserPromptSubmit");
+
+    const tmpRh = fs.mkdtempSync(path.join(os.tmpdir(), "harness-rulehook-"));
+    try {
+      fs.mkdirSync(path.join(tmpRh, ".rulehook"), { recursive: true });
+      fs.writeFileSync(path.join(tmpRh, ".rulehook", "rulehook.toml"), rhToml, "utf8");
+      assert(resolveRulehook({}, tmpRh) === true, "resolveRulehook detects existing toml");
+      assert(scanSignals(tmpRh).S_RULEHOOK === true, "detect S_RULEHOOK");
+      // sync merge: copy fixture sync, add .rulehook, run once
+      const syncSrc = path.join(skillRoot, "scripts/fixtures/l5-sync-codex/scripts/agent-config/sync.mjs");
+      const ssotSrc = path.join(skillRoot, "scripts/fixtures/l5-sync-codex/docs/agent-config");
+      fs.mkdirSync(path.join(tmpRh, "scripts/agent-config"), { recursive: true });
+      fs.cpSync(ssotSrc, path.join(tmpRh, "docs/agent-config"), { recursive: true });
+      fs.copyFileSync(syncSrc, path.join(tmpRh, "scripts/agent-config/sync.mjs"));
+      const syncRun = runNode([path.join(tmpRh, "scripts/agent-config/sync.mjs")], { cwd: tmpRh });
+      assert(syncRun.status === 0, "rulehook tmp sync exit 0");
+      const hooksOut = fs.readFileSync(path.join(tmpRh, ".codex/hooks.json"), "utf8");
+      assert(/rulehook hook --target codex/.test(hooksOut), "sync with .rulehook merges rulehook");
+      assert(/\^Bash\$/.test(hooksOut), "sync with .rulehook keeps Bash matcher");
+    } finally {
+      fs.rmSync(tmpRh, { recursive: true, force: true });
+    }
+
+    // default codex fixture has no .rulehook → no rulehook in hooks
+    const fxHooks = fs.readFileSync(
+      path.join(skillRoot, "scripts/fixtures/l5-sync-codex/.codex/hooks.json"),
+      "utf8"
+    );
+    assert(!/rulehook hook/.test(fxHooks), "default l5-sync-codex hooks omit rulehook");
+  }
 
   assert(
     fs.existsSync(path.join(skillRoot, "templates/ai-tools/codex/rules/repository.rules")),

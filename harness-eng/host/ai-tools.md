@@ -114,7 +114,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 | `trae` | `.trae/mcp.json.example` | `.trae/mcp.json` |
 | `codex` | `.codex/config.toml.example` | `.codex/config.toml`（**trusted** 项目；`[mcp_servers.*]`） |
 
-路径 SSOT：`scripts/lib/mcp-paths.mjs`（Claude/Cursor/Trae 的 `mcp.json`）；Codex 走 **config.toml**，见适配卡。calibrate-live 按优先级读 `mcp.json` 真密（不含 Codex toml）。  
+路径 SSOT：`scripts/lib/mcp-paths.mjs`（Claude/Cursor/Trae 的 `mcp.json`）；Codex 走 **config.toml**，见适配卡。calibrate-live：**JSON 真密优先**，其后回退项目 `.codex/config.toml` / `config.toml.example`（`env_vars`→本机环境变量）。  
 **Trae**：磁盘写 `.trae/mcp.json` 后须在 IDE **Settings → MCP** 用开关启用；面板里 toggled-off 的 server **仍在场**（不是缺文件）。2026-09-14 实证见 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。  
 **Codex**：项目 MCP 仅 trusted 加载；会话用 `/mcp`；**勿**假设根 `.mcp.json` 生效。人验见 [CODEX-MANUAL.md](CODEX-MANUAL.md)。
 

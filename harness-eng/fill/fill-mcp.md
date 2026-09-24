@@ -19,8 +19,8 @@
 
 多选时 JSON 宿主各写对应真密路径（内容一致）。Codex 为 **TOML** 投影（可用 `scripts/lib/codex-mcp-toml.mjs` / L5 `sync.mjs`）；路径 SSOT：`scripts/lib/mcp-paths.mjs`。  
 `resolveMcpSecretTargets` 在 `ai_tools` 含 `codex` 时会包含 `.codex/config.toml`。  
-`fill-calibrate-live` 按优先级读取 **JSON**：`.cursor/mcp.json` → `.mcp.json` → `.trae/mcp.json` → `.qoder/mcp.json`（**不含** Codex toml）。  
-**仅 Codex、无 JSON 真密时**：过闸请用路径 B 的前提——保留一份 JSON 真密副本供 calibrate，或会话内 MCP 烟测（路径 A）；不要假设 calibrate 能解析 `config.toml`。
+`fill-calibrate-live` 读序：**JSON 真密**（`.cursor/mcp.json` → `.mcp.json` → `.trae/mcp.json` → `.qoder/mcp.json`）→ **`.codex/config.toml`** → **`.codex/config.toml.example`**（只作 schema；`env_vars` 名从本机 `process.env` 取值）→ `application-*.yml`。  
+**仅 Codex 仓**：无需另备 JSON 副本；设好 `MYSQL_*` / `REDIS_URL`（或本机 toml 内联 `[mcp_servers.*.env]`）即可 calibrate。
 
 **Codex 启用仪式**（写完 toml 后）：workspace **trust** → 审阅 `docs/agent-config/mcp/policy.json`（决定 example 里谁 `enabled`）→ 拷贝/合并本机 `.codex/config.toml` → `/mcp` 验收。  
 **策略优先级**：`policy.servers.<name>` > heuristics（写库类默认关、gitlab/chrome 等安全工具默认可开）> `defaults`。改 policy 后须 `sync.mjs` 再生 `config.toml.example`；本机 toml 可再覆盖。详见 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)。

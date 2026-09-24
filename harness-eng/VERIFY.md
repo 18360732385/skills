@@ -1,21 +1,41 @@
-﻿# harness-eng 验收记录（0.7.7）
+﻿# harness-eng 验收记录（0.7.9）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.7**（Codex MCP policy 精细开关；其上 0.7.6 redis/jobs/frontend skills · 0.7.5 contract/api/db · 0.7.4 hooks 生效链）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.9**（可选 L4 rulehook；其上 0.7.8 calibrate toml · 0.7.7 MCP policy · 0.7.6 redis/jobs/frontend skills · 0.7.5 contract/api/db）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.9 增量验收（可选 L4 rulehook）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.9` | 有 |
+| CHANGELOG 标题 `## 0.7.9` | 有 |
+| `templates/agent-config/rulehook/rulehook.toml` ≤10 rules | 有 |
+| sync `mergeRulehookCodexHooks` / tmpl id `0.7.9` | 有 |
+| upgrade `## 0.7.8 → 0.7.9` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.8 增量验收（calibrate 读 toml）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.8` | 有 |
+| CHANGELOG 标题 `## 0.7.8` | 有 |
+| `parseCodexMcpToml` / `codexTomlToMcpDoc` | 有 |
+| `loadMcpCredentials` 回退 `.codex/config.toml` | 有 |
+| upgrade `## 0.7.7 → 0.7.8` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.7 增量验收（MCP policy）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.7` | 有 |
 | CHANGELOG 标题 `## 0.7.7` | 有 |
 | `templates/agent-config/mcp/policy.json` | 有 |
 | sync tmpl 读 `policy.json` → `enabled` / `approval_mode` | 有 |
 | upgrade `## 0.7.6 → 0.7.7` | 有 |
-| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.6 增量验收（redis / jobs / frontend skills）
 

@@ -1,0 +1,75 @@
+# harness-eng L4 optional NL deny seed (≤10 rules).
+# Opt-in only: Q_RULEHOOK / meta.rulehook / existing .rulehook/.
+# Requires local `rulehook` on PATH; not vendored by harness-eng.
+# Upstream: https://github.com/xwk-911/rulehook
+# Sync merges `rulehook hook --target codex` into .codex/hooks.json when this file exists.
+
+[settings]
+provider = "codex-cli"
+fail_open = true
+timeout = 25
+cache = true
+
+[[rules]]
+id = "no-test-gaming"
+rule = "Never make a failing test pass by skipping, weakening, deleting, or commenting it out. Fix the underlying code instead."
+events = ["pre_tool_use", "stop"]
+tools = "Bash|Edit|Write|MultiEdit|apply_patch"
+action = "deny"
+pattern = "skip|xfail|no-verify|coverage|assert|test"
+
+[[rules]]
+id = "no-skip-hooks"
+rule = "Never bypass git hooks with --no-verify, --no-gpg-sign, or HUSKY=0 to land a commit."
+events = ["pre_tool_use"]
+tools = "Bash"
+action = "deny"
+pattern = "no-verify|no-gpg-sign|HUSKY=0"
+
+[[rules]]
+id = "no-commit-secrets"
+rule = "Never commit secrets, API keys, tokens, or private keys (.env with credentials, pem/key files, hardcoded passwords)."
+events = ["pre_tool_use"]
+tools = "Bash|Edit|Write|MultiEdit|apply_patch"
+action = "deny"
+pattern = "\\.env|secret|api[_-]?key|BEGIN (RSA |OPENSSH )?PRIVATE|password\\s*="
+
+[[rules]]
+id = "no-delete-failing-tests"
+rule = "Never delete or empty a failing test file solely to make CI green."
+events = ["pre_tool_use"]
+tools = "Bash|Edit|Write|MultiEdit|apply_patch"
+action = "deny"
+pattern = "rm .+test|delete.*(test|spec)|\\.only\\(|xit\\(|xdescribe\\("
+
+[[rules]]
+id = "no-fabricate-acceptance"
+rule = "Never claim acceptance or fill scores passed without running the documented check commands."
+events = ["stop"]
+tools = "*"
+action = "deny"
+pattern = "acceptance|fill-score|skeleton_ready|overall"
+
+[[rules]]
+id = "no-force-destructive-git"
+rule = "Never run git push --force, git reset --hard, or git clean -fdx against shared or protected branches without explicit human approval in this turn."
+events = ["pre_tool_use"]
+tools = "Bash"
+action = "deny"
+pattern = "push --force|push -f|reset --hard|clean -[a-z]*f"
+
+[[rules]]
+id = "no-prod-mcp-writes"
+rule = "Never use MCP MySQL/Redis write tools against production or prod-named environments."
+events = ["pre_tool_use"]
+tools = "mcp__mysql|mcp__redis|Bash"
+action = "deny"
+pattern = "prod|production|DROP |TRUNCATE |DELETE FROM"
+
+[[rules]]
+id = "no-weaken-lint-gate"
+rule = "Never disable or weaken lint/typecheck/test gates in CI config just to merge a broken change."
+events = ["pre_tool_use"]
+tools = "Edit|Write|MultiEdit|apply_patch|Bash"
+action = "deny"
+pattern = "continue-on-error:\\s*true|eslint-disable|@ts-ignore|skip_ci|allow_failure"

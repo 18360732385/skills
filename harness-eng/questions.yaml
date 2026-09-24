@@ -1,7 +1,7 @@
-﻿# questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
+# questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.7.7"
+version: "0.7.9"
 
 all_recommend_phrases:
   - 全部推荐
@@ -302,6 +302,13 @@ batches:
         options:
           - { value: example_only, label: example_only（推荐：仅 example 入库，真密走 .gitignore）, recommended: true }
           - { value: vendored_shared, label: vendored_shared（写入 meta；audit 不按反模式红灯） }
+      - id: Q_RULEHOOK
+        text: 是否启用可选 L4 rulehook（自然语言 deny；短硬红线；须本机安装 rulehook CLI；默认否）？
+        type: boolean
+        when_ladder_min: L4
+        recommended: false
+        recommended_when: "S_RULEHOOK"
+        note: 仅 Codex/多宿主 NL 强制场景；不默认依赖；详见 host/CODEX-PARITY.md L4
 
   - id: batch-seed-truths
     when: "mode == seed-truths"
