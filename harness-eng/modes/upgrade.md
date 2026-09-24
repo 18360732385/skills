@@ -57,6 +57,26 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.4 → 0.7.5 迁移要点
+
+1. **meta**：`skill_version` → `0.7.5`
+2. **L5**：确认 `docs/agent-config/skills/` 有 `contract-sync` / `api-doc-sync` / `db-doc-sync`；缺则从技能模板补齐
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.5`）后再 `node scripts/agent-config/sync.mjs`（应出现 `.agents/skills/*/SKILL.md`）
+4. Codex：AGENTS「Rules 索引」应点名 skills；人验 `/skills`
+
+## 0.7.3 → 0.7.4 迁移要点
+
+1. **meta**：`skill_version` → `0.7.4`
+2. **Codex**：刷新 `.codex/hooks.json`（`commandWindows` 改走 `codex-hook.cmd`；新增 `mcp__mysql`）、`codex-hook.cmd`、`mcp-mysql-guard.js`、`codex-adapter.js`（`mcp-guard`）；扩充 `repository.rules`
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.4`）后再 `node scripts/agent-config/sync.mjs`
+
+## 0.7.2 → 0.7.3 迁移要点
+
+1. **meta**：`skill_version` → `0.7.3`
+2. **Codex（若 `ai_tools` 含 codex）**：刷新 `.codex/hooks.json`（须含 `commandWindows`）与 `codex-stop-checklist.js`；确认 `.gitignore` 有 `.codex/config.toml`；人验 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.3`）后再 `node scripts/agent-config/sync.mjs`
+4. **装/升 URL** 仍用 **`main`**
+
 ## 0.7.1 → 0.7.2 迁移要点
 
 1. **meta**：`skill_version` → `0.7.2`

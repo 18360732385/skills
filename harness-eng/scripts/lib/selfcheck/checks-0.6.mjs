@@ -486,7 +486,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.7.2", "manifest version exactly 0.7.1");
+  assert(verLine && verLine[1] === "0.7.5", "manifest version exactly 0.7.5");
 
   const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -856,23 +856,37 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.7.2", "current manifest pin 0.7.1");
+  assert(manVer063 === "0.7.5", "current manifest pin 0.7.5");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.7\.2/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID");
-  assert(/HARNESS_ENG_VERSION:\s*0\.7\.2/.test(syncTmpl063), "sync.mjs.tmpl has HARNESS_ENG_VERSION");
+  assert(
+    new RegExp(`HARNESS_SYNC_TMPL_ID:\\s*${manVer063.replace(/\./g, "\\.")}`).test(syncTmpl063),
+    "sync.mjs.tmpl has HARNESS_SYNC_TMPL_ID"
+  );
+  assert(
+    new RegExp(`HARNESS_ENG_VERSION:\\s*${manVer063.replace(/\./g, "\\.")}`).test(syncTmpl063),
+    "sync.mjs.tmpl has HARNESS_ENG_VERSION"
+  );
   const tmplId = (syncTmpl063.match(/HARNESS_SYNC_TMPL_ID:\s*(\S+)/) || [])[1];
   assert(tmplId === manVer063, "tmpl marker matches manifest version");
 
   const golden063 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
   const goldenSync063 = fs.readFileSync(path.join(golden063, "scripts/agent-config/sync.mjs"), "utf8");
-  assert(/HARNESS_SYNC_TMPL_ID:\s*0\.7\.2/.test(goldenSync063), "l5-sync-golden instantiated sync has marker");
+  assert(
+    new RegExp(`HARNESS_SYNC_TMPL_ID:\\s*${manVer063.replace(/\./g, "\\.")}`).test(goldenSync063),
+    "l5-sync-golden instantiated sync has marker"
+  );
   const goldFresh = runNode(
     [path.join(skillRoot, "scripts/harness.mjs"), "--check-freshness", "--root", golden063],
     { cwd: skillRoot }
   );
   assert(goldFresh.status === 0, "check-freshness passes on golden");
-  assert(/freshness OK|HARNESS_SYNC_TMPL_ID=0\.7\.2/.test(goldFresh.stderr + goldFresh.stdout), "golden freshness message");
+  assert(
+    new RegExp(`freshness OK|HARNESS_SYNC_TMPL_ID=${manVer063.replace(/\./g, "\\.")}`).test(
+      goldFresh.stderr + goldFresh.stdout
+    ),
+    "golden freshness message"
+  );
 
   const stale063 = path.join(skillRoot, "scripts/fixtures/l5-sync-stale");
   assert(fs.existsSync(path.join(stale063, "scripts/agent-config/sync.mjs")), "l5-sync-stale stub");
@@ -1263,8 +1277,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
   assert(
-    /版本：\*\*0\.7\.2\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
-    "使用手册-摘要 version 0.7.0"
+    /版本：\*\*0\.7\.5\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
+    "使用手册-摘要 version 0.7.5"
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
 }
@@ -1320,6 +1334,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.6\.8-dev → 0\.6\.9/.test(upgrade068), "upgrade has 0.6.8-dev → 0.6.9");
   assert(/0\.6\.9 → 0\.7\.0/.test(upgrade068), "upgrade has 0.6.9 → 0.7.0");
   assert(/0\.7\.1 → 0\.7\.2/.test(upgrade068), "upgrade has 0.7.1 → 0.7.2");
+  assert(/0\.7\.3 → 0\.7\.4/.test(upgrade068), "upgrade has 0.7.3 → 0.7.4");
+  assert(/0\.7\.4 → 0\.7\.5/.test(upgrade068), "upgrade has 0.7.4 → 0.7.5");
   assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
   assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
 
@@ -1327,9 +1343,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.6\.9 增量验收/.test(verify068), "VERIFY 0.6.9 section");
   assert(/0\.7\.0 增量验收/.test(verify068), "VERIFY 0.7.0 section");
   assert(/0\.7\.2 增量验收/.test(verify068), "VERIFY 0.7.1 section");
+  assert(/0\.7\.5 增量验收/.test(verify068), "VERIFY 0.7.5 section");
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/0\.7\.2/.test(syncTmpl068), "sync tmpl id 0.7.1");
+  assert(/0\.7\.5/.test(syncTmpl068), "sync tmpl id 0.7.5");
   assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");
 
   assert(/\|\s*`trae`\s*\|\s*\*\*高\*\*/.test(aiTools068), "Trae matrix still 高 after Codex P0");

@@ -57,6 +57,8 @@ export function resolveMcpSecretTargets(aiTools) {
     push(".mcp.json");
   }
   if (tools.has("trae")) push(".trae/mcp.json");
+  // Codex 真密为 TOML（非 JSON）；fill-mcp 写入后须 trusted + /mcp。calibrate-live 仍优先读 JSON 候选。
+  if (tools.has("codex")) push(CODEX_CONFIG_TOML);
   return out;
 }
 

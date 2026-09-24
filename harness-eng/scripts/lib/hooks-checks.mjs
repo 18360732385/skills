@@ -62,6 +62,33 @@ const TRAE_STYLE = {
   "stop-checklist": { event: "Stop", adapter: "stop-check" },
 };
 
+/**
+ * Codex：matcher 为正则；终端工具名 Bash → `^Bash$`。
+ * after-edit：Codex 无稳定 Edit 事件映射 → 不登记（勿静默丢配置；家族选中时仅其它宿主生效）。
+ * Stop 默认磁盘脚本为 codex-stop-checklist.js（见 manifest / sync），登记表仍用 stop-check 语义。
+ */
+const CODEX_STYLE = {
+  "commit-gate": {
+    event: "PreToolUse",
+    matcher: "^Bash$",
+    adapter: "commit-gate",
+    timeout: 12,
+  },
+  "commit-gate-extended": {
+    event: "PreToolUse",
+    matcher: "^Bash$",
+    adapter: "commit-gate",
+    timeout: 12,
+  },
+  "mysql-guard": {
+    event: "PreToolUse",
+    matcher: "mcp__mysql",
+    adapter: "mcp-guard",
+    timeout: 8,
+  },
+  "stop-checklist": { event: "Stop", adapter: "stop-check", timeout: 8 },
+};
+
 /** hooks 家族登记表。gate 类才有 git 模式（.githooks 兜底）。 */
 export const HOOK_DEFS = {
   "commit-gate": {
@@ -74,6 +101,7 @@ export const HOOK_DEFS = {
       qoder: CLAUDE_STYLE["commit-gate"],
       trae: TRAE_STYLE["commit-gate"],
       workbuddy: CLAUDE_STYLE["commit-gate"],
+      codex: CODEX_STYLE["commit-gate"],
     },
   },
   "commit-gate-extended": {
@@ -86,6 +114,7 @@ export const HOOK_DEFS = {
       qoder: CLAUDE_STYLE["commit-gate-extended"],
       trae: TRAE_STYLE["commit-gate-extended"],
       workbuddy: CLAUDE_STYLE["commit-gate-extended"],
+      codex: CODEX_STYLE["commit-gate-extended"],
     },
   },
   "mysql-guard": {
@@ -97,6 +126,7 @@ export const HOOK_DEFS = {
       qoder: CLAUDE_STYLE["mysql-guard"],
       trae: TRAE_STYLE["mysql-guard"],
       workbuddy: CLAUDE_STYLE["mysql-guard"],
+      codex: CODEX_STYLE["mysql-guard"],
     },
   },
   "after-edit": {
@@ -108,6 +138,7 @@ export const HOOK_DEFS = {
       qoder: CLAUDE_STYLE["after-edit"],
       trae: TRAE_STYLE["after-edit"],
       workbuddy: CLAUDE_STYLE["after-edit"],
+      // codex: 无 after-edit 事件（故意 omit）
     },
   },
   "stop-checklist": {
@@ -119,6 +150,7 @@ export const HOOK_DEFS = {
       qoder: CLAUDE_STYLE["stop-checklist"],
       trae: TRAE_STYLE["stop-checklist"],
       workbuddy: CLAUDE_STYLE["stop-checklist"],
+      codex: CODEX_STYLE["stop-checklist"],
     },
   },
 };
@@ -322,7 +354,7 @@ function hooksConfigEntriesJson(selection, aiTools) {
   for (const key of selection) {
     const def = HOOK_DEFS[key];
     const targets = {};
-    for (const t of ["cursor", "claude", "qoder", "trae", "workbuddy"]) {
+    for (const t of ["cursor", "claude", "qoder", "trae", "workbuddy", "codex"]) {
       if (!tools.has(t)) continue;
       const ev = def.events[t];
       if (ev) targets[t] = ev;
@@ -446,6 +478,10 @@ export function expandHooksFamily(params, agentConfig, actionForTarget, root) {
     if (has("trae")) push(`hookfam-${key}-trae`, def.template, `.trae/hooks/${def.script}`);
     if (has("workbuddy")) {
       push(`hookfam-${key}-codebuddy`, def.template, `.codebuddy/hooks/${def.script}`);
+    }
+    // Codex：家族脚本进 .codex/hooks；Stop 仍用专用 codex-stop-checklist（manifest），不在此覆盖
+    if (has("codex") && key !== "stop-checklist" && def.events.codex) {
+      push(`hookfam-${key}-codex`, def.template, `.codex/hooks/${def.script}`);
     }
     if (def.gate) push(`hookfam-${key}-githooks`, def.template, `.githooks/${def.script}`);
   }

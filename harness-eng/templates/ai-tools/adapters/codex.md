@@ -6,8 +6,9 @@
 
 - **目录**: `.codex/`；主指令优先根/目录级 `AGENTS.md`（官方层级合并；~32KiB）
 - **Command policy (rules)**: `docs/agent-config/codex/rules/*.rules` → `.codex/rules/`（Starlark；**experimental**）；**禁止**把 `.mdc` 转成 `.rules`
-- **Config / MCP**: `.codex/config.toml.example`（由 `mcp/servers*.json` 脱敏生成）；本机 trusted 后 `.codex/config.toml`（建议 gitignore）；会话 `/mcp`
-- **Hooks**: `.codex/hooks.json` — `PreToolUse` matcher **`^Bash$`** + `Stop`；经 `codex-adapter.js`；须 `/hooks` 信任；fail-open；`.githooks` 仍兜底
-- **Skills**: L5 全量 `docs/agent-config/skills/` → `.agents/skills/`（不 prune 用户自建）
+- **Hooks**: `.codex/hooks.json` — `PreToolUse` **`^Bash$`** + **`mcp__mysql`** + `Stop`；含 **`commandWindows`**（`codex-hook.cmd`）；经 `codex-adapter.js`（含 `mcp-guard` 软提醒）；须 `/hooks` 信任；fail-open；`.githooks` 仍兜底
+- **Config / MCP**: `.codex/config.toml.example`（由 `mcp/servers*.json` 脱敏生成）；本机 trusted 后 `.codex/config.toml`（**gitignore**）；会话 `/mcp`
+- **Skills**: L5 `docs/agent-config/skills/` → `.agents/skills/`（种子：`contract-sync` / `api-doc-sync` / `db-doc-sync`；不 prune 用户自建）
+- **入库**：hooks / rules / `config.toml.example` / `docs/agent-config/codex/**` 应提交；**勿**提交 `.codex/config.toml`
 - **contract-sync**: 仅 L0–L2 写 `.codex/contract-sync.md`；L3+/L5 omit
 - **人验**: [CODEX-MANUAL.md](../../../host/CODEX-MANUAL.md)

@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.2"
+version: "0.7.5"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -321,6 +321,19 @@ files:
     ladder: L3
     template: hooks/codex-stop-checklist.js.tmpl
     target: .codex/hooks/codex-stop-checklist.js
+    placeholders: [DB_MIGRATION_DIR, MIGRATION_ENVS, CODE_PREFIXES]
+    when_ai_tools: codex
+  - id: hooks-codex-cmd
+    ladder: L3
+    template: hooks/codex-hook.cmd
+    target: .codex/hooks/codex-hook.cmd
+    when_ai_tools: codex
+    note: Windows commandWindows launcher（git root → adapter / --direct）
+  - id: hooks-codex-mysql-guard
+    ladder: L3
+    template: hooks/mcp-mysql-guard.js.tmpl
+    target: .codex/hooks/mcp-mysql-guard.js
+    placeholders: [MYSQL_GUARD_SERVERS]
     when_ai_tools: codex
   - id: codex-rules-repository
     ladder: L3
@@ -404,3 +417,22 @@ files:
     ladder: L5
     template: agent-config/settings.json.tmpl
     target: docs/agent-config/settings.json
+  - id: agent-config-skill-contract-sync
+    ladder: L5
+    template: agent-config/skills/contract-sync/SKILL.md
+    target: docs/agent-config/skills/contract-sync/SKILL.md
+    note: Codex/非 Cursor 契约同步纪律；sync → .agents/skills（及各宿主 skills/）
+  - id: agent-config-skill-db-doc-sync
+    ladder: L5
+    template: agent-config/skills/db-doc-sync/SKILL.md
+    target: docs/agent-config/skills/db-doc-sync/SKILL.md
+  - id: agent-config-skill-api-doc-sync
+    ladder: L5
+    template: agent-config/skills/api-doc-sync/SKILL.md
+    target: docs/agent-config/skills/api-doc-sync/SKILL.md
+  - id: agent-config-codex-rules-repository
+    ladder: L5
+    template: agent-config/codex/rules/repository.rules
+    target: docs/agent-config/codex/rules/repository.rules
+    when_ai_tools: codex
+    note: L5 SSOT；sync 投影到 .codex/rules/

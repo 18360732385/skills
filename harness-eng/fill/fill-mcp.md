@@ -18,7 +18,11 @@
 | `codex` | `.codex/config.toml.example` | `.codex/config.toml`（trusted 本机；建议 gitignore；**勿提交**密钥进仓库） |
 
 多选时 JSON 宿主各写对应真密路径（内容一致）。Codex 为 **TOML** 投影（可用 `scripts/lib/codex-mcp-toml.mjs` / L5 `sync.mjs`）；路径 SSOT：`scripts/lib/mcp-paths.mjs`。  
-`fill-calibrate-live` 按优先级读取 JSON：`.cursor/mcp.json` → `.mcp.json` → `.trae/mcp.json` → `.qoder/mcp.json`（**不含** Codex toml）。
+`resolveMcpSecretTargets` 在 `ai_tools` 含 `codex` 时会包含 `.codex/config.toml`。  
+`fill-calibrate-live` 按优先级读取 **JSON**：`.cursor/mcp.json` → `.mcp.json` → `.trae/mcp.json` → `.qoder/mcp.json`（**不含** Codex toml）。  
+**仅 Codex、无 JSON 真密时**：过闸请用路径 B 的前提——保留一份 JSON 真密副本供 calibrate，或会话内 MCP 烟测（路径 A）；不要假设 calibrate 能解析 `config.toml`。
+
+**Codex 启用仪式**（写完 toml 后）：workspace **trust** → `/mcp` 验收 → 写库类保持 `enabled=false` 直至明确需要。详见 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)。
 
 **Trae 启用**：写完 `.trae/mcp.json` 后须在 IDE **Settings → MCP** 用开关启用各 server。磁盘产物 ≠ 已接入；面板里 **OFF via toggle** 的条目仍在场（不是缺文件 / 不是启动失败）。无协议变更：主路径仍是 `.trae/mcp.json`，不改到 `.cursor/mcp.json`。
 

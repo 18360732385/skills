@@ -1,8 +1,8 @@
-# Codex 真人会话清单（0.7.2 · 高）
+# Codex 真人会话清单（0.7.5 · 高）
 
 给本机已装 **Codex CLI / IDE / ChatGPT 桌面 Codex** 的同学。对照：[CODEX-PARITY.md](CODEX-PARITY.md)。
 
-仓库至少有：根 `AGENTS.md`；若 `ai_tools` 含 codex：`.codex/hooks.json`、`.codex/rules/`、`.codex/config.toml.example`。
+仓库至少有：根 `AGENTS.md`；若 `ai_tools` 含 codex：`.codex/hooks.json`、`.codex/rules/`、`.codex/config.toml.example`、`.codex/hooks/codex-hook.cmd`。
 
 ## 0. 信任项目
 
@@ -13,18 +13,22 @@
 
 - [ ] 根（及目录级）`AGENTS.md` 非空
 - [ ] **不要**期望 `.cursor/rules/*.mdc` 被 Codex 当 instructions 加载
+- [ ] 「Rules 索引」含 Codex 小节
 
 ## 2. Starlark rules
 
 - [ ] 磁盘有 `.codex/rules/*.rules`（如 `repository.rules`）
-- [ ] 尝试 `git push` 类命令出现 prompt；`git reset --hard` 被 forbidden（以客户端为准）
+- [ ] 尝试 `git push` 类命令出现 prompt；`git reset --hard` / `git push --force` 被 forbidden（以客户端为准）
 - [ ] 知悉 rules 仍可能标 experimental
 
 ## 3. Hooks：`/hooks` trust
 
-- [ ] `.codex/hooks.json` 含 `PreToolUse` matcher `^Bash$` 与 `Stop`
+- [ ] `.codex/hooks.json` 含 `PreToolUse` matcher `^Bash$`、`mcp__mysql` 与 `Stop`
+- [ ] 每条 command hook 含 **`commandWindows`**（经 `codex-hook.cmd`；勿依赖 bash `$(git …)`）
+- [ ] `codex-stop-checklist.js` 在有脏交付文件时写 **stderr** 软提醒（非空壳）
 - [ ] 经 `codex-adapter.js`；`/hooks` 审阅并 **trust**
 - [ ] `.githooks` 仍作兜底
+- [ ] `.gitignore` 含 `.codex/config.toml`（真密本机文件）
 
 ## 4. MCP：`config.toml` + `/mcp`
 
@@ -35,14 +39,16 @@
 
 ## 5. Skills
 
-- [ ] L5：`.agents/skills/` 含同步产物与 `GENERATED.md`
+- [ ] L5：`.agents/skills/` 含 `contract-sync` / `api-doc-sync` / `db-doc-sync` 与 `GENERATED.md`
 - [ ] `/skills` 或 `$` 可发现
 
 ## 6. 已知悉
 
 - [ ] 不做 `.mdc` 全量镜像
 - [ ] 推荐纪律 B：无探测不默认勾选 Codex
+- [ ] 应入库 hooks/rules/example；勿入库 `config.toml`
+- [ ] **Windows 限制**：部分 shell 走 `unified_exec` / `command_execution` 时，`PreToolUse(^Bash$)` 可能不触发（官方 hooks「不完全拦截」）；`.githooks` 仍兜底。Stop / 已走 Bash tool 的路径不受此限
 
 ## 回传模板
 
-trust=是|否 / AGENTS=是|否 / rules=是|否 / hooks=已信任 / MCP=/mcp可见 / skills=是|否 / 非.mdc已知悉=是|否
+trust=是|否 / AGENTS=是|否 / rules=是|否 / hooks=已信任 / Stop_stderr=是|否 / MCP=/mcp可见 / skills=是|否 / 非.mdc已知悉=是|否

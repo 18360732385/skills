@@ -1,8 +1,45 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2`（当前 **0.7.2**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5`（当前 **0.7.5**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.5 — 2026-09-24（Codex Skills 种子 · 行为承接）
+
+### Added
+- **L5 skills 种子**：`docs/agent-config/skills/{contract-sync,api-doc-sync,db-doc-sync}/SKILL.md` → sync 到 `.agents/skills/`（及各宿主 `skills/`）；承接原 `.mdc` 同步纪律（**不做**全量镜像）
+- **manifest**：`agent-config-skill-*` + `agent-config-codex-rules-repository`（L5 SSOT Starlark）
+- AGENTS「Rules 索引」点名上述 skills；CODEX-PARITY NL 域规则 → **PASS**（薄种子）
+
+### Docs / pack
+- MANUAL / adapters / upgrade `0.7.4 → 0.7.5`；fixture `l5-sync-codex` 含 skills；selfcheck 钉种子存在与同步产物
+- **收口**：freshness / golden `HARNESS_SYNC_TMPL_ID` 与 manifest 对齐 **0.7.5**（selfcheck 按当前 version 动态断言）；README 纪律行补「Pn 回流 / 前后端契约」；MANUAL/PARITY 注明 Win `unified_exec` 可能绕过 PreToolUse
+
+## 0.7.4 — 2026-09-24（Codex hooks 家族 / Windows cmd / MCP 路径）
+
+### Fixed
+- **Windows hooks**：`commandWindows` 改走 **`codex-hook.cmd`**（`for /f` + git root），避免 PowerShell 嵌套引号在 `cmd /C` 外层包裹下静默失败
+- **mysql-guard**：默认 Codex hooks 增加 `PreToolUse` matcher `mcp__mysql`；`codex-adapter` 支持 **`mcp-guard`**（ask/deny → stderr，stdout 仍 `{}`）
+- **HOOK_DEFS**：登记 `events.codex`（`after-edit` 故意 omit）；`expandHooksFamily` / `hooks.config` 含 codex；manifest 增 `hooks-codex-cmd` / `hooks-codex-mysql-guard`
+- **mcp-paths**：`resolveMcpSecretTargets` 在含 `codex` 时包含 `.codex/config.toml`；fill-mcp 写明 calibrate **不**读 toml
+- **repository.rules**：增补 `git push --force` / `-f`、`git clean -xfd`
+
+### Docs / pack
+- CODEX-PARITY / MANUAL / adapters / upgrade `0.7.3 → 0.7.4`；selfcheck 钉 `codex-hook.cmd` + `mcp__mysql` + HOOK_DEFS.codex
+- sync tmpl / fixture `l5-sync-codex` → **0.7.4**
+
+## 0.7.3 — 2026-09-24（Codex hooks 生效链 PR1）
+
+### Fixed
+- **Codex hooks Windows**：`command` 保留 Unix `$(git …)`；新增 **`commandWindows`**（初版 PowerShell；**0.7.4** 改 cmd 启动器），避免 Win 下 `$()` 未展开导致 hook 静默 fail-open
+- **Codex Stop 去空壳**：`codex-stop-checklist.js` 对齐 Cursor stop 观察清单（git status / migration / superpowers / 代码前缀 → **stderr**；stdout 仍 `{}`）
+- **codex-adapter**：转发子进程 stderr；spawn/非零退出写诊断（仍 fail-open）
+- **gitignore**：snippet 增加 `.codex/config.toml`
+
+### Docs / pack
+- CODEX-MANUAL / PARITY / adapters/codex 同步；upgrade `0.7.2 → 0.7.3`；selfcheck 钉 `commandWindows` + Stop 非空壳 + gitignore
+- sync tmpl / fixture `l5-sync-codex` → **0.7.3**
+- AGENTS「Rules 索引」Codex 分支；MCP 启用仪式 / 入库约定
 
 ## 0.7.2 — 2026-09-24（日落 CLI shim）
 

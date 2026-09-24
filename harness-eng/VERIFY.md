@@ -1,22 +1,39 @@
-# harness-eng 验收记录（0.7.2）
+# harness-eng 验收记录（0.7.5）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.2**（日落 CLI shim；其上 0.7.1 热路径瘦身 · 0.7.0 形态重标定）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.5**（Codex Skills 种子；其上 0.7.4 hooks 生效链 · 0.7.2 日落 CLI shim）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.5 增量验收（Codex Skills 种子）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.5` | 有 |
+| CHANGELOG 标题 `## 0.7.5` | 有 |
+| `templates/agent-config/skills/{contract,api,db}-doc-sync` 或 contract-sync | 有 |
+| fixture `.agents/skills/contract-sync/SKILL.md` | 有 |
+| upgrade `## 0.7.4 → 0.7.5` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.4 增量验收（Codex hooks PR1）
+
+| 项 | 期望 |
+|---|---|
+| CHANGELOG 标题 `## 0.7.4` | 有 |
+| `codex-hooks.json` 含 `commandWindows` / `codex-hook.cmd` | 有 |
+| gitignore snippet 含 `.codex/config.toml` | 有 |
 
 ## 0.7.2 增量验收（日落 CLI shim）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.2` | 有 |
 | CHANGELOG 标题 `## 0.7.2` | 有 |
 | `scripts/land.mjs` 缺席 | 有 |
 | 域 `fill-inventory-*` / `fill-merge-*` shim 缺席 | 有 |
 | upgrade `## 0.7.1 → 0.7.2` | 有 |
-| `node scripts/selfcheck.mjs` exit 0 | 有 |
-| `使用手册.html` 存在且钉 `v0.7.2` / `#s6` / 统一 CLI | 有 |
+| `使用手册.html` 存在且钉版本 / `#s6` / 统一 CLI | 有 |
 
 ## 0.7.1 增量验收（热路径瘦身）
 

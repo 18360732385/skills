@@ -2,9 +2,9 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.7.2**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
+**当前版本：0.7.5**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
-**0.7.2**：硬删 `land.mjs` 与域 fill shim。**0.7.1**：热路径瘦身。**0.7.0**：形态重标定 · Codex → **高** · Pn 回流 / 前后端契约门禁（[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md)；纪律 B；不做 `.mdc` 镜像）。**0.6.9**：Codex 高落地。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
+**0.7.5**：Codex L5 skills 种子（`contract-sync` / `api-doc-sync` / `db-doc-sync`）。**0.7.4**：Codex hooks `commandWindows` + Stop 观察清单 + `.codex/config.toml` gitignore。**0.7.2**：硬删 `land.mjs` 与域 fill shim。**0.7.0**：形态重标定 · Codex → **高**（[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md)；纪律 B；不做 `.mdc` 镜像）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
@@ -63,7 +63,7 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 
 - 写盘前过 [write-plan.md](modes/write-plan.md) 闸门（或已预授权）
 - 需 db·redis 时过 [fill-mcp.md](fill/fill-mcp.md) **填充 MCP 闸**（过闸后再填充；未过停留骨架）
-- 模板只含去域化骨架；业务 `Pn` / 域 Never do / MCP 真密来自本仓经确认抽取
+- 模板只含去域化骨架；业务 `Pn` 回流（Never do↔pitfalls）与前后端契约门禁剖面来自本仓经确认抽取；MCP 真密不入库
 - 多工作区必须确认目标根
 - 对用户优先中文；术语见 [glossary.md](glossary.md)
 
@@ -79,4 +79,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.7.2**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。
+技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.7.5**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。

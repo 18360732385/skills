@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.2
- * HARNESS_ENG_VERSION: 0.7.2
+ * HARNESS_SYNC_TMPL_ID: 0.7.5
+ * HARNESS_ENG_VERSION: 0.7.5
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -39,8 +39,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.2";
-const HARNESS_ENG_VERSION = "0.7.2";
+const HARNESS_SYNC_TMPL_ID = "0.7.5";
+const HARNESS_ENG_VERSION = "0.7.5";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = {{AI_TOOLS_JSON}};
@@ -241,11 +241,24 @@ function planHooks() {
   }
 }
 
-/** Codex hooks：优先 SSOT codex/hooks.json，否则默认 PreToolUse(^Bash$)+Stop */
+/** Codex hooks：优先 SSOT codex/hooks.json，否则默认 PreToolUse(^Bash$)+mcp__mysql+Stop */
 function planCodexHooks(allScripts, scriptsDir) {
   if (ssotExists("codex", "hooks.json")) {
     put(".codex/hooks.json", readSsot("codex", "hooks.json"));
   } else {
+    // Unix: bash $(git …). Windows: commandWindows + codex-hook.cmd（避免 PowerShell 嵌套引号）
+    const adapterUnix =
+      'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" commit-gate superpowers-commit-gate.js';
+    const adapterWin =
+      "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" commit-gate superpowers-commit-gate.js";
+    const mysqlUnix =
+      'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" mcp-guard mcp-mysql-guard.js';
+    const mysqlWin =
+      "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" mcp-guard mcp-mysql-guard.js";
+    const stopUnix =
+      'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-stop-checklist.js"';
+    const stopWin =
+      "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" --direct codex-stop-checklist.js";
     const defaultHooks = {
       _generated: HEADER_JSON,
       description: "harness-eng Codex hooks (fail-open)",
@@ -256,10 +269,22 @@ function planCodexHooks(allScripts, scriptsDir) {
             hooks: [
               {
                 type: "command",
-                command:
-                  'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" commit-gate superpowers-commit-gate.js',
+                command: adapterUnix,
+                commandWindows: adapterWin,
                 timeout: 12,
                 statusMessage: "Checking Bash commit gate",
+              },
+            ],
+          },
+          {
+            matcher: "mcp__mysql",
+            hooks: [
+              {
+                type: "command",
+                command: mysqlUnix,
+                commandWindows: mysqlWin,
+                timeout: 8,
+                statusMessage: "Checking MySQL MCP",
               },
             ],
           },
@@ -269,8 +294,8 @@ function planCodexHooks(allScripts, scriptsDir) {
             hooks: [
               {
                 type: "command",
-                command:
-                  'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-stop-checklist.js"',
+                command: stopUnix,
+                commandWindows: stopWin,
                 timeout: 8,
                 statusMessage: "Delivery soft check",
               },
@@ -290,6 +315,12 @@ function planCodexHooks(allScripts, scriptsDir) {
   }
   if (ssotExists("hooks", "codex-stop-checklist.js")) {
     put(".codex/hooks/codex-stop-checklist.js", readSsot("hooks", "codex-stop-checklist.js"));
+  }
+  if (ssotExists("hooks", "codex-hook.cmd")) {
+    put(".codex/hooks/codex-hook.cmd", readSsot("hooks", "codex-hook.cmd"));
+  } else {
+    const cmdPath = path.join(scriptsDir, "codex-hook.cmd");
+    if (fs.existsSync(cmdPath)) put(".codex/hooks/codex-hook.cmd", fs.readFileSync(cmdPath));
   }
 }
 

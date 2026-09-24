@@ -22,9 +22,23 @@ fs.copyFileSync(
   path.join(skillRoot, "templates/hooks/codex-adapter.js"),
   path.join(fx, "docs/agent-config/hooks/codex-adapter.js")
 );
+fs.copyFileSync(
+  path.join(skillRoot, "templates/hooks/codex-hook.cmd"),
+  path.join(fx, "docs/agent-config/hooks/codex-hook.cmd")
+);
 fs.writeFileSync(
   path.join(fx, "docs/agent-config/hooks/codex-stop-checklist.js"),
-  fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-stop-checklist.js.tmpl"), "utf8")
+  fs
+    .readFileSync(path.join(skillRoot, "templates/hooks/codex-stop-checklist.js.tmpl"), "utf8")
+    .replace(/\{\{CODE_PREFIXES\}\}/g, "")
+    .replace(/\{\{DB_MIGRATION_DIR\}\}/g, "")
+    .replace(/\{\{MIGRATION_ENVS\}\}/g, "")
+);
+fs.writeFileSync(
+  path.join(fx, "docs/agent-config/hooks/mcp-mysql-guard.js"),
+  fs
+    .readFileSync(path.join(skillRoot, "templates/hooks/mcp-mysql-guard.js.tmpl"), "utf8")
+    .replace(/\{\{MYSQL_GUARD_SERVERS\}\}/g, "mysql-(dev|test|uat)")
 );
 fs.copyFileSync(
   path.join(skillRoot, "templates/agent-config/codex/rules/repository.rules"),
@@ -34,6 +48,14 @@ fs.copyFileSync(
   path.join(skillRoot, "templates/agent-config/mcp/servers.example.json"),
   path.join(fx, "docs/agent-config/mcp/servers.example.json")
 );
+for (const skill of ["contract-sync", "api-doc-sync", "db-doc-sync"]) {
+  const destDir = path.join(fx, "docs/agent-config/skills", skill);
+  fs.mkdirSync(destDir, { recursive: true });
+  fs.copyFileSync(
+    path.join(skillRoot, "templates/agent-config/skills", skill, "SKILL.md"),
+    path.join(destDir, "SKILL.md")
+  );
+}
 fs.writeFileSync(
   path.join(fx, "README.fixture.md"),
   "# Fixture: L5 sync Codex\n\nMinimal SSOT with ai_tools=codex.\nRun sync then --check.\n"
@@ -51,5 +73,10 @@ console.log(
     ".codex/hooks.json",
     ".codex/rules/repository.rules",
     ".codex/hooks/codex-adapter.js",
+    ".codex/hooks/codex-hook.cmd",
+    ".codex/hooks/mcp-mysql-guard.js",
+    ".agents/skills/contract-sync/SKILL.md",
+    ".agents/skills/api-doc-sync/SKILL.md",
+    ".agents/skills/db-doc-sync/SKILL.md",
   ].map((p) => [p, fs.existsSync(path.join(fx, p))])
 );

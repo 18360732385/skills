@@ -8,6 +8,18 @@ prefix_rule(
 )
 
 prefix_rule(
+    pattern = ["git", "push", "--force"],
+    decision = "forbidden",
+    justification = "Force-push rewrites remotes; refuse by default.",
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-f"],
+    decision = "forbidden",
+    justification = "Force-push rewrites remotes; refuse by default.",
+)
+
+prefix_rule(
     pattern = ["git", "reset", "--hard"],
     decision = "forbidden",
     justification = "Destructive reset; use recoverable alternatives.",
@@ -17,4 +29,10 @@ prefix_rule(
     pattern = ["git", "clean", "-fd"],
     decision = "forbidden",
     justification = "Destructive clean; refuse by default.",
+)
+
+prefix_rule(
+    pattern = ["git", "clean", "-xfd"],
+    decision = "forbidden",
+    justification = "Destructive clean including ignored files; refuse by default.",
 )
