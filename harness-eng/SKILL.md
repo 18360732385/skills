@@ -1,11 +1,6 @@
 ---
 name: harness-eng
-description: >-
-  施工仪式：把 Agent Harness 工程化落地到目标仓库——生成/补齐 AGENTS.md、AI 编码规则
-  （如 .cursor/rules）、契约文档（func/api/db/redis/jobs）、hooks、MCP 配置、知识回流与规划目录。
-  用户点名 harness-eng，或说开干 / 落地 / 形态 / 覆盖 / 贴顶 / gate / 打分 / 审计 / 续跑 / 流水线 / 升阶 / 填充 / 会话自证 / session-live，
-  或要求生成 AGENTS.md / 仓库工程化 / AI 协作规则 / 文档与代码同步，
-  或定时 / Cron / Scheduler / jobs 契约填充时使用。
+description: 按阶梯把 Agent Harness 工程化落地到目标仓。
 ---
 
 # harness-eng
