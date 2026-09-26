@@ -217,7 +217,21 @@ export function stringify(value, opts = {}) {
     for (const [k, v] of Object.entries(value)) {
       if (Array.isArray(v) && !opts.flow) {
         lines.push(`${k}:`);
-        for (const item of v) lines.push(`  - ${stringify(item, { flow: true })}`);
+        for (const item of v) {
+          if (item && typeof item === "object" && !Array.isArray(item)) {
+            const nested = stringify(item, opts).split("\n").filter(Boolean);
+            if (!nested.length) {
+              lines.push("  - {}");
+              continue;
+            }
+            lines.push(`  - ${nested[0]}`);
+            for (let i = 1; i < nested.length; i++) {
+              lines.push(`    ${nested[i]}`);
+            }
+          } else {
+            lines.push(`  - ${stringify(item, { flow: true })}`);
+          }
+        }
       } else if (v && typeof v === "object" && !Array.isArray(v)) {
         lines.push(`${k}:`);
         for (const line of stringify(v, opts).split("\n")) {

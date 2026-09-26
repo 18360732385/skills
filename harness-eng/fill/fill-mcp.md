@@ -47,13 +47,13 @@
 
 无 db/redis 需求时本闸不适用。
 
-## 与 fill-truths
+### 与 session-live 共享 MCP 探针
 
-过闸后 Agent 经 MCP（或 calibrate-live 产物）做实据：
+路径 A 的「本会话可见 + 主环境只读调用」与 [session-live](../modes/session-live.md) **同一套语义**，实现库：`scripts/lib/live-probes.mjs`。
 
-- **mysql / postgres**：`SHOW CREATE` / 列与索引 → `docs/db/table/`
-- **oracle**：以实际 Oracle MCP 工具为准 → 同目录
-- **redis**：`SCAN` / `TYPE` / `TTL` → `docs/redis/keys/`
+- 若已跑 `session-live` 且报告 `claims.mcp_gate_path_a: true` → 路径 A 可记过（仍须矩阵 server 已写入真密）
+- 也可在 fill-mcp 烟测后把观测写入同一 `session-live-latest.yaml`（`--write --from-json`）
+- **hooks 探针不属本闸**；hooks/`unproven` 不挡填充；不得据此写「行为 PASS」（见 session-live 宣称规则）
 
 ### MCP 未挂载探测
 
@@ -61,7 +61,16 @@
 
 1. 提示 **Reload Window / 新开 Agent**（【推荐】）
 2. 改走 [`fill-calibrate-live.mjs`](../scripts/fill-calibrate-live.mjs)（见 `--help`）
-3. 两路径皆失败 → 闸门未过，停填充
+3. 可选跑 [`session-live`](../modes/session-live.md) 落盘证据（MCP 项将为 `fail`/`unproven`）
+4. 两路径皆失败 → 闸门未过，停填充
+
+## 与 fill-truths
+
+过闸后 Agent 经 MCP（或 calibrate-live 产物）做实据：
+
+- **mysql / postgres**：`SHOW CREATE` / 列与索引 → `docs/db/table/`
+- **oracle**：以实际 Oracle MCP 工具为准 → 同目录
+- **redis**：`SCAN` / `TYPE` / `TTL` → `docs/redis/keys/`
 
 ## 步骤
 
@@ -71,7 +80,7 @@
 - [ ] 3 从本仓对应 profile 的 yml/properties **读取**连接信息
 - [ ] 4 WritePlan：将写入哪些真密路径 + 哪些 {engine}-{profile} — 确认
 - [ ] 5 写入（多路径内容一致）；gitignore 建议忽略各真密路径
-- [ ] 6 烟测或 calibrate-live；打印矩阵覆盖表（应有 / 已有 / 缺口）
+- [ ] 6 烟测或 calibrate-live（MCP 观测语义见 live-probes）；打印矩阵覆盖表（应有 / 已有 / 缺口）
 - [ ] 7 闸门未过则移交并停止填充；过闸则可供 fill-truths
 ```
 

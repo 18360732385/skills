@@ -18,6 +18,7 @@ export const DOC_MOVES = {
   "prefill.md": "modes/prefill.md",
   "ladder.md": "modes/ladder.md",
   "session-dashboard.md": "modes/session-dashboard.md",
+  "session-live.md": "modes/session-live.md",
   "examples.md": "modes/examples.md",
   "foreign-playbook.md": "modes/foreign-playbook.md",
   "domain-extend.md": "modes/domain-extend.md",

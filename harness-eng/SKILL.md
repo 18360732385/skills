@@ -3,7 +3,7 @@ name: harness-eng
 description: >-
   施工仪式：把 Agent Harness 工程化落地到目标仓库——生成/补齐 AGENTS.md、AI 编码规则
   （如 .cursor/rules）、契约文档（func/api/db/redis/jobs）、hooks、MCP 配置、知识回流与规划目录。
-  用户点名 harness-eng，或说开干 / 落地 / 形态 / 覆盖 / 贴顶 / gate / 打分 / 审计 / 续跑 / 流水线 / 升阶 / 填充，
+  用户点名 harness-eng，或说开干 / 落地 / 形态 / 覆盖 / 贴顶 / gate / 打分 / 审计 / 续跑 / 流水线 / 升阶 / 填充 / 会话自证 / session-live，
   或要求生成 AGENTS.md / 仓库工程化 / AI 协作规则 / 文档与代码同步，
   或定时 / Cron / Scheduler / jobs 契约填充时使用。
 ---
@@ -43,6 +43,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 | **多 Agent 精填** | `fill-truths-agents` | [fill-truths-agents.md](fill/fill-truths-agents.md) |
 | **契约填充** | `fill-truths` | [fill/README.md](fill/README.md) → [fill.md](fill/fill.md) |
 | **MCP 装配** | `fill-mcp` | [fill/README.md](fill/README.md) → [fill-mcp.md](fill/fill-mcp.md) |
+| **会话自证** | `session-live` | [session-live.md](modes/session-live.md) · [session-live-checks.yaml](host/session-live-checks.yaml) |
 
 legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见「分支 → Read」与 [fill/README.md](fill/README.md)。
 
@@ -92,6 +93,7 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 | 写盘确认 / 预授权 / Windows JSON | [write-plan.md](modes/write-plan.md) |
 | 打分 / score-policy / 覆盖裁决 | [fill-score.md](fill/fill-score.md) |
 | AI 工具面 / 多宿主 / 加契约域 | [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md) |
+| 会话自证（MCP/hooks/rules 本会话） | [session-live.md](modes/session-live.md) · `scripts/session-live.mjs --help` |
 
 旁路脚本：`scripts/fill-calibrate-live.mjs`（live 校准）· `scripts/fill-report-html.mjs`（HTML 报告，score 后【推荐】），`--help` 自查。  
 写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。  

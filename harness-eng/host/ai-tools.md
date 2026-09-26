@@ -130,3 +130,8 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 ## 与 fill 并行
 
 契约工具无关；门禁以文件系统 + node 脚本为准；fill-mcp 多路径写入。
+
+## 会话自证（session-live）
+
+磁盘存在（detect `S_*`）≠ 当前会话已加载。当前宿主可跑 [session-live](../modes/session-live.md)：Agent 自证本会话 MCP/hooks/rules 可观测性；检查表 [session-live-checks.yaml](session-live-checks.yaml)。  
+**与人验并行**：面板开关 / 热加载仍见各 P0 手册；`skipped_wrong_host` 表示须换到对应 IDE 再测。

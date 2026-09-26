@@ -103,6 +103,18 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 3. `.gitignore` 是否忽略 `.cursor/mcp.json`（建议有）
 4. 非 cursor 工具：契约 sync 镜像文件存在（见 [ai-tools.md](../host/ai-tools.md)）
 
+## 会话自证（可选 · 推荐 L3+）
+
+磁盘齐套 ≠ 本会话生效。可跑 [session-live](session-live.md)：
+
+```text
+## 会话自证
+未跑 → 建议：在当前宿主会话执行 session-live
+已跑 → host=… behavior_pass_claim=… mcp_gate_path_a=…（见 docs/harness-eng/session-live-latest.yaml）
+```
+
+`unproven` / 面板项仍指向各宿主 P0 手册；hooks 失败不挡填充，但不得写「行为 PASS」。
+
 ## Trae 路径可见性（与 Cursor 同级）
 
 报告 / 缺口表对 Trae 至少列出（若 `ai_tools` 含 `trae` 或探测到 `.trae/`）：

@@ -1,0 +1,245 @@
+# session-live 会话可观测契约（SSOT）
+# 磁盘齐套仍走 modes/ladder.md；本表只列「当前宿主 Agent 能自证」的子集。
+# 规格：modes/session-live.md · 探针库：scripts/lib/live-probes.mjs
+version: "1"
+
+status_enum:
+  - pass
+  - fail
+  - unproven
+  - skipped_wrong_host
+  - skipped_no_live_surface
+
+# 自定义入口-only：无 hooks/MCP 原生面
+custom_entry:
+  default_status: skipped_no_live_surface
+
+hosts:
+  cursor:
+    family: cursor
+    detect_hints:
+      - ".cursor/"
+    mcp:
+      secret_paths:
+        - ".cursor/mcp.json"
+      example_paths:
+        - ".cursor/mcp.json.example"
+      probes:
+        - id: mcp_tools_seen
+          strength: strong
+          how: "本会话工具/MCP 列表与应有矩阵（或真密 server 名）求交"
+        - id: mcp_readonly_call
+          strength: strong
+          how: "对主环境（fill_mcp_profile，默认 test）只读调用成功（如 list/SHOW）"
+    hooks:
+      config_paths:
+        - ".cursor/hooks.json"
+      event_hint: beforeShellExecution
+      matcher_hint: "git\\s+commit"
+      probes:
+        - id: hooks_trigger
+          strength: strong
+          safe_command: "git commit --dry-run"
+          expect: "注入/软提醒可见（非静默无输出且未配置空 hook）"
+    rules:
+      disk_paths:
+        - ".cursor/rules"
+      probes:
+        - id: rules_disk
+          strength: weak
+          how: "磁盘 rules 非空（与 S_RULES 一致）"
+        - id: rules_self_report
+          strength: weak
+          how: "Agent 复述根 AGENTS 一条 Never do（弱证据，易幻觉）"
+
+  claude:
+    family: claude
+    detect_hints:
+      - "CLAUDE.md"
+      - ".claude/"
+    mcp:
+      secret_paths:
+        - ".mcp.json"
+      example_paths:
+        - ".mcp.json.example"
+      probes:
+        - id: mcp_tools_seen
+          strength: strong
+          how: "本会话 MCP 工具列表 ∩ 应有 server"
+        - id: mcp_readonly_call
+          strength: strong
+          how: "主环境只读调用成功"
+    hooks:
+      config_paths:
+        - ".claude/settings.json"
+      event_hint: PreToolUse
+      matcher_hint: Bash
+      probes:
+        - id: hooks_trigger
+          strength: strong
+          safe_command: "git commit --dry-run"
+          expect: "systemMessage / additionalContext 或等价软提醒"
+    rules:
+      disk_paths:
+        - ".claude/rules"
+      probes:
+        - id: rules_disk
+          strength: weak
+          how: "磁盘 .claude/rules 非空"
+        - id: rules_self_report
+          strength: weak
+          how: "复述 Never do 一条"
+
+  qoder:
+    family: claude
+    detect_hints:
+      - ".qoder/"
+    mcp:
+      secret_paths:
+        - ".mcp.json"
+      example_paths:
+        - ".mcp.json.example"
+      probes:
+        - id: mcp_tools_seen
+          strength: strong
+          how: "本会话 MCP 工具列表 ∩ 应有 server"
+        - id: mcp_readonly_call
+          strength: strong
+          how: "主环境只读调用成功"
+    hooks:
+      config_paths:
+        - ".qoder/settings.json"
+      event_hint: PreToolUse
+      matcher_hint: Bash
+      note: "须为 settings.json hooks 段，不是 Cursor 式 .qoder/hooks.json"
+      probes:
+        - id: hooks_trigger
+          strength: strong
+          safe_command: "git commit --dry-run"
+          expect: "软提醒注入可见"
+    rules:
+      disk_paths:
+        - ".qoder/rules"
+      probes:
+        - id: rules_disk
+          strength: weak
+          how: "磁盘 .qoder/rules 非空"
+        - id: rules_self_report
+          strength: weak
+          how: "复述 Never do 一条"
+
+  trae:
+    family: claude
+    detect_hints:
+      - ".trae/"
+    mcp:
+      secret_paths:
+        - ".trae/mcp.json"
+      example_paths:
+        - ".trae/mcp.json.example"
+      note: "磁盘有文件 ≠ Settings→MCP 已启用；toggled-off ≠ 缺文件"
+      probes:
+        - id: mcp_tools_seen
+          strength: strong
+          how: "本会话可见 MCP（ON）∩ 应有 server"
+        - id: mcp_readonly_call
+          strength: strong
+          how: "主环境只读调用成功"
+    hooks:
+      config_paths:
+        - ".trae/hooks.json"
+      event_hint: PreToolUse
+      matcher_hint: "Bash|RunCommand"
+      note: "只认 .trae/hooks.json；禁止用 .cursor/hooks.json 当 Trae 证据"
+      probes:
+        - id: hooks_trigger
+          strength: strong
+          safe_command: "git commit --dry-run"
+          expect: "additionalContext / systemMessage"
+    rules:
+      disk_paths:
+        - ".trae/rules"
+      probes:
+        - id: rules_disk
+          strength: weak
+          how: "磁盘 .trae/rules 非空（含 FM）"
+        - id: rules_self_report
+          strength: weak
+          how: "复述 Never do 一条"
+
+  workbuddy:
+    family: claude
+    detect_hints:
+      - ".codebuddy/"
+      - "CODEBUDDY.md"
+    mcp:
+      secret_paths:
+        - ".mcp.json"
+      example_paths:
+        - ".mcp.json.example"
+      probes:
+        - id: mcp_tools_seen
+          strength: strong
+          how: "本会话 MCP 列表 ∩ 应有 server"
+        - id: mcp_readonly_call
+          strength: strong
+          how: "主环境只读调用成功"
+    hooks:
+      config_paths:
+        - ".codebuddy/settings.json"
+      event_hint: PreToolUse
+      matcher_hint: Bash
+      note: "save ≠ live；须 /hooks 面板已应用"
+      probes:
+        - id: hooks_trigger
+          strength: strong
+          safe_command: "git commit --dry-run"
+          expect: "软提醒可见；未在面板应用 → unproven 或 fail"
+    rules:
+      disk_paths:
+        - ".codebuddy/rules"
+      probes:
+        - id: rules_disk
+          strength: weak
+          how: "磁盘扁平 .codebuddy/rules/*.md 非空"
+        - id: rules_self_report
+          strength: weak
+          how: "复述 Never do 一条"
+
+  codex:
+    family: codex
+    detect_hints:
+      - ".codex/"
+    mcp:
+      secret_paths:
+        - ".codex/config.toml"
+      example_paths:
+        - ".codex/config.toml.example"
+      note: "须 workspace trusted；会话 /mcp；勿用根 .mcp.json 当 Codex 证据"
+      probes:
+        - id: mcp_tools_seen
+          strength: strong
+          how: "/mcp 或工具列表 ∩ 应有 server"
+        - id: mcp_readonly_call
+          strength: strong
+          how: "主环境只读调用成功（或 calibrate-live 记入观测）"
+    hooks:
+      config_paths:
+        - ".codex/hooks.json"
+      event_hint: PreToolUse
+      matcher_hint: "^Bash$"
+      probes:
+        - id: hooks_trigger
+          strength: strong
+          safe_command: "git commit --dry-run"
+          expect: "hook 注入/软提醒可见"
+    rules:
+      disk_paths:
+        - ".codex/rules"
+      probes:
+        - id: rules_disk
+          strength: weak
+          how: "磁盘 Starlark rules 或 AGENTS 入口在"
+        - id: rules_self_report
+          strength: weak
+          how: "复述 Never do 一条"

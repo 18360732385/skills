@@ -15,5 +15,6 @@
 | [questions.md](questions.md) · [prefill.md](prefill.md) | 提问 / 安全预填 |
 | [seed-truths.md](seed-truths.md) | 补空壳真相 |
 | [session-dashboard.md](session-dashboard.md) | 会话仪表盘 |
+| [session-live.md](session-live.md) | 会话自证（当前宿主 MCP/hooks/rules） |
 | [examples.md](examples.md) · [foreign-playbook.md](foreign-playbook.md) | 示例 / 共存 |
 | [domain-extend.md](domain-extend.md) · [truth-quality.md](truth-quality.md) | 加域 / 深真全 |
