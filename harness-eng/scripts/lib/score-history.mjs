@@ -1,6 +1,7 @@
 /**
  * score-history.jsonl — append-only score snapshots for Dashboard trend (0.2.14+).
  * Path: docs/harness-eng/score-history.jsonl
+ * 0.4.0: entries carry report_schema + morph_scale; incomparable points greyed / not linked.
  */
 
 import fs from "fs";
@@ -8,6 +9,43 @@ import path from "path";
 
 export const HISTORY_REL = "docs/harness-eng/score-history.jsonl";
 export const DEFAULT_LIMIT = 20;
+export const CURRENT_REPORT_SCHEMA = "0.4.0";
+
+/**
+ * Compare dotted version strings (e.g. 0.3.0 vs 0.4.0).
+ * @returns {number} negative if a<b, 0 if equal, positive if a>b
+ */
+export function cmpSchema(a, b) {
+  const pa = String(a || "0")
+    .split(".")
+    .map((x) => parseInt(x, 10) || 0);
+  const pb = String(b || "0")
+    .split(".")
+    .map((x) => parseInt(x, 10) || 0);
+  const n = Math.max(pa.length, pb.length);
+  for (let i = 0; i < n; i++) {
+    const da = pa[i] || 0;
+    const db = pb[i] || 0;
+    if (da !== db) return da - db;
+  }
+  return 0;
+}
+
+/**
+ * @param {object} entry
+ * @param {object} [ctx]
+ * @param {string} [ctx.currentSchema]
+ * @param {string} [ctx.currentMorphScale]
+ */
+export function isIncomparablePoint(entry, ctx = {}) {
+  const wantSchema = ctx.currentSchema || CURRENT_REPORT_SCHEMA;
+  const wantMorph = ctx.currentMorphScale || "0.7";
+  const schema = entry?.report_schema;
+  if (!schema || cmpSchema(schema, wantSchema) < 0) return true;
+  const morph = entry?.morph_scale;
+  if (morph != null && String(morph) !== String(wantMorph)) return true;
+  return false;
+}
 
 /**
  * @param {object} score
@@ -27,6 +65,8 @@ export function makeHistoryEntry(score, ctx = {}) {
     written: ctx.run?.written ?? null,
     merged: ctx.run?.merged ?? null,
     unchanged: ctx.run?.unchanged ?? null,
+    report_schema: ctx.report_schema || CURRENT_REPORT_SCHEMA,
+    morph_scale: s.morph_scale || ctx.morph_scale || "0.7",
   };
 }
 
@@ -68,11 +108,13 @@ export function appendScoreHistory(root, entry) {
 
 /**
  * Build series for chart from history entries (+ optional current).
+ * Marks incomparable points; comparable subset used for delta.
  * @param {object[]} history
  * @param {object} [currentEntry]
  * @param {number} [limit]
+ * @param {object} [opts]
  */
-export function buildTrendSeries(history, currentEntry = null, limit = DEFAULT_LIMIT) {
+export function buildTrendSeries(history, currentEntry = null, limit = DEFAULT_LIMIT, opts = {}) {
   let pts = Array.isArray(history) ? history.slice() : [];
   if (currentEntry) {
     const last = pts[pts.length - 1];
@@ -83,6 +125,27 @@ export function buildTrendSeries(history, currentEntry = null, limit = DEFAULT_L
     if (!same) pts.push(currentEntry);
   }
   if (limit > 0 && pts.length > limit) pts = pts.slice(-limit);
+
+  const schemaCtx = {
+    currentSchema: opts.currentSchema || CURRENT_REPORT_SCHEMA,
+    currentMorphScale:
+      opts.currentMorphScale ||
+      currentEntry?.morph_scale ||
+      "0.7",
+  };
+
+  const incomparable = pts.map((p) => isIncomparablePoint(p, schemaCtx));
+  const comparableOverall = pts.map((p, i) =>
+    incomparable[i] ? null : typeof p.overall === "number" ? p.overall : null
+  );
+  const comparableCoverage = pts.map((p, i) =>
+    incomparable[i]
+      ? null
+      : typeof p.coverage_percent === "number"
+        ? p.coverage_percent
+        : null
+  );
+
   return {
     labels: pts.map((p, i) => {
       if (p.round != null) return `r${p.round}`;
@@ -93,7 +156,13 @@ export function buildTrendSeries(history, currentEntry = null, limit = DEFAULT_L
     coverage: pts.map((p) =>
       typeof p.coverage_percent === "number" ? p.coverage_percent : null
     ),
+    /** Values used for line segments (null = break / skip link). */
+    overall_linkable: comparableOverall,
+    coverage_linkable: comparableCoverage,
     ready: pts.map((p) => !!p.ready),
+    report_schema: pts.map((p) => p.report_schema || null),
+    morph_scale: pts.map((p) => p.morph_scale || null),
+    incomparable,
     points: pts,
   };
 }

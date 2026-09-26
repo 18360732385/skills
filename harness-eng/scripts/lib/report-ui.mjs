@@ -1,9 +1,10 @@
 ﻿/**
  * Build human-facing `ui` projection from fill-score JSON.
- * 报告壳主键：`ui.report_schema`（现 0.3.0）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.4.0）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
+ * 0.4.0：go_nogo · tasks[] · diagnose.story · ladder_progress · host_surface；趋势 incomparable。
  * 0.3.0 / skill 0.7.0：形态满分 100（探针+深度）；ready.ok 对外废弃；morph_scale。
  * 0.2.26：CJK 正文 · 减动 · 命令一键复制 · Escape/键盘切台 · 尊重 #hash · 参考分降权 · 残差分层。
  */
@@ -12,6 +13,9 @@ import {
   domainLabel,
   defaultContractDomains,
 } from "./domains.mjs";
+
+export const REPORT_SCHEMA = "0.4.0";
+const LADDER_STEPS = ["L0", "L1", "L2", "L3", "L4", "L5"];
 
 const DOMAIN_ZH = {
   api: "接口文档",
@@ -940,29 +944,194 @@ function buildTrend(historySeries) {
   if (!historySeries || !Array.isArray(historySeries.labels)) return null;
   if (historySeries.labels.length < 1) return null;
   const overall = historySeries.overall || [];
-  const nums = overall.filter((n) => typeof n === "number");
+  const linkable = Array.isArray(historySeries.overall_linkable)
+    ? historySeries.overall_linkable
+    : overall;
+  const nums = linkable.filter((n) => typeof n === "number");
   let delta = null;
   if (nums.length >= 2) {
     delta = Math.round((nums[nums.length - 1] - nums[nums.length - 2]) * 10) / 10;
+  }
+  const incomparable = Array.isArray(historySeries.incomparable)
+    ? historySeries.incomparable
+    : [];
+  const incomparableCount = incomparable.filter(Boolean).length;
+  let summary =
+    historySeries.labels.length < 2
+      ? "历史不足 2 次，暂无趋势"
+      : delta == null
+        ? "已有 " + historySeries.labels.length + " 次评分快照"
+        : "最近 overall Δ " +
+          (delta > 0 ? "+" : "") +
+          delta +
+          "（共 " +
+          historySeries.labels.length +
+          " 点）";
+  if (incomparableCount > 0) {
+    summary +=
+      " · " +
+      incomparableCount +
+      " 点尺度不可比（report_schema/morph 不符，已灰显不连线）";
   }
   return {
     labels: historySeries.labels,
     overall: historySeries.overall,
     coverage: historySeries.coverage,
+    overall_linkable: historySeries.overall_linkable || null,
+    coverage_linkable: historySeries.coverage_linkable || null,
+    report_schema: historySeries.report_schema || null,
+    morph_scale: historySeries.morph_scale || null,
+    incomparable,
     ready: historySeries.ready,
     count: historySeries.labels.length,
     delta_overall: delta,
+    summary,
+  };
+}
+
+function buildGoNogo(score, nextActions) {
+  const aiOk = !!score.ai_coding_ready?.ok;
+  const blockers = Array.isArray(score.ai_coding_ready?.blockers)
+    ? score.ai_coding_ready.blockers
+    : [];
+  const next_commands = (nextActions || [])
+    .map((a) => a.command)
+    .filter(Boolean)
+    .slice(0, 3);
+  return {
+    ok: aiOk,
+    label_zh: aiOk ? "建议可以开干" : "建议暂缓",
+    blockers,
+    next_commands,
+    rule: score.ai_coding_ready?.rule || "开干只看 ai_coding_ready",
+  };
+}
+
+function buildTasks(score, shards, nextActions) {
+  const out = [];
+  let pri = 1;
+  for (const a of nextActions || []) {
+    if (out.length >= 12) break;
+    out.push({
+      id: "action-" + pri,
+      title: a.title || "下一步",
+      why: a.detail || "",
+      priority: pri++,
+      cmd: a.command || null,
+      kind: "action",
+    });
+  }
+  for (const s of shards || []) {
+    if (out.length >= 16) break;
+    out.push({
+      id: s.id || "shard-" + out.length,
+      title: s.title || s.id || "分片",
+      why: s.hint || s.package || "",
+      priority: pri++,
+      cmd: s.command || null,
+      kind: s.kind || "fill",
+    });
+  }
+  return out;
+}
+
+function buildDiagnose(score, domainStories, missTop, decisionKpis) {
+  const story = [];
+  const sk = score.skeleton_ready?.ok;
+  const cov = score.coverage_ready?.ok;
+  const sem = score.semantic_ready?.ok;
+  const plan = score.fill_plan;
+  story.push({
+    id: "gates",
+    tone: score.ai_coding_ready?.ok ? "ok" : "warn",
+    text:
+      "四态灯：骨架=" +
+      (sk === true ? "YES" : sk === false ? "NO" : "—") +
+      " · 覆盖=" +
+      (cov === true ? "YES" : cov === false ? "NO" : "—") +
+      " · 语义=" +
+      (sem === true ? "YES" : sem === false ? "NO" : "—") +
+      " · Plan=" +
+      (plan?.present === false
+        ? "缺"
+        : plan?.all_closed
+          ? "已关"
+          : plan?.present
+            ? "有"
+            : "—") +
+      "（不替代开干）",
+  });
+  const lagging = domainStories.find((d) => d.tone === "warn") || domainStories[0];
+  if (lagging) {
+    story.push({
+      id: "lagging",
+      tone: lagging.tone || "warn",
+      text:
+        "拖后腿：" +
+        (lagging.name_zh || lagging.id) +
+        " — " +
+        (lagging.story || lagging.status_label || ""),
+    });
+  }
+  if (missTop?.length) {
+    story.push({
+      id: "miss",
+      tone: "warn",
+      text:
+        "常见缺口：" +
+        missTop
+          .slice(0, 4)
+          .map((m) => (m.label_zh || m.id) + "×" + m.count)
+          .join("、"),
+    });
+  }
+  const gateKpis = (decisionKpis || []).filter((k) =>
+    ["skeleton_ready", "coverage_ready", "semantic_ready", "fill_plan"].includes(k.id)
+  );
+  return {
+    story,
+    gate_lamps: gateKpis,
+    lagging_domain: lagging
+      ? { id: lagging.id, name_zh: lagging.name_zh, story: lagging.story }
+      : null,
+  };
+}
+
+function buildLadderProgress(score, meta = {}) {
+  const raw =
+    meta.ladder ||
+    score.skeleton_ready?.ladder ||
+    score.suggest_upgrade?.current_ladder ||
+    null;
+  const cur = raw ? String(raw).toUpperCase().replace(/^L?/, "L") : null;
+  const curIdx = cur ? LADDER_STEPS.indexOf(cur) : -1;
+  const next =
+    score.suggest_upgrade?.next_ladder ||
+    (curIdx >= 0 && curIdx < LADDER_STEPS.length - 1
+      ? LADDER_STEPS[curIdx + 1]
+      : null);
+  const steps = LADDER_STEPS.map((id, i) => ({
+    id,
+    label_zh: id,
+    done: curIdx >= 0 && i <= curIdx,
+    current: curIdx >= 0 && i === curIdx,
+  }));
+  const doneCount = steps.filter((s) => s.done).length;
+  const percent =
+    curIdx < 0 ? 0 : Math.round(((curIdx + 1) / LADDER_STEPS.length) * 100);
+  return {
+    current: cur,
+    next: next ? String(next).toUpperCase().replace(/^L?/, "L") : null,
+    percent,
+    done: doneCount,
+    total: LADDER_STEPS.length,
+    steps,
     summary:
-      historySeries.labels.length < 2
-        ? "历史不足 2 次，暂无趋势"
-        : delta == null
-          ? "已有 " + historySeries.labels.length + " 次评分快照"
-          : "最近 overall Δ " +
-            (delta > 0 ? "+" : "") +
-            delta +
-            "（共 " +
-            historySeries.labels.length +
-            " 点）",
+      curIdx < 0
+        ? "阶梯未写入 meta（未知）"
+        : curIdx >= LADDER_STEPS.length - 1
+          ? "施工阶梯已达 L5"
+          : "施工阶梯 " + cur + "（下一阶 " + (next || "—") + "）",
   };
 }
 
@@ -1014,11 +1183,12 @@ function buildPipelineProgress(score) {
     current_id: current.id,
     current_label_zh: current.label_zh,
     ladder,
+    label_zh: "开干闸路径",
     steps,
     summary:
       percent >= 100
-        ? "流水线已达可 AI coding"
-        : "进行中：" + current.label_zh + "（" + doneCount + "/" + steps.length + "）",
+        ? "开干闸路径已达可 AI coding"
+        : "开干闸路径：" + current.label_zh + "（" + doneCount + "/" + steps.length + "）",
   };
 }
 
@@ -1073,12 +1243,14 @@ function buildCompositeScore(score, pipeline) {
  * @param {object} [opts.meta] harness-meta (domains etc.)
  * @param {object} [opts.history_series] prebuilt trend series
  * @param {object} [opts.run] pipeline run stats
+ * @param {object} [opts.host_surface] prebuilt host surface (0.4.0+)
  * @returns {object} ui projection
  */
 export function buildReportUi(score, opts = {}) {
   const s = score && typeof score === "object" ? score : {};
+  const meta = opts.meta || {};
   const cov = s.coverage || {};
-  const actionOpts = { root: opts.root || s.root || null, meta: opts.meta || {} };
+  const actionOpts = { root: opts.root || s.root || null, meta };
   const domains = buildDomains(s);
   const missTop = buildMissTop(s);
   const domainStories = buildDomainStories(s);
@@ -1088,19 +1260,33 @@ export function buildReportUi(score, opts = {}) {
   const trend = buildTrend(opts.history_series || null);
   const showDomainCards = opts.show_domain_cards === true;
   const pipeline_progress = buildPipelineProgress(s);
+  const ladder_progress = buildLadderProgress(s, meta);
   const composite_score = buildCompositeScore(s, pipeline_progress);
+  const decision_kpis = buildDecisionKpis(s);
+  const next_actions = buildNextActions(s, actionOpts);
+  const shards = buildShards(s, actionOpts);
+  const go_nogo = buildGoNogo(s, next_actions);
+  const tasks = buildTasks(s, shards, next_actions);
+  const diagnose = buildDiagnose(s, domainStories, missTop, decision_kpis);
+  const host_surface =
+    opts.host_surface && typeof opts.host_surface === "object"
+      ? opts.host_surface
+      : null;
   return {
-    version: "0.3.0",
-    report_schema: "0.3.0",
+    version: REPORT_SCHEMA,
+    report_schema: REPORT_SCHEMA,
     morph_scale: s.morph_scale || "0.7",
     headline: buildHeadline(s),
     verdict: buildVerdict(s),
+    go_nogo,
     gap_to_ready: buildGapToReady(s),
-    decision_kpis: buildDecisionKpis(s),
+    decision_kpis,
     morph_strip: buildMorphStrip(s),
     coverage_strip: buildCoverageStrip(s),
+    diagnose,
     show_domain_cards: showDomainCards,
     composite_score,
+    ladder_progress,
     pipeline_progress,
     quality_overall: typeof s.overall === "number" ? s.overall : null,
     formula_ceiling: typeof s.formula_ceiling === "number" ? s.formula_ceiling : null,
@@ -1128,9 +1314,11 @@ export function buildReportUi(score, opts = {}) {
     chart_domains: buildChartDomains(s),
     miss_top: missTop,
     gaps_top: buildGapsTop(s),
-    next_actions: buildNextActions(s, actionOpts),
-    shards: buildShards(s, actionOpts),
+    next_actions,
+    shards,
+    tasks,
     tasks_empty_hint: buildTasksEmptyHint(s),
+    host_surface,
     diff,
     trend,
     run_timeline,
@@ -1138,7 +1326,7 @@ export function buildReportUi(score, opts = {}) {
     glossary: GLOSSARY,
     suggest_raw: s.suggest_next || null,
     disclaimer:
-      "本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。",
+      "本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。开干只看 ai_coding_ready；宿主面不否决开干。",
   };
 }
 

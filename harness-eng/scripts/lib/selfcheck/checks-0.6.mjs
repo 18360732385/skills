@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 0.6.x selfcheck suite (M1–M4 · Trae 高 · dashboard · freshness).
  * Invoked from scripts/selfcheck.mjs via runChecks06(helpers).
  */
@@ -24,7 +24,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   // Re-load hot docs so this suite does not depend on outer-scope consts from selfcheck.mjs
   const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
-  const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+  const handbookMd = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
   const manifest = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const pipeline = readDoc("pipeline.md");
   const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
@@ -304,7 +304,13 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     ...fs.readdirSync(path.join(skillRoot, "modes")).filter((f) => f.endsWith(".md")).map((f) => `modes/${f}`),
     ...fs.readdirSync(path.join(skillRoot, "fill")).filter((f) => f.endsWith(".md")).map((f) => `fill/${f}`),
     ...fs.readdirSync(path.join(skillRoot, "host")).filter((f) => f.endsWith(".md")).map((f) => `host/${f}`),
+    ...fs.readdirSync(path.join(skillRoot, "guide")).filter((f) => /\.(md|html)$/.test(f)).map((f) => `guide/${f}`),
   ];
+  assert(fs.existsSync(path.join(skillRoot, "guide/使用手册.md")), "guide/使用手册.md");
+  assert(fs.existsSync(path.join(skillRoot, "guide/使用手册.html")), "guide/使用手册.html");
+  assert(fs.existsSync(path.join(skillRoot, "guide/使用手册-摘要.md")), "guide/使用手册-摘要.md");
+  assert(!fs.existsSync(path.join(skillRoot, "使用手册.md")), "no root 使用手册.md");
+  assert(!fs.existsSync(path.join(skillRoot, "docs/harness-eng/README.md")), "no skill-tree docs/harness-eng sample");
   const dangling = sweepFiles.flatMap(danglingFrom);
   assert(dangling.length === 0, `no dangling relative links (${dangling.slice(0, 8).join(" ; ") || "none"})`);
 }
@@ -495,7 +501,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.7.9", "manifest version exactly 0.7.9");
+  assert(verLine && verLine[1] === "0.7.14", "manifest version exactly 0.7.14");
 
   const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -827,7 +833,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     reportExpectedRel: null,
     reportExists: false,
     scorePath: null,
-    handbookPath: "使用手册.md",
+    handbookPath: "guide/使用手册.md",
     handbookUrl: null,
   };
   const stanceMd = (coverage, morph) =>
@@ -865,7 +871,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.7.9", "current manifest pin 0.7.9");
+  assert(manVer063 === "0.7.14", "current manifest pin 0.7.14");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(
@@ -1023,7 +1029,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/升级三步/.test(upgrade064) && /check-freshness/.test(upgrade064) && /\*\*`main`\*\*|\*\*main\*\*/.test(upgrade064), "upgrade 0.6.4 L5 three-step (main · check-freshness · refresh sync)");
   const verify064 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/正式钉号/.test(verify064) && /0\.6\.3 → 0\.6\.4/.test(verify064), "VERIFY formal pin acceptance rows");
-  const summary064 = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
+  const summary064 = fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8");
   assert(/WorkBuddy\/CodeBuddy（\*\*0\.6\.4\*\*）/.test(summary064), "使用手册-摘要 keeps CodeBuddy 0.6.4 baseline note");
 
   const hooksChecks064 = fs.readFileSync(path.join(skillRoot, "scripts/lib/hooks-checks.mjs"), "utf8");
@@ -1285,8 +1291,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const gloss067 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
-  assert(/版本：\*\*0\.7\.9\*\*/.test(fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8")),
-    "使用手册-摘要 version 0.7.9"
+  assert(/版本：\*\*0\.7\.14\*\*/.test(fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8")),
+    "使用手册-摘要 version 0.7.14"
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
 }
@@ -1351,6 +1357,11 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.6 → 0\.7\.7/.test(upgrade068), "upgrade has 0.7.6 → 0.7.7");
   assert(/0\.7\.7 → 0\.7\.8/.test(upgrade068), "upgrade has 0.7.7 → 0.7.8");
   assert(/0\.7\.8 → 0\.7\.9/.test(upgrade068), "upgrade has 0.7.8 → 0.7.9");
+  assert(/0\.7\.9 → 0\.7\.10/.test(upgrade068), "upgrade has 0.7.9 → 0.7.10");
+  assert(/0\.7\.10 → 0\.7\.11/.test(upgrade068), "upgrade has 0.7.10 → 0.7.11");
+  assert(/0\.7\.11 → 0\.7\.12/.test(upgrade068), "upgrade has 0.7.11 → 0.7.12");
+  assert(/0\.7\.12 → 0\.7\.13/.test(upgrade068), "upgrade has 0.7.12 → 0.7.13");
+  assert(/0\.7\.13 → 0\.7\.14/.test(upgrade068), "upgrade has 0.7.13 → 0.7.14");
   assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
   assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
 
@@ -1361,10 +1372,15 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.7 增量验收/.test(verify068), "VERIFY keeps 0.7.7 section");
   assert(/0\.7\.8 增量验收/.test(verify068), "VERIFY keeps 0.7.8 section");
   assert(/0\.7\.9 增量验收/.test(verify068), "VERIFY 0.7.9 section");
+  assert(/0\.7\.10 增量验收/.test(verify068), "VERIFY 0.7.10 section");
+  assert(/0\.7\.11 增量验收/.test(verify068), "VERIFY 0.7.11 section");
+  assert(/0\.7\.12 增量验收/.test(verify068), "VERIFY 0.7.12 section");
+  assert(/0\.7\.13 增量验收/.test(verify068), "VERIFY 0.7.13 section");
+  assert(/0\.7\.14 增量验收/.test(verify068), "VERIFY 0.7.14 section");
   assert(/0\.7\.6 增量验收/.test(verify068), "VERIFY keeps 0.7.6 section");
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/0\.7\.9/.test(syncTmpl068), "sync tmpl id 0.7.9");
+  assert(/0\.7\.14/.test(syncTmpl068), "sync tmpl id 0.7.14");
   assert(/mergeRulehookCodexHooks/.test(syncTmpl068), "sync tmpl merges rulehook");
   assert(/policy\.json/.test(syncTmpl068) && /resolveMcpServerPolicy/.test(syncTmpl068), "sync tmpl MCP policy-aware");
   assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");

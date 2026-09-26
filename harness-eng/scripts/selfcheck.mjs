@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.7.9: optional L4 rulehook (+0.7.8 calibrate toml / 0.7.7 MCP policy).
+ * 0.7.14: report_schema 0.4.0 · 五台 + host_surface (+0.7.13 handbook rewrite).
+ * 0.7.13: handbook rewrite (+0.7.12 guide/ / 0.7.11 dual-write / 0.7.10 compress).
  * 0.7.4: Codex hooks codex-hook.cmd + mcp__mysql + HOOK_DEFS.codex.
  * 0.7.3: Codex hooks commandWindows + Stop checklist + gitignore.
  * 0.7.2: hard-delete land.mjs + domain fill shims.
@@ -25,6 +26,12 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { buildReportUi } from "./lib/report-ui.mjs";
+import { buildHostSurface, formatHostSurfaceLine } from "./lib/host-surface.mjs";
+import {
+  isIncomparablePoint,
+  buildTrendSeries,
+  CURRENT_REPORT_SCHEMA,
+} from "./lib/score-history.mjs";
 import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
@@ -160,7 +167,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.7\.9"/.test(qYaml), "questions.yaml version 0.7.9");
+assert(/version:\s*"0\.7\.14"/.test(qYaml), "questions.yaml version 0.7.14");
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -206,11 +213,11 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.7\.9"/.test(manifest), "manifest 0.7.9");
+assert(/version:\s*"0\.7\.14"/.test(manifest), "manifest 0.7.14");
 const rootManifestPath = path.join(skillRoot, "_meta/manifest.yaml");
 assert(fs.existsSync(rootManifestPath), "root _meta/manifest.yaml present");
 const rootManifest = fs.readFileSync(rootManifestPath, "utf8");
-assert(/version:\s*"0\.7\.9"/.test(rootManifest), "root _meta manifest 0.7.9");
+assert(/version:\s*"0\.7\.14"/.test(rootManifest), "root _meta manifest 0.7.14");
 {
   const rv = (rootManifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
   const tv = (manifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
@@ -221,7 +228,7 @@ const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.7\.9"/.test(metaTmpl), "harness-meta 0.7.9");
+assert(/skill_version:\s*"0\.7\.14"/.test(metaTmpl), "harness-meta 0.7.14");
 assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
@@ -250,7 +257,11 @@ assert(/^## 0\.7\.0\b/m.test(changelog), "CHANGELOG 0.7.0");
 assert(/^## 0\.7\.3\b/m.test(changelog), "CHANGELOG 0.7.3");
 assert(/^## 0\.7\.4\b/m.test(changelog), "CHANGELOG 0.7.4");
 assert(/^## 0\.7\.5\b/m.test(changelog), "CHANGELOG 0.7.5");
-assert(/^## 0\.7\.9\b/m.test(changelog), "CHANGELOG 0.7.9");
+assert(/^## 0\.7\.14\b/m.test(changelog), "CHANGELOG 0.7.14");
+assert(/^## 0\.7\.12\b/m.test(changelog), "CHANGELOG keeps 0.7.12");
+assert(/^## 0\.7\.11\b/m.test(changelog), "CHANGELOG keeps 0.7.11");
+assert(/^## 0\.7\.10\b/m.test(changelog), "CHANGELOG keeps 0.7.10");
+assert(/^## 0\.7\.9\b/m.test(changelog), "CHANGELOG keeps 0.7.9");
 assert(/^## 0\.7\.8\b/m.test(changelog), "CHANGELOG keeps 0.7.8");
 assert(/^## 0\.7\.7\b/m.test(changelog), "CHANGELOG keeps 0.7.7");
 assert(/^## 0\.7\.6\b/m.test(changelog), "CHANGELOG keeps 0.7.6");
@@ -371,7 +382,9 @@ assert(!/\*\*0\.2\.9\+\*\*/.test(fillScoreMd), "fill-score has no 0.2.9+ sedimen
 assert(/CHANGELOG\.md/.test(fillScoreMd), "fill-score points version history to CHANGELOG");
 
 assert(/score-policy|覆盖裁决/.test(skill), "SKILL points to score-policy / 覆盖裁决");
-assert(/打分 \/ score-policy/.test(skill), "SKILL branch table has score-policy row");
+assert(/打分 \/ score-policy/.test(skill), "SKILL keeps score-policy pointer literal");
+assert(/对外四支/.test(skill), "SKILL documents 对外四支 mode buckets");
+assert(/对外三档/.test(skill), "SKILL documents 对外三档 ladder");
 
 const fillMcpGate = readDoc("fill-mcp.md");
 assert(/过闸后再/.test(fillMcpGate), "fill-mcp positive: 过闸后再");
@@ -433,7 +446,7 @@ assert(
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.7\.9）/.test(verifyMd) && /当前 \*\*0\.7\.9\*\*/.test(verifyMd), "VERIFY is 0.7.9");
+assert(/验收记录（0\.7\.14）/.test(verifyMd) && /当前 \*\*0\.7\.14\*\*/.test(verifyMd), "VERIFY is 0.7.14");
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
@@ -446,7 +459,7 @@ assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.7\.9/.test(readme), "README header version 0.7.9");
+assert(/当前版本：0\.7\.14/.test(readme), "README header version 0.7.14");
 assert(/0\.7\.4/.test(readme), "README mentions 0.7.4");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
@@ -454,23 +467,23 @@ assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
 assert(!/selfcheck-0\.5\.2/.test(readme), "README no stale selfcheck-0.5.2 pin");
 assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 
-const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+const handbookMd = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.7\.9\*\*/.test(handbookMd), "使用手册.md version 0.7.9");
-assert(/当前 \*\*0\.7\.9\*\*/.test(quickstartMd), "QUICKSTART version 0.7.9");
+assert(/版本：\*\*0\.7\.14\*\*/.test(handbookMd), "使用手册.md version 0.7.14");
+assert(/当前 \*\*0\.7\.14\*\*/.test(quickstartMd), "QUICKSTART version 0.7.14");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
-assert(fs.existsSync(path.join(skillRoot, "使用手册.html")), "使用手册.html present");
-const handbookHtml = fs.readFileSync(path.join(skillRoot, "使用手册.html"), "utf8");
-assert(/v0\.7\.9/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
+assert(fs.existsSync(path.join(skillRoot, "guide", "使用手册.html")), "使用手册.html present");
+const handbookHtml = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.html"), "utf8");
+assert(/v0\.7\.14/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
 assert(
   /harness\.mjs/.test(handbookHtml) && /fill-inventory\.mjs --domain/.test(handbookHtml),
   "使用手册.html documents unified CLI"
 );
 assert(/公开 CLI|harness\.mjs/.test(handbookMd), "使用手册.md documents public CLI");
 assert(/使用手册\.html/.test(handbookMd), "使用手册.md links HTML edition");
-const handbookSummary = fs.readFileSync(path.join(skillRoot, "使用手册-摘要.md"), "utf8");
+const handbookSummary = fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8");
 for (const [label, text] of [
   ["使用手册.md", handbookMd],
   ["使用手册-摘要.md", handbookSummary],
@@ -503,7 +516,10 @@ assert(/填充 MCP 闸/.test(fillMcpGate), "fill-mcp defines gate");
 assert(/S_ENV_PROFILES/.test(readDoc("detect.md")), "detect has S_ENV_PROFILES");
 assert(/MCP 矩阵/.test(readDoc("detect.md")), "detect has MCP matrix");
 assert(/mysql-dev-example/.test(fs.readFileSync(path.join(skillRoot, "templates/mcp/mcp.json.example"), "utf8")), "mcp example multi-env");
-assert(/意图（一支）/.test(skill), "SKILL uses one-branch intent table");
+assert(/模式分流（对外四支）/.test(skill), "SKILL uses 对外四支 mode table");
+assert(!/意图（一支）/.test(skill), "SKILL dropped legacy one-branch intent table header");
+assert(!/## 分支\s*→\s*Read/.test(skill), "SKILL dropped 分支→Read mini-table");
+assert(/打分 \/ score-policy/.test(skill), "SKILL keeps score-policy pointer literal");
 assert(/upgrade\.md/.test(skill), "SKILL points to upgrade.md");
 assert(/填充 MCP 闸/.test(skill), "SKILL mentions fill MCP gate");
 assert(!/## 其它模式/.test(skill), "SKILL has no redundant 其它模式 section");
@@ -552,14 +568,19 @@ const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
 if (fs.existsSync(fixture)) {
   const scoreObj = JSON.parse(fs.readFileSync(fixture, "utf8"));
   const ui = buildReportUi(scoreObj);
-  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0"].includes(ui.version), "ui.version compatible");
+  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0"].includes(ui.version), "ui.version compatible");
   assert(Array.isArray(ui.decision_kpis) && ui.decision_kpis.length >= 1, "ui.decision_kpis");
   assert(Array.isArray(ui.morph_strip), "ui.morph_strip");
   assert(ui.show_domain_cards === false, "domain cards default off");
   assert(ui.verdict.ready_label === "建议可以开干" || ui.verdict.ready_label === "建议暂缓", "verdict binary");
   assert(ui.composite_score && typeof ui.composite_score.value === "number", "ui.composite_score");
   assert(ui.pipeline_progress && Array.isArray(ui.pipeline_progress.steps), "ui.pipeline_progress");
-  assert(ui.report_schema === "0.3.0", "report_schema 0.3.0");
+  assert(ui.report_schema === "0.4.0", "report_schema 0.4.0");
+  assert(ui.go_nogo && typeof ui.go_nogo.ok === "boolean", "ui.go_nogo");
+  assert(Array.isArray(ui.tasks), "ui.tasks");
+  assert(ui.ladder_progress && Array.isArray(ui.ladder_progress.steps), "ui.ladder_progress");
+  assert(ui.diagnose && Array.isArray(ui.diagnose.story), "ui.diagnose.story");
+  assert(ui.pipeline_progress.label_zh === "开干闸路径", "pipeline labeled 开干闸路径");
   assert(ui.morph_scale === "0.7" || scoreObj.morph_scale === "0.7" || ui.morph_scale == null, "morph_scale present or fixture lag ok");
   assert(ui.chart_domains && Array.isArray(ui.chart_domains.labels_zh), "chart_domains.labels_zh");
   assert(
@@ -607,6 +628,11 @@ if (fs.existsSync(fixture)) {
   assert(/IBM Plex Sans SC/.test(reportTmpl), "report tmpl CJK body font");
   assert(/kind-badge/.test(reportTmpl), "report tmpl residual badge");
   assert(/hashTab|location\.hash/.test(reportTmpl) && !/show\(\$\("deck"\)\);\s*setTab\("decision"\)/.test(reportTmpl), "report tmpl respects hash after paint");
+  assert(/data-tab="host"/.test(reportTmpl) && /宿主台/.test(reportTmpl), "report tmpl host tab");
+  assert(/ladder_progress|施工阶梯/.test(reportTmpl), "report tmpl ladder axis");
+  assert(/host-capsule|host_surface/.test(reportTmpl), "report tmpl host capsule");
+  assert(/overall_linkable|incomparable/.test(reportTmpl), "report tmpl history hard-cut");
+  assert(fs.existsSync(path.join(skillRoot, "scripts/lib/host-surface.mjs")), "host-surface.mjs");
 }
 
 // --- 0.2.26 acceptance fixture smoke ---
@@ -954,8 +980,14 @@ if (fs.existsSync(fixture)) {
     "upgrade Done requires acceptance summary"
   );
   assert(
-    /UTF-16|writeFileSync/.test(fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8")),
-    "QUICKSTART Windows UTF-8 example"
+    /UTF-16/.test(fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8")) &&
+      /write-plan\.md/.test(fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8")),
+    "QUICKSTART Windows tip points write-plan"
+  );
+  assert(
+    /UTF-16|writeFileSync/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")) &&
+      /SKILL_VERSION:'0\.7\.14'/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")),
+    "write-plan Windows UTF-8 example pins 0.7.14"
   );
   const helpPlan = runNode([path.join(skillRoot, "scripts/fill-plan.mjs"), "--help"]);
   assert(helpPlan.status === 0, "fill-plan --help exits 0");
@@ -1137,10 +1169,10 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.7\.9"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.9");
+  assert(/version:\s*"0\.7\.14"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.14");
 }
 
-// --- 0.7.3–0.7.9: Codex hooks + Skills + MCP policy + calibrate + rulehook ---
+// --- 0.7.3–0.7.14: Codex hooks + Skills + MCP policy + calibrate + rulehook + docs compress/dedupe ---
 {
   const codexHooks = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json"), "utf8");
   assert(/commandWindows/.test(codexHooks), "codex-hooks.json has commandWindows");
@@ -1653,6 +1685,86 @@ if (fs.existsSync(fixture)) {
 }
 
 assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs")), "lib/selfcheck/checks-0.5.mjs exists");
+
+// --- 0.7.14 / report_schema 0.4.0 ---
+{
+  assert(CURRENT_REPORT_SCHEMA === "0.4.0", "score-history CURRENT_REPORT_SCHEMA 0.4.0");
+  assert(
+    isIncomparablePoint({ report_schema: "0.3.0", morph_scale: "0.7" }),
+    "history 0.3.0 incomparable"
+  );
+  assert(
+    !isIncomparablePoint({ report_schema: "0.4.0", morph_scale: "0.7" }),
+    "history 0.4.0 comparable"
+  );
+  const series = buildTrendSeries(
+    [{ at: "2026-01-01", overall: 50, report_schema: "0.3.0", morph_scale: "0.7" }],
+    { at: "2026-09-26", overall: 70, report_schema: "0.4.0", morph_scale: "0.7" },
+    20
+  );
+  assert(
+    Array.isArray(series.incomparable) &&
+      series.incomparable[0] === true &&
+      series.overall_linkable[0] === null,
+    "trend series greys old points"
+  );
+
+  const tmpHs = fs.mkdtempSync(path.join(os.tmpdir(), "harness-hs-"));
+  try {
+    fs.mkdirSync(path.join(tmpHs, ".cursor", "rules"), { recursive: true });
+    fs.writeFileSync(path.join(tmpHs, ".cursor", "rules", "x.mdc"), "# r\n", "utf8");
+    const hs = buildHostSurface(tmpHs, { meta: { ladder: "L4", ai_tools: ["cursor"] } });
+    assert(hs && hs.status, "host_surface builds");
+    assert(
+      (hs.hosts || []).some((h) => h.id === "cursor" && h.disk?.rules === "present"),
+      "host_surface disk rules present"
+    );
+    assert(
+      (hs.hosts || []).every((h) => h.disk?.rules !== "pass"),
+      "disk layer never uses pass"
+    );
+    const line = formatHostSurfaceLine(hs);
+    assert(!line || /宿主面/.test(line), "host line format or omit");
+
+    const uiHs = buildReportUi(
+      {
+        overall: 60,
+        morph_scale: "0.7",
+        ai_coding_ready: { ok: false, blockers: ["semantic_ready"], rule: "test" },
+        skeleton_ready: { ok: true, ladder: "L4" },
+        coverage_ready: { ok: true },
+        semantic_ready: { ok: false },
+        coverage: { percent: 80 },
+        fill_plan: { present: true, all_closed: false },
+      },
+      { meta: { ladder: "L4" }, root: tmpHs, host_surface: hs }
+    );
+    assert(uiHs.report_schema === "0.4.0", "ui 0.4.0 with host");
+    assert(uiHs.host_surface && uiHs.host_surface.status, "ui carries host_surface");
+    assert(uiHs.go_nogo.ok === false, "go_nogo from ai_coding_ready");
+    assert(uiHs.ladder_progress.current === "L4", "ladder_progress from meta");
+  } finally {
+    fs.rmSync(tmpHs, { recursive: true, force: true });
+  }
+
+  const sessionDashSrc = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/session-dashboard.mjs"),
+    "utf8"
+  );
+  assert(/formatHostSurfaceLine|hostLine/.test(sessionDashSrc), "session-dash host line");
+  assert(/五台读法/.test(sessionDashSrc), "session-dash handbook 五台读法");
+  const sessionDashMd0714 = readDoc("session-dashboard.md");
+  assert(
+    /宿主面/.test(sessionDashMd0714) && /五台读法/.test(sessionDashMd0714),
+    "session-dashboard.md 0.4.0"
+  );
+  const handbookMd0714 = fs.readFileSync(path.join(skillRoot, "guide/使用手册.md"), "utf8");
+  assert(/仪表盘五台|宿主台/.test(handbookMd0714), "handbook §6 five panels");
+  assert(
+    /0\.4\.0/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
+    "glossary report_schema 0.4.0"
+  );
+}
 
 // --- 0.5.x suites (lib/selfcheck/checks-0.5.mjs) ---
 runChecks05({ skillRoot, docPath, readDoc, assert, runNode });

@@ -1,8 +1,11 @@
 # 术语与阶段卡（对用户展示）
 
-内部仍可用英文 ID；**对用户默认用中文名**，括号附英文别名。提问前可摘要展示本表相关行。
+内部仍可用英文 ID；**对用户默认用中文名**，括号附英文别名。提问前可摘要展示本表相关行。  
+**对外压缩（0.7.14）**：阶梯用三档、模式用四支（见 [SKILL.md](SKILL.md)）；下表仍是写盘 / audit 用的完整 ID。
 
 ## 阶梯（成熟度）`Q_LADDER`
+
+**对外三档**：**协作入口**(L0) · **契约与回流**(L1–L2) · **门禁·工具·SSOT**(L3–L5)。
 
 | 阶 | 中文名 | 一句话：你得到什么 |
 |---|---|---|
@@ -16,6 +19,8 @@
 大仓常见起步：**L4**（骨架 + hooks + MCP example 一次到位，再填真相）。仅当用户明确「只要协作+索引、不深填」时推荐停在 **L2**。
 
 ## 模式 `Q_MODE`
+
+**对外四支**（压缩表见 [SKILL.md](SKILL.md)）：**施工** · **流水线** · **审计/自证** · **填充**。下表为完整内部 ID。
 
 | 中文 | 内部名 | 何时用 |
 |---|---|---|
@@ -63,7 +68,7 @@
 | `morph_scale` | 形态尺度（`0.7`）；与旧 history 不可比 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
 | `skill_version` | 技能号（manifest / meta；当前列车见 CHANGELOG） |
-| `report_schema` | **报告壳**投影 schema（现 **0.3.0**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可 |
+| `report_schema` | **报告壳**投影 schema（现 **0.4.0**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；开干只看 `ai_coding_ready` |
 
 ## 常用词
 
@@ -95,15 +100,15 @@
 | **fill-work** | `docs/api/.fill-work/` worker 片段目录；经 `fill-merge.mjs --domain`（过 acceptance）合并进 SSOT |
 | **acceptance-check** | 深真全语义闸（反例正则+必填章）；merge/close 前置 |
 | **金标批次** | 同业务域 api+func+相关 db/redis 同批 + 强制 `sample_n` |
-| **MCP 矩阵** | detect 产出的应有 `{engine}-{profile}` 集合（profile 以仓库自动发现为准） |
-| **填充 MCP 闸** | 需 db·redis 实据时：矩阵达标 ∧（MCP 烟测 ∨ calibrate-live）；过闸后再 inventory/agents；未过则停留骨架 |
-| **MCP 主环境** | `fill_mcp_profile`（默认 **test**）：烟测/calibrate/agents 实据优先 `{engine}-{profile}` |
-| **MCP 先行** | 先 fill-mcp（或多环境矩阵）再填真相；过闸规格见 [fill-mcp.md](fill/fill-mcp.md) |
-| **live 校准** | MCP 未挂载时用 `fill-calibrate-live` 直连；可按引擎满足填充 MCP 闸 |
+| **MCP 矩阵** | detect 产出的应有 `{engine}-{profile}` 集合；细则见 [detect.md](modes/detect.md) / [fill-mcp.md](fill/fill-mcp.md) |
+| **填充 MCP 闸** | 需 db·redis 时过闸后再 inventory/agents，未过则停留骨架；细则 SSOT：[fill-mcp.md](fill/fill-mcp.md) |
+| **MCP 主环境** | `fill_mcp_profile`（默认 **test**）；见 fill-mcp |
+| **MCP 先行** | 先 fill-mcp 再填真相；见 [fill-mcp.md](fill/fill-mcp.md) |
+| **live 校准** | MCP 未挂载时用 `fill-calibrate-live`；见 fill-mcp |
 | **会话自证** | 当前宿主自证 MCP（强）/ hooks（强）/ rules（弱·中）/ githooks（中）/ **human_gates**（gate→unproven+reason_code）/ Codex skills·Starlark；`behavior_pass_claim` 仅 MCP+hooks；playbook+matrix 多宿主；`content-shell-scan` 管分册空壳 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
 | **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
-| **会话仪表盘** | **本轮**实质产出 / 闸门决策 / 显式读数时回复末尾的四台 markdown 摘要 + 可选纯文本态势（无 mermaid；提问批次 / 定根前 / 等确认空轮 / meta / 跑题省略；按里程碑非按会话历史）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
+| **会话仪表盘** | 本轮里程碑时附四台摘要；SHOW/HIDE SSOT：[session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |
 | **score-history** | `docs/harness-eng/score-history.jsonl`：历次 overall/coverage/ready 追加日志 |
 | **progress.yaml** | `docs/harness-eng/progress.yaml`：填充进度状态（`--write-progress`） |

@@ -1,8 +1,8 @@
 # harness-eng 快速开始
 
 一页纸入口。详细闸门与模式见 [SKILL.md](SKILL.md)、[glossary.md](glossary.md)。  
-人读完整说明：[使用手册.md](使用手册.md) · 浏览器版：[使用手册.html](使用手册.html)；对外短文：[使用手册-摘要.md](使用手册-摘要.md)。  
-拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主；热路径见 [AGENT-INDEX.md](AGENT-INDEX.md)。
+人读完整说明：[guide/使用手册.md](guide/使用手册.md) · 浏览器版：[guide/使用手册.html](guide/使用手册.html)；对外短文：[guide/使用手册-摘要.md](guide/使用手册-摘要.md)。
+拓扑：`modes/` · `fill/` · `host/`；热路径见 [AGENT-INDEX.md](AGENT-INDEX.md)。
 
 ## 一句话安装 / 更新
 
@@ -19,18 +19,16 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；Trae：`~/.trae/skills/` 或项目 `.trae/skills/`——**示例≠唯一安装目标**；其他按该宿主文档）。更新同 URL 再执行一次即可。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。详情见手册「2. 如何安装和更新」。
 L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --root <TARGET>`；落后则 land/upgrade 刷新 `scripts/agent-config/sync.mjs`，再 `node scripts/agent-config/sync.mjs`。
 
-## 你要做什么？
+## 你要做什么？（对外四支）
 
-| 场景 | 对 Agent 说 | 结果 |
+| 支 | 对 Agent 说 | 结果 |
 |---|---|---|
-| 大仓第一次上 harness | **流水线** / pipeline | audit → **L4** land → **MCP 矩阵** → inventory → **fill-plan --gold** → **agents** → acceptance → score → **HTML 报告** |
-| 只看缺口、不写盘 | **审计** / audit | 对照 L0–L5，默认不写文件 |
-| 半成品接着补 | **续跑** / resume | 只补缺口，`on_exists=skip` |
-| 按模板深填契约 | **多 Agent 填充** / fill-truths-agents | 须过 **填充 MCP 闸** → Plan 批次 → acceptance → merge → score |
-| 含 Cron / Scheduler | 域含 **jobs** + inventory | `fill-inventory.mjs --domain jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT） |
-| 建填充目标/批次 | **填充计划** / fill-plan | `docs/harness-eng/fill-plan.yaml`（大仓 gold+sample_n） |
-| 仅脚本薄草稿（对话不推荐） | **自动填充** / fill-truths-auto | 归档实现；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
-| 看能不能开 AI 改业务 | **完整度打分** / fill-score | 打开 **report-latest.html** 决策台 |
+| **流水线** | **流水线** / pipeline | 大仓首次：audit → **L4** land → MCP 闸 → inventory → fill-plan → agents → score → HTML 报告 |
+| **施工** | **落地** / **续跑** / **升阶** / seed-truths | 装或补骨架（半成品用续跑，`on_exists=skip`） |
+| **审计 / 自证** | **审计** / **会话自证** | 对照 **L0–L5** 缺口或核验当前宿主；默认不写盘（audit） |
+| **填充** | **填充** / fill-plan / agents / **打分** | MCP 过闸 → Plan → agents → acceptance → merge → score |
+
+含 Cron/Scheduler：域含 **jobs** → `fill-inventory.mjs --domain jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT）。仅脚本薄草稿（对话不推荐）：[archive/fill-truths-auto](archive/fill-truths-auto/INDEX.md)。
 
 ## 能否 AI Coding（10 秒）
 
@@ -42,24 +40,22 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 | 「建议暂缓」/ 开干 NO / blockers 非空 | 不可以 |
 | 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
 
-四台读法见 [使用手册.md](使用手册.md) 第 6 章（会话仪表盘）。  
-施工/审计等**本轮实质产出或闸门决策/显式读数**末尾另有**会话仪表盘**（四台摘要 + 可选纯文本态势）；提问批次 / 定根前 / 等确认空轮 / 纯问版本 / 手册 / 技能本身 / 跑题则省略（里程碑判定，不按会话历史）。见 [session-dashboard.md](modes/session-dashboard.md)。浏览器手册：[使用手册.html](使用手册.html#s6)。
+五台读法见 [guide/使用手册.md](guide/使用手册.md) 第 6 章 · [guide/使用手册.html](guide/使用手册.html#s6)。会话内仅**实质产出 / 闸门决策 / 显式读数**时 SHOW；细则 [session-dashboard.md](modes/session-dashboard.md)。
 
 ## 写盘闸门（必记）
 
-确认 / 预授权词表：[write-plan.md](modes/write-plan.md)。「全部推荐」协议：[recommended-profile.md](modes/recommended-profile.md)。最短路径：全部推荐 → 确认预授权 → 确认。
+确认 / 预授权：[write-plan.md](modes/write-plan.md)。「全部推荐」：[recommended-profile.md](modes/recommended-profile.md)。最短路径：全部推荐 → 确认预授权 → 确认。
 
-需 db·redis 实据时另过 **填充 MCP 闸**（[fill-mcp.md](fill/fill-mcp.md)）：仓库 profile 自动发现 → `{engine}-{profile}` 矩阵 +（烟测 ∨ calibrate-live）；**过闸后再** inventory / agents；未过则停留骨架。
+需 db·redis 实据时过 **填充 MCP 闸**：**过闸后再** inventory / agents；未过则停留骨架。细则 SSOT：[fill-mcp.md](fill/fill-mcp.md)。
 
 ## 推荐最短路径（大仓）
 
 ```text
 1. 点名 harness-eng → 流水线（目标 L4 · fill_engine=agents · gold）
 2. 全部推荐 → 确认预授权 → 确认
-3. 骨架战役（audit→L4→fill-mcp 矩阵）过闸后 → 填充战役见 modes/pipeline-fill.md
-4. acceptance-check → fill-merge.mjs --domain <id>（过闸）→ 打开 docs/harness-eng/report-latest.html
-5. 看决策台 **建议可以开干**（ai_coding_ready）；顺带看 gold_ratio；heuristic 只留 `.fill-work`
-6. Plan 未关或金标低 → 继续 agents；早停看 Plan 关闭 + `ai_coding_ready` / `gold_ratio`
+3. 骨架战役（audit→L4→fill-mcp）过闸后 → 填充战役见 modes/pipeline-fill.md
+4. acceptance → fill-merge → 打开 report-latest.html，看 ai_coding_ready
+5. Plan 未关或金标低 → 继续 agents；早停看 Plan 关闭 + ai_coding_ready
 ```
 
 ## 本地脚本（可选）
@@ -69,28 +65,15 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 ```bash
 cd <harness-eng技能目录>
 node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land
-# 骨架战役用 --mode pipeline-skeleton（不跑 fill-*）
-node scripts/fill-inventory.mjs --domain api --root <TARGET>
-node scripts/fill-merge.mjs --domain api --inventory <inv.json> --work-dir <dir> --check
-node scripts/fill-plan.mjs --root <TARGET> --init --gold --sample-n 30
-node scripts/fill-plan.mjs --root <TARGET> --residual   # 批次已关后清 acceptance warnings
-node scripts/acceptance-check.mjs --root <TARGET> --domain api
-node scripts/fill-score.mjs --root <TARGET>
-node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
+# 骨架战役：--mode pipeline-skeleton
 node scripts/selfcheck.mjs
 ```
 
+fill 家族 CLI（inventory / merge / plan / score / report）见 [fill/README.md](fill/README.md)。
+
 ### Windows 传参（醒目）
 
-PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。先用 Node 写 **UTF-8 无 BOM** 文件，再传路径（SSOT：[write-plan.md](modes/write-plan.md)）：
+PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BOM** 文件再传路径。完整示例 SSOT：[write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
 
-```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.9'}}), 'utf8')"
-node scripts/harness.mjs --root <TARGET> --params params.json --mode land
-```
-
-多宿主对齐：**Cursor / Claude / Qoder / WorkBuddy 高**；**Trae 高**；**Codex 高 · 纪律 B**（未探测不进「全部推荐」；不做 `.mdc` 镜像）。详 [ai-tools.md](host/ai-tools.md)。
-
-Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)；填充索引：[fill/README.md](fill/README.md)。  
-Trae：[host/TRAE-PARITY.md](host/TRAE-PARITY.md)。CodeBuddy：[host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.9**）。
+多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.14**）。

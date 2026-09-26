@@ -5,7 +5,7 @@
 # - 落地模板权威 = `templates/_meta/manifest.yaml`（files / placeholders / when）
 # - 两边 version 必须一致
 
-version: "0.7.9"
+version: "0.7.14"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: true

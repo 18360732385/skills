@@ -57,6 +57,39 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.13 → 0.7.14 迁移要点
+
+1. **报告壳**：`report_schema` **0.4.0**（与 skill **0.7.14** 同发；报告壳 ≠ skill）
+2. **五台 HTML**：新增 **宿主台**；默认仍进决策台；双轴进度（施工阶梯 L0–L5 + 开干闸路径）
+3. **宿主面**：读 `session-live` + 磁盘探测；磁盘有 ≠ 生效；**不**改变 `ai_coding_ready`
+4. **历史**：旧 `score-history` 点若无 `report_schema≥0.4` / morph 不符 → 灰显不连线（不可比）
+5. **会话仪表盘**：同 `buildReportUi`；可选宿主面一行；SHOW/HIDE 策略不变
+6. 升版后建议重跑 `fill-score` + `fill-report-html`；手册 §6 改为五台读法
+
+## 0.7.12 → 0.7.13 迁移要点
+
+1. **meta**：`skill_version` → `0.7.13`（手册文案对齐四支/三档；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：`guide/使用手册` 已重写；人读入口仍 `guide/`
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.13`）后再 sync（与往期相同）
+
+## 0.7.11 → 0.7.12 迁移要点
+
+1. **meta**：`skill_version` → `0.7.12`（人读手册路径变更；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：手册在 `guide/`（`使用手册.md` / `.html` / 摘要）；根目录不再放手册
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.12`）后再 sync（与往期相同）
+
+## 0.7.10 → 0.7.11 迁移要点
+
+1. **meta**：`skill_version` → `0.7.11`（入口双写去重；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：QUICKSTART / glossary / pipeline* 以旁路规格为 SSOT；Windows JSON 示例只在 write-plan
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.11`）后再 sync（与往期相同）
+
+## 0.7.9 → 0.7.10 迁移要点
+
+1. **meta**：`skill_version` → `0.7.10`（纯编排；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：入口改用对外四支 / 三档；细阶与内部模式 ID 仍见 `ladder.md` / `glossary.md`
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.10`）后再 sync（与往期相同）
+
 ## 0.7.8 → 0.7.9 迁移要点
 
 1. **meta**：`skill_version` → `0.7.9`；需要 NL deny 时设 `rulehook: true` 或保留已有 `.rulehook/`

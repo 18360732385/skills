@@ -1,6 +1,11 @@
 ---
 name: harness-eng
-description: 按阶梯把 Agent Harness 工程化落地到目标仓。
+description: >-
+  施工仪式：把 Agent Harness 工程化落地到目标仓库——生成/补齐 AGENTS.md、AI 编码规则
+  （如 .cursor/rules）、契约文档（func/api/db/redis/jobs）、hooks、MCP 配置、知识回流与规划目录。
+  用户点名 harness-eng，或说开干 / 落地 / 形态 / 覆盖 / 贴顶 / gate / 打分 / 审计 / 续跑 / 流水线 / 升阶 / 填充 / 会话自证 / session-live，
+  或要求生成 AGENTS.md / 仓库工程化 / AI 协作规则 / 文档与代码同步，
+  或定时 / Cron / Scheduler / jobs 契约填充时使用。
 ---
 
 # harness-eng
@@ -9,7 +14,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
 **Agent 热路径 · 读侧路由 SSOT**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。  
 拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。  
-一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。施工产物默认 `docs/harness-eng/`。
+一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[guide/使用手册.html](guide/使用手册.html) / [guide/使用手册.md](guide/使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](modes/write-plan.md)。  
 **全部推荐**协议 SSOT：[recommended-profile.md](modes/recommended-profile.md)。他处只指针。
@@ -21,29 +26,21 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（0.7.2 起无 `land.mjs`）。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](modes/recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
-6. **本轮实质施工产出、闸门决策点（出示 WritePlan / 用户确认）、或显式读数**时回复末尾附可视化**会话仪表盘**（四台摘要 + 可选纯文本态势；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。提问批次 / 定根前 / 等确认空轮 / 纯 meta / 版本 / 手册 / 跑题 / 改 skill **不附**整块（判定按本轮里程碑，不按「会话曾点名」）。
+6. **本轮实质施工产出、闸门决策点（出示 WritePlan / 用户确认）、或显式读数**时回复末尾附可视化**会话仪表盘**（四台摘要 + 可选宿主面一行 + 可选纯文本态势；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。提问批次 / 定根前 / 等确认空轮 / 纯 meta / 版本 / 手册 / 跑题 / 改 skill **不附**整块（判定按本轮里程碑，不按「会话曾点名」）。HTML 持久报告为**五台**（决策/诊断/任务/趋势/宿主，`report_schema` 0.4.0）。
 
-## 模式分流
+## 模式分流（对外四支）
 
-| 意图（一支） | 模式 | 规格 |
+| 支 | 含模式（内部 ID） | 规格入口 |
 |---|---|---|
-| **落地** | `land` | 下文 |
-| **续跑** | `resume` | [resume.md](modes/resume.md) |
-| **流水线** | `pipeline` | [pipeline.md](modes/pipeline.md) → Done 后 [pipeline-fill.md](modes/pipeline-fill.md) |
-| **审计** | `audit` | [audit-report.md](modes/audit-report.md) · [ladder.md](modes/ladder.md) |
-| **升阶** | `upgrade` | [upgrade.md](modes/upgrade.md) |
-| **补空壳真相** | `seed-truths` | [seed-truths.md](modes/seed-truths.md) |
-| **打分家族** | `fill-score`（默认双轴）· `fill-morph` · `fill-gate` | [fill-score.md](fill/fill-score.md) · [fill-morph.md](fill/fill-morph.md) · [fill-gate.md](fill/fill-gate.md) |
-| **填充计划** | `fill-plan` | [fill-plan.md](fill/fill-plan.md) |
-| **多 Agent 精填** | `fill-truths-agents` | [fill-truths-agents.md](fill/fill-truths-agents.md) |
-| **契约填充** | `fill-truths` | [fill/README.md](fill/README.md) → [fill.md](fill/fill.md) |
-| **MCP 装配** | `fill-mcp` | [fill/README.md](fill/README.md) → [fill-mcp.md](fill/fill-mcp.md) |
-| **会话自证** | `session-live` | [session-live.md](modes/session-live.md) · [session-live-checks.yaml](host/session-live-checks.yaml) |
+| **施工** | `land` · `resume` · `upgrade` · `seed-truths` | 下文 · [resume.md](modes/resume.md) · [upgrade.md](modes/upgrade.md) · [seed-truths.md](modes/seed-truths.md) |
+| **流水线** | `pipeline` → Done 后 `pipeline-fill` | [pipeline.md](modes/pipeline.md) → [pipeline-fill.md](modes/pipeline-fill.md) |
+| **审计 / 自证** | `audit` · `session-live` | [audit-report.md](modes/audit-report.md) · [ladder.md](modes/ladder.md) · [session-live.md](modes/session-live.md) |
+| **填充** | `fill-score` / `fill-morph` / `fill-gate` · `fill-plan` · `fill-truths-agents` · `fill-truths` · `fill-mcp` | [fill/README.md](fill/README.md) · [fill-score.md](fill/fill-score.md) |
 
-legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见「分支 → Read」与 [fill/README.md](fill/README.md)。
+legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见 [AGENT-INDEX.md](AGENT-INDEX.md) 与 [fill/README.md](fill/README.md)。
 
 未指定：`MATURE`→audit；`PARTIAL`/已有 meta 未满阶→**resume**；**大仓首次**→**pipeline**（L4，`fill_engine=agents`）；否则→land（大仓默认 L4）。  
-阶梯：L0 协作入口 · L1 契约骨架 · L2 知识回流 · L3 规划与软门禁 · L4 工具连接样例 · L5 配置 SSOT 管线（详 [glossary.md](glossary.md) / [ladder.md](modes/ladder.md)）。
+**对外三档**阶梯：**协作入口**(L0) · **契约与回流**(L1–L2) · **门禁·工具·SSOT**(L3–L5)；细阶 L0–L5 见 [glossary.md](glossary.md) / [ladder.md](modes/ladder.md)。
 
 ## land
 
@@ -79,17 +76,8 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 - SSOT promote：仅过 acceptance；heuristic 标 `quality: heuristic` 且留在 `.fill-work`；宣称可 AI coding 仅看 `ai_coding_ready`
 - **填充 MCP 闸**：域/栈需 db·redis 时，矩阵+（烟测∨calibrate-live）达标后才进入填充（[fill-mcp.md](fill/fill-mcp.md)）
 
-## 分支 → Read
-
-读侧路由 SSOT 在 [AGENT-INDEX.md](AGENT-INDEX.md)（必读≤8 + 按需表；本页不再铺全量，防双表漂移）。高频三条指针：
-
-| 何时 | Read |
-|---|---|
-| 写盘确认 / 预授权 / Windows JSON | [write-plan.md](modes/write-plan.md) |
-| 打分 / score-policy / 覆盖裁决 | [fill-score.md](fill/fill-score.md) |
-| AI 工具面 / 多宿主 / 加契约域 | [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md) |
-| 会话自证（MCP/hooks/rules · 1.2 人工闸 + playbook） | [session-live.md](modes/session-live.md) · `scripts/session-live.mjs --help` · `content-shell-scan.mjs` |
+读侧路由 SSOT 在 [AGENT-INDEX.md](AGENT-INDEX.md)（必读≤8 + 按支按需表）。高频指针：写盘/预授权 → [write-plan.md](modes/write-plan.md)；**打分 / score-policy / 覆盖裁决** → [fill-score.md](fill/fill-score.md)；AI 工具面 / 多宿主 → [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md)。
 
 旁路脚本：`scripts/fill-calibrate-live.mjs`（live 校准）· `scripts/fill-report-html.mjs`（HTML 报告，score 后【推荐】），`--help` 自查。  
 写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。  
-版本里程碑（0.6.x 各行：Trae 高 / CodeBuddy / freshness / Codex P0…）查 [CHANGELOG.md](CHANGELOG.md)，本页不铺版本行。
+版本里程碑查 [CHANGELOG.md](CHANGELOG.md)，本页不铺版本行。

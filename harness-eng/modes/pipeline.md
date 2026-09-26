@@ -8,7 +8,7 @@
 
 1. audit 报告已输出（已具备 / 缺口 / 反模式 / 建议下一阶）
 2. 目标 **L4** 骨架齐：`docs/harness-eng/harness-meta.yaml`（无则回退 `.cursor/`）的 `ladder`≥L4（或本轮 land/resume 已装齐 L4 必备文件）
-3. **填充 MCP 闸**已过（见 [fill-mcp.md](../fill/fill-mcp.md)）：域/栈需 db·redis 时，矩阵 +（MCP 烟测 ∨ calibrate-live）；仅书面跳过 MCP 且无 calibrate-live → 本项为假（停留骨架）
+3. **填充 MCP 闸**已过（细则 SSOT：[fill-mcp.md](../fill/fill-mcp.md)）；未过则**停留骨架**
 4. 若不做填充、只要骨架：WritePlan 标注 `fill_deferred=true`，则第 3 项可记「延期」；**本轮不** Read [pipeline-fill.md](pipeline-fill.md)
 
 **骨架 Done 且非 fill_deferred** 后再 Read [pipeline-fill.md](pipeline-fill.md)。第 3 项为真后再展开填充步骤。
@@ -25,7 +25,7 @@
 1. audit（只读指纹 + MCP 矩阵）→ [audit-report.md](audit-report.md) · [detect.md](detect.md)
 2. land 或 resume（骨架目标 **L4**：hooks + mcp.example + gitignore）
    → 确认后 `scripts/harness.mjs --mode pipeline-skeleton`（仅骨架写盘，不跑 fill-* / 不 Read pipeline-fill）
-3. fill-mcp（多环境矩阵；烟测或 calibrate-live）→ [fill-mcp.md](../fill/fill-mcp.md)
+3. fill-mcp（过闸后再续填充）→ [fill-mcp.md](../fill/fill-mcp.md)
 ```
 
 写盘走公开入口 `scripts/harness.mjs`，**不要**把 `render.mjs` 当 Agent 主路径。`pipeline-skeleton` 只覆盖本文件骨架战役；填充战役仍在骨架 Done 且非 `fill_deferred` 后再 Read [pipeline-fill.md](pipeline-fill.md)。

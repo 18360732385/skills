@@ -1,12 +1,12 @@
 # 会话仪表盘（工程轮回复末尾）
 
-> SSOT：仅当**本轮**有目标仓 harness **实质施工产出**、**闸门决策点**、或用户**显式要读数**时，对用户可见回复的**固定结尾**。默认 **HIDE**。提问批次 / 定根前 / 等确认空轮 / 改 skill / 纯 meta **整块省略**。与 `docs/harness-eng/report-latest.html`（施工 HTML 四台）互补：HTML 是持久产物；本节是**会话内**快照。
+> SSOT：仅当**本轮**有目标仓 harness **实质施工产出**、**闸门决策点**、或用户**显式要读数**时，对用户可见回复的**固定结尾**。默认 **HIDE**。提问批次 / 定根前 / 等确认空轮 / 改 skill / 纯 meta **整块省略**。与 `docs/harness-eng/report-latest.html`（施工 HTML 五台 · `report_schema` 0.4.0）互补：HTML 是持久产物；本节是**会话内**快照。
 
 ## Done
 
 **SHOW**（本轮命中里程碑时）：
 
-1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选纯文本态势；无 score 时精简）
+1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选宿主面一行 + 可选纯文本态势；无 score 时精简）
 2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`；`--help` 看选项）
 3. **尚无目标根 → 一律 HIDE**（勿空表凑脚注；定根后再 SHOW）
 
@@ -92,7 +92,11 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 
 （有覆盖+形态时一行；缺任一轴则整行省略。象限阈值 0.5：Q1 补形态 / Q2 理想区 / Q3 起步 / Q4 补覆盖）
 
-**详情请查询仪表盘** → 目标仓 [`docs/harness-eng/report-latest.html`](…)（已生成时给 file 链接） · [四台读法（使用手册 · 第6章）](../使用手册.html#s6)
+宿主面：cursor live · hooks✓ mcp✓ · trae 未自证
+
+（有 `host_surface` 磁盘或 live 数据时一行；全 absent 则省略。磁盘≠生效；不否决开干。）
+
+**详情请查询仪表盘** → 目标仓 [`docs/harness-eng/report-latest.html`](…)（已生成时给 file 链接） · [五台读法（使用手册 · 第6章）](../guide/使用手册.html#s6)
 
 （尚未生成报告时：脚注写预期路径 +「完整度打分」提示，手册链接仍必带。）
 ---
@@ -112,16 +116,17 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 ---
 ```
 
-**禁止**：把仪表盘插在正文中间；省略四台之一（全量）；精简省略「详情请查询仪表盘」脚注；用 `ready.ok` / overall / 参考分替代「开干」结论。
+**禁止**：把仪表盘插在正文中间；省略四台之一（全量）；精简省略「详情请查询仪表盘」脚注；用 `ready.ok` / overall / 参考分替代「开干」结论；把宿主 live 绑进开干判定。
 
 ## 数据优先级
 
 | 台 | 来源（高→低） |
 |---|---|
-| 决策台 | `score-latest.json` → `ai_coding_ready` + `buildReportUi` verdict |
-| 诊断台 | `docs/harness-eng/harness-meta.yaml`（无则回退 `.cursor/`）+ score 的 skeleton/semantic/gold |
-| 任务台 | CLI `--pending`/`--next` → 会话上下文 → `fill-plan.yaml` → `next_shards` |
-| 趋势台 | score 的 coverage / overall / ui.composite |
+| 决策台 | `buildReportUi.go_nogo`（← `ai_coding_ready`） |
+| 诊断台 | `ui.ladder_progress` / meta ladder + score skeleton/semantic/gold |
+| 任务台 | CLI `--pending`/`--next` → `ui.tasks[0]` → `fill-plan.yaml` → `next_shards` |
+| 趋势台 | `ui` coverage / morph / composite（参考分≠开干） |
+| 宿主面一行 | `buildHostSurface`（磁盘+session-live）；无数据则省略 |
 
 会话字段：
 - **模式**：以本轮 intent / CLI `--mode` 为准（fill-score、audit、pipeline…）；**勿**默认钉死 `meta.last_mode`
@@ -140,7 +145,7 @@ node scripts/session-dash.mjs --root <TARGET> \
 - 只读；不写盘
 - Agent 按本页触发规则决定是否调用；**工程轮务必传 `--mode`（本轮动作）**；`--intent engineering`（默认）渲染仪表盘；`--intent meta` 不输出 markdown（`--json` 时写 `{ omitted: true, reason: "meta" }`）
 - 无 score 时不报错，趋势台写「暂无 score」
-- 脚注固定以 **详情请查询仪表盘** 开头；链到目标仓 `report-latest.html`（已生成）+ skill 内 [使用手册.html `#s6`](../使用手册.html#s6)（无 HTML 时回退 [使用手册.md 第6章](../使用手册.md#60-对话内会话仪表盘工程轮末尾)）
+- 脚注固定以 **详情请查询仪表盘** 开头；链到目标仓 `report-latest.html`（已生成）+ skill 内 [使用手册.html `#s6`](../guide/使用手册.html#s6)（无 HTML 时回退 [使用手册.md 第6章](../guide/使用手册.md#60-对话内会话仪表盘工程轮末尾)）
 
 ## 与 HTML 报告关系
 
@@ -149,7 +154,7 @@ node scripts/session-dash.mjs --root <TARGET> \
 | 探测 / 提问 / 定根前 / 等确认空轮 | **省略** | 可能不存在 |
 | 出示 WritePlan / 确认后写盘 / 实质产出 | 会话态快照 | 可能不存在 |
 | 纯 meta / 版本 / 手册 / 跑题 / 改 skill | **省略** | 不涉及 |
-| fill-score 后 | 三词 + 四台摘要 | 【推荐】同步生成，脚注链过去 |
+| fill-score 后 | 三词 + 四台摘要 + 可选宿主面一行 | 【推荐】同步生成五台 HTML，脚注链过去 |
 | audit 只读出结论 | 缺口摘要进任务台 | 不强制生成 |
 
 开干结论**两处一致**：只看 `ai_coding_ready`（见 [glossary.md](../glossary.md)）。

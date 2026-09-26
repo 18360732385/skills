@@ -1,4 +1,4 @@
-# Codex → 官方对齐清单（0.7.9 · 高）
+# Codex → 官方对齐清单（0.7.14 · 高）
 
 harness-eng 将 Codex 标为矩阵 **高**：分轨 SSOT（共享 mcp/hooks/skills + Starlark `codex/rules`），推荐纪律 **B**（探测或显式勾选）。  
 **仍不做** Cursor `.mdc` 全量镜像。

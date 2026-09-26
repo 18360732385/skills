@@ -11,15 +11,15 @@
  * Default --out: docs/harness-eng/report-latest.html
  * Also writes docs/harness-eng/score-latest.json (unless --no-score-copy)
  * Appends docs/harness-eng/score-history.jsonl (unless --no-history-append / dry-run)
- * Dashboard: 决策 / 诊断 / 任务 / 趋势台（ui via report-ui.mjs）
+ * Dashboard: 决策 / 诊断 / 任务 / 趋势 / 宿主台（ui via report-ui.mjs · report_schema 0.4.0）
  * Legacy: docs/agent-kb/harness-report-latest.html still readable by agents; new writes go to harness-eng/
  * Does not invent credentials. Write still requires Agent confirmation / preauth.
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { parse as parseYaml } from "./lib/yaml.mjs";
 import { buildReportUi } from "./lib/report-ui.mjs";
+import { buildHostSurface } from "./lib/host-surface.mjs";
 import { HARNESS_META_READ_CANDIDATES } from "./lib/harness-meta.mjs";
 import {
   appendScoreHistory,
@@ -28,8 +28,14 @@ import {
   readScoreHistory,
   HISTORY_REL,
   DEFAULT_LIMIT,
+  CURRENT_REPORT_SCHEMA,
 } from "./lib/score-history.mjs";
 import { ensureRunWithRound, loadRunLatest } from "./lib/run-latest.mjs";
+import {
+  SESSION_LIVE_LATEST_REL,
+  SESSION_LIVE_MATRIX_REL,
+} from "./lib/live-probes.mjs";
+import { parse as parseYaml } from "./lib/yaml.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "..");
@@ -87,10 +93,11 @@ Also writes docs/harness-eng/score-latest.json (UTF-8) unless --no-score-copy.
 Appends ${HISTORY_REL} unless --no-history-append or --dry-run.
 --history → docs/harness-eng/history/report-<timestamp>.html
 
-ui fields (0.2.26+): composite_score, pipeline_progress, decision_kpis, morph_strip,
+ui fields (0.4.0+): go_nogo, tasks, diagnose, ladder_progress, host_surface,
+pipeline_progress (开干闸路径), composite_score (参考分), decision_kpis, morph_strip,
 show_domain_cards, gap_to_ready, domain_stories, miss_top, gaps_top,
-chart_domains, next_actions[].command, shards[].command,
-diff, trend, run_timeline
+chart_domains, next_actions[].command, shards[].command, trend.incomparable,
+diff, run_timeline
 
 Legacy path docs/agent-kb/harness-report-latest.html is no longer the default.
 --score -   read JSON from stdin (prefer UTF-8 no-BOM file on Windows)
@@ -147,6 +154,8 @@ function loadMeta(root, metaArg) {
           last_mode: doc.last_mode || null,
           domains: doc.domains || null,
           glob_profile: doc.glob_profile || null,
+          ai_tools: doc.ai_tools || null,
+          session_live: doc.session_live || null,
         };
       }
     } catch {
@@ -272,9 +281,39 @@ function main() {
     mode,
     run,
     at: new Date().toISOString(),
+    report_schema: CURRENT_REPORT_SCHEMA,
+    morph_scale: scoreForUi.morph_scale || "0.7",
   });
-  const history_series = buildTrendSeries(prior, entry, args.historyLimit);
-  const ui = buildReportUi(scoreForUi, { history_series, run, root, meta });
+  const history_series = buildTrendSeries(prior, entry, args.historyLimit, {
+    currentSchema: CURRENT_REPORT_SCHEMA,
+    currentMorphScale: scoreForUi.morph_scale || "0.7",
+  });
+  let host_surface = null;
+  try {
+    host_surface = buildHostSurface(root, { meta });
+  } catch (e) {
+    host_surface = {
+      status: "absent",
+      summary_zh: "宿主面不可用",
+      current: null,
+      generated_at: null,
+      stale: true,
+      hosts: [],
+      empty_hint: String(e.message || e),
+      hint_command: "node scripts/session-live.mjs --root <TARGET> --emit-playbook",
+      legend: {
+        disk: "灰灯=磁盘存在",
+        live: "彩灯=session-live",
+      },
+    };
+  }
+  const ui = buildReportUi(scoreForUi, {
+    history_series,
+    run,
+    root,
+    meta,
+    host_surface,
+  });
   const reportDirRel = "docs/harness-eng";
   const payload = {
     generated_at: entry.at,
@@ -284,6 +323,8 @@ function main() {
     report_dir: reportDirRel,
     legacy_report: LEGACY_REPORT_REL,
     history_rel: HISTORY_REL,
+    session_live_latest: SESSION_LIVE_LATEST_REL,
+    session_live_matrix: SESSION_LIVE_MATRIX_REL,
     meta,
     ui,
     score: scoreForUi,
@@ -367,7 +408,7 @@ function main() {
   if (ui.gap_to_ready?.summary) console.log(`距门槛: ${ui.gap_to_ready.summary}`);
   if (ui.diff?.summary) console.log(`相对上次: ${ui.diff.summary}`);
   if (ui.trend?.summary) console.log(`趋势: ${ui.trend.summary}`);
-  console.log("请将报告路径回复给用户，并用浏览器或 IDE 打开查看（决策/诊断/任务/趋势台）。");
+  console.log("请将报告路径回复给用户，并用浏览器或 IDE 打开查看（决策/诊断/任务/趋势/宿主台）。");
 }
 
 try {

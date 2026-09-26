@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.7.9</title>
+  <title>harness-eng 使用手册 · v0.7.14</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.7.9</div>
+    <div class="ver">v0.7.14</div>
   </header>
 
   <div class="shell">
@@ -655,7 +655,7 @@
             </div>
             <p class="dash-legend">
               生成方式：对 Agent 说「完整度打分 / 开干闸」，或跑 <code>fill-score</code> + <code>fill-report-html</code>。
-              详细四台读法见 <a href="#s6">第 6 章</a>。
+              详细五台读法见 <a href="#s6">第 6 章</a>。
             </p>
           </div>
         </div>
@@ -669,15 +669,12 @@
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>能力</th><th>落在哪</th><th>作用</th></tr>
+              <tr><th>对外三档</th><th>内部阶</th><th>落在哪</th><th>作用</th></tr>
             </thead>
             <tbody>
-              <tr><td>协作入口</td><td>根/分册 <code>AGENTS.md</code>、总览规则</td><td>Agent 一进仓就知道命令、红线、文档优先级</td></tr>
-              <tr><td>契约骨架</td><td><code>docs/func|api|db|redis|jobs</code> + path-scoped rules</td><td>「改代码前读真相、改后回写文档」有落点</td></tr>
-              <tr><td>知识回流</td><td><code>docs/agent-kb</code></td><td>pitfalls / 架构概览 / 已知缺口可沉淀</td></tr>
-              <tr><td>规划与软门禁</td><td><code>docs/superpowers</code> + hooks</td><td>进行中事项可见；提交前软提醒（不拦截）</td></tr>
-              <tr><td>工具连接样例</td><td><code>mcp.json.example</code> 等</td><td>教怎么接 MCP；真密默认不入库（本地可填）</td></tr>
-              <tr><td>多工具配置 SSOT（可选 L5）</td><td><code>docs/agent-config/</code> + <code>sync.mjs</code></td><td>一份真相生成 Cursor / Claude / Qoder 等目录</td></tr>
+              <tr><td><strong>协作入口</strong></td><td>L0</td><td>根/分册 <code>AGENTS.md</code>、总览规则、meta</td><td>命令、红线、文档优先级</td></tr>
+              <tr><td><strong>契约与回流</strong></td><td>L1–L2</td><td><code>docs/func|api|db|redis|jobs</code> + agent-kb</td><td>契约有落点；pitfalls 可沉淀</td></tr>
+              <tr><td><strong>门禁·工具·SSOT</strong></td><td>L3–L5</td><td>hooks · MCP example · 可选 agent-config</td><td>软提醒、工具样例、多工具一处改</td></tr>
             </tbody>
           </table>
         </div>
@@ -764,24 +761,21 @@ cp -R &lt;源&gt;/harness-eng &lt;host-skills-dir&gt;/harness-eng</code></pre>
           <ul>
             <li>写盘只认 <code>node scripts/harness.mjs</code>（<code>--mode land|resume|upgrade|pipeline-skeleton</code>）；已无 <code>land.mjs</code></li>
             <li>填充只认 <code>fill-inventory.mjs --domain &lt;id&gt;</code> / <code>fill-merge.mjs --domain &lt;id&gt;</code>；域薄包装已删</li>
-            <li>迁移替换表见 <a href="modes/upgrade.md">upgrade.md</a>「0.7.1 → 0.7.2」</li>
+            <li>迁移替换表见 <a href="../modes/upgrade.md">upgrade.md</a>「0.7.1 → 0.7.2」</li>
           </ul>
         </div>
 
-        <h3>3.1 按场景怎么说</h3>
+        <h3>3.1 对外四支</h3>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>你想做什么</th><th>可以这样说</th><th>Agent 大致会走</th></tr>
+              <tr><th>支</th><th>对 Agent 说</th><th>结果</th></tr>
             </thead>
             <tbody>
-              <tr><td>大仓第一次全面工程化</td><td>「用 harness-eng 跑<strong>流水线</strong>，目标 L4」</td><td>audit → L4 骨架 → MCP 矩阵/闸 → 填充计划 → 多 Agent 精填 → 打分 / HTML 报告</td></tr>
-              <tr><td>只想看缺什么、先别改仓</td><td>「<strong>审计</strong>一下本仓 harness 成熟度」</td><td>对照 L0–L5，默认不写盘</td></tr>
-              <tr><td>从零或按阶梯装骨架</td><td>「给这个仓<strong>落地</strong> harness，做到 L2，域只要 api 和 db」</td><td>探测 → 推荐包 → 提问 → WritePlan → <strong>等你确认</strong> → 渲染</td></tr>
-              <tr><td>已经装了一半</td><td>「<strong>续跑</strong>补齐缺口，不要覆盖我已有的 Never do」</td><td>读 meta，只补缺，<code>on_exists=skip</code></td></tr>
-              <tr><td>升一阶</td><td>「从现在完整阶<strong>升阶</strong>到 L3」</td><td>按 upgrade 规格差分补齐</td></tr>
-              <tr><td>深填契约真相</td><td>「按 fill-plan 做<strong>多 Agent 填充</strong>」</td><td>过填充 MCP 闸 → 批次精填 → acceptance → merge → score</td></tr>
-              <tr><td>能不能开 AI 改业务</td><td>「跑<strong>完整度打分</strong> / <strong>开干闸</strong>」</td><td>看 <code>ai_coding_ready</code>，打开 <code>docs/harness-eng/report-latest.html</code></td></tr>
+              <tr><td><strong>流水线</strong></td><td><strong>流水线</strong> / pipeline</td><td>大仓首次：audit → L4 → MCP 闸 → inventory → fill-plan → agents → score</td></tr>
+              <tr><td><strong>施工</strong></td><td><strong>落地</strong> / <strong>续跑</strong> / <strong>升阶</strong></td><td>装或补骨架；半成品用续跑</td></tr>
+              <tr><td><strong>审计 / 自证</strong></td><td><strong>审计</strong> / <strong>会话自证</strong></td><td>对照 L0–L5 或核验宿主；audit 默认不写盘</td></tr>
+              <tr><td><strong>填充</strong></td><td><strong>填充</strong> / 打分</td><td>MCP 过闸 → Plan → agents → acceptance → merge → score</td></tr>
             </tbody>
           </table>
         </div>
@@ -867,7 +861,7 @@ node scripts/selfcheck.mjs</code></pre>
         <p>技能会在该路径写入指针模板。自定义工具<strong>不会</strong>自动装配宿主 hooks。</p>
 
         <h3>4.3 软门禁与 hooks / MCP 差异（L3+）</h3>
-        <p>按<strong>协议族</strong>理解（详 <a href="host/ai-tools.md">ai-tools.md</a>）：</p>
+        <p>按<strong>协议族</strong>理解（详 <a href="../host/ai-tools.md">ai-tools.md</a>）：</p>
         <div class="table-wrap">
           <table>
             <thead><tr><th>族</th><th>工具</th><th>hooks（L3+）</th><th>MCP example（L4+）</th></tr></thead>
@@ -891,9 +885,9 @@ node scripts/selfcheck.mjs</code></pre>
             <tbody>
               <tr><td>MCP 多路径</td><td><code>.cursor/mcp.json</code> ∥ 根 <code>.mcp.json</code> ∥ <code>.trae/mcp.json</code></td></tr>
               <tr><td>Claude rules 镜像</td><td>L3+ 全量 <code>.claude/rules/*.md</code></td></tr>
-              <tr><td>CodeBuddy 0.6.4</td><td>扁平 <code>.codebuddy/rules/*.md</code>（保留 FM）；<code>/hooks</code> 面板；根 <code>.mcp.json</code>；settings 优先级 CLI &gt; local &gt; project &gt; user；见 <a href="host/CODEBUDDY-PARITY.md">CODEBUDDY-PARITY.md</a></td></tr>
-              <tr><td>适配卡</td><td><a href="templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td></tr>
-              <tr><td>L5 生成引擎</td><td><a href="host/sync-hosts.md">sync-hosts.md</a> + <code>sync.mjs</code></td></tr>
+              <tr><td>CodeBuddy 0.6.4</td><td>扁平 <code>.codebuddy/rules/*.md</code>（保留 FM）；<code>/hooks</code> 面板；根 <code>.mcp.json</code>；settings 优先级 CLI &gt; local &gt; project &gt; user；见 <a href="../host/CODEBUDDY-PARITY.md">CODEBUDDY-PARITY.md</a></td></tr>
+              <tr><td>适配卡</td><td><a href="../templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td></tr>
+              <tr><td>L5 生成引擎</td><td><a href="../host/sync-hosts.md">sync-hosts.md</a> + <code>sync.mjs</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -909,8 +903,8 @@ node scripts/selfcheck.mjs</code></pre>
             </tbody>
           </table>
         </div>
-        <p><code>1x-contract-sync</code> 只给拿不到全量 <code>*-sync*</code> 镜像的宿主（尤其 Codex、自定义入口、L0–L2）。L3+ / L5 全量镜像宿主不再强制冗余 1x。权威始终是根 <code>AGENTS.md</code> + <code>docs/**</code>，外加<strong>本宿主</strong> rules 目录；<code>.cursor/rules/11|12|13|16</code> 只是 Cursor 示例。详 <a href="host/ai-tools.md">ai-tools.md</a>。</p>
-        <p>选 <strong>Codex + L5</strong> 时：<code>sync.mjs</code> <strong>不会</strong>全量发出 Codex 的 rules / hooks / MCP / skills（<strong>部分对齐 P2 · 不默认</strong>）。详见 <a href="templates/ai-tools/adapters/codex.md">adapters/codex.md</a>。</p>
+        <p><code>1x-contract-sync</code> 只给拿不到全量 <code>*-sync*</code> 镜像的宿主（尤其 Codex、自定义入口、L0–L2）。L3+ / L5 全量镜像宿主不再强制冗余 1x。权威始终是根 <code>AGENTS.md</code> + <code>docs/**</code>，外加<strong>本宿主</strong> rules 目录；<code>.cursor/rules/11|12|13|16</code> 只是 Cursor 示例。详 <a href="../host/ai-tools.md">ai-tools.md</a>。</p>
+        <p>选 <strong>Codex + L5</strong> 时：<code>sync.mjs</code> <strong>不会</strong>全量发出 Codex 的 rules / hooks / MCP / skills（<strong>部分对齐 P2 · 不默认</strong>）。详见 <a href="../templates/ai-tools/adapters/codex.md">adapters/codex.md</a>。</p>
       </section>
 
       <section id="s5">
@@ -1032,7 +1026,7 @@ node scripts/selfcheck.mjs</code></pre>
         </div>
 
         <h3>6.0 对话内会话仪表盘（工程轮末尾）</h3>
-        <p>0.5.4+（展示时机 <strong>里程碑 SHOW</strong>，较 0.7.0 再收）：点名 harness-eng 且<strong>本轮</strong>有实质施工产出、闸门决策点（出示 WritePlan 或用户确认/继续施工）、或显式要读数时，Agent 回复末尾附四台摘要 + 可选纯文本态势（无 mermaid）。提问批次 / 定根前 / 等确认空轮 / 纯问版本号、安装、手册、术语、改 skill、跑题则<strong>整块省略</strong>（即便同会话早先施工过）。含糊默认不附。脚注固定 <strong>详情请查询仪表盘</strong> → 目标仓 <code>report-latest.html</code>（已生成时）· 本页 <a href="#s6">#s6 四台读法</a>。</p>
+        <p><strong>里程碑 SHOW</strong>：点名 harness-eng 且<strong>本轮</strong>有实质施工产出、闸门决策点（出示 WritePlan 或用户确认/继续施工）、或显式要读数时，Agent 回复末尾附四台摘要 + 可选宿主面一行 + 可选纯文本态势（无 mermaid）。提问批次 / 定根前 / 等确认空轮 / 纯问版本号、安装、手册、术语、改 skill、跑题则<strong>整块省略</strong>（即便同会话早先施工过）。含糊默认不附。脚注固定 <strong>详情请查询仪表盘</strong> → 目标仓 <code>report-latest.html</code>（已生成时）· 本页 <a href="#s6">#s6 五台读法</a>。</p>
         <p>脚本：<code>node scripts/session-dash.mjs --root &lt;目标仓&gt; --intent engineering</code> · 规格 <code>session-dashboard.md</code>。</p>
 
         <h3>6.1 怎么生成 / 打开 HTML 仪表盘</h3>
@@ -1041,7 +1035,7 @@ node scripts/selfcheck.mjs</code></pre>
 node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-eng/score-latest.json</code></pre>
         <p>浏览器打开：<code>docs/harness-eng/report-latest.html</code>。</p>
 
-        <h3>6.2 仪表盘四台：看什么、到什么程度</h3>
+        <h3>6.2 仪表盘五台：看什么、到什么程度</h3>
         <p><strong>能否 AI coding 只看决策台</strong>；其余台解释差在哪、下一步做什么。</p>
 
         <h3>决策台（唯一开干裁决）</h3>
@@ -1057,7 +1051,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
             </tbody>
           </table>
         </div>
-        <p>开干 YES 时需同时：骨架就绪、覆盖就绪（以 <code>score-policy.yaml</code> 为准）、语义就绪、fill-plan 全关，以及 <code>gate_profile</code> 下的 gate 项。具体阈值见 <a href="fill/fill-gate.md">fill-gate.md</a> 与当次 score JSON 的 blockers，<strong>勿背手册硬编码数字</strong>。</p>
+        <p>开干 YES 时需同时：骨架就绪、覆盖就绪（以 <code>score-policy.yaml</code> 为准）、语义就绪、fill-plan 全关，以及 <code>gate_profile</code> 下的 gate 项。具体阈值见 <a href="../fill/fill-gate.md">fill-gate.md</a> 与当次 score JSON 的 blockers，<strong>勿背手册硬编码数字</strong>。</p>
 
         <h3>诊断台 / 任务台 / 趋势台</h3>
         <div class="table-wrap">
@@ -1155,14 +1149,14 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.7.9</strong>）与目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
+          <div class="ans"><p>技能版本看 <code>templates/_meta/manifest.yaml</code>（当前 <strong>0.7.14</strong>）与目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
           <div class="ans"><p>说「审计」；多根时先确认 <code>Q_TARGET_ROOT</code>。审计默认不写盘。</p></div>
         </details>
         <details>
-          <summary>Q14：流水线和落地有什么区别？</summary>
+          <summary>Q14：四支里流水线和施工有什么区别？</summary>
           <div class="ans">
             <p><strong>落地 land</strong>：按目标阶梯安装/合并骨架。</p>
             <p><strong>流水线 pipeline</strong>：一次确认串联审计 → L4 骨架 → MCP 闸 → inventory → fill-plan → agents → score（大仓首次【推荐】）。</p>
@@ -1180,27 +1174,27 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
               <tr><td><a href="使用手册.html">使用手册.html</a></td><td>HTML 可读版（本页）</td></tr>
               <tr><td><a href="使用手册-摘要.md">使用手册-摘要.md</a></td><td>对外一分钟导读</td></tr>
               <tr><td><a href="使用手册.md">使用手册.md</a></td><td>本页对应的 Markdown 源</td></tr>
-              <tr><td><a href="QUICKSTART.md">QUICKSTART.md</a></td><td>一页纸场景表与最短路径</td></tr>
-              <tr><td><a href="SKILL.md">SKILL.md</a></td><td>Agent 施工仪式总流程</td></tr>
-              <tr><td><a href="glossary.md">glossary.md</a></td><td>阶梯 / 模式 / 开干术语</td></tr>
-              <tr><td><a href="host/ai-tools.md">ai-tools.md</a></td><td>多 AI 工具面与 hooks / L5</td></tr>
-              <tr><td><a href="host/sync-hosts.md">sync-hosts.md</a></td><td>L5 宿主目录生成与适配卡索引</td></tr>
-              <tr><td><a href="templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td><td>各 AI 工具路径适配卡</td></tr>
-              <tr><td><a href="modes/conflict-policy.md">conflict-policy.md</a></td><td>merge / MCP / L5 生成物冲突策略</td></tr>
-              <tr><td><a href="modes/ladder.md">ladder.md</a></td><td>L0–L5 交付物与自检清单</td></tr>
-              <tr><td><a href="VERIFY.md">VERIFY.md</a></td><td>版本验收记录</td></tr>
-              <tr><td><a href="modes/write-plan.md">write-plan.md</a></td><td>确认闸门与预授权词表</td></tr>
-              <tr><td><a href="fill/fill-score.md">fill-score.md</a> / <a href="fill/fill-gate.md">fill-gate.md</a></td><td>双轴打分与开干闸</td></tr>
-              <tr><td><a href="modes/pipeline.md">pipeline.md</a> / <a href="modes/pipeline-fill.md">pipeline-fill.md</a></td><td>骨架战役与填充战役</td></tr>
-              <tr><td><a href="modes/examples.md">examples.md</a></td><td>情景示例</td></tr>
-              <tr><td><a href="CHANGELOG.md">CHANGELOG.md</a></td><td>版本变更</td></tr>
+              <tr><td><a href="../QUICKSTART.md">QUICKSTART.md</a></td><td>一页纸场景表与最短路径</td></tr>
+              <tr><td><a href="../SKILL.md">SKILL.md</a></td><td>Agent 施工仪式总流程</td></tr>
+              <tr><td><a href="../glossary.md">glossary.md</a></td><td>阶梯 / 模式 / 开干术语</td></tr>
+              <tr><td><a href="../host/ai-tools.md">ai-tools.md</a></td><td>多 AI 工具面与 hooks / L5</td></tr>
+              <tr><td><a href="../host/sync-hosts.md">sync-hosts.md</a></td><td>L5 宿主目录生成与适配卡索引</td></tr>
+              <tr><td><a href="../templates/ai-tools/adapters/">templates/ai-tools/adapters/</a></td><td>各 AI 工具路径适配卡</td></tr>
+              <tr><td><a href="../modes/conflict-policy.md">conflict-policy.md</a></td><td>merge / MCP / L5 生成物冲突策略</td></tr>
+              <tr><td><a href="../modes/ladder.md">ladder.md</a></td><td>L0–L5 交付物与自检清单</td></tr>
+              <tr><td><a href="../VERIFY.md">VERIFY.md</a></td><td>版本验收记录</td></tr>
+              <tr><td><a href="../modes/write-plan.md">write-plan.md</a></td><td>确认闸门与预授权词表</td></tr>
+              <tr><td><a href="../fill/fill-score.md">fill-score.md</a> / <a href="../fill/fill-gate.md">fill-gate.md</a></td><td>双轴打分与开干闸</td></tr>
+              <tr><td><a href="../modes/pipeline.md">pipeline.md</a> / <a href="../modes/pipeline-fill.md">pipeline-fill.md</a></td><td>骨架战役与填充战役</td></tr>
+              <tr><td><a href="../modes/examples.md">examples.md</a></td><td>情景示例</td></tr>
+              <tr><td><a href="../CHANGELOG.md">CHANGELOG.md</a></td><td>版本变更</td></tr>
             </tbody>
           </table>
         </div>
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.7.9
+          HTML 手册由 Markdown 使用手册整理生成 · harness-eng v0.7.14
         </div>
       </section>
     </main>

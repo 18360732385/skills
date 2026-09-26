@@ -1,6 +1,7 @@
 /**
  * Chat footer dashboard for harness-eng this-turn engineering steps (0.5.3+; gated 0.5.4+; tightened 0.6.9).
- * Mirrors report-latest.html four panels in markdown (plain-text stance; no mermaid).
+ * Mirrors report-latest.html five panels in markdown (plain-text stance; no mermaid).
+ * 0.4.0 / 0.7.14: consume buildReportUi (go_nogo/tasks) + host_surface line.
  * When to SHOW/HIDE: session-dashboard.md (agent decides per this turn; --intent on session-dash.mjs).
  */
 import fs from "fs";
@@ -8,14 +9,15 @@ import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { parse as parseYaml } from "./yaml.mjs";
 import { buildReportUi } from "./report-ui.mjs";
+import { buildHostSurface, formatHostSurfaceLine } from "./host-surface.mjs";
 import { readProgress } from "./progress-file.mjs";
 import { findHarnessMetaFile } from "./harness-meta.mjs";
 
 const SCORE_REL = "docs/harness-eng/score-latest.json";
 const REPORT_REL = "docs/harness-eng/report-latest.html";
 const FILL_PLAN_REL = "docs/harness-eng/fill-plan.yaml";
-const HANDBOOK_HTML = "使用手册.html";
-const HANDBOOK_MD = "使用手册.md";
+const HANDBOOK_HTML = "guide/使用手册.html";
+const HANDBOOK_MD = "guide/使用手册.md";
 const HANDBOOK_ANCHOR_HTML = "#s6";
 const HANDBOOK_ANCHOR_MD = "#60-对话内会话仪表盘工程轮末尾";
 
@@ -100,50 +102,87 @@ export function buildSessionDashboard(opts = {}) {
   const fillPlan = root ? readFillPlan(root) : null;
   const reportExists = root ? fs.existsSync(path.join(root, REPORT_REL)) : false;
 
+  let host_surface = null;
+  if (root) {
+    try {
+      host_surface = buildHostSurface(root, { meta: meta || {} });
+    } catch {
+      host_surface = null;
+    }
+  }
+
   let ui = null;
   if (score) {
     try {
-      ui = buildReportUi(score, { meta: meta || {}, root: root || null });
+      ui = buildReportUi(score, {
+        meta: meta || {},
+        root: root || null,
+        host_surface,
+      });
     } catch {
       ui = null;
     }
   }
 
-  const aiReady = score?.ai_coding_ready?.ok;
+  const go = ui?.go_nogo || null;
+  const aiReady =
+    go && typeof go.ok === "boolean"
+      ? go.ok
+      : score?.ai_coding_ready?.ok;
   const verdictLabel =
+    go?.label_zh ||
     ui?.verdict?.ready_label ||
     (aiReady === true ? "建议可以开干" : aiReady === false ? "建议暂缓" : "未打分");
+  const blockers = Array.isArray(go?.blockers)
+    ? go.blockers
+    : score?.ai_coding_ready?.blockers || [];
 
   const coveragePct =
-    typeof score?.coverage?.percent === "number"
-      ? score.coverage.percent / 100
-      : typeof score?.coverage?.ratio === "number"
-        ? score.coverage.ratio
-        : null;
+    typeof ui?.coverage_percent === "number"
+      ? ui.coverage_percent / 100
+      : typeof score?.coverage?.percent === "number"
+        ? score.coverage.percent / 100
+        : typeof score?.coverage?.ratio === "number"
+          ? score.coverage.ratio
+          : null;
 
   const morphOverall =
-    typeof score?.overall === "number"
-      ? score.overall / 100
-      : typeof score?.quality?.overall === "number"
-        ? score.quality.overall / 100
-        : null;
+    typeof ui?.quality_overall === "number"
+      ? ui.quality_overall / 100
+      : typeof score?.overall === "number"
+        ? score.overall / 100
+        : typeof score?.quality?.overall === "number"
+          ? score.quality.overall / 100
+          : null;
 
   const compositePct =
     typeof ui?.composite_score?.value === "number"
       ? ui.composite_score.value / 100
       : null;
 
-  const blockers = score?.ai_coding_ready?.blockers || [];
-  const ladder = meta?.ladder || score?.skeleton_ready?.ladder || "—";
-  const domains = meta?.domains || (score?.domains ? Object.keys(score.domains) : []);
-  const domainStr = Array.isArray(domains) ? domains.join(", ") || "—" : String(domains);
+  const ladder =
+    ui?.ladder_progress?.current ||
+    meta?.ladder ||
+    score?.skeleton_ready?.ladder ||
+    "—";
+  const domains =
+    meta?.domains || (score?.domains ? Object.keys(score.domains) : []);
+  const domainStr = Array.isArray(domains)
+    ? domains.join(", ") || "—"
+    : String(domains);
 
   let taskLine = opts.nextAction || "—";
   if (!opts.nextAction) {
-    if (opts.pending) taskLine = opts.pending;
-    else if (fillPlan && fillPlan.batches) {
+    if (opts.pending) {
+      taskLine = opts.pending;
+    } else if (ui?.tasks?.length) {
+      const t0 = ui.tasks[0];
+      taskLine = t0.title || t0.cmd || "—";
+    } else if (fillPlan && fillPlan.batches) {
       const batches = Object.values(fillPlan.batches);
-      const open = batches.filter((b) => b && b.status !== "closed" && b.status !== "done").length;
+      const open = batches.filter(
+        (b) => b && b.status !== "closed" && b.status !== "done"
+      ).length;
       taskLine = open > 0 ? `fill-plan 开放 ${open} 批` : "fill-plan 已关";
     } else if (score?.next_shards?.length) {
       taskLine = `next_shards ×${score.next_shards.length}`;
@@ -165,6 +204,8 @@ export function buildSessionDashboard(opts = {}) {
     }
   }
 
+  const hostLine = formatHostSurfaceLine(host_surface || ui?.host_surface);
+
   return {
     root: root ? shortPath(root) : "—",
     sessionMode: opts.sessionMode || "—",
@@ -175,14 +216,18 @@ export function buildSessionDashboard(opts = {}) {
       ai_coding_ready: aiReady,
       label: verdictLabel,
       blockers: blockers.slice(0, 4),
+      next_commands: Array.isArray(go?.next_commands)
+        ? go.next_commands.slice(0, 3)
+        : [],
     },
     diagnose: {
       ladder,
       domains: domainStr,
-      skeleton: score?.skeleton_ready?.ok,
-      semantic: score?.semantic_ready?.ok,
-      gold_ratio: score?.gold_ratio,
-      formula_ceiling: score?.formula_ceiling,
+      skeleton: ui?.skeleton_ready ?? score?.skeleton_ready?.ok,
+      semantic: ui?.semantic_ready ?? score?.semantic_ready?.ok,
+      gold_ratio: ui?.gold_ratio ?? score?.gold_ratio,
+      formula_ceiling: ui?.formula_ceiling ?? score?.formula_ceiling,
+      story: ui?.diagnose?.story || null,
     },
     task: {
       line: taskLine,
@@ -192,8 +237,10 @@ export function buildSessionDashboard(opts = {}) {
       coverage: coveragePct,
       morph: morphOverall,
       composite: compositePct,
-      overall: score?.overall ?? null,
+      overall: ui?.quality_overall ?? score?.overall ?? null,
     },
+    host_surface: host_surface || ui?.host_surface || null,
+    hostLine,
     reportPath: reportExists && root ? shortPath(path.join(root, REPORT_REL)) : null,
     reportExpectedRel: root ? REPORT_REL : null,
     reportExists,
@@ -204,21 +251,25 @@ export function buildSessionDashboard(opts = {}) {
         ? shortPath(path.join(SKILL_ROOT, HANDBOOK_MD))
         : HANDBOOK_HTML,
     handbookUrl: fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_HTML))
-      ? pathToFileURL(path.join(SKILL_ROOT, HANDBOOK_HTML)).href + HANDBOOK_ANCHOR_HTML
+      ? pathToFileURL(path.join(SKILL_ROOT, HANDBOOK_HTML)).href +
+        HANDBOOK_ANCHOR_HTML
       : fs.existsSync(path.join(SKILL_ROOT, HANDBOOK_MD))
-        ? pathToFileURL(path.join(SKILL_ROOT, HANDBOOK_MD)).href + HANDBOOK_ANCHOR_MD
+        ? pathToFileURL(path.join(SKILL_ROOT, HANDBOOK_MD)).href +
+          HANDBOOK_ANCHOR_MD
         : null,
   };
 }
 
 function renderDashboardLinkFooter(data) {
-  const handbookLabel = "四台读法（使用手册 · 第6章）";
+  const handbookLabel = "五台读法（使用手册 · 第6章）";
   const handbookPart = data.handbookUrl
     ? `[${handbookLabel}](${data.handbookUrl})`
     : `[${handbookLabel}](${HANDBOOK_HTML}${HANDBOOK_ANCHOR_HTML})`;
 
   if (data.reportPath && data.reportExists) {
-    const reportUrl = pathToFileURL(path.resolve(data.reportPath.replace(/\//g, path.sep))).href;
+    const reportUrl = pathToFileURL(
+      path.resolve(data.reportPath.replace(/\//g, path.sep))
+    ).href;
     return `**详情请查询仪表盘** → [report-latest.html](${reportUrl}) · ${handbookPart}（开干只看决策台 \`ai_coding_ready\`）`;
   }
 
@@ -234,7 +285,8 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
     !data.scorePath &&
     (data.decision?.label === "未打分" || data.decision?.ai_coding_ready == null) &&
     (data.diagnose?.ladder === "—" || data.diagnose?.ladder == null) &&
-    (data.trend?.overall == null && data.trend?.coverage == null);
+    data.trend?.overall == null &&
+    data.trend?.coverage == null;
   if (opts.compactEmpty !== false && emptyNoise) {
     const modeBit =
       data.metaLastMode && data.metaLastMode !== data.sessionMode
@@ -244,7 +296,7 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
       data.task?.line && data.task.line !== "—"
         ? `下一动作：${data.task.line}`
         : "下一动作：说「完整度打分」或先 audit/land";
-    return [
+    const compact = [
       "---",
       "## harness-eng 会话仪表盘（精简） · 未打分",
       "",
@@ -252,9 +304,14 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
       "",
       nextLine,
       "",
-      renderDashboardLinkFooter(data),
-      "---",
-    ].join("\n");
+    ];
+    if (data.hostLine) {
+      compact.push(data.hostLine);
+      compact.push("");
+    }
+    compact.push(renderDashboardLinkFooter(data));
+    compact.push("---");
+    return compact.join("\n");
   }
   const lines = [];
   lines.push("---");
@@ -289,8 +346,13 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
   if (typeof data.diagnose.gold_ratio === "number") {
     diagParts.push(`金标 ${Math.round(data.diagnose.gold_ratio * 100)}%`);
   }
-  if (typeof data.diagnose.formula_ceiling === "number" && typeof data.trend.overall === "number") {
-    if (data.trend.overall >= data.diagnose.formula_ceiling - 2) diagParts.push("形态贴顶");
+  if (
+    typeof data.diagnose.formula_ceiling === "number" &&
+    typeof data.trend.overall === "number"
+  ) {
+    if (data.trend.overall >= data.diagnose.formula_ceiling - 2) {
+      diagParts.push("形态贴顶");
+    }
   }
   lines.push(`| **诊断台** | ${diagParts.join(" · ")} · 域 ${data.diagnose.domains} |`);
 
@@ -315,7 +377,11 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
     lines.push("");
   }
 
-  lines.push("");
+  if (data.hostLine) {
+    lines.push(data.hostLine);
+    lines.push("");
+  }
+
   lines.push(renderDashboardLinkFooter(data));
   lines.push("---");
   return lines.join("\n");

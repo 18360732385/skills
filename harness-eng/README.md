@@ -1,13 +1,13 @@
-﻿# harness-eng
+# harness-eng
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.7.9**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
+**当前版本：0.7.14**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
-**0.7.9**：可选 L4 rulehook（勾选/探测才装；sync 合并 hooks）。**0.7.8**：`fill-calibrate-live` 可读 Codex toml（`env_vars`→本机 env）。**0.7.7**：Codex MCP `policy.json` 精细开关。**0.7.6**：L5 skills `redis-doc-sync` / `jobs-doc-sync` / `frontend-web`。**0.7.5**：`contract-sync` / `api-doc-sync` / `db-doc-sync`。**0.7.4**：Codex hooks `commandWindows` + Stop。**0.7.0**：形态重标定 · Codex → **高**。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
+**0.7.14**：使用手册大段改写（四支/三档）。**0.7.12**：人读手册迁入 `guide/`。**0.7.11**：入口双写去重。**0.7.10**：热路径编排压缩（四支/三档）。**0.7.9**：可选 L4 rulehook（勾选/探测才装；sync 合并 hooks）。**0.7.8**：`fill-calibrate-live` 可读 Codex toml（`env_vars`→本机 env）。**0.7.7**：Codex MCP `policy.json` 精细开关。**0.7.6**：L5 skills `redis-doc-sync` / `jobs-doc-sync` / `frontend-web`。**0.7.5**：`contract-sync` / `api-doc-sync` / `db-doc-sync`。**0.7.4**：Codex hooks `commandWindows` + Stop。**0.7.0**：形态重标定 · Codex → **高**。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
-**使用手册（人读）**：[使用手册.html](使用手册.html) · [使用手册.md](使用手册.md) · [使用手册-摘要.md](使用手册-摘要.md)  
+**使用手册（人读）**：[guide/使用手册.html](guide/使用手册.html) · [guide/使用手册.md](guide/使用手册.md) · [guide/使用手册-摘要.md](guide/使用手册-摘要.md)
 **拓扑**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主
 
 历史（0.6.0 文档拓扑 / Codex 曾冻结 P2 等）见 [CHANGELOG.md](CHANGELOG.md)；勿当现行矩阵。
@@ -16,7 +16,7 @@
 
 ### 源仓内置
 
-本仓路径：`harness-eng/`（拷到宿主用户 skills 目录后为 `<host-skills-dir>/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [使用手册.html](使用手册.html) / [使用手册.md](使用手册.md)。
+本仓路径：`harness-eng/`（拷到宿主用户 skills 目录后为 `<host-skills-dir>/harness-eng/`）。对话中显式点名 **harness-eng**（或落地 / 流水线 / 续跑 / 审计 / 补空壳真相）。人读说明见 [guide/使用手册.html](guide/使用手册.html) / [guide/使用手册.md](guide/使用手册.md)。
 
 **一句话安装（推荐）：** 对 Agent 说「帮我把这个 skill 装到你当前 Agent 宿主的用户 skills 目录，地址：https://github.com/18360732385/skills/tree/main/harness-eng」；或 `npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g`（需要时按宿主加 `--agent`）。装完新开会话后再点名。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。
 
@@ -79,4 +79,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.7.7**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。
+技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.7.14**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。

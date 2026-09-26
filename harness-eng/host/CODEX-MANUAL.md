@@ -1,4 +1,4 @@
-# Codex 真人会话清单（0.7.9 · 高）
+# Codex 真人会话清单（0.7.14 · 高）
 
 给本机已装 **Codex CLI / IDE / ChatGPT 桌面 Codex** 的同学。对照：[CODEX-PARITY.md](CODEX-PARITY.md)。
 

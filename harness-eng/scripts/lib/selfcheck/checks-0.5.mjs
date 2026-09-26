@@ -30,7 +30,7 @@ import { isGeneratedHostPath, resolveLandAgentConfig } from "../../harness.mjs";
 
 export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
-  const handbookMd = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+  const handbookMd = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
   const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
   const glossary = readDoc("glossary.md");
   const ladderMd = readDoc("ladder.md");
@@ -957,7 +957,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.7\.9"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.7\.14"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"
@@ -1197,7 +1197,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
     "render encodes full-mirror / 1x emit conditions"
   );
 
-  const handbook057 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+  const handbook057 = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
   const syncHosts057 = readDoc("sync-hosts.md");
   const codexAd057 = fs.readFileSync(path.join(skillRoot, "templates/ai-tools/adapters/codex.md"), "utf8");
   assert(/对齐矩阵|纪律 B|\*\*高\*\*/.test(handbook057) && /Codex|codex/.test(handbook057), "handbook FAQ/docs Codex 高 · 纪律 B");
@@ -1702,7 +1702,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   const qMd0510 = readDoc("questions.md");
   assert(/不.*默认|纪律 B|不进「全部推荐」/.test(qMd0510) && /codex/i.test(qMd0510), "questions.md Codex 纪律 B");
 
-  const handbook0510 = fs.readFileSync(path.join(skillRoot, "使用手册.md"), "utf8");
+  const handbook0510 = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
   assert(!/全部推荐」默认偏向 Cursor/.test(handbook0510), "handbook.md no Cursor-default 全部推荐");
   assert(/不.*默认|纪律 B|塞进默认包/.test(handbook0510) && /Codex|codex/.test(handbook0510), "handbook.md Codex 纪律 B");
 
@@ -1723,7 +1723,7 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   const reportUi0510 = fs.readFileSync(path.join(skillRoot, "scripts/lib/report-ui.mjs"), "utf8");
   assert(/report_schema/.test(reportUi0510), "report-ui.mjs names report_schema");
   const uiObj = buildReportUi({ overall: 0.5, domains: {} });
-  assert(uiObj.version === "0.3.0", "ui.version 0.3.0 for consumers");
+  assert(uiObj.version === "0.4.0", "ui.version 0.4.0 for consumers");
   assert(uiObj.report_schema === uiObj.version, "report_schema aliases ui.version");
 
   const reportTmpl0510 = fs.readFileSync(

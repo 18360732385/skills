@@ -40,7 +40,7 @@ export const DOC_MOVES = {
 /** @deprecated 0.7.1: root stubs removed; kept empty for importers. */
 export const ROOT_STUBS = [];
 
-/** Canonical root docs that stay (not moved). */
+/** Canonical root docs that stay (not moved). Handbooks live under guide/ (0.7.12+). */
 export const ROOT_KEEP = [
   "AGENT-INDEX.md",
   "CHANGELOG.md",
@@ -49,8 +49,6 @@ export const ROOT_KEEP = [
   "README.md",
   "SKILL.md",
   "VERIFY.md",
-  "使用手册.md",
-  "使用手册-摘要.md",
 ];
 
 export const ROOT_MD_MAX = 12;

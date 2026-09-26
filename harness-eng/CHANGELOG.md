@@ -1,8 +1,50 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → 0.7.1 → 0.7.2 → 0.7.3 → 0.7.4 → 0.7.5 → 0.7.6 → 0.7.7 → 0.7.8 → 0.7.9`（当前 **0.7.9**）。报告对照 **`skill_version` + `report_schema`**（**0.3.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.12 → 0.7.13 → 0.7.14`（当前 **0.7.14**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.14 — 2026-09-26（报告壳 0.4.0 · 五台 + 宿主面）
+
+### Report / UI
+- **`report_schema` → 0.4.0**：`go_nogo` · `tasks[]` · `diagnose.story` · `ladder_progress`（施工阶梯）+ `pipeline_progress`（开干闸路径）· `host_surface`
+- **HTML 五台**：决策 / 诊断 / 任务 / 趋势 / **宿主**；默认仍进决策台；顶栏 live 胶囊 → 宿主台
+- **宿主面**：磁盘灰灯（present/absent，≠生效）+ session-live 彩灯；**不**绑进 `ai_coding_ready`
+- **趋势硬切断**：`report_schema < 0.4` 或 `morph_scale` 不符 → 灰显、不连线
+- **会话仪表盘**：消费同一 `buildReportUi`；有数据时多一行宿主面；手册脚注「五台读法」
+
+### Docs / pack
+- upgrade `0.7.13 → 0.7.14`；manifest / meta / sync tmpl / questions → `0.7.14`
+- 手册 §6 五台读法 + 双轴进度；glossary `report_schema` **0.4.0**
+
+## 0.7.13 — 2026-09-26（使用手册大段改写）
+
+### Docs / pack
+- **人读对齐 Pass 1–2**：`guide/使用手册` 按对外四支 / 三档重写；砍 0.6.x 沉积脚注；html / 摘要同源同步
+- 语义冻结：模式 ID / L0–L5 / 闸门 / fill 行为不变
+- upgrade `0.7.12 → 0.7.13`；manifest / meta / sync tmpl / questions → `0.7.13`
+
+## 0.7.12 — 2026-09-26（guide/ 手册搬家）
+
+### Docs / pack
+- **Pass 2**：`使用手册.md` / `.html` / `使用手册-摘要.md` → `guide/`；根无 stub；`ROOT_KEEP` 不含手册
+- 删除技能树样例 `docs/harness-eng/README.md`（落地模板仍在 `templates/docs/harness-eng/`）
+- `modes/` · `fill/` · `host/` **不动名**；写盘 / fill 语义不变
+- upgrade `0.7.11 → 0.7.12`；manifest / meta / sync tmpl / questions → `0.7.12`
+
+## 0.7.11 — 2026-09-26（入口双写去重）
+
+### Docs / pack
+- **Pass 1.1**：QUICKSTART / glossary / pipeline* 长复述改 SSOT 指针；write-plan Windows 示例钉当前版本；SKILL 删「分支→Read」迷你表（路由仍 AGENT-INDEX）
+- 语义冻结：模式 ID / L0–L5 / 闸门 / fill 行为不变
+- upgrade `0.7.10 → 0.7.11`；manifest / meta / sync tmpl / questions → `0.7.11`
+
+## 0.7.10 — 2026-09-26（热路径编排压缩）
+
+### Docs / pack
+- **对外呈现**：模式四支（施工 · 流水线 · 审计/自证 · 填充）；阶梯三档（协作入口 · 契约与回流 · 门禁·工具·SSOT）；内部 ID / L0–L5 / 写盘语义不变
+- 压缩 `SKILL.md` · 按支重排 `AGENT-INDEX.md` · `QUICKSTART`「你要做什么」表 · `glossary` 对外对照指针
+- upgrade `0.7.9 → 0.7.10`；manifest / meta / sync tmpl / questions → `0.7.10`
 
 ## 0.7.9 — 2026-09-24（可选 L4 rulehook 适配器）
 

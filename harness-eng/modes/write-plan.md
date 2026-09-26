@@ -92,11 +92,11 @@ Q_SEED: 是
 **推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.6.8-dev'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.14'}}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 
-他处（SKILL / pipeline / fill-score / QUICKSTART）只指针到此，不复述长文。
+他处（SKILL / pipeline / fill-score / QUICKSTART）只指针到此，不复述长文或完整示例。
 
 ## 写入方式
 

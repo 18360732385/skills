@@ -244,7 +244,7 @@
     }
 
     /* ============================================================
-       PROGRESS CARD（流水线；仪表参考分在趋势台次区）
+       PROGRESS CARD（双轴：施工阶梯 + 开干闸路径；参考分在趋势台）
        ============================================================ */
     .progress-card {
       background: var(--panel);
@@ -253,9 +253,88 @@
       padding: 16px 18px;
       margin-bottom: 14px;
       box-shadow: var(--shadow);
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .progress-card .pipe-axis { display: block; }
+    .progress-card .pipe-axis.secondary .pipe-track { opacity: 0.85; }
+    .progress-card .axis-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-bottom: 4px;
     }
     @media (max-width: 720px) { .progress-card { grid-template-columns: 1fr; } }
+
+    .host-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      cursor: pointer;
+      background: transparent;
+      color: var(--text);
+    }
+    .host-capsule:hover { border-color: var(--accent); color: var(--accent); }
+    .host-capsule .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--muted);
+    }
+    .host-capsule.live .dot { background: var(--ok, #2ecc71); }
+    .host-capsule.unproven .dot { background: var(--warn); }
+    .host-capsule.absent .dot { background: var(--muted); }
+
+    .host-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .host-matrix th, .host-matrix td {
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      text-align: center;
+    }
+    .host-matrix th { background: var(--panel); font-weight: 700; }
+    .host-matrix td.host-id { text-align: left; font-family: var(--mono); }
+    .host-matrix .cell-disk { color: var(--muted); }
+    .host-matrix .cell-live.pass { color: var(--ok, #2ecc71); font-weight: 700; }
+    .host-matrix .cell-live.fail { color: var(--danger, #e74c3c); font-weight: 700; }
+    .host-matrix .cell-live.unproven { color: var(--warn); }
+    .host-matrix tr.current td { outline: 1px solid var(--accent); }
+    .host-legend {
+      margin: 10px 0 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .trend-banner {
+      margin: 0 0 10px;
+      padding: 8px 10px;
+      border: 1px dashed var(--warn);
+      border-radius: var(--radius);
+      font-size: 0.78rem;
+      color: var(--warn);
+      background: var(--warn-soft);
+    }
+    .diagnose-story {
+      margin: 0 0 12px;
+      padding: 0;
+      list-style: none;
+    }
+    .diagnose-story li {
+      margin: 0 0 6px;
+      padding: 6px 10px;
+      border-left: 3px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .diagnose-story li.warn { border-left-color: var(--warn); }
+    .diagnose-story li.ok { border-left-color: var(--ok, #2ecc71); }
 
     .composite .lab {
       color: var(--muted);
@@ -1218,6 +1297,10 @@
         <div class="sub" id="subtitle"></div>
       </div>
       <div class="topbar-actions">
+        <button type="button" class="host-capsule absent hidden" id="host-capsule" title="打开宿主台">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="host-capsule-text">宿主面</span>
+        </button>
         <button type="button" class="btn" id="btn-glossary">名词解释</button>
         <button type="button" class="btn" id="btn-tech">技术细节</button>
         <button type="button" class="btn theme" id="btn-theme" aria-label="切换明暗模式">浅色</button>
@@ -1225,9 +1308,19 @@
     </div>
 
     <section class="progress-card hidden" id="sec-progress">
-      <div class="pipe">
+      <div class="pipe pipe-axis primary" id="ladder-axis">
+        <div class="axis-label">施工阶梯</div>
         <div class="lab">
-          <span id="pipe-summary">流水线进度</span>
+          <span id="ladder-summary">施工阶梯</span>
+          <span id="ladder-pct"></span>
+        </div>
+        <div class="pipe-track"><div class="pipe-fill" id="ladder-fill" style="width:0%"></div></div>
+        <div class="pipe-steps" id="ladder-steps"></div>
+      </div>
+      <div class="pipe pipe-axis secondary" id="pipe-axis">
+        <div class="axis-label">开干闸路径</div>
+        <div class="lab">
+          <span id="pipe-summary">开干闸路径</span>
           <span id="pipe-pct"></span>
         </div>
         <div class="pipe-track"><div class="pipe-fill" id="pipe-fill" style="width:0%"></div></div>
@@ -1241,6 +1334,7 @@
         <button type="button" class="tab" data-tab="diagnose" role="tab">诊断台</button>
         <button type="button" class="tab" data-tab="tasks" role="tab">任务台</button>
         <button type="button" class="tab" data-tab="trend" role="tab">趋势台</button>
+        <button type="button" class="tab" data-tab="host" role="tab">宿主台</button>
         <div class="tab-nav" title="键盘 ← → 或 [ ] 切台 · Esc 关闭弹层">
           <button type="button" class="btn" id="tab-prev" aria-label="上一台">‹</button>
           <button type="button" class="btn" id="tab-next" aria-label="下一台">›</button>
@@ -1266,6 +1360,7 @@
       <section class="panel" id="panel-diagnose" data-panel="diagnose" role="tabpanel">
         <h2>诊断台</h2>
         <p class="lead" id="lagging-lead">哪域拖后腿、常见缺口、低分真相。</p>
+        <ul class="diagnose-story" id="diagnose-story"></ul>
         <div class="coverage-strip hidden" id="coverage-strip"></div>
         <div class="morph-strip hidden" id="morph-strip"></div>
         <div class="diag-grid">
@@ -1299,6 +1394,7 @@
       <section class="panel" id="panel-trend" data-panel="trend" role="tabpanel">
         <h2>趋势台</h2>
         <p class="lead" id="trend-lead">历次 overall / coverage；相对上次 diff；pipeline 轮次。</p>
+        <div class="trend-banner hidden" id="trend-banner"></div>
         <div class="composite composite-secondary" id="composite-block">
           <div class="lab" id="composite-lab">仪表参考分</div>
           <div class="val" id="composite-val">—</div>
@@ -1316,6 +1412,14 @@
           </div>
         </div>
         <div class="empty hidden" id="trend-empty">尚无评分历史与 diff。可用 fill-score --compare / 多次打分积累。</div>
+      </section>
+
+      <section class="panel" id="panel-host" data-panel="host" role="tabpanel">
+        <h2>宿主台</h2>
+        <p class="lead" id="host-lead">各 AI 工具 hooks / rules / MCP 磁盘齐套与会话自证（磁盘≠生效）。</p>
+        <div id="host-matrix-wrap"></div>
+        <p class="host-legend" id="host-legend"></p>
+        <div class="empty hidden" id="host-empty"></div>
       </section>
     </div>
 
@@ -1347,7 +1451,7 @@
   <script type="application/json" id="report-data">{{REPORT_JSON}}</script>
   <script>
 (function () {
-  var TAB_ORDER = ["decision", "diagnose", "tasks", "trend"];
+  var TAB_ORDER = ["decision", "diagnose", "tasks", "trend", "host"];
   var THEME_KEY = "harness-report-theme";
 
   function $(id) { return document.getElementById(id); }
@@ -1570,8 +1674,10 @@
       return "<p style=\"color:var(--muted);font-size:0.82rem\">// 尚无 score-history</p>";
     }
     var labels = trend.labels;
-    var o = trend.overall || [];
-    var c = trend.coverage || [];
+    var oLink = trend.overall_linkable || trend.overall || [];
+    var cLink = trend.coverage_linkable || trend.coverage || [];
+    var oRaw = trend.overall || [];
+    var incomp = trend.incomparable || [];
     var w = 440, h = 160, padL = 36, padR = 12, padT = 16, padB = 28;
     var n = labels.length;
     function xAt(i) {
@@ -1585,31 +1691,106 @@
     }
     function pathFor(arr, stroke) {
       var d = [];
+      var started = false;
       for (var i = 0; i < arr.length; i++) {
         var y = yAt(arr[i]);
-        if (y == null) continue;
-        d.push((d.length ? "L" : "M") + xAt(i) + " " + y);
+        if (y == null) {
+          started = false;
+          continue;
+        }
+        d.push((started ? "L" : "M") + xAt(i) + " " + y);
+        started = true;
       }
       if (!d.length) return "";
       return '<path d="' + d.join(" ") + '" fill="none" stroke="' + stroke + '" stroke-width="2"/>';
     }
-    var ticks = "";
+    var dots = "";
     for (var i = 0; i < labels.length; i++) {
+      var yRaw = yAt(oRaw[i]);
+      if (yRaw == null) continue;
+      var grey = !!incomp[i];
+      dots +=
+        '<circle cx="' + xAt(i) + '" cy="' + yRaw + '" r="' + (grey ? 4 : 3) +
+        '" fill="' + (grey ? "var(--muted)" : "var(--accent)") + '" opacity="' +
+        (grey ? "0.55" : "1") + '"/>';
+    }
+    var ticks = "";
+    for (var j = 0; j < labels.length; j++) {
       ticks +=
-        '<text x="' + xAt(i) + '" y="' + (h - 8) + '" text-anchor="middle" fill="var(--muted)" font-size="9">' +
-        esc(String(labels[i]).slice(0, 8)) + "</text>";
+        '<text x="' + xAt(j) + '" y="' + (h - 8) + '" text-anchor="middle" fill="var(--muted)" font-size="9">' +
+        esc(String(labels[j]).slice(0, 8)) + "</text>";
     }
     return (
       '<svg class="chart-svg" viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="评分趋势">' +
       '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (h - padB) + '" stroke="var(--border)"/>' +
       '<line x1="' + padL + '" y1="' + (h - padB) + '" x2="' + (w - padR) + '" y2="' + (h - padB) + '" stroke="var(--border)"/>' +
-      pathFor(o, "var(--accent)") +
-      pathFor(c, "var(--warn)") +
+      pathFor(oLink, "var(--accent)") +
+      pathFor(cLink, "var(--warn)") +
+      dots +
       ticks +
       '<text x="' + (w - padR) + '" y="12" text-anchor="end" fill="var(--accent)" font-size="10">overall</text>' +
       '<text x="' + (w - padR) + '" y="24" text-anchor="end" fill="var(--warn)" font-size="10">coverage</text>' +
       "</svg>"
     );
+  }
+
+  function hostCell(disk, live) {
+    var d = disk === "present" ? "磁盘●" : "磁盘○";
+    var liveLab = "—";
+    var liveCls = "";
+    if (live === "pass") { liveLab = "live✓"; liveCls = "pass"; }
+    else if (live === "fail") { liveLab = "live✗"; liveCls = "fail"; }
+    else if (live === "unproven") { liveLab = "未证"; liveCls = "unproven"; }
+    else if (live && String(live).indexOf("skipped") === 0) { liveLab = "跳过"; liveCls = "unproven"; }
+    return (
+      '<span class="cell-disk">' + d + '</span><br>' +
+      '<span class="cell-live ' + liveCls + '">' + liveLab + "</span>"
+    );
+  }
+
+  function renderHostPanel(hs) {
+    var wrap = $("host-matrix-wrap");
+    var empty = $("host-empty");
+    var legend = $("host-legend");
+    if (!hs || !hs.hosts || !hs.hosts.length) {
+      if (wrap) wrap.innerHTML = "";
+      if (empty) {
+        empty.textContent = (hs && hs.empty_hint) || "尚未 session-live；磁盘有文件也不等于生效。";
+        show(empty);
+      }
+      if (legend) legend.textContent = "";
+      return;
+    }
+    hide(empty);
+    var surfaces = hs.surfaces || ["rules", "hooks", "mcp", "githooks"];
+    var head =
+      "<tr><th>宿主</th>" +
+      surfaces.map(function (s) { return "<th>" + esc(s) + "</th>"; }).join("") +
+      "<th>状态</th></tr>";
+    var rows = hs.hosts.map(function (h) {
+      var cls = h.current ? " current" : "";
+      var cells = surfaces.map(function (s) {
+        var disk = (h.disk && h.disk[s]) || "absent";
+        var live = h.live ? h.live[s] : null;
+        return "<td>" + hostCell(disk, live) + "</td>";
+      }).join("");
+      return (
+        '<tr class="' + cls.trim() + '"><td class="host-id">' +
+        esc(h.id) + (h.current ? " · 当前" : "") +
+        "</td>" + cells + "<td>" + esc(h.status || "—") + "</td></tr>"
+      );
+    }).join("");
+    wrap.innerHTML = '<table class="host-matrix"><thead>' + head + "</thead><tbody>" + rows + "</tbody></table>";
+    if (legend) {
+      legend.textContent =
+        (hs.legend && hs.legend.disk ? hs.legend.disk + " · " : "") +
+        (hs.legend && hs.legend.live ? hs.legend.live : "") +
+        (hs.hint_command ? " · 提示：" + hs.hint_command : "");
+    }
+    if (hs.empty_hint && hs.status === "absent") {
+      empty.textContent = hs.empty_hint;
+      show(empty);
+    }
   }
 
   initTheme();
@@ -1668,7 +1849,7 @@
     var repo = meta.repo_name || score.root || "目标仓";
     var repoShort = String(repo).replace(/\\\\/g, "/").split("/").pop();
     var mode = data.mode || meta.last_mode || "";
-    var ladder = meta.ladder || (ui.pipeline_progress && ui.pipeline_progress.ladder) || "";
+    var ladderMeta = meta.ladder || (ui.ladder_progress && ui.ladder_progress.current) || (ui.pipeline_progress && ui.pipeline_progress.ladder) || "";
     var skillVer = meta.skill_version || data.skill_version || "";
     var termIndex = buildTermIndex(ui.glossary || []);
 
@@ -1676,7 +1857,7 @@
     $("title").textContent = repoShort + " · 施工指挥台";
     var bits = [];
     if (mode) bits.push("模式 " + mode);
-    if (ladder) bits.push("阶梯 " + ladder);
+    if (ladderMeta) bits.push("阶梯 " + ladderMeta);
     if (skillVer) bits.push("skill_version " + skillVer);
     var reportSchema = ui.report_schema || ui.version || "";
     if (reportSchema) bits.push("report_schema " + reportSchema + "（报告壳 ≠ skill）");
@@ -1686,11 +1867,26 @@
 
     var composite = ui.composite_score || {};
     var pipe = ui.pipeline_progress || {};
+    var ladderProg = ui.ladder_progress || {};
     $("composite-lab").textContent = composite.label_zh || "仪表参考分";
     $("composite-val").textContent =
       typeof composite.value === "number" ? composite.value : "—";
     $("composite-tip").textContent = composite.tip || "≠开干 · 仅参考";
-    $("pipe-summary").textContent = pipe.summary || "流水线进度";
+
+    $("ladder-summary").textContent = ladderProg.summary || "施工阶梯";
+    $("ladder-pct").textContent =
+      typeof ladderProg.percent === "number" ? ladderProg.percent + "%" : "";
+    $("ladder-fill").style.width =
+      (typeof ladderProg.percent === "number" ? Math.max(0, Math.min(100, ladderProg.percent)) : 0) + "%";
+    var ladderSteps = ladderProg.steps || [];
+    $("ladder-steps").innerHTML = ladderSteps.map(function (s) {
+      var cls = "pipe-step";
+      if (s.done) cls += " done";
+      if (s.current) cls += " current";
+      return '<span class="' + cls + '">' + esc(s.label_zh || s.id) + "</span>";
+    }).join("");
+
+    $("pipe-summary").textContent = pipe.summary || pipe.label_zh || "开干闸路径";
     $("pipe-pct").textContent =
       typeof pipe.percent === "number" ? pipe.percent + "%" : "";
     $("pipe-fill").style.width =
@@ -1704,14 +1900,24 @@
     }).join("");
     show($("sec-progress"));
 
+    var hs = ui.host_surface || null;
+    var cap = $("host-capsule");
+    if (cap && hs) {
+      cap.className = "host-capsule " + (hs.status || "absent");
+      $("host-capsule-text").textContent = "宿主 · " + (hs.summary_zh || hs.status || "—");
+      show(cap);
+      cap.onclick = function () { setTab("host"); };
+    }
+
+    var go = ui.go_nogo || {};
     var verdict = ui.verdict || {};
-    var readyOk = !!verdict.ai_coding_ready || !!verdict.ready_ok;
+    var readyOk = go.ok != null ? !!go.ok : (!!verdict.ai_coding_ready || !!verdict.ready_ok);
     var badge = $("verdict-badge");
-    badge.textContent = verdict.ready_label || (readyOk ? "建议可以开干" : "建议暂缓");
+    badge.textContent = go.label_zh || verdict.ready_label || (readyOk ? "建议可以开干" : "建议暂缓");
     badge.className = "verdict-badge " + (readyOk ? "ok" : "no");
 
     $("headline").innerHTML = linkTerms(ui.headline || score.suggest_next || "（无摘要）", termIndex);
-    $("verdict-hint").innerHTML = linkTerms(verdict.ready_hint || "", termIndex);
+    $("verdict-hint").innerHTML = linkTerms(verdict.ready_hint || go.rule || "", termIndex);
     var gap = ui.gap_to_ready || {};
     $("gap-line").innerHTML =
       "<strong>距门槛：</strong>" + linkTerms(gap.summary || "—", termIndex) +
@@ -1747,6 +1953,13 @@
           (a.command ? cmdHtml(a.command) : "") +
           "</li>"
         );
+      }).join("");
+    }
+
+    var diagStory = (ui.diagnose && ui.diagnose.story) || [];
+    if (diagStory.length) {
+      $("diagnose-story").innerHTML = diagStory.map(function (s) {
+        return '<li class="' + esc(s.tone || "") + '">' + linkTerms(s.text || "", termIndex) + "</li>";
       }).join("");
     }
 
@@ -1833,7 +2046,16 @@
       show($("gaps-block"));
     }
 
-    var shards = ui.shards || [];
+    var shards = ui.tasks && ui.tasks.length ? ui.tasks.map(function (t) {
+      return {
+        id: t.id,
+        title: t.title,
+        package: t.kind || "",
+        hint: t.why || "",
+        command: t.cmd,
+        kind: t.kind === "residual" ? "residual" : (t.kind === "action" ? "fill" : t.kind),
+      };
+    }) : (ui.shards || []);
     if (shards.length) {
       $("tasks").innerHTML = shards.map(function (s) {
         var isResidual = s.kind === "residual";
@@ -1859,6 +2081,16 @@
     var hasTrend = trend && trend.labels && trend.labels.length;
     var hasDiff = ui.diff && ui.diff.summary;
     var timeline = ui.run_timeline || [];
+    var banner = $("trend-banner");
+    if (banner) {
+      var inc = (trend && trend.incomparable) ? trend.incomparable.filter(Boolean).length : 0;
+      if (inc > 0) {
+        banner.textContent = "有 " + inc + " 个历史点尺度不可比（report_schema / morph_scale），已灰显且不连线。";
+        show(banner);
+      } else {
+        hide(banner);
+      }
+    }
     if (hasTrend || hasDiff || timeline.length) {
       $("trend-lead").textContent =
         (trend && trend.summary) || "历次评分与本轮 run 对照。";
@@ -1880,6 +2112,8 @@
       hide($("trend-grid"));
       show($("trend-empty"));
     }
+
+    renderHostPanel(ui.host_surface);
 
     var gloss = ui.glossary || [];
     $("glossary").innerHTML = gloss.map(function (g) {
