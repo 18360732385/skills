@@ -75,8 +75,8 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 | `.cursor/mcp.json` 含明文密且被跟踪 | 按 meta.`mcp_tracking`：`example_only`→反模式；`vendored_shared`→注明约定例外 |
 | `S_SECRETS_LEAK`（README/yml） | |
 | 根 AGENTS 与分册严重漂移且无冲突裁决 | |
-| **分册 AGENTS 空壳**（`agents_variant=modules` 时分册仍大面积 `TODO(harness-eng)` 且无「改动路径速查」实表） | L0 **内容**缺口（不拦阶梯）；移交精填分册 |
-| **Never do 无 Pn 回链**（红线行存在却无 `→ P\d+`） | L2 内容缺口；Never do 须 `一句话 → Pn` |
+| **分册 AGENTS 空壳**（`agents_variant=modules` 时分册仍大面积 `TODO(harness-eng)` 且无「改动路径速查」实表） | L0 **内容**缺口（不拦阶梯）；移交精填分册；**可跑** `node scripts/content-shell-scan.mjs --root <TARGET>` |
+| **Never do 无 Pn 回链**（红线行存在却无 `→ P\d+`） | L2 内容缺口；Never do 须 `一句话 → Pn`；**可跑** content-shell-scan |
 | **路径速查空壳**（仍仅示例 / 大面积「待补」，且活跃 Pn ≥3） | L2 运营缺口；从 Never do / 改动路径补速查 |
 | **meta.ai_tools 与入口/镜像 rules 不一致**（入口缺失必记；`1x-contract-sync` 仅对 Codex / L0–L2 未镜像宿主必查。L3+/L5 全量镜像宿主看本宿主 `*-sync*`，缺 1x 不记此反模式） | |
 | `pitfalls.md` 稳定 ID 重号（`Pn` 重复、语义不同） | |
@@ -103,17 +103,18 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 3. `.gitignore` 是否忽略 `.cursor/mcp.json`（建议有）
 4. 非 cursor 工具：契约 sync 镜像文件存在（见 [ai-tools.md](../host/ai-tools.md)）
 
-## 会话自证（可选 · 推荐 L3+）
+## 会话自证【推荐】L3+
 
-磁盘齐套 ≠ 本会话生效。可跑 [session-live](session-live.md)：
+磁盘齐套 ≠ 本会话生效。跑 [session-live 1.2](session-live.md)（含人工闸）；多宿主 playbook；内容扫描：
 
 ```text
-## 会话自证
-未跑 → 建议：在当前宿主会话执行 session-live
-已跑 → host=… behavior_pass_claim=… mcp_gate_path_a=…（见 docs/harness-eng/session-live-latest.yaml）
+## 会话自证【推荐】1.2
+未跑 → session-live（3b human_gates）+ --emit-playbook
+已跑 → host=… behavior_pass_claim=… human_gates_ok=… githooks_ok=…
+矩阵 → --merge-matrix；内容 → content-shell-scan.mjs --root <TARGET>
 ```
 
-`unproven` / 面板项仍指向各宿主 P0 手册；hooks 失败不挡填充，但不得写「行为 PASS」。
+`unproven` + reason_code 指向 P0 手册；hooks/`human_gates` 失败不挡填充，但不得写「面板 PASS」。
 
 ## Trae 路径可见性（与 Cursor 同级）
 

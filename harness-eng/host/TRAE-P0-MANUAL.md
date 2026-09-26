@@ -8,6 +8,8 @@
 
 **通道纪律（强制）**：Trae hooks 探测 **只认 `.trae/hooks.json`**。**永远不要**把 `.cursor/hooks.json` 的 `beforeShellExecution` 当作 Trae 证据（Round B 打到 Cursor 通道 = 无效）。
 
+**可机证优先**：MCP 列表/只读调用、hooks dry-run、rules 作用域双探、githooks → 在 Trae 会话跑 [session-live 1.2](../modes/session-live.md)（先核 `human_gates`：`mcp_settings_on` / `hooks_settings_on`）。多宿主 → `--emit-playbook` / `--merge-matrix`。**Settings → MCP / Hooks 面板开关仍须人开**（本手册第 2–3 节）；未开记 `unproven` + reason_code，勿写成缺文件。
+
 ## 0. 消费仓刷新（升级后必做 · freshness gate）
 
 技能 tmpl（`templates/agent-config/sync.mjs.tmpl` 的 `toHostMd(rule, host)`）已对 trae **保留** FM，但 L5 **已落地的** `scripts/agent-config/sync.mjs` **不会**随 skill 升级自动更新——除非 land/upgrade **重渲** `agent-config-sync`。旧脚本会继续无条件剥 FM，把 `alwaysApply` / `globs` 降成正文 `> 适用路径` / `> 始终应用`。
@@ -104,8 +106,8 @@ T-P1-2 后生成物门禁 matcher 是 **`Bash|RunCommand`**（官方终端 `tool
 
 ```text
 T-P0-1 rules：消费仓 sync.mjs 已刷新=是|否 / 磁盘 FM=有|无 / alwaysApply=… / globs 注入=… / 嵌套=…
-T-P0-2 MCP：路径= .trae/mcp.json / IDE 已消费=是|否 / 挂上=… / 缺服=… / 面板报错=… / 关开关=…
-T-P0-3 hooks：通道=.trae/hooks.json（勿报 .cursor） / Settings→Hooks 项目已启用=是|否 / 是否新会话=是|否 / matcher=RunCommand / systemMessage|additionalContext=有|无 / Stop=… / .githooks兜底=…
+T-P0-2 MCP：路径= .trae/mcp.json / human_gates.mcp_settings_on=… / session-live reason_code=… / 挂上=… / 缺服=… / 面板报错=…
+T-P0-3 hooks：通道=.trae/hooks.json / human_gates.hooks_settings_on=… / matcher=RunCommand / injection=… / .githooks兜底=…
 T-P0-4 skills：可见=… / 按需=… / disable-model-invocation=…
 Trae 版本 / 日期：
 ```

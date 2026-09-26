@@ -93,7 +93,7 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 | 写盘确认 / 预授权 / Windows JSON | [write-plan.md](modes/write-plan.md) |
 | 打分 / score-policy / 覆盖裁决 | [fill-score.md](fill/fill-score.md) |
 | AI 工具面 / 多宿主 / 加契约域 | [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md) |
-| 会话自证（MCP/hooks/rules 本会话） | [session-live.md](modes/session-live.md) · `scripts/session-live.mjs --help` |
+| 会话自证（MCP/hooks/rules · 1.2 人工闸 + playbook） | [session-live.md](modes/session-live.md) · `scripts/session-live.mjs --help` · `content-shell-scan.mjs` |
 
 旁路脚本：`scripts/fill-calibrate-live.mjs`（live 校准）· `scripts/fill-report-html.mjs`（HTML 报告，score 后【推荐】），`--help` 自查。  
 写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。  

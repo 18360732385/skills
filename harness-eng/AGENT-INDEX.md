@@ -28,7 +28,8 @@
 | 打分 / 形态 / 开干闸 | [fill/fill-score.md](fill/fill-score.md) · [fill/fill-morph.md](fill/fill-morph.md) · [fill/fill-gate.md](fill/fill-gate.md) |
 | 契约填充 / workers | [fill/fill.md](fill/fill.md) · [fill/fill-truths-agents.md](fill/fill-truths-agents.md) · [fill/fill-workers.md](fill/fill-workers.md) |
 | MCP / live 校准 | [fill/fill-mcp.md](fill/fill-mcp.md) · `scripts/fill-calibrate-live.mjs --help` |
-| 会话自证（当前宿主 MCP/hooks/rules） | [modes/session-live.md](modes/session-live.md) · [host/session-live-checks.yaml](host/session-live-checks.yaml) · `scripts/session-live.mjs --help` |
+| 会话自证（当前宿主 · **1.2** 人工闸 + playbook） | [modes/session-live.md](modes/session-live.md) · `scripts/session-live.mjs --help`（`--emit-playbook` / `--merge-matrix`） |
+| audit 内容扫描（分册空壳 / Never do↔Pn） | `scripts/content-shell-scan.mjs --root <TARGET>` |
 | AI 工具面 / 多宿主 | [host/ai-tools.md](host/ai-tools.md) · [host/sync-hosts.md](host/sync-hosts.md) |
 | CodeBuddy / WorkBuddy（**0.6.4**） | [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md) |
 | Codex **高**（**0.6.9**） | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md) |

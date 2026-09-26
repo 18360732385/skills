@@ -22,7 +22,7 @@
 | **落地** | `land` | 从零或按目标阶梯安装骨架（大仓默认 L4） |
 | **流水线** | `pipeline` | 一次确认串联 audit→L4 land→**MCP 矩阵/闸**→inventory→**fill-plan**→**agents**→score（大仓首次【推荐】） |
 | **审计** | `audit` | 只读对照缺口，默认不写盘 |
-| **会话自证** | `session-live` | 当前宿主 Agent 核验本会话 MCP/hooks/rules 可观测性；落盘 `session-live-latest.yaml`；与人验并行；见 [session-live.md](modes/session-live.md) |
+| **会话自证** | `session-live` | 当前宿主核验 MCP/hooks/rules/githooks + **human_gates**（检查表 **1.2**）；多宿主 `--emit-playbook` / `--merge-matrix`；见 [session-live.md](modes/session-live.md) |
 | **升阶** | `upgrade` | 当前完整阶再 +1（书面可到指定阶）；规格 [upgrade.md](modes/upgrade.md) |
 | **补空壳真相** | `seed-truths` | 索引表加导航行 + `01-*.md` 空壳（**无**字段级契约） |
 | **填充计划** | `fill-plan` | 目标/批次/Done；进度 SSOT（`docs/harness-eng/fill-plan.yaml`） |
@@ -100,7 +100,7 @@
 | **MCP 主环境** | `fill_mcp_profile`（默认 **test**）：烟测/calibrate/agents 实据优先 `{engine}-{profile}` |
 | **MCP 先行** | 先 fill-mcp（或多环境矩阵）再填真相；过闸规格见 [fill-mcp.md](fill/fill-mcp.md) |
 | **live 校准** | MCP 未挂载时用 `fill-calibrate-live` 直连；可按引擎满足填充 MCP 闸 |
-| **会话自证** | 当前宿主在本会话自证 MCP（强）/ hooks（强）/ rules（弱）；状态 `pass\|fail\|unproven\|skipped_*`；`behavior_pass_claim` 不得靠 rules 单独成立；MCP 强证复用填充闸路径 A（`live-probes.mjs`） |
+| **会话自证** | 当前宿主自证 MCP（强）/ hooks（强）/ rules（弱·中）/ githooks（中）/ **human_gates**（gate→unproven+reason_code）/ Codex skills·Starlark；`behavior_pass_claim` 仅 MCP+hooks；playbook+matrix 多宿主；`content-shell-scan` 管分册空壳 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
 | **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
 | **会话仪表盘** | **本轮**实质产出 / 闸门决策 / 显式读数时回复末尾的四台 markdown 摘要 + 可选纯文本态势（无 mermaid；提问批次 / 定根前 / 等确认空轮 / meta / 跑题省略；按里程碑非按会话历史）；规格 [session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |

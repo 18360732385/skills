@@ -4,6 +4,8 @@
 
 仓库至少有：根 `AGENTS.md`；若 `ai_tools` 含 codex：`.codex/hooks.json`、`.codex/rules/`、`.codex/config.toml.example`、`.codex/hooks/codex-hook.cmd`。
 
+**可机证优先**：`/mcp`、skills、hooks dry-run、githooks、Starlark **观测** → [session-live 1.2](../modes/session-live.md)（`human_gates`：`workspace_trusted` / `hooks_trusted`）。多宿主 → `--emit-playbook` / `--merge-matrix`。**workspace trust 与 `/hooks` trust 仍须人开**（本手册第 0 / 3 节）。
+
 ## 0. 信任项目
 
 - [ ] 仓库根启动 Codex；workspace **trust**
@@ -67,4 +69,4 @@
 
 ## 回传模板
 
-trust=是|否 / AGENTS=是|否 / rules=是|否 / hooks=已信任 / Stop_stderr=是|否 / MCP=/mcp可见 / skills=是|否 / rulehook=未装|已装已验 / 非.mdc已知悉=是|否
+trust=human_gates.workspace_trusted / hooks_trusted=… / session-live reason_code=… / AGENTS=是|否 / rules=是|否 / MCP=/mcp可见 / skills=是|否 / rulehook=未装|已装已验 / 非.mdc已知悉=是|否

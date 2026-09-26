@@ -4,6 +4,8 @@
 
 仓库至少有：`.codebuddy/rules/*.md`（含 frontmatter）、`.codebuddy/settings.json`（hooks）、根 `.mcp.json`（或 `.example` 拷成真文件）。
 
+**可机证优先**：MCP / hooks dry-run / rules 作用域 / githooks → [session-live 1.2](../modes/session-live.md)（`human_gates`：`hooks_panel_applied` / `mcp_first_approval`）。多宿主 → `--emit-playbook`。**`/hooks` 面板应用与 MCP 首次审批仍须人开**（本手册第 2–3 节；save ≠ live）。
+
 ## 0. 消费仓刷新（升级后必做 · freshness gate）
 
 **0.6.4** 起 rules 为扁平 `.md` 且保留 FM；旧消费仓若仍是 `<name>/RULE.mdc`，必须刷新实例化 `scripts/agent-config/sync.mjs` 再跑 sync。
@@ -53,4 +55,4 @@ node scripts/harness.mjs --check-freshness --root <TARGET>
 
 ## 回传模板
 
-Rules=扁平.md+FM=有|无 / Hooks面板已应用=是|否 / matcher=Bash / MCP首次审批=是|否 / freshness=OK|落后
+Rules=扁平.md+FM=有|无 / human_gates.hooks_panel_applied=… / mcp_first_approval=… / session-live reason_code=… / freshness=OK|落后

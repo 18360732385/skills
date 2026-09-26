@@ -1,7 +1,8 @@
 # session-live 会话可观测契约（SSOT）
 # 磁盘齐套仍走 modes/ladder.md；本表只列「当前宿主 Agent 能自证」的子集。
 # 规格：modes/session-live.md · 探针库：scripts/lib/live-probes.mjs
-version: "1"
+# 注意：本文件须可被 scripts/lib/yaml.mjs 解析（无 YAML anchor）。
+version: "1.2"
 
 status_enum:
   - pass
@@ -10,7 +11,9 @@ status_enum:
   - skipped_wrong_host
   - skipped_no_live_surface
 
-# 自定义入口-only：无 hooks/MCP 原生面
+# human_gates reason_code（ok=false / 缺省 → unproven，不用 fail）
+# panel_mcp_off | hooks_panel_off | hooks_not_applied | mcp_approval_pending | workspace_untrusted | hooks_untrusted
+
 custom_entry:
   default_status: skipped_no_live_surface
 
@@ -19,6 +22,13 @@ hosts:
     family: cursor
     detect_hints:
       - ".cursor/"
+    human_gates:
+      note: "Cursor 多数无独立 Settings MCP 开关；首次 MCP 审批仍可能出现"
+      probes:
+        - id: mcp_first_approval
+          strength: gate
+          reason_code: mcp_approval_pending
+          how: "若 IDE 要求首次批准 MCP server，用户已批准；无需面板则可标 ok=true 跳过"
     mcp:
       secret_paths:
         - ".cursor/mcp.json"
@@ -40,7 +50,15 @@ hosts:
         - id: hooks_trigger
           strength: strong
           safe_command: "git commit --dry-run"
-          expect: "注入/软提醒可见（非静默无输出且未配置空 hook）"
+          expect: "注入/软提醒可见；L3 软提醒不拦截由此覆盖"
+    githooks:
+      probes:
+        - id: githooks_path
+          strength: medium
+          how: "git config core.hooksPath 指向 .githooks（或含 .githooks）"
+        - id: githooks_precommit
+          strength: medium
+          how: "磁盘存在 .githooks/pre-commit"
     rules:
       disk_paths:
         - ".cursor/rules"
@@ -51,12 +69,21 @@ hosts:
         - id: rules_self_report
           strength: weak
           how: "Agent 复述根 AGENTS 一条 Never do（弱证据，易幻觉）"
+        - id: rules_scope_probe
+          strength: medium
+          how: "读带 globs 规则的匹配路径应注入；明显不匹配路径应弱/不注入（观测 matched_injected / unmatched_weak）"
 
   claude:
     family: claude
     detect_hints:
       - "CLAUDE.md"
       - ".claude/"
+    human_gates:
+      probes:
+        - id: mcp_first_approval
+          strength: gate
+          reason_code: mcp_approval_pending
+          how: "若 CLI/IDE 要求首次批准 MCP，用户已批准；否则 ok=true"
     mcp:
       secret_paths:
         - ".mcp.json"
@@ -78,7 +105,15 @@ hosts:
         - id: hooks_trigger
           strength: strong
           safe_command: "git commit --dry-run"
-          expect: "systemMessage / additionalContext 或等价软提醒"
+          expect: "systemMessage / additionalContext；L3 软提醒不拦截由此覆盖"
+    githooks:
+      probes:
+        - id: githooks_path
+          strength: medium
+          how: "git config core.hooksPath 指向 .githooks（或含 .githooks）"
+        - id: githooks_precommit
+          strength: medium
+          how: "磁盘存在 .githooks/pre-commit"
     rules:
       disk_paths:
         - ".claude/rules"
@@ -89,11 +124,20 @@ hosts:
         - id: rules_self_report
           strength: weak
           how: "复述 Never do 一条"
+        - id: rules_scope_probe
+          strength: medium
+          how: "读带 globs 规则的匹配路径应注入；明显不匹配路径应弱/不注入"
 
   qoder:
     family: claude
     detect_hints:
       - ".qoder/"
+    human_gates:
+      probes:
+        - id: mcp_first_approval
+          strength: gate
+          reason_code: mcp_approval_pending
+          how: "若要求首次批准 MCP，用户已批准；否则 ok=true"
     mcp:
       secret_paths:
         - ".mcp.json"
@@ -116,7 +160,15 @@ hosts:
         - id: hooks_trigger
           strength: strong
           safe_command: "git commit --dry-run"
-          expect: "软提醒注入可见"
+          expect: "软提醒注入可见；L3 软提醒不拦截由此覆盖"
+    githooks:
+      probes:
+        - id: githooks_path
+          strength: medium
+          how: "git config core.hooksPath 指向 .githooks（或含 .githooks）"
+        - id: githooks_precommit
+          strength: medium
+          how: "磁盘存在 .githooks/pre-commit"
     rules:
       disk_paths:
         - ".qoder/rules"
@@ -127,11 +179,25 @@ hosts:
         - id: rules_self_report
           strength: weak
           how: "复述 Never do 一条"
+        - id: rules_scope_probe
+          strength: medium
+          how: "读带 globs 规则的匹配路径应注入；明显不匹配路径应弱/不注入"
 
   trae:
     family: claude
     detect_hints:
       - ".trae/"
+    human_gates:
+      manual: "host/TRAE-P0-MANUAL.md"
+      probes:
+        - id: mcp_settings_on
+          strength: gate
+          reason_code: panel_mcp_off
+          how: "Settings → MCP 已启用本项目（人开开关；开后跑 MCP 强证）"
+        - id: hooks_settings_on
+          strength: gate
+          reason_code: hooks_panel_off
+          how: "Settings → Hooks 已启用项目 hooks（人开；开后跑 hooks_trigger）"
     mcp:
       secret_paths:
         - ".trae/mcp.json"
@@ -155,7 +221,15 @@ hosts:
         - id: hooks_trigger
           strength: strong
           safe_command: "git commit --dry-run"
-          expect: "additionalContext / systemMessage"
+          expect: "additionalContext / systemMessage；L3 软提醒不拦截由此覆盖"
+    githooks:
+      probes:
+        - id: githooks_path
+          strength: medium
+          how: "git config core.hooksPath 指向 .githooks（或含 .githooks）"
+        - id: githooks_precommit
+          strength: medium
+          how: "磁盘存在 .githooks/pre-commit"
     rules:
       disk_paths:
         - ".trae/rules"
@@ -166,12 +240,26 @@ hosts:
         - id: rules_self_report
           strength: weak
           how: "复述 Never do 一条"
+        - id: rules_scope_probe
+          strength: medium
+          how: "读带 globs 规则的匹配路径应注入；明显不匹配路径应弱/不注入"
 
   workbuddy:
     family: claude
     detect_hints:
       - ".codebuddy/"
       - "CODEBUDDY.md"
+    human_gates:
+      manual: "host/CODEBUDDY-P0-MANUAL.md"
+      probes:
+        - id: hooks_panel_applied
+          strength: gate
+          reason_code: hooks_not_applied
+          how: "/hooks 面板已确认/应用（save ≠ live）"
+        - id: mcp_first_approval
+          strength: gate
+          reason_code: mcp_approval_pending
+          how: "MCP 首次连接已在面板审批"
     mcp:
       secret_paths:
         - ".mcp.json"
@@ -194,7 +282,15 @@ hosts:
         - id: hooks_trigger
           strength: strong
           safe_command: "git commit --dry-run"
-          expect: "软提醒可见；未在面板应用 → unproven 或 fail"
+          expect: "软提醒可见；未在面板应用 → unproven；L3 软提醒不拦截由此覆盖"
+    githooks:
+      probes:
+        - id: githooks_path
+          strength: medium
+          how: "git config core.hooksPath 指向 .githooks（或含 .githooks）"
+        - id: githooks_precommit
+          strength: medium
+          how: "磁盘存在 .githooks/pre-commit"
     rules:
       disk_paths:
         - ".codebuddy/rules"
@@ -205,11 +301,25 @@ hosts:
         - id: rules_self_report
           strength: weak
           how: "复述 Never do 一条"
+        - id: rules_scope_probe
+          strength: medium
+          how: "读带 globs 规则的匹配路径应注入；明显不匹配路径应弱/不注入"
 
   codex:
     family: codex
     detect_hints:
       - ".codex/"
+    human_gates:
+      manual: "host/CODEX-MANUAL.md"
+      probes:
+        - id: workspace_trusted
+          strength: gate
+          reason_code: workspace_untrusted
+          how: "workspace 已 trust（未信任不期待项目 hooks/MCP）"
+        - id: hooks_trusted
+          strength: gate
+          reason_code: hooks_untrusted
+          how: "/hooks 已审阅并 trust harness hooks"
     mcp:
       secret_paths:
         - ".codex/config.toml"
@@ -219,10 +329,13 @@ hosts:
       probes:
         - id: mcp_tools_seen
           strength: strong
-          how: "/mcp 或工具列表 ∩ 应有 server"
+          how: "会话 /mcp 列表 ∩ 应有 server（勿用根 .mcp.json）"
         - id: mcp_readonly_call
           strength: strong
           how: "主环境只读调用成功（或 calibrate-live 记入观测）"
+        - id: skills_seen
+          strength: medium
+          how: ".agents/skills/ 期望名 ∩ 会话 /skills 或 $ 可见 skills"
     hooks:
       config_paths:
         - ".codex/hooks.json"
@@ -232,7 +345,15 @@ hosts:
         - id: hooks_trigger
           strength: strong
           safe_command: "git commit --dry-run"
-          expect: "hook 注入/软提醒可见"
+          expect: "hook 注入/软提醒可见；L3 软提醒不拦截由此覆盖"
+    githooks:
+      probes:
+        - id: githooks_path
+          strength: medium
+          how: "git config core.hooksPath 指向 .githooks（或含 .githooks）"
+        - id: githooks_precommit
+          strength: medium
+          how: "磁盘存在 .githooks/pre-commit"
     rules:
       disk_paths:
         - ".codex/rules"
@@ -243,3 +364,10 @@ hosts:
         - id: rules_self_report
           strength: weak
           how: "复述 Never do 一条"
+        - id: rules_scope_probe
+          strength: medium
+          how: "Starlark/AGENTS 作用域：匹配路径约束可见；无关路径弱（弱-中证据）"
+        - id: starlark_forbid
+          strength: medium
+          safe: observe_only
+          how: "观测危险命令是否被 forbid/prompt；禁止真跑 git push --force / reset --hard"

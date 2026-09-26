@@ -133,5 +133,5 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 
 ## 会话自证（session-live）
 
-磁盘存在（detect `S_*`）≠ 当前会话已加载。当前宿主可跑 [session-live](../modes/session-live.md)：Agent 自证本会话 MCP/hooks/rules 可观测性；检查表 [session-live-checks.yaml](session-live-checks.yaml)。  
-**与人验并行**：面板开关 / 热加载仍见各 P0 手册；`skipped_wrong_host` 表示须换到对应 IDE 再测。
+磁盘存在（detect `S_*`）≠ 当前会话已加载。当前宿主可跑 [session-live 1.2](../modes/session-live.md)：人工闸 reason_code + MCP/hooks 自证；多宿主 `--emit-playbook` / `--merge-matrix`。  
+**与人验并行**：面板/trust 仍须人开；开后立刻机证落盘。audit 分册空壳 → `content-shell-scan.mjs`。

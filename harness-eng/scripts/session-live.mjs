@@ -1,18 +1,11 @@
 #!/usr/bin/env node
 /**
- * session-live — 会话自证落盘 / 检查表打印（观测由当前宿主 Agent 完成）。
- *
- * Usage:
- *   node scripts/session-live.mjs --help
- *   node scripts/session-live.mjs --validate-checks
- *   node scripts/session-live.mjs --root <TARGET> --host <id> --checklist
- *   node scripts/session-live.mjs --root <TARGET> --recommend-host
- *   node scripts/session-live.mjs --root <TARGET> --write --from-json <obs.json>
- *   node scripts/session-live.mjs --root <TARGET> --write --from-json -   # stdin
+ * session-live — 会话自证落盘 / 检查表 / playbook / matrix（1.2）。
  */
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { parse as parseYaml } from "./lib/yaml.mjs";
+import { findHarnessMetaFile } from "./lib/harness-meta.mjs";
 import {
   SKILL_ROOT,
   loadSessionLiveChecks,
@@ -22,39 +15,43 @@ import {
   evaluateObservations,
   writeSessionLiveReport,
   patchHarnessMetaSessionLive,
+  validateChecksDoc,
+  buildPlaybook,
+  writePlaybook,
+  mergeSessionLiveReports,
+  writeSessionLiveMatrix,
+  loadStubReports,
   SESSION_LIVE_CHECKS_REL,
   SESSION_LIVE_LATEST_REL,
+  SESSION_LIVE_PLAYBOOK_REL,
+  SESSION_LIVE_MATRIX_REL,
 } from "./lib/live-probes.mjs";
 
-const HELP = `session-live — harness-eng 会话自证（落盘 / 检查表）
+const HELP = `session-live — harness-eng 会话自证（1.2 · 人工闸 + playbook）
 
 用法:
   node scripts/session-live.mjs --validate-checks
   node scripts/session-live.mjs --root <TARGET> --recommend-host
   node scripts/session-live.mjs --root <TARGET> --host <id> --checklist
   node scripts/session-live.mjs --root <TARGET> --write --from-json <obs.json|->
+  node scripts/session-live.mjs --root <TARGET> --emit-playbook [--host <current>]
+  node scripts/session-live.mjs --root <TARGET> --merge-matrix
 
 选项:
-  --root <path>         目标仓根（--write / --recommend-host / --checklist 需要）
+  --root <path>         目标仓根
   --host <id>           cursor|claude|codex|qoder|trae|workbuddy
-  --checklist           打印该宿主探针清单（给 Agent）
-  --recommend-host      根据磁盘 hints 推荐 live_host（不确定则 recommended=null）
-  --write               根据观测 JSON 评分并写入 ${SESSION_LIVE_LATEST_REL} + meta.session_live
-  --from-json <path|->  观测文件；- 表示 stdin
-  --json                机器可读输出
-  --validate-checks     校验技能内 ${SESSION_LIVE_CHECKS_REL}
-  --help, -h            本帮助
+  --checklist           打印探针清单（含 human_gates）
+  --recommend-host      磁盘 hints 推荐 live_host
+  --write               评分落盘 latest + stubs/report-<host>.yaml + meta
+  --from-json <path|->  观测 JSON
+  --emit-playbook       写 session-live-playbook.md + stubs/obs-*.json
+  --merge-matrix        合并 stubs/report-*.yaml → session-live-matrix.yaml
+  --json                机器可读
+  --validate-checks     校验检查表 version 1.2
+  --help, -h
 
-观测 JSON 最小字段:
-  { "host": "cursor",
-    "mcp": { "tools_seen": ["mysql-test"], "readonly_call": { "ok": true, "server": "mysql-test" } },
-    "hooks": { "triggered": true, "injection_seen": true, "command": "git commit --dry-run" },
-    "rules": { "self_report": { "ok": true, "quoted": "Never do …" } },
-    "ai_tools": ["cursor", "trae"] }
-
-说明:
-  本脚本不代替 Agent 观察「本会话工具列表 / hook 注入」；只评分与落盘。
-  规格：modes/session-live.md
+观测 1.2 增加 human_gates: { "<gate_id>": true|false }
+人工闸未开 → unproven + reason_code（不用 fail）。规格：modes/session-live.md
 `;
 
 function parseArgs(argv) {
@@ -65,6 +62,8 @@ function parseArgs(argv) {
     checklist: false,
     recommendHost: false,
     write: false,
+    emitPlaybook: false,
+    mergeMatrix: false,
     fromJson: null,
     root: null,
     host: null,
@@ -77,6 +76,8 @@ function parseArgs(argv) {
     else if (a === "--checklist") out.checklist = true;
     else if (a === "--recommend-host") out.recommendHost = true;
     else if (a === "--write") out.write = true;
+    else if (a === "--emit-playbook") out.emitPlaybook = true;
+    else if (a === "--merge-matrix") out.mergeMatrix = true;
     else if (a === "--root") out.root = argv[++i];
     else if (a === "--host") out.host = argv[++i];
     else if (a === "--from-json") out.fromJson = argv[++i];
@@ -92,6 +93,19 @@ function readJsonInput(fromJson) {
       ? fs.readFileSync(0, "utf8")
       : fs.readFileSync(path.resolve(fromJson), "utf8");
   return JSON.parse(String(raw).replace(/^\uFEFF/, ""));
+}
+
+function readAiToolsFromMeta(root) {
+  const found = findHarnessMetaFile(root);
+  if (!found) return [];
+  try {
+    const doc = parseYaml(fs.readFileSync(found.abs, "utf8"));
+    const t = doc?.ai_tools;
+    if (Array.isArray(t)) return t.map(String);
+  } catch {
+    /* ignore */
+  }
+  return [];
 }
 
 function main() {
@@ -110,14 +124,15 @@ function main() {
     if (missing.length) {
       throw new Error(`session-live-checks missing hosts: ${missing.join(",")}`);
     }
-    const payload = {
-      ok: true,
-      version: doc.version,
-      hosts,
-      path: SESSION_LIVE_CHECKS_REL,
-    };
+    const v = validateChecksDoc(doc);
+    if (!v.ok) {
+      throw new Error(`session-live-checks 1.2 invalid: ${v.errors.join("; ")}`);
+    }
+    const payload = { ok: true, version: doc.version, hosts, path: SESSION_LIVE_CHECKS_REL };
     process.stdout.write(
-      args.json ? JSON.stringify(payload, null, 2) + "\n" : `OK ${SESSION_LIVE_CHECKS_REL} hosts=${hosts.join(",")}\n`
+      args.json
+        ? JSON.stringify(payload, null, 2) + "\n"
+        : `OK ${SESSION_LIVE_CHECKS_REL} version=${doc.version} hosts=${hosts.join(",")}\n`
     );
     return;
   }
@@ -126,9 +141,8 @@ function main() {
     if (!args.root) throw new Error("--recommend-host requires --root");
     const root = path.resolve(args.root);
     const rec = recommendLiveHost(root);
-    if (args.json) {
-      process.stdout.write(JSON.stringify(rec, null, 2) + "\n");
-    } else {
+    if (args.json) process.stdout.write(JSON.stringify(rec, null, 2) + "\n");
+    else {
       process.stdout.write(
         `recommended=${rec.recommended ?? "null"} candidates=[${rec.candidates.join(",")}] note=${rec.note}\n`
       );
@@ -147,16 +161,66 @@ function main() {
     return;
   }
 
+  if (args.emitPlaybook) {
+    if (!args.root) throw new Error("--emit-playbook requires --root");
+    const root = path.resolve(args.root);
+    const aiTools = readAiToolsFromMeta(root);
+    const pb = buildPlaybook({
+      root,
+      aiTools,
+      currentHost: args.host || null,
+    });
+    writePlaybook(root, pb);
+    if (args.json) {
+      process.stdout.write(
+        JSON.stringify(
+          { ok: true, playbook: SESSION_LIVE_PLAYBOOK_REL, hosts: pb.hosts },
+          null,
+          2
+        ) + "\n"
+      );
+    } else {
+      process.stdout.write(
+        `wrote ${SESSION_LIVE_PLAYBOOK_REL}; stubs=${pb.hosts.join(",") || "(none)"}\n`
+      );
+    }
+    return;
+  }
+
+  if (args.mergeMatrix) {
+    if (!args.root) throw new Error("--merge-matrix requires --root");
+    const root = path.resolve(args.root);
+    const reports = loadStubReports(root);
+    if (!reports.length) {
+      throw new Error("no stub reports found under docs/harness-eng/session-live-stubs/");
+    }
+    const matrix = mergeSessionLiveReports(reports);
+    const w = writeSessionLiveMatrix(root, matrix);
+    if (args.json) {
+      process.stdout.write(JSON.stringify({ ok: true, matrix: w.rel, doc: matrix }, null, 2) + "\n");
+    } else {
+      process.stdout.write(
+        `wrote ${w.rel} tested=[${matrix.tested.join(",")}] totals pass=${matrix.totals.pass} fail=${matrix.totals.fail} unproven=${matrix.totals.unproven}\n`
+      );
+    }
+    return;
+  }
+
   if (args.write) {
     if (!args.root) throw new Error("--write requires --root");
     const root = path.resolve(args.root);
     const obs = readJsonInput(args.fromJson);
     if (args.host && !obs.host) obs.host = args.host;
+    if (!obs.ai_tools?.length) {
+      const fromMeta = readAiToolsFromMeta(root);
+      if (fromMeta.length) obs.ai_tools = fromMeta;
+    }
     const report = evaluateObservations(root, obs);
     const written = writeSessionLiveReport(root, report);
     const meta = patchHarnessMetaSessionLive(root, report);
     const summary = {
       report: written.rel,
+      stub: written.stubRel || null,
       meta: meta.rel,
       host: report.host,
       counts: report.counts,
@@ -167,10 +231,10 @@ function main() {
     } else {
       process.stdout.write(
         [
-          `wrote ${written.rel}`,
+          `wrote ${written.rel}${written.stubRel ? ` + ${written.stubRel}` : ""}`,
           `meta ${meta.rel} session_live.host=${report.host}`,
           `counts pass=${report.counts.pass} fail=${report.counts.fail} unproven=${report.counts.unproven} skipped=${report.counts.skipped}`,
-          `behavior_pass_claim=${report.claims.behavior_pass_claim} mcp_gate_path_a=${report.claims.mcp_gate_path_a}`,
+          `behavior_pass_claim=${report.claims.behavior_pass_claim} mcp_gate_path_a=${report.claims.mcp_gate_path_a} githooks_ok=${report.claims.githooks_ok} human_gates_ok=${report.claims.human_gates_ok}`,
           "",
         ].join("\n")
       );
