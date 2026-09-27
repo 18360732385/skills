@@ -988,9 +988,17 @@ assert(/仅.*local 真密配置/.test(skill) || /仅\*\*本轮在创建/.test(sk
 assert(/不按「会话曾点名」/.test(skill), "SKILL dashboard not gated by session history");
 assert(!/\*\*每轮回复末尾\*\*/.test(skill), "SKILL no unconditional every-turn dashboard");
 const sessionDashMd = readDoc("session-dashboard.md");
-assert(/决策台/.test(sessionDashMd) && /趋势台/.test(sessionDashMd), "session-dashboard four panels");
+assert(
+  /【阶段】/.test(sessionDashMd) &&
+    /【现状】/.test(sessionDashMd) &&
+    /【工作】/.test(sessionDashMd) &&
+    /【下一步建议】/.test(sessionDashMd),
+  "session-dashboard four narrative sections"
+);
+assert(/可 AI coding|ai_coding_ready/.test(sessionDashMd), "session-dashboard 现状 = AI coding only");
 assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
 assert(/会话仪表盘（精简） · 未打分/.test(sessionDashMd), "session-dashboard documents compact B format");
+assert(/┌/.test(sessionDashMd) && /│/.test(sessionDashMd) && /└/.test(sessionDashMd), "session-dashboard documents four-side box");
 assert(
   /使用手册\.(html|md)/.test(sessionDashMd) && /第6章|#s6|60-对话内会话仪表盘/.test(sessionDashMd),
   "session-dashboard handbook anchor"
@@ -1033,16 +1041,18 @@ assert(!/对齐矩阵（0\.5\.7）/.test(aiTools063), "ai-tools matrix title not
   const emptyOut = emptyDash.stdout || "";
   assert(/精简/.test(emptyOut), "session-dash empty uses compact footer");
   assert(/未打分/.test(emptyOut), "session-dash compact titles 未打分");
-  assert(/下一动作：/.test(emptyOut), "session-dash compact has 下一动作");
+  assert(/【下一步建议】/.test(emptyOut) || /【工作】/.test(emptyOut), "session-dash compact has next/work");
   assert(/详情请查询仪表盘/.test(emptyOut), "session-dash compact has report footer");
   assert(!/\| \*\*决策台\*\*/.test(emptyOut), "session-dash empty omits four-panel table");
+  assert(/┌/.test(emptyOut) && /└/.test(emptyOut), "session-dash compact has box frame");
+  assert(/【现状】/.test(emptyOut) && /AI coding/.test(emptyOut), "session-dash compact 现状 is AI coding");
 }
 
 
 assert(/--intent engineering\|meta/.test(sessionDashMd), "session-dashboard documents --intent");
 assert(!/会话内\*\*每一轮\*\*/.test(sessionDashMd), "session-dashboard SSOT no longer every-turn");
 assert(!/quadrantChart|```mermaid/.test(sessionDashMd), "session-dashboard.md no mermaid");
-assert(/施工态势/.test(sessionDashMd), "session-dashboard.md documents 施工态势");
+assert(/【现状】/.test(sessionDashMd) && /AI coding/.test(sessionDashMd), "session-dashboard.md 现状 AI coding");
 assert(!/四台 \+ mermaid/.test(skill), "SKILL dashboard is 四台摘要 not mermaid");
 assert(/本轮/.test(handbookMd) && /会话仪表盘/.test(handbookMd), "使用手册.md dashboard is this-turn gated");
 assert(/里程碑 SHOW/.test(handbookMd) && /提问批次/.test(handbookMd), "使用手册.md milestone SHOW and Q&A HIDE");
@@ -1104,9 +1114,16 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "session-dash stdout has no mermaid fence"
     );
     assert(
-      /施工态势：覆盖 80% × 形态 88%（Q2 理想区）/.test(dashMd.stdout || ""),
-      "session-dash plain-text stance"
+      /【现状】暂不可 AI coding（开干 NO）/.test(dashMd.stdout || ""),
+      "session-dash 现状 is AI coding only"
     );
+    assert(
+      /【阶段】/.test(dashMd.stdout || "") &&
+        /【工作】/.test(dashMd.stdout || "") &&
+        /【下一步建议】/.test(dashMd.stdout || ""),
+      "session-dash four one-liners"
+    );
+    assert(!/施工态势：/.test(dashMd.stdout || ""), "session-dash no longer prints 施工态势");
     assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
     assert(
       /使用手册/.test(dashMd.stdout || "") &&

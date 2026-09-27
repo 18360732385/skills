@@ -5,7 +5,10 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { renderSessionDashboardMarkdown } from "../session-dashboard.mjs";
+import {
+  renderSessionDashboardMarkdown,
+  stanceQuadrant,
+} from "../session-dashboard.mjs";
 import { DOC_MOVES, ROOT_STUBS, ROOT_KEEP, ROOT_MD_MAX } from "../doc-paths.mjs";
 import { HOOK_DEFS, buildContractChecksJs, resolveRulehook } from "../hooks-checks.mjs";
 import { scanSignals } from "../detect-signals.mjs";
@@ -817,9 +820,14 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/quadrantChart|mermaid/.test(changelog062) && /施工态势/.test(changelog062), "CHANGELOG 0.6.2 notes mermaid drop + 施工态势");
   const libDash062 = fs.readFileSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs"), "utf8");
   assert(!/quadrantChart/.test(libDash062) && !/```mermaid/.test(libDash062), "session-dashboard.mjs emits no mermaid");
-  assert(/施工态势/.test(libDash062) && /stanceQuadrant/.test(libDash062), "session-dashboard.mjs plain-text stanceQuadrant");
+  assert(/stanceQuadrant/.test(libDash062), "session-dashboard.mjs keeps stanceQuadrant helper");
   const upgrade062 = readDoc("upgrade.md");
   assert(/0\.6\.1 → 0\.6\.2/.test(upgrade062), "upgrade has 0.6.1 → 0.6.2");
+
+  assert(stanceQuadrant(0.8, 0.4) === "Q1 补形态", "stance Q1 补形态");
+  assert(stanceQuadrant(0.5, 0.5) === "Q2 理想区", "stance Q2 理想区 at 0.5 boundary");
+  assert(stanceQuadrant(0, 0) === "Q3 起步", "stance Q3 起步");
+  assert(stanceQuadrant(0.49, 0.5) === "Q4 补覆盖", "stance Q4 补覆盖");
 
   const dashSkeleton = {
     root: "/tmp/he-stance",
@@ -829,41 +837,18 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     decision: { ai_coding_ready: false, label: "建议暂缓", blockers: [] },
     diagnose: { ladder: "L3", domains: "api" },
     task: { line: "—" },
+    trend: { coverage: 0.8, morph: 0.4, composite: null, overall: 40 },
     reportPath: null,
     reportExpectedRel: null,
     reportExists: false,
-    scorePath: null,
+    scorePath: "/tmp/he-stance/docs/harness-eng/score-latest.json",
     handbookPath: "guide/使用手册.md",
     handbookUrl: null,
   };
-  const stanceMd = (coverage, morph) =>
-    renderSessionDashboardMarkdown({
-      ...dashSkeleton,
-      trend: { coverage, morph, composite: null, overall: morph == null ? null : morph * 100 },
-    });
-  assert(
-    /施工态势：覆盖 80% × 形态 40%（Q1 补形态）/.test(stanceMd(0.8, 0.4)),
-    "stance Q1 补形态 (high coverage, low morph)"
-  );
-  assert(
-    /施工态势：覆盖 50% × 形态 50%（Q2 理想区）/.test(stanceMd(0.5, 0.5)),
-    "stance Q2 理想区 at 0.5 boundary"
-  );
-  assert(
-    /施工态势：覆盖 0% × 形态 0%（Q3 起步）/.test(stanceMd(0, 0)),
-    "stance Q3 起步 (low coverage, low morph)"
-  );
-  assert(
-    /施工态势：覆盖 49% × 形态 50%（Q4 补覆盖）/.test(stanceMd(0.49, 0.5)),
-    "stance Q4 补覆盖 (low coverage, high morph)"
-  );
-  const omitCoverage = stanceMd(null, 0.8);
-  const omitMorph = stanceMd(0.8, null);
-  const omitBoth = stanceMd(null, null);
-  assert(!/施工态势/.test(omitCoverage), "stance omitted when coverage missing");
-  assert(!/施工态势/.test(omitMorph), "stance omitted when morph missing");
-  assert(!/施工态势/.test(omitBoth), "stance omitted when no score axes");
-  assert(!/```\s*mermaid/.test(omitBoth) && !/quadrantChart/.test(omitBoth), "no-score footer still has no mermaid");
+  const stanceMd = renderSessionDashboardMarkdown(dashSkeleton);
+  assert(/【现状】暂不可 AI coding（开干 NO）/.test(stanceMd), "footer 现状 is AI coding only");
+  assert(!/施工态势：/.test(stanceMd), "footer no longer prints 施工态势");
+  assert(!/```\s*mermaid/.test(stanceMd) && !/quadrantChart/.test(stanceMd), "footer still has no mermaid");
 }
 
 // --- 0.6.3 formal: freshness · report_schema narrative · upgrade three-step ---

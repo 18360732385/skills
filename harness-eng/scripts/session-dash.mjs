@@ -20,7 +20,7 @@
  */
 import { buildSessionDashboard, renderSessionDashboardMarkdown } from "./lib/session-dashboard.mjs";
 
-const HELP = `session-dash — harness-eng 会话仪表盘（本轮里程碑末尾四台摘要）
+const HELP = `session-dash — harness-eng 会话仪表盘（本轮里程碑末尾：阶段/现状/工作/下一步）
 
 用法:
   node scripts/session-dash.mjs --root <TARGET> [选项]

@@ -6,13 +6,13 @@
 
 **SHOW**（本轮命中里程碑时）：
 
-1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（含四台表 + 可选宿主面一行 + 可选纯文本态势；无 score 时精简）
+1. 回复正文之后、无其它内容之前，附上「## harness-eng 会话仪表盘」块（四边框 + 阶段/现状/剩余工作/下一步建议；无 score 时精简）
 2. 已知 `--root` / `Q_TARGET_ROOT` 时，优先跑 `scripts/session-dash.mjs` 渲染（可 `--json` 自检；`--intent engineering`；`--help` 看选项）
 3. **尚无目标根 → 一律 HIDE**（勿空表凑脚注；定根后再 SHOW）
 
 **HIDE**（本轮未命中里程碑时）：
 
-- **省略**整个 `## harness-eng 会话仪表盘` 块（含四台、纯文本态势、脚注）
+- **省略**整个 `## harness-eng 会话仪表盘` 块（含边框、四段叙事、脚注）
 - 不要为了「凑脚注」去跑 session-dash；若脚本自检可用 `--intent meta`（无 markdown 输出）
 
 ## 触发
@@ -71,58 +71,58 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 | 同会话先 audit 再聊无关业务 bug | 业务轮 **HIDE**；再回到 audit/fill 出结论则该轮 **SHOW** |
 | 含糊：无实质产出、无闸门决策、无显式读数 | **HIDE**（默认） |
 
-## 格式（固定 · 压缩 + 边框）
+## 格式（固定 · 四边框 + 四句叙事）
 
-上下用 `◇━ ◆ … ◆ ━◇` 框住整块，与正文区分。四台表保留，文案缩短（✓/✗、百分比、blockers≤2）。
+用 `┌─┐│ └─┘` **上下左右**框住整块（顶/底栏嵌 `◆标题◆`）。正文严格四行、**各一句**：
+
+1. **【阶段】** — 阶梯 L* + 本轮模式（+ phase）
+2. **【现状】** — **仅**是否可 AI coding（开干 YES/NO；只看 `ai_coding_ready`）
+3. **【工作】** — 剩余工作一句（blockers 或任务摘要）
+4. **【下一步建议】** — 下一步一句（任务或 `next_commands[0]`）
+
+HTML 五台详情仍走脚注链接。
 
 ### 全量（有 score / 有诊断信号）
 
 ```markdown
-◇━━━━━━━━ ◆ harness-eng 会话仪表盘 ◆ ━━━━━━━━◇
-## harness-eng 会话仪表盘
-`…` · **模式** … · 阶段 … · 预授权 是|否
-
-| 台 | 读数 |
-|:---|:---|
-| **决策台** | 开干 YES|NO · 可开干|暂缓 · blockers（≤2） |
-| **诊断台** | L* · 骨架✓/✗ · 语义✓/✗ · 金标*% |
-| **任务台** | 下一动作（过长截断） |
-| **趋势台** | 覆盖*% · 形态*% · 参*%≠开干 |
-
-施工态势：覆盖 80% × 形态 74%（Q2 理想区）
-
-（有覆盖+形态时一行；缺任一轴则整行省略。象限阈值 0.5：Q1 补形态 / Q2 理想区 / Q3 起步 / Q4 补覆盖）
-
-宿主：cursor 未自证 mcp✓
-
-（有 `host_surface` 时一行，只摘首宿主；全 absent 则省略。磁盘≠生效；不否决开干。）
-
-**详情请查询仪表盘** → [report](…) · [五台读法（使用手册）](../guide/使用手册.html#s6) · 开干=`ai_coding_ready`
-◇━━━━━━━━ ◆ 详情 · 五台读法 ◆ ━━━━━━━━◇
+┌──────◆harness-eng 会话仪表盘◆──────┐
+│## harness-eng 会话仪表盘             │
+│`…`                                   │
+│                                      │
+│【阶段】L4 · 模式 fill-score · score  │
+│【现状】暂不可 AI coding（开干 NO）   │
+│【工作】待过闸：semantic_ready、…     │
+│【下一步建议】按 Plan 批次继续精填    │
+│                                      │
+│**详情请查询仪表盘** → report · 五台读法（使用手册）│
+└──────◆详情 · 五台读法◆──────────────┘
 ```
 
 ### 精简（无 score 且诊断空 · 减噪）
 
 ```markdown
-◇━━━━ ◆ 会话仪表盘（精简）·未打分 ◆ ━━━━◇
-## harness-eng 会话仪表盘（精简） · 未打分
-`…` · **模式** … · 阶段 … · 预授权 是|否
-下一动作：…
-**详情请查询仪表盘** → …（已生成 file 链 / 未生成预期路径 · 手册 #s6）
-◇━━━━━━━━ ◆ 详情 · 五台读法 ◆ ━━━━━━━━◇
+┌──◆会话仪表盘（精简）·未打分◆──┐
+│## harness-eng 会话仪表盘（精简） · 未打分│
+│【阶段】模式 … · 未打分           │
+│【现状】尚未打分，暂不能判断是否可 AI coding│
+│【工作】…                         │
+│【下一步建议】…                   │
+│**详情请查询仪表盘** → …          │
+└──◆详情 · 五台读法◆──────────────┘
 ```
 
-**禁止**：把仪表盘插在正文中间；省略四台之一（全量）；精简省略「详情请查询仪表盘」脚注；用 `ready.ok` / overall / 参考分替代「开干」结论；把宿主 live 绑进开干判定。
+**禁止**：把仪表盘插在正文中间；精简省略「详情请查询仪表盘」脚注；用 `ready.ok` / overall / 参考分 / 覆盖形态替代「现状」开干结论；把宿主 live 绑进开干判定；省略四边框或四段标题；【现状】堆叠多指标。
 
 ## 数据优先级
 
-| 台 | 来源（高→低） |
+| 段 | 来源（高→低） |
 |---|---|
-| 决策台 | `buildReportUi.go_nogo`（← `ai_coding_ready`） |
-| 诊断台 | `ui.ladder_progress` / meta ladder + score skeleton/semantic/gold |
-| 任务台 | CLI `--pending`/`--next` → `ui.tasks[0]` → `fill-plan.yaml` → `next_shards` |
-| 趋势台 | `ui` coverage / morph / composite（参考分≠开干） |
-| 宿主面一行 | `buildHostSurface`（磁盘+session-live）；无数据则省略 |
+| 【阶段】 | meta/`ui.ladder_progress` + 本轮 mode/phase |
+| 【现状】 | **仅** `go_nogo` / `ai_coding_ready`（可/暂不可 AI coding） |
+| 【工作】 | blockers（≤2）或 CLI/`ui.tasks[0]`/fill-plan/next_shards |
+| 【下一步建议】 | 任务摘要或 `go_nogo.next_commands[0]` |
+| 脚注 | report-latest.html + 五台读法（使用手册 #s6） |
+| （可选）宿主面 | 细节进 HTML 宿主台；会话脚注不展开 host_surface |
 
 会话字段：
 - **模式**：以本轮 intent / CLI `--mode` 为准（fill-score、audit、pipeline…）；**勿**默认钉死 `meta.last_mode`
@@ -150,7 +150,7 @@ node scripts/session-dash.mjs --root <TARGET> \
 | 探测 / 提问 / 定根前 / 等确认空轮 | **省略** | 可能不存在 |
 | 出示 WritePlan / 确认后写盘 / 实质产出 | 会话态快照 | 可能不存在 |
 | 纯 meta / 版本 / 手册 / 跑题 / 改 skill | **省略** | 不涉及 |
-| fill-score 后 | 三词 + 四台摘要 + 可选宿主面一行 | 【推荐】同步生成五台 HTML，脚注链过去 |
+| fill-score 后 | 三词 + 四句叙事仪表盘 | 【推荐】同步生成五台 HTML，脚注链过去 |
 | audit 只读出结论 | 缺口摘要进任务台 | 不强制生成 |
 
 开干结论**两处一致**：只看 `ai_coding_ready`（见 [glossary.md](../glossary.md)）。

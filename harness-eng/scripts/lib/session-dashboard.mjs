@@ -1,8 +1,7 @@
 /**
  * Chat footer dashboard for harness-eng this-turn engineering steps (0.5.3+; gated 0.5.4+; tightened 0.6.9).
- * Mirrors report-latest.html five panels in markdown (plain-text stance; no mermaid).
- * 0.4.0 / 0.7.14: consume buildReportUi (go_nogo/tasks) + host_surface line.
- * Compact copy + Unicode frame (◇/━/◆) so the block reads as a special footer.
+ * 0.4.0 / 0.7.14: consume buildReportUi (go_nogo/tasks) + host_surface.
+ * 0.7.14+: four-side box; 【阶段】【现状】【工作】【下一步建议】各一句；现状仅 AI coding 可否（无 mermaid）。
  * When to SHOW/HIDE: session-dashboard.md (agent decides per this turn; --intent on session-dash.mjs).
  */
 import fs from "fs";
@@ -58,35 +57,94 @@ function readFillPlan(root) {
   }
 }
 
-function pctNum(ratio) {
-  if (ratio == null || Number.isNaN(ratio)) return null;
-  return Math.round(Math.max(0, Math.min(1, ratio)) * 100);
+const BOX_INNER = 68;
+
+function displayWidth(s) {
+  let w = 0;
+  for (const ch of [...String(s ?? "")]) {
+    const code = ch.codePointAt(0) || 0;
+    w += code > 0xff ? 2 : 1;
+  }
+  return w;
 }
 
-function yesNo(ok) {
-  if (ok === true) return "**YES**";
-  if (ok === false) return "**NO**";
-  return "—";
+function padVisual(s, width) {
+  const str = String(s ?? "");
+  const pad = Math.max(0, width - displayWidth(str));
+  return str + " ".repeat(pad);
 }
 
-function gateMark(ok) {
-  if (ok === true) return "✓";
-  if (ok === false) return "✗";
-  return "·";
+function truncVisual(s, maxW) {
+  const str = String(s ?? "");
+  if (displayWidth(str) <= maxW) return str;
+  let out = "";
+  let w = 0;
+  for (const ch of [...str]) {
+    const cw = (ch.codePointAt(0) || 0) > 0xff ? 2 : 1;
+    if (w + cw > maxW - 1) break;
+    out += ch;
+    w += cw;
+  }
+  return out + "…";
 }
 
-/** Distinctive frame so the footer reads as a special block (not body prose). */
-const FRAME = {
-  top: "◇━━━━━━━━ ◆ harness-eng 会话仪表盘 ◆ ━━━━━━━━◇",
-  bot: "◇━━━━━━━━ ◆ 详情 · 五台读法 ◆ ━━━━━━━━◇",
-  topCompact: "◇━━━━ ◆ 会话仪表盘（精简）·未打分 ◆ ━━━━◇",
-};
+/** Wrap by display width (CJK≈2) so long URLs are not clipped off. */
+function wrapVisual(s, maxW) {
+  const str = String(s ?? "");
+  if (displayWidth(str) <= maxW) return [str];
+  const lines = [];
+  let cur = "";
+  let w = 0;
+  for (const ch of [...str]) {
+    const cw = (ch.codePointAt(0) || 0) > 0xff ? 2 : 1;
+    if (w + cw > maxW && cur) {
+      lines.push(cur);
+      cur = ch;
+      w = cw;
+    } else {
+      cur += ch;
+      w += cw;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [""];
+}
 
-function compactHostLine(line) {
-  if (!line) return null;
-  const body = String(line).replace(/^宿主面：/, "");
-  const first = body.split(" · ")[0] || body;
-  return `宿主：${first}`;
+/** Four-side Unicode box; title centered on top/bottom bars. */
+function frameBox(innerLines, title, footTitle) {
+  const width = BOX_INNER;
+  const t = truncVisual(title || "harness-eng 会话仪表盘", width - 4);
+  const f = truncVisual(footTitle || "详情 · 五台读法", width - 4);
+  const topPad = Math.max(0, width - displayWidth(t) - 2);
+  const topLeft = Math.floor(topPad / 2);
+  const topRight = topPad - topLeft;
+  const botPad = Math.max(0, width - displayWidth(f) - 2);
+  const botLeft = Math.floor(botPad / 2);
+  const botRight = botPad - botLeft;
+  const top =
+    "┌" + "─".repeat(topLeft) + "◆" + t + "◆" + "─".repeat(topRight) + "┐";
+  const bot =
+    "└" + "─".repeat(botLeft) + "◆" + f + "◆" + "─".repeat(botRight) + "┘";
+  const body = [];
+  for (const line of innerLines || []) {
+    for (const part of wrapVisual(line, width)) {
+      body.push("│" + padVisual(part, width) + "│");
+    }
+  }
+  return [top, ...body, bot].join("\n");
+}
+
+/** Keep each narrative section to one short sentence. */
+function oneSentence(s, maxLen = 72) {
+  let t = String(s ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/^[;；、.\s]+|[;；、.\s]+$/g, "")
+    .trim();
+  if (!t) return "—";
+  // drop trailing soft punctuation; ensure single clause feel
+  t = t.split(/[。！？\n]/)[0].trim() || t;
+  if (t.length > maxLen) t = t.slice(0, maxLen - 1) + "…";
+  return t;
 }
 
 function shortPath(p) {
@@ -94,8 +152,11 @@ function shortPath(p) {
   return String(p).replace(/\\/g, "/");
 }
 
-/** Coverage × morph stance; thresholds 0.5. No mermaid (Trae Syntax Error). */
-function stanceQuadrant(coverage, morph) {
+/**
+ * Coverage × morph stance helper (thresholds 0.5).
+ * Kept for diagnostics/tests; session footer no longer prints 施工态势 line.
+ */
+export function stanceQuadrant(coverage, morph) {
   const highC = coverage >= 0.5;
   const highM = morph >= 0.5;
   if (highC && !highM) return "Q1 补形态";
@@ -299,15 +360,6 @@ function renderDashboardLinkFooter(data) {
   return `**详情请查询仪表盘** → 定根后生成 \`${REPORT_REL}\` · ${handbookPart}`;
 }
 
-function shortVerdictLabel(label) {
-  if (!label) return "—";
-  const s = String(label);
-  if (/可以开干|建议可以开干/.test(s)) return "可开干";
-  if (/暂缓|建议暂缓/.test(s)) return "暂缓";
-  if (/未打分/.test(s)) return "未打分";
-  return s.length > 12 ? s.slice(0, 12) + "…" : s;
-}
-
 export function renderSessionDashboardMarkdown(data, opts = {}) {
   const emptyNoise =
     !data.scorePath &&
@@ -315,97 +367,83 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
     (data.diagnose?.ladder === "—" || data.diagnose?.ladder == null) &&
     data.trend?.overall == null &&
     data.trend?.coverage == null;
-  if (opts.compactEmpty !== false && emptyNoise) {
-    const modeBit =
-      data.metaLastMode && data.metaLastMode !== data.sessionMode
-        ? `**模式** ${data.sessionMode}（meta.last_mode=${data.metaLastMode}）`
-        : `**模式** ${data.sessionMode}`;
-    const nextLine =
-      data.task?.line && data.task.line !== "—"
-        ? `下一动作：${data.task.line}`
-        : "下一动作：说「完整度打分」或先 audit/land";
-    const host = compactHostLine(data.hostLine);
-    const compact = [
-      FRAME.topCompact,
-      "## harness-eng 会话仪表盘（精简） · 未打分",
-      `\`${data.root}\` · ${modeBit} · ${data.sessionPhase} · 预授权 ${data.preauth}`,
-      nextLine,
-    ];
-    if (host) compact.push(host);
-    compact.push(renderDashboardLinkFooter(data));
-    compact.push(FRAME.bot);
-    return compact.join("\n");
-  }
 
   const modeBit =
     data.metaLastMode && data.metaLastMode !== data.sessionMode
       ? `**模式** ${data.sessionMode}（meta.last_mode=${data.metaLastMode}）`
       : `**模式** ${data.sessionMode}`;
 
-  const blockers = (data.decision.blockers || []).slice(0, 2);
-  const decisionBits = [
-    `开干 ${yesNo(data.decision.ai_coding_ready)}`,
-    shortVerdictLabel(data.decision.label),
-  ];
-  if (blockers.length) decisionBits.push(blockers.join(","));
+  if (opts.compactEmpty !== false && emptyNoise) {
+    const nextLine =
+      data.task?.line && data.task.line !== "—"
+        ? data.task.line
+        : "说「完整度打分」或先 audit/land";
+    const inner = [
+      "## harness-eng 会话仪表盘（精简） · 未打分",
+      `\`${data.root}\``,
+      "",
+      `【阶段】${modeBit} · 未打分`,
+      "【现状】尚未打分，暂不能判断是否可 AI coding",
+      `【工作】${oneSentence(nextLine)}`,
+      `【下一步建议】${oneSentence(nextLine)}`,
+      "",
+      renderDashboardLinkFooter(data),
+    ];
+    return frameBox(inner, "会话仪表盘（精简）·未打分", "详情 · 五台读法");
+  }
 
   const ladderRaw = data.diagnose.ladder;
-  const diagParts = [
-    ladderRaw === "—" ? "—" : `L${String(ladderRaw).replace(/^L/i, "")}`,
-    `骨架${gateMark(data.diagnose.skeleton)}`,
-    `语义${gateMark(data.diagnose.semantic)}`,
-  ];
-  if (typeof data.diagnose.gold_ratio === "number") {
-    diagParts.push(`金标${Math.round(data.diagnose.gold_ratio * 100)}%`);
+  const ladderLabel =
+    ladderRaw === "—" ? "—" : `L${String(ladderRaw).replace(/^L/i, "")}`;
+  const phaseParts = [ladderLabel, modeBit];
+  if (data.sessionPhase && data.sessionPhase !== "—") {
+    phaseParts.push(data.sessionPhase);
   }
-  if (
-    typeof data.diagnose.formula_ceiling === "number" &&
-    typeof data.trend.overall === "number" &&
-    data.trend.overall >= data.diagnose.formula_ceiling - 2
-  ) {
-    diagParts.push("贴顶");
+  const phaseLine = oneSentence(phaseParts.join(" · "));
+
+  const ai = data.decision.ai_coding_ready;
+  const statusLine =
+    ai === true
+      ? "可以 AI coding（开干 YES）"
+      : ai === false
+        ? "暂不可 AI coding（开干 NO）"
+        : "尚未打分，暂不能判断是否可 AI coding";
+
+  const blockers = (data.decision.blockers || []).slice(0, 2);
+  let workLine = "";
+  if (blockers.length) {
+    workLine = `待过闸：${blockers.join("、")}`;
+  } else if (data.task?.line && data.task.line !== "—") {
+    workLine = data.task.line;
+  } else if (ai === true) {
+    workLine = "无硬 blockers，契约与代码仍须人工审";
+  } else {
+    workLine = "补语义闸并关闭 fill-plan 开放批次";
   }
+  workLine = oneSentence(workLine);
 
-  const cov = pctNum(data.trend.coverage);
-  const morph = pctNum(data.trend.morph);
-  const comp = pctNum(data.trend.composite);
-  const trendParts = [];
-  if (cov != null) trendParts.push(`覆盖${cov}%`);
-  if (morph != null) trendParts.push(`形态${morph}%`);
-  if (comp != null) trendParts.push(`参${comp}%≠开干`);
-  if (!trendParts.length && data.trend.overall == null) trendParts.push("无score");
+  const cmds = Array.isArray(data.decision.next_commands)
+    ? data.decision.next_commands
+    : [];
+  let nextLine =
+    (data.task?.line && data.task.line !== "—" && data.task.line) ||
+    cmds[0] ||
+    (ai === true
+      ? "打开 report 核对五台后写业务"
+      : "fill-plan --status 后 agents 清 semantic");
+  nextLine = oneSentence(nextLine);
 
-  const taskShort =
-    data.task.line && data.task.line !== "—"
-      ? data.task.line.length > 72
-        ? data.task.line.slice(0, 70) + "…"
-        : data.task.line
-      : "—";
-
-  const lines = [
-    FRAME.top,
+  const inner = [
     "## harness-eng 会话仪表盘",
-    `\`${data.root}\` · ${modeBit} · ${data.sessionPhase} · 预授权 ${data.preauth}`,
+    `\`${data.root}\``,
     "",
-    "| 台 | 读数 |",
-    "|:---|:---|",
-    `| **决策台** | ${decisionBits.join(" · ")} |`,
-    `| **诊断台** | ${diagParts.join(" · ")} |`,
-    `| **任务台** | ${taskShort} |`,
-    `| **趋势台** | ${trendParts.join(" · ") || "—"} |`,
+    `【阶段】${phaseLine}`,
+    `【现状】${statusLine}`,
+    `【工作】${workLine}`,
+    `【下一步建议】${nextLine}`,
+    "",
+    renderDashboardLinkFooter(data),
   ];
 
-  if (data.trend.coverage != null && data.trend.morph != null) {
-    const cx = Math.round(data.trend.coverage * 100);
-    const my = Math.round(data.trend.morph * 100);
-    const q = stanceQuadrant(data.trend.coverage, data.trend.morph);
-    lines.push(`施工态势：覆盖 ${cx}% × 形态 ${my}%（${q}）`);
-  }
-
-  const host = compactHostLine(data.hostLine);
-  if (host) lines.push(host);
-
-  lines.push(renderDashboardLinkFooter(data));
-  lines.push(FRAME.bot);
-  return lines.join("\n");
+  return frameBox(inner, "harness-eng 会话仪表盘", "详情 · 五台读法");
 }
