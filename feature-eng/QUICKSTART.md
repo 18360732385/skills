@@ -29,6 +29,8 @@ init（首次绑 11 环）
 2. **progress / 回链 仅控制器写**——厨师只回报产物路径列表。
 3. **自动调起 ≠ 替用户 yes 硬闸**。
 
+**证据条**：写 `gates.*` 前须合法 `authorized_by` + 适用环 `审核-<stage>.md`（proxy 不豁免）。`node scripts/gate-evidence.mjs --cwd <仓根> --slug <slug>`。
+
 详情：[SKILL.md](SKILL.md) · [binding.md](modes/binding.md) · [stages.md](modes/stages.md)
 
 ## 无厨师也能跑完 Full（最小清单）

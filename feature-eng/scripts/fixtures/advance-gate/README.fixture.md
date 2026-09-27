@@ -7,4 +7,4 @@
 - `gates.go` 仍为 null（advance 通过开干闸后才写）
 - `stage: plan` · `domain: skipped` · `proto: null`
 
-供 selfcheck 校验「可推进」形状（时间戳 / 产物指针 / 枚举），**不是**真实主题。
+供 selfcheck 校验「可推进」形状（时间戳 / 产物指针 / 枚举）与闸门证据（硬闸授权 + `审核-grill.md` / `审核-design.md`），**不是**真实主题。审核文件须落盘，不得占位省略。

@@ -1,5 +1,20 @@
 # feature-eng CHANGELOG
 
+## 0.2.10-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.9-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 M1–M6 之上。本版落实 **闸门证据**（打穿演戏闸）：
+
+- **gate-evidence.mjs**：ISO `gates.*` → 回链 `authorized_by` 合法；适用环须有 `审核-<stage>.md` + `result`；`--expect-fail` 供负例
+- **金样**：`advance-gate` / `close-ready` 补硬闸授权表与审核文件；废除「审核可不落盘」
+- **负例**：`gate-theater-bad/`（假 transcript + 缺审核）须 FAIL
+- **纪律**：SKILL 证据条 / 红旗 / 合理化表；`controller_proxy` 不豁免；description SDO（仅触发）
+- **selfcheck**：PIN 0.2.10-dev；调用 gate-evidence 金样 PASS / 负例 FAIL
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.10-dev | 2026-09-27 | 闸门证据机检 + 金样/负例；V0.6.X 开发钉 |
+| 0.2.9-dev | 2026-09-21 | M1–M6 monorepo 摩擦优化；V0.6.X 开发钉 |
+
 ## 0.2.9-dev — 2026-09-21
 
 V0.6.X 开发钉。相对 0.2.8-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #48（O8–O14）之上。本版落实同仓 monorepo 摩擦优化 **M1–M6**（跨仓 O15–O19 明确不在范围）：

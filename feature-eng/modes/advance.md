@@ -42,3 +42,4 @@
 - 审核员只写 `审核-<stage>.md`。
 - 自动调起 ≠ 替用户 yes 硬闸。
 - 设计确认后 → [domain-bridge.md](domain-bridge.md)；开干后 → [proto-bridge.md](proto-bridge.md)。
+- **证据条**：写 `gates.*` ISO 前，回链 `authorized_by` 合法且适用环 `审核-<stage>.md` 已落盘（`chef_mode=controller_proxy` 不豁免）。机检：`node scripts/gate-evidence.mjs`。

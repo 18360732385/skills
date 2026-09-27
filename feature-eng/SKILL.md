@@ -1,15 +1,15 @@
 ---
 name: feature-eng
 description: >-
-  开发流程控制器：分诊 S/B/F · 按环节调度已绑定子 skill · 维护 runs 进度 · 验产物过闸。
-  本身不做具体开发工作。仅用户点名使用。
+  Use when the user explicitly names feature-eng, or asks to run
+  init/start/resume/advance/close for a docs/runs topic under this skill.
 disable-model-invocation: true
 ---
 
 # feature-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.9-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
-**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/feature.mjs`（`modes` / `status`）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.10-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
+**Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/feature.mjs`（`modes` / `status`）。闸门证据：`node scripts/gate-evidence.mjs`。
 
 Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](modes/stages.md)；产物形状见 [artifacts.md](modes/artifacts.md)（L1）；环间语义见 [gates-review.md](modes/gates-review.md)（L2）；环节与 skill **解耦**，运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（init/rebind **首问**可改；见 [binding.md](modes/binding.md)）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。  
 拓扑：`modes/` 模式规格 · `config/` 绑定 SSOT · `templates/` 过程态骨架 · `scripts/feature.mjs` 薄 CLI。
@@ -29,6 +29,35 @@ Skill = **开发流程仪式（控制器）**。流程定稿见 [stages.md](mode
 | **L2 审核** | 仅 `审核-<stage>.md` | `progress.yaml`、`回链.md`、领域正文、业务代码 |
 
 硬轨：跳过硬闸或伪造勾选；未完成首问就写盘/改绑；厨师/审核员代写 progress/`回链.md`；替用户 yes 硬闸。自动调起 ≠ 跳过硬闸。
+
+### 闸门证据条（0.2.10）
+
+写任何 `gates.*` ISO 时间戳之前须同时成立：
+
+1. 回链「硬闸授权」表有对应行，且 `authorized_by` 仅为 `user_chat` | `user_task_<id>` | `policy_exception`
+2. 适用环已落盘 `审核-<stage>.md` 且含 `result: pass|fail`（映射见 [gates-common.md](modes/gates-common.md) / `scripts/gate-evidence.mjs`）
+
+`chef_mode=controller_proxy` **不豁免**上述证据条——与 `bound` 同级。机检：`node scripts/gate-evidence.mjs --cwd <仓根> --slug <slug>`。
+
+### 红旗 — STOP
+
+- 把「用户：确认」多轮假对话写入 `authorized_by`
+- 声称环完成但跳过 L2 / 不写 `审核-<stage>.md`
+- `controller_proxy` 当作可跳过 advance / 硬闸的许可证
+- 只读 YAML `description` 或 SKILL 前几段就开干，不 Read `modes/`
+- 金样/旧夹具「审核文件可不落盘」——已废除；以本版证据条为准
+
+**出现任一条：停写 gates；先补证据。**
+
+### 合理化表
+
+| 借口 | 现实 |
+|---|---|
+| 「赶时间，L2 以后补」 | 无 `审核-<stage>.md` 不得写推进闸时间戳 |
+| 「用户肯定会同意，先填确认」 | 假 transcript 非法；等真实短确认或 `user_task_<id>` |
+| 「proxy 模式我兼代厨师，闸也可以省」 | proxy 只改厨师帽；证据条与 bound 相同 |
+| 「description 已经写了流程」 | description 只触发加载；流程以 modes 为准 |
+| 「夹具说审核文件可不落盘」 | 0.2.10 起金样必须落盘；演戏闸 FAIL |
 
 ## 模式分流
 

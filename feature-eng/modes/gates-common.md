@@ -25,7 +25,9 @@
 | `user_task_<id>` | 任务级授权码（如 `user_task_2026-09-21`）；批量/无人值守任务用此，**不**伪造聊天 |
 | `policy_exception` | 策略例外（须在备注写清依据） |
 
-**禁止**：把「看起来像对话」的假 transcript / 占位笔录（含伪造的「用户：确认」多轮对话）写入授权证据。校验器 / selfcheck 拒绝此类占位。
+**禁止**：把「看起来像对话」的假 transcript / 占位笔录（含伪造的「用户：确认」多轮对话）写入授权证据。校验器 / selfcheck / `scripts/gate-evidence.mjs` 拒绝此类占位。
+
+**证据机检（0.2.10）**：凡 `progress.gates.<name>` 为 ISO，回链本表须有对应行且 `authorized_by` 合法；下列闸另须主题根存在审核文件且含 `result: pass|fail`——`shared_understanding`→`审核-grill.md`，`design_confirmed`→`审核-design.md`，`go`→`审核-plan.md`，`gate`→`审核-gate.md`，`verify`→`审核-verify.md`。`triage` / `pre_impl` / `close` 不要求完整 L2 文件，但仍要合法授权。`controller_proxy` 不豁免。
 
 ## review_policy 降级备注（O5）
 

@@ -1,0 +1,50 @@
+# feature-eng fixture：闸门演戏负例（ISO gates 已写但证据无效）
+slug: "2026-09-27-gate-theater-bad"
+title: "gate-theater-bad 夹具"
+created_at: "2026-09-27"
+updated_at: "2026-09-27T10:00:00+08:00"
+
+path: bounded
+run_mode: guided
+invoke: strict
+handoff_policy: confirm
+review_policy: subagent
+chef_mode: bound
+stage: plan
+
+domain: skipped
+proto: null
+
+artifacts:
+  adr: []
+  spec: "docs/superpowers/specs/2026-09-27-gate-theater-bad-设计.md"
+  plan: "docs/superpowers/plans/2026-09-27-gate-theater-bad-实施计划.md"
+  proto: null
+  context_delta: null
+  testcases: null
+  test_report: null
+  qa_report: null
+
+tasks:
+  - id: T1
+    title: "夹具任务"
+    depends_on: []
+    status: pending
+
+gates:
+  triage: "2026-09-27T09:00:00+08:00"
+  shared_understanding: "2026-09-27T09:30:00+08:00"
+  design_confirmed: "2026-09-27T10:00:00+08:00"
+  go: null
+  pre_impl: null
+  gate: null
+  verify: null
+  close: null
+
+env_verified: null
+env_notes: null
+layout: null
+packages: null
+docs_root: "docs/"
+sibling_repos: null
+accepted_residual: null

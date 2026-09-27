@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.9-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.10-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 模式文件 · feature.mjs 薄 CLI · 11 绑定键非空 · example 对齐 · 模板 ·
  * SKILL 边界 · 禁根 CONTEXT · AGENT-INDEX · QUICKSTART · truncate-contracts ·
  * status-scan · close_pitfalls · CHANGELOG · fixtures（init / progress-bad / advance-gate /
- * bindings-bad / close-ready）。
+ * bindings-bad / close-ready / gate-theater-bad）· gate-evidence。
  */
 import fs from "fs";
 import path from "path";
@@ -31,7 +31,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.9-dev";
+const PIN = "0.2.10-dev";
 
 const MODES = [
   "modes/init.md",
@@ -329,8 +329,12 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
+  changelog != null && /^##\s+0\.2\.10-dev\b/m.test(changelog),
+  "CHANGELOG has ## 0.2.10-dev heading"
+);
+assert(
   changelog != null && /^##\s+0\.2\.9-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.2.9-dev heading"
+  "CHANGELOG retains ## 0.2.9-dev heading"
 );
 assert(
   changelog != null && /^##\s+0\.2\.8-dev\b/m.test(changelog),
@@ -845,6 +849,29 @@ assert(
   /CONTEXT\.md/.test(advHuilian) && /禁止/.test(advHuilian),
   "advance-gate 回链 bans root CONTEXT.md"
 );
+assert(/## 硬闸授权/.test(advHuilian), "advance-gate 回链 has 硬闸授权");
+assert(
+  /authorized_by/.test(advHuilian) && /user_chat/.test(advHuilian),
+  "advance-gate 回链 has legal authorized_by"
+);
+assert(
+  !/可不落盘/.test(advHuilian),
+  "advance-gate 回链 no longer allows missing L2 files"
+);
+assert(
+  exists(`${FIX_ADV}/docs/runs/active/${ADV_SLUG}/审核-grill.md`),
+  "advance-gate has 审核-grill.md"
+);
+assert(
+  exists(`${FIX_ADV}/docs/runs/active/${ADV_SLUG}/审核-design.md`),
+  "advance-gate has 审核-design.md"
+);
+assert(
+  /result:\s*pass/i.test(
+    read(`${FIX_ADV}/docs/runs/active/${ADV_SLUG}/审核-design.md`) || ""
+  ),
+  "advance-gate 审核-design.md has result: pass"
+);
 
 const scanAdv = spawnSync(process.execPath, [scanBin], {
   cwd: path.join(skillRoot, FIX_ADV),
@@ -1305,6 +1332,98 @@ assert(/M1|layout/.test(changelog || ""), "CHANGELOG mentions M1/layout");
 assert(/## 0\.2\.8-dev/.test(changelog || ""), "CHANGELOG retains ## 0.2.8-dev (end block)");
 assert(/monorepo-layout-shape/.test(fixReadme), "fixtures README lists monorepo-layout-shape");
 assert(/verify_commands|workdir_policy/.test(fixReadme), "fixtures README mentions M2/M5 fields");
+
+// 0.2.10-dev：闸门证据
+assert(exists("scripts/gate-evidence.mjs"), "0.2.10 gate-evidence.mjs exists");
+const gateEvBin = path.join(skillRoot, "scripts/gate-evidence.mjs");
+const FIX_THEATER = "scripts/fixtures/gate-theater-bad";
+const THEATER_SLUG = "2026-09-27-gate-theater-bad";
+assert(exists(FIX_THEATER), "gate-theater-bad fixture dir exists");
+assert(
+  exists(`${FIX_THEATER}/docs/runs/active/${THEATER_SLUG}/progress.yaml`),
+  "gate-theater-bad progress exists"
+);
+assert(
+  exists(`${FIX_THEATER}/docs/runs/active/${THEATER_SLUG}/回链.md`),
+  "gate-theater-bad 回链 exists"
+);
+assert(/gate-theater-bad/.test(fixReadme), "fixtures README lists gate-theater-bad");
+assert(/gate-evidence/.test(verify + readme + skill), "VERIFY/README/SKILL mention gate-evidence");
+assert(/证据条|红旗|合理化表/.test(skill || ""), "SKILL has 证据条/红旗/合理化表");
+assert(
+  /controller_proxy/.test(skill || "") && /不豁免/.test(skill || ""),
+  "SKILL: controller_proxy 不豁免证据条"
+);
+assert(/证据条|gate-evidence/.test(advance || ""), "advance.md mentions 证据条");
+assert(/gate-evidence|证据机检/.test(gatesCommon || ""), "gates-common mentions gate-evidence");
+assert(/证据条|gate-evidence/.test(quick || ""), "QUICKSTART mentions 证据条");
+
+const fmMatch = (skill || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
+const fm = fmMatch ? fmMatch[1] : "";
+assert(
+  /Use when/i.test(fm) && !/分诊 S\/B\/F/.test(fm),
+  "SKILL description is trigger-only (SDO)"
+);
+const geAdv = spawnSync(
+  process.execPath,
+  [gateEvBin, "--cwd", path.join(skillRoot, FIX_ADV), "--slug", ADV_SLUG],
+  { encoding: "utf8" }
+);
+assert(geAdv.status === 0, "gate-evidence on advance-gate exit 0");
+assert(/PASS/.test(`${geAdv.stdout || ""}`), "gate-evidence advance-gate prints PASS");
+
+const geClose = spawnSync(
+  process.execPath,
+  [
+    gateEvBin,
+    "--cwd",
+    path.join(skillRoot, FIX_CLOSE),
+    "--slug",
+    CLOSE_SLUG,
+  ],
+  { encoding: "utf8" }
+);
+assert(geClose.status === 0, "gate-evidence on close-ready exit 0");
+
+const geTheaterFail = spawnSync(
+  process.execPath,
+  [
+    gateEvBin,
+    "--cwd",
+    path.join(skillRoot, FIX_THEATER),
+    "--slug",
+    THEATER_SLUG,
+  ],
+  { encoding: "utf8" }
+);
+assert(
+  geTheaterFail.status !== 0,
+  "gate-evidence on gate-theater-bad exits non-zero"
+);
+const geTheaterExpect = spawnSync(
+  process.execPath,
+  [
+    gateEvBin,
+    "--cwd",
+    path.join(skillRoot, FIX_THEATER),
+    "--slug",
+    THEATER_SLUG,
+    "--expect-fail",
+  ],
+  { encoding: "utf8" }
+);
+assert(
+  geTheaterExpect.status === 0,
+  "gate-evidence --expect-fail on gate-theater-bad exit 0"
+);
+assert(
+  /EXPECT-FAIL OK|fake transcript|missing.*审核/.test(
+    `${geTheaterExpect.stdout || ""}${geTheaterExpect.stderr || ""}`
+  ),
+  "gate-theater-bad reports fake transcript or missing review"
+);
+assert(/## 0\.2\.10-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.10-dev block");
+assert(/gate-evidence|闸门证据/.test(changelog || ""), "CHANGELOG mentions gate-evidence");
 
 // --- report ---
 const total = ok.length + fail.length;
