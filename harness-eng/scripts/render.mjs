@@ -228,6 +228,71 @@ function scanPomModules(root) {
   return [...new Set(mods)];
 }
 
+/**
+ * Spring 分册 Maven 命令：有根聚合 pom（含 &lt;module&gt;）→ -pl；否则 → -f &lt;module&gt;。
+ * @returns {{ test: string, run: string, note: string, forbid: string }}
+ */
+function mavenCmdsForModule(root, moduleDir) {
+  const dir = String(moduleDir || ".").replace(/\\/g, "/").replace(/\/$/, "") || ".";
+  const hasRootPom = fs.existsSync(path.join(root, "pom.xml"));
+  const isReactor = hasRootPom && scanPomModules(root).length > 0;
+  if (isReactor) {
+    return {
+      test: `mvn -pl ${dir} -am test`,
+      run: `mvn -pl ${dir} spring-boot:run -Dspring-boot.run.profiles=dev`,
+      note: "Maven 命令**必须在仓库根**执行（reactor / `${revision}` 等只从根解析）",
+      forbid: `\`mvn -pl ${dir} -am spring-boot:run\`（正确：不加 \`-am\`；Maven 必须在仓库根）`,
+    };
+  }
+  const fArg = dir === "." ? "pom.xml" : `${dir}/pom.xml`;
+  return {
+    test: `mvn -f ${fArg} test`,
+    run: `mvn -f ${fArg} spring-boot:run -Dspring-boot.run.profiles=dev`,
+    note: "本仓**无根聚合 pom**（或根 pom 无 `<module>`）；用 `mvn -f <module>/pom.xml`，勿假设 `-pl` / 仓库根 reactor",
+    forbid: `勿使用 \`mvn -pl ${dir}\`（无根聚合时必失败）；改用 \`mvn -f ${fArg}\``,
+  };
+}
+
+const SPRING_DB_BLOCK_ENABLED = `### 各环境库名（骨架）
+
+| Profile | 配置文件 | MySQL 库名 |
+|---|---|---|
+| local / dev / test / uat / … | TODO(harness-eng) | TODO(harness-eng): 勿硬编码单一库名 |
+
+## 库表迁移
+
+- 迁移模式：TODO(harness-eng): flyway / manual_sql / none（与 \`docs/db/db.md\` 声明一致）
+- **禁止**修改已发布迁移脚本；新变更只追加下一版本
+- manual_sql 模式：发版 / 新环境须人工按序执行；勿伪造 \`flyway_schema_history\`
+- 版本号 SSOT：TODO(harness-eng): 迁移目录与命名约定（勿采信 plan 正文「当前最高 Vn」）
+`;
+
+const SPRING_DB_BLOCK_DISABLED = `> 本仓未启用 \`db\` 契约域；各环境库名表与迁移节省略。启用 db 域后补齐并同步 \`docs/db/\`。
+`;
+
+/** .githooks/* 与 *.sh 写盘后设可执行位（Unix；Windows 上尽力而为，git index 见 ladder 自检）。 */
+function maybeChmodExecutable(abs, targetRel) {
+  const rel = String(targetRel || "").replace(/\\/g, "/");
+  const base = path.basename(rel);
+  const isHook =
+    rel.startsWith(".githooks/") ||
+    /\.sh$/i.test(rel) ||
+    base === "pre-commit" ||
+    base === "commit-msg" ||
+    base === "pre-push";
+  if (!isHook) return;
+  try {
+    fs.chmodSync(abs, 0o755);
+  } catch {
+    /* Windows / 只读盘：忽略；ladder 自检会提示 git update-index --chmod=+x */
+  }
+}
+
+function writeRenderedFile(abs, content, targetRel) {
+  fs.writeFileSync(abs, content, "utf8");
+  maybeChmodExecutable(abs, targetRel);
+}
+
 function ensureYamlListPlaceholders(params, placeholders) {
   const ph = { ...placeholders };
   if (Array.isArray(params.domains)) {
@@ -650,15 +715,37 @@ function expandFromManifest(manifestPath, params, root) {
           : params.module_agents_template === "frontend"
             ? "agents/AGENTS.module.frontend.md.tmpl"
             : e.template;
+      const domainsLower = new Set(
+        [...domains].map((d) => String(d).toLowerCase())
+      );
+      const dbEnabled = domainsLower.has("db");
       for (const dir of moduleDirs) {
         const name = path.basename(dir);
         const target = `${dir}/AGENTS.md`;
+        const maven =
+          params.module_agents_template === "spring"
+            ? mavenCmdsForModule(root, dir)
+            : null;
         files.push({
           id: e.id,
           template: moduleTmpl,
           target,
           action: actionForTarget(target, e.id, e),
-          placeholders_extra: { MODULE_DIR: dir, MODULE_NAME: name },
+          placeholders_extra: {
+            MODULE_DIR: dir,
+            MODULE_NAME: name,
+            ...(maven
+              ? {
+                  MAVEN_TEST_CMD: maven.test,
+                  MAVEN_RUN_CMD: maven.run,
+                  MAVEN_DISCIPLINE_NOTE: maven.note,
+                  MAVEN_FORBID_LINE: maven.forbid,
+                  SPRING_DB_BLOCK: dbEnabled
+                    ? SPRING_DB_BLOCK_ENABLED
+                    : SPRING_DB_BLOCK_DISABLED,
+                }
+              : {}),
+          },
         });
       }
       continue;
@@ -1062,7 +1149,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
 
   if (action === "replace") {
     ensureDir(abs);
-    fs.writeFileSync(abs, rendered, "utf8");
+    writeRenderedFile(abs, rendered, targetRel);
     log.push({
       target: targetRel,
       action: "replace",
@@ -1075,7 +1162,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   if (action === "create") {
     if (exists) throw new Error(`create refused: ${targetRel} already exists (use merge/skip/backup-create)`);
     ensureDir(abs);
-    fs.writeFileSync(abs, rendered, "utf8");
+    writeRenderedFile(abs, rendered, targetRel);
     log.push({
       target: targetRel,
       action: "create",
@@ -1092,7 +1179,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       log.push({ target: targetRel, action: "backup", status: "ok", backup: path.basename(bak) });
     }
     ensureDir(abs);
-    fs.writeFileSync(abs, rendered, "utf8");
+    writeRenderedFile(abs, rendered, targetRel);
     log.push({
       target: targetRel,
       action: "backup-create",
@@ -1105,7 +1192,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   if (action === "merge") {
     if (!exists) {
       ensureDir(abs);
-      fs.writeFileSync(abs, rendered, "utf8");
+      writeRenderedFile(abs, rendered, targetRel);
       log.push({
         target: targetRel,
         action: "merge",
@@ -1119,7 +1206,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       const lines = rendered.split(/\r?\n/).filter((l) => l.trim() && !cur.includes(l));
       if (lines.length) {
         const next = cur.replace(/\s*$/, "") + "\n\n" + lines.join("\n") + "\n";
-        fs.writeFileSync(abs, next, "utf8");
+        writeRenderedFile(abs, next, targetRel);
         log.push({ target: targetRel, action: "merge", status: "appended-lines", count: lines.length });
       } else {
         log.push({ target: targetRel, action: "merge", status: "noop" });
@@ -1140,7 +1227,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       merged = mergeMarkdown(cur, rendered, isMdc);
       log.push({ target: targetRel, action: "merge", status: "merged", mergePreview });
     }
-    fs.writeFileSync(abs, merged, "utf8");
+    writeRenderedFile(abs, merged, targetRel);
     const unresolvedMerged = findUnresolvedPlaceholders(merged);
     if (unresolvedMerged.length) {
       log[log.length - 1].unresolvedPlaceholders = unresolvedMerged;
@@ -1173,6 +1260,13 @@ function main() {
   const agentConfig = resolveAgentConfig(params);
   if (placeholders.AGENT_CONFIG == null) {
     placeholders.AGENT_CONFIG = agentConfig ? "true" : "false";
+  }
+  if (placeholders.GATE_PROFILE == null) {
+    const gp =
+      params.gate_profile ||
+      params.placeholders?.GATE_PROFILE ||
+      "strict";
+    placeholders.GATE_PROFILE = String(gp);
   }
   const rulehook = resolveRulehook(params, root);
   params.rulehook = rulehook;

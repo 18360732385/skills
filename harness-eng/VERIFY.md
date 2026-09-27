@@ -1,23 +1,61 @@
-# harness-eng 验收记录（0.7.16）
+# harness-eng 验收记录（0.7.19）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.16**（docs/runs 入图 + rule 18 中途 commit；其上 0.7.15 消歧接力 · 0.7.14 报告壳 0.4.0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.19**（批 D2–D4：delivery-checklist · rule 18 时机 · refresh；其上 0.7.18 批 B · 0.7.17 批 A · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.19 增量验收（批 D2–D4）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.19` | 有 |
+| CHANGELOG 标题 `## 0.7.19`（delivery-checklist / refresh / rule 18） | 有 |
+| `templates/docs/agent-kb/delivery-checklist.md` + manifest `kb-delivery-checklist` | 有 |
+| rule 00/18/19、AGENTS 指针到 delivery-checklist | 有 |
+| `harness.mjs --mode refresh`（exit 0/2/1） | 有 |
+| upgrade `## 0.7.18 → 0.7.19` | 有 |
+| sync tmpl id `0.7.19` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.18 增量验收（批 B：分发安全 + 就绪可信）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.18` | 有（历史钉；现行见 0.7.19） |
+| CHANGELOG 标题 `## 0.7.18`（C1/C9/F14） | 有 |
+| sync skills 目录：`harness-managed.json` + unmanaged 不删 | 有 |
+| `fill-score` `coverage_source`；缺 inventory 可 rescanned | 有 |
+| `--output` 相对 `--root` | 有 |
+| upgrade `## 0.7.17 → 0.7.18` | 有 |
+| sync tmpl id `0.7.18`（历史）/ 现行 `0.7.19` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.17 增量验收（批 A：L5/land 独立 P0）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.17` | 有 |
+| CHANGELOG 标题 `## 0.7.17`（F3/F9/F10/F15/F17） | 有 |
+| `ladderOrd` 含 L5；未知阶抛错 | 有 |
+| manifest `files` 含 `score-policy`（L1）；meta 有 `gate_profile` | 有 |
+| `extractEvidence` 认全角 `evidence：` | 有 |
+| render 对 `.githooks/*` 调 `chmodSync`；ladder 查可执行位 | 有 |
+| Spring 分册 `mavenCmdsForModule`：无根聚合 → `mvn -f` | 有 |
+| upgrade `## 0.7.16 → 0.7.17` | 有 |
+| sync tmpl id `0.7.17` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.16 增量验收（docs/runs 入图 + rule 18 中途 commit）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.16` | 有 |
 | CHANGELOG 标题 `## 0.7.16` | 有 |
 | AGENTS tmpl（root + solo）含 `docs/runs` | 有 |
 | rule 00 含 `docs/runs` 与交付双归档 / 中途 commit | 有 |
 | rule 18 含进行中可中途 commit、禁止假收口、交付双归档 | 有 |
 | upgrade `## 0.7.15 → 0.7.16` | 有 |
-| sync tmpl id `0.7.16` | 有 |
-| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.15 增量验收（与 feature-eng 消歧与接力）
 

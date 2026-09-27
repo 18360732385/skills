@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.16
- * HARNESS_ENG_VERSION: 0.7.16
+ * HARNESS_SYNC_TMPL_ID: 0.7.19
+ * HARNESS_ENG_VERSION: 0.7.19
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -23,10 +23,13 @@
  * - 协议族：cursor → hooks.json（Cursor 事件）；claude/qoder/workbuddy → settings.json hooks
  *   （Claude 系）；trae → .trae/hooks.json。均经 claude-adapter 翻译统一脚本。
  *   Codex 族：.codex/hooks.json + codex-adapter.js。
- * - 托管 rules 目录（.cursor/.trae/.qoder/.claude/.codebuddy/rules）里不在本脚本 plan
+ * - 托管 rules / hooks 目录（.cursor/.trae/.qoder/.claude/.codebuddy/…）里不在本脚本 plan
  *   的文件会被当 stale 清理。这是故意的：L3+/L5 全量镜像宿主不再写 1x-contract-sync.md；
  *   宿主侧 00-harness-ssot 孤儿也不属于 plan（由 SSOT docs/agent-config/rules/00-harness-ssot.mdc
  *   分发）。缺 00 时先 land/render 把 SSOT 指针写上再 sync，勿 git restore 宿主孤儿。
+ * - 托管 **skills** 目录（`.cursor/skills` 等）：只 prune 上次清单
+ *   （`<skillsDir>/.harness-managed.json`）里、且本次已不在 plan 的文件；清单外用户自建
+ *   skill 只 warn / `--check` 报 unmanaged，**不删除**（与 `.agents/skills` 不 prune 用户自建同精神）。
  * - CodeBuddy 0.6.4：rules 改为扁平 `.codebuddy/rules/<stem>.md`（保留 FM）。旧布局
  *   `.codebuddy/rules/<name>/RULE.mdc` 及空目录会在托管前缀下被 prune（故意迁移清理）。
  * - 不生成 settings.local.json / .codebuddy/agents/（非目标）。hooks 改 settings.json 后须在
@@ -39,8 +42,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.16";
-const HARNESS_ENG_VERSION = "0.7.16";
+const HARNESS_SYNC_TMPL_ID = "0.7.19";
+const HARNESS_ENG_VERSION = "0.7.19";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = {{AI_TOOLS_JSON}};
@@ -584,28 +587,78 @@ function planClaudeMd() {
 
 // ---------- 写盘 / 校验 ----------
 
+/** rules/hooks：全量镜像，plan 外一律 stale。skills：见 SKILLS_DIRS。 */
 const MANAGED_DIRS = [
   has("cursor") && ".cursor/rules",
   has("cursor") && ".cursor/hooks",
-  has("cursor") && ".cursor/skills",
   has("qoder") && ".qoder/rules",
   has("qoder") && ".qoder/hooks",
-  has("qoder") && ".qoder/skills",
   has("claude") && ".claude/rules",
   has("claude") && ".claude/hooks",
-  has("claude") && ".claude/skills",
   has("trae") && ".trae/rules",
   has("trae") && ".trae/hooks",
-  has("trae") && ".trae/skills",
   has("workbuddy") && ".codebuddy/rules",
   has("workbuddy") && ".codebuddy/hooks",
-  has("workbuddy") && ".codebuddy/skills",
   has("codex") && ".codex/hooks",
   has("codex") && ".codex/rules",
 ].filter(Boolean);
 
-function staleFiles() {
+/** skills：只 prune `.harness-managed.json` 清单内且已不在 plan 的文件 */
+const SKILLS_DIRS = [
+  has("cursor") && ".cursor/skills",
+  has("qoder") && ".qoder/skills",
+  has("claude") && ".claude/skills",
+  has("trae") && ".trae/skills",
+  has("workbuddy") && ".codebuddy/skills",
+].filter(Boolean);
+
+const MANAGED_JSON = ".harness-managed.json";
+
+function managedJsonRel(dir) {
+  return `${dir}/${MANAGED_JSON}`;
+}
+
+function loadPrevManaged(dir) {
+  const abs = path.join(ROOT, dir, MANAGED_JSON);
+  if (!fs.existsSync(abs)) return [];
+  try {
+    const j = JSON.parse(fs.readFileSync(abs, "utf8"));
+    return Array.isArray(j.files) ? j.files.map((f) => String(f).replace(/\\/g, "/")) : [];
+  } catch {
+    return [];
+  }
+}
+
+function planFilesInDir(dir) {
+  const prefix = dir + "/";
+  return [...plan.keys()]
+    .filter((rel) => rel === dir || rel.startsWith(prefix))
+    .filter((rel) => !rel.endsWith("/" + MANAGED_JSON) && rel !== managedJsonRel(dir))
+    .sort();
+}
+
+/** 把各 skills 目录的托管清单写入 plan（供 --check 与写盘） */
+function planSkillsManagedManifests() {
+  for (const dir of SKILLS_DIRS) {
+    const files = planFilesInDir(dir);
+    const body =
+      JSON.stringify(
+        {
+          version: 1,
+          generator: "scripts/agent-config/sync.mjs",
+          harness_eng_version: HARNESS_ENG_VERSION,
+          files,
+        },
+        null,
+        2
+      ) + "\n";
+    put(managedJsonRel(dir), body);
+  }
+}
+
+function classifyHostFiles() {
   const stale = [];
+  const unmanaged = [];
   for (const dir of MANAGED_DIRS) {
     const abs = path.join(ROOT, dir);
     if (!fs.existsSync(abs)) continue;
@@ -614,7 +667,19 @@ function staleFiles() {
       if (!plan.has(rel)) stale.push(rel);
     }
   }
-  return stale;
+  for (const dir of SKILLS_DIRS) {
+    const abs = path.join(ROOT, dir);
+    if (!fs.existsSync(abs)) continue;
+    const prev = new Set(loadPrevManaged(dir));
+    for (const file of walk(abs)) {
+      const rel = path.relative(ROOT, file).split(path.sep).join("/");
+      if (plan.has(rel)) continue;
+      if (rel === managedJsonRel(dir)) continue;
+      if (prev.has(rel)) stale.push(rel);
+      else unmanaged.push(rel);
+    }
+  }
+  return { stale, unmanaged };
 }
 
 /** 文本比对忽略 CRLF/LF（Windows autocrlf / HEADER 注入混用时避免假漂移） */
@@ -637,13 +702,13 @@ function apply() {
       fs.writeFileSync(abs, content);
     }
   }
-  const stale = staleFiles();
+  const { stale, unmanaged } = classifyHostFiles();
   if (!CHECK_ONLY) {
-    for (const rel of stale) fs.rmSync(path.join(ROOT, rel));
+    for (const rel of stale) fs.rmSync(path.join(ROOT, rel), { force: true });
     // 迁出旧 RULE.mdc 目录后清掉空文件夹（尤其 .codebuddy/rules/<name>/）
-    for (const dir of MANAGED_DIRS) pruneEmptyDirs(dir);
+    for (const dir of [...MANAGED_DIRS, ...SKILLS_DIRS]) pruneEmptyDirs(dir);
   }
-  return { diffs, stale };
+  return { diffs, stale, unmanaged };
 }
 
 function pruneEmptyDirs(relDir) {
@@ -667,18 +732,33 @@ planCodexRules();
 planSettings();
 planSkills();
 planClaudeMd();
+planSkillsManagedManifests();
 
-const { diffs, stale } = apply();
+const { diffs, stale, unmanaged } = apply();
 if (CHECK_ONLY) {
+  if (unmanaged.length) {
+    console.error(`[agent-config] unmanaged（skills 清单外，不删除） ${unmanaged.length} 处：`);
+    for (const f of unmanaged) console.error(`  - ${f} (unmanaged)`);
+  }
   if (diffs.length || stale.length) {
     console.error(`[agent-config] 漂移 ${diffs.length} 处，过期文件 ${stale.length} 处：`);
     for (const f of [...diffs, ...stale.map((s) => s + " (stale)")]) console.error(`  - ${f}`);
     console.error("请执行：node scripts/agent-config/sync.mjs");
     process.exit(1);
   }
-  console.log(`[agent-config] 无漂移（${plan.size} 个生成物与 SSOT 一致；${HARNESS_SYNC_TMPL_ID}/${HARNESS_ENG_VERSION}）`);
+  if (unmanaged.length) {
+    console.log(
+      `[agent-config] 无漂移（${plan.size} 个生成物与 SSOT 一致；${unmanaged.length} 个 unmanaged 已提示；${HARNESS_SYNC_TMPL_ID}/${HARNESS_ENG_VERSION}）`
+    );
+  } else {
+    console.log(`[agent-config] 无漂移（${plan.size} 个生成物与 SSOT 一致；${HARNESS_SYNC_TMPL_ID}/${HARNESS_ENG_VERSION}）`);
+  }
 } else {
+  if (unmanaged.length) {
+    console.error(`[agent-config] unmanaged（skills 清单外，已保留） ${unmanaged.length} 处：`);
+    for (const f of unmanaged) console.error(`  - ${f}`);
+  }
   console.log(
-    `[agent-config] 生成完成：写入 ${diffs.length} 个文件，清理 ${stale.length} 个过期文件，共管理 ${plan.size} 个生成物`
+    `[agent-config] 生成完成：写入 ${diffs.length} 个文件，清理 ${stale.length} 个过期文件，保留 unmanaged ${unmanaged.length}，共管理 ${plan.size} 个生成物`
   );
 }

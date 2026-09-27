@@ -24,8 +24,9 @@
 
 - [ ] `docs/runs/active/<slug>/progress.yaml` 存在
 - [ ] `path` 为 `spike|bounded|full`（用户已确认后写入）
-- [ ] `run_mode` 为 `guided|express`；`invoke` 为 `strict|inline`
+- [ ] `run_mode` 为 `guided|express|unattended`；`invoke` 为 `strict|inline`
 - [ ] `handoff_policy` 为 `auto|confirm`；`review_policy` 为 `subagent|inline`
+- [ ] 若 `run_mode=unattended`：回链「仪式与降级」含集中降级备注；硬闸 `authorized_by` 为 `user_task_<id>` 或 `policy_exception`
 - [ ] `chef_mode` 为 `bound|controller_proxy`（start 探测后写入）
 - [ ] `sibling_repos` 为 `null` 或非空列表（用户提跨仓配对时非空；见 O8）
 - [ ] `layout` 为 `null|monorepo|multi_repo`；`packages` 为 `null` 或 `[{ path, role: api|web|other }]`；`docs_root` 默认 `docs/`（M1）

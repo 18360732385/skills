@@ -37,8 +37,12 @@ function loadAnswers(raw) {
 }
 
 function ladderOrd(l) {
-  const m = { L0: 0, L1: 1, L2: 2, L3: 3, L4: 4 };
-  return m[l] ?? -1;
+  const m = { L0: 0, L1: 1, L2: 2, L3: 3, L4: 4, L5: 5 };
+  if (l == null || l === "") return 0;
+  if (!(l in m)) {
+    throw new Error(`Unknown ladder: ${l} (expected L0–L5)`);
+  }
+  return m[l];
 }
 
 function evalWhen(expr, ctx) {

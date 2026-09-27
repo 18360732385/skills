@@ -1,9 +1,9 @@
-# Agent 热路径索引
+﻿# Agent 热路径索引
 
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。
 
-**拓扑（0.2.15-dev）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
+**拓扑（0.2.17-dev）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
 
 ## 必读（写盘 / 调起前）≤6 文件
 
@@ -21,6 +21,7 @@
 | 何时 | Read / 跑 |
 |---|---|
 | 一页纸 | [QUICKSTART.md](QUICKSTART.md) |
+| 绑定 SSOT（目标仓） | `docs/runs/stage-bindings.yaml`（init/rebind；技能包 config/ 为种子） |
 | 推荐包 / minimal | [stage-bindings.example.yaml](config/stage-bindings.example.yaml) · [stage-bindings.minimal.yaml](config/stage-bindings.minimal.yaml) |
 | 模板 | `templates/` |
 | modes 索引 | [modes/README.md](modes/README.md) · `node scripts/feature.mjs modes` |

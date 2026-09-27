@@ -361,8 +361,10 @@ function scanOneModule(
   controllerRootArg,
   shardSize,
   outOverride,
-  excludeBase = DEFAULT_EXCLUDE_BASE
+  excludeBase = DEFAULT_EXCLUDE_BASE,
+  opts = {}
 ) {
+  const write = opts.write !== false;
   let controllerRoot = controllerRootArg
     ? path.resolve(root, controllerRootArg)
     : guessControllerRoot(root, moduleName);
@@ -435,6 +437,9 @@ function scanOneModule(
     },
   };
 
+  if (!write) {
+    return report;
+  }
   const outPath = path.resolve(
     outOverride || defaultInventoryPath(root, "api", moduleName || null)
   );
@@ -444,6 +449,27 @@ function scanOneModule(
     `Wrote ${outPath} module=${moduleName || "-"} endpoints=${report.stats.endpoints} shards=${report.stats.shards}`
   );
   return { ...report, outPath };
+}
+
+/**
+ * In-memory API inventory for fill-score when `.fill-work/inventory*.json` is absent
+ * (often gitignored). Does not write disk.
+ * @returns {object|null}
+ */
+export function scanApiInventoryMemory(root) {
+  const r = scanOneModule(root, null, null, 80, null, DEFAULT_EXCLUDE_BASE, {
+    write: false,
+  });
+  if (!r || r.ok === false) return null;
+  if (!Array.isArray(r.endpoints) || !r.endpoints.length) return null;
+  return {
+    ok: true,
+    root,
+    module: r.module || null,
+    endpoints: r.endpoints,
+    shards: r.shards || [],
+    sources: ["<memory-rescan>"],
+  };
 }
 
 export function main(argv = process.argv) {

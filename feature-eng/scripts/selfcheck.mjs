@@ -1,6 +1,6 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.15-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.17-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 入口 · modes/specs/ · feature.mjs · 绑定 · 模板 · lib ·
  * status-scan --cwd · gate-evidence · fixtures · CHANGELOG。
  */
@@ -13,6 +13,7 @@ import {
   isLegalAuthorizedBy,
 } from "./lib/auth.mjs";
 import {
+  RUN_MODE_ENUM,
   validateProgressEnums,
   validateMonorepoPackages,
 } from "./lib/progress-shape.mjs";
@@ -37,7 +38,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.15-dev";
+const PIN = "0.2.17-dev";
 
 const MODES = [
   "modes/init.md",
@@ -462,21 +463,25 @@ assert(
   "init.md must not unconditionally 默认代跑 sync.mjs"
 );
 assert(
-  /有.*代跑|探测.*sync|条件/.test(initMdEarly) && /无.*跳过|跳过/.test(initMdEarly),
-  "init.md sync is conditional (run if present, skip if absent)"
+  /禁止.*sync|不.*代跑.*sync|禁止代跑/.test(initMdEarly),
+  "init.md forbids harness sync.mjs"
 );
 assert(
-  /条件 sync|有.*sync\.mjs|跳过/.test(rebindMdEarly),
-  "rebind.md sync is conditional"
+  /docs\/runs\/stage-bindings\.yaml/.test(initMdEarly),
+  "init.md writes docs/runs/stage-bindings.yaml"
 );
 assert(
-  /无 sync|无则|以本 skill|以本文件为准/.test(bindingMdEarly + readme),
-  "binding/README document no-sync fallback"
+  /禁止.*sync|不.*代跑.*sync|禁止代跑/.test(rebindMdEarly),
+  "rebind.md forbids harness sync.mjs"
+);
+assert(
+  /docs\/runs\/stage-bindings\.yaml/.test(rebindMdEarly + bindingMdEarly + readme),
+  "rebind/flow/README document target-repo bindings SSOT"
 );
 const bindingsYamlHdr = (read("config/stage-bindings.yaml") || "").slice(0, 400);
 assert(
-  /存在.*sync\.mjs|否则跳过|无则/.test(bindingsYamlHdr),
-  "stage-bindings.yaml header documents conditional sync"
+  /种子|回退/.test(bindingsYamlHdr) && /禁止.*sync|sync\.mjs/.test(bindingsYamlHdr),
+  "stage-bindings.yaml header: seed/fallback + no sync"
 );
 
 // =====================================================================
@@ -1729,18 +1734,40 @@ assert(
   "binding.md links 设计笔记 tmpl"
 );
 
-// 0.2.15-dev：harness_probe + close_pitfalls 收紧；保留 0.2.14 消歧块
+// 0.2.17-dev：批 D close↔checklist/refresh；其上 0.2.16 批 C
+assert(/## 0\.2\.17-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.17-dev block");
+assert(/## 0\.2\.16-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.16-dev block");
 assert(/## 0\.2\.15-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.15-dev block");
 assert(/## 0\.2\.14-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.14-dev block");
-assert(/harness_probe|close_pitfalls/.test(changelog || ""), "CHANGELOG mentions P2 probe/pitfalls");
+assert(/delivery-checklist|harness refresh|harness_snapshot/.test(changelog || ""), "CHANGELOG mentions batch D");
+assert(/unattended|docs\/runs\/stage-bindings/.test(changelog || ""), "CHANGELOG mentions batch C");
+const closeMd = read("modes/close.md") || "";
+assert(/delivery-checklist\.md/.test(closeMd), "close.md prefers delivery-checklist");
+assert(/--mode refresh|mode refresh/.test(closeMd), "close.md calls harness refresh");
+assert(/harness_snapshot/.test(closeMd), "close.md records harness_snapshot");
+assert(/verify 之后|不是.*每次.*commit/.test(closeMd), "close.md timing after verify");
 assert(/与 harness-eng 的配合与互斥/.test(skill || ""), "SKILL has harness compat section");
 assert(/软探测|从不.*land|不阻断/.test(skill || ""), "SKILL soft probe never requires land");
+assert(/docs\/runs\/stage-bindings\.yaml/.test(skill || ""), "SKILL mentions target bindings SSOT");
 assert(/modes\/specs\/flow/.test(skill || ""), "SKILL links modes/specs/flow");
 assert(/modes\/specs\/gates/.test(skill || ""), "SKILL links modes/specs/gates");
 assert(/≤6/.test(index) || /≤6 文件/.test(index), "AGENT-INDEX says ≤6");
 assert(/harness_probe/.test(startMd), "start.md has harness_probe");
 assert(/软·不阻断|不阻断/.test(startMd) && /ai_coding_ready/.test(startMd), "start probe soft + ai_coding_ready");
 assert(/静默跳过/.test(startMd), "start probe silent without meta");
+assert(/unattended/.test(startMd), "start.md has unattended run_mode");
+assert(
+  /invoke.*inline|inline.*invoke/.test(startMd) && /handoff_policy.*auto|auto/.test(startMd),
+  "start unattended central downgrade documented"
+);
+assert(
+  /unattended/.test(read("templates/progress.yaml.tmpl") || ""),
+  "progress.tmpl mentions unattended"
+);
+assert(
+  RUN_MODE_ENUM.has("unattended"),
+  "progress-shape RUN_MODE_ENUM includes unattended"
+);
 assert(
   /lint-pitfalls\.mjs/.test(startMd) && /close_pitfalls:\s*on|close_pitfalls.*on/.test(startMd),
   "start tightens close_pitfalls to on when lint exists"

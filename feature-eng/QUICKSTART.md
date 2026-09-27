@@ -1,6 +1,6 @@
-# feature-eng 一页纸
+﻿# feature-eng 一页纸
 
-**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.15-dev**。
+**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.17-dev**。
 
 **接力**：需要工程化时先 `harness-eng` → **新会话**再点名本 skill；同会话勿并行。本 skill 可独立使用（无 harness 亦可）。有 `harness-meta` 时 `start` 会软提示 `ai_coding_ready`（可忽略继续）；详见 [SKILL.md](SKILL.md)「配合与互斥」。
 
@@ -40,9 +40,9 @@ init（首次绑 11 环；可选推荐包 / minimal）
 
 宿主未装 `stage-bindings` 所指厨师时，`start` 会强制 `chef_mode: controller_proxy`（须警告，勿静默）。也可 init 时选 **minimal** 绑定包。最小可跑完 Full：
 
-1. **绑定文件在**：`config/stage-bindings.yaml`（或先 `init`）；关键环非 null（F：`spec`/`plan`/`testdesign`/`implement`/`verify` 等）——否则 proxy。
+1. **绑定文件在**：目标仓 `docs/runs/stage-bindings.yaml`（或先 `init`；可回退技能包 `config/`）；关键环非 null（F：`spec`/`plan`/`testdesign`/`implement`/`verify` 等）——否则 proxy。
 2. **过程态**：`docs/runs/active/<slug>/{progress.yaml,回链.md}`；`chef_mode: controller_proxy` 已写入回链「仪式与降级」。
-3. **硬闸授权**：用真实 `user_task_<id>` 或 `user_chat`——**禁止伪造聊天笔录与 fixture/auto 占位**。
+3. **硬闸授权**：用真实 `user_task_<id>` 或 `user_chat`——**禁止伪造聊天笔录与 fixture/auto 占位**。批跑用 `run_mode: unattended` + `user_task_<id>`。
 4. **环间**：控制器戴厨师帽按 [gates.md](modes/specs/gates.md) L1 落盘领域产物；仍走 advance L1/L2；`review_policy` 无 Task 则显式降为 `inline`。
 5. **收口**：按 [close.md](modes/close.md) 双归档 L1 检查单（runs + superpowers/archive）。
 

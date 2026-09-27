@@ -1,6 +1,6 @@
-# harness-eng install metadata — do not put secrets here
+﻿# harness-eng install metadata — do not put secrets here
 skill: harness-eng
-skill_version: "0.7.16"
+skill_version: "0.7.19"
 # agent_config: true = L5 配置 SSOT 管线已启用（docs/agent-config/ + scripts/agent-config/sync.mjs）；生成物勿手改
 agent_config: {{AGENT_CONFIG}}
 # rulehook: true = 可选 L4 NL deny（.rulehook/rulehook.toml）；默认 false；须本机 CLI
@@ -14,6 +14,8 @@ glob_profile: "{{GLOB_PROFILE}}"
 last_mode: "{{LAST_MODE}}"
 ai_tools: {{AI_TOOLS_YAML}}
 installed_at: "{{DATE}}"
+# 开干档（与 docs/harness-eng/score-policy.yaml 的 gate_profile 对齐；裁决以 score-policy 为准）
+gate_profile: "{{GATE_PROFILE}}"
 # 开干轴（≠ domain_caps / formula_ceiling）
 ready_quality: 80
 ready_coverage: 0.8

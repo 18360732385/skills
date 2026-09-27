@@ -1,5 +1,35 @@
 # feature-eng CHANGELOG
 
+## 0.2.17-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.16-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **批 D：收口清单接力 + harness refresh**：
+
+- **close**：优先执行目标仓 `docs/agent-kb/delivery-checklist.md`；无则内建最小集
+- **harness refresh**：有 `harness-meta` 时代跑 `harness.mjs --mode refresh`；失败可标 `harness_snapshot: stale`
+- **时机**：verify 之后收口；非每次实现期 commit
+- **selfcheck / VERIFY**：PIN 0.2.17-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.17-dev | 2026-09-27 | 批 D：delivery-checklist + harness refresh 接力 |
+| 0.2.16-dev | 2026-09-27 | 批 C：绑定 SSOT→docs/runs + 禁 sync + unattended |
+| 0.2.15-dev | 2026-09-27 | P2：harness_probe + close_pitfalls 收紧 |
+| 0.2.14-dev | 2026-09-27 | P0：与 harness-eng 消歧与接力 |
+
+## 0.2.16-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.15-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **批 C：绑定解耦 + unattended**：
+
+- **绑定 SSOT**：目标仓 `docs/runs/stage-bindings.yaml`；技能包 `config/` 仅种子/回退；init/rebind **禁止**代跑 harness `sync.mjs`
+- **`run_mode: unattended`**：集中降级 `invoke→inline`、`review_policy→inline`、`handoff_policy→auto`；硬闸仅 `user_task_<id>` / `policy_exception`
+- **selfcheck / VERIFY**：PIN 0.2.16-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.16-dev | 2026-09-27 | 批 C：绑定 SSOT→docs/runs + 禁 sync + unattended |
+| 0.2.15-dev | 2026-09-27 | P2：harness_probe + close_pitfalls 收紧 |
+| 0.2.14-dev | 2026-09-27 | P0：与 harness-eng 消歧与接力 |
+
 ## 0.2.15-dev — 2026-09-27
 
 V0.6.X 开发钉。相对 0.2.14-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **P2：harness_probe + close_pitfalls 有脚本时收紧**：

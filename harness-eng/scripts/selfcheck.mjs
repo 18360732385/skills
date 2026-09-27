@@ -1,6 +1,8 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
+ * 0.7.19: 批 D2–D4（delivery-checklist · refresh）; 其上 0.7.18 批 B（sync skills unmanaged · inventory rescan · --output/--root）.
+ * 0.7.17: 批 A P0（L5 ladderOrd · score-policy land · 全角 evidence · githooks +x · Spring mvn -f）.
  * 0.7.16: docs/runs + rule18 mid-commit (+0.7.15 handoff).
  * 0.7.13: handbook rewrite (+0.7.12 guide/ / 0.7.11 dual-write / 0.7.10 compress).
  * 0.7.4: Codex hooks codex-hook.cmd + mcp__mysql + HOOK_DEFS.codex.
@@ -167,7 +169,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.7\.16"/.test(qYaml), "questions.yaml version 0.7.16");
+assert(/version:\s*"0\.7\.19"/.test(qYaml), "questions.yaml version 0.7.19");
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -213,11 +215,11 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.7\.16"/.test(manifest), "manifest 0.7.16");
+assert(/version:\s*"0\.7\.19"/.test(manifest), "manifest 0.7.19");
 const rootManifestPath = path.join(skillRoot, "_meta/manifest.yaml");
 assert(fs.existsSync(rootManifestPath), "root _meta/manifest.yaml present");
 const rootManifest = fs.readFileSync(rootManifestPath, "utf8");
-assert(/version:\s*"0\.7\.16"/.test(rootManifest), "root _meta manifest 0.7.16");
+assert(/version:\s*"0\.7\.19"/.test(rootManifest), "root _meta manifest 0.7.19");
 {
   const rv = (rootManifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
   const tv = (manifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
@@ -228,7 +230,7 @@ const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.7\.16"/.test(metaTmpl), "harness-meta 0.7.16");
+assert(/skill_version:\s*"0\.7\.19"/.test(metaTmpl), "harness-meta 0.7.19");
 assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
@@ -257,7 +259,8 @@ assert(/^## 0\.7\.0\b/m.test(changelog), "CHANGELOG 0.7.0");
 assert(/^## 0\.7\.3\b/m.test(changelog), "CHANGELOG 0.7.3");
 assert(/^## 0\.7\.4\b/m.test(changelog), "CHANGELOG 0.7.4");
 assert(/^## 0\.7\.5\b/m.test(changelog), "CHANGELOG 0.7.5");
-assert(/^## 0\.7\.16\b/m.test(changelog), "CHANGELOG 0.7.16");
+assert(/^## 0\.7\.19\b/m.test(changelog), "CHANGELOG 0.7.19");
+assert(/^## 0\.7\.16\b/m.test(changelog), "CHANGELOG keeps 0.7.16");
 assert(/^## 0\.7\.15\b/m.test(changelog), "CHANGELOG keeps 0.7.15");
 assert(/^## 0\.7\.14\b/m.test(changelog), "CHANGELOG keeps 0.7.14");
 assert(/^## 0\.7\.12\b/m.test(changelog), "CHANGELOG keeps 0.7.12");
@@ -448,7 +451,7 @@ assert(
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.7\.16）/.test(verifyMd) && /当前 \*\*0\.7\.16\*\*/.test(verifyMd), "VERIFY is 0.7.16");
+assert(/验收记录（0\.7\.19）/.test(verifyMd) && /当前 \*\*0\.7\.19\*\*/.test(verifyMd), "VERIFY is 0.7.19");
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
@@ -461,7 +464,7 @@ assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.7\.16/.test(readme), "README header version 0.7.16");
+assert(/当前版本：0\.7\.19/.test(readme), "README header version 0.7.19");
 assert(/0\.7\.4/.test(readme), "README mentions 0.7.4");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
@@ -472,13 +475,13 @@ assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 const handbookMd = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.7\.16\*\*/.test(handbookMd), "使用手册.md version 0.7.16");
-assert(/当前 \*\*0\.7\.16\*\*/.test(quickstartMd), "QUICKSTART version 0.7.16");
+assert(/版本：\*\*0\.7\.19\*\*/.test(handbookMd), "使用手册.md version 0.7.19");
+assert(/当前 \*\*0\.7\.19\*\*/.test(quickstartMd), "QUICKSTART version 0.7.19");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(fs.existsSync(path.join(skillRoot, "guide", "使用手册.html")), "使用手册.html present");
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.html"), "utf8");
-assert(/v0\.7\.16/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
+assert(/v0\.7\.19/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
 assert(
   /harness\.mjs/.test(handbookHtml) && /fill-inventory\.mjs --domain/.test(handbookHtml),
   "使用手册.html documents unified CLI"
@@ -988,8 +991,8 @@ if (fs.existsSync(fixture)) {
   );
   assert(
     /UTF-16|writeFileSync/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")) &&
-      /SKILL_VERSION:'0\.7\.16'/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")),
-    "write-plan Windows UTF-8 example pins 0.7.16"
+      /SKILL_VERSION:'0\.7\.19'/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")),
+    "write-plan Windows UTF-8 example pins 0.7.19"
   );
   const helpPlan = runNode([path.join(skillRoot, "scripts/fill-plan.mjs"), "--help"]);
   assert(helpPlan.status === 0, "fill-plan --help exits 0");
@@ -1171,7 +1174,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.7\.16"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.16");
+  assert(/version:\s*"0\.7\.19"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.19");
 }
 
 // --- 0.7.3–0.7.14: Codex hooks + Skills + MCP policy + calibrate + rulehook + docs compress/dedupe ---
@@ -1587,9 +1590,10 @@ if (fs.existsSync(fixture)) {
     path.join(skillRoot, "templates/agents/AGENTS.module.spring.md.tmpl"),
     "utf8"
   );
-  assert(/spring-boot:run/.test(spring) && /仓库根/.test(spring), "spring variant Maven discipline");
-  assert(/manual_sql/.test(spring), "spring variant mentions migration mode");
   const renderSrc = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/\{\{MAVEN_TEST_CMD\}\}/.test(spring) && /\{\{MAVEN_DISCIPLINE_NOTE\}\}/.test(spring), "spring variant Maven discipline placeholders");
+  assert(/\{\{SPRING_DB_BLOCK\}\}/.test(spring), "spring variant has SPRING_DB_BLOCK slot");
+  assert(/manual_sql/.test(renderSrc) && /SPRING_DB_BLOCK_ENABLED/.test(renderSrc), "spring variant mentions migration mode when db enabled");
   assert(/module_agents_template/.test(renderSrc), "render supports module_agents_template");
   assert(/previewMarkdownMerge/.test(renderSrc), "render has previewMarkdownMerge");
   assert(/mergePreview/.test(renderSrc), "render logs mergePreview");
@@ -1778,6 +1782,138 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
     /0\.4\.0/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
     "glossary report_schema 0.4.0"
   );
+}
+
+// --- 0.7.19 批 B P0：sync skills prune · inventory rescan · --output；+ D1 soft-gate ---
+{
+  const softGate = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(/listActiveFeatureRuns|docs\/runs\/active/.test(softGate), "soft-gate reads docs/runs/active");
+  assert(/主题进行中|feature-eng close/.test(softGate), "soft-gate in-flight wording");
+  assert(!/若本提交完成其主功能，先按 rule 18 收口/.test(softGate), "soft-gate dropped premature-close nudge");
+
+  const syncTmplB = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
+  assert(/SKILLS_DIRS/.test(syncTmplB), "sync tmpl has SKILLS_DIRS");
+  assert(/harness-managed\.json/.test(syncTmplB), "sync tmpl writes harness-managed.json");
+  assert(/unmanaged/.test(syncTmplB), "sync tmpl reports unmanaged");
+  assert(/HARNESS_ENG_VERSION = "0\.7\.19"/.test(syncTmplB), "sync tmpl version 0.7.19");
+
+  const invApi = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-api.mjs"), "utf8");
+  assert(/scanApiInventoryMemory/.test(invApi), "inventory-api exports scanApiInventoryMemory");
+  assert(/write !== false|opts\.write/.test(invApi), "scanOneModule supports write:false");
+
+  const fillScoreSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/coverage_source/.test(fillScoreSrc), "fill-score sets coverage_source");
+  assert(/scanApiInventoryMemory/.test(fillScoreSrc), "fill-score imports memory rescan");
+  assert(/path\.isAbsolute\(args\.output\)/.test(fillScoreSrc), "fill-score --output relative to root");
+
+  // sync: foreign skill survives
+  const golden = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
+  const tmpSync = fs.mkdtempSync(path.join(os.tmpdir(), "harness-b1-"));
+  try {
+    fs.cpSync(golden, tmpSync, { recursive: true });
+    const foreignDir = path.join(tmpSync, ".cursor", "skills", "foreign");
+    fs.mkdirSync(foreignDir, { recursive: true });
+    fs.writeFileSync(path.join(foreignDir, "SKILL.md"), "# foreign\n", "utf8");
+    const syncRun = runNode([path.join(tmpSync, "scripts/agent-config/sync.mjs")], { cwd: tmpSync });
+    assert(syncRun.status === 0, "sync with foreign skill exits 0");
+    assert(
+      fs.existsSync(path.join(foreignDir, "SKILL.md")),
+      "foreign skill SKILL.md retained after sync"
+    );
+    assert(
+      /unmanaged/i.test(syncRun.stdout + syncRun.stderr),
+      "sync mentions unmanaged"
+    );
+    const checkRun = runNode([path.join(tmpSync, "scripts/agent-config/sync.mjs"), "--check"], {
+      cwd: tmpSync,
+    });
+    assert(checkRun.status === 0, "sync --check green with unmanaged foreign skill");
+    assert(
+      /unmanaged/i.test(checkRun.stdout + checkRun.stderr),
+      "sync --check reports unmanaged"
+    );
+  } finally {
+    fs.rmSync(tmpSync, { recursive: true, force: true });
+  }
+}
+
+// --- 0.7.19 批 D2–D4：delivery-checklist · refresh · rule 18 时机 ---
+{
+  const checklist = path.join(skillRoot, "templates/docs/agent-kb/delivery-checklist.md");
+  assert(fs.existsSync(checklist), "delivery-checklist.md template exists");
+  const clBody = fs.readFileSync(checklist, "utf8");
+  assert(/唯一正文/.test(clBody) && /harness.*refresh|refresh/.test(clBody), "checklist has refresh step");
+  assert(/kb-delivery-checklist/.test(manifest), "manifest wires kb-delivery-checklist");
+
+  const rule00 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/00-project-docs-overview.mdc.tmpl"),
+    "utf8"
+  );
+  assert(/delivery-checklist\.md/.test(rule00), "rule 00 points to delivery-checklist");
+  const rule18 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/18-superpowers-corpus.mdc.tmpl"),
+    "utf8"
+  );
+  assert(/不是.*每次.*commit|交付.*合并.*前/.test(rule18), "rule 18 timing: not every commit");
+  assert(/delivery-checklist\.md/.test(rule18), "rule 18 points to checklist");
+
+  const harnessSrc = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(/mode refresh|refresh/.test(harnessSrc) && /runRefresh/.test(harnessSrc), "harness.mjs has refresh mode");
+  assert(fs.existsSync(path.join(skillRoot, "scripts/lib/refresh.mjs")), "lib/refresh.mjs exists");
+
+  const dryRefresh = runNode(
+    [path.join(skillRoot, "scripts/harness.mjs"), "--mode", "refresh", "--root", skillRoot, "--dry-run"],
+    { cwd: skillRoot }
+  );
+  assert(dryRefresh.status === 0, "harness refresh --dry-run exits 0");
+  assert(/"mode":\s*"refresh"/.test(dryRefresh.stdout), "refresh dry-run JSON mode");
+}
+
+// --- 0.7.17 批 A P0：L5 / land / merge / hooks / Spring ---
+{
+  const qnSrc = fs.readFileSync(path.join(skillRoot, "scripts/questions-next.mjs"), "utf8");
+  assert(/L5:\s*5/.test(qnSrc), "questions-next ladderOrd has L5");
+  assert(/Unknown ladder/.test(qnSrc), "questions-next rejects unknown ladder");
+  const tmpQn = fs.mkdtempSync(path.join(os.tmpdir(), "harness-qn-l5-"));
+  try {
+    const ansPath = path.join(tmpQn, "answers.json");
+    fs.writeFileSync(
+      ansPath,
+      JSON.stringify({
+        type: "NEW_CODE_NO_HARNESS",
+        mode: "land",
+        ladder: "L5",
+        answered_batches: ["batch-0-global", "batch-1-new", "batch-1-new-b", "batch-2-contracts", "batch-2-openapi"],
+      }),
+      "utf8"
+    );
+    const qnL5 = runNode([path.join(skillRoot, "scripts/questions-next.mjs"), "--answers", ansPath]);
+    assert(qnL5.status === 0, "questions-next L5 exits 0");
+    const qnOut = qnL5.stdout || "";
+    assert(
+      /Q_HOOKS_FAMILY|Q_MCP|Q_CODE_PREFIXES|Q_HOOK|batch-3-l3l4/.test(qnOut),
+      "questions-next L5 emits L3+ batch (hooks/MCP/prefixes)"
+    );
+  } finally {
+    fs.rmSync(tmpQn, { recursive: true, force: true });
+  }
+
+  assert(/id:\s*score-policy/.test(manifest), "manifest files includes score-policy");
+  assert(/gate_profile/.test(metaTmpl), "harness-meta tmpl has gate_profile");
+
+  const mergeDomSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/merge-domain.mjs"), "utf8");
+  assert(/evidence\[:：\]/.test(mergeDomSrc), "merge-domain extractEvidence accepts fullwidth colon");
+  assert(/export function extractEvidence/.test(mergeDomSrc), "extractEvidence is shared export");
+  const mergeApiSrcA = fs.readFileSync(path.join(skillRoot, "scripts/lib/merge-api.mjs"), "utf8");
+  assert(/from "\.\/merge-domain\.mjs"/.test(mergeApiSrcA), "merge-api imports shared extractEvidence");
+
+  const renderSrcA = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/chmodSync/.test(renderSrcA) && /maybeChmodExecutable/.test(renderSrcA), "render chmods hooks");
+  assert(/mavenCmdsForModule/.test(renderSrcA) && /mvn -f/.test(renderSrcA), "render Spring mvn -f branch");
+  assert(/可执行/.test(ladderMd), "ladder checks hook executable bit");
 }
 
 // --- 0.5.x suites (lib/selfcheck/checks-0.5.mjs) ---

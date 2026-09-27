@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "generator": "scripts/agent-config/sync.mjs",
+  "harness_eng_version": "0.7.19",
+  "files": []
+}

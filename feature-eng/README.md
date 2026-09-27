@@ -1,4 +1,4 @@
-# feature-eng
+﻿# feature-eng
 
 用户点名的开发流程控制器（`disable-model-invocation: true`，**须点名**，不自动加载）。与 [`release-eng`](../release-eng/) 同级、互不替代。
 
@@ -6,6 +6,8 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
+0.2.17-dev 要点：批 D——close 跟 `delivery-checklist.md`；可选 `harness refresh`；失败标 `harness_snapshot: stale`。叠在 0.2.16-dev 之上。
+0.2.16-dev 要点：批 C——绑定 SSOT 迁至目标仓 `docs/runs/stage-bindings.yaml`；禁止代跑 harness sync；`run_mode: unattended` 集中降级。叠在 0.2.15-dev 之上。
 0.2.15-dev 要点：P2 harness_probe 软探测 + 有 lint-pitfalls 时本主题 close_pitfalls 收紧为 on（yaml 默认仍 optional）。叠在 0.2.14-dev 之上。
 0.2.14-dev 要点：P0 与 harness-eng 消歧与接力（配合与互斥短节；计划 Go 闸 ≠ 仓库开干；环间 L1/L2 ≠ 阶梯）。叠在 0.2.13-dev 之上。
 0.2.13-dev 要点：modes 大合并——根目录仅 7 入口；`modes/specs/{flow,gates,bridges,handoff}` 四手册；旧扁平规格废除。叠在 0.2.12-dev 之上。
@@ -26,8 +28,8 @@
 ## 可移植性
 
 - **首发仓**：`c-be-sms-ai`（`source_repo` 见 manifest）。
-- **本仓可用**：skill + `config/` + `templates/` 已齐；改绑定后：**有** `scripts/agent-config/sync.mjs` 则代跑，**无则跳过**（以本 skill 内 `config/` 为准；宿主路径见 [modes/specs/flow.md](modes/specs/flow.md)）。
-- **迁到他仓**：整目录拷贝；`stage-bindings.yaml` 需按目标仓工具链重新 `init`（可先用 `stage-bindings.minimal.yaml`）。
+- **本仓可用**：skill + `config/`（种子）+ `templates/` 已齐；业务绑定写目标仓 **`docs/runs/stage-bindings.yaml`**（`init`/`rebind`）；**禁止**代跑 harness `sync.mjs`。
+- **迁到他仓**：技能推荐用户级安装；目标仓跑 `init` 生成 `docs/runs/stage-bindings.yaml`（可先用 `stage-bindings.minimal.yaml` 种子）。
 - 过程态：`docs/runs/`（与 `docs/superpowers/` 平级）；语料仍在 superpowers。旧路径 `docs/superpowers/runs/` 仅兼容提示迁移。
 - **收口**：[modes/close.md](modes/close.md) 为 skill 内规则（含 active→archive）；契约目录 / pitfalls lint 为可选增强。
 

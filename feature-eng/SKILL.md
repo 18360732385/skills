@@ -8,10 +8,10 @@ disable-model-invocation: true
 
 # feature-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.15-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.17-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/feature.mjs`（`modes` / `status` / `gate-evidence` / `close-check`）。闸门证据：`node scripts/gate-evidence.mjs`。
 
-Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disable-model-invocation: true`，不自动加载）。流程与绑定见 [flow.md](modes/specs/flow.md)；L1/L2/硬闸见 [gates.md](modes/specs/gates.md)；桥见 [bridges.md](modes/specs/bridges.md)；运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（init/rebind **首问**可改）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。  
+Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disable-model-invocation: true`，不自动加载）。流程与绑定见 [flow.md](modes/specs/flow.md)；L1/L2/硬闸见 [gates.md](modes/specs/gates.md)；桥见 [bridges.md](modes/specs/bridges.md)；**运行时绑定 SSOT** = 目标仓 `docs/runs/stage-bindings.yaml`（init/rebind 写入；技能包 `config/` 为种子/回退；**禁止**代跑 harness sync）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。  
 拓扑：`modes/` 7 入口 · `modes/specs/` 4 手册 · `config/` · `templates/` · `scripts/feature.mjs`。
 
 ## 控制器边界（最高优先级）

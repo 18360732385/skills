@@ -1,6 +1,6 @@
-# 落地模板权威（files / placeholders / when）。
+﻿# 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.16"
+version: "0.7.19"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -45,7 +45,13 @@ placeholders:
   - AI_TOOLS_YAML
   - AI_TOOLS_JSON
   - AGENT_CONFIG
+  - GATE_PROFILE
   - PITFALL_DOMAINS
+  - MAVEN_TEST_CMD
+  - MAVEN_RUN_CMD
+  - MAVEN_DISCIPLINE_NOTE
+  - MAVEN_FORBID_LINE
+  - SPRING_DB_BLOCK
   - CONTRACT_CHECKS_JS
   - DB_MIGRATION_DIR
   - MIGRATION_ENVS
@@ -89,8 +95,13 @@ files:
     ladder: L0
     template: meta/harness-meta.yaml.tmpl
     target: docs/harness-eng/harness-meta.yaml
-    placeholders: [LADDER_TARGET, DOMAINS_YAML, AGENTS_VARIANT, GLOB_PROFILE, DATE, LAST_MODE, AI_TOOLS_YAML]
+    placeholders: [LADDER_TARGET, DOMAINS_YAML, AGENTS_VARIANT, GLOB_PROFILE, DATE, LAST_MODE, AI_TOOLS_YAML, GATE_PROFILE]
     note: "0.5.6+ SSOT under docs/harness-eng/; readers fall back to legacy .cursor/harness-meta.yaml(.yml)"
+  - id: score-policy
+    ladder: L1
+    template: docs/harness-eng/score-policy.yaml.tmpl
+    target: docs/harness-eng/score-policy.yaml
+    note: "新 land 显式 strict + all_domains；无此文件 fill-score 回落 legacy（须明示）"
   - id: rule-00
     ladder: L0
     template: rules/00-project-docs-overview.mdc.tmpl
@@ -178,6 +189,11 @@ files:
     ladder: L2
     template: docs/agent-kb/accepted-gaps.md
     target: docs/agent-kb/accepted-gaps.md
+  - id: kb-delivery-checklist
+    ladder: L2
+    template: docs/agent-kb/delivery-checklist.md
+    target: docs/agent-kb/delivery-checklist.md
+    note: "交付收口唯一正文；rule 00/18/19、AGENTS、feature-eng close 只留指针"
   - id: rule-19
     ladder: L2
     template: rules/19-agent-kb.mdc.tmpl

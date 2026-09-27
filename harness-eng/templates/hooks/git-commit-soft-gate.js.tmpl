@@ -200,6 +200,39 @@ function codeTouchedByPrefixes(staged) {
   return staged.some((f) => prefixes.some((p) => f.startsWith(p)));
 }
 
+/** feature-eng 进行中主题：docs/runs/active/<slug>/progress.yaml 且 stage ≠ done */
+function listActiveFeatureRuns(root) {
+  const activeDir = path.join(root, "docs", "runs", "active");
+  const out = [];
+  let slugs = [];
+  try {
+    slugs = fs.readdirSync(activeDir).filter((n) => {
+      try {
+        return fs.statSync(path.join(activeDir, n)).isDirectory();
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return out;
+  }
+  for (const slug of slugs) {
+    const p = path.join(activeDir, slug, "progress.yaml");
+    let raw = "";
+    try {
+      raw = fs.readFileSync(p, "utf8");
+    } catch {
+      continue;
+    }
+    const stageM = raw.match(/^stage:\s*(\S+)/m);
+    const stage = stageM ? stageM[1].replace(/['"]/g, "") : "";
+    if (stage && stage !== "done" && stage !== "null") {
+      out.push({ slug, stage });
+    }
+  }
+  return out;
+}
+
 function collectSuperpowersReminders(root, staged) {
   const plansDir = path.join(root, "docs", "superpowers", "plans");
   let activePlans = [];
@@ -219,10 +252,21 @@ function collectSuperpowersReminders(root, staged) {
   if (activePlans.length === 0 || !codeTouchedByPrefixes(staged) || indexTouched) {
     return [];
   }
+  const featureRuns = listActiveFeatureRuns(root);
+  if (featureRuns.length > 0) {
+    const shown = featureRuns
+      .slice(0, 3)
+      .map((r) => `${r.slug}（环 ${r.stage}）`)
+      .join("、");
+    const more = featureRuns.length > 3 ? ` 等 ${featureRuns.length} 个` : "";
+    return [
+      `- feature-eng：主题进行中（${shown}${more}）；中途 commit 允许，收口在 feature-eng close / 宣称交付时（见 rule 18）；纯 fix/chore 可忽略`,
+    ];
+  }
   const shown = activePlans.slice(0, 3).join("、");
   const more = activePlans.length > 3 ? ` 等 ${activePlans.length} 个` : "";
   return [
-    `- superpowers：仍有进行中 plan（${shown}${more}）；若本提交完成其主功能，先按 rule 18 收口（README→ARCHIVE），纯 fix/chore 可忽略`,
+    `- superpowers：仍有进行中 plan（${shown}${more}）；若本提交**宣称交付**其主功能，先按 rule 18 收口（README→ARCHIVE）；进行中主题勿假收口；纯 fix/chore 可忽略`,
   ];
 }
 

@@ -3,7 +3,7 @@
  */
 
 export const PATH_ENUM = new Set(["spike", "bounded", "full", null]);
-export const RUN_MODE_ENUM = new Set(["guided", "express", null]);
+export const RUN_MODE_ENUM = new Set(["guided", "express", "unattended", null]);
 export const INVOKE_ENUM = new Set(["strict", "inline", null]);
 export const HANDOFF_ENUM = new Set(["auto", "confirm", null]);
 export const REVIEW_ENUM = new Set(["subagent", "inline", null]);

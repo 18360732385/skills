@@ -57,6 +57,27 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.18 → 0.7.19 迁移要点
+
+1. **meta**：`skill_version` → `0.7.19`
+2. **L2**：land/resume 补渲 `docs/agent-kb/delivery-checklist.md`；rule 00/18/19、AGENTS 改指针
+3. **行为**：`harness.mjs --mode refresh --root .` 可重建 inventory/score；feature-eng close 可选代跑
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.19`）后再 sync
+
+## 0.7.17 → 0.7.18 迁移要点
+
+1. **meta**：`skill_version` → `0.7.18`
+2. **L5**：刷新 `sync.mjs`（tmpl id `0.7.18`）后再 sync——skills 目录改清单 prune；项目级第三方 skill 不再被删
+3. **fill-score**：缺 inventory 会内存重扫；`--output` 相对路径相对目标仓根
+4. **不必**：重填契约（除非 coverage 仍缺口）
+
+## 0.7.16 → 0.7.17 迁移要点
+
+1. **meta**：`skill_version` → `0.7.17`；确认 `docs/harness-eng/score-policy.yaml` 存在（缺则 land/resume 补渲或手补 strict）
+2. **行为**：questions-next 对 L5 正确吐 hooks/MCP 批；merge 认全角 evidence；新渲 `.githooks` 带可执行位；Spring 分册无根聚合 pom 时用 `mvn -f`
+3. **不必**：重扫 inventory（除非另有缺口）
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.17`）后再 sync；存量 hook 若 git 忽略：`git update-index --chmod=+x .githooks/pre-commit`
+
 ## 0.7.15 → 0.7.16 迁移要点
 
 1. **meta**：`skill_version` → `0.7.16`（docs/templates：`docs/runs` 入图 + rule 18 中途 commit；模式 / 阶梯 / 闸门语义不变）

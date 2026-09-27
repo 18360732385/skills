@@ -1,12 +1,20 @@
 ﻿# init — 初始化环节绑定
 
-首次使用 feature-eng、或绑定文件缺失时运行。目标：产出可用的 `config/stage-bindings.yaml`。
+首次使用 feature-eng、或目标仓绑定文件缺失时运行。目标：在**目标仓**产出可用的 `docs/runs/stage-bindings.yaml`。
 
 ## 原则（最高优先级）
 
-- 推荐包 SSOT：[`config/stage-bindings.example.yaml`](../config/stage-bindings.example.yaml)。「推荐 ≠ 强制」见 [flow.md](specs/flow.md)。
+- 推荐包 SSOT（技能包内种子）：[`config/stage-bindings.example.yaml`](../config/stage-bindings.example.yaml)。「推荐 ≠ 强制」见 [flow.md](specs/flow.md)。
+- **运行时绑定 SSOT（目标仓）**：`docs/runs/stage-bindings.yaml`。技能包内 `config/stage-bindings.yaml` 仅作种子 / 回退，**不是**业务仓 SSOT。
+- **禁止**代跑 `scripts/agent-config/sync.mjs`（那是 harness L5 管线；会误伤项目级 skills）。绑定不经 sync 分发。
 - **首问**必停：先展示固定表（中文名 + skill + 产物），再让用户选择；未选不写盘。
 - 用户可选：①一键采用全部推荐 ②逐环改绑 ③某环指定其他已装/待装 skill ④某环暂不绑定（`null`）。
+
+## 绑定解析序（与 start / lookup 共用）
+
+1. 目标仓 `docs/runs/stage-bindings.yaml`（优先）
+2. 若无 → 回退技能包内 `config/stage-bindings.yaml`（须在回链/首问说明「使用 skill 种子回退；建议 init 写入目标仓」）
+3. 二者皆无 → 硬闸：完成本 init
 
 ## repo_bootstrap（与 start 共用）
 
@@ -59,12 +67,10 @@
    - 可选：该环 `input_contract`（薄 skill 建议补必传字段；可跳过）
 4. **安装缺失**：选中但当前环境没有的 skill，给出安装方式并**经用户同意**后执行；安装失败则该环写 `null` 并说明。
    - 完成标准：每个非 null 绑定能在已安装列表中**按名命中**；未命中 → 改 `null`。
-5. **预览 diff**：写盘前展示新旧绑定对照（含 `defaults`；环节列带中文名）；用户确认后写入 `config/stage-bindings.yaml`。
-6. **同步（条件）**：探测目标仓是否存在 `scripts/agent-config/sync.mjs`（或文档注明的等价 sync）。
-   - **有** → 代跑；失败则提示用户手工执行。
-   - **无** → **跳过**，一行说明：「本仓无 agent-config sync；绑定以 skill 内 `config/stage-bindings.yaml` 为准；宿主工作副本路径因工具而异（如 `.cursor/skills/`、`.agents/skills/`），按宿主习惯拷贝/安装本 skill 即可。」
-   - **禁止**在缺少该脚本时假装已 sync，或把「默认代跑」写成无条件步骤。
-7. **收尾**：提示「后续 start/resume 沿用本绑定；改映射用 rebind。推荐包只是起点（见 [flow.md](specs/flow.md)）。start 可按主题覆盖 `invoke` / `run_mode` / `handoff_policy` / `review_policy`。过闸后由控制器主动调起下一 skill（见 advance）。domain 为条件环，多数主题会跳过。」
+   - **推荐用户级安装**本 skill 与厨师 skill；**勿**把 feature-eng 拷进项目级 `.cursor/skills/` 指望 harness sync 托管。
+5. **预览 diff**：写盘前展示新旧绑定对照（含 `defaults`；环节列带中文名）；用户确认后写入目标仓 **`docs/runs/stage-bindings.yaml`**（若无 `docs/runs/` 则先建目录）。
+6. **禁止 sync**：本步**不**探测、不代跑 `scripts/agent-config/sync.mjs`。一行说明：「绑定 SSOT 在目标仓 `docs/runs/stage-bindings.yaml`；与 harness L5 sync 无关。」
+7. **收尾**：提示「后续 start/resume 沿用本绑定；改映射用 rebind。推荐包只是起点（见 [flow.md](specs/flow.md)）。start 可按主题覆盖 `invoke` / `run_mode`（含 `unattended`）/ `handoff_policy` / `review_policy`。过闸后由控制器主动调起下一 skill（见 advance）。domain 为条件环，多数主题会跳过。」
 
 ## 硬闸
 
@@ -72,7 +78,8 @@
 - 首问未展示含中文名的推荐包表前，不得视为已完成首问。
 - 安装动作**必须**用户显式同意；禁止静默安装。
 - `testdesign` / `verify` 也参与问卷（调起时机见 [flow.md](specs/flow.md) 裁剪表）。
+- 禁止把「写入目标仓绑定」伪装成已跑 harness sync。
 
 ## 幂等
 
-已有绑定文件时进入 init：先用同一固定表展示现状与 `config/stage-bindings.example.yaml` 对照，首问改为「保持现状 / 重置为推荐包 / 逐环改」；只改用户确认要改的环。
+已有目标仓 `docs/runs/stage-bindings.yaml` 时进入 init：先用同一固定表展示现状与 `config/stage-bindings.example.yaml` 对照，首问改为「保持现状 / 重置为推荐包 / 逐环改」；只改用户确认要改的环。若仅有技能包种子、尚无目标仓文件 → 按「首次」写盘。

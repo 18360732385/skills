@@ -20,6 +20,7 @@ import { spawnSync } from "child_process";
 import { isCliMain } from "./cli-main.mjs";
 import { findClassFile, parseFields, toMarkdown } from "../fill-dto-fields.mjs";
 import { writeAutoFillShards } from "./fill-auto-api.mjs";
+import { extractEvidence, normalizeEvidence } from "./merge-domain.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -142,20 +143,6 @@ function parseFragmentSections(text, sourcePath) {
     }
   }
   return sections;
-}
-
-function extractEvidence(body) {
-  const m =
-    body.match(/\*\*evidence:\*\*\s*`([^`]+)`/i) ||
-    body.match(/\*\*evidence:\*\*\s*(\S+)/i) ||
-    body.match(/evidence:\s*`([^`]+)`/i) ||
-    body.match(/evidence:\s*(\S+\.java#\w+)/i);
-  return m ? m[1].trim() : null;
-}
-
-function normalizeEvidence(ev) {
-  if (!ev) return "";
-  return ev.replace(/\\/g, "/");
 }
 
 function loadInventory(p) {

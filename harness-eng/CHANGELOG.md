@@ -1,8 +1,41 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.14 → 0.7.15 → 0.7.16`（当前 **0.7.16**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.14 → 0.7.15 → 0.7.16 → 0.7.17 → 0.7.18 → 0.7.19`（当前 **0.7.19**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.19 — 2026-09-27（批 D2–D4：收口清单 + refresh）
+
+### Added
+- **D2**：`docs/agent-kb/delivery-checklist.md`（交付收口唯一正文）；rule 00/18/19、AGENTS、stop-checklist 改指针
+- **D4**：`harness.mjs --mode refresh`（inventory → acceptance → fill-score；exit 0/2/1；`--no-write` / `--dry-run`）
+
+### Fixed / Docs
+- **D3**：rule 18 钉死「交付/合并前收口，非每次 commit」；与 soft-gate（D1）口径一致
+- upgrade `0.7.18 → 0.7.19`；manifest / meta / sync tmpl / questions → `0.7.19`
+
+## 0.7.18 — 2026-09-27（批 B：分发安全 + 就绪可信；+ D1 soft-gate）
+
+### Fixed
+- **C1**：sync 对宿主 **skills** 目录只 prune `.harness-managed.json` 清单内文件；清单外报 unmanaged 并保留（不再静默删除 feature-eng 等项目级 skill）
+- **C9**：`fill-score` 缺 `.fill-work/inventory` 时内存重扫 API inventory；报告 `coverage_source: file|rescanned|missing`
+- **F14**：`fill-score --output` 相对路径相对 `--root` 解析
+- **C5 / D1**：`git-commit-soft-gate` 识别 `docs/runs/active/*/progress.yaml`（stage≠done）时提醒「主题进行中，收口在 feature-eng close」，不再诱导 verify 前假收口
+
+### Docs / pack
+- upgrade `0.7.17 → 0.7.18`；manifest / meta / sync tmpl / questions → `0.7.18`
+
+## 0.7.17 — 2026-09-27（批 A：L5/land 独立 P0）
+
+### Fixed
+- **F3**：`questions-next.mjs` `ladderOrd` 补 `L5:5`；未知阶抛错（不再静默 `-1` 跳过 hooks/MCP 批）
+- **F9**：`manifest` L1 落盘 `docs/harness-eng/score-policy.yaml`；meta 写 `gate_profile`；fill-score 无文件时明示 `legacy（无 score-policy）`
+- **F10**：`merge-api` / `merge-domain` 共用 `extractEvidence`（半角/全角 `evidence:` / `evidence：` 均认）
+- **F15**：render 写 `.githooks/*` / `*.sh` 后 `chmod 0o755`；ladder 自检查可执行位
+- **F17**：Spring 分册按根聚合 pom 分支：`mvn -pl` vs `mvn -f`；无 `db` 域省略库名表/迁移节
+
+### Docs / pack
+- upgrade `0.7.16 → 0.7.17`；manifest / meta / sync tmpl / questions → `0.7.17`
 
 ## 0.7.16 — 2026-09-27（docs/runs 入图 + rule 18 中途 commit）
 

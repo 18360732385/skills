@@ -2,7 +2,7 @@
 
 ## 前置
 
-- 无 `config/stage-bindings.yaml` → 硬闸：先走 [init.md](init.md)（含推荐包首问）。
+- 绑定解析序见 [init.md](init.md)：优先 `docs/runs/stage-bindings.yaml`；无则回退技能包 `config/stage-bindings.yaml`（须注明回退）；二者皆无 → 硬闸：先走 [init.md](init.md)。
 - 已有未完成 `docs/runs/active/<slug>/` 且用户意图是续跑 → 转 [resume.md](resume.md)。
 
 ## 步骤
@@ -26,7 +26,7 @@
      - 提示：NO/未知时可先 harness fill-score，或继续本主题（独立模式）
      ```
    - 结论写入 `回链.md`「仪式与降级」一行：`harness_probe: meta=有 · ai_coding_ready=…`（无 meta 时不写）。
-2. **绑定就绪检查 + chef_mode 探测**：读 `stage-bindings.yaml`。按即将分诊的路径，标出关键环若为 `null` 的缺口（见下表）。有缺口 → **红字提示**（失败文案见 [flow.md](specs/flow.md)「绑定 skill 可调起」预检 A/B），建议先 `rebind`/`init`；用户坚持继续则仅能跑到第一个未绑环前。首个执行环调起前再跑完整预检 A–E。
+2. **绑定就绪检查 + chef_mode 探测**：按解析序读绑定（优先目标仓 `docs/runs/stage-bindings.yaml`）。按即将分诊的路径，标出关键环若为 `null` 的缺口（见下表）。有缺口 → **红字提示**（失败文案见 [flow.md](specs/flow.md)「绑定 skill 可调起」预检 A/B），建议先 `rebind`/`init`；用户坚持继续则仅能跑到第一个未绑环前。首个执行环调起前再跑完整预检 A–E。
    - 任意路径常用：`grill` / `design`（按需）  
    - B/F：`implement`、`review`；条件 `proto` / `domain`（仅 entered 时才调起）  
    - **仅 F**：`spec`、`plan`、`testdesign`、`verify` 不应为 null（否则 Full 跑不通）
@@ -47,11 +47,17 @@
    - 非同仓 → `layout: null`（≈ multi_repo）或显式 `multi_repo`；`packages: null` 即可。
 5c. **monorepo_bootstrap 剥离（M6）**：合并旧双仓树 / `cp` 进 monorepo 时，检查并**剥离**子包级 `docs/runs`、`docs/superpowers`（典礼只留仓库根 `docs_root`）。可选在根 `docs/HISTORY-split-repos.md` 记旧仓指针。清单勾选见 init「monorepo_bootstrap」。
 6. **仪式选项（可与分诊同屏确认）**：
-   - **`run_mode`**：`guided`（默认）| `express`
+   - **`run_mode`**：`guided`（默认）| `express` | **`unattended`**（无人值守 / 批跑；见下）
    - **`invoke`**：`strict`（默认）| `inline`（见 [flow.md](specs/flow.md)）。缺省可跟 `defaults.invoke`。
-   - **`handoff_policy`**：`auto` | `confirm`。未指定时：`express`→`auto`，`guided`→`confirm`。
+   - **`handoff_policy`**：`auto` | `confirm`。未指定时：`express`/`unattended`→`auto`，`guided`→`confirm`。
    - **`review_policy`**：`subagent`（默认）| `inline`。
-   - **review_policy 宿主探测（O5）**：若用户选/默认 `subagent`，但宿主 **无 Task/子代理能力** → **自动降级**为 `inline`，并在 `回链.md`「仪式与降级」与门禁备注写明「review_policy: subagent→inline（宿主无 Task）」——**禁止静默改值**。
+   - **`unattended` 集中降级（须一次性落盘备注）**：若用户选 / 任务声明 `run_mode: unattended`：
+     1. `invoke: strict` → **`inline`**（禁止卡在「请开新会话点名」）
+     2. `review_policy: subagent` → **`inline`**（无 Task 亦可）
+     3. `handoff_policy` → **`auto`**
+     4. 硬闸 `authorized_by` **必须**为真实 `user_task_<id>`（任务码）或显式 `policy_exception`；**禁止**伪造 `user_chat` 笔录
+     5. 回链「仪式与降级」写明上述降级清单；`progress.run_mode: unattended`
+   - **review_policy 宿主探测（O5）**：若用户选/默认 `subagent`（且非 unattended 已降），但宿主 **无 Task/子代理能力** → **自动降级**为 `inline`，并在 `回链.md`「仪式与降级」与门禁备注写明「review_policy: subagent→inline（宿主无 Task）」——**禁止静默改值**。
    - **`close_pitfalls`（有 lint 脚本时收紧）**：
      - 探测目标仓是否存在 `scripts/agent-kb/lint-pitfalls.mjs`（或团队文档注明的等价路径）。
      - 用户本轮**显式**指定 `off|optional|on` → 以用户为准，写入 `progress.close_pitfalls`。
@@ -76,6 +82,13 @@
 **可压缩**：grill+design 同轮；共享理解闸 + 设计确认闸可用**一次总 yes**。  
 **仍分环**：spec 与 plan；design 后仍跑 **domain-bridge**；proto 桥规则不变。  
 **编排**：默认 `handoff_policy=auto`。
+
+## `unattended` 硬边界
+
+**不跳过**：与 Full/Bounded 路径相同的硬闸与 L1/L2（证据条仍生效）。  
+**编排**：见步骤 6 集中降级；过闸后一律按 `handoff_policy=auto` 调下一环。  
+**授权**：仅 `user_task_<id>` / `policy_exception`；任务结束须在回链可审计。  
+**≠** `express`：express 仍可交互确认；unattended 假定任务预授权，禁止演「用户：确认」假对话。
 
 ## 硬闸
 

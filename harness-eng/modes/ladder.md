@@ -49,7 +49,7 @@
 - [ ] `docs/superpowers/README.md` 含进行中表
 - [ ] `18-superpowers-corpus.mdc` 存在
 - [ ] 按所选 `ai_tools` 原生 hooks 均存在（cursor / claude / qoder / trae / workbuddy / codex）；未选工具不要求
-- [ ] `.githooks/pre-commit` + gate 存在（L3 兜底）；建议 `git config core.hooksPath .githooks`
+- [ ] `.githooks/pre-commit` + gate 存在（L3 兜底）；**且可执行**（`stat` 含 `x`；若 git 忽略 hook：`git update-index --chmod=+x .githooks/pre-commit`）；建议 `git config core.hooksPath .githooks`
 - [ ] Cursor 若选用：`.cursor/hooks.json` 的 `failClosed` 不为强拦（允许 false）
 - [ ] Qoder 若选用：`.qoder/settings.json` 含 Claude 系 `hooks`（`PreToolUse` 等），**不是** Cursor 式 `.qoder/hooks.json`
 - [ ] Trae 若选用：`.trae/hooks.json` 含 Claude 系嵌套 hooks

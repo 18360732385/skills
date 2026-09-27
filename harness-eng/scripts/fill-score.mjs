@@ -8,11 +8,13 @@
  *
  * 0.2.19: --output <path> writes JSON to file (stdout shows summary only)
  *          --json outputs only JSON to stdout (suppresses summary text)
+ * 0.7.18: --output 相对路径相对 --root；缺 inventory 文件时内存重扫（coverage_source）
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { mergeApiInventories, loadDomainInventory } from "./lib/inventory-paths.mjs";
+import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
 import { createProgress } from "./lib/progress-log.mjs";
 import { writeProgress } from "./lib/progress-file.mjs";
 import {
@@ -971,9 +973,24 @@ function main() {
   const progress = createProgress({ quiet: args.quiet, label: "fill-score" });
   progress.log("start");
 
+  /** @type {"file"|"rescanned"|"missing"} */
+  let coverageSource = "missing";
   let inventory = loadJson(args.inventory);
-  if (!inventory) {
+  if (inventory) {
+    coverageSource = "file";
+  } else {
     inventory = mergeApiInventories(root);
+    if (inventory) {
+      coverageSource = "file";
+    } else {
+      try {
+        inventory = scanApiInventoryMemory(root);
+        if (inventory) coverageSource = "rescanned";
+      } catch (e) {
+        progress.log(`inventory rescan skip: ${e.message || e}`);
+        inventory = null;
+      }
+    }
   }
   const prev = loadJson(args.compare);
 
@@ -1127,6 +1144,7 @@ function main() {
   ) };
   report.coverage = coverageFromInventory(inventory, apiDocEndpoints);
   report.coverage_by_domain = coverageByDomain(root, report.coverage);
+  report.coverage_source = coverageSource;
   report.next_shards = nextShardsFromInventory(inventory);
 
   const qOk = report.overall >= args.readyQuality;
@@ -1320,9 +1338,11 @@ function main() {
     }`
   );
 
-  // 0.2.19: --output writes JSON to file; --json suppresses summary
+  // 0.2.19 / 0.7.18: --output 相对路径相对 --root（避免 cwd=skill 目录写进技能仓）
   if (args.output) {
-    const outAbs = path.resolve(args.output);
+    const outAbs = path.isAbsolute(args.output)
+      ? path.resolve(args.output)
+      : path.resolve(root, args.output);
     fs.mkdirSync(path.dirname(outAbs), { recursive: true });
     fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
     console.error(`Wrote ${outAbs}`);
@@ -1339,7 +1359,11 @@ function main() {
     console.log(
       `开干: ${report.ai_coding_ready.ok ? "YES" : "NO"}  覆盖: ${
         report.coverage ? report.coverage.percent + "%" : "—"
-      }(mode=${covEval.mode})  gate_profile: ${scorePolicy.gate_profile || "legacy"}`
+      }(mode=${covEval.mode})  gate_profile: ${
+        scorePolicy.present
+          ? scorePolicy.gate_profile || "strict"
+          : "legacy（无 score-policy）"
+      }`
     );
     console.log(
       `分层: skeleton=${skel.ok ? "YES" : "NO"} coverage=${coverageReady ? "YES" : "NO"} semantic=${semanticOk ? "YES" : "NO"} plan_closed=${

@@ -19,14 +19,15 @@ export function walkMd(dir, acc = []) {
   return acc;
 }
 
-/** Extract evidence from a markdown section body. */
+/** Extract evidence from a markdown section body（半角/全角冒号均认，对齐 acceptance-check）。 */
 export function extractEvidence(body) {
+  if (!body) return null;
   const m =
-    body.match(/\*\*evidence:\*\*\s*`([^`]+)`/i) ||
-    body.match(/\*\*evidence:\*\*\s*(\S+)/i) ||
-    body.match(/evidence:\s*`([^`]+)`/i) ||
-    body.match(/evidence:\s*(\S+\.java#\w+)/i) ||
-    body.match(/evidence:\s*(\S+\.java)/i);
+    body.match(/\*\*evidence[:：]\*\*\s*`([^`]+)`/i) ||
+    body.match(/\*\*evidence[:：]\*\*\s*(\S+)/i) ||
+    body.match(/evidence[:：]\s*`([^`]+)`/i) ||
+    body.match(/evidence[:：]\s*(\S+\.java#\w+)/i) ||
+    body.match(/evidence[:：]\s*(\S+\.java)/i);
   return m ? m[1].trim() : null;
 }
 

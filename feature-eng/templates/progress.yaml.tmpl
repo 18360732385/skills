@@ -20,7 +20,8 @@ updated_at: "{{date}}"
 # spike | bounded | full（分诊闸：用户确认后写入）
 path: null
 
-# guided | express（start 首问；见 start.md）
+# guided | express | unattended（start 首问；见 start.md）
+# unattended：集中降级 invoke→inline、review→inline、handoff→auto；硬闸用 user_task_<id>
 run_mode: guided
 
 # strict | inline（调起策略；见 binding.md；可跟 defaults.invoke）

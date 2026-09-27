@@ -6,6 +6,7 @@
  *   node scripts/harness.mjs --root <TARGET> --params <params.json>
  *       [--mode land|resume|upgrade|pipeline-skeleton]
  *       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
+ *   node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write]
  *   node scripts/harness.mjs --check-freshness --root <TARGET>
  *
  * Reads harness-meta (docs/harness-eng/ then .cursor/ fallback).
@@ -16,6 +17,7 @@
  * Else: delegate to render.mjs with the same argv patterns.
  *
  * pipeline-skeleton = skeleton campaign write only (not fill-* / pipeline-fill).
+ * refresh = rebuild inventory + acceptance + fill-score（feature-eng close 可选调用；exit 0/2/1）。
  */
 import fs from "fs";
 import path from "path";
@@ -31,11 +33,12 @@ import {
   runFreshnessCheck,
 } from "./lib/sync-freshness.mjs";
 import { migrateScorePolicyFile } from "./lib/score-policy-migrate.mjs";
+import { runRefresh } from "./lib/refresh.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
 
-const MODES = ["land", "resume", "upgrade", "pipeline-skeleton"];
+const MODES = ["land", "resume", "upgrade", "pipeline-skeleton", "refresh"];
 
 function maybeMigrateScorePolicy(root, mode, dryRun) {
   if (dryRun) return;
@@ -81,6 +84,7 @@ function parseArgs(argv) {
     backup: false,
     mode: "land",
     noSync: false,
+    noWrite: false,
     help: false,
     checkFreshness: false,
   };
@@ -93,6 +97,7 @@ function parseArgs(argv) {
     else if (a === "--manifest") out.manifest = argv[++i];
     else if (a === "--mode") out.mode = String(argv[++i] || "land");
     else if (a === "--no-sync") out.noSync = true;
+    else if (a === "--no-write") out.noWrite = true;
     else if (a === "--check-freshness") out.checkFreshness = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
@@ -105,6 +110,7 @@ function printHelp() {
   node scripts/harness.mjs --root <TARGET> --params <params.json>
       [--mode land|resume|upgrade|pipeline-skeleton]
       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
+  node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write]
   node scripts/harness.mjs --check-freshness --root <TARGET>
 
 Canonical Agent write entry (0.6.0+).
@@ -113,6 +119,8 @@ Canonical Agent write entry (0.6.0+).
     node scripts/agent-config/sync.mjs
     in the target (unless --no-sync or --dry-run).
   pipeline-skeleton: skeleton campaign write only — 不跑 fill-* / pipeline-fill.
+  refresh: 重建 inventory → acceptance → fill-score（写 score-latest.json）；
+    exit 0=ai_coding_ready · 2=未开干(warn) · 1=脚本失败；--no-write 不落盘 score。
   --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与目标仓
     scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
 `);
@@ -206,6 +214,12 @@ function announceMode(mode) {
     );
     return;
   }
+  if (mode === "refresh") {
+    console.error(
+      "harness: mode=refresh（inventory → acceptance → fill-score；exit 0/2/1）。"
+    );
+    return;
+  }
   console.error(`harness: mode=${mode}。公开入口 scripts/harness.mjs。`);
 }
 
@@ -219,13 +233,34 @@ export function main(argv = process.argv) {
   if (args.checkFreshness && args.root && !args.params) {
     process.exit(runFreshnessCheck(args.root, skillRoot));
   }
+
+  const modeEarly = String(args.mode || "land").toLowerCase();
+  if (modeEarly === "refresh") {
+    if (!args.root) {
+      printHelp();
+      process.exit(1);
+    }
+    announceMode("refresh");
+    const { exitCode, report } = runRefresh(args.root, {
+      write: !args.noWrite,
+      dryRun: args.dryRun,
+    });
+    process.stdout.write(JSON.stringify(report, null, 2) + "\n");
+    if (report.hints?.length) {
+      for (const h of report.hints) console.error(`harness refresh: ${h}`);
+    }
+    process.exit(exitCode);
+  }
+
   if (!args.root || !args.params) {
     printHelp();
     process.exit(1);
   }
   const mode = String(args.mode || "land").toLowerCase();
   if (!MODES.includes(mode)) {
-    throw new Error(`Unknown --mode ${args.mode} (use land|resume|upgrade|pipeline-skeleton)`);
+    throw new Error(
+      `Unknown --mode ${args.mode} (use land|resume|upgrade|pipeline-skeleton|refresh)`
+    );
   }
 
   const params = loadParams(args.params);

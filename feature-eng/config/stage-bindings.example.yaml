@@ -1,6 +1,6 @@
-# stage-bindings.yaml 示例与字段说明（示例文件；真实绑定见同目录 stage-bindings.yaml）
+# stage-bindings 示例与字段说明（技能包种子；业务仓 SSOT = docs/runs/stage-bindings.yaml）
 #
-# 推荐包名单（SSOT）。下列为推荐默认；首问规则见 skill binding.md。
+# 推荐包名单（种子 SSOT）。下列为推荐默认；首问规则见 modes/specs/flow.md。
 
 version: 1
 

@@ -1,7 +1,7 @@
 # feature-eng 环节 → skill 绑定（minimal：未装推荐包时）
-# 本文件供 init 首问「采用 minimal」；不是默认 stage-bindings.yaml。
+# 本文件供 init 首问「采用 minimal」；写入目标仓 docs/runs/stage-bindings.yaml。
 # 关键环可 null → start 将强制 chef_mode=controller_proxy（须警告）。
-# 有 scripts/agent-config/sync.mjs 则改后代跑；否则跳过。
+# 禁止代跑 harness sync.mjs。
 
 version: 1
 
