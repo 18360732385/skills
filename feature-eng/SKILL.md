@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 # feature-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.13-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.15-dev**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/feature.mjs`（`modes` / `status` / `gate-evidence` / `close-check`）。闸门证据：`node scripts/gate-evidence.mjs`。
 
 Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disable-model-invocation: true`，不自动加载）。流程与绑定见 [flow.md](modes/specs/flow.md)；L1/L2/硬闸见 [gates.md](modes/specs/gates.md)；桥见 [bridges.md](modes/specs/bridges.md)；运行时只读 [config/stage-bindings.yaml](config/stage-bindings.yaml)（init/rebind **首问**可改）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。  
@@ -65,6 +65,16 @@ Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disabl
 | 「inline 我就一边写代码一边改 progress」 | inline 只改调起形态；progress/回链/gates 仍只由 advance 写 |
 | 「B 路径 close 不用双归档」 | Bounded 仍须 active→archive；superpowers/archive 按 close L1 勾选，不得静默省略 runs 归档 |
 
+## 与 harness-eng 的配合与互斥
+
+- **顺序**：仓需先工程化时，先 `harness-eng` 至可 AI coding（或团队接受的阶）；再**新会话**点名本 skill。**同会话勿并行**。
+- **本 skill 不做**：不 land / fill / upgrade harness；不改 `docs/harness-eng/` 施工产物（close 时可选读契约目录做同步检查除外）。
+- **独立**：`harness_land: false`；无 `harness-meta` 时照常 `init` / `start`。
+- **软探测**：`start` 可只读探测仓库开干（`ai_coding_ready`）；无 meta 静默；**从不**因探测结果要求 land / 阻断开工。
+- **续跑**：本 skill `resume` = **续跑主题**（`docs/runs/active`）；**≠** harness 续跑工程化。
+- **计划 Go 闸**：环 5 末（`gates.go`）**≠** harness 仓库开干（`ai_coding_ready`）。
+- **环间 L1 / L2**：产物形状 / 语义审核；**≠** harness 阶梯 L1 / L2。
+
 ## 模式分流
 
 | 意图 | 模式 | Read |
@@ -72,7 +82,7 @@ Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disabl
 | 首次使用 / 初始化绑定 | `init` | [init.md](modes/init.md) |
 | 改环节↔skill 映射 | `rebind` | [rebind.md](modes/rebind.md) |
 | 新主题开工 | `start` | [start.md](modes/start.md) |
-| 续跑进行中主题 | `resume` | [resume.md](modes/resume.md) |
+| 续跑进行中主题 | `resume` | [resume.md](modes/resume.md)（续跑主题；≠ harness 续跑工程化） |
 | 只看进度 | `status` | [status.md](modes/status.md) |
 | 声称当前环完成 | `advance` | [advance.md](modes/advance.md) |
 | 收口归档 | `close` | [close.md](modes/close.md) |

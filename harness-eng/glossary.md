@@ -1,7 +1,7 @@
 # 术语与阶段卡（对用户展示）
 
 内部仍可用英文 ID；**对用户默认用中文名**，括号附英文别名。提问前可摘要展示本表相关行。  
-**对外压缩（0.7.14）**：阶梯用三档、模式用四支（见 [SKILL.md](SKILL.md)）；下表仍是写盘 / audit 用的完整 ID。
+**对外压缩（0.7.16）**：阶梯用三档、模式用四支（见 [SKILL.md](SKILL.md)）；下表仍是写盘 / audit 用的完整 ID。
 
 ## 阶梯（成熟度）`Q_LADDER`
 
@@ -35,10 +35,10 @@
 | **自动填充** | `fill-truths-auto` | **仅脚本、对话不推荐**；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | **填充引擎** | `Q_FILL_ENGINE` | `agents`【推荐】/ `hybrid`（可选）/ `auto`（legacy） |
 | **inventory 默认路径** | — | `docs/<domain>/.fill-work/inventory*.json`（fill-score 可自动发现） |
-| **续跑** | `resume` | 已有一半 harness：读 meta/指纹，**只补缺口**（幂等） |
-| **完整度打分** | `fill-score` | 双轴：形态 + 开干；见 [fill-score.md](fill/fill-score.md) |
+| **续跑工程化** | `resume` | 已有一半 harness：读 meta/指纹，**只补缺口**（幂等）。**≠** feature-eng 续跑主题（`docs/runs/active`） |
+| **完整度打分** | `fill-score` | 双轴：形态 + 仓库开干；见 [fill-score.md](fill/fill-score.md) |
 | **形态诊断** | `fill-morph` | 只看形态轴；引擎同 fill-score `--focus morph` |
-| **开干闸** | `fill-gate` | 只看开干清单 / gate；引擎同 fill-score `--focus gate` |
+| **仓库开干闸** | `fill-gate` | 只看开干清单 / gate（仓库级 `ai_coding_ready`）；引擎同 fill-score `--focus gate`。**≠** feature-eng 环 5「计划 Go 闸」 |
 | **填充** | `fill-*` | 骨架后：MCP → inventory → fill-plan → agents，见 [fill.md](fill/fill.md) |
 | **收益递减早停** | pipeline | **以 Plan 批次关闭 + semantic_ready / ai_coding_ready 为准** |
 
@@ -50,7 +50,7 @@
 |---|---|---|
 | **覆盖** | `coverage` / `coverage_by_domain` / `coverage_ready` | 相对 inventory 的文档化比例；裁决见 score-policy |
 | **形态** | `overall` / 域分 / `template_completeness` / `formula_ceiling` | 像不像模板；贴顶后走 agents |
-| **开干** | 仅 `ai_coding_ready` | 建议可以 AI 改业务的唯一闸 |
+| **开干**（仓库开干） | 仅 `ai_coding_ready` | 建议可以 AI 改业务的唯一闸（仓库级；≠ feature 计划 Go） |
 
 技术字段（骨架/语义/Plan/gate/gold；`ready.ok` 已废弃）见 [fill-score.md](fill/fill-score.md)。  
 `gate_profile`：有 score-policy 未写则 **strict**；无文件则 **legacy**；显式 `legacy` 可回退；显式 **`gold`** 为高门槛档（覆盖 100% / 形态≥**95** / 完成度≥95 / TODO 扫面 B / warnings=0）。新仓【推荐】仍 **strict**（`Q_GATE_PROFILE`）。**0.7.0**：形态满分 100（探针+深度）；`morph_scale: "0.7"`；strict 形态地板 **75**。
@@ -120,6 +120,17 @@
 | **RecommendedProfile** | 探测后自动给出的推荐包；不懂选项时可「全部推荐」 |
 | **WritePlan** | 写入前计划表 + 渲染预览；确认后才写盘 |
 | **AI 工具面** | `Q_AI_TOOL`：Cursor / Claude / Codex / Qoder / Trae / WorkBuddy；可自定义入口。适配层非 SSOT，见 [ai-tools.md](host/ai-tools.md) |
+
+## 与 feature-eng 易混词
+
+| 本 skill 说法 | 含义 | 勿与 feature-eng 混淆 |
+|---|---|---|
+| **仓库开干** / 可 AI coding | 仅 `ai_coding_ready` | ≠ 环 5 **计划 Go 闸**（`gates.go`） |
+| **续跑工程化** | 模式 `resume`：补 harness 缺口 | ≠ **续跑主题**（`docs/runs/active`） |
+| 阶梯 **L1 / L2** | 契约骨架 / 知识回流 | ≠ 环间 L1（形状）/ L2（语义） |
+| **Gate** / `fill-gate` | 仓库开干清单焦点 | ≠ 环 9 门禁闸 |
+
+配合顺序：本 skill 准备 → **新会话**点名 feature-eng；同会话勿并行。详见 [SKILL.md](SKILL.md)「配合与互斥」。
 
 ## 确认闸门（对用户提示语）
 

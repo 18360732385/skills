@@ -1,5 +1,32 @@
 # feature-eng CHANGELOG
 
+## 0.2.15-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.14-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **P2：harness_probe + close_pitfalls 有脚本时收紧**：
+
+- **harness_probe**：start 1b 只读软探测 `harness-meta` / `ai_coding_ready`；无 meta 静默；**不阻断**；回链可记一行；resume 可选补
+- **close_pitfalls**：yaml 默认仍 `optional`；有 `lint-pitfalls.mjs` 且用户未显式指定 → 本主题写 `on`；close 解析序 progress → defaults →（有脚本视为 on）
+- **selfcheck / VERIFY**：PIN 0.2.15-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.15-dev | 2026-09-27 | P2：harness_probe + close_pitfalls 收紧 |
+| 0.2.14-dev | 2026-09-27 | P0：与 harness-eng 消歧与接力 |
+
+## 0.2.14-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.13-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **P0：与 harness-eng 消歧与接力**：
+
+- **配合与互斥**：SKILL 短节（顺序 / 同会话勿并行 / 独立仍可跑）
+- **术语**：环 5「计划 Go 闸」（`gates.go`）≠ harness 仓库开干；环间 L1/L2 ≠ 阶梯；`resume` = 续跑主题
+- **热路径**：AGENT-INDEX / QUICKSTART 接力指针
+- **selfcheck / VERIFY**：PIN 0.2.14-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.14-dev | 2026-09-27 | P0：与 harness-eng 消歧与接力 |
+| 0.2.13-dev | 2026-09-27 | modes 大合并：7 入口 + specs/ 四手册 |
+
 ## 0.2.13-dev — 2026-09-27
 
 V0.6.X 开发钉。相对 0.2.12-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **modes 大合并**：

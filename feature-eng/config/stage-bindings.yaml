@@ -11,7 +11,7 @@ defaults:
   commit_policy: user_authorized
   handoff_policy: confirm
   review_policy: subagent
-  close_pitfalls: optional   # off | optional | on — 见 close.md；默认不强制
+  close_pitfalls: optional   # off | optional | on — skill 默认 optional；start 若发现 lint-pitfalls.mjs 则本主题写 on（可显式覆盖）；见 close.md
 
 stages:
   grill:      { skill: grill-me }                        # 环 1 澄清（术语草稿随 runs；禁止根 CONTEXT）

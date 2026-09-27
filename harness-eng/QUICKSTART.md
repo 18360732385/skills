@@ -32,13 +32,13 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 
 ## 能否 AI Coding（10 秒）
 
-打开目标仓 `docs/harness-eng/report-latest.html`（施工仪表盘）：
+打开目标仓 `docs/harness-eng/report-latest.html`（施工仪表盘）。此处「开干」= **仓库开干**（`ai_coding_ready`），≠ feature-eng 环 5「计划 Go 闸」。
 
 | 决策台 | 结论 |
 |---|---|
-| 徽章 **「建议可以开干」** + 可 AI coding **YES** | 可以开干（仍须人工审） |
+| 徽章 **「建议可以开干」** + 可 AI coding **YES** | 可以仓库开干（仍须人工审） |
 | 「建议暂缓」/ 开干 NO / blockers 非空 | 不可以 |
-| 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠开干） |
+| 仅 overall / 金标 /「仪表参考分」高 | 不可以（参考分 ≠仓库开干） |
 
 五台读法见 [guide/使用手册.md](guide/使用手册.md) 第 6 章 · [guide/使用手册.html](guide/使用手册.html#s6)。会话内仅**实质产出 / 闸门决策 / 显式读数**时 SHOW；细则 [session-dashboard.md](modes/session-dashboard.md)。
 
@@ -76,4 +76,4 @@ fill 家族 CLI（inventory / merge / plan / score / report）见 [fill/README.m
 PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BOM** 文件再传路径。完整示例 SSOT：[write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
 
 多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.14**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.16**）。

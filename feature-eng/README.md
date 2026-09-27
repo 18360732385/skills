@@ -6,6 +6,8 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
+0.2.15-dev 要点：P2 harness_probe 软探测 + 有 lint-pitfalls 时本主题 close_pitfalls 收紧为 on（yaml 默认仍 optional）。叠在 0.2.14-dev 之上。
+0.2.14-dev 要点：P0 与 harness-eng 消歧与接力（配合与互斥短节；计划 Go 闸 ≠ 仓库开干；环间 L1/L2 ≠ 阶梯）。叠在 0.2.13-dev 之上。
 0.2.13-dev 要点：modes 大合并——根目录仅 7 入口；`modes/specs/{flow,gates,bridges,handoff}` 四手册；旧扁平规格废除。叠在 0.2.12-dev 之上。
 0.2.12-dev 要点：P2（auth/progress-shape lib；status-scan --cwd；交接/术语增量/设计笔记/审核-stage 模板；pre-impl↔pre_impl 别名；manifest specs）。叠在 0.2.11-dev 之上。
 0.2.11-dev 要点：闸检须 `result: pass`；`user_task_*` 占位黑名单；夹具 Spec/Plan stub；feature.mjs 转发 gate-evidence/close-check；close-check 组合 gate-evidence；AGENT-INDEX ≤8 文件；minimal 绑定包；proxy「仪式与降级」机检。叠在 0.2.10-dev 之上。

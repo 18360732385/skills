@@ -38,7 +38,8 @@ review_policy: subagent
 # 见 binding.md「chef_mode」；controller_proxy = 显式降级：控制器兼代厨师角色落盘产物
 chef_mode: bound
 
-# off | optional | on（close 时 pitfalls lint；缺省跟 defaults.close_pitfalls，再缺省 optional）
+# off | optional | on（close 时 pitfalls lint；解析序见 close.md）
+# skill yaml 默认 optional；start 若发现 lint-pitfalls.mjs 且用户未显式指定 → 写 on
 # close_pitfalls: optional
 
 # triage | grill | design | domain-bridge | domain | spec | plan | proto-bridge | proto | testdesign

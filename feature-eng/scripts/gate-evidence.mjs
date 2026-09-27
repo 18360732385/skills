@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * feature-eng 闸门证据廉价校验（0.2.13-dev）。
+ * feature-eng 闸门证据廉价校验（0.2.15-dev）。
  * 不写盘：ISO gates.* 须有合法 authorized_by；适用环须有 审核-<stage>.md 且 result: pass。
  * controller_proxy + 任一 ISO gate → 回链「仪式与降级」节非空。
  *

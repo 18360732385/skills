@@ -1,16 +1,37 @@
-# harness-eng 验收记录（0.7.14）
+# harness-eng 验收记录（0.7.16）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.14**（报告壳 0.4.0 · 五台 + 宿主面；其上 0.7.13 手册改写 · 0.7.12 guide/ 搬家 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.16**（docs/runs 入图 + rule 18 中途 commit；其上 0.7.15 消歧接力 · 0.7.14 报告壳 0.4.0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.16 增量验收（docs/runs 入图 + rule 18 中途 commit）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.16` | 有 |
+| CHANGELOG 标题 `## 0.7.16` | 有 |
+| AGENTS tmpl（root + solo）含 `docs/runs` | 有 |
+| rule 00 含 `docs/runs` 与交付双归档 / 中途 commit | 有 |
+| rule 18 含进行中可中途 commit、禁止假收口、交付双归档 | 有 |
+| upgrade `## 0.7.15 → 0.7.16` | 有 |
+| sync tmpl id `0.7.16` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.15 增量验收（与 feature-eng 消歧与接力）
+
+| 项 | 期望 |
+|---|---|
+| CHANGELOG 标题 `## 0.7.15` | 有 |
+| SKILL「配合与互斥」；glossary 易混词；移交含 feature-eng | 有 |
+| 仓库开干 ≠ 计划 Go；续跑工程化 ≠ 续跑主题 | 有 |
+| upgrade `## 0.7.14 → 0.7.15` | 有 |
 
 ## 0.7.14 增量验收（报告壳 0.4.0 · 五台 + 宿主面）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.14` | 有 |
 | CHANGELOG 标题 `## 0.7.14` | 有 |
 | `ui.report_schema === "0.4.0"`；含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface` | 有 |
 | HTML 模板五 Tab（含宿主台）+ 双轴进度 + 顶栏 capsule | 有 |
@@ -18,8 +39,6 @@
 | 会话仪表盘可出宿主面一行；脚注「五台读法」 | 有 |
 | 开干只看 `ai_coding_ready`；宿主面不否决开干 | 有 |
 | upgrade `## 0.7.13 → 0.7.14` | 有 |
-| sync tmpl id `0.7.14` | 有 |
-| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.13 增量验收（使用手册大段改写）
 

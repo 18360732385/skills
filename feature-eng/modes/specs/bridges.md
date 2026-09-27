@@ -53,7 +53,7 @@
 ## Part B — proto-bridge（环 5→6）
 
 
-**仅控制器执行**，在 Plan（或 B 的 checklist）过开干闸之后、进入环 7/7b 之前运行。
+**仅控制器执行**，在 Plan（或 B 的 checklist）过**计划 Go 闸**之后、进入环 7/7b 之前运行。
 
 ## 步骤
 

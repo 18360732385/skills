@@ -92,7 +92,7 @@ Q_SEED: 是
 **推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.14'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.16'}}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 
@@ -130,13 +130,14 @@ node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 
 ### P1 — 契约可协作
 
-4. 为每个启用契约域补充首个 `01-*.md` 真相，或跑 `seed-truths`
-5. 填写 Never do **域**红线（只写本仓真实约束）
+4. **下一会话**点名 **feature-eng**（`init` 或 `start`）做需求开发；**勿在本会话继续 land/fill**
+5. 为每个启用契约域补充首个 `01-*.md` 真相，或跑 `seed-truths`
+6. 填写 Never do **域**红线（只写本仓真实约束）
 
 ### P2 — 知识回流
 
-6. 按域追加真实 `Pn`（有翻车后再写）
-7. 将稳定高频翻车压缩进 `00` 薄片表
+7. 按域追加真实 `Pn`（有翻车后再写）
+8. 将稳定高频翻车压缩进 `00` 薄片表
 
 ## Trae 同级
 

@@ -1,6 +1,8 @@
 # feature-eng 一页纸
 
-**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.13-dev**。
+**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.15-dev**。
+
+**接力**：需要工程化时先 `harness-eng` → **新会话**再点名本 skill；同会话勿并行。本 skill 可独立使用（无 harness 亦可）。有 `harness-meta` 时 `start` 会软提示 `ai_coding_ready`（可忽略继续）；详见 [SKILL.md](SKILL.md)「配合与互斥」。
 
 ## 主循环
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.13-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.15-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 入口 · modes/specs/ · feature.mjs · 绑定 · 模板 · lib ·
  * status-scan --cwd · gate-evidence · fixtures · CHANGELOG。
  */
@@ -37,7 +37,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.13-dev";
+const PIN = "0.2.15-dev";
 
 const MODES = [
   "modes/init.md",
@@ -364,6 +364,14 @@ assert(/close_pitfalls/.test(close), "close.md documents close_pitfalls");
 assert(
   /\boff\b/.test(close) && /\boptional\b/.test(close) && /\bon\b/.test(close),
   "close.md has off|optional|on"
+);
+assert(
+  /视为\s*`?on`?|视为 on/.test(close),
+  "close.md resolution: lint script → effective on"
+);
+assert(
+  /lint-pitfalls\.mjs/.test(close) && /解析顺序/.test(close),
+  "close.md has close_pitfalls resolution order"
 );
 
 // --- CHANGELOG formal heading ---
@@ -1721,12 +1729,28 @@ assert(
   "binding.md links 设计笔记 tmpl"
 );
 
-// 0.2.13-dev：modes 大合并
-assert(/## 0\.2\.13-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.13-dev block");
-assert(/modes 大合并|specs\/flow|四手册/.test(changelog || ""), "CHANGELOG mentions modes merge");
+// 0.2.15-dev：harness_probe + close_pitfalls 收紧；保留 0.2.14 消歧块
+assert(/## 0\.2\.15-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.15-dev block");
+assert(/## 0\.2\.14-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.14-dev block");
+assert(/harness_probe|close_pitfalls/.test(changelog || ""), "CHANGELOG mentions P2 probe/pitfalls");
+assert(/与 harness-eng 的配合与互斥/.test(skill || ""), "SKILL has harness compat section");
+assert(/软探测|从不.*land|不阻断/.test(skill || ""), "SKILL soft probe never requires land");
 assert(/modes\/specs\/flow/.test(skill || ""), "SKILL links modes/specs/flow");
 assert(/modes\/specs\/gates/.test(skill || ""), "SKILL links modes/specs/gates");
 assert(/≤6/.test(index) || /≤6 文件/.test(index), "AGENT-INDEX says ≤6");
+assert(/harness_probe/.test(startMd), "start.md has harness_probe");
+assert(/软·不阻断|不阻断/.test(startMd) && /ai_coding_ready/.test(startMd), "start probe soft + ai_coding_ready");
+assert(/静默跳过/.test(startMd), "start probe silent without meta");
+assert(
+  /lint-pitfalls\.mjs/.test(startMd) && /close_pitfalls:\s*on|close_pitfalls.*on/.test(startMd),
+  "start tightens close_pitfalls to on when lint exists"
+);
+assert(
+  /lint-pitfalls\.mjs/.test(bindings || "") || /本主题写 on/.test(bindings || ""),
+  "bindings comment documents start tighten to on"
+);
+assert(/harness_probe/.test(read("modes/resume.md") || ""), "resume.md optional harness_probe top-up");
+assert(/ai_coding_ready/.test(read("QUICKSTART.md") || ""), "QUICKSTART mentions ai_coding_ready soft tip");
 
 // --- report ---
 const total = ok.length + fail.length;

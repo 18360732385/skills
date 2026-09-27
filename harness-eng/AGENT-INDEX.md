@@ -23,7 +23,7 @@
 
 | 何时 | Read |
 |---|---|
-| 续跑 | [modes/resume.md](modes/resume.md) |
+| 续跑工程化 | [modes/resume.md](modes/resume.md)（≠ feature 续跑主题） |
 | 升阶 | [modes/upgrade.md](modes/upgrade.md) |
 | 补空壳真相 | [modes/seed-truths.md](modes/seed-truths.md) |
 
@@ -45,7 +45,7 @@
 
 | 何时 | Read |
 |---|---|
-| 打分 / 形态 / 开干闸 | [fill/fill-score.md](fill/fill-score.md) · [fill/fill-morph.md](fill/fill-morph.md) · [fill/fill-gate.md](fill/fill-gate.md) |
+| 打分 / 形态 / 仓库开干闸 | [fill/fill-score.md](fill/fill-score.md) · [fill/fill-morph.md](fill/fill-morph.md) · [fill/fill-gate.md](fill/fill-gate.md)（仓库级 `ai_coding_ready`） |
 | 契约填充 / workers | [fill/fill.md](fill/fill.md) · [fill/fill-truths-agents.md](fill/fill-truths-agents.md) · [fill/fill-workers.md](fill/fill-workers.md) |
 | MCP / live 校准 | [fill/fill-mcp.md](fill/fill-mcp.md) · `scripts/fill-calibrate-live.mjs --help` |
 

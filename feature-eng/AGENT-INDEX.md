@@ -3,13 +3,13 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。
 
-**拓扑（0.2.13-dev）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
+**拓扑（0.2.15-dev）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
 
 ## 必读（写盘 / 调起前）≤6 文件
 
 | # | 何时 | Read |
 |---|---|---|
-| 1 | **边界 / 写盘权责** | [SKILL.md](SKILL.md)「控制器边界」 |
+| 1 | **边界 / 写盘权责**（含配合与互斥） | [SKILL.md](SKILL.md)「控制器边界」·「与 harness-eng 的配合与互斥」 |
 | 2 | 环节表 + 绑定 lookup / 截断 | [flow.md](modes/specs/flow.md) |
 | 3 | L1 + L2 + 硬闸 | [gates.md](modes/specs/gates.md) |
 | 4 | 过闸写盘与主动调起 | [advance.md](modes/advance.md) |

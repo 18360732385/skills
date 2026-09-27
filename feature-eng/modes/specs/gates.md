@@ -1,11 +1,12 @@
-﻿# gates — L1 / L2 / 硬闸
+﻿# gates — 环间 L1 / L2 / 硬闸
 
-L1 形状 + L2 审核 + 硬闸（原 artifacts + gates-review + gates-common）。环节/绑定见 [flow.md](flow.md)。
+环间 **L1（形状）** + **L2（语义）** + 硬闸（原 artifacts + gates-review + gates-common）。环节/绑定见 [flow.md](flow.md)。  
+**消歧**：此处 L1/L2 **≠** harness-eng 阶梯 L1/L2（契约骨架 / 知识回流）。环 5「计划 Go 闸」**≠** harness 仓库开干（`ai_coding_ready`）。
 
-## Part A — 产物契约（L1）
+## Part A — 产物契约（环间 L1）
 
 
-本页 = **L1 机械/形状**勾选。语义必过项见下文 Part B（**L2**）。`advance` 须 **L1 ∧ L2**（适用时）都过才推进。
+本页 = **环间 L1 机械/形状**勾选。语义必过项见下文 Part B（**环间 L2**）。`advance` 须 **L1 ∧ L2**（适用时）都过才推进。
 
 控制器校验时：**只 Read 当前 `progress.stage` 对应一节**（不要整页通读）。
 
@@ -76,7 +77,7 @@ L1 形状 + L2 审核 + 硬闸（原 artifacts + gates-review + gates-common）�
 
 - [ ] F：`docs/superpowers/plans/*-实施计划.md`（或约定名）存在；`artifacts.plan` 已填（advance）
 - [ ] B（若进入）：checklist 或计划文件存在且非空
-- [ ] 开干闸三问已过 → advance 写 `gates.go`（条件见下文 Part C）
+- [ ] 计划 Go 闸三问已过 → advance 写 `gates.go`（条件见下文 Part C）
 - [ ] 计划中「每任务 commit」若存在：视为 optional；未授权则可不执行（见 [flow.md](flow.md) 宿主 commit 策略）
 
 ## proto-bridge（环 5→6）
@@ -296,7 +297,7 @@ L1 形状 + L2 审核 + 硬闸（原 artifacts + gates-review + gates-common）�
 
 ### 离开 plan
 
-- [ ] 开干三问语义成立
+- [ ] 计划 Go 三问语义成立
 - [ ] 任务拆分可支撑实现
 
 ### 离开 proto（仅 `proto=entered`）
@@ -359,7 +360,7 @@ L1 形状 + L2 审核 + 硬闸（原 artifacts + gates-review + gates-common）�
 
 ## 硬闸授权 `authorized_by`（O3）
 
-凡用户硬闸（分诊 / 共享理解 / 设计确认 / 开干 / Pre-Impl / Gate / Verify / Close 等需显式确认者），在 `回链.md`「硬闸授权」表记录：
+凡用户硬闸（分诊 / 共享理解 / 设计确认 / 计划 Go / Pre-Impl / Gate / Verify / Close 等需显式确认者），在 `回链.md`「硬闸授权」表记录：
 
 | 合法取值 | 含义 |
 |---|---|
@@ -435,10 +436,11 @@ L1 形状 + L2 审核 + 硬闸（原 artifacts + gates-review + gates-common）�
 
 - 规则见 [bridges.md](bridges.md)；桥本身不写 ADR，只决定 `domain=skipped|skipped_by_user|entered`（展示结论可推翻）。结束后按 `handoff_policy` 主动进下一环。
 
-## 开干闸（环 5 末，计划侧）
+## 计划 Go 闸（环 5 末，计划侧）
 
-- 通过：L1+L2（离开 plan）过；三问语义成立：①任务依赖无环 ②契约变更已列入首批 ③每任务有可测验收；用户短确认（若尚未在 plan 审中显式 yes）。
+- 通过：L1+L2（离开 plan）过；三问语义成立：①任务依赖无环 ②契约变更已列入首批 ③每任务有可测验收；用户短确认（若尚未在 plan 审中显式 yes）。写 `gates.go`。
 - 失败：补 plan；不得进 Proto 桥。
+- **≠** harness-eng 仓库开干（`ai_coding_ready`）。
 
 ## Proto 桥（环 5→6）
 

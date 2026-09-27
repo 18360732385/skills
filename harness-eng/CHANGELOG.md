@@ -1,8 +1,25 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.12 → 0.7.13 → 0.7.14`（当前 **0.7.14**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.14 → 0.7.15 → 0.7.16`（当前 **0.7.16**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.16 — 2026-09-27（docs/runs 入图 + rule 18 中途 commit）
+
+### Docs / pack
+- **AGENTS**：Repo structure + 文档优先级增加 `docs/runs/` 指针（非契约 SSOT；不 land 整套 runs）
+- **rule 00**：文档权威 / 定向读序 / 交付收口含 runs active→archive；提交门禁与 rule 18 对齐
+- **rule 18**：进行中主题允许中途 commit；宣称交付时 superpowers + runs **双归档**；禁止假收口
+- **stop-checklist**：文案改为「宣称交付时须…；进行中可中途 commit」
+- upgrade `0.7.15 → 0.7.16`；manifest / meta / sync tmpl / questions → `0.7.16`
+
+## 0.7.15 — 2026-09-27（与 feature-eng 消歧与接力）
+
+### Docs / pack
+- **配合与互斥**：SKILL 短节（准备 → 新会话 feature-eng；同会话勿并行；可独立施工）
+- **术语**：仓库开干（`ai_coding_ready` / `fill-gate`）≠ feature 环 5「计划 Go 闸」；续跑工程化 ≠ 续跑主题；glossary 易混词表
+- **移交**：write-plan / prefill / land§7 P1 固定项「下一会话点名 feature-eng」
+- upgrade `0.7.14 → 0.7.15`；manifest / meta / sync tmpl / questions → `0.7.15`
 
 ## 0.7.14 — 2026-09-26（报告壳 0.4.0 · 五台 + 宿主面）
 

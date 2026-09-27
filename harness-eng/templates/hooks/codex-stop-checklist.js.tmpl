@@ -94,7 +94,7 @@ function git(cmd, cwd) {
         f.startsWith("docs/superpowers/archive/")
     );
     if (plansUntracked.length && !indexTouched) {
-      lines.push("superpowers 有未收口 plan：交付时须徽章 + git mv archive + 写入 ARCHIVE（rule 18）");
+      lines.push("superpowers 有未收口 plan：宣称交付时须徽章 + git mv archive + 写入 ARCHIVE（rule 18）；进行中主题可中途 commit");
     }
 
     const prefixes =

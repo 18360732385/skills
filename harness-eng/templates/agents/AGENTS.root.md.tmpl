@@ -25,6 +25,7 @@ TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必
 ├── docs/func|api|db|redis|jobs/  # 契约：索引 + 真相（按已启用域）
 ├── docs/agent-kb/           # architecture / pitfalls / accepted-gaps
 ├── docs/releases/           # 发版过程域（非契约 SSOT；若启用）
+├── docs/runs/               # 主题过程态（非契约 SSOT；有则读 active/*/progress.yaml）
 └── docs/superpowers/        # 规划语料（非 SSOT；若启用 L3）
 ```
 
@@ -36,7 +37,8 @@ TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必
 4. `docs/func` → `docs/api` → `docs/db` → `docs/redis` → `docs/jobs`（先索引再真相；按已启用域）
 5. `docs/agent-kb/` — 定向与踩坑回流（非契约 SSOT）
 6. `docs/superpowers/README.md` — 仅进行中；不覆盖上列 SSOT
-7. `docs/releases/` — 发版过程域（若启用；非契约 SSOT）
+7. `docs/runs/` — 主题过程态；存在 `active/<slug>/` 时优先读该主题 `progress.yaml` / `回链.md`（非契约 SSOT；由 feature-eng 等典礼维护，harness-eng **不** land 整套 runs）
+8. `docs/releases/` — 发版过程域（若启用；非契约 SSOT）
 
 > **冲突裁决**：分册 AGENTS / 契约真相以**磁盘最新文件**为准；动手前 Read 重读，勿沿用会话早期摘要。
 

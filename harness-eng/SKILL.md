@@ -19,6 +19,14 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](modes/write-plan.md)。  
 **全部推荐**协议 SSOT：[recommended-profile.md](modes/recommended-profile.md)。他处只指针。
 
+## 与 feature-eng 的配合与互斥
+
+- **顺序**：本 skill 做仓库工程化准备；完成后**新会话**点名 `feature-eng`（`init` / `start`）做需求开发。**同会话勿并行**点名两者。
+- **本 skill 不做**：不调度 `docs/runs`、不跑 feature advance/close、不代写业务主题 Spec/Plan。
+- **独立**：无 feature-eng 时本 skill 仍可完整落地脚手架与契约。
+- **续跑**：用户说「续跑」且语境是 harness 半成品 → 本 skill `resume`（续跑工程化）；主题过程态 → 请用户点名 feature-eng。
+- **开干**：本 skill「开干 / 可 AI coding」仅指仓库级 `ai_coding_ready`，**≠** feature-eng 环 5「计划 Go 闸」（`gates.go`）。易混词见 [glossary.md](glossary.md)。
+
 ## 流程
 
 1. **探测 → 推荐包 → 提问 → WritePlan → 确认闸门 → 才写盘**（预授权例外见 write-plan）。最短路径见 QUICKSTART。
@@ -59,7 +67,7 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 - [ ] 4 WritePlan（白话摘要 + 预览）— 等待确认（闸门见 write-plan.md）
 - [ ] 5 确认后 `scripts/harness.mjs`（`--mode land`；L5/`agent_config` 走 sync，勿直渲生成宿主路径；非 L5 委托 render）；空仓 on_exists=fail；半成品改 resume 语义 on_exists=skip
 - [ ] 6 ladder 自检；写/合并 harness-meta（skill_version 与 manifest 一致）
-- [ ] 7 分级移交 TODO（P1：精填分册 AGENTS；P1：Pn 回流 / 路径速查 / Never do↔Pn；若 Q_APIFOX：设 APIFOX_PROJECT_ID）
+- [ ] 7 分级移交 TODO（P1：下一会话点名 feature-eng init/start，勿本会话继续 land/fill；P1：精填分册 AGENTS；P1：Pn 回流 / 路径速查 / Never do↔Pn；若 Q_APIFOX：设 APIFOX_PROJECT_ID）
 ```
 
 细节链：Read [detect.md](modes/detect.md) → [questions.yaml](questions.yaml) / [questions.md](modes/questions.md) → [write-plan.md](modes/write-plan.md) + [prefill.md](modes/prefill.md) → **harness.mjs** → [ladder.md](modes/ladder.md)。

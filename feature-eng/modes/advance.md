@@ -41,5 +41,5 @@
 - 仅控制器改 `progress.yaml` / `回链.md`。
 - 审核员只写 `审核-<stage>.md`。
 - 自动调起 ≠ 替用户 yes 硬闸。
-- 设计确认后 → [bridges.md](specs/bridges.md)；开干后 → [bridges.md](specs/bridges.md)。
+- 设计确认后 → [bridges.md](specs/bridges.md)；计划 Go 后 → [bridges.md](specs/bridges.md)。
 - **证据条**：写 `gates.*` ISO 前，回链 `authorized_by` 合法且适用环 `审核-<stage>.md` 已落盘且 **`result: pass`**（`chef_mode=controller_proxy` 不豁免；proxy 须「仪式与降级」非空）。机检：`node scripts/gate-evidence.mjs` 或 `node scripts/feature.mjs gate-evidence`。

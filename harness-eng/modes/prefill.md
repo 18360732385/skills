@@ -31,6 +31,7 @@ WritePlan 必须展示预填后的 `AGENTS.md` Critical/Commands 前约 20 行�
 | 优先级 | 项 |
 |---|---|
 | P0 | README/yml 疑似密钥（若探测到） |
+| **P1** | **下一会话点名 feature-eng**（`init` 或 `start`）；勿在本会话继续 land/fill |
 | **P1** | **精填分册 AGENTS**（定位表、改动路径速查实表、Never do 一句话↔`Pn`；勿抄他仓业务条） |
 | **P1** | **Pn 回流**：从 Critical/Commands/Never do 补 `docs/agent-kb/pitfalls.md` **路径速查**；Never do 一律 `一句话 → Pn`；改台账后跑 lint |
 | P1 | seed-truths / fill-plan（大仓） |

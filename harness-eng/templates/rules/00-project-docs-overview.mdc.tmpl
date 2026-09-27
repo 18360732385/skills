@@ -15,7 +15,8 @@ alwaysApply: true
 4. `docs/func|api|db|redis|jobs`：先索引再真相（按已启用契约域；rules `11`–`13`、`16`、`20`）
 5. `docs/agent-kb/`（architecture / pitfalls / accepted-gaps；非契约 SSOT）
 6. `docs/superpowers/README.md`：仅「进行中」（若启用；非 SSOT）
-7. （可选）`docs/releases/`：发版过程域（非契约 SSOT；skill `release-eng`）
+7. `docs/runs/`：主题过程态（非契约 SSOT；有 `active/<slug>/` 时优先读该主题 `progress.yaml` / `回链.md`）
+8. （可选）`docs/releases/`：发版过程域（非契约 SSOT；skill `release-eng`）
 
 冲突裁决：分册 AGENTS / 契约真相以**磁盘最新**为准；动手前 Read 重读，勿沿用会话早期摘要。
 
@@ -23,11 +24,11 @@ alwaysApply: true
 
 | 场景 | 先读 |
 |---|---|
-| **定向**（新会话 / 边界不清） | 根 AGENTS → `docs/agent-kb/architecture-overview.md` → 相关 pitfalls **按域** |
+| **定向**（新会话 / 边界不清） | 根 AGENTS →（若存在 `docs/runs/active/` → 对应 `progress.yaml`）→ `docs/agent-kb/architecture-overview.md` → 相关 pitfalls **按域** |
 | **改业务 / 契约** | 分册 AGENTS → `docs/func\|api\|db\|redis\|jobs` 索引+真相 → 代码 |
 | **改 Cron / 定时任务** | `docs/jobs/jobs.md` → `tasks/NN-*.md` → Scheduler / Registry / yml（rule `20`） |
 | **发版 / 上线清单** | 用户点名 `release-eng`（若本仓启用） |
-| **交付收口** | 契约已同步？→ superpowers 进行中表（若启用）→ **新翻车须回流 `Pn` 并更新「路径速查」**（Never do 只一句话 + `→ Pn`） |
+| **交付收口** | 契约已同步？→ **若有** `docs/runs/active/<slug>` 则 active→archive（及回链终态）→ superpowers 进行中表收口（若启用）→ **新翻车须回流 `Pn` 并更新「路径速查」**（Never do 只一句话 + `→ Pn`） |
 
 ## 同步一句
 
@@ -48,7 +49,7 @@ TODO(harness-eng): 将本仓稳定高频翻车压缩为 3～7 行薄片，回链
 
 ## 提交门禁
 
-- **superpowers**：用户要求 `git commit` 或本轮完成某规划主题主功能时，先 Read `docs/superpowers/README.md`「进行中」表；漏收口则先收口（若启用 L3）。
+- **superpowers / runs**：仅当用户**宣称主题主功能交付**或要求收口（如 feature-eng close）时，先 Read `docs/superpowers/README.md`「进行中」表并做收口（徽章 + archive + README→ARCHIVE；**若有** `docs/runs/active/<slug>` 则一并 active→archive）。**进行中**主题（`docs/runs/active/` 且 `stage ≠ done`）允许按用户授权**中途 commit**；勿因本条强制假收口或改徽章为「已交付」。纯 fix/chore 可不改索引。详见 path rule `18`。
 - **契约同步**（若装 hooks 家族 `commit-gate-extended`）：commit 时按暂存路径软提醒漏同步 `docs/func|api|db|redis|jobs` 真相（domains.yaml `hook:` 段驱动）。
 - **SQL/环境**（同上）：暂存含 `db/migration/*.sql` 时软提醒按迁移模式人工同步到各环境（不自动执行）。
 - **agent-kb**：本轮修了智能体高频翻车模式 → 追加或核对 `Pn`（rule `19` 三问）；改过 `pitfalls.md` 须跑 `node scripts/agent-kb/lint-pitfalls.mjs`。

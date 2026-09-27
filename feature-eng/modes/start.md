@@ -15,6 +15,17 @@
      - **提示**临时目录配方（完整见 [QUICKSTART.md](../QUICKSTART.md)「绿地前端」）：`scaffold_dir=$(mktemp -d) && npm create vite@latest "$scaffold_dir" -- --template <tpl> && cp -a "$scaffold_dir"/. .`
      - init/start **提示配方**，不要只报「目录非空」就失败。
    - **非 empty-ish**：正常继续。预检结论可写入 `回链.md`「其他」一行。
+1b. **harness_probe（软·不阻断）**：只读探测仓库工程化状态；**禁止**因结果拒绝 start / 分诊。
+   - 探测 `docs/harness-eng/harness-meta.yaml`（无则可读遗留 `.cursor/harness-meta.yaml`）。
+   - **无 meta** → **静默跳过**（零噪音）。
+   - **有 meta** → 尝试读 `docs/harness-eng/run-latest.json`、同目录 score/report JSON，或 `report-latest.html` 内嵌的 `ai_coding_ready`（有则 YES/NO，找不到则「未知」）。对用户展示短块后继续：
+     ```text
+     【harness 探测】（软·不阻断）
+     - meta: 有
+     - 仓库开干 ai_coding_ready: YES | NO | 未知
+     - 提示：NO/未知时可先 harness fill-score，或继续本主题（独立模式）
+     ```
+   - 结论写入 `回链.md`「仪式与降级」一行：`harness_probe: meta=有 · ai_coding_ready=…`（无 meta 时不写）。
 2. **绑定就绪检查 + chef_mode 探测**：读 `stage-bindings.yaml`。按即将分诊的路径，标出关键环若为 `null` 的缺口（见下表）。有缺口 → **红字提示**（失败文案见 [flow.md](specs/flow.md)「绑定 skill 可调起」预检 A/B），建议先 `rebind`/`init`；用户坚持继续则仅能跑到第一个未绑环前。首个执行环调起前再跑完整预检 A–E。
    - 任意路径常用：`grill` / `design`（按需）  
    - B/F：`implement`、`review`；条件 `proto` / `domain`（仅 entered 时才调起）  
@@ -41,11 +52,15 @@
    - **`handoff_policy`**：`auto` | `confirm`。未指定时：`express`→`auto`，`guided`→`confirm`。
    - **`review_policy`**：`subagent`（默认）| `inline`。
    - **review_policy 宿主探测（O5）**：若用户选/默认 `subagent`，但宿主 **无 Task/子代理能力** → **自动降级**为 `inline`，并在 `回链.md`「仪式与降级」与门禁备注写明「review_policy: subagent→inline（宿主无 Task）」——**禁止静默改值**。
+   - **`close_pitfalls`（有 lint 脚本时收紧）**：
+     - 探测目标仓是否存在 `scripts/agent-kb/lint-pitfalls.mjs`（或团队文档注明的等价路径）。
+     - 用户本轮**显式**指定 `off|optional|on` → 以用户为准，写入 `progress.close_pitfalls`。
+     - 否则：若**有** lint 脚本 → 写 `progress.close_pitfalls: on`，回链「仪式与降级」注明「有 lint-pitfalls → on」；若**无** → 跟 `defaults.close_pitfalls`（缺省 `optional`），可不写 progress 字段。
 7. **建过程态**：
    - 确保 `docs/runs/active/`（及可选 `docs/runs/README.md`，可用 `templates/runs-README.md.tmpl`）
    - 创建 `docs/runs/active/<slug>/`
-   - 写 `progress.yaml`（自 `templates/progress.yaml.tmpl`；写入已探测的 `chef_mode` / 可能降级后的 `review_policy` / 可选 `sibling_repos` / `layout`·`packages`·`docs_root`）
-   - 写 `回链.md`（自 `templates/回链.md.tmpl`；同步 chef_mode / review_policy 降级备注 / 跨仓表 / 同仓布局）
+   - 写 `progress.yaml`（自 `templates/progress.yaml.tmpl`；写入已探测的 `chef_mode` / 可能降级后的 `review_policy` / 可选 `close_pitfalls` / `sibling_repos` / `layout`·`packages`·`docs_root`）
+   - 写 `回链.md`（自 `templates/回链.md.tmpl`；同步 chef_mode / review_policy 降级备注 / harness_probe / close_pitfalls 收紧备注 / 跨仓表 / 同仓布局）
    - 可选：在 `docs/runs/README.md` 进行中表插入一行
 8. **登记索引**（仅 F，或用户要求登记时）：`docs/superpowers/README.md` 进行中表按日期倒序插入主题行（Spec/Plan 列先 `—`，环 4/5 产出后回写）。无 README 则跳过并说明。
 9. **进入下一环**：**控制器主动**按 [flow.md](specs/flow.md) lookup 调起首个执行环。若 `chef_mode=controller_proxy`，本环由控制器戴厨师帽产出领域产物，仍经 advance 写盘。若 `handoff_policy=confirm`，先短确认卡片再调起。用户声称本环完成 → [advance.md](advance.md)。
@@ -57,7 +72,7 @@
 
 ## `express` 硬边界
 
-**不跳过**：分诊确认、开干闸、Pre-Impl、Verify（F）、Close。  
+**不跳过**：分诊确认、计划 Go 闸、Pre-Impl、Verify（F）、Close。  
 **可压缩**：grill+design 同轮；共享理解闸 + 设计确认闸可用**一次总 yes**。  
 **仍分环**：spec 与 plan；design 后仍跑 **domain-bridge**；proto 桥规则不变。  
 **编排**：默认 `handoff_policy=auto`。
@@ -73,3 +88,4 @@
 - 用户已提跨仓配对却未填 `sibling_repos` → 不得宣称 start/grill 完成。
 - `layout=monorepo` 且 sibling_repos 指向 `packages[].path` 同仓路径 → 不得宣称 start 完成（改用 packages）。
 - monorepo 合并后子包仍残留 `docs/runs|superpowers` → 须先剥离（M6）再继续典礼。
+- harness_probe 仅为软提示；`ai_coding_ready=NO|未知` **不得**阻断 start。

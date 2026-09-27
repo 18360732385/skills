@@ -57,6 +57,20 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.15 → 0.7.16 迁移要点
+
+1. **meta**：`skill_version` → `0.7.16`（docs/templates：`docs/runs` 入图 + rule 18 中途 commit；模式 / 阶梯 / 闸门语义不变）
+2. **AGENTS / rule 00**：承认 `docs/runs` 过程态指针；交付收口含 runs active→archive（若有）
+3. **rule 18**：进行中主题可中途 commit；宣称交付时 superpowers + runs 双归档
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.16`）后再 sync（与往期相同）
+
+## 0.7.14 → 0.7.15 迁移要点
+
+1. **meta**：`skill_version` → `0.7.15`（docs-only：与 feature-eng 消歧 / 移交指针；模式 / 阶梯 / 闸门语义不变）
+2. **术语**：对外「仓库开干」= `ai_coding_ready`；勿与 feature-eng「计划 Go 闸」混用
+3. **移交**：land/resume/upgrade Done 打印 P1「下一会话点名 feature-eng」
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.15`）后再 sync（与往期相同）
+
 ## 0.7.13 → 0.7.14 迁移要点
 
 1. **报告壳**：`report_schema` **0.4.0**（与 skill **0.7.14** 同发；报告壳 ≠ skill）

@@ -10,7 +10,7 @@ defaults:
   commit_policy: user_authorized
   handoff_policy: confirm
   review_policy: inline
-  close_pitfalls: optional
+  close_pitfalls: optional   # skill 默认；有 lint-pitfalls.mjs 时 start 本主题写 on
 
 stages:
   grill:      { skill: null }

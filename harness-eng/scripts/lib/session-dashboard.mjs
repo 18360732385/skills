@@ -1,7 +1,7 @@
 /**
  * Chat footer dashboard for harness-eng this-turn engineering steps (0.5.3+; gated 0.5.4+; tightened 0.6.9).
- * 0.4.0 / 0.7.14: consume buildReportUi (go_nogo/tasks) + host_surface.
- * 0.7.14+: four-side box; 【阶段】【现状】【工作】【下一步建议】各一句；现状仅 AI coding 可否（无 mermaid）。
+ * 0.4.0 / 0.7.16: consume buildReportUi (go_nogo/tasks) + host_surface.
+ * 0.7.16+: four-side box; 【阶段】【现状】【工作】【下一步建议】各一句；现状仅 AI coding 可否（无 mermaid）。
  * When to SHOW/HIDE: session-dashboard.md (agent decides per this turn; --intent on session-dash.mjs).
  */
 import fs from "fs";
