@@ -1,6 +1,6 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.10-dev"
+version: "0.2.13-dev"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false
@@ -19,9 +19,17 @@ modes:
   - advance
   - close
 
+specs_dir: modes/specs/
+specs:
+  - flow
+  - gates
+  - bridges
+  - handoff
+
 config:
   - config/stage-bindings.yaml
   - config/stage-bindings.example.yaml
+  - config/stage-bindings.minimal.yaml
   - config/truncate-contracts.yaml
 
 templates:
@@ -30,6 +38,10 @@ templates:
   - templates/测试用例.md.tmpl
   - templates/测试报告.md.tmpl
   - templates/runs-README.md.tmpl
+  - templates/交接.md.tmpl
+  - templates/术语增量.md.tmpl
+  - templates/设计笔记.md.tmpl
+  - templates/审核-stage.md.tmpl
 
 runs_root: docs/runs/
 runs_active: docs/runs/active/

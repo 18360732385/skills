@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * feature-eng close 双归档廉价校验（O7）。
- * 不写盘；只检查消费仓内 archive 形状与指针。
+ * feature-eng close 双归档廉价校验（O7 + 0.2.11 gate-evidence）。
+ * 不写盘；检查 archive 形状后组合 gate-evidence。
  *
  * Usage:
  *   node scripts/close-check.mjs --cwd <消费仓根> --slug <slug>
@@ -9,6 +9,10 @@
  */
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { spawnSync } from "child_process";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
@@ -123,5 +127,21 @@ if (issues.length) {
   for (const o of ok) console.log("  ✓", o);
   process.exit(1);
 }
+
+const gateEvidence = path.join(__dirname, "gate-evidence.mjs");
+const ge = spawnSync(
+  process.execPath,
+  [gateEvidence, "--cwd", cwd, "--slug", slug],
+  { encoding: "utf8" }
+);
+const geOut = `${ge.stdout || ""}${ge.stderr || ""}`;
+if (ge.status !== 0) {
+  console.error(`close-check FAIL: gate-evidence exit ${ge.status}`);
+  process.stdout.write(geOut);
+  for (const o of ok) console.log("  ✓", o);
+  process.exit(ge.status == null ? 1 : ge.status);
+}
+ok.push("gate-evidence PASS");
 console.log(`close-check PASS slug=${slug} (${ok.length} checks)`);
 for (const o of ok) console.log("  ✓", o);
+if (ge.stdout) process.stdout.write(ge.stdout);

@@ -1,0 +1,50 @@
+# feature-eng fixture：L2 result:fail 负例（合法授权但审核 fail 仍写了 ISO 闸）
+slug: "2026-09-27-gate-l2-fail-bad"
+title: "gate-l2-fail-bad 夹具"
+created_at: "2026-09-27"
+updated_at: "2026-09-27T10:00:00+08:00"
+
+path: bounded
+run_mode: guided
+invoke: strict
+handoff_policy: confirm
+review_policy: subagent
+chef_mode: bound
+stage: plan
+
+domain: skipped
+proto: null
+
+artifacts:
+  adr: []
+  spec: null
+  plan: null
+  proto: null
+  context_delta: null
+  testcases: null
+  test_report: null
+  qa_report: null
+
+tasks:
+  - id: T1
+    title: "夹具任务"
+    depends_on: []
+    status: pending
+
+gates:
+  triage: "2026-09-27T09:00:00+08:00"
+  shared_understanding: null
+  design_confirmed: "2026-09-27T10:00:00+08:00"
+  go: null
+  pre_impl: null
+  gate: null
+  verify: null
+  close: null
+
+env_verified: null
+env_notes: null
+layout: null
+packages: null
+docs_root: "docs/"
+sibling_repos: null
+accepted_residual: null

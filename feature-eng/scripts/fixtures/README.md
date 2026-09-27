@@ -10,15 +10,24 @@
 | `bindings-bad/` | 破损 stage-bindings 样本（null skill / 缺键），供绑定校验拒绝 |
 | `close-ready/` | close 后 archive 形状（`stage=done` + `gates.close` + 授权/审核证据） |
 | `gate-theater-bad/` | 闸门演戏负例（ISO gates + 假 transcript / 缺审核）→ gate-evidence FAIL |
+| `gate-l2-fail-bad/` | L2 `result: fail` 仍写 ISO 推进闸 → gate-evidence FAIL |
 | `sibling-repos-shape/` | O8 `sibling_repos` 条目形状金标 |
 | `env-notes-shape/` | O11/O14/M2/M5 `pinned_deps` + `api_base_mode` + `verify_commands` + `workdir_policy` 形状金标 |
 | `monorepo-layout-shape/` | M1 `layout`/`packages`/`docs_root` 金标 + 冲突负例 |
 
-勿把本目录当真实主题 resume/close；`bindings-bad/` / `gate-theater-bad/` 更勿拷进消费仓当正式过程态。
+勿把本目录当真实主题 resume/close；`bindings-bad/` / `gate-theater-bad/` / `gate-l2-fail-bad/` 更勿拷进消费仓当正式过程态。
+
+## 0.2.12-dev 字段
+
+`scripts/lib/auth.mjs` / `progress-shape.mjs`；status-scan `--cwd`；模板交接/术语增量/设计笔记/审核-stage；`stage: pre-impl` ↔ `gates.pre_impl`。
+
+## 0.2.11-dev 字段
+
+推进闸审核须 `result: pass`；拒绝 `user_task_fixture|auto|…`；金样 Spec/Plan 路径须有 stub 文件；`close-check` 组合 `gate-evidence`。
 
 ## 0.2.10-dev 字段
 
-闸门证据：ISO `gates.*` 须回链「硬闸授权」合法 `authorized_by`；适用环须落盘 `审核-<stage>.md`（含 `result`）。机检：`scripts/gate-evidence.mjs`。
+闸门证据：ISO `gates.*` 须回链「硬闸授权」合法 `authorized_by`；适用环须落盘 `审核-<stage>.md`。机检：`scripts/gate-evidence.mjs`。
 
 ## 0.2.9-dev 字段
 

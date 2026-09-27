@@ -1,5 +1,53 @@
 # feature-eng CHANGELOG
 
+## 0.2.13-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.12-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **modes 大合并**：
+
+- **入口**：`modes/` 根仅 init/rebind/start/resume/status/advance/close + README
+- **specs/**：`flow.md`（stages+binding）· `gates.md`（artifacts+gates-review+gates-common）· `bridges.md`（domain+proto）· `handoff.md`
+- **废除**旧扁平 `binding.md` / `stages.md` / `artifacts.md` / `gates-*.md` / `*-bridge.md` / 根 `handoff.md`
+- **热路径**：AGENT-INDEX 必读 ≤6；feature.mjs modes 分入口/specs 两段；manifest `specs_dir` + 四手册名
+- **selfcheck / VERIFY**：PIN 0.2.13-dev；旧路径泄漏断言
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.13-dev | 2026-09-27 | modes 大合并：7 入口 + specs/ 四手册 |
+| 0.2.12-dev | 2026-09-27 | P2 auth lib / status-scan --cwd / 缺模板 / schema 别名 |
+
+## 0.2.12-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.11-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **P2**：
+
+- **lib**：`scripts/lib/auth.mjs`（gate-evidence / selfcheck 共用）；`scripts/lib/progress-shape.mjs`（枚举 + monorepo packages）
+- **status-scan**：支持 `--cwd`
+- **模板**：交接 / 术语增量 / 设计笔记 / 审核-stage
+- **别名**：progress.tmpl 注明 `stage: pre-impl` ↔ `gates.pre_impl`；artifacts 注明 `context_delta`→术语增量.md
+- **文档**：SKILL 合理化补 express/inline/B；manifest `specs:`；CHANGELOG 0.2.1 脚注
+- **selfcheck / VERIFY**：PIN 0.2.12-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.12-dev | 2026-09-27 | P2 auth lib / status-scan --cwd / 缺模板 / schema 别名 |
+| 0.2.11-dev | 2026-09-27 | P1 闸检 pass / 占位黑名单 / stub / CLI / AGENT-INDEX / minimal |
+
+## 0.2.11-dev — 2026-09-27
+
+V0.6.X 开发钉。相对 0.2.10-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **P1**：
+
+- **gate-evidence**：适用环审核须 `result: pass`（`fail` 不得推进）；`user_task_fixture|auto|todo|placeholder|test|dummy` 非法；`controller_proxy`+ISO gate → 回链「仪式与降级」非空
+- **负例**：`gate-l2-fail-bad/`（合法授权 + result:fail + ISO）须 FAIL
+- **夹具**：advance-gate / close-ready 落盘 Spec·Plan stub；close-ready 授权改为 `user_task_2026-09-19`
+- **CLI**：`feature.mjs gate-evidence|close-check`；`close-check` 组合 gate-evidence；修 modes 列表 `.md` strip
+- **热路径**：AGENT-INDEX 必读 ≤8 **文件**；SKILL 分流补 advance/status；binding 截断表改只指 truncate-contracts
+- **minimal**：`config/stage-bindings.minimal.yaml`；init 首问可选；须点名说明（QUICKSTART/README）
+- **selfcheck / VERIFY**：PIN 0.2.11-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.11-dev | 2026-09-27 | P1 闸检 pass / 占位黑名单 / stub / CLI / AGENT-INDEX / minimal |
+| 0.2.10-dev | 2026-09-27 | 闸门证据机检 + 金样/负例；P0 钉号/VERIFY/sync 条件化；V0.6.X 开发钉 |
+
 ## 0.2.10-dev — 2026-09-27
 
 V0.6.X 开发钉。相对 0.2.9-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 M1–M6 之上。本版落实 **闸门证据**（打穿演戏闸）：
@@ -9,15 +57,16 @@ V0.6.X 开发钉。相对 0.2.9-dev：**不**改默认绑定 skill 名；`harnes
 - **负例**：`gate-theater-bad/`（假 transcript + 缺审核）须 FAIL
 - **纪律**：SKILL 证据条 / 红旗 / 合理化表；`controller_proxy` 不豁免；description SDO（仅触发）
 - **selfcheck**：PIN 0.2.10-dev；调用 gate-evidence 金样 PASS / 负例 FAIL
+- **P0 文档/耦合**（同钉修订）：仓根 README feature-eng 行钉 0.2.10-dev；VERIFY 继承节改为 as-of、禁止旧钉冒充现行；init/rebind/binding/config：`sync.mjs` 有则代跑、无则跳过
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
-| 0.2.10-dev | 2026-09-27 | 闸门证据机检 + 金样/负例；V0.6.X 开发钉 |
+| 0.2.10-dev | 2026-09-27 | 闸门证据机检 + 金样/负例；P0 钉号/VERIFY/sync 条件化；V0.6.X 开发钉 |
 | 0.2.9-dev | 2026-09-21 | M1–M6 monorepo 摩擦优化；V0.6.X 开发钉 |
 
 ## 0.2.9-dev — 2026-09-21
 
-V0.6.X 开发钉。相对 0.2.8-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #48（O8–O14）之上。本版落实同仓 monorepo 摩擦优化 **M1–M6**（跨仓 O15–O19 明确不在范围）：
+V0.6.X 开发钉。相对 0.2.8-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。叠在 #48（O8–O14）之上。本版落实同仓 monorepo 摩擦优化 **M1–M6**：
 
 - **M1 layout/packages**：progress `layout: monorepo|multi_repo`（null≈multi）；`packages: [{ path, role: api|web|other }]`；`docs_root` 默认 `docs/`；monorepo 禁止 sibling_repos 指向同仓包路径；start/回链/artifacts
 - **M2 verify_commands**：`env_notes.verify_commands: string[]`；verify L1 全员 exit 0 才写 `gates.verify`；QUICKSTART 双端示例
@@ -105,7 +154,7 @@ V0.6.X 开发钉。相对 0.2.4：**不**改环节语义与默认绑定 skill �
 | 0.2.4 | 2026-09-17 | 正式钉号；P0 索引/selfcheck + P1 预检/截断/QUICKSTART + P2 status-scan / close_pitfalls（不改默认绑定 skill 名） |
 | 0.2.3 | 2026-09-17 | 过程态迁至 `docs/runs/{active\|archive}/`（与 superpowers 平级）；close 物理归档；人读文件中文短名（回链/测试用例/测试报告/交接/术语增量等），机读保留 `progress.yaml`；L2 为 `审核-<stage>.md`；旧 `docs/superpowers/runs` 兼容提示 |
 | 0.2.2 | 2026-09-17 | 过闸后按 `handoff_policy`（auto\|confirm）**主动**调起下一 skill；advance 拆 L1（artifacts）/ L2（新建 gates-review.md，subagent 优先）；硬闸短确认卡片；用户不再默认手切 skill |
-| 0.2.1 | 2026-09-17 | init/rebind/status 首问固定中文名+skill+产物表；Proto 桥改为展示结论可推翻（需 UI 仍硬问）；新增 domain-bridge（默认 design→spec，条件进定稿）；禁止主题术语写根 CONTEXT.md，改 `context-delta.md` |
+| 0.2.1 | 2026-09-17 | init/rebind/status 首问固定中文名+skill+产物表；Proto 桥改为展示结论可推翻（需 UI 仍硬问）；新增 domain-bridge（默认 design→spec，条件进定稿）；禁止主题术语写根 CONTEXT.md，改 `context-delta.md`（**现行文件名 `术语增量.md`**；机读键仍为 `artifacts.context_delta`） |
 | 0.2.0 | 2026-09-17 | 宿主适配与仪式加速：`invoke` strict\|inline + 指针卡片；`run_mode` guided\|express；progress/links **仅控制器**写、厨师回报路径；advance 口令协议；Proto 跨仓前端提示；implement 分 code_complete / 可选 env_verified，Verify 强制环境证据；handoff 环≥5 主动提议；defaults.commit_policy / 可选 input_contract |
 | 0.1.6 | 2026-09-16 | writing-for-agents P2：lookup 切断调起（子代理/新会话）；人侧入口收为 start/resume/close/init\|rebind（未指定走 status；环完成挂 advance）；README 瘦成指针 |
 | 0.1.5 | 2026-09-16 | writing-for-agents P1：产物契约拆至 artifacts.md（按环勾选、advance 只读当前节）；抬高校验 demand；控制器边界改正述+三条硬轨；gates Pre-Impl/Gate/Verify 回链 artifacts |

@@ -1,11 +1,11 @@
 # feature-eng 一页纸
 
-点名本 skill → 按意图走模式。热路径索引：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。
+**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.13-dev**。
 
 ## 主循环
 
 ```text
-init（首次绑 11 环）
+init（首次绑 11 环；可选推荐包 / minimal）
   → start（分诊 S/B/F · 建 docs/runs/active/<slug>/）
     → 子 skill 干活（lookup / 指针卡片）
       → advance（L1→L2→写盘→按 handoff_policy 调下一环）
@@ -13,7 +13,8 @@ init（首次绑 11 环）
           → close（active → archive）
 ```
 
-续跑：`resume`。只看进度：`status`（`node scripts/feature.mjs status`）。改绑：`rebind`。列模式：`node scripts/feature.mjs modes`。
+续跑：`resume`。只看进度：`status`（`node scripts/feature.mjs status`）。改绑：`rebind`。列模式：`node scripts/feature.mjs modes`。  
+闸检：`node scripts/feature.mjs gate-evidence --cwd <仓根> --slug <slug>`。收口检查：`node scripts/feature.mjs close-check …`。
 
 ## 路径一句话
 
@@ -29,18 +30,18 @@ init（首次绑 11 环）
 2. **progress / 回链 仅控制器写**——厨师只回报产物路径列表。
 3. **自动调起 ≠ 替用户 yes 硬闸**。
 
-**证据条**：写 `gates.*` 前须合法 `authorized_by` + 适用环 `审核-<stage>.md`（proxy 不豁免）。`node scripts/gate-evidence.mjs --cwd <仓根> --slug <slug>`。
+**证据条**：写 `gates.*` 前须合法 `authorized_by`（禁 fixture/auto 占位）+ 适用环 `审核-<stage>.md` 且 **`result: pass`**（proxy 不豁免；proxy 须「仪式与降级」非空）。
 
-详情：[SKILL.md](SKILL.md) · [binding.md](modes/binding.md) · [stages.md](modes/stages.md)
+详情：[SKILL.md](SKILL.md) · [flow.md](modes/specs/flow.md) · [gates.md](modes/specs/gates.md)
 
 ## 无厨师也能跑完 Full（最小清单）
 
-宿主未装 `stage-bindings` 所指厨师时，`start` 会强制 `chef_mode: controller_proxy`（须警告，勿静默）。最小可跑完 Full：
+宿主未装 `stage-bindings` 所指厨师时，`start` 会强制 `chef_mode: controller_proxy`（须警告，勿静默）。也可 init 时选 **minimal** 绑定包。最小可跑完 Full：
 
-1. **绑定文件在**：`config/stage-bindings.yaml`（或先 `init`）；关键环非 null（F：`spec`/`plan`/`testdesign`/`implement`/`verify` 等）。
-2. **过程态**：`docs/runs/active/<slug>/{progress.yaml,回链.md}`；`chef_mode: controller_proxy` 已写入回链。
-3. **硬闸授权**：用 `authorized_by: user_task_<id>` 或真实 `user_chat`——**禁止伪造聊天笔录**。
-4. **环间**：控制器戴厨师帽按 [artifacts.md](modes/artifacts.md) 落盘领域产物；仍走 advance L1/L2；`review_policy` 无 Task 则显式降为 `inline`。
+1. **绑定文件在**：`config/stage-bindings.yaml`（或先 `init`）；关键环非 null（F：`spec`/`plan`/`testdesign`/`implement`/`verify` 等）——否则 proxy。
+2. **过程态**：`docs/runs/active/<slug>/{progress.yaml,回链.md}`；`chef_mode: controller_proxy` 已写入回链「仪式与降级」。
+3. **硬闸授权**：用真实 `user_task_<id>` 或 `user_chat`——**禁止伪造聊天笔录与 fixture/auto 占位**。
+4. **环间**：控制器戴厨师帽按 [gates.md](modes/specs/gates.md) L1 落盘领域产物；仍走 advance L1/L2；`review_policy` 无 Task 则显式降为 `inline`。
 5. **收口**：按 [close.md](modes/close.md) 双归档 L1 检查单（runs + superpowers/archive）。
 
 边界仍有效：proxy 是**显式降级**，不是默认；能装厨师时优先 `bound`。
@@ -62,7 +63,7 @@ init/start 遇「仅模板文件、无 package.json」时**提示本配方**，�
 
 ## CORS 或 Dev Proxy（O9）
 
-Full+UI 联调二选一（或 `accepted_blocked`）。矩阵见 [gates-common.md](modes/gates-common.md)。
+Full+UI 联调二选一（或 `accepted_blocked`）。矩阵见 [gates.md](modes/specs/gates.md)。
 
 **Vite Dev Proxy（前端仓）：**
 
@@ -136,5 +137,5 @@ env_notes:
 
 - **O8**：配对仓 → `sibling_repos: [{ url, role: api|web, spec_path }]`；web 消费 api → Spec「消费契约」。
 - **O11/O14**：`env_notes.pinned_deps` + `api_base_mode: proxy|absolute`；`node -v` 对照 `engines`。
-- **O12**：proto 无厨师 → `设计笔记.md` 草图+主路径 3 步。
+- **O12**：proto 无厨师 → `设计笔记.md`（模板 `templates/设计笔记.md.tmpl`）草图+主路径 3 步。
 - **O13**：web+auth Spec → 会话存储 `memory|sessionStorage|localStorage(+风险)`。

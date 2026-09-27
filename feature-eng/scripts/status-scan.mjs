@@ -2,10 +2,20 @@
 /**
  * feature-eng status-scan：列出 docs/runs/active/<slug>/progress.yaml 的 slug / stage / path。
  * 在仓库根或任意子目录运行均可（向上查找含 docs/runs 的根）。
- * 无 active 主题时友好退出 0。
+ * 支持 --cwd <dir>（与 gate-evidence 同风格）。无 active 主题时友好退出 0。
+ *
+ * Usage:
+ *   node scripts/status-scan.mjs
+ *   node scripts/status-scan.mjs --cwd <仓根或夹具根>
  */
 import fs from "fs";
 import path from "path";
+
+function arg(name, fallback = null) {
+  const i = process.argv.indexOf(name);
+  if (i >= 0 && process.argv[i + 1]) return process.argv[i + 1];
+  return fallback;
+}
 
 function findRunsRoot(start) {
   let dir = path.resolve(start);
@@ -33,7 +43,8 @@ function readField(text, key) {
   return v;
 }
 
-const runsRoot = findRunsRoot(process.cwd());
+const startCwd = path.resolve(arg("--cwd", process.cwd()));
+const runsRoot = findRunsRoot(startCwd);
 if (!runsRoot) {
   console.log("（未找到 docs/runs/ — 本仓尚无过程态目录，或请在仓库根附近运行）");
   process.exit(0);
@@ -41,7 +52,9 @@ if (!runsRoot) {
 
 const activeDir = path.join(runsRoot, "active");
 if (!fs.existsSync(activeDir)) {
-  console.log(`（无进行中主题：${path.relative(process.cwd(), activeDir) || "docs/runs/active"} 不存在）`);
+  console.log(
+    `（无进行中主题：${path.relative(startCwd, activeDir) || "docs/runs/active"} 不存在）`
+  );
   process.exit(0);
 }
 
@@ -59,7 +72,7 @@ if (entries.length === 0) {
 const rows = [];
 for (const slugDir of entries) {
   const progressPath = path.join(activeDir, slugDir, "progress.yaml");
-  const rel = path.relative(process.cwd(), progressPath) || progressPath;
+  const rel = path.relative(startCwd, progressPath) || progressPath;
   if (!fs.existsSync(progressPath)) {
     rows.push({
       slug: slugDir,

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * feature-eng 闸门证据廉价校验（0.2.10-dev）。
- * 不写盘：ISO gates.* 须有合法 authorized_by；适用环须有 审核-<stage>.md。
+ * feature-eng 闸门证据廉价校验（0.2.13-dev）。
+ * 不写盘：ISO gates.* 须有合法 authorized_by；适用环须有 审核-<stage>.md 且 result: pass。
+ * controller_proxy + 任一 ISO gate → 回链「仪式与降级」节非空。
  *
  * Usage:
  *   node scripts/gate-evidence.mjs --cwd <仓根> --slug <slug>
@@ -10,6 +11,11 @@
  */
 import fs from "fs";
 import path from "path";
+import {
+  isFakeChatTranscriptPlaceholder,
+  isUserTaskPlaceholder,
+  isLegalAuthorizedBy,
+} from "./lib/auth.mjs";
 
 function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
@@ -82,25 +88,19 @@ function nestedScalar(text, parentKey, childKey) {
   if (v === "null" || v === "~" || v === "") return null;
   return v;
 }
-
-export function isFakeChatTranscriptPlaceholder(value) {
-  if (value == null) return false;
-  const s = String(value);
-  if (/用户\s*[:：]/.test(s) && /(确认|同意|yes)/i.test(s)) return true;
-  if (/^(User|Assistant|Human|AI)\s*[:：]/im.test(s)) return true;
-  if (/\n/.test(s) && /确认/.test(s) && s.length > 40) return true;
-  if (/\[chat[-_ ]?transcript\]/i.test(s)) return true;
-  if (/伪造|假笔录|fake\s*transcript/i.test(s)) return true;
-  return false;
-}
-
-export function isLegalAuthorizedBy(value) {
-  if (value == null || value === "" || value === "—") return false;
-  const s = String(value).trim();
-  if (isFakeChatTranscriptPlaceholder(s)) return false;
-  if (s === "user_chat" || s === "policy_exception") return true;
-  if (/^user_task_[A-Za-z0-9._-]+$/.test(s)) return true;
-  return false;
+function readScalar(text, key) {
+  if (!text) return undefined;
+  const m = text.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
+  if (!m) return undefined;
+  let v = m[1].trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1);
+  }
+  if (v === "null" || v === "~" || v === "") return null;
+  return v;
 }
 
 function isIsoGate(v) {
@@ -133,6 +133,18 @@ function parseAuthTable(huilian) {
   return map;
 }
 
+/** 「仪式与降级」节存在且有实质行（非空、非纯 —） */
+function ritualSectionOk(huilian) {
+  if (!huilian || !/##\s*仪式与降级/.test(huilian)) return false;
+  const m = huilian.match(/##\s*仪式与降级\s*\n([\s\S]*?)(?=\n##\s|\n*$)/);
+  if (!m) return false;
+  const meaningful = (m[1] || "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && l !== "—" && !/^[-*]\s*—\s*$/.test(l));
+  return meaningful.length > 0;
+}
+
 const activeRel = `docs/runs/active/${slug}`;
 const archiveRel = `docs/runs/archive/${slug}`;
 let runRel = null;
@@ -158,10 +170,12 @@ else if (huilian) ok.push("回链.md present");
 
 const authMap = parseAuthTable(huilian || "");
 
+let anyIsoGate = false;
 if (progress) {
   for (const gate of GATE_KEYS) {
     const ts = nestedScalar(progress, "gates", gate);
     if (!isIsoGate(ts)) continue;
+    anyIsoGate = true;
 
     ok.push(`gates.${gate} is ISO`);
 
@@ -177,6 +191,10 @@ if (progress) {
       issues.push(`gates.${gate}: authorized_by empty (got ${JSON.stringify(auth)})`);
     } else if (isFakeChatTranscriptPlaceholder(auth)) {
       issues.push(`gates.${gate}: fake transcript in authorized_by`);
+    } else if (isUserTaskPlaceholder(auth)) {
+      issues.push(
+        `gates.${gate}: placeholder user_task id (${JSON.stringify(auth)})`
+      );
     } else if (!isLegalAuthorizedBy(auth)) {
       issues.push(
         `gates.${gate}: illegal authorized_by (${JSON.stringify(auth)})`
@@ -191,11 +209,28 @@ if (progress) {
       const body = read(reviewRel);
       if (!body) {
         issues.push(`gates.${gate} set but missing ${reviewRel}`);
-      } else if (!/result:\s*(pass|fail)\b/i.test(body)) {
-        issues.push(`${reviewRel} missing result: pass|fail`);
+      } else if (!/result:\s*pass\b/i.test(body)) {
+        if (/result:\s*fail\b/i.test(body)) {
+          issues.push(
+            `${reviewRel} result: fail (ISO gates.${gate} requires result: pass)`
+          );
+        } else {
+          issues.push(`${reviewRel} missing result: pass`);
+        }
       } else {
-        ok.push(`${reviewFile} has result`);
+        ok.push(`${reviewFile} result: pass`);
       }
+    }
+  }
+
+  const chefMode = readScalar(progress, "chef_mode");
+  if (chefMode === "controller_proxy" && anyIsoGate) {
+    if (!ritualSectionOk(huilian)) {
+      issues.push(
+        "chef_mode=controller_proxy with ISO gates requires non-empty 回链「仪式与降级」"
+      );
+    } else {
+      ok.push("controller_proxy 仪式与降级 present");
     }
   }
 }

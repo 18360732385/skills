@@ -1,0 +1,26 @@
+# feature-eng 环节 → skill 绑定（minimal：未装推荐包时）
+# 本文件供 init 首问「采用 minimal」；不是默认 stage-bindings.yaml。
+# 关键环可 null → start 将强制 chef_mode=controller_proxy（须警告）。
+# 有 scripts/agent-config/sync.mjs 则改后代跑；否则跳过。
+
+version: 1
+
+defaults:
+  invoke: inline
+  commit_policy: user_authorized
+  handoff_policy: confirm
+  review_policy: inline
+  close_pitfalls: optional
+
+stages:
+  grill:      { skill: null }
+  design:     { skill: brainstorming }   # 若宿主已装；否则 rebind 为 null + proxy
+  domain:     { skill: null }
+  spec:       { skill: brainstorming }
+  plan:       { skill: writing-plans }
+  proto:      { skill: null }
+  testdesign: { skill: null }
+  implement:  { skill: executing-plans } # 轻依赖回退；无则 null + proxy
+  review:     { skill: null }
+  verify:     { skill: null }
+  diagnose:   { skill: systematic-debugging }

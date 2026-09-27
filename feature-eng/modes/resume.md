@@ -1,4 +1,4 @@
-# resume — 续跑进行中主题
+﻿# resume — 续跑进行中主题
 
 ## 步骤
 
@@ -8,12 +8,12 @@
 3. 若存在 `交接.md` → 先读它恢复上下文。
 4. 向用户播报：当前环（附中文名）、仪式字段、domain/proto、已完成产物、未过闸、`pending_invoke`（若有）、下一步动作（字段同 [status.md](status.md) 第 3 点）。
 5. 按当前 stage 继续：
-   - `domain-bridge` / `proto-bridge` → 按对应桥文件执行
-   - `回链.md` 有 `pending_invoke` → 按 [binding.md](binding.md) **主动** lookup
+   - `domain-bridge` / `proto-bridge` → 按 [bridges.md](specs/bridges.md) 执行
+   - `回链.md` 有 `pending_invoke` → 按 [flow.md](specs/flow.md) **主动** lookup
    - 当前环需子 skill → **主动** lookup（尊重 `progress.invoke`）
-   - 当前环是闸 → 按 [gates-common.md](gates-common.md) 校验
+   - 当前环是闸 → 按 [gates.md](specs/gates.md) 校验
    - 用户声称本环完成 → [advance.md](advance.md)
-6. 满足任一则先建议走 [handoff.md](handoff.md) 再续：用户表示接不上当前上下文；或无 `交接.md` 且 `updated_at` 距今 ≥ 7 天；或播报后用户否认准确性；或已完成环数 ≥ 5 且尚无交接。
+6. 满足任一则先建议走 [handoff.md](specs/handoff.md) 再续：用户表示接不上当前上下文；或无 `交接.md` 且 `updated_at` 距今 ≥ 7 天；或播报后用户否认准确性；或已完成环数 ≥ 5 且尚无交接。
 
 ## 约束
 

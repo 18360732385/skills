@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.10-dev)：静态断言 + 夹具行为断言。
- * 覆盖：manifest · modes/ 模式文件 · feature.mjs 薄 CLI · 11 绑定键非空 · example 对齐 · 模板 ·
- * SKILL 边界 · 禁根 CONTEXT · AGENT-INDEX · QUICKSTART · truncate-contracts ·
- * status-scan · close_pitfalls · CHANGELOG · fixtures（init / progress-bad / advance-gate /
- * bindings-bad / close-ready / gate-theater-bad）· gate-evidence。
+ * feature-eng selfcheck (0.2.13-dev)：静态断言 + 夹具行为断言。
+ * 覆盖：manifest · modes/ 入口 · modes/specs/ · feature.mjs · 绑定 · 模板 · lib ·
+ * status-scan --cwd · gate-evidence · fixtures · CHANGELOG。
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
+import {
+  isFakeChatTranscriptPlaceholder,
+  isLegalAuthorizedBy,
+} from "./lib/auth.mjs";
+import {
+  validateProgressEnums,
+  validateMonorepoPackages,
+} from "./lib/progress-shape.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
@@ -31,7 +37,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.10-dev";
+const PIN = "0.2.13-dev";
 
 const MODES = [
   "modes/init.md",
@@ -44,6 +50,14 @@ const MODES = [
 ];
 
 const MODE_EXTRAS = [
+  "modes/specs/flow.md",
+  "modes/specs/gates.md",
+  "modes/specs/bridges.md",
+  "modes/specs/handoff.md",
+  "modes/README.md",
+];
+
+const FLAT_SPEC_LEAKS = [
   "modes/binding.md",
   "modes/stages.md",
   "modes/artifacts.md",
@@ -52,7 +66,6 @@ const MODE_EXTRAS = [
   "modes/domain-bridge.md",
   "modes/proto-bridge.md",
   "modes/handoff.md",
-  "modes/README.md",
 ];
 
 const ROOT_MODE_LEAKS = [
@@ -93,6 +106,10 @@ const TEMPLATES = [
   "templates/测试用例.md.tmpl",
   "templates/测试报告.md.tmpl",
   "templates/runs-README.md.tmpl",
+  "templates/交接.md.tmpl",
+  "templates/术语增量.md.tmpl",
+  "templates/设计笔记.md.tmpl",
+  "templates/审核-stage.md.tmpl",
 ];
 
 function stageSkillMap(yamlText) {
@@ -146,9 +163,25 @@ for (const f of MODE_EXTRAS) {
 for (const f of ROOT_MODE_LEAKS) {
   assert(!exists(f), `root must not keep mode leak ${f}`);
 }
+for (const f of FLAT_SPEC_LEAKS) {
+  assert(!exists(f), `modes/ must not keep flat spec leak ${f}`);
+}
 assert(
   manifest != null && /modes_dir:\s*modes\//.test(manifest),
   "manifest modes_dir == modes/"
+);
+assert(
+  manifest != null && /specs_dir:\s*modes\/specs\//.test(manifest),
+  "manifest specs_dir == modes/specs/"
+);
+assert(
+  /specs:\s*\n(?:\s*-\s*(flow|gates|bridges|handoff)\s*\n){4}/.test(manifest || "") ||
+    (/flow/.test(manifest || "") &&
+      /gates/.test(manifest || "") &&
+      /bridges/.test(manifest || "") &&
+      /handoff/.test(manifest || "") &&
+      /specs:/.test(manifest || "")),
+  "manifest lists specs flow/gates/bridges/handoff"
 );
 
 // --- 11 binding keys + non-null skills ---
@@ -245,7 +278,7 @@ assert(
 );
 
 // --- binding precheck + truncate wire ---
-const binding = read("modes/binding.md") || "";
+const binding = read("modes/specs/flow.md") || "";
 assert(/绑定 skill 可调起/.test(binding), "binding has 绑定 skill 可调起");
 assert(/未绑定 skill/.test(binding), "binding failure copy: 未绑定 skill");
 assert(
@@ -271,7 +304,7 @@ assert(
 );
 
 // --- no root CONTEXT rule ---
-const stages = read("modes/stages.md") || "";
+const stages = read("modes/specs/flow.md") || "";
 const hasContextBan =
   (skill != null && /CONTEXT\.md/.test(skill) && /禁止|不可写/.test(skill)) ||
   /禁止[^。\n]*CONTEXT\.md/.test(stages) ||
@@ -287,6 +320,14 @@ assert(
 assert(exists("AGENT-INDEX.md"), "AGENT-INDEX.md exists");
 const index = read("AGENT-INDEX.md") || "";
 assert(/必读/.test(index), "AGENT-INDEX has 必读");
+assert(/≤[68]\s*文件|≤[68] 文件/.test(index), "AGENT-INDEX caps ≤6/≤8 files");
+assert(/specs\/flow|modes\/specs\/flow/.test(index), "AGENT-INDEX links specs/flow");
+assert(/specs\/gates|modes\/specs\/gates/.test(index), "AGENT-INDEX links specs/gates");
+assert(
+  !/CHANGELOG\.md.*VERIFY\.md.*selfcheck/.test(index.split("## 必读")[1]?.split("## 按需")[0] || ""),
+  "AGENT-INDEX 必读 demotes CHANGELOG/VERIFY/selfcheck"
+);
+assert(/本回合模式/.test(index), "AGENT-INDEX has 本回合模式 row");
 assert(/按需/.test(index), "AGENT-INDEX has 按需");
 assert(
   skill != null && /AGENT-INDEX\.md/.test(skill),
@@ -329,8 +370,16 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
+  changelog != null && /^##\s+0\.2\.12-dev\b/m.test(changelog),
+  "CHANGELOG has ## 0.2.12-dev heading"
+);
+assert(
+  changelog != null && /^##\s+0\.2\.11-dev\b/m.test(changelog),
+  "CHANGELOG retains ## 0.2.11-dev heading"
+);
+assert(
   changelog != null && /^##\s+0\.2\.10-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.2.10-dev heading"
+  "CHANGELOG retains ## 0.2.10-dev heading"
 );
 assert(
   changelog != null && /^##\s+0\.2\.9-dev\b/m.test(changelog),
@@ -373,6 +422,54 @@ assert(/selfcheck\.mjs/.test(readme), "README mentions selfcheck.mjs");
 assert(readme.includes(PIN), `README pins ${PIN}`);
 assert(/QUICKSTART\.md/.test(readme), "README links QUICKSTART");
 
+// P0：仓根 README 钉号 + VERIFY 继承不冒充现行钉 + sync 条件化
+const repoRootReadmePath = path.join(skillRoot, "..", "README.md");
+const repoRootReadme = fs.existsSync(repoRootReadmePath)
+  ? fs.readFileSync(repoRootReadmePath, "utf8")
+  : null;
+assert(repoRootReadme != null, "repo root README.md exists (../README.md)");
+assert(
+  new RegExp(
+    String.raw`feature-eng/README\.md[^\n]*` + PIN.replace(/\./g, "\\.")
+  ).test(repoRootReadme || ""),
+  `repo root README feature-eng row pins ${PIN}`
+);
+assert(
+  !/钉\s*\*\*0\.2\.8-dev\*\*/.test(verify),
+  "VERIFY must not claim current pin is 0.2.8-dev"
+);
+assert(
+  /继承\s*[·•]\s*as-of|as-of\s*0\.2\./i.test(verify),
+  "VERIFY inheritance sections use as-of wording"
+);
+assert(
+  /现行权威钉/.test(verify),
+  "VERIFY inheritance sections point to current pin"
+);
+const initMdEarly = read("modes/init.md") || "";
+const rebindMdEarly = read("modes/rebind.md") || "";
+const bindingMdEarly = read("modes/specs/flow.md") || "";
+assert(
+  !/默认代跑\s*`?node scripts\/agent-config\/sync\.mjs/.test(initMdEarly),
+  "init.md must not unconditionally 默认代跑 sync.mjs"
+);
+assert(
+  /有.*代跑|探测.*sync|条件/.test(initMdEarly) && /无.*跳过|跳过/.test(initMdEarly),
+  "init.md sync is conditional (run if present, skip if absent)"
+);
+assert(
+  /条件 sync|有.*sync\.mjs|跳过/.test(rebindMdEarly),
+  "rebind.md sync is conditional"
+);
+assert(
+  /无 sync|无则|以本 skill|以本文件为准/.test(bindingMdEarly + readme),
+  "binding/README document no-sync fallback"
+);
+const bindingsYamlHdr = (read("config/stage-bindings.yaml") || "").slice(0, 400);
+assert(
+  /存在.*sync\.mjs|否则跳过|无则/.test(bindingsYamlHdr),
+  "stage-bindings.yaml header documents conditional sync"
+);
 
 // =====================================================================
 // 0.2.5-dev：fixtures + 行为断言（超出「文件存在」）
@@ -620,7 +717,7 @@ const fixRunsReadme = read(fixRunsReadmeRel) || "";
 assert(fixRunsReadme.includes(FIX_SLUG), "fixture runs README lists slug");
 
 // artifacts.md triage 契约字段
-const artifactsMd = read("modes/artifacts.md") || "";
+const artifactsMd = read("modes/specs/gates.md") || "";
 assert(/##\s*triage/.test(artifactsMd), "artifacts.md has ## triage");
 assert(
   /`path`/.test(artifactsMd) &&
@@ -687,6 +784,10 @@ const featHelp = spawnSync(process.execPath, [path.join(skillRoot, "scripts/feat
 assert(featHelp.status === 0, "feature.mjs --help exit 0");
 const helpOut = `${featHelp.stdout || ""}${featHelp.stderr || ""}`;
 assert(/modes/.test(helpOut) && /status/.test(helpOut), "feature.mjs --help lists modes/status");
+assert(
+  /gate-evidence/.test(helpOut) && /close-check/.test(helpOut),
+  "feature.mjs --help lists gate-evidence/close-check"
+);
 assert(/调度员不进厨房/.test(helpOut), "feature.mjs --help keeps 调度员不进厨房");
 const featModes = spawnSync(process.execPath, [path.join(skillRoot, "scripts/feature.mjs"), "modes"], {
   cwd: skillRoot,
@@ -696,6 +797,8 @@ assert(featModes.status === 0, "feature.mjs modes exit 0");
 const modesOut = `${featModes.stdout || ""}`;
 assert(/modes\/init\.md/.test(modesOut), "feature.mjs modes lists modes/init.md");
 assert(/advance/.test(modesOut) && /close/.test(modesOut), "feature.mjs modes lists advance/close");
+assert(/modes\/specs\/flow\.md/.test(modesOut), "feature.mjs modes lists specs/flow");
+assert(/specs\//.test(modesOut) && /gates/.test(modesOut), "feature.mjs modes lists specs section");
 const featStatus = spawnSync(
   process.execPath,
   [path.join(skillRoot, "scripts/feature.mjs"), "status", "--cwd", path.join(skillRoot, FIX_GOOD)],
@@ -1038,7 +1141,7 @@ assert(/repo_bootstrap|empty-ish|模板文件/.test(initMd + startMd), "O2 init/
 assert(/LICENSE|\.gitignore/.test(startMd), "O2 start mentions LICENSE/.gitignore");
 
 // O3 authorized_by
-const gatesCommon = read("modes/gates-common.md") || "";
+const gatesCommon = read("modes/specs/gates.md") || "";
 assert(/authorized_by/.test(gatesCommon), "O3 gates-common has authorized_by");
 assert(/user_chat/.test(gatesCommon), "O3 gates-common user_chat");
 assert(/user_task_/.test(gatesCommon), "O3 gates-common user_task_");
@@ -1046,24 +1149,7 @@ assert(/policy_exception/.test(gatesCommon), "O3 gates-common policy_exception")
 assert(/禁止伪造|伪造聊天/.test(gatesCommon + huilianTmpl), "O3 forbids forging chat");
 assert(/authorized_by|硬闸授权/.test(huilianTmpl), "O3 回链.tmpl has 硬闸授权");
 
-function isFakeChatTranscriptPlaceholder(value) {
-  if (value == null) return false;
-  const s = String(value);
-  // Reject dialogue-like fakes
-  if (/用户\s*[:：]/.test(s) && /(确认|同意|yes)/i.test(s)) return true;
-  if (/^(User|Assistant|Human|AI)\s*[:：]/im.test(s)) return true;
-  if (/\n/.test(s) && /确认/.test(s) && s.length > 40) return true;
-  if (/\[chat[-_ ]?transcript\]/i.test(s)) return true;
-  if (/伪造|假笔录|fake\s*transcript/i.test(s)) return true;
-  return false;
-}
-function isLegalAuthorizedBy(value) {
-  if (value == null || value === "" || value === "—") return true; // empty ok in template
-  const s = String(value).trim();
-  if (s === "user_chat" || s === "policy_exception") return true;
-  if (/^user_task_[A-Za-z0-9._-]+$/.test(s)) return true;
-  return false;
-}
+const legal = (v) => isLegalAuthorizedBy(v, { allowEmpty: true });
 const fakeSamples = [
   "用户：确认\n助手：好的",
   "User: LGTM\nAssistant: proceeding",
@@ -1072,14 +1158,23 @@ const fakeSamples = [
 ];
 for (const s of fakeSamples) {
   assert(
-    isFakeChatTranscriptPlaceholder(s) || !isLegalAuthorizedBy(s),
+    isFakeChatTranscriptPlaceholder(s) || !legal(s),
     `O3 rejects fake chat placeholder: ${s.slice(0, 24)}`
   );
 }
-assert(isLegalAuthorizedBy("user_chat"), "O3 accepts user_chat");
-assert(isLegalAuthorizedBy("user_task_2026-09-21"), "O3 accepts user_task_<id>");
-assert(isLegalAuthorizedBy("policy_exception"), "O3 accepts policy_exception");
-assert(!isLegalAuthorizedBy("用户：确认"), "O3 rejects bare 用户：确认");
+assert(legal("user_chat"), "O3 accepts user_chat");
+assert(legal("user_task_2026-09-21"), "O3 accepts user_task_<id>");
+assert(legal("policy_exception"), "O3 accepts policy_exception");
+assert(legal("—"), "O3 allowEmpty accepts —");
+assert(!legal("用户：确认"), "O3 rejects bare 用户：确认");
+assert(!isLegalAuthorizedBy("user_task_fixture"), "O3 rejects user_task_fixture");
+assert(!isLegalAuthorizedBy("user_task_auto"), "O3 rejects user_task_auto");
+assert(!isLegalAuthorizedBy("user_task_todo"), "O3 rejects user_task_todo");
+assert(exists("scripts/lib/auth.mjs"), "scripts/lib/auth.mjs exists");
+assert(
+  /lib\/auth\.mjs/.test(read("scripts/gate-evidence.mjs") || ""),
+  "gate-evidence imports lib/auth.mjs"
+);
 
 // O4 env_notes
 assert(/env_notes/.test(progressTmpl), "O4 progress.tmpl has env_notes");
@@ -1095,7 +1190,7 @@ assert(/env_notes/.test(artifactsMd), "O4 artifacts.md documents env_notes");
 assert(/review_policy/.test(startMd) && (/无 Task|降级/.test(startMd)), "O5 start.md review_policy downgrade");
 assert(/禁止静默/.test(startMd + gatesCommon), "O5 forbids silent review_policy change");
 assert(/subagent.*inline|inline/.test(startMd), "O5 start mentions subagent→inline");
-const gatesReview = read("modes/gates-review.md") || "";
+const gatesReview = read("modes/specs/gates.md") || "";
 assert(/降级|无 Task/.test(gatesReview), "O5 gates-review documents Task downgrade");
 
 // O6 Chinese filenames contract
@@ -1213,7 +1308,7 @@ assert(/version:/.test(envSample) && /reason:/.test(envSample), "O11 env sample 
 
 // O12 proto light sketch
 assert(/轻量降级|设计笔记/.test(binding) && /草图|主路径/.test(binding + gatesCommon), "O12 binding/gates light sketch");
-const protoBridge = read("modes/proto-bridge.md") || "";
+const protoBridge = read("modes/specs/bridges.md") || "";
 assert(/O12|轻量/.test(protoBridge), "O12 proto-bridge documents light sketch");
 assert(/不要求.*可点击|草图\+状态机|可点击 HTML/.test(gatesCommon + artifactsMd), "O12 no clickable HTML required in proxy mode");
 
@@ -1424,6 +1519,214 @@ assert(
 );
 assert(/## 0\.2\.10-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.10-dev block");
 assert(/gate-evidence|闸门证据/.test(changelog || ""), "CHANGELOG mentions gate-evidence");
+
+// 0.2.11-dev：P1
+assert(/## 0\.2\.11-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.11-dev block");
+assert(/result:\s*pass|result: pass/.test(gatesCommon + skill), "0.2.11 gates require result: pass");
+assert(
+  /fixture\|auto|user_task_fixture|占位/.test(gatesCommon + skill + (read("templates/回链.md.tmpl") || "")),
+  "0.2.11 documents user_task placeholder ban"
+);
+assert(exists("config/stage-bindings.minimal.yaml"), "stage-bindings.minimal.yaml exists");
+assert(
+  /minimal/.test(initMdEarly + quick + (manifest || "")),
+  "init/QUICKSTART/manifest mention minimal"
+);
+assert(/点名|不自动加载/.test(quick + readme), "QUICKSTART/README say name-gated");
+assert(/status/.test(skill || "") && /advance/.test(skill || ""), "SKILL 模式分流 has status/advance");
+assert(
+  /勿在本页维护第二份|truncate-contracts\.yaml.*SSOT|机读契约（SSOT）/.test(
+    read("modes/specs/flow.md") || ""
+  ),
+  "binding.md truncate table deferred to yaml SSOT"
+);
+
+const FIX_L2FAIL = "scripts/fixtures/gate-l2-fail-bad";
+const L2FAIL_SLUG = "2026-09-27-gate-l2-fail-bad";
+assert(exists(FIX_L2FAIL), "gate-l2-fail-bad fixture dir exists");
+assert(
+  exists(`${FIX_L2FAIL}/docs/runs/active/${L2FAIL_SLUG}/审核-design.md`),
+  "gate-l2-fail-bad 审核-design exists"
+);
+assert(/gate-l2-fail-bad/.test(fixReadme), "fixtures README lists gate-l2-fail-bad");
+
+const advProgText = read(`${FIX_ADV}/docs/runs/active/${ADV_SLUG}/progress.yaml`) || "";
+const advSpec = nestedScalar(advProgText, "artifacts", "spec");
+const advPlan = nestedScalar(advProgText, "artifacts", "plan");
+assert(
+  advSpec && fs.existsSync(path.join(skillRoot, FIX_ADV, advSpec)),
+  "advance-gate artifacts.spec stub exists"
+);
+assert(
+  advPlan && fs.existsSync(path.join(skillRoot, FIX_ADV, advPlan)),
+  "advance-gate artifacts.plan stub exists"
+);
+const closeProg = read(`${FIX_CLOSE}/docs/runs/archive/${CLOSE_SLUG}/progress.yaml`) || "";
+const closeSpec = nestedScalar(closeProg, "artifacts", "spec");
+const closePlan = nestedScalar(closeProg, "artifacts", "plan");
+assert(
+  closeSpec && fs.existsSync(path.join(skillRoot, FIX_CLOSE, closeSpec)),
+  "close-ready artifacts.spec stub exists"
+);
+assert(
+  closePlan && fs.existsSync(path.join(skillRoot, FIX_CLOSE, closePlan)),
+  "close-ready artifacts.plan stub exists"
+);
+assert(
+  !/user_task_fixture/.test(read(`${FIX_CLOSE}/docs/runs/archive/${CLOSE_SLUG}/回链.md`) || ""),
+  "close-ready 回链 no longer uses user_task_fixture"
+);
+assert(
+  /user_task_2026-09-19/.test(read(`${FIX_CLOSE}/docs/runs/archive/${CLOSE_SLUG}/回链.md`) || ""),
+  "close-ready uses user_task_2026-09-19"
+);
+
+const geL2Fail = spawnSync(
+  process.execPath,
+  [gateEvBin, "--cwd", path.join(skillRoot, FIX_L2FAIL), "--slug", L2FAIL_SLUG],
+  { encoding: "utf8" }
+);
+assert(geL2Fail.status !== 0, "gate-evidence on gate-l2-fail-bad exits non-zero");
+assert(
+  /result:\s*fail|requires result:\s*pass/i.test(
+    `${geL2Fail.stdout || ""}${geL2Fail.stderr || ""}`
+  ),
+  "gate-l2-fail-bad reports result:fail"
+);
+const geL2Expect = spawnSync(
+  process.execPath,
+  [
+    gateEvBin,
+    "--cwd",
+    path.join(skillRoot, FIX_L2FAIL),
+    "--slug",
+    L2FAIL_SLUG,
+    "--expect-fail",
+  ],
+  { encoding: "utf8" }
+);
+assert(geL2Expect.status === 0, "gate-evidence --expect-fail on gate-l2-fail-bad exit 0");
+
+const featBin = path.join(skillRoot, "scripts/feature.mjs");
+const featGe = spawnSync(
+  process.execPath,
+  [
+    featBin,
+    "gate-evidence",
+    "--cwd",
+    path.join(skillRoot, FIX_ADV),
+    "--slug",
+    ADV_SLUG,
+  ],
+  { encoding: "utf8" }
+);
+assert(featGe.status === 0, "feature.mjs gate-evidence on advance-gate exit 0");
+const featClose = spawnSync(
+  process.execPath,
+  [
+    featBin,
+    "close-check",
+    "--cwd",
+    path.join(skillRoot, FIX_CLOSE),
+    "--slug",
+    CLOSE_SLUG,
+  ],
+  { encoding: "utf8" }
+);
+assert(featClose.status === 0, "feature.mjs close-check on close-ready exit 0");
+assert(
+  /gate-evidence PASS|close-check PASS/.test(`${featClose.stdout || ""}`),
+  "close-check output mentions PASS / gate-evidence"
+);
+
+const quickPin = read("QUICKSTART.md") || "";
+assert(quickPin.includes(PIN), `QUICKSTART pins ${PIN}`);
+
+assert(/stage-bindings\.minimal\.yaml/.test(manifest || ""), "manifest lists stage-bindings.minimal.yaml");
+
+// 0.2.12-dev：P2
+assert(/## 0\.2\.12-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.12-dev block");
+assert(exists("scripts/lib/progress-shape.mjs"), "scripts/lib/progress-shape.mjs exists");
+assert(
+  /--cwd/.test(read("scripts/status-scan.mjs") || ""),
+  "status-scan.mjs documents --cwd"
+);
+const scanCwd = spawnSync(
+  process.execPath,
+  [
+    path.join(skillRoot, "scripts/status-scan.mjs"),
+    "--cwd",
+    path.join(skillRoot, FIX_GOOD),
+  ],
+  { encoding: "utf8", cwd: path.join(skillRoot, "scripts") }
+);
+assert(scanCwd.status === 0, "status-scan --cwd fixture exit 0");
+assert(
+  (scanCwd.stdout || "").includes(FIX_SLUG),
+  "status-scan --cwd prints fixture slug"
+);
+
+const tmplEnumIssues = validateProgressEnums(progressTmpl);
+assert(
+  tmplEnumIssues.length === 0,
+  `progress.tmpl enums OK (${tmplEnumIssues.join("; ") || "none"})`
+);
+assert(
+  /pre-impl|pre_impl|命名别名/.test(progressTmpl),
+  "progress.tmpl has pre-impl/pre_impl alias note"
+);
+assert(
+  /context_delta|术语增量/.test(progressTmpl + (read("modes/specs/gates.md") || "")),
+  "context_delta → 术语增量 documented"
+);
+assert(
+  /术语增量\.md/.test(changelog || "") && /context-delta/.test(changelog || ""),
+  "CHANGELOG 0.2.1 footnote 术语增量"
+);
+
+const advEnumIssues = validateProgressEnums(advProgText);
+assert(
+  advEnumIssues.length === 0,
+  `advance-gate progress enums OK (${advEnumIssues.join("; ") || "none"})`
+);
+
+const monoShapeIssues = validateMonorepoPackages(monoSample);
+assert(
+  monoShapeIssues.length === 0,
+  `monorepo sample packages OK (${monoShapeIssues.join("; ") || "none"})`
+);
+const monoNullReject = validateMonorepoPackages("layout: monorepo\npackages: null\n");
+assert(monoNullReject.length > 0, "monorepo + null packages rejected");
+
+assert(
+  /express|Pre-Impl/.test(skill || "") &&
+    /inline/.test(skill || "") &&
+    /Bounded|B 路径/.test(skill || ""),
+  "SKILL rationalization covers express/inline/B"
+);
+assert(
+  !/\bO1[5-9]\b/.test(quick + verify + skill + readme + (changelog || "")),
+  "docs must not mention retired cross-repo backlog ids"
+);
+assert(/specs:/.test(manifest || ""), "manifest has specs:");
+assert(
+  /交接\.md\.tmpl|术语增量\.md\.tmpl|设计笔记\.md\.tmpl|审核-stage\.md\.tmpl/.test(
+    manifest || ""
+  ),
+  "manifest lists P2 templates"
+);
+assert(/交接\.md\.tmpl/.test(read("modes/specs/handoff.md") || ""), "handoff.md links 交接 tmpl");
+assert(
+  /设计笔记\.md\.tmpl/.test(read("modes/specs/flow.md") || ""),
+  "binding.md links 设计笔记 tmpl"
+);
+
+// 0.2.13-dev：modes 大合并
+assert(/## 0\.2\.13-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.13-dev block");
+assert(/modes 大合并|specs\/flow|四手册/.test(changelog || ""), "CHANGELOG mentions modes merge");
+assert(/modes\/specs\/flow/.test(skill || ""), "SKILL links modes/specs/flow");
+assert(/modes\/specs\/gates/.test(skill || ""), "SKILL links modes/specs/gates");
+assert(/≤6/.test(index) || /≤6 文件/.test(index), "AGENT-INDEX says ≤6");
 
 // --- report ---
 const total = ok.length + fail.length;

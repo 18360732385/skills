@@ -1,11 +1,14 @@
 # feature-eng
 
-用户点名的开发流程控制器（`disable-model-invocation: true`）。与 [`release-eng`](../release-eng/) 同级、互不替代。
+用户点名的开发流程控制器（`disable-model-invocation: true`，**须点名**，不自动加载）。与 [`release-eng`](../release-eng/) 同级、互不替代。
 
 入口与仪式：[SKILL.md](SKILL.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
 
-验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`。闸门证据：`node scripts/gate-evidence.mjs`。
+验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
+0.2.13-dev 要点：modes 大合并——根目录仅 7 入口；`modes/specs/{flow,gates,bridges,handoff}` 四手册；旧扁平规格废除。叠在 0.2.12-dev 之上。
+0.2.12-dev 要点：P2（auth/progress-shape lib；status-scan --cwd；交接/术语增量/设计笔记/审核-stage 模板；pre-impl↔pre_impl 别名；manifest specs）。叠在 0.2.11-dev 之上。
+0.2.11-dev 要点：闸检须 `result: pass`；`user_task_*` 占位黑名单；夹具 Spec/Plan stub；feature.mjs 转发 gate-evidence/close-check；close-check 组合 gate-evidence；AGENT-INDEX ≤8 文件；minimal 绑定包；proxy「仪式与降级」机检。叠在 0.2.10-dev 之上。
 0.2.10-dev 要点：闸门证据机检（gate-evidence + advance-gate/close-ready 金样落盘审核文件 + gate-theater-bad 负例）；SKILL 证据条/红旗/SDO；叠在 0.2.9-dev 之上。
 0.2.9-dev 要点：M1–M6 monorepo 摩擦优化（layout/packages/docs_root / verify_commands / 单 Spec API·UI·测试矩阵 / 根 README SSOT / workdir_policy / monorepo_bootstrap 剥离）；叠在 0.2.8-dev 之上。
 0.2.8-dev 要点：O8–O14 摩擦优化（sibling_repos / CORS·Proxy 联调门禁 / 绿地前端 mktemp 配方 / pinned_deps·Node×jsdom / proto 轻量草图 / 会话存储枚举 / api_base_mode）；叠在 0.2.7-dev 之上。
@@ -21,8 +24,8 @@
 ## 可移植性
 
 - **首发仓**：`c-be-sms-ai`（`source_repo` 见 manifest）。
-- **本仓可用**：skill + `config/` + `templates/` 已齐；改 SSOT 后须跑 `node scripts/agent-config/sync.mjs`（若目标仓有该管线）。
-- **迁到他仓**：整目录拷贝；`stage-bindings.yaml` 需按目标仓工具链重新 `init`。
+- **本仓可用**：skill + `config/` + `templates/` 已齐；改绑定后：**有** `scripts/agent-config/sync.mjs` 则代跑，**无则跳过**（以本 skill 内 `config/` 为准；宿主路径见 [modes/specs/flow.md](modes/specs/flow.md)）。
+- **迁到他仓**：整目录拷贝；`stage-bindings.yaml` 需按目标仓工具链重新 `init`（可先用 `stage-bindings.minimal.yaml`）。
 - 过程态：`docs/runs/`（与 `docs/superpowers/` 平级）；语料仍在 superpowers。旧路径 `docs/superpowers/runs/` 仅兼容提示迁移。
 - **收口**：[modes/close.md](modes/close.md) 为 skill 内规则（含 active→archive）；契约目录 / pitfalls lint 为可选增强。
 
@@ -41,4 +44,3 @@
 | `交接.md` | 交接 |
 
 脚本与夹具须 **UTF-8**；跑 selfcheck / 跨平台工具时建议 `LC_ALL=C.UTF-8`（或等价 UTF-8 locale）。
-

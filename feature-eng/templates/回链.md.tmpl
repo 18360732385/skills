@@ -35,6 +35,7 @@
 ## 硬闸授权（authorized_by）
 > 合法取值仅：`user_chat` | `user_task_<id>` | `policy_exception`。  
 > **禁止伪造聊天笔录**；批量/任务级授权用 `user_task_<id>`（如 `user_task_2026-09-21`）。  
+> **禁止**自造 `user_task_fixture|auto|todo|placeholder|test|dummy`；须用户或任务跑批真实 id。  
 > 不得把「看起来像对话」的假 transcript 当作授权证据。
 
 | 闸 | 时间 | authorized_by | 备注 |

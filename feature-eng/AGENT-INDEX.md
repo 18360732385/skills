@@ -1,40 +1,32 @@
 # Agent 热路径索引
 
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
-人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。
+人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。
 
-**拓扑（0.2.10-dev）**：`modes/` 模式规格（init/rebind/start/resume/status/advance/close 等）· `config/` 绑定 SSOT · `templates/` 过程态骨架 · `scripts/feature.mjs` 薄 CLI · `scripts/gate-evidence.mjs` 闸门证据。控制器本身不做具体开发。
+**拓扑（0.2.13-dev）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
 
-## 必读（写盘 / 调起前）≤8
+## 必读（写盘 / 调起前）≤6 文件
+
+| # | 何时 | Read |
+|---|---|---|
+| 1 | **边界 / 写盘权责** | [SKILL.md](SKILL.md)「控制器边界」 |
+| 2 | 环节表 + 绑定 lookup / 截断 | [flow.md](modes/specs/flow.md) |
+| 3 | L1 + L2 + 硬闸 | [gates.md](modes/specs/gates.md) |
+| 4 | 过闸写盘与主动调起 | [advance.md](modes/advance.md) |
+| 5 | **本回合模式**（点名后再读） | [start](modes/start.md) / [resume](modes/resume.md) / [close](modes/close.md) / [init](modes/init.md) / [rebind](modes/rebind.md) / [status](modes/status.md) 之一 |
+| 6 | （进桥 / 交接时） | [bridges.md](modes/specs/bridges.md) · [handoff.md](modes/specs/handoff.md) |
+
+## 按需
 
 | 何时 | Read / 跑 |
 |---|---|
-| **边界 / 写盘权责**（调度员不进厨房） | [SKILL.md](SKILL.md)「控制器边界」 |
-| 环节表 / 裁剪 / runs 目录 | [stages.md](modes/stages.md) |
-| 绑定 lookup / invoke / 截断 / 指针卡片 | [binding.md](modes/binding.md) · [config/stage-bindings.yaml](config/stage-bindings.yaml) · [config/truncate-contracts.yaml](config/truncate-contracts.yaml) |
-| L1 产物勾选 | [artifacts.md](modes/artifacts.md) |
-| L2 语义审核 | [gates-review.md](modes/gates-review.md) |
-| 硬闸短确认 | [gates-common.md](modes/gates-common.md) |
-| 过闸后写盘与主动调起 | [advance.md](modes/advance.md) |
-| 版本 / 验收 | [CHANGELOG.md](CHANGELOG.md) · [VERIFY.md](VERIFY.md) · `node scripts/selfcheck.mjs` |
-
-## 按需（点名后再读）
-
-| 何时 | Read |
-|---|---|
-| 首次绑定 / 改绑 | [init.md](modes/init.md) · [rebind.md](modes/rebind.md) |
 | 一页纸 | [QUICKSTART.md](QUICKSTART.md) |
-| 新主题开工 / 续跑 / 状态 | [start.md](modes/start.md) · [resume.md](modes/resume.md) · [status.md](modes/status.md) · `node scripts/feature.mjs status`（或 `status-scan.mjs`） |
-| 收口归档 | [close.md](modes/close.md) |
-| 定稿桥 / Proto 桥 | [domain-bridge.md](modes/domain-bridge.md) · [proto-bridge.md](modes/proto-bridge.md) |
-| 交接 | [handoff.md](modes/handoff.md) |
-| 推荐包示例 | [config/stage-bindings.example.yaml](config/stage-bindings.example.yaml) |
-| 模板 | `templates/`（progress.yaml · 回链.md · 测试用例.md · 测试报告.md · runs-README.md） |
+| 推荐包 / minimal | [stage-bindings.example.yaml](config/stage-bindings.example.yaml) · [stage-bindings.minimal.yaml](config/stage-bindings.minimal.yaml) |
+| 模板 | `templates/` |
 | modes 索引 | [modes/README.md](modes/README.md) · `node scripts/feature.mjs modes` |
-| selfcheck 夹具 | [scripts/fixtures/](scripts/fixtures/)（init-skeleton · progress-bad · advance-gate · bindings-bad · close-ready · gate-theater-bad） |
-| 闸门证据机检 | `node scripts/gate-evidence.mjs --cwd <仓根> --slug <slug>` |
-| 清单权威号 | [`_meta/manifest.yaml`](_meta/manifest.yaml) |
+| 闸检 / 收口 | `node scripts/feature.mjs gate-evidence …` · `close-check …` |
+| 版本 / 烟测 | [CHANGELOG.md](CHANGELOG.md) · [VERIFY.md](VERIFY.md) · `node scripts/selfcheck.mjs` |
 
 ## 写盘纪律（一行）
 
-控制器只写 `progress.yaml` / `回链.md` / runs 骨架 / gates 时间戳；领域正文与业务代码交给绑定子 skill。**禁止**写仓库根 `CONTEXT.md`（术语走 `术语增量.md`）。自动调起 ≠ 跳过硬闸。
+控制器只写 `progress.yaml` / `回链.md` / runs 骨架 / gates 时间戳；领域正文与业务代码交给绑定子 skill。**禁止**写仓库根 `CONTEXT.md`。自动调起 ≠ 跳过硬闸。

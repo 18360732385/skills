@@ -1,5 +1,8 @@
 # handoff — 交接旁路
 
+交接旁路（原 handoff.md）。
+
+
 会话过长、AI 变迟钝、中断续跑、换工具时触发。控制器自身执行，不绑子 skill。
 
 ## 何时
@@ -12,6 +15,8 @@
 主动提议话术示例：「建议先写 `交接.md` 并新会话 `feature-eng resume`，避免后续环丢闸。」用户拒可继续。
 
 ## 压缩字段（写入 `docs/runs/active/<slug>/交接.md`）
+
+骨架可从 skill 内 [`templates/交接.md.tmpl`](../../templates/交接.md.tmpl) 复制。
 
 ```markdown
 # 交接 — <slug> — <日期>
