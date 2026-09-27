@@ -643,6 +643,27 @@ function expandFromManifest(manifestPath, params, root) {
     if (entryId === "rulehook-toml" || entryId === "rulehook-readme") {
       return fs.existsSync(path.join(root, targetRel)) ? "skip" : "create";
     }
+    // E8: 既有 superpowers 索引或 feature-eng runs → 不 H2 merge 双表
+    if (entryId === "sp-readme" || entryId === "sp-archive") {
+      const absSp = path.join(root, targetRel);
+      if (fs.existsSync(absSp)) {
+        const hasRuns =
+          fs.existsSync(path.join(root, "docs", "runs")) ||
+          fs.existsSync(path.join(root, "docs", "runs", "active"));
+        let hasThemeTable = false;
+        try {
+          const body = fs.readFileSync(absSp, "utf8");
+          hasThemeTable =
+            /\|\s*日期\s*\|\s*主题\s*\|/.test(body) ||
+            /\|\s*日期\s*\|\s*主题\s*\|\s*Spec\s*\|/.test(body);
+        } catch {
+          /* ignore */
+        }
+        if (hasRuns || hasThemeTable) {
+          return "skip";
+        }
+      }
+    }
     const abs = path.join(root, targetRel);
     if (defaultAction === "create" && fs.existsSync(abs)) {
       if (onExists === "skip") return "skip";
@@ -1102,7 +1123,16 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   const ph = { ...placeholders, ...(item.placeholders_extra || {}) };
 
   if (action === "skip") {
-    log.push({ target: targetRel, action: "skip", status: "ok" });
+    const note =
+      item.id === "sp-readme" || item.id === "sp-archive"
+        ? "外部/既有索引，不 H2 补齐"
+        : undefined;
+    log.push({
+      target: targetRel,
+      action: "skip",
+      status: "ok",
+      ...(note ? { note } : {}),
+    });
     return;
   }
 

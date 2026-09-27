@@ -1,13 +1,23 @@
 /**
- * Cheap detect-signal probes for fixtures / selfcheck (0.5.9).
+ * Cheap detect-signal probes for fixtures / selfcheck (0.5.9+; 0.7.20 monorepo).
  * Boolean FS checks only — not a full Fingerprint runner.
  */
 import fs from "fs";
 import path from "path";
 
+const STACK_FILES = ["pom.xml", "package.json", "go.mod", "Cargo.toml", "pyproject.toml"];
+
 function isFile(p) {
   try {
     return fs.existsSync(p) && fs.statSync(p).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function isDir(p) {
+  try {
+    return fs.existsSync(p) && fs.statSync(p).isDirectory();
   } catch {
     return false;
   }
@@ -75,10 +85,92 @@ function hasHooks(root) {
   ].some(settingsHasHooks);
 }
 
+/** Root or one-level child directory contains a stack manifest. */
 function hasStack(root) {
-  return ["pom.xml", "package.json", "go.mod", "Cargo.toml", "pyproject.toml"].some((f) =>
-    isFile(path.join(root, f))
-  );
+  if (STACK_FILES.some((f) => isFile(path.join(root, f)))) return true;
+  let names = [];
+  try {
+    names = fs.readdirSync(root);
+  } catch {
+    return false;
+  }
+  for (const name of names) {
+    if (name.startsWith(".") || name === "node_modules" || name === "target") continue;
+    const dir = path.join(root, name);
+    if (!isDir(dir)) continue;
+    if (STACK_FILES.some((f) => isFile(path.join(dir, f)))) return true;
+  }
+  return false;
+}
+
+function listPomFiles(root) {
+  const out = [];
+  if (isFile(path.join(root, "pom.xml"))) out.push(path.join(root, "pom.xml"));
+  let names = [];
+  try {
+    names = fs.readdirSync(root);
+  } catch {
+    return out;
+  }
+  for (const name of names) {
+    if (name.startsWith(".") || name === "node_modules" || name === "target") continue;
+    const p = path.join(root, name, "pom.xml");
+    if (isFile(p)) out.push(p);
+  }
+  return out;
+}
+
+function hasSpring(root) {
+  for (const pom of listPomFiles(root)) {
+    try {
+      const text = fs.readFileSync(pom, "utf8");
+      if (/spring-boot/i.test(text)) return true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return false;
+}
+
+function packageJsonLooksFrontend(pkgPath) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    if (pkg.workspaces) return true;
+    const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+    if (deps.react || deps.vue || deps.vite || deps.next || deps["@angular/core"]) return true;
+    if (pkg.name && /web|frontend|ui/i.test(String(pkg.name))) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+function hasFrontend(root) {
+  if (isFile(path.join(root, "frontend", "package.json"))) return true;
+  if (isDir(path.join(root, "apps"))) {
+    let apps = [];
+    try {
+      apps = fs.readdirSync(path.join(root, "apps"));
+    } catch {
+      apps = [];
+    }
+    for (const a of apps) {
+      if (isFile(path.join(root, "apps", a, "package.json"))) return true;
+    }
+  }
+  const rootPkg = path.join(root, "package.json");
+  if (isFile(rootPkg) && packageJsonLooksFrontend(rootPkg)) return true;
+  let names = [];
+  try {
+    names = fs.readdirSync(root);
+  } catch {
+    return false;
+  }
+  for (const name of names) {
+    const pkg = path.join(root, name, "package.json");
+    if (isFile(pkg) && packageJsonLooksFrontend(pkg)) return true;
+  }
+  return false;
 }
 
 /**
@@ -97,6 +189,12 @@ export function scanSignals(root) {
   const S_JOBS = hasNonEmptyIn(path.join(root, "docs", "jobs"));
   const S_KB = hasNonEmptyIn(path.join(root, "docs", "agent-kb"));
   const S_STACK = hasStack(root);
+  const S_SPRING = hasSpring(root);
+  const S_FRONTEND = hasFrontend(root);
+  const S_SP = hasNonEmptyIn(path.join(root, "docs", "superpowers"));
+  const S_RUNS =
+    isDir(path.join(root, "docs", "runs")) ||
+    hasNonEmptyIn(path.join(root, "docs", "runs"));
   const S_RULEHOOK = isFile(path.join(root, ".rulehook", "rulehook.toml"));
   const MATURE = !!(S_AGENTS_ROOT && S_RULES && (S_FUNC || S_API || S_DB || S_REDIS || S_JOBS) && S_KB);
   return {
@@ -111,6 +209,10 @@ export function scanSignals(root) {
     S_JOBS,
     S_KB,
     S_STACK,
+    S_SPRING,
+    S_FRONTEND,
+    S_SP,
+    S_RUNS,
     S_RULEHOOK,
     MATURE,
   };

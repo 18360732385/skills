@@ -6,6 +6,7 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
+0.2.18-dev 要点：批 E——domain-bridge 判据收窄；close 死链改写 + close-check；ARCHIVE「提交」列 PR→merge SHA。叠在 0.2.17-dev 之上。
 0.2.17-dev 要点：批 D——close 跟 `delivery-checklist.md`；可选 `harness refresh`；失败标 `harness_snapshot: stale`。叠在 0.2.16-dev 之上。
 0.2.16-dev 要点：批 C——绑定 SSOT 迁至目标仓 `docs/runs/stage-bindings.yaml`；禁止代跑 harness sync；`run_mode: unattended` 集中降级。叠在 0.2.15-dev 之上。
 0.2.15-dev 要点：P2 harness_probe 软探测 + 有 lint-pitfalls 时本主题 close_pitfalls 收紧为 on（yaml 默认仍 optional）。叠在 0.2.14-dev 之上。

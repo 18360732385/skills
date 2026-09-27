@@ -3,7 +3,7 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。
 
-**拓扑（0.2.17-dev）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
+**拓扑（0.2.18-dev）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
 
 ## 必读（写盘 / 调起前）≤6 文件
 

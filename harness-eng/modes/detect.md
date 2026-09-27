@@ -29,13 +29,14 @@ git rev-parse --show-toplevel
 | `S_REDIS` | `docs/redis/` **且至少 1 个非空文件** |
 | `S_JOBS` | `docs/jobs/` **且至少 1 个非空文件**；或源码命中 `@Scheduled` / `*Scheduler.java` / `SyncTaskCode` / `SyncTaskMetadataRegistry`（调度指纹） |
 | `S_RELEASES` | `docs/releases/` 存在（过程域脚注；非契约） |
-| `S_FRONTEND` | 存在前端分册/`apps/*` 且有 path rule `17-*` 或 `package.json` workspace 前端包（协作包脚注） |
+| `S_FRONTEND` | 平铺 `frontend/package.json`，或 `apps/*`+`package.json`，或根/一层子目录 `package.json` 含 React/Vite/Vue/Next/workspace（协作包脚注；**不要求**已有 rule 17） |
 | `S_KB` | `docs/agent-kb/` **且至少 1 个非空文件** |
-| `S_SP` | `docs/superpowers/` **且至少 1 个非空文件** |
+| `S_SP` | `docs/superpowers/` **且至少 1 个非空文件**（**外部流程产物**；见类型判定） |
+| `S_RUNS` | `docs/runs/` 存在（feature-eng 过程态；**外部流程产物**；见类型判定） |
 | `S_HOOKS` | 任一：`.cursor/hooks.json` **或** Claude 系 settings 含 `hooks` 段（`.claude/settings.json` / `.qoder/settings.json` / `.codebuddy/settings.json`）**或** `.trae/hooks.json` **或** `.codex/hooks.json` **或** `.githooks/pre-commit`。**非仅 Cursor** |
 | `S_MCP` | `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json` 或任一 `mcp.json.example` |
 | `S_CLAUDE` | `CLAUDE.md` 或 `.claude/` |
-| `S_STACK` | `pom.xml` / `package.json` / `go.mod` / `Cargo.toml` / `pyproject.toml` 等 |
+| `S_STACK` | 根目录 **或一层子目录** 存在 `pom.xml` / `package.json` / `go.mod` / `Cargo.toml` / `pyproject.toml`（monorepo `backend/`+`frontend/` 可命中） |
 | `S_HARNESS_META` | `docs/harness-eng/harness-meta.yaml`（无则回退 `.cursor/harness-meta.yaml` / `.yml`；PARTIAL/upgrade 读 ladder/domains） |
 | `S_SECRETS_LEAK` | README / `*.yml` / `*.yaml` / `.env*` 命中启发式：`password:`、`密码`、`passwd`、`secret:`、`api[_-]?key`、疑似长 token（≥20 连续字母数字） |
 | `S_SQL_DIR` | 存在 `file/**/*.sql` 或仓内集中手写 SQL 目录，且非标准 migration 树 |
@@ -43,7 +44,7 @@ git rev-parse --show-toplevel
 | `S_DB_ENGINE` | 栈侧库引擎集合（mysql / oracle / postgres / …）；见下节 **MCP 矩阵** |
 | `S_STACK_REDIS` | 依赖或配置出现 Redis（与契约目录 `S_REDIS` 分开记） |
 | `S_SLF4J` | Java 源码命中 `org.slf4j` / `@Slf4j`（行为包 rule 21 推荐信号；非契约域） |
-| `S_SPRING` | 根/模块 `pom.xml` 命中 `spring-boot` 依赖（backend-spring 分册变体 `Q_MODULE_AGENTS=spring` 推荐信号） |
+| `S_SPRING` | 根或一层子目录 `pom.xml` 命中 `spring-boot` 依赖（backend-spring 分册变体 `Q_MODULE_AGENTS=spring` 推荐信号） |
 | `S_AGENT_CONFIG` | `docs/agent-config/` 或 `scripts/agent-config/sync.mjs` 已存在（L5 已落地的信号；resume/upgrade 优先沿用） |
 | `S_MULTI_TOOL` | 探测到的 AI 工具入口 ≥ 2（`.cursor/` `CLAUDE.md`/`.claude/` `.codex/` `.qoder/` `.trae/` `.codebuddy/`）；L5 配置 SSOT 管线推荐信号 |
 | `S_ENV_PROFILES` | 从仓库 profile 自动发现的环境名列表（见下节） |
@@ -94,7 +95,7 @@ Fingerprint 摘要须打印：**应有 MCP 矩阵**（列表）+ **已有 mcp.js
 
 1. **FOREIGN**：有 `S_CLAUDE` 且无本 harness 形态（无 `S_00`+契约索引+真相结构）→ 先问并存策略（[foreign-playbook.md](foreign-playbook.md)）
 2. **MATURE**：`S_AGENTS_ROOT` 且 `S_RULES`（**任一宿主** rules，非仅 `.cursor/rules`）且（`S_FUNC|S_API|S_DB|S_REDIS|S_JOBS` 至少一个）且 `S_KB` → 默认 audit。仅 Claude / Qoder / Trae / CodeBuddy 的仓只要根 AGENTS + 该宿主 rules + 契约骨架 + agent-kb 齐套，仍判 MATURE（**不要**因缺少 `.cursor/rules` 就降为 PARTIAL / 误默认 land）
-3. **PARTIAL**：有任一 harness 信号但不满足 MATURE → 差分补齐
+3. **PARTIAL**：有任一 **harness** 信号但不满足 MATURE → 差分补齐。**不算** harness 信号（勿仅因此判 PARTIAL / 默认 resume）：`S_SP`、`S_RUNS`、`S_FRONTEND`（协作包）、`S_RELEASES`（过程域）。仅有 superpowers / runs 的仓仍可按 NEW_CODE 全量 land；对已有 README/ARCHIVE 表见 render「既有索引 skip」。
 4. **NEW_CODE_NO_HARNESS**：有 `S_STACK` 或明显源码，无 `S_AGENTS_ROOT` 且无 `S_RULES`（任一宿主）且无契约目录 → 全量 scaffold
 5. **NEW_EMPTY**：其余近空 → 全量 scaffold
 

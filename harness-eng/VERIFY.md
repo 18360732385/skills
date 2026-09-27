@@ -1,35 +1,47 @@
-# harness-eng 验收记录（0.7.19）
+# harness-eng 验收记录（0.7.20）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.19**（批 D2–D4：delivery-checklist · rule 18 时机 · refresh；其上 0.7.18 批 B · 0.7.17 批 A · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.20**（批 E：monorepo detect · entry_ready · GLOB hooks · sp skip；其上 0.7.19 批 D · 0.7.18 批 B · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.20 增量验收（批 E）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.20` | 有 |
+| CHANGELOG 标题 `## 0.7.20`（E1/E2/E7/E8） | 有 |
+| `stack-monorepo-fe-be` → `S_STACK`/`S_SPRING`/`S_FRONTEND` | 有 |
+| strict `entry_todo`；`buildContractChecksJs`∪GLOB；sp skip 既有表 | 有 |
+| upgrade `## 0.7.19 → 0.7.20` | 有 |
+| sync tmpl id `0.7.20` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.19 增量验收（批 D2–D4）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.19` | 有 |
+| manifest / meta / questions 为 `0.7.19` | 有（历史钉；现行见 0.7.20） |
 | CHANGELOG 标题 `## 0.7.19`（delivery-checklist / refresh / rule 18） | 有 |
 | `templates/docs/agent-kb/delivery-checklist.md` + manifest `kb-delivery-checklist` | 有 |
 | rule 00/18/19、AGENTS 指针到 delivery-checklist | 有 |
 | `harness.mjs --mode refresh`（exit 0/2/1） | 有 |
 | upgrade `## 0.7.18 → 0.7.19` | 有 |
-| sync tmpl id `0.7.19` | 有 |
+| sync tmpl id `0.7.19`（历史）/ 现行 `0.7.20` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.18 增量验收（批 B：分发安全 + 就绪可信）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.18` | 有（历史钉；现行见 0.7.19） |
+| manifest / meta / questions 为 `0.7.18` | 有（历史钉；现行见 0.7.20） |
 | CHANGELOG 标题 `## 0.7.18`（C1/C9/F14） | 有 |
 | sync skills 目录：`harness-managed.json` + unmanaged 不删 | 有 |
 | `fill-score` `coverage_source`；缺 inventory 可 rescanned | 有 |
 | `--output` 相对 `--root` | 有 |
 | upgrade `## 0.7.17 → 0.7.18` | 有 |
-| sync tmpl id `0.7.18`（历史）/ 现行 `0.7.19` | 有 |
+| sync tmpl id `0.7.18`（历史）/ 现行 `0.7.20` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.17 增量验收（批 A：L5/land 独立 P0）

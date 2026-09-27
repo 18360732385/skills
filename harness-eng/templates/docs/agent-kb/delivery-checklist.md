@@ -21,7 +21,7 @@
 ## 3. superpowers + runs 双归档
 
 - [ ] Spec/Plan 徽章「已交付」+ `git mv`（或未跟踪 `mv`）入 `docs/superpowers/archive/`
-- [ ] README「进行中」删行 → ARCHIVE 追加（「提交」列：合并前可填 PR 链接，合并后回填 merge commit）
+- [ ] README「进行中」删行 → ARCHIVE 追加（「提交」列：合并前填 PR/MR URL 或 `pr:<n>`；合并后回填 merge commit SHA；禁止仅写 squash 前分支 tip）
 - [ ] **若有** `docs/runs/active/<slug>/`：`stage=done` + active→archive + 回链终态
 
 ## 4. pitfalls 三问 + lint

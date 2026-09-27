@@ -1,10 +1,11 @@
 ﻿#!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.17-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.18-dev)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 入口 · modes/specs/ · feature.mjs · 绑定 · 模板 · lib ·
  * status-scan --cwd · gate-evidence · fixtures · CHANGELOG。
  */
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
@@ -38,7 +39,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.17-dev";
+const PIN = "0.2.18-dev";
 
 const MODES = [
   "modes/init.md",
@@ -1734,11 +1735,14 @@ assert(
   "binding.md links 设计笔记 tmpl"
 );
 
-// 0.2.17-dev：批 D close↔checklist/refresh；其上 0.2.16 批 C
+// 0.2.18-dev：批 E domain-bridge / close 死链 / ARCHIVE 提交；其上 0.2.17 批 D
+assert(/## 0\.2\.18-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.18-dev block");
 assert(/## 0\.2\.17-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.17-dev block");
 assert(/## 0\.2\.16-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.16-dev block");
 assert(/## 0\.2\.15-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.15-dev block");
 assert(/## 0\.2\.14-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.14-dev block");
+assert(/破坏性变更|新限界上下文|默认 skipped/.test(changelog || ""), "CHANGELOG mentions batch E bridges");
+assert(/死链|active\/|merge commit SHA|pr:<n>/.test(changelog || ""), "CHANGELOG mentions batch E close");
 assert(/delivery-checklist|harness refresh|harness_snapshot/.test(changelog || ""), "CHANGELOG mentions batch D");
 assert(/unattended|docs\/runs\/stage-bindings/.test(changelog || ""), "CHANGELOG mentions batch C");
 const closeMd = read("modes/close.md") || "";
@@ -1746,6 +1750,75 @@ assert(/delivery-checklist\.md/.test(closeMd), "close.md prefers delivery-checkl
 assert(/--mode refresh|mode refresh/.test(closeMd), "close.md calls harness refresh");
 assert(/harness_snapshot/.test(closeMd), "close.md records harness_snapshot");
 assert(/verify 之后|不是.*每次.*commit/.test(closeMd), "close.md timing after verify");
+assert(/死链改写|runs\/active\//.test(closeMd), "E11 close.md dead-link rewrite");
+assert(/merge commit SHA|pr:<n>|squash/.test(closeMd), "E13 close.md ARCHIVE 提交钉死");
+const bridgesMd = read("modes/specs/bridges.md") || "";
+assert(
+  /破坏性变更/.test(bridgesMd) && /新限界上下文/.test(bridgesMd) && /默认 skipped/.test(bridgesMd),
+  "E9 bridges.md narrow domain-bridge criteria"
+);
+assert(/docs\/api|契约同步/.test(bridgesMd), "E9 bridges.md REST+docs/api → skipped");
+{
+  const deadDir = fs.mkdtempSync(path.join(os.tmpdir(), "feature-e11-dead-"));
+  try {
+    const slugDead = CLOSE_SLUG;
+    const archRel = path.join("docs", "runs", "archive", slugDead);
+    fs.mkdirSync(path.join(deadDir, archRel), { recursive: true });
+    fs.cpSync(
+      path.join(skillRoot, FIX_CLOSE, "docs", "runs", "archive", slugDead),
+      path.join(deadDir, archRel),
+      { recursive: true }
+    );
+    fs.cpSync(
+      path.join(skillRoot, FIX_CLOSE, "docs", "superpowers"),
+      path.join(deadDir, "docs", "superpowers"),
+      { recursive: true }
+    );
+    const poison = path.join(deadDir, archRel, "回链.md");
+    fs.appendFileSync(
+      poison,
+      `\n- 死链样例：\`docs/runs/active/${slugDead}/progress.yaml\`\n`,
+      "utf8"
+    );
+    const deadRun = spawnSync(
+      process.execPath,
+      [closeCheckBin, "--cwd", deadDir, "--slug", slugDead],
+      { cwd: skillRoot, encoding: "utf8" }
+    );
+    assert(deadRun.status !== 0, "E11 close-check FAIL on active dead link");
+    assert(
+      /dead active path/.test(`${deadRun.stdout || ""}${deadRun.stderr || ""}`),
+      "E11 close-check reports dead active path"
+    );
+  } finally {
+    fs.rmSync(deadDir, { recursive: true, force: true });
+  }
+}
+{
+  const warnDir = fs.mkdtempSync(path.join(os.tmpdir(), "feature-e13-warn-"));
+  try {
+    const slugW = CLOSE_SLUG;
+    fs.cpSync(path.join(skillRoot, FIX_CLOSE), warnDir, { recursive: true });
+    fs.mkdirSync(path.join(warnDir, "docs", "superpowers"), { recursive: true });
+    fs.writeFileSync(
+      path.join(warnDir, "docs", "superpowers", "ARCHIVE.md"),
+      `# ARCHIVE\n\n## 已交付主题\n\n| 日期 | 主题 | Spec | Plan | 提交 |\n|---|---|---|---|---|\n| 2026-09-19 | ${slugW} | a | b | feature/branch-tip-only |\n`,
+      "utf8"
+    );
+    const warnRun = spawnSync(
+      process.execPath,
+      [closeCheckBin, "--cwd", warnDir, "--slug", slugW],
+      { cwd: skillRoot, encoding: "utf8" }
+    );
+    assert(warnRun.status === 0, "E13 branch-tip ARCHIVE warn does not FAIL");
+    assert(
+      /WARNING|branch tip|提交 column/.test(`${warnRun.stdout || ""}${warnRun.stderr || ""}`),
+      "E13 close-check WARNING for non-PR/SHA 提交"
+    );
+  } finally {
+    fs.rmSync(warnDir, { recursive: true, force: true });
+  }
+}
 assert(/与 harness-eng 的配合与互斥/.test(skill || ""), "SKILL has harness compat section");
 assert(/软探测|从不.*land|不阻断/.test(skill || ""), "SKILL soft probe never requires land");
 assert(/docs\/runs\/stage-bindings\.yaml/.test(skill || ""), "SKILL mentions target bindings SSOT");

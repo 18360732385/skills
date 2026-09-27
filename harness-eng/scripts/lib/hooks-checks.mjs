@@ -285,14 +285,51 @@ function loadRegistry() {
   return registryCache;
 }
 
-/** 从 domains.yaml 的 hook_* 段生成 CONTRACT_CHECKS 数组字面量。 */
-export function buildContractChecksJs(domains) {
+/**
+ * Expand a comma-separated glob list into hook code predicates.
+ * `frontend/src/api/**` → prefix `frontend/src/api/`；含 `*` 的片段转简易 regex。
+ */
+export function globListToCodePreds(globCsv) {
+  if (!globCsv || typeof globCsv !== "string") return [];
+  const out = [];
+  for (const raw of globCsv.split(/[,;]/)) {
+    let g = raw.trim().replace(/\\/g, "/");
+    if (!g) continue;
+    g = g.replace(/^\*\*\//, "");
+    if (g.endsWith("/**")) {
+      out.push(g.slice(0, -3).replace(/\*\*/g, "").replace(/\/$/, "") + "/");
+      continue;
+    }
+    if (g.includes("*")) {
+      const esc = g
+        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*\*/g, ".*")
+        .replace(/\*/g, "[^/]*");
+      out.push(`/${esc}/`);
+      continue;
+    }
+    out.push(g.endsWith("/") ? g : g + "/");
+  }
+  return out;
+}
+
+/** 从 domains.yaml 的 hook_* 段生成 CONTRACT_CHECKS；api 域并上 placeholders.GLOB_API。 */
+export function buildContractChecksJs(domains, placeholders = {}) {
   const registry = loadRegistry();
   const blocks = [];
+  const globByDomain = {
+    api: placeholders.GLOB_API || placeholders.glob_api,
+    func: placeholders.GLOB_FUNC || placeholders.glob_func,
+    db: placeholders.GLOB_DB || placeholders.glob_db,
+  };
   for (const d of domains || []) {
     const def = registry[d];
     if (!def || !def.hook_docs) continue;
-    const codes = Array.isArray(def.hook_code) ? def.hook_code : [];
+    const codes = Array.isArray(def.hook_code) ? [...def.hook_code] : [];
+    const extra = globListToCodePreds(globByDomain[d]);
+    for (const e of extra) {
+      if (!codes.includes(e)) codes.push(e);
+    }
     if (!codes.length) continue;
     const tip = def.hook_tip || `同步 ${def.hook_docs}`;
     blocks.push(
@@ -403,7 +440,13 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     if (ph[k] == null) out[k] = v;
   };
 
-  put("CONTRACT_CHECKS_JS", buildContractChecksJs(domains));
+  put(
+    "CONTRACT_CHECKS_JS",
+    buildContractChecksJs(domains, {
+      ...(params && params.placeholders),
+      ...ph,
+    })
+  );
   const registry = loadRegistry();
   const migDir =
     (params && params.db_migration_dir) ||

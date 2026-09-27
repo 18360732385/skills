@@ -33,9 +33,14 @@
 2. **superpowers 收口（内建最小集）**  
    - Spec/Plan（若存在）文首徽章改「已交付」  
    - `git mv` 入 `docs/superpowers/archive/specs|plans/`（目录不存在则先建；**未跟踪**则用普通 `mv`）  
-   - 若有 `docs/superpowers/README.md` 进行中表：删本主题行 → 写入 `ARCHIVE.md`（日期倒序；「提交」列：合并前可填 PR 链接，合并后回填 merge commit）  
+   - 若有 `docs/superpowers/README.md` 进行中表：删本主题行 → 写入 `ARCHIVE.md`（日期倒序；「提交」列见下方钉死规则）  
    - 若有变更记录文件：追加一行  
    - 无 README/ARCHIVE 约定：至少把 Spec/Plan 移入 archive，并向用户说明本仓索引约定缺失
+
+   **ARCHIVE「提交」列（钉死）**：
+   - **合并前**：填 PR/MR URL（或 `pr:<n>`）
+   - **合并后**：回填 **merge commit SHA**（完整 40hex 或仓内可辨短 SHA）
+   - **禁止**仅写 squash 前分支 tip SHA 当最终追溯
 
 3. **pitfalls 回流（内建三问）**  
    - 本轮是否修了/确认了智能体易再犯的错误做法？  
@@ -59,6 +64,9 @@
    - 若有 `docs/runs/README.md` 进行中表：删本主题行  
    - 若主题仍在旧路径 `docs/superpowers/runs/<slug>/`：迁到 `docs/runs/archive/<slug>/` 并注明已从旧路径迁移
 
+4b. **死链改写（只改路径字符串）**  
+   归档后扫描主题根 `docs/runs/archive/<slug>/`，以及回链 / `progress.artifacts` 列出的 chef、审核、Spec/Plan 产物：将仍指向 `docs/runs/active/<slug>/`（或归档前 Spec/Plan 路径）的字符串改写为对应 archive 路径。**勿**改写语义正文，只替换路径。
+
 5. 输出交付摘要：路径、各环节产物、测试报告通过率（F）、残留风险、本仓跳过的可选增强项、`harness_snapshot` 状态。
 
 ## 双归档 L1 检查单（O7，可勾选）
@@ -70,12 +78,13 @@
 - [ ] `回链.md` 最终产物指针补齐（含 chef_mode / authorized_by / env_notes / harness_snapshot 若适用）
 - [ ] `docs/runs/active/<slug>/` → `docs/runs/archive/<slug>/`（已跟踪用 `git mv`，否则 `mv`）
 - [ ] 若有 `docs/runs/README.md` 进行中表：已删本主题行
+- [ ] 主题 archive 树与 artifacts 指向文件中**无** `docs/runs/active/<slug>` 死链（步骤 4b）
 
 ### Spec/Plan → superpowers/archive
 - [ ] Spec/Plan（若存在）文首徽章改「已交付」
 - [ ] Spec → `docs/superpowers/archive/specs/`；Plan → `docs/superpowers/archive/plans/`（目录不存在则先建；未跟踪用 `mv`）
 - [ ] 若有 `docs/superpowers/README.md` 进行中表：已删本主题行
-- [ ] 若有 `docs/superpowers/ARCHIVE.md`：已按日期倒序追加（「提交」列填代表性 commit 或 PR 链接，若有）
+- [ ] 若有 `docs/superpowers/ARCHIVE.md`：已按日期倒序追加；「提交」列=合并前 PR/MR URL 或 `pr:<n>`，合并后 merge SHA（禁止仅 squash 前分支 tip）
 - [ ] `progress.artifacts.spec|plan` 指针已改为 archive 路径（若原先指向非 archive）
 
 ### 根 README 双端启动 SSOT（M4，layout=monorepo 时必勾）

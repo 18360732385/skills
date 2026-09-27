@@ -166,6 +166,43 @@ export function countHarnessTodos(root, scan = "truths") {
 }
 
 /**
+ * Strict entry_ready: ## Commands / Critical sections must not still be TODO(harness-eng).
+ * @returns {{ ok: boolean, files: string[] }}
+ */
+export function checkEntryReady(root) {
+  const files = [];
+  const paths = [path.join(root, "AGENTS.md")];
+  try {
+    for (const name of fs.readdirSync(root)) {
+      const p = path.join(root, name);
+      try {
+        if (fs.statSync(p).isDirectory() && !name.startsWith(".")) {
+          paths.push(path.join(p, "AGENTS.md"));
+        }
+      } catch {
+        /* skip */
+      }
+    }
+  } catch {
+    /* skip */
+  }
+  for (const abs of paths) {
+    if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) continue;
+    const text = fs.readFileSync(abs, "utf8");
+    const sections = text.split(/^##\s+/m);
+    for (const sec of sections) {
+      const head = (sec.split(/\r?\n/)[0] || "").trim();
+      if (!/^(Commands|Critical)\b/i.test(head)) continue;
+      if (/TODO\(harness-eng\)/i.test(sec)) {
+        files.push(path.relative(root, abs).replace(/\\/g, "/"));
+        break;
+      }
+    }
+  }
+  return { ok: files.length === 0, files: [...new Set(files)] };
+}
+
+/**
  * Evaluate strict/gold gate extras for ai_coding_ready.
  * @returns {{ active: boolean, ok: boolean, blockers: string[], checks: object }}
  */
@@ -177,18 +214,31 @@ export function evaluateAiCodingGate(report, policy, gold) {
     morph_floor_ok: null,
     template_completeness_ok: null,
     no_harness_todo: null,
+    entry_ready: null,
     gold_ok: null,
     warnings_ok: null,
     todo_scan: null,
+    frontend_coverage: null,
   };
   if (!active) {
     return { active: false, ok: true, blockers: [], checks };
   }
   const g = policy.gate || {};
   const blockers = [];
+  // strict: AGENTS Commands/Critical 不得仍是 TODO
+  if (profile === "strict" && report.root) {
+    const entry = checkEntryReady(report.root);
+    checks.entry_ready = entry.ok;
+    if (!entry.ok) {
+      blockers.push("entry_todo:" + entry.files.join(","));
+    }
+  }
+  const domainKeys = Object.keys(report.domains || {});
+  if (domainKeys.length && !domainKeys.includes("frontend") && !domainKeys.includes("web")) {
+    checks.frontend_coverage = "not_measured";
+  }
   if (typeof g.morph_floor === "number") {
     const floors = [];
-    const domainKeys = Object.keys(report.domains || {});
     const checkDomains = domainKeys.length
       ? domainKeys
       : defaultContractDomains();

@@ -1,4 +1,4 @@
-﻿# WritePlan 格式与确认闸门
+# WritePlan 格式与确认闸门
 
 ## 展示格式
 
@@ -92,7 +92,7 @@ Q_SEED: 是
 **推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.19'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.20'}}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 

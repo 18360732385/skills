@@ -1,5 +1,20 @@
 # feature-eng CHANGELOG
 
+## 0.2.18-dev — 2026-09-28
+
+V0.7.X 开发钉。相对 0.2.17-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **批 E：domain-bridge 收窄 · close 死链 · ARCHIVE 提交列**：
+
+- **E9 domain-bridge**：判据收窄为破坏性变更 / 跨模块共享模型 / 新限界上下文；仅新增 REST 且目标仓已有 `docs/api`（或 harness_meta / 契约同步）→ **默认 skipped**
+- **E11 close**：归档后改写 `docs/runs/active/<slug>/` 死链；`close-check` 对 archive/artifacts 残留 active 路径 FAIL
+- **E13 ARCHIVE「提交」列**：合并前 PR/MR URL 或 `pr:<n>`；合并后 merge commit SHA；不合规 warn（不阻断独立仓）
+- **selfcheck / VERIFY**：PIN 0.2.18-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.18-dev | 2026-09-28 | 批 E：bridges 收窄 · close 死链 · ARCHIVE 提交 |
+| 0.2.17-dev | 2026-09-27 | 批 D：delivery-checklist + harness refresh 接力 |
+| 0.2.16-dev | 2026-09-27 | 批 C：绑定 SSOT→docs/runs + 禁 sync + unattended |
+
 ## 0.2.17-dev — 2026-09-27
 
 V0.6.X 开发钉。相对 0.2.16-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **批 D：收口清单接力 + harness refresh**：

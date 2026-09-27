@@ -1,8 +1,19 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.14 → 0.7.15 → 0.7.16 → 0.7.17 → 0.7.18 → 0.7.19`（当前 **0.7.19**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.14 → 0.7.15 → 0.7.16 → 0.7.17 → 0.7.18 → 0.7.19 → 0.7.20`（当前 **0.7.20**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.20 — 2026-09-27（批 E：monorepo detect · entry_ready · GLOB hooks · sp skip）
+
+### Fixed / Improved
+- **E1**：`detect-signals` 一层子目录 `S_STACK`；新增 `S_SPRING` / `S_FRONTEND` / `S_SP` / `S_RUNS`；`detect.md` 钉 `S_SP`/`S_RUNS` 不算 harness PARTIAL 信号
+- **E2**：strict `entry_ready`——根/分册 AGENTS `## Commands`/`Critical` 仍含 `TODO(harness-eng)` → blocker `entry_todo`
+- **E7**：`buildContractChecksJs` 并上 `GLOB_API` 等；domains 默认含 `dto/`
+- **E8**：已有 `docs/runs/` 或 README/ARCHIVE 主题表时 sp-readme/archive `skip`（不 H2 双表补齐）
+
+### Docs / pack
+- upgrade `0.7.19 → 0.7.20`；manifest / meta / sync tmpl / questions → `0.7.20`
 
 ## 0.7.19 — 2026-09-27（批 D2–D4：收口清单 + refresh）
 

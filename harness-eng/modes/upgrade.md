@@ -57,6 +57,14 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.19 → 0.7.20 迁移要点
+
+1. **meta**：`skill_version` → `0.7.20`
+2. **detect**：monorepo 一层子目录可命中 `S_STACK`；留意新信号 `S_SPRING`/`S_FRONTEND`/`S_SP`/`S_RUNS`（后两者不单独判 PARTIAL）
+3. **strict**：开干前 AGENTS Commands/Critical 须消掉 `TODO(harness-eng)`（`entry_todo`）
+4. **hooks / sp**：契约 hook 并上用户 GLOB；已有 runs 或主题表时不 H2 补齐 superpowers 索引
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.20`）后再 sync
+
 ## 0.7.18 → 0.7.19 迁移要点
 
 1. **meta**：`skill_version` → `0.7.19`

@@ -69,7 +69,7 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 **ready.ok（0.7.0 起对外废弃）**：JSON 仍输出且标 `deprecated: true`；摘要/HTML/仪表盘不展示。内部仍可算 quality/coverage 兼容式，**开干不看此项**。
 
 **ai_coding_ready（开干闸）**：`skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed`；若 `gate_profile=strict|gold` 再并入 `gate.*`。  
-- **strict**（有 score-policy 未写 profile 亦视为 strict）：缺省 `morph_floor=75` / `todo_scan=truths` / `acceptance_blockers_max=0`；语义 `generic≤3 && unbound≤2 && tc≥70`。  
+- **strict**（有 score-policy 未写 profile 亦视为 strict）：缺省 `morph_floor=75` / `todo_scan=truths` / `acceptance_blockers_max=0`；另检 **entry_ready**（根/分册 AGENTS `## Commands`/`Critical` 不得仍含 `TODO(harness-eng)`，否则 blocker `entry_todo`）；前端无契约域时 `frontend_coverage: not_measured`（不阻断）；语义 `generic≤3 && unbound≤2 && tc≥70`。  
 - **gold**：覆盖目标强制 1.0；`morph_floor=95`；`template_completeness_min=95`；`todo_scan=harness_docs`；`acceptance_blockers_max=0`；`acceptance_warnings_max=0`；语义 `generic≤0 && unbound≤0 && tc≥95`。  
 - **legacy**：语义保持 `generic≤5 && unbound≤3 && tc≥50`。  
 显式 `gate_profile: legacy` 可回退宽松语义。缺 fill-plan → `ai_coding_ready=false`。新仓【推荐】仍 strict。
