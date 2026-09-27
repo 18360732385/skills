@@ -2,6 +2,7 @@
  * Chat footer dashboard for harness-eng this-turn engineering steps (0.5.3+; gated 0.5.4+; tightened 0.6.9).
  * Mirrors report-latest.html five panels in markdown (plain-text stance; no mermaid).
  * 0.4.0 / 0.7.14: consume buildReportUi (go_nogo/tasks) + host_surface line.
+ * Compact copy + Unicode frame (◇/━/◆) so the block reads as a special footer.
  * When to SHOW/HIDE: session-dashboard.md (agent decides per this turn; --intent on session-dash.mjs).
  */
 import fs from "fs";
@@ -57,17 +58,35 @@ function readFillPlan(root) {
   }
 }
 
-function pctBar(ratio, width = 10) {
-  if (ratio == null || Number.isNaN(ratio)) return "—";
-  const r = Math.max(0, Math.min(1, ratio));
-  const filled = Math.round(r * width);
-  return `${"█".repeat(filled)}${"░".repeat(width - filled)} ${Math.round(r * 100)}%`;
+function pctNum(ratio) {
+  if (ratio == null || Number.isNaN(ratio)) return null;
+  return Math.round(Math.max(0, Math.min(1, ratio)) * 100);
 }
 
 function yesNo(ok) {
   if (ok === true) return "**YES**";
   if (ok === false) return "**NO**";
   return "—";
+}
+
+function gateMark(ok) {
+  if (ok === true) return "✓";
+  if (ok === false) return "✗";
+  return "·";
+}
+
+/** Distinctive frame so the footer reads as a special block (not body prose). */
+const FRAME = {
+  top: "◇━━━━━━━━ ◆ harness-eng 会话仪表盘 ◆ ━━━━━━━━◇",
+  bot: "◇━━━━━━━━ ◆ 详情 · 五台读法 ◆ ━━━━━━━━◇",
+  topCompact: "◇━━━━ ◆ 会话仪表盘（精简）·未打分 ◆ ━━━━◇",
+};
+
+function compactHostLine(line) {
+  if (!line) return null;
+  const body = String(line).replace(/^宿主面：/, "");
+  const first = body.split(" · ")[0] || body;
+  return `宿主：${first}`;
 }
 
 function shortPath(p) {
@@ -261,7 +280,7 @@ export function buildSessionDashboard(opts = {}) {
 }
 
 function renderDashboardLinkFooter(data) {
-  const handbookLabel = "五台读法（使用手册 · 第6章）";
+  const handbookLabel = "五台读法（使用手册）";
   const handbookPart = data.handbookUrl
     ? `[${handbookLabel}](${data.handbookUrl})`
     : `[${handbookLabel}](${HANDBOOK_HTML}${HANDBOOK_ANCHOR_HTML})`;
@@ -270,14 +289,23 @@ function renderDashboardLinkFooter(data) {
     const reportUrl = pathToFileURL(
       path.resolve(data.reportPath.replace(/\//g, path.sep))
     ).href;
-    return `**详情请查询仪表盘** → [report-latest.html](${reportUrl}) · ${handbookPart}（开干只看决策台 \`ai_coding_ready\`）`;
+    return `**详情请查询仪表盘** → [report](${reportUrl}) · ${handbookPart} · 开干=\`ai_coding_ready\``;
   }
 
   if (data.root !== "—" && data.reportExpectedRel) {
-    return `**详情请查询仪表盘** → 目标仓 \`${data.reportExpectedRel}\`（尚未生成；说「完整度打分」或跑 fill-report-html） · ${handbookPart}`;
+    return `**详情请查询仪表盘** → \`${data.reportExpectedRel}\`（未生成·说「完整度打分」） · ${handbookPart}`;
   }
 
-  return `**详情请查询仪表盘** → 定目标根后生成 \`${REPORT_REL}\` · ${handbookPart}`;
+  return `**详情请查询仪表盘** → 定根后生成 \`${REPORT_REL}\` · ${handbookPart}`;
+}
+
+function shortVerdictLabel(label) {
+  if (!label) return "—";
+  const s = String(label);
+  if (/可以开干|建议可以开干/.test(s)) return "可开干";
+  if (/暂缓|建议暂缓/.test(s)) return "暂缓";
+  if (/未打分/.test(s)) return "未打分";
+  return s.length > 12 ? s.slice(0, 12) + "…" : s;
 }
 
 export function renderSessionDashboardMarkdown(data, opts = {}) {
@@ -296,93 +324,88 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
       data.task?.line && data.task.line !== "—"
         ? `下一动作：${data.task.line}`
         : "下一动作：说「完整度打分」或先 audit/land";
+    const host = compactHostLine(data.hostLine);
     const compact = [
-      "---",
+      FRAME.topCompact,
       "## harness-eng 会话仪表盘（精简） · 未打分",
-      "",
-      `**目标** \`${data.root}\` · ${modeBit} · **阶段** ${data.sessionPhase} · **预授权** ${data.preauth}`,
-      "",
+      `\`${data.root}\` · ${modeBit} · ${data.sessionPhase} · 预授权 ${data.preauth}`,
       nextLine,
-      "",
     ];
-    if (data.hostLine) {
-      compact.push(data.hostLine);
-      compact.push("");
-    }
+    if (host) compact.push(host);
     compact.push(renderDashboardLinkFooter(data));
-    compact.push("---");
+    compact.push(FRAME.bot);
     return compact.join("\n");
   }
-  const lines = [];
-  lines.push("---");
-  lines.push("## harness-eng 会话仪表盘");
-  lines.push("");
-  lines.push(
-    `**目标** \`${data.root}\` · **模式** ${data.sessionMode}${
-      data.metaLastMode && data.metaLastMode !== data.sessionMode
-        ? `（meta.last_mode=${data.metaLastMode}）`
-        : ""
-    } · **阶段** ${data.sessionPhase} · **预授权** ${data.preauth}`
-  );
-  lines.push("");
-  lines.push("| 台 | 读数 |");
-  lines.push("|:---|:---|");
-  lines.push(
-    `| **决策台** | 开干 ${yesNo(data.decision.ai_coding_ready)} · ${data.decision.label}${
-      data.decision.blockers.length
-        ? ` · blockers: ${data.decision.blockers.join(", ")}`
-        : ""
-    } |`
-  );
+
+  const modeBit =
+    data.metaLastMode && data.metaLastMode !== data.sessionMode
+      ? `**模式** ${data.sessionMode}（meta.last_mode=${data.metaLastMode}）`
+      : `**模式** ${data.sessionMode}`;
+
+  const blockers = (data.decision.blockers || []).slice(0, 2);
+  const decisionBits = [
+    `开干 ${yesNo(data.decision.ai_coding_ready)}`,
+    shortVerdictLabel(data.decision.label),
+  ];
+  if (blockers.length) decisionBits.push(blockers.join(","));
 
   const ladderRaw = data.diagnose.ladder;
   const diagParts = [
     ladderRaw === "—" ? "—" : `L${String(ladderRaw).replace(/^L/i, "")}`,
+    `骨架${gateMark(data.diagnose.skeleton)}`,
+    `语义${gateMark(data.diagnose.semantic)}`,
   ];
-  if (data.diagnose.skeleton === true) diagParts.push("骨架就绪");
-  else if (data.diagnose.skeleton === false) diagParts.push("骨架未齐");
-  if (data.diagnose.semantic === true) diagParts.push("语义关");
-  else if (data.diagnose.semantic === false) diagParts.push("语义未关");
   if (typeof data.diagnose.gold_ratio === "number") {
-    diagParts.push(`金标 ${Math.round(data.diagnose.gold_ratio * 100)}%`);
+    diagParts.push(`金标${Math.round(data.diagnose.gold_ratio * 100)}%`);
   }
   if (
     typeof data.diagnose.formula_ceiling === "number" &&
-    typeof data.trend.overall === "number"
+    typeof data.trend.overall === "number" &&
+    data.trend.overall >= data.diagnose.formula_ceiling - 2
   ) {
-    if (data.trend.overall >= data.diagnose.formula_ceiling - 2) {
-      diagParts.push("形态贴顶");
-    }
+    diagParts.push("贴顶");
   }
-  lines.push(`| **诊断台** | ${diagParts.join(" · ")} · 域 ${data.diagnose.domains} |`);
 
-  lines.push(`| **任务台** | ${data.task.line} |`);
-
+  const cov = pctNum(data.trend.coverage);
+  const morph = pctNum(data.trend.morph);
+  const comp = pctNum(data.trend.composite);
   const trendParts = [];
-  if (data.trend.coverage != null) trendParts.push(`覆盖 ${pctBar(data.trend.coverage)}`);
-  if (data.trend.morph != null) trendParts.push(`形态 ${pctBar(data.trend.morph)}`);
-  if (data.trend.composite != null) {
-    trendParts.push(`参考分 ${pctBar(data.trend.composite)}（≠开干）`);
-  } else if (data.trend.overall == null) {
-    trendParts.push("暂无 score");
-  }
-  lines.push(`| **趋势台** | ${trendParts.join(" · ") || "—"} |`);
-  lines.push("");
+  if (cov != null) trendParts.push(`覆盖${cov}%`);
+  if (morph != null) trendParts.push(`形态${morph}%`);
+  if (comp != null) trendParts.push(`参${comp}%≠开干`);
+  if (!trendParts.length && data.trend.overall == null) trendParts.push("无score");
+
+  const taskShort =
+    data.task.line && data.task.line !== "—"
+      ? data.task.line.length > 72
+        ? data.task.line.slice(0, 70) + "…"
+        : data.task.line
+      : "—";
+
+  const lines = [
+    FRAME.top,
+    "## harness-eng 会话仪表盘",
+    `\`${data.root}\` · ${modeBit} · ${data.sessionPhase} · 预授权 ${data.preauth}`,
+    "",
+    "| 台 | 读数 |",
+    "|:---|:---|",
+    `| **决策台** | ${decisionBits.join(" · ")} |`,
+    `| **诊断台** | ${diagParts.join(" · ")} |`,
+    `| **任务台** | ${taskShort} |`,
+    `| **趋势台** | ${trendParts.join(" · ") || "—"} |`,
+  ];
 
   if (data.trend.coverage != null && data.trend.morph != null) {
     const cx = Math.round(data.trend.coverage * 100);
     const my = Math.round(data.trend.morph * 100);
     const q = stanceQuadrant(data.trend.coverage, data.trend.morph);
     lines.push(`施工态势：覆盖 ${cx}% × 形态 ${my}%（${q}）`);
-    lines.push("");
   }
 
-  if (data.hostLine) {
-    lines.push(data.hostLine);
-    lines.push("");
-  }
+  const host = compactHostLine(data.hostLine);
+  if (host) lines.push(host);
 
   lines.push(renderDashboardLinkFooter(data));
-  lines.push("---");
+  lines.push(FRAME.bot);
   return lines.join("\n");
 }

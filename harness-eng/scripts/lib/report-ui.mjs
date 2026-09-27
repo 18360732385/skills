@@ -17,6 +17,16 @@ import {
 export const REPORT_SCHEMA = "0.4.0";
 const LADDER_STEPS = ["L0", "L1", "L2", "L3", "L4", "L5"];
 
+/** 施工阶梯悬停说明（与 glossary 一句话对齐） */
+const LADDER_TIPS = {
+  L0: { name_zh: "协作入口", tip_zh: "根/分册 AGENTS.md、总览规则、Karpathy、harness-meta" },
+  L1: { name_zh: "契约骨架", tip_zh: "docs/func|api|db|redis|jobs 索引 + templates + 同步 rules" },
+  L2: { name_zh: "知识回流", tip_zh: "docs/agent-kb 四件套 + pitfalls「域」列 + rule 19" },
+  L3: { name_zh: "规划与软门禁", tip_zh: "docs/superpowers 进行中表 + commit 软提醒 hooks（不拦截）" },
+  L4: { name_zh: "工具连接样例", tip_zh: "mcp.json.example + 说明 + gitignore 忽略真密 mcp.json" },
+  L5: { name_zh: "配置 SSOT 管线", tip_zh: "docs/agent-config/ + sync.mjs --check；工具目录为生成物" },
+};
+
 const DOMAIN_ZH = {
   api: "接口文档",
   func: "功能文档",
@@ -1110,12 +1120,19 @@ function buildLadderProgress(score, meta = {}) {
     (curIdx >= 0 && curIdx < LADDER_STEPS.length - 1
       ? LADDER_STEPS[curIdx + 1]
       : null);
-  const steps = LADDER_STEPS.map((id, i) => ({
-    id,
-    label_zh: id,
-    done: curIdx >= 0 && i <= curIdx,
-    current: curIdx >= 0 && i === curIdx,
-  }));
+  const steps = LADDER_STEPS.map((id, i) => {
+    const tip = LADDER_TIPS[id] || {};
+    return {
+      id,
+      label_zh: id,
+      name_zh: tip.name_zh || id,
+      tip_zh: tip.tip_zh
+        ? id + " " + tip.name_zh + " — " + tip.tip_zh
+        : id,
+      done: curIdx >= 0 && i <= curIdx,
+      current: curIdx >= 0 && i === curIdx,
+    };
+  });
   const doneCount = steps.filter((s) => s.done).length;
   const percent =
     curIdx < 0 ? 0 : Math.round(((curIdx + 1) / LADDER_STEPS.length) * 100);

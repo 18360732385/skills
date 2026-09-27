@@ -444,6 +444,7 @@
       gap: 6px;
     }
     .pipe-step {
+      position: relative;
       font-size: 0.68rem;
       padding: 3px 9px;
       border-radius: 2px;
@@ -452,6 +453,30 @@
       background: var(--panel2);
       font-family: var(--mono);
       letter-spacing: 0.02em;
+    }
+    .pipe-step[data-tip] { cursor: help; }
+    .pipe-step[data-tip]:hover::after,
+    .pipe-step[data-tip]:focus-visible::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 8px);
+      z-index: 40;
+      min-width: 160px;
+      max-width: 280px;
+      padding: 8px 10px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.45;
+      white-space: normal;
+      box-shadow: var(--shadow);
+      pointer-events: none;
     }
     .pipe-step.done {
       color: var(--ok);
@@ -626,20 +651,30 @@
     .gap-line:empty { display: none; }
 
     /* ============================================================
-       KPIs
+       KPIs（决策台主指标单行排布）
        ============================================================ */
     .kpis {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(140px, 220px));
-      gap: 12px;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
     }
-    @media (max-width: 520px) { .kpis { grid-template-columns: 1fr; } }
     .kpi {
+      flex: 1 1 0;
+      min-width: 108px;
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 12px 14px;
+      padding: 10px 12px;
       transition: all 0.2s ease;
+    }
+    @media (max-width: 720px) {
+      .kpis { flex-wrap: wrap; }
+      .kpi { flex: 1 1 calc(33.33% - 10px); min-width: 140px; }
+    }
+    @media (max-width: 520px) {
+      .kpi { flex: 1 1 100%; min-width: 0; }
     }
     .kpi::before {
       content: '';
@@ -676,11 +711,38 @@
     .kpi.ok .v { color: var(--ok); }
     .kpi.no .v { color: var(--danger); text-shadow: 0 0 6px rgba(255,45,111,0.4); }
     .kpi.warn .v { color: var(--warn); text-shadow: 0 0 6px rgba(255,184,0,0.4); }
-    .kpi .s { color: var(--muted); font-size: 0.72rem; margin-top: 4px; }
+    .kpi .s {
+      color: var(--muted);
+      font-size: 0.68rem;
+      margin-top: 4px;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
 
     /* ============================================================
-       MORPH STRIP
+       COVERAGE + MORPH STRIP（同一行）
        ============================================================ */
+    .diag-strips {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .diag-strips .coverage-strip,
+    .diag-strips .morph-strip {
+      flex: 1 1 0;
+      margin-bottom: 0;
+      min-width: 0;
+    }
+    @media (max-width: 720px) {
+      .diag-strips { flex-wrap: wrap; }
+      .diag-strips .coverage-strip,
+      .diag-strips .morph-strip { flex: 1 1 100%; }
+    }
     .morph-strip {
       display: flex;
       flex-wrap: wrap;
@@ -736,19 +798,45 @@
     .coverage-strip .s { color: var(--muted); font-size: 0.72rem; }
 
     /* ============================================================
-       DOMAIN SUMMARY
+       DOMAIN SUMMARY（两域一行；不达标域名红字）
        ============================================================ */
     .domain-summary {
       margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
       font-size: 0.82rem;
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.5;
     }
-    .domain-summary strong {
+    @media (max-width: 640px) {
+      .domain-summary { grid-template-columns: 1fr; }
+    }
+    .domain-summary .dom-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px 8px;
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--border);
+      min-width: 0;
+    }
+    .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: none; }
+    @media (max-width: 640px) {
+      .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: 1px dashed var(--border); }
+      .domain-summary .dom-row:last-child { border-bottom: none; }
+    }
+    .domain-summary .dom-name {
       color: var(--accent);
       font-weight: 700;
       text-shadow: var(--neon-text);
+      min-width: 4.5em;
     }
+    .domain-summary .dom-name.warn {
+      color: var(--danger);
+      text-shadow: 0 0 6px rgba(255, 45, 111, 0.35);
+    }
+    .domain-summary .dom-bits { color: var(--muted); }
 
     /* ============================================================
        ACTIONS
@@ -1361,8 +1449,10 @@
         <h2>诊断台</h2>
         <p class="lead" id="lagging-lead">哪域拖后腿、常见缺口、低分真相。</p>
         <ul class="diagnose-story" id="diagnose-story"></ul>
-        <div class="coverage-strip hidden" id="coverage-strip"></div>
-        <div class="morph-strip hidden" id="morph-strip"></div>
+        <div class="diag-strips" id="diag-strips">
+          <div class="coverage-strip hidden" id="coverage-strip"></div>
+          <div class="morph-strip hidden" id="morph-strip"></div>
+        </div>
         <div class="diag-grid">
           <div class="chart-box">
             <h3>分域形态分 vs 分域上限</h3>
@@ -1464,6 +1554,7 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
   }
+  function escAttr(s) { return esc(s); }
   function load() {
     var raw = $("report-data").textContent.trim();
     if (!raw || raw.charAt(0) !== "{") throw new Error("报告数据未注入");
@@ -1883,7 +1974,12 @@
       var cls = "pipe-step";
       if (s.done) cls += " done";
       if (s.current) cls += " current";
-      return '<span class="' + cls + '">' + esc(s.label_zh || s.id) + "</span>";
+      var tip = s.tip_zh || ((s.name_zh ? s.name_zh + " — " : "") + (s.label_zh || s.id));
+      return (
+        '<span class="' + cls + '" tabindex="0" data-tip="' + escAttr(tip) +
+        '" title="' + escAttr(tip) + '">' +
+        esc(s.label_zh || s.id) + "</span>"
+      );
     }).join("");
 
     $("pipe-summary").textContent = pipe.summary || pipe.label_zh || "开干闸路径";
@@ -1935,11 +2031,13 @@
     var decisionKpis = ui.decision_kpis || [];
     if (decisionKpis.length) {
       $("kpis").innerHTML = decisionKpis.map(function (k) {
+        var sub = k.sub || "";
         return (
-          '<div class="kpi ' + esc(k.tone || "") + '">' +
+          '<div class="kpi ' + esc(k.tone || "") + '" title="' + escAttr((k.label_zh || k.id) + (sub ? " — " + sub : "")) + '">' +
           '<div class="k">' + linkTerms(k.label_zh || k.id, termIndex) + "</div>" +
           '<div class="v">' + esc(k.value) + "</div>" +
-          '<div class="s">' + linkTerms(k.sub || "", termIndex) + "</div></div>"
+          (sub ? '<div class="s">' + linkTerms(sub, termIndex) + "</div>" : "") +
+          "</div>"
         );
       }).join("");
     }
@@ -2005,12 +2103,15 @@
         if (d.room != null && d.room > 0) bits.push("距上限 " + d.room);
         if (typeof d.coverage_percent === "number") bits.push("覆盖 " + d.coverage_percent + "%");
         if (d.status_label) bits.push(d.status_label);
-        var mark = d.tone === "warn" ? "⚠ " : "";
+        var warn = d.tone === "warn";
+        var mark = warn ? "⚠ " : "";
         return (
-          "<strong>" + mark + esc(d.name_zh || d.id) + "</strong> " +
-          esc(bits.join(" · "))
+          '<div class="dom-row">' +
+          '<span class="dom-name' + (warn ? " warn" : "") + '">' +
+          mark + esc(d.name_zh || d.id) + "</span>" +
+          '<span class="dom-bits">' + esc(bits.join(" · ")) + "</span></div>"
         );
-      }).join(" · ");
+      }).join("");
     }
 
     if (ui.show_domain_cards && stories.length) {

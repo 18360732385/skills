@@ -12,6 +12,8 @@
 - **宿主面**：磁盘灰灯（present/absent，≠生效）+ session-live 彩灯；**不**绑进 `ai_coding_ready`
 - **趋势硬切断**：`report_schema < 0.4` 或 `morph_scale` 不符 → 灰显、不连线
 - **会话仪表盘**：消费同一 `buildReportUi`；有数据时多一行宿主面；手册脚注「五台读法」
+- **报告壳排版**：施工阶梯 L* 悬停说明；决策台 KPI 单行；覆盖+形态条同排；多域摘要两域一行、不达标域名红字
+- **会话仪表盘压缩**：`◇━ ◆ … ◆ ━◇` 边框；四台文案缩短（✓/✗、blockers≤2）；宿主只摘首行
 
 ### Docs / pack
 - upgrade `0.7.13 → 0.7.14`；manifest / meta / sync tmpl / questions → `0.7.14`
