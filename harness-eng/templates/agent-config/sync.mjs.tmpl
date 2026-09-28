@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.29
- * HARNESS_ENG_VERSION: 0.7.29
+ * HARNESS_SYNC_TMPL_ID: 0.7.32
+ * HARNESS_ENG_VERSION: 0.7.32
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -42,8 +42,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.29";
-const HARNESS_ENG_VERSION = "0.7.29";
+const HARNESS_SYNC_TMPL_ID = "0.7.32";
+const HARNESS_ENG_VERSION = "0.7.32";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = {{AI_TOOLS_JSON}};
@@ -754,9 +754,9 @@ planSkillsManagedManifests();
 function collectHookScriptRefs() {
   const refs = new Set();
   const re = /(?:^|[\s"'`])((?:\.[a-zA-Z0-9_-]+\/hooks\/|docs\/agent-config\/hooks\/)[^\s"'`]+)/g;
-  // 0.7.27 HS-7: Codex adapter bare filenames → .codex/hooks/<script> (only when command is Codex)
+  // 0.7.27 / 0.7.31 HS-7: Codex adapter bare filenames after optional closing quote
   const bareRe =
-    /(?:codex-adapter\.js|codex-hook\.cmd)(?:[^"'\\n]*?)(?:commit-gate|mcp-guard|--direct)\s+([A-Za-z0-9_.-]+\.(?:js|cmd|mjs))\b/g;
+    /(?:codex-adapter\.js|codex-hook\.cmd)["']?\s+(?:commit-gate|mcp-guard|--direct)\s+([A-Za-z0-9_.-]+\.(?:js|cmd|mjs))\b/g;
   function scanText(text) {
     if (!text || typeof text !== "string") return;
     let m;

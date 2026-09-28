@@ -452,6 +452,31 @@ function ensureStandardPlaceholders(params, placeholders, root) {
   set("GLOB_FRONTEND", "**/frontend/**,**/src/**");
   set("STACK_BADGES", "");
   set("OPENAPI_BRIDGE_TIP", "");
+  // 0.7.32 LT-6: docs tree + skill list follow enabled domains (no orphan redis/jobs)
+  const domainList = Array.isArray(params.domains)
+    ? params.domains.map((d) => String(d).toLowerCase())
+    : [];
+  const contractOrder = ["func", "api", "db", "redis", "jobs"];
+  const enabledContract = contractOrder.filter((d) => domainList.includes(d));
+  const docsPipe =
+    enabledContract.length > 0 ? enabledContract.join("|") : "func|api|db";
+  set("DOCS_CONTRACT_TREE", `docs/${docsPipe}/`);
+  set(
+    "DOCS_CONTRACT_PRIORITY",
+    enabledContract.length
+      ? enabledContract.map((d) => `\`docs/${d}\``).join(" → ")
+      : "`docs/func` → `docs/api` → `docs/db`"
+  );
+  const skills = ["contract-sync"];
+  if (enabledContract.includes("api") || domainList.length === 0) skills.push("api-doc-sync");
+  if (enabledContract.includes("db") || domainList.length === 0) skills.push("db-doc-sync");
+  if (enabledContract.includes("redis")) skills.push("redis-doc-sync");
+  if (enabledContract.includes("jobs")) skills.push("jobs-doc-sync");
+  skills.push("frontend-web");
+  set(
+    "AGENTS_SKILLS_LIST",
+    skills.map((s) => `\`${s}\``).join("、")
+  );
   return ph;
 }
 
@@ -675,6 +700,7 @@ function splitYamlTopLevelBlocks(text) {
 
 /**
  * 0.7.26 ID-6: merge managed keys while preserving nested blocks (inventory) and mid-file comments.
+ * 0.7.32 ID-6: if managed scalar value unchanged, keep original block text (quotes/style).
  */
 function mergeYamlMaps(existingText, incomingText) {
   const exist = parseSimpleYamlMap(existingText);
@@ -683,8 +709,25 @@ function mergeYamlMaps(existingText, incomingText) {
   const outBlocks = new Map(split.blocks);
   const order = [...split.order];
 
+  const valuesEqual = (a, b) => {
+    if (Array.isArray(a) && Array.isArray(b)) {
+      return a.length === b.length && a.every((x, i) => String(x) === String(b[i]));
+    }
+    return a === b;
+  };
+
   for (const [k, v] of Object.entries(incoming.map)) {
     if (!YAML_MANAGED_KEYS.has(k) && outBlocks.has(k)) continue;
+    if (
+      YAML_MANAGED_KEYS.has(k) &&
+      outBlocks.has(k) &&
+      Object.prototype.hasOwnProperty.call(exist.map, k) &&
+      valuesEqual(exist.map[k], v)
+    ) {
+      // value unchanged — keep original block (quotes / spacing)
+      if (!order.includes(k)) order.push(k);
+      continue;
+    }
     const line = `${k}: ${formatYamlValue(v)}`;
     outBlocks.set(k, line);
     if (!order.includes(k)) order.push(k);
@@ -1520,6 +1563,28 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   }
 
   if (action === "replace") {
+    // 0.7.32 NEW-17: upgrade fix-hook replace → backup first + stderr tip
+    const isFixHook =
+      opts.params &&
+      (opts.params.mode === "upgrade" || opts.params.last_mode === "upgrade") &&
+      isUpgradeFixHookTarget(targetRel);
+    if (exists && isFixHook) {
+      const bak = `${abs}.bak-harness-${todayStamp()}`;
+      try {
+        fs.copyFileSync(abs, bak);
+        console.error(
+          `harness upgrade: backed up ${targetRel} → ${path.basename(bak)}（按本次 params 重渲；过期 land 占位可能覆盖手工值；upgrade_fix_hooks:false 可关）`
+        );
+        log.push({
+          target: targetRel,
+          action: "backup",
+          status: "ok",
+          backup: path.basename(bak),
+        });
+      } catch (e) {
+        console.error(`harness upgrade: backup failed for ${targetRel}: ${e.message}`);
+      }
+    }
     ensureDir(abs);
     writeRenderedFile(abs, rendered, targetRel);
     log.push({
@@ -1654,9 +1719,11 @@ function main() {
     const tools = Array.isArray(params.ai_tools) ? params.ai_tools : [];
     placeholders.AI_TOOLS_JSON = JSON.stringify(tools);
   }
-  // 0.7.26 ID-6: LAST_MODE from params.mode or placeholders
-  if (placeholders.LAST_MODE == null || placeholders.LAST_MODE === "") {
-    placeholders.LAST_MODE = String(params.mode || params.last_mode || "land");
+  // 0.7.26 ID-6 / 0.7.32: LAST_MODE from params.mode (CLI mode wins over land leftovers)
+  if (params.mode) {
+    placeholders.LAST_MODE = String(params.mode);
+  } else if (placeholders.LAST_MODE == null || placeholders.LAST_MODE === "") {
+    placeholders.LAST_MODE = String(params.last_mode || "land");
   }
   // 0.7.26 LT-11: common hook placeholders get safe defaults so manifest expand
   // does not leave {{CODE_PREFIXES}} (fatal unresolved) when Agent omits them

@@ -1,10 +1,56 @@
-﻿# harness-eng 验收记录（0.7.29）
+﻿# harness-eng 验收记录（0.7.32）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.29**（e2e P2：填契约 / 幂等 / UX；其上 0.7.28 e2e P1 · 0.7.27 e2e P0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.32**（e2e P2：LT-6/7/11 · FC-6 · NEW-8/16/17 · ID-6 · 升级提示 · §7#2；其上 0.7.31 e2e P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.32 增量验收（e2e P2）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.32`；templates / meta / questions / sync tmpl 一致 | 有 |
+| 根 AGENTS 无未装 redis/jobs skill；domains 裁剪 docs 树 | 有 |
+| `MIGRATION_HEADER_KEYS` 默认 `[]`；`bad_name.sql` 触发命名提醒 | 有 |
+| `MYSQL_GUARD_SERVERS` 含 `mysql-local` | 有 |
+| func `svc.class` + preserve-order 发现序 | 有 |
+| 缺/空 inventory + `--write-ddl` → empty_inventory，不写空 JSON、不改表文档 | 有 |
+| resume 强制 `last_mode`；YAML 同值保留引号 | 有 |
+| L3/L4 Codex 无 mysql MCP 时 hooks.json 无 `mcp__mysql` | 有 |
+| upgrade fix-hook replace 有 `.bak-harness-*`；freshness 可提示手工 replace | 有 |
+| api `--module` 过滤 endpoints 再算 missing | 有 |
+| §7 #4/#9 工具侧：见 0.7.31 FC-9 / SG-1（本版不回归） | 有 |
+| CHANGELOG 标题 `## 0.7.32`；upgrade `## 0.7.31 → 0.7.32` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.31 增量验收（e2e P1）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.31`；templates / meta / questions / sync tmpl 一致 | 有 |
+| 缺 db/func inventory → `missing_inventory:*`，pass=false | 有 |
+| `refresh --no-write` / inventory `--no-write` 不改盘 | 有 |
+| DDL normalize + compare `db_diff>0` → exit 2；write-ddl 文案纠正 | 有 |
+| 跨文件 DTO；api ratio 0.15；注解参数 ≥1 阻断；func 0.25 | 有 |
+| resume + land fail → skip；错误 JSON | 有 |
+| sync bareRe 匹配带引号 command | 有 |
+| `.fill-work/project` update-index 命中 docs/api/api.md | 有 |
+| CHANGELOG 标题 `## 0.7.31`；upgrade `## 0.7.30 → 0.7.31` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.30 增量验收（e2e P0 热修）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.30`；templates / meta / questions / sync tmpl 一致 | 有 |
+| yaml 引号 key 解析为无引号；`module_roots` 双写不膨胀 | 有 |
+| `--gate-profile gold` 在 strict 缺省文件上得到 morph 95 / tc 95 / harness_docs / coverage 1.0 | 有 |
+| frontend「常用命令」预填成表，不覆盖 api-client 契约表 | 有 |
+| fill-score 落盘 `root` 为 `.`；skill CWD 仍报 `entry_todo` | 有 |
+| soft-gate `--codex` 时 `agent_message` 走 stderr | 有 |
+| CHANGELOG 标题 `## 0.7.30`；upgrade `## 0.7.29 → 0.7.30` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.29 增量验收（e2e P2）
 

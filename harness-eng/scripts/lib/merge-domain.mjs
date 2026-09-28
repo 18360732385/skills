@@ -102,15 +102,24 @@ export function extractInventoryEvidence(inv, domain) {
       out.push({ evidence: k.evidence || k.pattern || k.prefix, label: k.pattern || k.prefix || k.evidence });
     }
   } else if (domain === "func" && Array.isArray(inv.modules)) {
+    // 0.7.32 FC-6: inventory-func writes `class` (not className); preserve discovery order
     for (const mod of inv.modules) {
       const services = mod.services || [];
       for (const svc of services) {
-        out.push({ evidence: svc.evidence || svc.className || svc.name, label: svc.className || svc.name || svc.evidence });
+        const cls = svc.class || svc.className || svc.name;
+        out.push({
+          evidence: svc.evidence || cls,
+          label: cls || svc.evidence,
+        });
       }
     }
   } else if (domain === "func" && Array.isArray(inv.services)) {
     for (const svc of inv.services) {
-      out.push({ evidence: svc.evidence || svc.className || svc.name, label: svc.className || svc.name || svc.evidence });
+      const cls = svc.class || svc.className || svc.name;
+      out.push({
+        evidence: svc.evidence || cls,
+        label: cls || svc.evidence,
+      });
     }
   } else if (domain === "jobs" && Array.isArray(inv.tasks)) {
     for (const t of inv.tasks) {
@@ -503,13 +512,34 @@ export function updateDomainIndex(opts) {
   for (const f of files) {
     const stem = f.replace(/\.md$/i, "");
     const link = domain === "db" ? `table/${f}` : domain === "redis" ? `keys/${f}` : `modules/${f}`;
-    if (text.includes(f) || text.includes(stem)) continue;
-    const row = `| ${stem} | [\`${f}\`](${link}) | — |\n`;
+    // Drop placeholder rows for this stem (（待补充）)
+    const placeholderRe = new RegExp(
+      `^\\|\\s*${stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\|[^\\n]*待补充[^\\n]*\\|.*$`,
+      "gmi"
+    );
+    if (placeholderRe.test(text)) {
+      text = text.replace(placeholderRe, "");
+      changed = true;
+    }
+    if (text.includes(f) || new RegExp(`\\|\\s*${stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\|`).test(text)) {
+      continue;
+    }
     const secRe = new RegExp(
       `(##\\s*${sectionHeading}\\s*\\n)([\\s\\S]*?)(?=\\n##\\s+|$)`,
       "i"
     );
     const sec = text.match(secRe);
+    let colCount = 3;
+    if (sec) {
+      const headerLine = (sec[2].match(/^\|[^\n]+\|/m) || [])[0];
+      if (headerLine) {
+        colCount = Math.max(2, headerLine.split("|").filter((c) => c.trim() !== "").length);
+      }
+    }
+    // Align cells to existing header width (pad with —)
+    const cells = [stem, `[\`${f}\`](${link})`, "—"];
+    while (cells.length < colCount) cells.push("—");
+    const row = `| ${cells.slice(0, colCount).join(" | ")} |\n`;
     if (sec) {
       const body = sec[2];
       const lines = body.split(/\r?\n/);

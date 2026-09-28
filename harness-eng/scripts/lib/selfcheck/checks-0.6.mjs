@@ -1311,7 +1311,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const man068 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   assert(/mcp-codex-config/.test(man068) && /config\.toml\.example/.test(man068), "manifest lands codex config example");
 
-  const hooks068 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json"), "utf8");
+  const hooks068 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json.tmpl"), "utf8");
   assert(/"matcher"\s*:\s*"\^Bash\$"/.test(hooks068), "codex-hooks matcher ^Bash$");
   assert(!/"matcher"\s*:\s*"Bash"/.test(hooks068), "codex-hooks not bare Bash string");
 
@@ -1581,7 +1581,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
   assert(/prefix_rule/.test(rulesSeed) && /git/.test(rulesSeed) && /push/.test(rulesSeed), "rules seed has git push policy");
   assert(/reset/.test(rulesSeed) && /forbidden|prompt/.test(rulesSeed), "rules seed has destructive git policy");
-  const hooks069 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json"), "utf8");
+  const hooks069 = fs.readFileSync(path.join(skillRoot, "templates/hooks/codex-hooks.json.tmpl"), "utf8");
   assert(/"Stop"/.test(hooks069), "codex-hooks includes Stop");
   assert(/"matcher"\s*:\s*"\^Bash\$"/.test(hooks069), "PreToolUse still ^Bash$");
   assert(

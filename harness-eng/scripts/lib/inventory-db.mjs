@@ -16,7 +16,14 @@ import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { writeInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
 
 function parseArgs(argv) {
-  const out = { root: null, sqlRoot: "file", out: null, help: false, sqlRootSet: false };
+  const out = {
+    root: null,
+    sqlRoot: "file",
+    out: null,
+    help: false,
+    sqlRootSet: false,
+    noWrite: false,
+  };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--root") out.root = argv[++i];
@@ -24,6 +31,7 @@ function parseArgs(argv) {
       out.sqlRoot = argv[++i];
       out.sqlRootSet = true;
     } else if (a === "--out") out.out = argv[++i];
+    else if (a === "--no-write") out.noWrite = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -471,20 +479,26 @@ export function main(argv = process.argv) {
   }
 
   const json = JSON.stringify(report, null, 2);
-  const outPath = resolveInventoryOutPath(root, args.out, "db");
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, json, "utf8");
-  console.error(
-    `Wrote ${outPath} tables=${tables.length} enriched_comments≈${enriched}`
-  );
-  if (tables.length && sqlRootRel && sqlRootRel !== "file") {
-    try {
-      writeInventoryMeta(root, {
-        db: { sql_root: toRootRelative(root, sqlRootRel) || sqlRootRel },
-      });
-    } catch {
-      /* meta optional */
+  if (!args.noWrite) {
+    const outPath = resolveInventoryOutPath(root, args.out, "db");
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, json, "utf8");
+    console.error(
+      `Wrote ${outPath} tables=${tables.length} enriched_comments≈${enriched}`
+    );
+    if (tables.length && sqlRootRel && sqlRootRel !== "file") {
+      try {
+        writeInventoryMeta(root, {
+          db: { sql_root: toRootRelative(root, sqlRootRel) || sqlRootRel },
+        });
+      } catch {
+        /* meta optional */
+      }
     }
+  } else {
+    console.error(
+      `[inventory-db] --no-write tables=${tables.length} (stdout only)`
+    );
   }
   console.log(json);
   exitFromReport(report);

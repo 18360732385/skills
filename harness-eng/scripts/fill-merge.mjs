@@ -189,16 +189,40 @@ try {
   }
 
   if (args.write && args.updateIndex && report) {
-    // work-dir = docs/<domain>/.fill-work → domain root = docs/<domain>
-    const domainRoot = path.resolve(args.workDir, "..");
-    const docsRoot = path.resolve(domainRoot, "..");
-    const idx = updateDomainIndex({
-      root: fs.existsSync(path.join(domainRoot, `${args.domain}.md`))
+    // 0.7.31 FC-9: resolve docs/<domain> even when work-dir is .fill-work[/module]
+    const absWork = path.resolve(args.workDir);
+    let indexRoot = null;
+    let cur = absWork;
+    for (let i = 0; i < 6; i++) {
+      const candidate = path.join(cur, "docs", args.domain, `${args.domain}.md`);
+      const domainDir = path.join(cur, "docs", args.domain);
+      if (fs.existsSync(candidate) || fs.existsSync(domainDir)) {
+        indexRoot = cur;
+        break;
+      }
+      const parent = path.dirname(cur);
+      if (parent === cur) break;
+      cur = parent;
+    }
+    if (!indexRoot) {
+      // fallback: work-dir = docs/<domain>/.fill-work → repo root = ../..
+      const domainRoot = path.resolve(args.workDir, "..");
+      const docsRoot = path.resolve(domainRoot, "..");
+      indexRoot = fs.existsSync(path.join(domainRoot, `${args.domain}.md`))
         ? docsRoot
-        : domainRoot,
+        : path.resolve(docsRoot, "..");
+    }
+    const defaultTargetDir = path.join(
+      indexRoot,
+      "docs",
+      args.domain,
+      args.domain === "db" ? "table" : args.domain === "redis" ? "keys" : "modules"
+    );
+    const idx = updateDomainIndex({
+      root: indexRoot,
       domain: args.domain,
       inventory: args.inventory,
-      targetDir: args.targetDir || null,
+      targetDir: args.targetDir || (fs.existsSync(defaultTargetDir) ? defaultTargetDir : null),
       target: args.target || null,
     });
     if (idx?.updated) {

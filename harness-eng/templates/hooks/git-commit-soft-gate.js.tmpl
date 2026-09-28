@@ -2,7 +2,8 @@
 /**
  * git commit/merge 软门禁（harness-eng hooks 家族 · commit-gate-extended）。
  * 五合一提醒：superpowers 收口 + agent-kb 回流 + agent-config 漂移 + 契约漏同步 + db/migration 环境同步。
- * 永不拦截（fail-open）；Cursor 协议仅 allow + agent_message；--git 模式输出到 stderr 并 exit 0。
+ * 永不拦截（fail-open）；Cursor 协议仅 allow + agent_message；
+ * --git / --codex（HOST_SOFT）模式输出到 stderr 并 exit 0。
  * 子进程必须 stdio ignore stdin，否则会与 hook stdin 管道互相等待。
  * 契约 docsHit 只认真相子目录（modules/table/keys/tasks），索引与 archive 不算；
  * jobs 的 yml 侧按暂存 diff 新增行关键词（cron/task_code 等）判定，避免改配置误报。
@@ -36,6 +37,10 @@ const JOBS_DIFF_KEYWORD_RE =
 
 const argv = process.argv.slice(2);
 const GIT_MODE = argv.includes("--git") || process.env.HARNESS_HOOK_MODE === "git";
+// 0.7.30 NEW-15: Codex adapter passes --codex; write agent_message to stderr (adapter forwards)
+const CODEX_MODE =
+  argv.includes("--codex") || process.env.HARNESS_HOOK_MODE === "codex";
+const HOST_SOFT = GIT_MODE || CODEX_MODE;
 
 function readStdin() {
   return new Promise((resolve) => {
@@ -72,7 +77,7 @@ function readStdin() {
 }
 
 function allow(extra = {}) {
-  if (GIT_MODE) {
+  if (HOST_SOFT) {
     if (extra.agent_message) console.error(extra.agent_message);
     process.exit(0);
   }

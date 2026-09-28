@@ -110,6 +110,44 @@ export function formatFreshnessMessage(report, targetRoot) {
 }
 
 /**
+ * 0.7.32 升级提示缺口：rule13 / db.md 维护约定 / score-policy 可能仍 skip，需手工 replace。
+ * Heuristic only — avoid false positives on fresh land.
+ */
+export function warnManualReplaceGaps(targetRoot, log = console) {
+  const hints = [];
+  const ruleCandidates = [
+    path.join(targetRoot, ".cursor", "rules", "13-db-doc-sync.mdc"),
+    path.join(targetRoot, "docs", "agent-config", "rules", "13-db-doc-sync.mdc"),
+  ];
+  for (const p of ruleCandidates) {
+    if (!fs.existsSync(p)) continue;
+    const t = fs.readFileSync(p, "utf8");
+    if (/内容\s*\/\s*操作人\s*\/\s*时间/.test(t) || /V\[0-9\]\{4\}__\(DDL\|DML\)/.test(t)) {
+      hints.push("rule 13（旧头注释/命名约定）");
+      break;
+    }
+  }
+  const dbMd = path.join(targetRoot, "docs", "db", "db.md");
+  if (fs.existsSync(dbMd)) {
+    const t = fs.readFileSync(dbMd, "utf8");
+    if (!/维护约定/.test(t)) hints.push("docs/db/db.md（缺「维护约定」节）");
+  }
+  const policy = path.join(targetRoot, "docs", "harness-eng", "score-policy.yaml");
+  if (fs.existsSync(policy)) {
+    const t = fs.readFileSync(policy, "utf8");
+    if (/acceptance_warnings_max:\s*null\s*#\s*null=不检/.test(t) || /morph_floor:\s*60\b/.test(t)) {
+      hints.push("score-policy.yaml（旧缺省/注释指纹）");
+    }
+  }
+  if (hints.length) {
+    log.error(
+      `harness: 需手工 replace（upgrade 默认 skip）：${hints.join("；")}。详见 modes/upgrade.md`
+    );
+  }
+  return hints;
+}
+
+/**
  * Check-mode: skip (no consumer script) and fresh → 0; stale / error → 1.
  */
 export function runFreshnessCheck(targetRoot, skillRoot = DEFAULT_SKILL_ROOT, log = console) {
@@ -119,6 +157,7 @@ export function runFreshnessCheck(targetRoot, skillRoot = DEFAULT_SKILL_ROOT, lo
     log.error(
       "harness: 模板漂移提醒：技能 API 模板 vs 仓内 docs/api 厚模板可能不一致；upgrade on_exists=skip 以仓为准。"
     );
+    warnManualReplaceGaps(targetRoot, log);
     return 0;
   }
   if (report.status === "fresh") {
@@ -126,11 +165,13 @@ export function runFreshnessCheck(targetRoot, skillRoot = DEFAULT_SKILL_ROOT, lo
     log.error(
       "harness: 模板漂移提醒：技能 API 模板 vs 仓内 docs/api 厚模板可能不一致；upgrade on_exists=skip 以仓为准。"
     );
+    warnManualReplaceGaps(targetRoot, log);
     return 0;
   }
   log.error(formatFreshnessMessage(report, targetRoot));
   log.error(
     "harness: 模板漂移提醒：技能 API 模板 vs 仓内 docs/api 厚模板可能不一致；upgrade on_exists=skip 以仓为准。"
   );
+  warnManualReplaceGaps(targetRoot, log);
   return 1;
 }

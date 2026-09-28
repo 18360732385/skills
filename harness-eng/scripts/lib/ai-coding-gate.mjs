@@ -60,6 +60,38 @@ export function applyGoldCoverageDefaults(targets = {}) {
   return out;
 }
 
+/**
+ * 0.7.30 NEW-12: re-apply gate_profile defaults (shared by loadScorePolicy + CLI --gate-profile).
+ * Gold clears strict fingerprints (morph_floor 75 / todo_scan truths) so applyGoldGateDefaults can fill.
+ * @param {object} policy  mutable score-policy object ({ gate, coverage_targets, coverage_mode, ... })
+ * @param {"strict"|"gold"|"legacy"|string} profile
+ * @param {{ explicit?: object, coverageModeFromFile?: boolean }} [opts]
+ * @returns {object} policy
+ */
+export function reapplyGateProfile(policy, profile, opts = {}) {
+  const p = policy || {};
+  const explicit = { ...(opts.explicit || {}) };
+  p.gate_profile = profile;
+  const gate = { ...(p.gate || {}) };
+  if (profile === "gold") {
+    // land 曾写死的 strict 指纹在切 gold 时视为未设置
+    if (gate.morph_floor === 75) delete gate.morph_floor;
+    if (gate.todo_scan === "truths") {
+      delete gate.todo_scan;
+      delete explicit.todo_scan;
+    }
+    p.gate = applyGoldGateDefaults(gate, explicit);
+    p.coverage_targets = applyGoldCoverageDefaults(p.coverage_targets || {});
+    // match loadScorePolicy: only set all_domains when file omitted coverage_mode
+    if (!opts.coverageModeFromFile) p.coverage_mode = "all_domains";
+  } else if (profile === "strict") {
+    p.gate = applyStrictGateDefaults(gate, explicit);
+  } else {
+    p.gate = gate;
+  }
+  return p;
+}
+
 function countTodosInFile(filePath) {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return 0;
   const text = fs.readFileSync(filePath, "utf8");

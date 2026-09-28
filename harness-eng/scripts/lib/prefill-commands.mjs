@@ -70,18 +70,27 @@ export function formatCommandsTableRows(rows) {
 
 /**
  * Replace TODO Commands rows in AGENTS markdown when seed enabled.
+ * 0.7.30 NEW-11: only touch the Commands/常用命令 section (stop at next ##);
+ * if section has no table (frontend code-block TODO), replace body with a table.
  */
 export function applyCommandsPrefill(md, root, opts = {}) {
   const { rows } = collectCommandPrefill(root, opts);
   if (!rows.length) return md;
   const table = formatCommandsTableRows(rows);
-  // 0.7.29 LT-5: match ## Commands or ## 常用命令 (same as ai-coding-gate)
-  const headingRe = /##\s*(?:Commands|常用命令)[\s\S]*?TODO\(harness-eng\)/i;
-  if (headingRe.test(md)) {
-    return md.replace(
-      /(##\s*(?:Commands|常用命令)[\s\S]*?\|\s*---\|\s*---\s*\|\s*\n)([\s\S]*?)(?=\n##\s+|$)/i,
-      (_, head) => `${head}${table}\n\n`
-    );
-  }
-  return md;
+  return md.replace(
+    /(##\s*(?:Commands|常用命令)\s*\n)([\s\S]*?)(?=\n##\s+|$)/i,
+    (full, head, body) => {
+      if (!/TODO\(harness-eng\)/i.test(body)) return full;
+      // Section already has a 2-col markdown table → replace data rows only
+      if (/\|\s*---+\s*\|\s*---+\s*\|/.test(body)) {
+        const newBody = body.replace(
+          /(\|[^\n]+\|\s*\n\|\s*---+\s*\|\s*---+\s*\|\s*\n)([\s\S]*)/,
+          `$1${table}\n`
+        );
+        return head + newBody;
+      }
+      // Code block / plain TODO (frontend 分册): install a proper Commands table
+      return `${head}\n| Task | Command |\n|---|---|\n${table}\n\n`;
+    }
+  );
 }

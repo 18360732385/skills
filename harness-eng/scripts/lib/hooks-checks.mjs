@@ -496,10 +496,11 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     "MIGRATION_NAME_RE",
     JSON.stringify(String(migNameRe).replace(/^\/|\/$/g, ""))
   );
+  // 0.7.32 LT-7: default [] (no header check); opt-in via migration_header_keys / placeholder
   const headerKeys =
     (params && params.migration_header_keys) ||
     (ph.MIGRATION_HEADER_KEYS != null && ph.MIGRATION_HEADER_KEYS) ||
-    '["时间","撰写","目的","类型"]';
+    "[]";
   put(
     "MIGRATION_HEADER_KEYS",
     typeof headerKeys === "string" ? headerKeys : JSON.stringify(headerKeys)
@@ -511,7 +512,53 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
         "(application[^/]*\\.ya?ml|config/.*\\.ya?ml)$"
     )
   );
-  put("MYSQL_GUARD_SERVERS", "mysql-(dev|test|uat)");
+  // 0.7.32 LT-11: align with CD-3 / fill-mcp mysql-local (plus legacy env names)
+  const mysqlServers =
+    (params && (params.mysql_guard_servers || params.MYSQL_GUARD_SERVERS)) ||
+    (ph.MYSQL_GUARD_SERVERS != null && String(ph.MYSQL_GUARD_SERVERS)) ||
+    null;
+  if (mysqlServers) {
+    put("MYSQL_GUARD_SERVERS", String(mysqlServers).replace(/^\^|\$$/g, ""));
+  } else {
+    const mcpNames = [];
+    const mcpList = (params && (params.mcp || params.mcp_servers || params.mcpServers)) || [];
+    for (const m of Array.isArray(mcpList) ? mcpList : []) {
+      const name = typeof m === "string" ? m : m && (m.name || m.server || m.id);
+      if (name && /mysql/i.test(String(name))) mcpNames.push(String(name).replace(/^mcp__?/, ""));
+    }
+    if (mcpNames.length) {
+      const alts = [...new Set(mcpNames.map((n) => n.replace(/^mysql-?/, "mysql-").replace(/^mysql$/, "mysql-local")))];
+      put("MYSQL_GUARD_SERVERS", alts.length === 1 ? alts[0] : `(${alts.join("|")})`);
+    } else {
+      put("MYSQL_GUARD_SERVERS", "mysql-(local|dev|test|uat)");
+    }
+  }
+  // 0.7.32 NEW-16: only emit mcp__mysql matcher when mysql MCP selected
+  const mcpRaw =
+    (params && (params.mcp || params.mcp_engines || params.mcp_servers)) || [];
+  const mcpSet = new Set(
+    (Array.isArray(mcpRaw) ? mcpRaw : String(mcpRaw).split(","))
+      .map((x) => String(x || "").trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const wantMysqlHook = mcpSet.has("mysql") || [...mcpSet].some((m) => /mysql/i.test(m));
+  put(
+    "CODEX_MYSQL_HOOK_ENTRY",
+    wantMysqlHook
+      ? `,\n      {
+        "matcher": "mcp__mysql",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \\"$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js\\" mcp-guard mcp-mysql-guard.js",
+            "commandWindows": "for /f %i in ('git rev-parse --show-toplevel') do @call \\"%i\\\\.codex\\\\hooks\\\\codex-hook.cmd\\" mcp-guard mcp-mysql-guard.js",
+            "timeout": 8,
+            "statusMessage": "Checking MySQL MCP"
+          }
+        ]
+      }`
+      : ""
+  );
   put("HOOKS_CURSOR_EVENTS", cursorEventsJson(selection));
   put(
     "HOOKS_CLAUDE_GROUPS",

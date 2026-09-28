@@ -1,8 +1,51 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.20 → 0.7.21 → 0.7.22 → 0.7.23 → 0.7.24 → 0.7.25 → 0.7.26 → 0.7.27 → 0.7.28 → 0.7.29`（当前 **0.7.29**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.28 → 0.7.29 → 0.7.30 → 0.7.31 → 0.7.32`（当前 **0.7.32**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.32 — 2026-09-28（e2e P2：冷启动文案 · 空 inventory · Codex matcher · upgrade 备份）
+
+### Fixed
+- **LT-6**：根 AGENTS 用 `DOCS_CONTRACT_TREE` / `AGENTS_SKILLS_LIST` 随 domains 裁剪，不再推荐未装的 redis/jobs skills
+- **LT-7**：`MIGRATION_HEADER_KEYS` 默认 `[]`；after-edit 对非 `V*` 的 `*.sql` 也做命名提醒
+- **LT-11**：`MYSQL_GUARD_SERVERS` 默认含 `mysql-local`（与 CD-3/fill-mcp 对齐）
+- **FC-6**：func evidence 用 `svc.class`；preserve-order 跟 inventory 发现序
+- **NEW-8**：缺/空 inventory 拒绝 write/doc-scan，不写空 `inventory.json`、不改写表 DDL
+- **ID-6**：resume/upgrade 强制 `LAST_MODE`；YAML managed 值未变保留原 block
+- **NEW-16**：`codex-hooks.json.tmpl` 无 mysql MCP 时不写 `mcp__mysql` matcher
+- **NEW-17**：upgrade replace fix-hook 前 `.bak-harness-*` + stderr 提示
+- **升级提示缺口**：freshness / upgrade 后启发式提示需手工 replace 的 rule13 / db.md / score-policy
+- **§7 #2**：api `--module` 过滤 inventory endpoints 再算 missing（§7 #4/#9 工具侧已在 0.7.31 收口）
+
+### Docs / pack
+- upgrade `0.7.31 → 0.7.32`；manifest / meta / sync tmpl / questions → `0.7.32`
+
+## 0.7.31 — 2026-09-28（e2e P1：假 ready · --no-write · DDL · DTO 漂移 · resume · bareRe · update-index）
+
+### Fixed
+- **ID-4**：scored 域缺 inventory → `missing_inventory:*`，`coverage_ready`/`pass`/`ai_coding_ready` 失败
+- **ID-3**：`refresh --no-write` 与 inventory `--no-write` 不写 inventory/meta/score
+- **FC-1**：DDL 归一化（反引号/`AUTO_INCREMENT`）；compare `db_diff>0` → exit 2；`--write-ddl` 纠正「与 Flyway 一致」文案
+- **SG-1**：跨文件 DTO 查找；api `missingRatio` 默认 0.15；注解参数缺失 ≥1 阻断；func 阈值 0.25
+- **ID-5**：resume/upgrade 遇 `on_exists=fail` 强制 skip；错误 stdout JSON
+- **HS-7**：Codex bareRe 认 `…js" commit-gate script.js`
+- **FC-9**：`.fill-work[/module]` 解析到 `docs/<domain>`；对齐表列；删「（待补充）」占位行
+
+### Docs / pack
+- upgrade `0.7.30 → 0.7.31`；manifest / meta / sync tmpl / questions → `0.7.31`
+
+## 0.7.30 — 2026-09-28（e2e P0 热修：meta 引号 · 假 gold · 预填跨节 · score root · Codex soft-gate）
+
+### Fixed
+- **NEW-10**：`yaml.mjs` map key 走 `parseScalar`；`inventory-meta` 读写去引号膨胀；安全 key 不再强制加引号
+- **NEW-12 / SG-10**：`reapplyGateProfile` 统一文件路径与 CLI `--gate-profile gold`（清除 strict 指纹后再填 gold 缺省）
+- **NEW-11 / LT-5**：`prefill-commands` 只改 Commands/常用命令节；无表时装标准表，不踩下一节契约表
+- **ID-8 / NEW-14**：`fill-score` 门禁用绝对 root，落盘/`--json` 的 `report.root` 为 `"."`
+- **NEW-15 / LT-1**：`git-commit-soft-gate` 识别 `--codex` / `HOST_SOFT`，提醒写 stderr（Codex adapter 可转发）
+
+### Docs / pack
+- upgrade `0.7.29 → 0.7.30`；manifest / meta / sync tmpl / questions → `0.7.30`
 
 ## 0.7.29 — 2026-09-28（e2e P2：填契约 / 幂等 / UX）
 

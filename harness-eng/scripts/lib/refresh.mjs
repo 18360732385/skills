@@ -53,7 +53,7 @@ function parseFillScoreJson(stdout) {
   }
 }
 
-function inventoryArgv(domain, absRoot) {
+function inventoryArgv(domain, absRoot, { noWrite = false } = {}) {
   const argv = ["--domain", domain, "--root", absRoot];
   const inv = readInventoryMeta(absRoot);
   if (domain === "api" && inv.api?.controller_root) {
@@ -62,6 +62,7 @@ function inventoryArgv(domain, absRoot) {
   if (domain === "db" && inv.db?.sql_root) {
     argv.push("--sql-root", inv.db.sql_root);
   }
+  if (noWrite) argv.push("--no-write");
   return argv;
 }
 
@@ -86,7 +87,12 @@ export function runRefresh(root, opts = {}) {
       steps.push({ step: "inventory", domain: d, skipped: "dry-run" });
       continue;
     }
-    const r = runNode("fill-inventory.mjs", inventoryArgv(d, absRoot), absRoot);
+    // 0.7.31 ID-3: --no-write → inventory --no-write (no files / no meta)
+    const r = runNode(
+      "fill-inventory.mjs",
+      inventoryArgv(d, absRoot, { noWrite: !write }),
+      absRoot
+    );
     steps.push({
       step: "inventory",
       domain: d,

@@ -22,6 +22,7 @@ function parseArgs(argv) {
     allModules: false,
     out: null,
     help: false,
+    noWrite: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -34,6 +35,7 @@ function parseArgs(argv) {
       out.modules.push(...vals);
     } else if (a === "--all-modules") out.allModules = true;
     else if (a === "--out") out.out = argv[++i];
+    else if (a === "--no-write") out.noWrite = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -148,6 +150,7 @@ function parseClass(text, rel) {
 
 function scanModule(root, mod) {
   const javaRoot = path.join(root, mod, "src", "main", "java");
+  // 0.7.32 FC-6: walk discovery order — do not alpha-sort services
   const files = walkServices(javaRoot);
   const services = [];
   for (const f of files) {
@@ -228,28 +231,32 @@ export function main(argv = process.argv) {
 
   // Per-module files when multi; single combined when one module or --out set
   const written = [];
-  if (args.out) {
-    written.push(writeInventory(root, null, report, args.out));
-  } else if (single) {
-    written.push(writeInventory(root, single, report, null));
-  } else {
-    for (const m of moduleReports) {
-      const one = {
-        ok: true,
-        root,
-        module: m.name,
-        generatedAt: report.generatedAt,
-        modules: [m],
-        stats: m.stats,
-      };
-      written.push(writeInventory(root, m.name, one, null));
+  if (!args.noWrite) {
+    if (args.out) {
+      written.push(writeInventory(root, null, report, args.out));
+    } else if (single) {
+      written.push(writeInventory(root, single, report, null));
+    } else {
+      for (const m of moduleReports) {
+        const one = {
+          ok: true,
+          root,
+          module: m.name,
+          generatedAt: report.generatedAt,
+          modules: [m],
+          stats: m.stats,
+        };
+        written.push(writeInventory(root, m.name, one, null));
+      }
+      // Also write merged inventory.json for fill-truths-auto discovery
+      written.push(writeInventory(root, null, report, null));
     }
-    // Also write merged inventory.json for fill-truths-auto discovery
-    written.push(writeInventory(root, null, report, null));
   }
 
   console.error(
-    `Wrote func inventory modules=${report.stats.modules} services=${report.stats.services} methods=${report.stats.methods}`
+    args.noWrite
+      ? `[inventory-func] --no-write modules=${report.stats.modules} services=${report.stats.services}`
+      : `Wrote func inventory modules=${report.stats.modules} services=${report.stats.services} methods=${report.stats.methods}`
   );
   for (const w of written) console.error(`  ${w}`);
   console.log(JSON.stringify(report, null, 2));

@@ -62,6 +62,7 @@ function parseArgs(argv) {
     out: null,
     excludeBaseClasses: [...DEFAULT_EXCLUDE_BASE],
     quiet: false,
+    noWrite: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -82,6 +83,7 @@ function parseArgs(argv) {
         .filter(Boolean);
     } else if (a === "--out") out.out = argv[++i];
     else if (a === "--quiet") out.quiet = true;
+    else if (a === "--no-write") out.noWrite = true;
     else if (a === "--help" || a === "-h") {
       out.help = true;
     } else throw new Error(`Unknown arg: ${a}`);
@@ -94,9 +96,10 @@ function printHelp() {
   node scripts/fill-inventory.mjs --domain api --root <TARGET>
       [--modules sms-entrance,sms-safe] [--module sms-entrance] [--all-modules]
       [--controller-root <rel>] [--shard-size 80]
-      [--exclude-base-classes BaseController,...] [--out inv.json] [--quiet]
+      [--exclude-base-classes BaseController,...] [--out inv.json] [--quiet] [--no-write]
 
 Default --out (when omitted): docs/api/.fill-work/inventory.json
+--no-write: scan only (stdout JSON); do not write inventory files or harness-meta
   or docs/api/.fill-work/inventory-<module>.json when a module is set.
 
 --all-modules: expand root pom.xml <module> and scan each (writes per-module inventory).
@@ -194,8 +197,8 @@ function extractParamFieldNames(paramsSrc) {
   return [...new Set(fields)];
 }
 
-/** Best-effort VO/DTO field names from same compilation unit (bounded). */
-function extractTypeFieldNames(fileText, typeName) {
+/** Best-effort VO/DTO field names from same compilation unit, then sibling *.java (0.7.31 SG-1). */
+function extractTypeFieldNames(fileText, typeName, searchRoot = null) {
   if (!typeName) return [];
   const simple = String(typeName)
     .replace(/\.?<[^>]*>/g, "")
@@ -204,18 +207,68 @@ function extractTypeFieldNames(fileText, typeName) {
   if (!simple || /^(String|Integer|Long|Boolean|Object|Map|List|Set|void|int|long|boolean|ResponseEntity|Result|ApiResult)$/i.test(simple)) {
     return [];
   }
-  const idx = fileText.search(new RegExp(`(?:class|record|interface)\\s+${simple}\\b`));
-  if (idx < 0) return [];
-  const slice = fileText.slice(idx, idx + 4000);
-  const fields = [];
-  for (const m of slice.matchAll(
-    /(?:private|protected|public)\s+(?:static\s+)?(?:final\s+)?[\w.<>,\s\[\]]+\s+(\w+)\s*[;=]/g
-  )) {
-    const n = m[1];
-    if (/^(class|static|final|serialVersionUID)$/i.test(n)) continue;
-    fields.push(n);
+  function fieldsFromText(text) {
+    const idx = text.search(new RegExp(`(?:class|record|interface)\\s+${simple}\\b`));
+    if (idx < 0) return [];
+    const slice = text.slice(idx, idx + 4000);
+    const fields = [];
+    for (const m of slice.matchAll(
+      /(?:private|protected|public)\s+(?:static\s+)?(?:final\s+)?[\w.<>,\s\[\]]+\s+(\w+)\s*[;=]/g
+    )) {
+      const n = m[1];
+      if (/^(class|static|final|serialVersionUID)$/i.test(n)) continue;
+      fields.push(n);
+    }
+    // record components: record Foo(Type a, Type b)
+    const rec = slice.match(new RegExp(`record\\s+${simple}\\s*\\(([^)]*)\\)`));
+    if (rec) {
+      for (const part of rec[1].split(",")) {
+        const mm = part.trim().match(/([\w.<>[\]]+)\s+(\w+)\s*$/);
+        if (mm) fields.push(mm[2]);
+      }
+    }
+    return [...new Set(fields)].slice(0, 40);
   }
-  return [...new Set(fields)].slice(0, 40);
+  const local = fieldsFromText(fileText);
+  if (local.length) return local;
+  if (!searchRoot || !fs.existsSync(searchRoot)) return [];
+  // Bounded walk for Type.java / *Dtos.java under module src (skip target/)
+  const hit = [];
+  function walk(d, depth) {
+    if (hit.length || depth > 8 || !fs.existsSync(d)) return;
+    let names;
+    try {
+      names = fs.readdirSync(d);
+    } catch {
+      return;
+    }
+    for (const name of names) {
+      if (hit.length) return;
+      if (name === "target" || name === "node_modules" || name === ".git") continue;
+      const p = path.join(d, name);
+      let st;
+      try {
+        st = fs.statSync(p);
+      } catch {
+        continue;
+      }
+      if (st.isDirectory()) walk(p, depth + 1);
+      else if (
+        name === `${simple}.java` ||
+        (name.endsWith(".java") && name.includes(simple))
+      ) {
+        try {
+          const t = fs.readFileSync(p, "utf8");
+          const f = fieldsFromText(t);
+          if (f.length) hit.push(...f);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }
+  walk(searchRoot, 0);
+  return [...new Set(hit)].slice(0, 40);
 }
 
 function extractEndpointsFromFile(absFile, root, excludeBase = DEFAULT_EXCLUDE_BASE) {
@@ -227,6 +280,15 @@ function extractEndpointsFromFile(absFile, root, excludeBase = DEFAULT_EXCLUDE_B
   const classStart = classDecl.index;
   const base = extractClassBase(text, classStart);
   const rel = path.relative(root, absFile).replace(/\\/g, "/");
+  // Search DTO types under module java root (…/src/main/java or controller parent chain)
+  let dtoSearchRoot = path.dirname(absFile);
+  const javaIdx = rel.toLowerCase().indexOf("/src/main/java/");
+  if (javaIdx >= 0) {
+    dtoSearchRoot = path.join(root, rel.slice(0, javaIdx + "/src/main/java".length));
+  } else {
+    // climb a few levels from controller dir
+    dtoSearchRoot = path.resolve(absFile, "..", "..", "..");
+  }
   // package under controller: parent dirs after /controller/
   let pkg = "";
   const idx = rel.toLowerCase().indexOf("/controller/");
@@ -264,12 +326,13 @@ function extractEndpointsFromFile(absFile, root, excludeBase = DEFAULT_EXCLUDE_B
       /@RequestBody(?:\([^)]*\))?(?:\s*@[\w]+(?:\([^)]*\))?)*\s+(List\s*<\s*[\w.?]+\s*>|[\w.]+)/
     );
     if (rb) bodyType = rb[1].replace(/\s+/g, "");
-    // 0.7.29 SG-1: field skeletons for drift (empty ok)
+    // 0.7.29/0.7.31 SG-1: field skeletons + annotation params for drift
+    const annotationParams = extractParamFieldNames(params);
     const requestFields = [
-      ...extractParamFieldNames(params),
-      ...extractTypeFieldNames(text, bodyType),
+      ...annotationParams,
+      ...extractTypeFieldNames(text, bodyType, dtoSearchRoot),
     ];
-    const responseFields = extractTypeFieldNames(text, ret);
+    const responseFields = extractTypeFieldNames(text, ret, dtoSearchRoot);
     rows.push({
       package: pkg,
       controller: cls,
@@ -278,6 +341,7 @@ function extractEndpointsFromFile(absFile, root, excludeBase = DEFAULT_EXCLUDE_B
       method,
       bodyType,
       retType: ret,
+      annotationParams: [...new Set(annotationParams)],
       requestFields: [...new Set(requestFields)],
       responseFields: [...new Set(responseFields)],
       evidence: `${rel}#${method}`,
@@ -606,7 +670,8 @@ export function main(argv = process.argv) {
           null,
           args.shardSize,
           null,
-          args.excludeBaseClasses
+          args.excludeBaseClasses,
+          { write: !args.noWrite }
         );
         if (r.skip || r.warning) {
           warnings.push({ module: mod, skip: r.skip, warning: r.warning });
@@ -653,7 +718,8 @@ export function main(argv = process.argv) {
     args.controllerRoot,
     args.shardSize,
     args.out,
-    args.excludeBaseClasses
+    args.excludeBaseClasses,
+    { write: !args.noWrite }
   );
   if (report.skip) {
     pushWarning(report, report.warning || report.skip);
@@ -667,7 +733,11 @@ export function main(argv = process.argv) {
         "Cannot locate controller root. Pass --controller-root <rel> (directory containing *Controller.java trees)."
     );
   }
-  if (report.controllerRoot && (report.stats?.endpoints || 0) > 0) {
+  if (
+    !args.noWrite &&
+    report.controllerRoot &&
+    (report.stats?.endpoints || 0) > 0
+  ) {
     try {
       const rel =
         toRootRelative(root, report.controllerRoot) || report.controllerRoot;

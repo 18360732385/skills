@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Field-level doc ↔ inventory drift (0.7.25 SG-1).
  * Compares db inventory columns to docs/db/table field tables;
  * optionally api inventory DTO-ish field names vs api module field tables.
@@ -104,7 +104,7 @@ export function detectDbFieldDrift(root) {
  * Only flags when inventory has structured field lists.
  * @param {string} root
  * @param {object} apiInventory
- * @param {{ missingRatio?: number }} [opts]  default 0.3 (0.7.29 SG-1; was 0.5)
+ * @param {{ missingRatio?: number }} [opts]  default 0.15 (0.7.31 SG-1; was 0.3)
  */
 export function detectApiFieldDrift(root, apiInventory, opts = {}) {
   const gaps = [];
@@ -134,7 +134,12 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
   }
   if (!docFields.size) return { ok: true, gaps, blockers };
   const codeFields = new Set();
+  const annotationFields = new Set();
   for (const ep of apiInventory.endpoints) {
+    for (const p of ep.annotationParams || []) {
+      const n = typeof p === "string" ? p : p.name;
+      if (n) annotationFields.add(String(n).toLowerCase());
+    }
     for (const p of ep.params || ep.requestFields || []) {
       const n = typeof p === "string" ? p : p.name;
       if (n) codeFields.add(String(n).toLowerCase());
@@ -144,15 +149,25 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
       if (n) codeFields.add(String(n).toLowerCase());
     }
   }
-  if (!codeFields.size) return { ok: true, gaps, blockers };
+  if (!codeFields.size && !annotationFields.size) return { ok: true, gaps, blockers };
+
+  // 0.7.31: undocumented @RequestParam/@PathVariable → immediate blocker
+  const missingAnn = [...annotationFields].filter((c) => !docFields.has(c));
+  if (missingAnn.length >= 1) {
+    gaps.push({ missing_annotation_params: missingAnn.slice(0, 20) });
+    blockers.push(`doc_field_drift:api:${missingAnn.slice(0, 8).join("+")}`);
+  }
+
   const missing = [...codeFields].filter((c) => !docFields.has(c));
   const ratio =
     typeof opts.missingRatio === "number" && Number.isFinite(opts.missingRatio)
       ? opts.missingRatio
-      : 0.3;
+      : 0.15;
   if (missing.length && missing.length >= Math.max(1, Math.ceil(codeFields.size * ratio))) {
     gaps.push({ missing_in_doc: missing.slice(0, 20) });
-    blockers.push(`doc_field_drift:api:${missing.slice(0, 8).join("+")}`);
+    if (!blockers.length) {
+      blockers.push(`doc_field_drift:api:${missing.slice(0, 8).join("+")}`);
+    }
   }
   return { ok: blockers.length === 0, gaps, blockers };
 }
@@ -185,8 +200,8 @@ export function detectFuncMethodDrift(root, funcInventory) {
   }
   if (!codeMethods.size) return { ok: true, gaps, blockers };
   const missing = [...codeMethods].filter((name) => !docText.includes(name));
-  // Skeleton: block only when majority of methods absent from all func docs
-  if (missing.length && missing.length >= Math.max(1, Math.ceil(codeMethods.size * 0.5))) {
+  // 0.7.31 SG-1: block when ≥25% methods absent (was 50%)
+  if (missing.length && missing.length >= Math.max(1, Math.ceil(codeMethods.size * 0.25))) {
     gaps.push({ missing_in_doc: missing.slice(0, 20) });
     blockers.push(`doc_method_drift:func:${missing.slice(0, 8).join("+")}`);
   }

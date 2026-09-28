@@ -90,15 +90,24 @@ Requires mysql2 + ioredis (install once under TEMP/harness-mcp-calibrate).
 `);
 }
 
-/** Replace only the fenced ```sql block under ## 建表语句; preserve heading + 说明. */
+/** Replace only the fenced ```sql block under ## 建表语句; preserve heading + 说明.
+ * 0.7.31 FC-1: if prose claims Flyway byte-identical, rewrite to live SHOW CREATE disclaimer.
+ */
 export function replaceCreateTableBlock(md, ddl) {
-  const fence = "```sql\n" + ddl.trim() + "\n```";
+  const fence = "```sql\n" + String(ddl || "").trim() + "\n```";
+  let out = md;
   // Prefer: keep ## 建表语句 … prose, swap only ```sql…```
-  if (/##\s*建表语句[\s\S]*?```sql[\s\S]*?```/i.test(md)) {
-    return md.replace(/(##\s*建表语句[\s\S]*?)```sql[\s\S]*?```/i, `$1${fence}`);
+  if (/##\s*建表语句[\s\S]*?```sql[\s\S]*?```/i.test(out)) {
+    out = out.replace(/(##\s*建表语句[\s\S]*?)```sql[\s\S]*?```/i, `$1${fence}`);
+  } else {
+    // No section — append
+    out = out.replace(/\s*$/, `\n\n## 建表语句\n\n${fence}\n`);
   }
-  // No section — append
-  return md.replace(/\s*$/, `\n\n## 建表语句\n\n${fence}\n`);
+  out = out.replace(
+    /(与\s*Flyway[^\n]*一致)/gi,
+    "来自 live SHOW CREATE（非 Flyway 逐字）"
+  );
+  return out;
 }
 
 function extractCreateSqlFence(md) {
@@ -106,15 +115,18 @@ function extractCreateSqlFence(md) {
   return m ? m[1].trim() : null;
 }
 
-/** Normalize SHOW CREATE DDL for compare (strip ENGINE/COMMENT noise; keep structure). */
+/** Normalize SHOW CREATE DDL for compare (strip ENGINE/COMMENT/AUTO_INCREMENT noise; keep structure). */
 export function normalizeDdlForCompare(ddl) {
   return String(ddl || "")
+    .replace(/`/g, "")
     .replace(/\s+/g, " ")
     .replace(/\s*ENGINE\s*=\s*\w+/gi, "")
+    .replace(/\s*AUTO_INCREMENT\s*=\s*\d+/gi, "")
     .replace(/\s*DEFAULT\s+CHARSET\s*=\s*\w+/gi, "")
-    .replace(/\s*COLLATE\s*=\s*\w+/gi, "")
+    .replace(/\s*COLLATE\s*=\s*[\w]+/gi, "")
     .replace(/\s*COMMENT\s*=\s*'[^']*'/gi, "")
     .replace(/\s*COMMENT\s+'[^']*'/gi, "")
+    .replace(/,\s*\)/g, ")")
     .trim()
     .toLowerCase();
 }
@@ -370,11 +382,15 @@ async function main() {
   if (mysqlCfg) {
     const invPath = path.join(root, "docs", "db", ".fill-work", "inventory.json");
     const invExists = fs.existsSync(invPath);
-    const inv = invExists
-      ? JSON.parse(fs.readFileSync(invPath, "utf8"))
-      : { tables: [] };
+    let inv = { tables: [] };
+    if (invExists) {
+      try {
+        inv = JSON.parse(fs.readFileSync(invPath, "utf8"));
+      } catch {
+        inv = { tables: [] };
+      }
+    }
     const tableDir = path.join(root, "docs", "db", "table");
-    fs.mkdirSync(tableDir, { recursive: true });
     const byName = new Map();
     if (fs.existsSync(tableDir)) {
       for (const f of fs.readdirSync(tableDir)) {
@@ -382,22 +398,23 @@ async function main() {
         if (m) byName.set(m[2], { nn: m[1], file: f });
       }
     }
-    // 0.7.29 NEW-8: explicit empty inventory must not fall back to doc scan
+    // 0.7.32 NEW-8: missing or empty inventory → refuse write/doc-scan; no empty inventory.json
     const invTables = Array.isArray(inv.tables) ? inv.tables : [];
-    if (invExists && invTables.length === 0) {
+    if (!invExists || invTables.length === 0) {
       stats.empty_inventory = true;
       console.error(
-        "fill-calibrate-live: inventory.json has tables:[] — refuse doc-scan fallback (empty_inventory)"
+        invExists
+          ? "fill-calibrate-live: inventory.json has tables:[] — refuse write/doc-scan (empty_inventory)"
+          : "fill-calibrate-live: no docs/db/.fill-work/inventory.json — refuse write/doc-scan (empty_inventory); run fill-inventory --domain db first"
       );
       process.exitCode = 2;
     } else {
+    fs.mkdirSync(tableDir, { recursive: true });
     const conn = await mysql.createConnection({
       ...mysql2ConnectionConfig(mysqlCfg),
       connectTimeout: 10000,
     });
-    const tables = invTables.length
-      ? invTables
-      : [...byName.keys()].map((name) => ({ name }));
+    const tables = invTables;
     stats.diffs = stats.diffs || [];
     for (const t of tables) {
       const name = t.name;
@@ -482,7 +499,8 @@ async function main() {
       }
     }
     await conn.end();
-    if (args.writeDdl && inv.tables) {
+    // 0.7.32 NEW-8: only rewrite inventory when it has tables (never write tables:[])
+    if (args.writeDdl && Array.isArray(inv.tables) && inv.tables.length > 0) {
       fs.mkdirSync(path.dirname(invPath), { recursive: true });
       fs.writeFileSync(invPath, JSON.stringify(inv, null, 2));
     }
@@ -611,7 +629,7 @@ async function main() {
   }
 
   // 0.7.26 SG-9: inventory has tables but db_ok=0 → empty gate / fail
-  // 0.7.29 NEW-8: inventory exists with tables:[] + mysql → empty_inventory
+  // 0.7.32 NEW-8: missing inventory or tables:[] + mysql → empty_inventory (may already be set)
   let invTableCount = 0;
   let invFileExists = false;
   try {
@@ -624,13 +642,25 @@ async function main() {
   } catch {
     invTableCount = 0;
   }
-  if (mysqlCfg && invFileExists && invTableCount === 0) {
+  if (mysqlCfg && (!invFileExists || invTableCount === 0)) {
     stats.empty_inventory = true;
-    console.error("fill-calibrate-live: empty_inventory (tables:[]) with mysql configured");
+    if (process.exitCode !== 2) {
+      console.error(
+        invFileExists
+          ? "fill-calibrate-live: empty_inventory (tables:[]) with mysql configured"
+          : "fill-calibrate-live: empty_inventory (no inventory.json) with mysql configured"
+      );
+    }
     process.exitCode = 2;
   } else if (mysqlCfg && invTableCount > 0 && stats.db_ok === 0) {
     console.error(
       `fill-calibrate-live: db_ok=0 but inventory has ${invTableCount} table(s) (empty gate)`
+    );
+    process.exitCode = 2;
+  } else if (!args.writeDdl && (stats.db_diff || 0) > 0) {
+    // 0.7.31 FC-1: compare-only with real DDL drift → exit 2
+    console.error(
+      `fill-calibrate-live: db_diff=${stats.db_diff} (DDL changed vs docs; use --write-ddl to apply)`
     );
     process.exitCode = 2;
   }

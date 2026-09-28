@@ -35,6 +35,7 @@ import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
   applyGoldCoverageDefaults,
+  reapplyGateProfile,
   evaluateAiCodingGate,
 } from "./lib/ai-coding-gate.mjs";
 import {
@@ -759,8 +760,8 @@ function defaultScorePolicy() {
     },
     // 无 score-policy 文件 → legacy；有文件但未写 gate_profile → 0.3.0 升 strict
     gate_profile: "legacy",
-    // 0.7.29 SG-1: api field missing ratio for drift blockers
-    api_field_missing_ratio: 0.3,
+    // 0.7.29 SG-1: api field missing ratio for drift blockers (0.7.31 default 0.15)
+    api_field_missing_ratio: 0.15,
     gate: {
       morph_floor: null,
       template_completeness_min: null,
@@ -840,21 +841,12 @@ function loadScorePolicy(root) {
   }
   const nl = raw.match(/require_no_lagging_domain:\s*(true|false)/i);
   if (nl) gate.require_no_lagging_domain = nl[1].toLowerCase() === "true";
-  if (base.gate_profile === "gold") {
-    // 0.7.25 SG-6: land 曾写死的 strict 指纹（75 / truths）在切 gold 时视为未设置
-    if (gate.morph_floor === 75) delete gate.morph_floor;
-    if (gate.todo_scan === "truths") {
-      delete gate.todo_scan;
-      delete explicit.todo_scan;
-    }
-    base.gate = applyGoldGateDefaults(gate, explicit);
-    base.coverage_targets = applyGoldCoverageDefaults(base.coverage_targets);
-    if (!mode) base.coverage_mode = "all_domains";
-  } else if (base.gate_profile === "strict") {
-    base.gate = applyStrictGateDefaults(gate, explicit);
-  } else {
-    base.gate = gate;
-  }
+  base.gate = gate;
+  // 0.7.30 NEW-12: shared reapplyGateProfile (file path)
+  reapplyGateProfile(base, base.gate_profile, {
+    explicit,
+    coverageModeFromFile: !!mode,
+  });
   return { ...base, present: true, path: path.relative(root, p).replace(/\\/g, "/") };
 }
 
@@ -1060,14 +1052,12 @@ function main() {
     policyMigrated = migrateScorePolicyFile(root);
   }
   const scorePolicy = loadScorePolicy(root);
-  // 0.7.29 SG-10: CLI --gate-profile overrides score-policy.yaml
+  // 0.7.29 SG-10 / 0.7.30 NEW-12: CLI --gate-profile overrides via shared reapplyGateProfile
   if (args.gateProfile) {
-    scorePolicy.gate_profile = args.gateProfile;
-    if (args.gateProfile === "gold") {
-      scorePolicy.gate = applyGoldGateDefaults(scorePolicy.gate || {}, {});
-    } else if (args.gateProfile === "strict") {
-      scorePolicy.gate = applyStrictGateDefaults(scorePolicy.gate || {}, {});
-    }
+    reapplyGateProfile(scorePolicy, args.gateProfile, {
+      // CLI override: force gold coverage_mode like file gold without coverage_mode line
+      coverageModeFromFile: false,
+    });
   }
   const progress = createProgress({ quiet: args.quiet, label: "fill-score" });
   progress.log("start");
@@ -1111,7 +1101,8 @@ function main() {
   );
   const report = {
     ok: true,
-    // 0.7.27 NEW-2: absolute root so ai-coding-gate does not scan process CWD
+    // 0.7.27 NEW-2: absolute root for gate eval (ai-coding-gate must not scan process CWD)
+    // 0.7.30 ID-8/NEW-14: rewritten to "." before persist/stdout below
     root,
     modules: args.modules,
     scored_domains: domains,
@@ -1249,6 +1240,19 @@ function main() {
   report.coverage_source = coverageSource;
   report.next_shards = nextShardsFromInventory(inventory);
 
+  // 0.7.31 ID-4: scored contract domains missing inventory must not stay ready
+  const INV_SCORE_DOMAINS = new Set(["api", "func", "db", "redis", "jobs"]);
+  const missingInventoryDomains = [];
+  for (const d of domains) {
+    if (!INV_SCORE_DOMAINS.has(d)) continue;
+    if (d === "api") {
+      if (!inventory) missingInventoryDomains.push("api");
+    } else if (!loadDomainInventory(root, d)) {
+      missingInventoryDomains.push(d);
+    }
+  }
+  report.missing_inventory = missingInventoryDomains;
+
   const qOk = report.overall >= args.readyQuality;
   const covIncomplete = !report.coverage;
   const covEval = evaluateCoverageReady(
@@ -1303,7 +1307,9 @@ function main() {
       "legacy: generic_logic<=5 && dto_unbound<=3 && template_completeness>=50";
   }
   // 0.2.27: coverage_ready respects score-policy coverage_mode
-  const coverageReady = !covIncomplete && !!covEval.ok;
+  // 0.7.31 ID-4: also require every scored contract domain to have inventory
+  const coverageReady =
+    !covIncomplete && !!covEval.ok && missingInventoryDomains.length === 0;
   const planClosed = plan.present ? !!plan.all_closed : false;
 
   // 0.2.18/0.2.29: gold before gate so strict/gold can require acceptance_*_max
@@ -1324,7 +1330,7 @@ function main() {
   const apiRatio =
     Number.isFinite(Number(scorePolicy.api_field_missing_ratio))
       ? Number(scorePolicy.api_field_missing_ratio)
-      : 0.3;
+      : 0.15;
   const apiDrift = detectApiFieldDrift(root, inventory, { missingRatio: apiRatio });
   const funcInv = loadDomainInventory(root, "func");
   const funcDrift = detectFuncMethodDrift(root, funcInv);
@@ -1347,6 +1353,8 @@ function main() {
   const baseBlockers = [
     !skel.ok && "skeleton_ready",
     !coverageReady && "coverage_ready",
+    missingInventoryDomains.length &&
+      `missing_inventory:${missingInventoryDomains.join(",")}`,
     covEval.gaps?.some((g) => g.anomaly === "covered_gt_code") &&
       "inventory_undercount:covered_gt_code",
     !semanticOk && "semantic_ready",
@@ -1359,6 +1367,7 @@ function main() {
   report.coverage_ready = {
     ok: coverageReady,
     coverage_incomplete: covIncomplete,
+    missing_inventory: missingInventoryDomains,
     mode: covEval.mode,
     targets: covEval.targets,
     gaps: covEval.gaps,
@@ -1391,8 +1400,12 @@ function main() {
     blockers: [...baseBlockers, ...gateEval.blockers],
     gate: gateEval,
   };
-  // 0.7.28 ID-4: without inventory never morph-pass (was overall>=threshold fake green)
-  report.pass = covIncomplete ? false : report.ready.ok;
+  // 0.7.28 ID-4 / 0.7.31: without inventory (any scored domain) never morph-pass
+  const undercount = !!covEval.gaps?.some((g) => g.anomaly === "covered_gt_code");
+  report.pass =
+    covIncomplete || missingInventoryDomains.length || undercount
+      ? false
+      : report.ready.ok;
 
   if (prev && typeof prev.overall === "number") {
     report.diff = {
@@ -1427,9 +1440,11 @@ function main() {
     report.suggest_next = `semantic_ready=false（generic_logic=${genericN}, dto_unbound=${unboundN}）→ 按接口重填逻辑/清错挂 DTO`;
   } else if (!skel.ok) {
     report.suggest_next = "skeleton_ready=false → upgrade/resume 到 L4（hooks/MCP example）";
-  } else if (covIncomplete) {
+  } else if (covIncomplete || missingInventoryDomains.length) {
     report.suggest_next =
-      "缺 inventory → 先跑 node scripts/harness.mjs --mode refresh --root <仓> 再 fill-score；勿用形态分当覆盖";
+      missingInventoryDomains.length
+        ? `缺 inventory（${missingInventoryDomains.join(",")}）→ 先跑 node scripts/harness.mjs --mode refresh --root <仓> 再 fill-score`
+        : "缺 inventory → 先跑 node scripts/harness.mjs --mode refresh --root <仓> 再 fill-score；勿用形态分当覆盖";
   } else if (!coverageReady) {
     const und =
       covEval.gaps &&
@@ -1465,6 +1480,9 @@ function main() {
       report.gold_ratio == null ? "n/a" : report.gold_ratio
     }`
   );
+
+  // 0.7.30 ID-8/NEW-14: persist relative root so clone/refresh is zero-diff (gate already ran with abs)
+  report.root = ".";
 
   // 0.2.19 / 0.7.18: --output 相对路径相对 --root（避免 cwd=skill 目录写进技能仓）
   // 0.7.24: --json 时无论是否 --output 都向 stdout 打 JSON（refresh 依赖 stdout 解析）

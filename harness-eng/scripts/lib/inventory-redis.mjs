@@ -16,12 +16,13 @@ import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 
 function parseArgs(argv) {
-  const out = { root: null, sourceRoot: null, out: null, help: false };
+  const out = { root: null, sourceRoot: null, out: null, help: false, noWrite: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--root") out.root = argv[++i];
     else if (a === "--source-root") out.sourceRoot = argv[++i];
     else if (a === "--out") out.out = argv[++i];
+    else if (a === "--no-write") out.noWrite = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -418,12 +419,16 @@ export function main(argv = process.argv) {
   if (!merged.length) pushWarning(report, "no redis key patterns found");
 
   const json = JSON.stringify(report, null, 2);
-  const outPath = resolveInventoryOutPath(root, args.out, "redis");
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, json, "utf8");
-  console.error(
-    `Wrote ${outPath} keys=${merged.length} redis_true=${real} redis_false=${merged.length - real} meta=${withMeta}`
-  );
+  if (!args.noWrite) {
+    const outPath = resolveInventoryOutPath(root, args.out, "redis");
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, json, "utf8");
+    console.error(
+      `Wrote ${outPath} keys=${merged.length} redis_true=${real} redis_false=${merged.length - real} meta=${withMeta}`
+    );
+  } else {
+    console.error(`[inventory-redis] --no-write keys=${merged.length} (stdout only)`);
+  }
   console.log(json);
   exitFromReport(report);
 }

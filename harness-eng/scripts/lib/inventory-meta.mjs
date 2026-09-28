@@ -11,6 +11,39 @@ import { findHarnessMetaFile, canonicalHarnessMetaPath } from "./harness-meta.mj
 import { parse as parseYaml } from "./yaml.mjs";
 
 /**
+ * Strip wrapping quotes and collapse quote-inflation from older writers (NEW-10).
+ * e.g. """project""" → project
+ */
+export function stripWrappingQuotes(s) {
+  let out = String(s ?? "");
+  // Peel layers of wrapping " or ' until stable
+  for (let i = 0; i < 32; i++) {
+    const t = out.trim();
+    if (
+      (t.startsWith('"') && t.endsWith('"') && t.length >= 2) ||
+      (t.startsWith("'") && t.endsWith("'") && t.length >= 2)
+    ) {
+      out = t.slice(1, -1);
+      continue;
+    }
+    out = t;
+    break;
+  }
+  return out.replace(/\\/g, "/");
+}
+
+/** Safe unquoted YAML key (simple path-ish identifiers). */
+function formatYamlKey(k) {
+  const s = stripWrappingQuotes(k);
+  if (/^[A-Za-z0-9_./-]+$/.test(s)) return s;
+  return JSON.stringify(s);
+}
+
+function formatYamlString(v) {
+  return JSON.stringify(stripWrappingQuotes(v));
+}
+
+/**
  * @param {string} root
  * @returns {{ api?: { controller_root?: string, module_roots?: Record<string,string> }, db?: { sql_root?: string } }}
  */
@@ -25,21 +58,18 @@ export function readInventoryMeta(root) {
     if (inv.api && typeof inv.api === "object") {
       out.api = {};
       if (inv.api.controller_root)
-        out.api.controller_root = String(inv.api.controller_root).replace(/\\/g, "/");
+        out.api.controller_root = stripWrappingQuotes(inv.api.controller_root);
       if (inv.api.module_roots && typeof inv.api.module_roots === "object") {
         out.api.module_roots = {};
         for (const [k, v] of Object.entries(inv.api.module_roots)) {
           if (v != null && String(v).trim())
-            out.api.module_roots[String(k).replace(/\\/g, "/")] = String(v).replace(
-              /\\/g,
-              "/"
-            );
+            out.api.module_roots[stripWrappingQuotes(k)] = stripWrappingQuotes(v);
         }
       }
     }
     if (inv.db && typeof inv.db === "object") {
       out.db = {};
-      if (inv.db.sql_root) out.db.sql_root = String(inv.db.sql_root).replace(/\\/g, "/");
+      if (inv.db.sql_root) out.db.sql_root = stripWrappingQuotes(inv.db.sql_root);
     }
     return out;
   } catch {
@@ -63,14 +93,14 @@ export function writeInventoryMeta(root, patch) {
   const nextApi = { ...(existing.api || {}) };
   if (patch.api) {
     if (patch.api.controller_root != null)
-      nextApi.controller_root = String(patch.api.controller_root).replace(/\\/g, "/");
+      nextApi.controller_root = stripWrappingQuotes(patch.api.controller_root);
     if (patch.api.module_roots && typeof patch.api.module_roots === "object") {
       nextApi.module_roots = {
         ...(nextApi.module_roots || {}),
         ...Object.fromEntries(
           Object.entries(patch.api.module_roots).map(([k, v]) => [
-            String(k).replace(/\\/g, "/"),
-            String(v).replace(/\\/g, "/"),
+            stripWrappingQuotes(k),
+            stripWrappingQuotes(v),
           ])
         ),
       };
@@ -78,7 +108,17 @@ export function writeInventoryMeta(root, patch) {
   }
   const next = {
     api: nextApi,
-    db: { ...(existing.db || {}), ...(patch.db || {}) },
+    db: {
+      ...(existing.db || {}),
+      ...(patch.db
+        ? Object.fromEntries(
+            Object.entries(patch.db).map(([k, v]) => [
+              k,
+              v == null ? v : stripWrappingQuotes(v),
+            ])
+          )
+        : {}),
+    },
   };
 
   const lines = [];
@@ -89,17 +129,18 @@ export function writeInventoryMeta(root, patch) {
   if (hasApi) {
     lines.push("  api:");
     if (next.api.controller_root)
-      lines.push(`    controller_root: "${next.api.controller_root}"`);
+      lines.push(`    controller_root: ${formatYamlString(next.api.controller_root)}`);
     if (next.api.module_roots && Object.keys(next.api.module_roots).length) {
       lines.push("    module_roots:");
       for (const [k, v] of Object.entries(next.api.module_roots)) {
-        lines.push(`      "${k}": "${v}"`);
+        // 0.7.30 NEW-10: do not quote safe keys (avoids quote inflation with legacy yaml key parse)
+        lines.push(`      ${formatYamlKey(k)}: ${formatYamlString(v)}`);
       }
     }
   }
   if (next.db?.sql_root) {
     lines.push("  db:");
-    lines.push(`    sql_root: "${next.db.sql_root}"`);
+    lines.push(`    sql_root: ${formatYamlString(next.db.sql_root)}`);
   }
   if (lines.length <= 1) return;
 

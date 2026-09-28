@@ -11,7 +11,8 @@ const MIGRATION_DIR = "{{DB_MIGRATION_DIR}}";
 function escapeRe(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-const MIGRATION_RE = new RegExp("^" + escapeRe(MIGRATION_DIR) + "(V[^/]+\\.sql)$");
+/** 0.7.32 LT-7: any *.sql under migration dir (incl. bad_name.sql); V* still get header checks */
+const MIGRATION_ANY_RE = new RegExp("^" + escapeRe(MIGRATION_DIR) + "([^/]+\\.sql)$", "i");
 const MIGRATION_NAME_RE = new RegExp({{MIGRATION_NAME_RE}});
 const JOBS_YML_RE = new RegExp({{JOBS_YML_RE}});
 const JOBS_KEYWORD_RE =
@@ -76,7 +77,7 @@ function isDml(l) {
       .filter(Boolean)
       .join("\n");
 
-    const mig = rel.match(MIGRATION_RE);
+    const mig = rel.match(MIGRATION_ANY_RE);
     if (mig) {
       const fname = mig[1];
       const lines = [];
@@ -91,10 +92,13 @@ function isDml(l) {
         if (hasDdl && hasDml) {
           lines.push("migration 禁止同一文件混写 DDL 与 DML，请拆成连续版本号");
         }
-        const head = newText.split(/\r?\n/).slice(0, 10).join("\n");
-        const missing = HEADER_KEYS.filter((k) => !head.includes(k));
-        if (missing.length) {
-          lines.push(`migration 文件头注释缺少：${missing.join(" / ")}（模板见 db 契约 rule）`);
+        // Header keys only for names that look like migrations (V*); empty HEADER_KEYS = skip
+        if (/^V/i.test(fname) && Array.isArray(HEADER_KEYS) && HEADER_KEYS.length) {
+          const head = newText.split(/\r?\n/).slice(0, 10).join("\n");
+          const missing = HEADER_KEYS.filter((k) => !head.includes(k));
+          if (missing.length) {
+            lines.push(`migration 文件头注释缺少：${missing.join(" / ")}（模板见 db 契约 rule）`);
+          }
         }
       }
       if (lines.length) {

@@ -257,7 +257,37 @@ export function mergeApi(args) {
     throw new Error("--enrich-dto requires --source-root");
   }
 
-  const inv = loadInventory(args.inventory);
+  const invAll = loadInventory(args.inventory);
+  // 0.7.32 §7 #2: --module / inv.module → filter endpoints before missing calc
+  const moduleName = args.module || invAll.module || null;
+  let inv = invAll;
+  if (moduleName && Array.isArray(invAll.endpoints)) {
+    const modLc = String(moduleName).toLowerCase();
+    const filtered = invAll.endpoints.filter((e) => {
+      const hay = [
+        e.package,
+        e.controller,
+        e.evidence,
+        e.path,
+        e.module,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .replace(/\\/g, "/");
+      return (
+        hay.includes(modLc) ||
+        hay.split(/[./]/).some((p) => p === modLc || p.endsWith(modLc))
+      );
+    });
+    if (filtered.length) {
+      inv = { ...invAll, endpoints: filtered, module: moduleName };
+    } else {
+      console.error(
+        `WARN: --module ${moduleName} matched 0 endpoints; using full inventory (${invAll.endpoints.length})`
+      );
+    }
+  }
   const workDir = path.resolve(args.workDir);
   let files = walkMd(workDir);
   if (!files.length && args.autoFill) {
@@ -275,7 +305,6 @@ export function mergeApi(args) {
   const invEvidenceSet = new Set(
     inv.endpoints.map((e) => normalizeEvidence(e.evidence))
   );
-  const moduleName = args.module || inv.module || null;
 
   const byEvidence = new Map();
   const dups = [];

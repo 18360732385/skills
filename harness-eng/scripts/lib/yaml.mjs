@@ -99,7 +99,9 @@ export function parse(text) {
     for (const part of splitFlow(inner)) {
       const colon = part.indexOf(":");
       if (colon < 0) continue;
-      obj[part.slice(0, colon).trim()] = parseScalar(part.slice(colon + 1).trim());
+      obj[parseScalar(part.slice(0, colon).trim())] = parseScalar(
+        part.slice(colon + 1).trim()
+      );
     }
     return obj;
   }
@@ -115,7 +117,8 @@ export function parse(text) {
       advance();
       const m = p.trimmed.match(/^([^:#][^:]*):\s*(.*)$/);
       if (!m) continue;
-      const key = m[1].trim();
+      // 0.7.30 NEW-10: keys must parseScalar (quoted keys otherwise keep " in name)
+      const key = parseScalar(m[1].trim());
       let rest = m[2];
       if (rest.startsWith("#")) rest = "";
 
@@ -163,7 +166,7 @@ export function parse(text) {
       }
 
       const colon = rest.indexOf(":");
-      const k0 = rest.slice(0, colon).trim();
+      const k0 = parseScalar(rest.slice(0, colon).trim());
       let v0 = rest.slice(colon + 1).trim();
       if (v0.startsWith("#")) v0 = "";
 

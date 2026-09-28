@@ -32,6 +32,7 @@ import {
   compareSyncFreshness,
   formatFreshnessMessage,
   runFreshnessCheck,
+  warnManualReplaceGaps,
 } from "./lib/sync-freshness.mjs";
 import { migrateScorePolicyFile } from "./lib/score-policy-migrate.mjs";
 import { runRefresh } from "./lib/refresh.mjs";
@@ -135,16 +136,21 @@ function loadParams(paramsPath) {
 
 /**
  * 0.7.26 ID-5/ID-6: resume|upgrade → on_exists=skip（未显式设置时）；注入 LAST_MODE。
+ * 0.7.31 ID-5: resume|upgrade 若显式 on_exists=fail（复用 land params）→ 强制 skip。
  * @returns {{ params: object, paramsPath: string, tmp?: string }}
  */
 function applyModeDefaults(params, mode, paramsPath) {
   const next = { ...params, mode };
   let dirty = true; // always rewrite so render sees params.mode
-  if (
-    (mode === "resume" || mode === "upgrade") &&
-    (next.on_exists == null || next.on_exists === "")
-  ) {
-    next.on_exists = "skip";
+  if (mode === "resume" || mode === "upgrade") {
+    if (next.on_exists == null || next.on_exists === "") {
+      next.on_exists = "skip";
+    } else if (next.on_exists === "fail") {
+      console.error(
+        `harness: mode=${mode} 将 on_exists=fail 改为 skip（勿复用 land params 的 fail）`
+      );
+      next.on_exists = "skip";
+    }
   }
   // 0.7.28: upgrade 默认重渲行为修复类 hooks（可用 upgrade_fix_hooks:false 关闭）
   if (
@@ -153,13 +159,14 @@ function applyModeDefaults(params, mode, paramsPath) {
   ) {
     next.upgrade_fix_hooks = true;
   }
+  // 0.7.32 ID-6: resume|upgrade always pin LAST_MODE (override land leftovers)
   const ph = { ...(next.placeholders || {}) };
-  if (ph.LAST_MODE == null || ph.LAST_MODE === "") {
+  if (mode === "resume" || mode === "upgrade" || mode === "land") {
     ph.LAST_MODE = mode;
-    next.placeholders = ph;
-  } else if (!next.placeholders) {
-    next.placeholders = ph;
+  } else if (ph.LAST_MODE == null || ph.LAST_MODE === "") {
+    ph.LAST_MODE = mode;
   }
+  next.placeholders = ph;
   if (!dirty) return { params: next, paramsPath };
   const tmp = path.join(
     os.tmpdir(),
@@ -345,6 +352,7 @@ export function main(argv = process.argv) {
     if (st === 0) {
       maybeMigrateScorePolicy(args.root, mode, args.dryRun);
       if (!args.dryRun) tipGitHooks(args.root, mode);
+      if (mode === "upgrade" && !args.dryRun) warnManualReplaceGaps(args.root);
     }
     process.exit(st);
   }
@@ -385,7 +393,10 @@ export function main(argv = process.argv) {
   const synced = runSync(args.root);
   // sync 的 [agent-config] 行不得污染 stdout（Agent 可能 JSON.parse land 输出）
   const syncStatus = forward(synced, { stdoutToStderr: true });
-  if (syncStatus === 0) tipGitHooks(args.root, mode);
+  if (syncStatus === 0) {
+    tipGitHooks(args.root, mode);
+    if (mode === "upgrade") warnManualReplaceGaps(args.root);
+  }
   process.exit(syncStatus);
 }
 
@@ -393,7 +404,14 @@ if (isCliMain(import.meta.url)) {
   try {
     main();
   } catch (e) {
-    console.error(String(e && e.stack ? e.stack : e));
+    const msg = String(e && e.message ? e.message : e);
+    const mode =
+      (process.argv.includes("--mode") &&
+        process.argv[process.argv.indexOf("--mode") + 1]) ||
+      "land";
+    // 0.7.31 ID-5: structured JSON on stdout (Agent 可 parse)；stderr 短消息
+    console.log(JSON.stringify({ ok: false, error: msg, mode }, null, 2));
+    console.error(`harness: ${msg}`);
     process.exit(1);
   }
 }

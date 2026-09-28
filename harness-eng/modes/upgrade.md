@@ -57,6 +57,34 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.31 → 0.7.32 迁移要点
+
+1. **meta**：`skill_version` → `0.7.32`
+2. **AGENTS**：重渲根 AGENTS 后 docs/skills 列表随 domains；未启用 redis/jobs 不再出现对应 skill
+3. **迁移头**：默认不再检查「时间/撰写/目的/类型」；需要时设 `migration_header_keys` / `MIGRATION_HEADER_KEYS`
+4. **mysql-guard**：默认认 `mysql-local`；upgrade 会 backup 后 replace fix-hook（`upgrade_fix_hooks:false` 可关）
+5. **calibrate**：无 inventory 时勿再指望 `--write-ddl` 从文档反推；先跑 db inventory
+6. **Codex L3/L4**：未选 mysql MCP 时 hooks.json 不再挂悬空 mysql-guard
+7. **仍须手 replace（若旧仓）**：rule 13 / db.md「维护约定」/ 旧 score-policy — CLI/`--check-freshness` 会启发式提示
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.32`）后再 sync
+
+## 0.7.30 → 0.7.31 迁移要点
+
+1. **meta**：`skill_version` → `0.7.31`
+2. **评分**：缺任一 scored 域 inventory 会 `missing_inventory` / not ready；请先 `harness --mode refresh`
+3. **refresh `--no-write`**：确认只读（不落 inventory/meta/score）
+4. **calibrate**：compare 有 DDL drift 时 exit 2；`--write-ddl` 会改写「与 Flyway 一致」说明
+5. **L5+codex**：刷新 `sync.mjs`（tmpl id `0.7.31`）——悬空 hook bare 名检测生效
+6. **resume**：勿再传 land 的 `on_exists:fail`（会自动改 skip）
+
+## 0.7.29 → 0.7.30 迁移要点
+
+1. **meta**：`skill_version` → `0.7.30`
+2. **inventory meta**：若 `module_roots` 曾出现多层引号，跑一次 inventory/`--mode refresh` 会规范化；YAML 非法时先手清键名
+3. **评分**：`--gate-profile gold` 现与改 `score-policy` 的 gold 同逻辑；`score-latest.json` 的 `root` 为 `"."`（换机零 diff）
+4. **L5+codex**：刷新 soft-gate（`--codex` → stderr 提醒）与 `sync.mjs`（tmpl id `0.7.30`）后再 sync
+5. **AGENTS**：frontend 分册「常用命令」预填不再踩 api-client 表；若上轮已写坏可重渲或手修
+
 ## 0.7.28 → 0.7.29 迁移要点
 
 1. **meta**：`skill_version` → `0.7.29`

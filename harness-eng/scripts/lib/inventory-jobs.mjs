@@ -28,6 +28,7 @@ function parseArgs(argv) {
     out: null,
     quiet: false,
     help: false,
+    noWrite: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -35,6 +36,7 @@ function parseArgs(argv) {
     else if (a === "--shard-size") out.shardSize = Number(argv[++i]) || 20;
     else if (a === "--out") out.out = argv[++i];
     else if (a === "--quiet") out.quiet = true;
+    else if (a === "--no-write") out.noWrite = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -433,10 +435,14 @@ export function main(argv = process.argv) {
     warnings,
   };
 
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf8");
+  if (!args.noWrite) {
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf8");
+    progress.log(`wrote ${outPath} tasks=${tasks.length}`);
+  } else {
+    progress.log(`--no-write tasks=${tasks.length} (stdout only)`);
+  }
   console.log(JSON.stringify({ ...report, out: path.relative(root, outPath).replace(/\\/g, "/") }, null, 2));
-  progress.log(`wrote ${outPath} tasks=${tasks.length}`);
   exitFromReport(report, warnings);
 }
 

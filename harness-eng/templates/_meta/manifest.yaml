@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.29"
+version: "0.7.32"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -73,14 +73,14 @@ files:
     ladder: L0
     template: agents/AGENTS.root.solo.md.tmpl
     target: AGENTS.md
-    placeholders: [REPO_NAME, MODULE_DIRS]
+    placeholders: [REPO_NAME, MODULE_DIRS, DOCS_CONTRACT_TREE, DOCS_CONTRACT_PRIORITY, AGENTS_SKILLS_LIST]
     when:
       agents_variant: solo
   - id: agents-root
     ladder: L0
     template: agents/AGENTS.root.md.tmpl
     target: AGENTS.md
-    placeholders: [REPO_NAME, MODULE_DIRS]
+    placeholders: [REPO_NAME, MODULE_DIRS, DOCS_CONTRACT_TREE, DOCS_CONTRACT_PRIORITY, AGENTS_SKILLS_LIST]
     when:
       agents_variant: modules
   - id: agents-module
@@ -323,12 +323,13 @@ files:
     when_agent_config: false
   - id: hooks-codex-json
     ladder: L3
-    template: hooks/codex-hooks.json
+    template: hooks/codex-hooks.json.tmpl
     target: .codex/hooks.json
+    placeholders: [CODEX_MYSQL_HOOK_ENTRY]
     when_ai_tools: codex
     when_agent_config: false
     action_hint: merge-json-hooks
-    note: L5（agent_config）时由 sync.mjs 从 SSOT 生成，勿直渲
+    note: L5（agent_config）时由 sync.mjs 从 SSOT 生成，勿直渲；0.7.32 NEW-16 无 mysql MCP 时不写 matcher
   - id: hooks-codex-gate
     ladder: L3
     template: hooks/superpowers-commit-gate.js.tmpl

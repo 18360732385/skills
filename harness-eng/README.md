@@ -2,7 +2,7 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.7.29**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
+**当前版本：0.7.32**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
 **0.7.28**：e2e P1（upgrade hooks 自动 replace · inventory module_roots · covered_gt_code 阻断 · gold warnings null 语义 · doc-density · HS-4 docsGuard · 缺 inventory 不假绿）。**0.7.27**：e2e P0 热修（NEW-1 阻断崩溃 · L5 Codex 门禁真接线 · when_* 接通 · HS-3 斜杠 · SG-7 CJK · fill-score 绝对 root）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  

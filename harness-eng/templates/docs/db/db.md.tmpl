@@ -29,7 +29,7 @@
 
 ### 头注释（可选）
 
-- after-edit 默认检查头注释含：时间 / 撰写 / 目的 / 类型（可用 `MIGRATION_HEADER_KEYS` 覆盖或置空数组关闭）
+- after-edit **默认不检查**头注释（`MIGRATION_HEADER_KEYS=[]`）；若需检查可设为 `["时间","撰写","目的","类型"]` 等
 
 ### flyway vs 人工执行
 
