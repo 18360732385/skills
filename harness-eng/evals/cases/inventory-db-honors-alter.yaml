@@ -1,0 +1,51 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: inventory-db-honors-alter
+# 用例列表与报告中的可读标题。
+title: db inventory 须叠加 ALTER、勿只认 CREATE TABLE
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e FC-4 / PB-4 / R9：inventory-db 只解析 CREATE TABLE，忽略 ALTER，
+  V2 加的 tag 列对 harness 不可见，字段级漂移检测随之失效。
+  Agent 规划 db inventory / 表文档演进时须点出该陷阱，并说明表文档 DDL 应反映最终 schema。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/src/main/resources/db/migration/V1__init_schema.sql": |
+      CREATE TABLE task (
+        id BIGINT PRIMARY KEY,
+        title VARCHAR(128) NOT NULL
+      );
+    "backend/src/main/resources/db/migration/V2__add_task_tag.sql": |
+      ALTER TABLE task ADD COLUMN tag VARCHAR(32);
+
+input:
+  prompt: |
+    点名 harness-eng：Flyway 已有 V1 CREATE TABLE task 与 V2 ALTER 增加 tag。
+    请说明默认 fill-inventory / inventory-db 能否看到 tag 列；若看不到，对评分与表文档
+    （建表语句块）意味着什么，维护上应怎么做。不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "tag"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["ALTER", "alter", "CREATE TABLE"]
+    - output_contains:
+        any: ["忽略", "看不到", "不可见", "只解析", "陷阱", "缺陷", "盲区"]
+    - output_contains:
+        any: ["tag", "最终", "完整", "DDL", "叠加"]
+  failure:
+    - output_contains:
+        any: ["默认 inventory 一定能看到 tag", "只需看 V1 即可", "ALTER 会被自动叠加"]

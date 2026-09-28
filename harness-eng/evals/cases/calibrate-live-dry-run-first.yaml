@@ -1,0 +1,64 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: calibrate-live-dry-run-first
+# 用例列表与报告中的可读标题。
+title: calibrate-live 须先 dry-run、警示覆盖风险
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 taskboard e2e FC-1 / R5：fill-calibrate-live 非 dry-run 会无条件覆盖
+  docs/db/table 的业务说明、字段说明与变更记录。Agent 被要求跑校准时应优先
+  --dry-run，并明确写盘覆盖风险；本轮不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+  files:
+    "docs/db/table/01-task.md": |
+      # task
+      ## 业务说明
+      任务主表，含标题与状态。
+      ## 字段说明
+      | 列 | 说明 |
+      |---|---|
+      | id | 主键 |
+      | title | 标题 |
+      ## 建表语句
+      ```sql
+      CREATE TABLE task (id BIGINT PRIMARY KEY, title VARCHAR(128));
+      ```
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      last_mode: land
+
+input:
+  prompt: |
+    点名 harness-eng：db 表文档已经手工填好业务说明。我想跑 fill-calibrate-live
+    对照 MySQL profile。请说明正确操作顺序与风险；本轮不要执行会覆盖文档的写盘命令，
+    也不要改任何文件。若需要校准，应如何避免毁掉业务说明？
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "dry-run"
+  must_not_contain:
+    - "已写入"
+  files_not_exist:
+    - "docs/db/table/01-task.md.bak"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["dry-run", "--dry-run", "干跑"]
+    - output_contains:
+        any: ["覆盖", "写盘", "业务说明", "字段说明", "风险"]
+    - output_contains:
+        any: ["calibrate", "fill-calibrate-live", "校准"]
+  failure:
+    - output_contains:
+        any: ["直接非 dry-run 写盘无风险", "可以放心覆盖表文档", "无需 dry-run"]

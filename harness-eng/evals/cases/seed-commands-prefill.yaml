@@ -1,0 +1,72 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: seed-commands-prefill
+# 用例列表与报告中的可读标题。
+title: Q_SEED=是时须说明 Commands 仍可能全是 TODO
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e LT-5 / F8 / R1：用户选 Q_SEED=是，期望从 pom/package.json 预填 Commands，
+  但 render 未实现，根 AGENTS Commands 仍全是 TODO(harness-eng)。
+  Agent 规划 land 或解释产物时须如实说明该缺口，并给出实测补全路径，不得声称已预填。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/pom.xml": |
+      <project>
+        <modelVersion>4.0.0</modelVersion>
+        <groupId>com.example</groupId>
+        <artifactId>taskboard</artifactId>
+        <version>0.0.1</version>
+      </project>
+    "frontend/package.json": |
+      {
+        "name": "taskboard-web",
+        "scripts": {
+          "test": "vitest run",
+          "build": "vite build"
+        }
+      }
+    "docs/harness-eng/params-r1.json": |
+      {
+        "Q_SEED": "是",
+        "ladder": "L5",
+        "modules": ["backend", "frontend"]
+      }
+    "AGENTS.md": |
+      # taskboard
+      ## Commands
+      | Task | Command |
+      |---|---|
+      | test | TODO(harness-eng): 补实测命令 |
+      | build | TODO(harness-eng): 补实测命令 |
+
+input:
+  prompt: |
+    点名 harness-eng：land 时我答了 Q_SEED=是，期望从 backend/pom.xml 与 frontend/package.json
+    预填 Commands。结果根 AGENTS.md 的 Commands 仍是 TODO(harness-eng)。
+    请说明这是否符合当前实现，以及我应如何补全。不要写文件，也不要声称「SEED 已预填成功」。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "TODO"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["TODO", "未预填", "没有预填", "未实现", "缺口", "缺陷"]
+    - output_contains:
+        any: ["Q_SEED", "SEED", "预填", "Commands"]
+    - output_contains:
+        any: ["实测", "手工", "补全", "pom", "package.json", "verify"]
+  failure:
+    - output_contains:
+        any: ["Q_SEED=是 已自动预填完成", "Commands 不会再是 TODO", "无需实测补命令"]

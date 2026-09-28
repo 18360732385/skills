@@ -1,0 +1,87 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: fresh-clone-rescan-coverage
+# 用例列表与报告中的可读标题。
+title: 新 clone 无 .fill-work 时不得把失真覆盖当成就绪证据
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e ID-3 / ID-4 / R7：.fill-work 被 gitignore，新 clone 上 fill-score 走内存重扫，
+  业务分包时 api code 数错，db/func 覆盖消失；ready/overall 碰巧一致不能当证据。
+  Agent 须要求用正确 --controller-root/--sql-root 重建 inventory，再比 score。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/src/main/java/com/example/taskboard/task/TaskController.java": |
+      package com.example.taskboard.task;
+      import org.springframework.web.bind.annotation.*;
+      @RestController
+      public class TaskController {
+        @GetMapping("/api/tasks") public String list() { return "[]"; }
+      }
+    "backend/src/main/java/com/example/taskboard/project/ProjectController.java": |
+      package com.example.taskboard.project;
+      import org.springframework.web.bind.annotation.*;
+      @RestController
+      public class ProjectController {
+        @GetMapping("/api/projects") public String list() { return "[]"; }
+      }
+    "backend/src/main/resources/db/migration/V1__init_schema.sql": |
+      CREATE TABLE task (id BIGINT PRIMARY KEY);
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      last_mode: land
+    "docs/harness-eng/score-latest.json": |
+      {
+        "ai_coding_ready": true,
+        "overall": 97,
+        "coverage_source": "committed",
+        "coverage_by_domain": {
+          "api": {"covered": 14, "code": 14},
+          "db": {"covered": 3, "code": 3},
+          "func": {"covered": 1, "code": 1}
+        }
+      }
+    "docs/harness-eng/work/r7-freshclone-rescan-score.json": |
+      {
+        "ai_coding_ready": true,
+        "overall": 97,
+        "coverage_source": "rescanned",
+        "coverage_by_domain": {
+          "api": {"covered": 14, "code": 3},
+          "db": {"covered": 0, "code": 0},
+          "func": {"covered": 0, "code": 0}
+        },
+        "note": "新 clone 无 .fill-work 时的内存重扫失真样例"
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：新 clone 后直接 fill-score，coverage_source=rescanned，
+    api 变成 covered=14/code=3，db/func 覆盖消失；但 ai_coding_ready 和 overall 仍与本机一致。
+    请判断这是否证明「新 clone 结果一致 / 可 AI coding」，下一步应怎么重建可信覆盖。
+    不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["rescanned", "重扫", ".fill-work", "gitignore", "失真", "不可信"]
+    - output_contains:
+        any: ["controller-root", "sql-root", "inventory", "重建"]
+    - output_contains:
+        any: ["不能", "不可", "不应", "不足以", "碰巧", "巧合", "勿仅凭"]
+  failure:
+    - output_contains:
+        any: ["ready 一致即可认定新 clone 可信", "code=3 也没问题", "无需重建 inventory"]

@@ -266,10 +266,18 @@ export function truthsSubdir(domain, registry = loadDomainRegistry()) {
   return registry[domain]?.truths_dir || "modules";
 }
 
-/** Parse domains: list from harness-meta.yaml */
+/** Parse domains: list from harness-meta.yaml (raw string or parsed object). */
 export function parseMetaDomains(raw) {
   if (!raw) return [];
-  const flow = raw.match(/domains:\s*\[([^\]]*)\]/);
+  // 0.7.24: accept already-parsed YAML object (refresh used to pass object → TypeError)
+  if (typeof raw === "object" && !Array.isArray(raw)) {
+    if (Array.isArray(raw.domains)) {
+      return raw.domains.map((d) => String(d).trim()).filter(Boolean);
+    }
+    return [];
+  }
+  const text = String(raw);
+  const flow = text.match(/domains:\s*\[([^\]]*)\]/);
   if (flow) {
     return flow[1]
       .split(",")
@@ -278,7 +286,7 @@ export function parseMetaDomains(raw) {
   }
   const block = [];
   let inDom = false;
-  for (const line of String(raw).split(/\r?\n/)) {
+  for (const line of text.split(/\r?\n/)) {
     if (/^domains:\s*$/.test(line)) {
       inDom = true;
       continue;

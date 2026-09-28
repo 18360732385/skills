@@ -1,0 +1,47 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: land-gate-profile-in-plan
+# 用例列表与报告中的可读标题。
+title: land 路径 WritePlan 仍须包含 gate_profile
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e QF-4：Q_GATE_PROFILE 在 batch-fill，land 路径 transitions 问不到，
+  若不在 params/WritePlan 显式写入，门禁档位会静默缺省。验证 Agent 在 land
+  规划中主动提出或写入 gate_profile（如 strict），且未确认不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/new-code
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng：请规划对本仓 land 到 L3，domains 含 api/func。
+    门禁我想用 strict。本轮只出示提问批次或 WritePlan/参数要点，
+    必须明确 gate_profile 如何写入；我还没确认，请不要写任何文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  files_not_exist:
+    - "AGENTS.md"
+    - "docs/harness-eng/harness-meta.yaml"
+  must_not_contain:
+    - "写盘完成"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["gate_profile", "Q_GATE_PROFILE"]
+    - output_contains:
+        any: ["strict", "gold"]
+    - output_contains:
+        any: ["WritePlan", "确认", "params", "参数"]
+    - files_not_exist:
+        - "AGENTS.md"
+        - "docs/harness-eng/harness-meta.yaml"
+  failure:
+    - output_contains:
+        any: ["land 不用管 gate_profile", "门禁档位可省略", "写盘完成"]

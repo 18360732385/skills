@@ -1,6 +1,6 @@
 # harness-eng install metadata — do not put secrets here
 skill: harness-eng
-skill_version: "0.7.23"
+skill_version: "0.7.26"
 # agent_config: true = L5 配置 SSOT 管线已启用（docs/agent-config/ + scripts/agent-config/sync.mjs）；生成物勿手改
 agent_config: {{AGENT_CONFIG}}
 # rulehook: true = 可选 L4 NL deny（.rulehook/rulehook.toml）；默认 false；须本机 CLI
@@ -21,3 +21,7 @@ ready_quality: 80
 ready_coverage: 0.8
 # 填充实据 / 烟测主环境（矩阵可多环境；主环境默认 test）
 fill_mcp_profile: test
+# inventory 扫描根（fill-inventory 成功后回写；refresh / fill-score 重扫读取）
+# inventory:
+#   api: { controller_root: "backend/src/main/java/com/example" }
+#   db: { sql_root: "backend/src/main/resources/db/migration" }

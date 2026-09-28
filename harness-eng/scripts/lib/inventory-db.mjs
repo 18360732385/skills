@@ -13,18 +13,67 @@ import path from "path";
 import { isCliMain } from "./cli-main.mjs";
 import { defaultInventoryPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
+import { writeInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
 
 function parseArgs(argv) {
-  const out = { root: null, sqlRoot: "file", out: null, help: false };
+  const out = { root: null, sqlRoot: "file", out: null, help: false, sqlRootSet: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--root") out.root = argv[++i];
-    else if (a === "--sql-root") out.sqlRoot = argv[++i];
-    else if (a === "--out") out.out = argv[++i];
+    else if (a === "--sql-root") {
+      out.sqlRoot = argv[++i];
+      out.sqlRootSet = true;
+    } else if (a === "--out") out.out = argv[++i];
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
   return out;
+}
+
+/** 0.7.24: when default sql-root missing, probe common Flyway/Liquibase layouts. */
+export function discoverSqlRoot(root) {
+  const candidates = [
+    "db/migration",
+    "src/main/resources/db/migration",
+    "backend/src/main/resources/db/migration",
+    "src/main/resources/db/migrations",
+    "resources/db/migration",
+  ];
+  for (const rel of candidates) {
+    const abs = path.join(root, rel);
+    if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) return rel.replace(/\\/g, "/");
+  }
+  // shallow walk for **/db/migration
+  const found = [];
+  function walk(d, depth) {
+    if (depth > 5 || found.length || !fs.existsSync(d)) return;
+    let names;
+    try {
+      names = fs.readdirSync(d);
+    } catch {
+      return;
+    }
+    for (const name of names) {
+      if (name === "node_modules" || name === ".git" || name === "target" || name === "dist")
+        continue;
+      const p = path.join(d, name);
+      let st;
+      try {
+        st = fs.statSync(p);
+      } catch {
+        continue;
+      }
+      if (!st.isDirectory()) continue;
+      const norm = p.replace(/\\/g, "/");
+      if (/\/db\/migration$/i.test(norm) || /\/db\/migrations$/i.test(norm)) {
+        found.push(path.relative(root, p).replace(/\\/g, "/"));
+        return;
+      }
+      walk(p, depth + 1);
+    }
+  }
+  walk(root, 0);
+  return found[0] || null;
 }
 
 function printHelp() {
@@ -55,6 +104,35 @@ function walkFiles(dir, pred, acc = []) {
   return acc;
 }
 
+const SQL_CONSTRAINT_HEAD =
+  /^(PRIMARY|UNIQUE|KEY|CONSTRAINT|INDEX|FOREIGN|CHECK|FULLTEXT|SPATIAL)\b/i;
+
+/** Parse CREATE body lines → all columns (not only COMMENT lines). 0.7.25 FC-4 */
+function parseCreateBodyColumns(body) {
+  const columnComments = {};
+  const columns = [];
+  for (const line of body.split(/\r?\n/)) {
+    const trimmed = line.trim().replace(/,\s*$/, "");
+    if (!trimmed || SQL_CONSTRAINT_HEAD.test(trimmed)) continue;
+    const colMatch = trimmed.match(/^[`"']?(\w+)[`"']?\s+/);
+    if (!colMatch) continue;
+    const name = colMatch[1];
+    if (SQL_CONSTRAINT_HEAD.test(name)) continue;
+    const cm =
+      trimmed.match(/COMMENT\s+'([^']*)'/i) || trimmed.match(/COMMENT\s+"([^"]*)"/i);
+    const comment = cm ? cm[1] : "";
+    columnComments[name] = comment;
+    columns.push({
+      name,
+      typ: "—",
+      nn: "—",
+      def: "—",
+      comment: comment || "—",
+    });
+  }
+  return { columnComments, columns };
+}
+
 function extractTables(sqlText, relFile) {
   const tables = [];
   const re = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)[`"]?/gi;
@@ -63,8 +141,8 @@ function extractTables(sqlText, relFile) {
     const name = m[1];
     const start = m.index;
     const preview = sqlText.slice(start, start + 200).replace(/\s+/g, " ").trim();
-    // Extract inline COMMENT per column from nearby CREATE body
-    const columnComments = {};
+    let columnComments = {};
+    let columns = [];
     let i = start + m[0].length;
     let depth = 0;
     let bodyStart = -1;
@@ -78,15 +156,10 @@ function extractTables(sqlText, relFile) {
       }
     }
     if (bodyStart > 0) {
-      const body = sqlText.slice(bodyStart, i);
-      for (const line of body.split(/\r?\n/)) {
-        const cm =
-          line.match(/[`"]?(\w+)[`"]?\s+[\w()]+[\s\S]*?COMMENT\s+'([^']*)'/i) ||
-          line.match(/[`"]?(\w+)[`"]?\s+[\w()]+[\s\S]*?COMMENT\s+"([^"]*)"/i);
-        if (cm) columnComments[cm[1]] = cm[2];
-      }
+      const parsed = parseCreateBodyColumns(sqlText.slice(bodyStart, i));
+      columnComments = parsed.columnComments;
+      columns = parsed.columns;
     }
-    // COMMENT ON COLUMN table.col IS '...'
     const commentOn = new RegExp(
       `COMMENT\\s+ON\\s+COLUMN\\s+[\`"']?${name}[\`"']?\\.[\`"']?(\\w+)[\`"']?\\s+IS\\s+'([^']*)'`,
       "gi"
@@ -94,15 +167,93 @@ function extractTables(sqlText, relFile) {
     let cm;
     while ((cm = commentOn.exec(sqlText)) !== null) {
       columnComments[cm[1]] = cm[2];
+      const col = columns.find((c) => c.name === cm[1]);
+      if (col) col.comment = cm[2];
+      else
+        columns.push({
+          name: cm[1],
+          typ: "—",
+          nn: "—",
+          def: "—",
+          comment: cm[2],
+        });
     }
     tables.push({
       name,
       evidence: `${relFile}#CREATE:${name}`,
       preview,
       columnComments,
+      columns,
     });
   }
   return tables;
+}
+
+/**
+ * 0.7.25 FC-4: ALTER TABLE … ADD [COLUMN] … (and DROP COLUMN).
+ * @returns {{ table: string, add: string[], drop: string[], evidence: string }[]}
+ */
+export function extractAlterOps(sqlText, relFile) {
+  const ops = [];
+  const stmtRe = /ALTER\s+TABLE\s+[`"]?(\w+)[`"]?\s+([\s\S]*?)(?:;|$)/gi;
+  let m;
+  while ((m = stmtRe.exec(sqlText)) !== null) {
+    const table = m[1];
+    const body = m[2] || "";
+    const add = [];
+    const drop = [];
+    const addRe = /ADD\s+(?:COLUMN\s+)?[`"]?(\w+)[`"]?/gi;
+    let a;
+    while ((a = addRe.exec(body)) !== null) {
+      if (!SQL_CONSTRAINT_HEAD.test(a[1])) add.push(a[1]);
+    }
+    const dropRe = /DROP\s+(?:COLUMN\s+)?[`"]?(\w+)[`"]?/gi;
+    let d;
+    while ((d = dropRe.exec(body)) !== null) {
+      if (!/PRIMARY|FOREIGN|INDEX|KEY|CONSTRAINT/i.test(d[1])) drop.push(d[1]);
+    }
+    if (add.length || drop.length) {
+      ops.push({
+        table,
+        add,
+        drop,
+        evidence: `${relFile}#ALTER:${table}`,
+      });
+    }
+  }
+  return ops;
+}
+
+function mergeAlterIntoTable(table, op) {
+  table.columnComments = { ...(table.columnComments || {}) };
+  table.columns = Array.isArray(table.columns) ? [...table.columns] : [];
+  for (const col of op.add || []) {
+    if (!(col in table.columnComments)) table.columnComments[col] = "";
+    if (!table.columns.some((c) => c.name.toLowerCase() === col.toLowerCase())) {
+      table.columns.push({
+        name: col,
+        typ: "—",
+        nn: "—",
+        def: "—",
+        comment: "—",
+      });
+    }
+  }
+  for (const col of op.drop || []) {
+    delete table.columnComments[col];
+    const k = Object.keys(table.columnComments).find(
+      (c) => c.toLowerCase() === col.toLowerCase()
+    );
+    if (k) delete table.columnComments[k];
+    table.columns = table.columns.filter(
+      (c) => c.name.toLowerCase() !== col.toLowerCase()
+    );
+  }
+  if (op.evidence) {
+    table.evidence = table.evidence
+      ? `${table.evidence};${op.evidence}`
+      : op.evidence;
+  }
 }
 
 function camelToSnake(s) {
@@ -201,26 +352,58 @@ export function main(argv = process.argv) {
     throw new Error("Required: --root");
   }
   const root = path.resolve(args.root);
-  const sqlDir = path.resolve(root, args.sqlRoot);
+  let sqlRootRel = args.sqlRoot;
+  const sqlDirDefault = path.resolve(root, sqlRootRel);
+  if ((!args.sqlRootSet || sqlRootRel === "file") && !fs.existsSync(sqlDirDefault)) {
+    const discovered = discoverSqlRoot(root);
+    if (discovered) {
+      sqlRootRel = discovered;
+    }
+  }
+  const sqlDir = path.resolve(root, sqlRootRel);
   const files = walkFiles(sqlDir, (n) => /\.sql$/i.test(n));
   const tables = [];
   const seen = new Set();
   const warnings = [];
 
   if (!fs.existsSync(sqlDir)) {
-    warnings.push(`sql-root missing: ${args.sqlRoot}`);
+    warnings.push(`sql-root missing: ${sqlRootRel}`);
+  } else if (sqlRootRel !== args.sqlRoot) {
+    warnings.push(`sql-root auto-discovered: ${sqlRootRel}`);
   }
 
+  // Sort so V1 before V2; CREATE then ALTER merge (0.7.25 FC-4)
+  files.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const byKey = new Map();
   for (const f of files) {
     const rel = path.relative(root, f).replace(/\\/g, "/");
     const text = fs.readFileSync(f, "utf8");
     for (const t of extractTables(text, rel)) {
       const key = t.name.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      tables.push(t);
+      if (!byKey.has(key)) {
+        byKey.set(key, t);
+        seen.add(key);
+      }
+    }
+    for (const op of extractAlterOps(text, rel)) {
+      const key = op.table.toLowerCase();
+      let t = byKey.get(key);
+      if (!t) {
+        t = {
+          name: op.table,
+          evidence: op.evidence,
+          preview: "",
+          columnComments: {},
+          columns: [],
+        };
+        byKey.set(key, t);
+        seen.add(key);
+        warnings.push(`table ${op.table}: ALTER before CREATE in sql-root`);
+      }
+      mergeAlterIntoTable(t, op);
     }
   }
+  tables.push(...byKey.values());
 
   const entityMap = collectEntityComments(root);
   const mapperHints = collectMapperHints(root);
@@ -272,8 +455,8 @@ export function main(argv = process.argv) {
   tables.sort((a, b) => a.name.localeCompare(b.name));
   const report = {
     ok: true,
-    root,
-    sqlRoot: args.sqlRoot,
+    root: ".",
+    sqlRoot: sqlRootRel,
     tables,
     warnings,
     stats: {
@@ -294,6 +477,15 @@ export function main(argv = process.argv) {
   console.error(
     `Wrote ${outPath} tables=${tables.length} enriched_comments≈${enriched}`
   );
+  if (tables.length && sqlRootRel && sqlRootRel !== "file") {
+    try {
+      writeInventoryMeta(root, {
+        db: { sql_root: toRootRelative(root, sqlRootRel) || sqlRootRel },
+      });
+    } catch {
+      /* meta optional */
+    }
+  }
   console.log(json);
   exitFromReport(report);
 }

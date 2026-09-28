@@ -92,9 +92,11 @@ Q_SEED: 是
 **推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.23'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{REPO_NAME:'x',REPO_DESC:'x',CODE_PREFIXES:'src/',DATE:'2026-09-28'},on_exists:'fail'}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
+
+冲突动作含 **`replace`**（覆盖已有目标）；`create` 冲突时报错也会提示 `merge/skip/backup-create/replace`。
 
 他处（SKILL / pipeline / fill-score / QUICKSTART）只指针到此，不复述长文或完整示例。
 
@@ -105,7 +107,8 @@ node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 - 显式：`--root` + `--params`（占位符 + `files[]`）
 - 展开：params 含 `ladder` / `domains` / `agents_variant` / `on_exists` 等，可 `--manifest` 或 `expandFromManifest: true`
 - `include_optional` 必须是可选文件 ID **数组**（如 `["rule-14"]`）；`Q_RULE14=true` → 该数组；缺省 `[]`
-- `module_agents_template: "spring"` → 分册用 Spring 变体（`Q_MODULE_AGENTS`；0.4.0+）
+- `module_agents_template: "auto"|"spring"|"frontend"` → 分册变体（`Q_MODULE_AGENTS`）；**按目录探测**优先于全局 spring（0.7.25+）
+- WritePlan 白话摘要须回显 `gate_profile`（`Q_GATE_PROFILE` / score-policy）
 - 动作语义：[conflict-policy.md](conflict-policy.md)；`.cursor/mcp.json`：非 fill-mcp **保留**已有文件
 - merge 的 Markdown/MDC 为 H2 章节级合并；WritePlan 文件表对 `action=merge` 的 md/mdc 须列「将追加章节」（取 `--dry-run` 日志 `mergePreview`，0.4.0+）
 - 脚本失败 → 可手工 Write，移交注明原因

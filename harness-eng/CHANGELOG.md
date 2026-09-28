@@ -1,8 +1,49 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.20 → 0.7.21 → 0.7.22 → 0.7.23`（当前 **0.7.23**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.20 → 0.7.21 → 0.7.22 → 0.7.23 → 0.7.24 → 0.7.25 → 0.7.26`（当前 **0.7.26**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.26 — 2026-09-28（e2e P2：幂等·路径 · fill-merge · L 级收口）
+
+### Fixed
+- **ID-5 / ID-6**：`resume`/`upgrade` 未显式设时默认 `on_exists=skip`；meta merge 保真嵌套 `inventory` + 注入 `last_mode`
+- **ID-7 / ID-8**：报告产物入 gitignore snippet；fill-report-html 不再把 `diff` 写回 score-latest；score/inventory `root` 写 `"."`
+- **FC-5 / FC-6 / FC-7 / FC-9**：fill-merge `--target-dir`/`--split-by table`、保序+`--footer`、`--update-index`；func 覆盖 `unit=services`
+- **FC-8**：fill 文档写明首填后改 SSOT、勿用 `.fill-work` 回退
+- **L 级**：DU-4 stdout 纯 JSON；LT-11 未解析占位非 0；HS-4/5/6；SG-7/9/10；LT-3/4/6/8/12/13；CD-3；QF-5/6；FC-10/11；HS-8；DU-5
+
+### Deferred
+- CD-1 detect CLI 全量信号、LT-9/10 大模板去领域化、DU-3 DTO 去重结构、SG-8 跨文档一致性引擎
+
+### Docs / pack
+- upgrade `0.7.25 → 0.7.26`；manifest / meta / sync tmpl / questions → `0.7.26`
+
+## 0.7.25 — 2026-09-28（e2e P1：漂移 / morph·gold / 分册·seed / 迁移 SSOT / 问答）
+
+### Fixed
+- **FC-4 / SG-1 / SG-2**：db inventory 叠加 ALTER；字段级 `doc_field_drift` 进 strict；空壳字段说明/`—` 不过闸
+- **SG-3 / SG-4 / SG-5 / SG-6**：业务说明深度捕获；`关联文档` 认 links；密度按表块解析；score-policy 不写死 morph_floor（gold 门槛生效）
+- **QF-7 / LT-2 / MS-1 / LT-5**：分册按目录探测（全局 spring 不盖 frontend）；Q_SEED 预填 Commands
+- **LT-7 / DU-1 / DU-2**：默认 Flyway 命名；`docs/db/db.md` 为约定 SSOT；rule/AGENTS/hook 指针化
+- **QF-1～4**：`remaining`/`truncated`；`S_*`/`domains_has_*`；`Q_CONTRACT` 挪到 ladder 之后；land 问 `Q_GATE_PROFILE`
+
+### Docs / pack
+- upgrade `0.7.24 → 0.7.25`；manifest / meta / sync tmpl / questions → `0.7.25`
+
+## 0.7.24 — 2026-09-28（e2e P0：refresh / L5 hooks / glob / calibrate）
+
+### Fixed
+- **ID-1**：`fill-score --json` 在带 `--output` 时仍向 stdout 打 JSON；`refresh` 可回读 score 文件双保险
+- **ID-2**：`refresh.loadDomains` 传 meta 原始 YAML；`parseMetaDomains` 接受已 parse 的对象
+- **FC-2 / FC-3 / ID-3/4**：api inventory 取 Controller LCA；db 自动发现 migration 根；`harness-meta.inventory` 持久化扫描根供 refresh / 重扫
+- **LT-1**：L5+codex hooks 投 `docs/agent-config/hooks/`（manifest `when_agent_config: false`）；`harness` 拒直渲 `.codex/hooks/`
+- **HS-7**：`sync --check` 校验 hooks.json 引用的脚本存在
+- **HS-1/2/3**：`globListToCodePreds` 分步占位；文件级 glob 精确匹配；`DB_MIGRATION_DIR` 补尾斜杠
+- **FC-1**：`fill-calibrate-live` 默认只对比 DDL；显式 `--write-ddl` 仅替换建表语句代码块
+
+### Docs / pack
+- upgrade `0.7.23 → 0.7.24`；manifest / meta / sync tmpl / questions → `0.7.24`
 
 ## 0.7.23 — 2026-09-28（P3/P4：soft-gate 去品牌 + eng_snapshot 单写）
 

@@ -24,8 +24,8 @@ Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘�
 
 | 批次 | 何时 | 要点 |
 |---|---|---|
-| `batch-0-global` | 总是 | `Q_TARGET_ROOT` / `Q_MODE` / `Q_LADDER` / `Q_CONTRACT` |
-| `batch-1-new` (+b) | NEW_EMPTY / NEW_CODE_NO_HARNESS | 名/描述/分册/栈/globs → rule14/seed/glob/AI 工具 |
+| `batch-0-global` | 总是 | `Q_TARGET_ROOT` / `Q_MODE` / `Q_LADDER` |
+| `batch-1-new` (+b) | NEW_EMPTY / NEW_CODE_NO_HARNESS | `Q_CONTRACT`（ladder 之后）/ 名/描述/分册/栈/globs → rule14/seed/`Q_GATE_PROFILE`/AI 工具 |
 | `batch-1-partial` | PARTIAL / resume | 缺口表、AGENTS/rules/docs merge |
 | `batch-1-mature` | MATURE | 【推荐】先 audit |
 | `batch-1-foreign` | FOREIGN | 共存策略 → [foreign-playbook.md](foreign-playbook.md) |
@@ -38,7 +38,7 @@ Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘�
 `Q_FILL_ENGINE`：`agents`【大仓推荐】/ `hybrid`（可选薄草稿）/ `auto`（legacy）（见 [fill-truths-agents.md](../fill/fill-truths-agents.md) · [fill-plan.md](../fill/fill-plan.md)）。  
 大仓 / pipeline 默认 `Q_LADDER=L4`（见 [recommended-profile.md](recommended-profile.md)）。  
 `Q_MODULES` → manifest：`solo`→`agents-root-solo`；`few`/`all`→`agents-root`+`agents-module`。  
-`Q_MODULE_AGENTS`：`default` / `spring` / `frontend` → `params.module_agents_template`。  
+`Q_MODULE_AGENTS`：`auto`【前后端 monorepo 推荐】/ `default` / `spring` / `frontend` → `params.module_agents_template`；render **按目录探测**（pom→spring、package.json→frontend），全局 spring 不会盖住 frontend 分册。`questions-next` 截断时带 `remaining`/`truncated`。  
 `Q_FRONTEND_RULE` / `S_FRONTEND`+域含 `api` → 【推荐】`placeholders.GLOB_API` 追加前端契约包 globs（见 [recommended-profile.md](recommended-profile.md) / [detect.md](detect.md)）；与 rule 17、api `hook_code` regex 同剖面。  
 `Q_RULE14=true` → params `include_optional` 含 `"rule-14"`（**数组**，勿写布尔进 render params）。  
 `Q_APIFOX=true` → `include_optional` 追加 `openapi-md-to-openapi` / `openapi-sync` / `openapi-import` / `openapi-readme` / `openapi-env-example` / `openapi-generated-readme`，且 `openapi_bridge: true`（soft-gate 注入 `OPENAPI_BRIDGE_TIP`）。  

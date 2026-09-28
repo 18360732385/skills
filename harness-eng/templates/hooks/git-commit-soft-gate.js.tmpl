@@ -300,7 +300,8 @@ function collectPitfallsReminders(root, staged) {
  * - 暂存含 docs/agent-config/ 但未含任何生成物 → 提醒跑 sync.mjs 并一并暂存产物；
  * - 暂存含生成物但未含 docs/agent-config/ → 提醒生成物勿手改（跑过 sync 属正常）。
  */
-const GENERATED_PATH_RE = /^(\.cursor|\.qoder|\.claude|\.trae|\.codebuddy)\//;
+// 0.7.26 HS-5: include Codex / agents generated hosts
+const GENERATED_PATH_RE = /^(\.cursor|\.qoder|\.claude|\.trae|\.codebuddy|\.codex|\.agents)\//;
 const GENERATED_FILES = new Set(["CLAUDE.md", ".mcp.json"]);
 /** 工具目录中非生成器管理的内容（harness 元数据 / 本地覆盖） */
 const GENERATED_EXCLUDE = new Set([

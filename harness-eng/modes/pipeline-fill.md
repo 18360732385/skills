@@ -75,6 +75,8 @@ node scripts/fill-inventory.mjs --domain func --root <T> --all-modules
 node scripts/fill-plan.mjs --root <T> --init --domains api,func,db,redis,jobs
 # 主 Agent 按 fill-plan / fill-truths-agents / fill-workers 开多会话精填并 merge
 node scripts/fill-calibrate-live.mjs --root <T> --profile test
+# 默认仅对比 DDL；写盘须显式 --write-ddl（只替换建表语句代码块）
+# node scripts/fill-calibrate-live.mjs --root <T> --profile test --write-ddl
 node scripts/fill-score.mjs --root <T> --ready-quality 80 --ready-coverage 0.8 --summary-only
 node scripts/fill-report-html.mjs --root <T> --score score.json --mode pipeline
 node scripts/fill-plan.mjs --root <T> --status

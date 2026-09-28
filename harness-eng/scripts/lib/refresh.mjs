@@ -8,8 +8,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { findHarnessMetaFile } from "./harness-meta.mjs";
-import { parse as parseYaml } from "./yaml.mjs";
 import { parseMetaDomains, defaultContractDomains } from "./domains.mjs";
+import { readInventoryMeta } from "./inventory-meta.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
@@ -32,8 +32,9 @@ function loadDomains(root) {
   const found = findHarnessMetaFile(root);
   if (!found) return defaultContractDomains().filter((d) => d === "api" || d === "func");
   try {
-    const meta = parseYaml(fs.readFileSync(found.abs, "utf8")) || {};
-    const doms = parseMetaDomains(meta);
+    // 0.7.24: pass raw YAML string (parseMetaDomains also accepts object)
+    const raw = fs.readFileSync(found.abs, "utf8");
+    const doms = parseMetaDomains(raw);
     if (Array.isArray(doms) && doms.length) return doms;
   } catch {
     /* fall through */
@@ -50,6 +51,18 @@ function parseFillScoreJson(stdout) {
   } catch {
     return null;
   }
+}
+
+function inventoryArgv(domain, absRoot) {
+  const argv = ["--domain", domain, "--root", absRoot];
+  const inv = readInventoryMeta(absRoot);
+  if (domain === "api" && inv.api?.controller_root) {
+    argv.push("--controller-root", inv.api.controller_root);
+  }
+  if (domain === "db" && inv.db?.sql_root) {
+    argv.push("--sql-root", inv.db.sql_root);
+  }
+  return argv;
 }
 
 /**
@@ -73,11 +86,7 @@ export function runRefresh(root, opts = {}) {
       steps.push({ step: "inventory", domain: d, skipped: "dry-run" });
       continue;
     }
-    const r = runNode(
-      "fill-inventory.mjs",
-      ["--domain", d, "--root", absRoot],
-      absRoot
-    );
+    const r = runNode("fill-inventory.mjs", inventoryArgv(d, absRoot), absRoot);
     steps.push({
       step: "inventory",
       domain: d,
@@ -110,6 +119,14 @@ export function runRefresh(root, opts = {}) {
     }
     const sr = runNode("fill-score.mjs", scoreArgv, absRoot);
     scoreReport = parseFillScoreJson(sr.stdout);
+    // 0.7.24 belt: if stdout empty but --output wrote the file, read it
+    if (!scoreReport && write && fs.existsSync(scoreOutAbs)) {
+      try {
+        scoreReport = JSON.parse(fs.readFileSync(scoreOutAbs, "utf8"));
+      } catch {
+        /* keep null */
+      }
+    }
     steps.push({
       step: "fill-score",
       status: sr.status,

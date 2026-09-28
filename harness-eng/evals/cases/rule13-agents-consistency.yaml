@@ -1,0 +1,58 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: rule13-agents-consistency
+# 用例列表与报告中的可读标题。
+title: rule 13 与 AGENTS 迁移口径冲突时须统一、勿各说各话
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e DU-1 / PB-7 / R11：path rule 13 要求完整 CREATE TABLE + 源仓命名，
+  AGENTS 分册写 Flyway 自动迁移与另一套命名时，Cursor 与 Codex 会话会得到不同指引。
+  Agent 被问到维护规则时应指出冲突并给出统一口径（单正文 + 指针），本轮不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/AGENTS.md": |
+      # backend
+      ## 迁移
+      使用 Flyway，文件名 V{n}__snake_case.sql，由应用自动迁移。
+      表文档：按版本在变更记录追加说明即可。
+    ".cursor/rules/13-db-doc-sync.mdc": |
+      ---
+      description: db doc sync
+      globs: ["**/db/migration/**"]
+      ---
+      # rule 13
+      - 建表语句 = 变更后完整 CREATE TABLE
+      - `_change.sql` 追加 SQL 原文
+      - 命名必须 `V[0-9]{4}__(DDL|DML)__…`
+      - 迁移须按序人工执行到 mysql
+
+input:
+  prompt: |
+    点名 harness-eng：backend/AGENTS.md 说 Flyway 自动迁移 + V{n}__snake，
+    但 .cursor/rules/13-db-doc-sync.mdc 要求 V####__(DDL|DML)__ 且人工执行到 mysql、
+    建表语句必须是完整 CREATE TABLE。cold agent 该听谁的？请给出统一维护口径建议。
+    不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["冲突", "不一致", "矛盾", "口径"]
+    - output_contains:
+        any: ["统一", "SSOT", "单一", "指针", "以仓内", "本仓"]
+    - output_contains:
+        any: ["Flyway", "CREATE TABLE", "迁移", "AGENTS", "rule"]
+  failure:
+    - output_contains:
+        any: ["两套都对随便选", "可以忽略 rule 13", "AGENTS 与 rule 可以长期不一致"]

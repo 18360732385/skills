@@ -1,0 +1,56 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: questions-batch-remaining
+# 用例列表与报告中的可读标题。
+title: 问答批次截断后须续问、勿把未吐出题标为已答
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e QF-1 / R1：questions-next 每批 max=5 且不给 remaining，被截掉的
+  Q_GLOBS / Q_AI_TOOL / Q_AGENT_CONFIG 等会被跳过。Agent 在 land 问答中须
+  分页续吐或明确还有未答题，不得在首批答完后宣称问题已全部收齐。
+
+context:
+  repo_fixture: scripts/fixtures/new-code
+  git:
+    init: true
+
+input:
+  turns:
+    - role: user
+      content: |
+        点名 harness-eng：请对本仓走 land 施工仪式。先探测并给出第一批提问（≤5 题）。
+        我还没确认写盘。若必答题超过一批，请说明还有剩余题，不要假装首批就是全部。
+      post_condition:
+        must_contain_any: ["Q_", "提问", "推荐"]
+        on_fail: skip_remaining
+    - role: user
+      content: |
+        第一批我都选推荐值了。请继续吐出被截断/尚未出现的题（例如 AI 工具面、GLOBS、
+        agent_config、契约域相关），或明确列出 remaining / 未答题清单。
+        仍不要写盘；不要说「问题已全部答完」除非你真的覆盖了 land 必答题。
+
+constraints:
+  timeout_seconds: 900
+  max_turns: 24
+
+expect:
+  files_not_exist:
+    - "AGENTS.md"
+    - "docs/harness-eng/harness-meta.yaml"
+  must_not_contain:
+    - "写盘完成"
+
+judge:
+  type: rule_based
+  success:
+    - turn_response_contains:
+        turn: 1
+        contains_any: ["Q_", "提问", "推荐"]
+    - turn_response_contains:
+        turn: 2
+        contains_any: ["剩余", "remaining", "下一批", "续", "未答", "还要", "继续"]
+    - files_not_exist:
+        - "AGENTS.md"
+        - "docs/harness-eng/harness-meta.yaml"
+  failure:
+    - output_contains:
+        any: ["问题已全部答完可直接写盘", "首批即全部必答题", "无需再问"]

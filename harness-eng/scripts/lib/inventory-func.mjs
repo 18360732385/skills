@@ -209,7 +209,7 @@ export function main(argv = process.argv) {
   const single = modules.length === 1 ? modules[0] : null;
   const report = {
     ok: true,
-    root,
+    root: ".",
     module: single,
     generatedAt: new Date().toISOString().slice(0, 10),
     modules: moduleReports,

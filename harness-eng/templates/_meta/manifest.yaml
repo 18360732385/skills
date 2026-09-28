@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.23"
+version: "0.7.26"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -326,29 +326,35 @@ files:
     template: hooks/codex-hooks.json
     target: .codex/hooks.json
     when_ai_tools: codex
+    when_agent_config: false
     action_hint: merge-json-hooks
+    note: L5（agent_config）时由 sync.mjs 从 SSOT 生成，勿直渲
   - id: hooks-codex-gate
     ladder: L3
     template: hooks/superpowers-commit-gate.js.tmpl
     target: .codex/hooks/superpowers-commit-gate.js
     placeholders: [CODE_PREFIXES]
     when_ai_tools: codex
+    when_agent_config: false
   - id: hooks-codex-adapter
     ladder: L3
     template: hooks/codex-adapter.js
     target: .codex/hooks/codex-adapter.js
     when_ai_tools: codex
+    when_agent_config: false
   - id: hooks-codex-stop
     ladder: L3
     template: hooks/codex-stop-checklist.js.tmpl
     target: .codex/hooks/codex-stop-checklist.js
     placeholders: [DB_MIGRATION_DIR, MIGRATION_ENVS, CODE_PREFIXES]
     when_ai_tools: codex
+    when_agent_config: false
   - id: hooks-codex-cmd
     ladder: L3
     template: hooks/codex-hook.cmd
     target: .codex/hooks/codex-hook.cmd
     when_ai_tools: codex
+    when_agent_config: false
     note: Windows commandWindows launcher（git root → adapter / --direct）
   - id: hooks-codex-mysql-guard
     ladder: L3
@@ -356,6 +362,8 @@ files:
     target: .codex/hooks/mcp-mysql-guard.js
     placeholders: [MYSQL_GUARD_SERVERS]
     when_ai_tools: codex
+    when_agent_config: false
+    when_mcp: mysql
   - id: codex-rules-repository
     ladder: L3
     template: ai-tools/codex/rules/repository.rules
@@ -474,10 +482,12 @@ files:
     ladder: L5
     template: agent-config/skills/redis-doc-sync/SKILL.md
     target: docs/agent-config/skills/redis-doc-sync/SKILL.md
+    when_domains: [redis]
   - id: agent-config-skill-jobs-doc-sync
     ladder: L5
     template: agent-config/skills/jobs-doc-sync/SKILL.md
     target: docs/agent-config/skills/jobs-doc-sync/SKILL.md
+    when_domains: [jobs]
   - id: agent-config-skill-frontend-web
     ladder: L5
     template: agent-config/skills/frontend-web/SKILL.md

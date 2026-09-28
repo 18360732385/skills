@@ -1,0 +1,41 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: mature-defaults-audit
+# 用例列表与报告中的可读标题。
+title: MATURE 仓未指定模式时默认走审计
+# 可选背景：覆盖的行为或回归点。
+description: |
+  验证对已具备 AGENTS + 宿主 rules + 契约 + agent-kb 的 MATURE 仓，
+  用户仅点名 harness-eng、未要求 land/upgrade 时，默认进入 audit，不擅自写盘。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng，帮我处理一下当前仓库。
+    我没有指定 land / upgrade / resume，请按 skill 默认分流来做。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "MATURE"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["MATURE"]
+    - output_contains:
+        any: ["审计", "audit", "Audit"]
+    - output_contains:
+        any: ["已具备", "缺口", "L0", "L1", "L2"]
+  failure:
+    - output_contains:
+        any: ["开始写盘", "已写入 AGENTS", "无需审计直接落地"]

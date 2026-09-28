@@ -43,10 +43,12 @@ density:
 gate_profile: strict
 
 gate:
-  morph_floor: 75                 # 各有数据域的形态分下限（gold 缺省 95）
+  # 0.7.25 SG-6: 勿写死 morph_floor / todo_scan —— 由 gate_profile 缺省填充
+  # （strict→75/truths；gold→95/harness_docs）。显式数字才会覆盖 profile 缺省。
+  morph_floor: null               # null=按 profile（strict 75 / gold 95）
   template_completeness_min: null # gold 缺省 95；null=不检
   forbid_harness_todo: true
-  todo_scan: truths               # truths | harness_docs | all（gold 缺省 harness_docs）
+  todo_scan: null                 # null=按 profile（strict truths / gold harness_docs）
   gold_ratio_min: null
   acceptance_blockers_max: 0
   acceptance_warnings_max: null   # gold 缺省 0；null=不检

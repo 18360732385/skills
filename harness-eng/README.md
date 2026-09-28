@@ -2,15 +2,25 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.7.23**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
+**当前版本：0.7.26**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
-**0.7.23**：P3/P4（`listActiveTopicRuns` · `eng_snapshot` 单写）。**0.7.22**：P0/P1/P2 解耦（中性 `refresh-score` · 主题收口中性文案）。**0.7.21**：docs-only 协议解耦（feature-eng 可选别名）。**0.7.20**：批 E（monorepo detect · strict entry_ready · hook GLOB∪domains · sp 既有索引 skip）。**0.7.19**：批 D2–D4（delivery-checklist · rule 18 时机 · `harness refresh`）。**0.7.18**：批 B（sync skills 清单 prune · fill-score 缺 inventory 重扫 · --output 相对 root）+ D1 soft-gate。**0.7.17**：批 A P0（L5 ladderOrd、land 落 score-policy、全角 evidence、githooks +x、Spring `mvn -f`）。**0.7.16**：AGENTS/rule00 入图 `docs/runs`；rule 18 进行中可中途 commit、交付双归档。**0.7.15**：与主题流程消歧与接力。**0.7.14**：使用手册大段改写（四支/三档）。**0.7.12**：人读手册迁入 `guide/`。**0.7.11**：入口双写去重。**0.7.10**：热路径编排压缩（四支/三档）。**0.7.9**：可选 L4 rulehook（勾选/探测才装；sync 合并 hooks）。**0.7.8**：`fill-calibrate-live` 可读 Codex toml（`env_vars`→本机 env）。**0.7.7**：Codex MCP `policy.json` 精细开关。**0.7.6**：L5 skills `redis-doc-sync` / `jobs-doc-sync` / `frontend-web`。**0.7.5**：`contract-sync` / `api-doc-sync` / `db-doc-sync`。**0.7.4**：Codex hooks `commandWindows` + Stop。**0.7.0**：形态重标定 · Codex → **高**。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
+**0.7.26**：e2e P2（resume 默认 skip · meta 保真 · 报告 gitignore · 相对 root · fill-merge 拆分 · func services 覆盖 · L 级收口）。**0.7.25**：e2e P1（漂移 / morph·gold / 分册·seed / 迁移 SSOT / 问答）。**0.7.24**：e2e P0（refresh 可信 · L5 Codex hooks SSOT · glob→regex · calibrate 默认不写盘）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[guide/使用手册.html](guide/使用手册.html) · [guide/使用手册.md](guide/使用手册.md) · [guide/使用手册-摘要.md](guide/使用手册-摘要.md)
 **拓扑**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主
 
 历史（0.6.0 文档拓扑 / Codex 曾冻结 P2 等）见 [CHANGELOG.md](CHANGELOG.md)；勿当现行矩阵。
+
+## Git 门禁（HS-8）
+
+`core.hooksPath` **不会**随 clone 继承。新 clone / 新机器上须本机执行一次：
+
+```bash
+git config core.hooksPath .githooks
+```
+
+（Windows 同理。）land 若写入 `.githooks/pre-commit`，移交 TODO / README 应提示启用；**不**自动改全局 git config。
 
 ## 安装
 

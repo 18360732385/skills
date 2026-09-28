@@ -20,6 +20,7 @@
  * refresh = rebuild inventory + acceptance + fill-score（主题收口可选调用；exit 0/2/1）。
  */
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
@@ -70,9 +71,11 @@ const GENERATED_HOST_PREFIXES = [
   ".cursor/rules/",
   ".cursor/hooks/",
   ".claude/rules/",
+  ".claude/hooks/",
   ".qoder/rules/",
   ".trae/rules/",
   ".codebuddy/rules/",
+  ".codex/hooks/",
 ];
 
 function parseArgs(argv) {
@@ -128,6 +131,37 @@ Canonical Agent write entry (0.6.0+).
 
 function loadParams(paramsPath) {
   return JSON.parse(fs.readFileSync(paramsPath, "utf8"));
+}
+
+/**
+ * 0.7.26 ID-5/ID-6: resume|upgrade → on_exists=skip（未显式设置时）；注入 LAST_MODE。
+ * @returns {{ params: object, paramsPath: string, tmp?: string }}
+ */
+function applyModeDefaults(params, mode, paramsPath) {
+  const next = { ...params };
+  let dirty = false;
+  if (
+    (mode === "resume" || mode === "upgrade") &&
+    (next.on_exists == null || next.on_exists === "")
+  ) {
+    next.on_exists = "skip";
+    dirty = true;
+  }
+  const ph = { ...(next.placeholders || {}) };
+  if (ph.LAST_MODE == null || ph.LAST_MODE === "") {
+    ph.LAST_MODE = mode;
+    next.placeholders = ph;
+    dirty = true;
+  } else if (!next.placeholders) {
+    next.placeholders = ph;
+  }
+  if (!dirty) return { params: next, paramsPath };
+  const tmp = path.join(
+    os.tmpdir(),
+    `harness-params-${process.pid}-${Date.now()}.json`
+  );
+  fs.writeFileSync(tmp, JSON.stringify(next, null, 2), "utf8");
+  return { params: next, paramsPath: tmp, tmp };
 }
 
 function loadMeta(root) {
@@ -201,8 +235,12 @@ function runSync(root) {
   return spawnSync(process.execPath, [script], { encoding: "utf8", cwd: root });
 }
 
-function forward(r) {
-  if (r.stdout) process.stdout.write(r.stdout);
+/** 0.7.26 DU-4: child chatter → stderr so harness stdout stays JSON-parseable when needed. */
+function forward(r, { stdoutToStderr = false } = {}) {
+  if (r.stdout) {
+    if (stdoutToStderr) process.stderr.write(r.stdout);
+    else process.stdout.write(r.stdout);
+  }
   if (r.stderr) process.stderr.write(r.stderr);
   return r.status === null ? 1 : r.status;
 }
@@ -263,11 +301,26 @@ export function main(argv = process.argv) {
     );
   }
 
-  const params = loadParams(args.params);
+  const loaded = loadParams(args.params);
+  const applied = applyModeDefaults(loaded, mode, args.params);
+  const params = applied.params;
+  args.params = applied.paramsPath;
   const meta = loadMeta(args.root);
   const agentConfig = resolveLandAgentConfig(params, meta);
 
   announceMode(mode);
+  if (applied.tmp && (mode === "resume" || mode === "upgrade")) {
+    console.error(`harness: on_exists=${params.on_exists}（mode=${mode} 默认 skip）`);
+  }
+  if (applied.tmp) {
+    process.on("exit", () => {
+      try {
+        fs.unlinkSync(applied.tmp);
+      } catch {
+        /* ignore */
+      }
+    });
+  }
 
   if (!agentConfig) {
     if (args.checkFreshness) {
@@ -312,7 +365,8 @@ export function main(argv = process.argv) {
   }
 
   const synced = runSync(args.root);
-  const syncStatus = forward(synced);
+  // sync 的 [agent-config] 行不得污染 stdout（Agent 可能 JSON.parse land 输出）
+  const syncStatus = forward(synced, { stdoutToStderr: true });
   process.exit(syncStatus);
 }
 

@@ -64,5 +64,18 @@ node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir
 
 api 的 `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 CLI：`fill-merge.mjs --domain api`。
 
+db 多表一次写出（0.7.26+）：
+
+```bash
+node scripts/fill-merge.mjs --domain db --inventory docs/db/.fill-work/inventory.json \
+  --work-dir docs/db/.fill-work --target-dir docs/db/table --split-by table --write --update-index
+```
+
 workers：[fill-workers.md](fill-workers.md) · [ai-tools.md](../host/ai-tools.md)。  
 质量：[truth-quality.md](../modes/truth-quality.md)。
+
+## 首填后维护（0.7.26 FC-8）
+
+1. **真相已进 SSOT 后**：直接编辑 `docs/{api,func,db}/…` 下的模块/表文档；**不要**用本机 gitignored 的 `.fill-work` 旧 fragment 再跑 `fill-merge`（会把手改回退）。
+2. **代码变更后**：改 SSOT（或新开 fragment → acceptance → merge 到对应文件）；`refresh` **只**重建 inventory + acceptance + score，不重写真相正文。
+3. **索引**：`api.md` / `func.md` / `db.md` 为导航；merge 可用 `--update-index` 补行，大改仍以手维为准。

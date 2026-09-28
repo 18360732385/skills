@@ -1,0 +1,50 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: migration-dir-needs-slash
+# 用例列表与报告中的可读标题。
+title: db_migration_dir 缺尾斜杠时须警示 after-edit 永不命中
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e HS-3 / R11：after-edit-reminder 的 MIGRATION_DIR 缺尾斜杠时，
+  MIGRATION_RE 永不命中，迁移即时提醒失效。Agent 在 land/params 或重渲 hooks
+  时应要求补 / 或规范化，并建议实测。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/src/main/resources/db/migration/V1__init_schema.sql": |
+      CREATE TABLE task (id BIGINT PRIMARY KEY);
+    "docs/harness-eng/params-snippet.json": |
+      {
+        "db_migration_mode": "flyway",
+        "db_migration_dir": "backend/src/main/resources/db/migration"
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：params 里 db_migration_dir 写成
+    backend/src/main/resources/db/migration（没有末尾 /）。
+    请说明这对 after-edit / 迁移即时提醒有何影响，以及 land 或重渲 hooks 时应怎么处理。
+    不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["尾斜杠", "末尾 /", "trailing", "补 /", "规范化", "永不", "不命中", "失效"]
+    - output_contains:
+        any: ["after-edit", "MIGRATION", "迁移", "hook"]
+    - output_contains:
+        any: ["db_migration_dir", "migration"]
+  failure:
+    - output_contains:
+        any: ["有没有尾斜杠都一样", "缺 / 不影响 after-edit", "无需补斜杠"]

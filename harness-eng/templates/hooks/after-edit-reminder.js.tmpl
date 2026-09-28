@@ -16,8 +16,8 @@ const MIGRATION_NAME_RE = new RegExp({{MIGRATION_NAME_RE}});
 const JOBS_YML_RE = new RegExp({{JOBS_YML_RE}});
 const JOBS_KEYWORD_RE =
   /\b(cron|task[-_]?code|sync[-_]?task|scheduler|fixed[-_]?rate|fixed[-_]?delay)\b/i;
-/** 文件头必含要素（对齐 db 契约 rule：时间 / 撰写人 / 目的 / 类型） */
-const HEADER_KEYS = ["时间", "撰写", "目的", "类型"];
+/** 文件头必含要素（占位 MIGRATION_HEADER_KEYS；SSOT 见 docs/db/db.md；空数组=不检查） */
+const HEADER_KEYS = {{MIGRATION_HEADER_KEYS}};
 
 function readStdin() {
   return new Promise((resolve) => {

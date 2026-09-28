@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.7.23: P3/P4（listActiveTopicRuns · eng_snapshot 单写；回滚误加 repo-layout）; 其上 0.7.22 P0/P1/P2 解耦（中性 refresh-score · eng_snapshot · 能力探测文案）; 0.7.20 批 E（monorepo detect · entry_ready · GLOB hooks · sp skip）; 其上 0.7.19 批 D2–D4.
+ * 0.7.26: e2e P0（refresh / L5 hooks SSOT / glob→regex / calibrate 默认 compare）; 其上 0.7.23 P3/P4（listActiveTopicRuns · eng_snapshot 单写）; 0.7.22 中性 refresh-score; 0.7.20 批 E.
  * 0.7.17: 批 A P0（L5 ladderOrd · score-policy land · 全角 evidence · githooks +x · Spring mvn -f）.
  * 0.7.16: docs/runs + rule18 mid-commit (+0.7.15 handoff).
  * 0.7.13: handbook rewrite (+0.7.12 guide/ / 0.7.11 dual-write / 0.7.10 compress).
@@ -52,8 +52,12 @@ import {
   migrateMcpUsageGuideIfNeeded,
 } from "./lib/harness-meta.mjs";
 import { scanSignals } from "./lib/detect-signals.mjs";
-import { buildContractChecksJs, globListToCodePreds } from "./lib/hooks-checks.mjs";
-import { HOOK_DEFS } from "./lib/hooks-checks.mjs";
+import {
+  buildContractChecksJs,
+  globListToCodePreds,
+  buildHookPlaceholders,
+  HOOK_DEFS,
+} from "./lib/hooks-checks.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
 import {
   DOC_MOVES,
@@ -170,7 +174,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.7\.23"/.test(qYaml), "questions.yaml version 0.7.22");
+assert(/version:\s*"0\.7\.26"/.test(qYaml), "questions.yaml version 0.7.26");
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -216,11 +220,11 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.7\.23"/.test(manifest), "manifest 0.7.22");
+assert(/version:\s*"0\.7\.26"/.test(manifest), "manifest 0.7.26");
 const rootManifestPath = path.join(skillRoot, "_meta/manifest.yaml");
 assert(fs.existsSync(rootManifestPath), "root _meta/manifest.yaml present");
 const rootManifest = fs.readFileSync(rootManifestPath, "utf8");
-assert(/version:\s*"0\.7\.23"/.test(rootManifest), "root _meta manifest 0.7.22");
+assert(/version:\s*"0\.7\.26"/.test(rootManifest), "root _meta manifest 0.7.26");
 {
   const rv = (rootManifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
   const tv = (manifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
@@ -231,7 +235,7 @@ const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.7\.23"/.test(metaTmpl), "harness-meta 0.7.22");
+assert(/skill_version:\s*"0\.7\.26"/.test(metaTmpl), "harness-meta 0.7.26");
 assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
@@ -260,7 +264,10 @@ assert(/^## 0\.7\.0\b/m.test(changelog), "CHANGELOG 0.7.0");
 assert(/^## 0\.7\.3\b/m.test(changelog), "CHANGELOG 0.7.3");
 assert(/^## 0\.7\.4\b/m.test(changelog), "CHANGELOG 0.7.4");
 assert(/^## 0\.7\.5\b/m.test(changelog), "CHANGELOG 0.7.5");
-assert(/^## 0\.7\.23\b/m.test(changelog), "CHANGELOG 0.7.23");
+assert(/^## 0\.7\.26\b/m.test(changelog), "CHANGELOG 0.7.26");
+assert(/^## 0\.7\.25\b/m.test(changelog), "CHANGELOG keeps 0.7.25");
+assert(/^## 0\.7\.24\b/m.test(changelog), "CHANGELOG keeps 0.7.24");
+assert(/^## 0\.7\.23\b/m.test(changelog), "CHANGELOG keeps 0.7.23");
 assert(/^## 0\.7\.22\b/m.test(changelog), "CHANGELOG keeps 0.7.22");
 assert(/^## 0\.7\.21\b/m.test(changelog), "CHANGELOG keeps 0.7.21");
 assert(/^## 0\.7\.20\b/m.test(changelog), "CHANGELOG keeps 0.7.20");
@@ -455,7 +462,7 @@ assert(
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.7\.23）/.test(verifyMd) && /当前 \*\*0\.7\.23\*\*/.test(verifyMd), "VERIFY is 0.7.22");
+assert(/验收记录（0\.7\.26）/.test(verifyMd) && /当前 \*\*0\.7\.26\*\*/.test(verifyMd), "VERIFY is 0.7.26");
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
@@ -468,8 +475,8 @@ assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.7\.23/.test(readme), "README header version 0.7.22");
-assert(/0\.7\.4/.test(readme), "README mentions 0.7.4");
+assert(/当前版本：0\.7\.26/.test(readme), "README header version 0.7.26");
+assert(/0\.7\.26/.test(readme), "README mentions 0.7.26");
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -479,13 +486,13 @@ assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 const handbookMd = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.7\.23\*\*/.test(handbookMd), "使用手册.md version 0.7.22");
-assert(/当前 \*\*0\.7\.23\*\*/.test(quickstartMd), "QUICKSTART version 0.7.22");
+assert(/版本：\*\*0\.7\.26\*\*/.test(handbookMd), "使用手册.md version 0.7.26");
+assert(/当前 \*\*0\.7\.26\*\*/.test(quickstartMd), "QUICKSTART version 0.7.26");
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(fs.existsSync(path.join(skillRoot, "guide", "使用手册.html")), "使用手册.html present");
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.html"), "utf8");
-assert(/v0\.7\.23/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
+assert(/v0\.7\.26/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
 assert(
   /harness\.mjs/.test(handbookHtml) && /fill-inventory\.mjs --domain/.test(handbookHtml),
   "使用手册.html documents unified CLI"
@@ -995,8 +1002,9 @@ if (fs.existsSync(fixture)) {
   );
   assert(
     /UTF-16|writeFileSync/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")) &&
-      /SKILL_VERSION:'0\.7\.23'/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")),
-    "write-plan Windows UTF-8 example pins 0.7.22"
+      /REPO_NAME:'x'/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")) &&
+      /replace/.test(fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8")),
+    "write-plan Windows UTF-8 example uses REPO_NAME + replace"
   );
   const helpPlan = runNode([path.join(skillRoot, "scripts/fill-plan.mjs"), "--help"]);
   assert(helpPlan.status === 0, "fill-plan --help exits 0");
@@ -1178,7 +1186,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.7\.23"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.22");
+  assert(/version:\s*"0\.7\.26"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.26");
 }
 
 // --- 0.7.3–0.7.14: Codex hooks + Skills + MCP policy + calibrate + rulehook + docs compress/dedupe ---
@@ -1811,7 +1819,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   assert(/SKILLS_DIRS/.test(syncTmplB), "sync tmpl has SKILLS_DIRS");
   assert(/harness-managed\.json/.test(syncTmplB), "sync tmpl writes harness-managed.json");
   assert(/unmanaged/.test(syncTmplB), "sync tmpl reports unmanaged");
-  assert(/HARNESS_ENG_VERSION = "0\.7\.23"/.test(syncTmplB), "sync tmpl version 0.7.22");
+  assert(/HARNESS_ENG_VERSION = "0\.7\.26"/.test(syncTmplB), "sync tmpl version 0.7.26");
 
   const invApi = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-api.mjs"), "utf8");
   assert(/scanApiInventoryMemory/.test(invApi), "inventory-api exports scanApiInventoryMemory");
@@ -1969,6 +1977,34 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   assert(
     preds.some((p) => String(p).includes("frontend/src/api")),
     "E7 globListToCodePreds frontend/src/api"
+  );
+  // 0.7.26 HS-1: **/* must not become .[^/]*
+  const ctrlPreds = globListToCodePreds("backend/src/main/java/**/*Controller.java");
+  assert(ctrlPreds.length === 1 && String(ctrlPreds[0]).startsWith("/"), "E7 HS-1 controller glob is regex");
+  {
+    const body = String(ctrlPreds[0]).slice(1, -1);
+    const re = new RegExp(body);
+    assert(
+      re.test("backend/src/main/java/com/example/taskboard/task/TaskController.java"),
+      "E7 HS-1 **/*Controller.java matches nested package"
+    );
+  }
+  // HS-2: file-level glob exact, no trailing /
+  const filePreds = globListToCodePreds("backend/src/main/java/com/example/task/Task.java");
+  assert(
+    filePreds.length === 1 && filePreds[0] === "backend/src/main/java/com/example/task/Task.java",
+    "E7 HS-2 file glob exact path"
+  );
+  // HS-3: DB_MIGRATION_DIR trailing slash
+  const phMig = buildHookPlaceholders({
+    params: { db_migration_dir: "backend/src/main/resources/db/migration", domains: ["db"] },
+    agentConfig: false,
+    existing: {},
+    root: skillRoot,
+  });
+  assert(
+    phMig.DB_MIGRATION_DIR === "backend/src/main/resources/db/migration/",
+    "E7 HS-3 migration dir gets trailing slash"
   );
   const checksJs = buildContractChecksJs(["api"], { GLOB_API: "frontend/src/api/**" });
   assert(/frontend\/src\/api/.test(checksJs), "E7 buildContractChecksJs unions GLOB_API");

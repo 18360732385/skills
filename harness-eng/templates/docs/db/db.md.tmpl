@@ -1,7 +1,9 @@
 # {{REPO_NAME}} 表结构索引
 
-> **本文件是索引，不是 SSOT。** 建表语句与字段说明位于 [`table/`](./table/)。  
-> 改表前：先读本索引定位表，再读对应真相；改后更新 `table/NN-*.md` + `_change.sql`。
+> **本文件是索引 + 维护约定 SSOT（命名 / 演进 / `_change.sql`）。**  
+> 建表语句与字段说明位于 [`table/`](./table/)。  
+> 改表前：先读本索引定位表，再读对应真相；改后更新 `table/NN-*.md` + `_change.sql`。  
+> rule 13 / AGENTS 分册 / hooks 只引用本文件，勿另写一套命名正则。
 
 ## 读文档说明
 
@@ -10,6 +12,29 @@
 - **变更 SQL**：`docs/db/table/NN-{table}_change.sql`
 - **迁移模式**：{{DB_MIGRATION_MODE}}（flyway / manual_sql / none；manual_sql = 无 Flyway 依赖、人工按序执行、禁改已发布脚本）
 - **禁止**在本文件展开完整 CREATE TABLE
+
+## 维护约定（SSOT）
+
+### 迁移命名
+
+- 默认（Flyway 标准）：`V{数字}__{snake}.sql`，正则 `^V[0-9]+__[a-z0-9_]+\.sql$`
+- 可用 params `migration_name_re` / 占位 `MIGRATION_NAME_RE` 覆盖（hooks / soft-gate 读取同一占位）
+- 只追加新版本；**禁止**修改已发布脚本
+
+### 表文档演进
+
+- `## 建表语句` = **最新完整 CREATE TABLE**（含后续 ALTER 已合并的列）
+- `_change.sql`：**追加**各版本迁移原文（V1、V2…），勿当首迁唯一来源
+- 字段说明 / 业务说明随列变更同步；勿只改代码不改真相
+
+### 头注释（可选）
+
+- after-edit 默认检查头注释含：时间 / 撰写 / 目的 / 类型（可用 `MIGRATION_HEADER_KEYS` 覆盖或置空数组关闭）
+
+### flyway vs 人工执行
+
+- `flyway`：应用启动自动迁移时，**勿**要求「人工执行到 mysql」；`MIGRATION_ENVS` 应为空
+- `manual_sql`：发版 / 新环境须人工按序执行；勿伪造 `flyway_schema_history`
 
 ## 表文档
 

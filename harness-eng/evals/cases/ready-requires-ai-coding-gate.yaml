@@ -1,0 +1,43 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: ready-requires-ai-coding-gate
+# 用例列表与报告中的可读标题。
+title: 宣称可 AI coding 须依据 ai_coding_ready 而非口头 overall
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e SG-1 / PB-4：评分 overall 高或文档「看起来齐」不等于可开干。
+  Skill 硬闸要求宣称可 AI coding 仅看 ai_coding_ready。
+  本用例在 MATURE 仓上询问是否可开干，输出须提到 ai_coding_ready 或 fill-score/gate，
+  且不得在未跑 gate 的情况下断言「已就绪可开干」。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng：这个仓看起来文档已经很齐了。
+    请判断现在能不能宣称「可 AI coding / 开干」。
+    不要写文件；说明你依据的闸门字段或命令（例如 fill-score / ai_coding_ready），
+    若本环境还没跑分，请明确不能仅凭观感宣布就绪。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "ai_coding_ready"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["ai_coding_ready"]
+    - output_contains:
+        any: ["fill-score", "gate", "score-policy", "开干", "就绪"]
+  failure:
+    - output_contains:
+        any: ["仅凭 overall 即可开干", "不用看 ai_coding_ready", "观感已就绪可开干"]

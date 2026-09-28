@@ -1,0 +1,56 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: refresh-includes-db-domain
+# 用例列表与报告中的可读标题。
+title: refresh 报告 domains 须含 db、勿吞解析错误回退为 api/func
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e ID-2 / R5：refresh 的 loadDomains 把解析后对象传给 parseMetaDomains，
+  TypeError 被吞掉后回退到 [api,func]，db 域永远不做 inventory。
+  Agent 面对「含 db 的仓跑 refresh 却只报 api/func」须识别为缺陷/误报，并要求核对 meta.domains。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+  files:
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      last_mode: land
+    "docs/harness-eng/work/r5-refresh-report.json": |
+      {
+        "ok": false,
+        "domains": ["api", "func"],
+        "blockers": [],
+        "note": "simulated refresh stdout parse path"
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：harness-meta.yaml 里 domains 明确是 [api, func, db]，
+    但我刚跑 refresh，报告里 domains 只有 [api, func]，db 没有做 inventory。
+    请解释这是否正常、根因可能在哪、下一步应核对什么。不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "db"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["db", "domains"]
+    - output_contains:
+        any: ["误报", "缺陷", "bug", "解析", "回退", "TypeError", "不正常", "异常"]
+    - output_contains:
+        any: ["harness-meta", "meta.domains", "inventory", "refresh"]
+  failure:
+    - output_contains:
+        any: ["只有 api/func 是正常的", "db 域本就不该 refresh", "可以忽略 domains 差异"]

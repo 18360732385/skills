@@ -1,10 +1,55 @@
-# harness-eng 验收记录（0.7.23）
+﻿# harness-eng 验收记录（0.7.26）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.23**（P3 soft-gate/detect + P4 eng_snapshot 单写；其上 0.7.22 中性 refresh · 0.7.21 文案解耦 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.26**（e2e P2：幂等·路径 · fill-merge · L 级收口；其上 0.7.25 P1 · 0.7.24 P0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.26 增量验收（e2e P2）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.26` | 有 |
+| CHANGELOG 标题 `## 0.7.26` | 有 |
+| resume/upgrade 默认 `on_exists=skip`；meta `last_mode` | 有 |
+| gitignore 含 report-latest / run-latest / score-history | 有 |
+| score/inventory `root` 为 `"."` | 有 |
+| fill-merge `--split-by table`；func `unit=services` | 有 |
+| DU-4 stdout 可 JSON.parse；LT-11 未解析占位非 0 | 有 |
+| upgrade `## 0.7.25 → 0.7.26` | 有 |
+| sync tmpl id `0.7.26` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.25 增量验收（e2e P1）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.25` | 有（历史钉；现行见 0.7.26） |
+| CHANGELOG 标题 `## 0.7.25` | 有 |
+| db inventory 叠加 ALTER；`doc_field_drift` strict blocker | 有 |
+| morph 业务说明捕获正确；score-policy `morph_floor: null`；gold 门槛 95 | 有 |
+| 分册按目录选模板；Q_SEED 预填 Commands | 有 |
+| 迁移命名默认 Flyway；rule13 / db.md SSOT | 有 |
+| questions `remaining`/`truncated`；land 问 `Q_GATE_PROFILE` | 有 |
+| upgrade `## 0.7.24 → 0.7.25` | 有 |
+| sync tmpl id `0.7.25` | 有（历史；现行 `0.7.26`） |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.24 增量验收（e2e P0）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.24` | 有（历史钉；现行见 0.7.26） |
+| CHANGELOG 标题 `## 0.7.24` | 有 |
+| `fill-score --json --output` stdout 可 parse | 有 |
+| refresh `loadDomains` 含 db（meta 有 domains 时） | 有 |
+| `globListToCodePreds(**/*Controller.java)` 命中嵌套包 | 有 |
+| calibrate 默认不写盘；`--write-ddl` 仅换 DDL 块 | 有 |
+| sync tmpl `checkHookRefsExist`；codex hooks `when_agent_config: false` | 有 |
+| upgrade `## 0.7.23 → 0.7.24` | 有 |
+| sync tmpl id `0.7.24` | 有（历史；现行 `0.7.26`） |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.23 增量验收（P3/P4）
 

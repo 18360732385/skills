@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.7.23"
+version: "0.7.26"
 
 all_recommend_phrases:
   - 全部推荐
@@ -48,6 +48,13 @@ batches:
           - { value: L3, label: L3 规划与软门禁 }
           - { value: L4, label: L4 工具连接样例, recommended_when: "large_repo || mode == pipeline || mode == land" }
           - { value: L5, label: L5 配置 SSOT 管线（多工具仓推荐；含 Codex 为高·纪律 B）, recommended_when: "S_MULTI_TOOL" }
+
+  - id: batch-1-new
+    when: "type == NEW_EMPTY || type == NEW_CODE_NO_HARNESS"
+    when_mode: [land, resume]
+    max: 5
+    questions:
+      # 0.7.26 QF-3: after Q_LADDER answered (batch-0), so when_ladder_min works
       - id: Q_CONTRACT
         text: 启用哪些契约域？（L1+）
         type: multi
@@ -58,12 +65,6 @@ batches:
           - { value: db, label: db }
           - { value: redis, label: redis }
           - { value: jobs, label: jobs（Cron/Scheduler）, recommended_when: "S_JOBS" }
-
-  - id: batch-1-new
-    when: "type == NEW_EMPTY || type == NEW_CODE_NO_HARNESS"
-    when_mode: [land, resume]
-    max: 5
-    questions:
       - id: Q_NAME
         text: 仓库短名？
         type: text
@@ -83,12 +84,13 @@ batches:
           - { value: few, label: 根+少分册, recommended_when: "large_repo", meta: agents_variant=modules(subset) }
           - { value: all, label: 每模块一份, meta: agents_variant=modules(all) }
       - id: Q_MODULE_AGENTS
-        text: 分册模板变体？（仅 Q_MODULES≠solo 时适用；Spring 后端选 spring；前端选 frontend）
+        text: 分册模板变体？（仅 Q_MODULES≠solo；前后端 monorepo 选 auto 按目录探测；也可全局 spring/frontend）
         type: choice
         options:
-          - { value: default, label: 通用分册（默认） }
-          - { value: spring, label: Spring 后端分册, recommended_when: "S_SPRING" }
-          - { value: frontend, label: 前端分册, recommended_when: "S_FRONTEND" }
+          - { value: auto, label: 按目录自动（pom→spring · package.json→frontend）, recommended_when: "S_SPRING && S_FRONTEND" }
+          - { value: default, label: 通用分册 }
+          - { value: spring, label: 全局 Spring 后端分册（无前端包时）, recommended_when: "S_SPRING && !S_FRONTEND" }
+          - { value: frontend, label: 全局前端分册（无 Spring 时）, recommended_when: "S_FRONTEND && !S_SPRING" }
       - id: Q_STACK
         text: 技术栈是否如推断？
         type: confirm
@@ -131,7 +133,7 @@ batches:
         text: glob 档位？
         type: choice
         options:
-          - { value: wide, label: 全仓 }
+          - { value: wide, label: 全仓, recommended_when: "!large_repo" }
           - { value: focused, label: 收窄, recommended_when: "large_repo" }
       - id: Q_AI_TOOL
         text: 本仓要用哪些 AI 编程工具？（多选）
@@ -150,6 +152,16 @@ batches:
         text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs --check；启用后 .cursor/ 等为生成物）？含 Codex 时 sync 发出原生 rules/hooks/MCP/skills（不做 .mdc 镜像）
         type: boolean
         recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
+      # 0.7.26 QF-4: land 路径可达（勿只放在 batch-fill）
+      - id: Q_GATE_PROFILE
+        text: 开干档 gate_profile？（写入 score-policy；strict=常用；gold=高门槛）
+        type: choice
+        when_mode: [land, resume, upgrade]
+        options:
+          - { value: strict, label: strict（推荐·大仓/新仓）, recommended: true }
+          - { value: gold, label: gold（高门槛·贴顶后升档） }
+          - { value: legacy, label: legacy（仅骨架+覆盖+语义+Plan） }
+        recommended: strict
 
   - id: batch-1-partial
     when: "type == PARTIAL || mode == resume"
@@ -271,6 +283,17 @@ batches:
         type: text
         when_ladder_min: L3
         recommended_from: fingerprint.focused_prefixes
+      # land L3+ 若 batch-1-new-b 未问到，此处补问（已答则跳过）
+      - id: Q_GATE_PROFILE
+        text: 开干档 gate_profile？（写入 score-policy；若上批已答可跳过）
+        type: choice
+        when_mode: [land, resume, upgrade]
+        when_ladder_min: L3
+        options:
+          - { value: strict, label: strict（推荐）, recommended: true }
+          - { value: gold, label: gold（高门槛） }
+          - { value: legacy, label: legacy }
+        recommended: strict
       - id: Q_HOOK
         text: 是否启用 commit 软提醒（不拦截）？
         type: boolean
@@ -291,10 +314,9 @@ batches:
         type: multi
         when_ladder_min: L4
         options:
-          - { value: mysql, label: mysql }
-          - { value: redis, label: redis }
-          - { value: browser, label: browser }
-        recommended: [mysql, redis, browser]
+          - { value: mysql, label: mysql, recommended_when: "S_DB || domains_has_db" }
+          - { value: redis, label: redis, recommended_when: "S_REDIS || S_STACK_REDIS || domains_has_redis" }
+          - { value: browser, label: browser, recommended_when: "S_FRONTEND" }
       - id: Q_MCP_TRACKING
         text: mcp.json 跟踪策略？（团队约定共享且已跟踪含密 mcp.json 才选 vendored_shared）
         type: choice

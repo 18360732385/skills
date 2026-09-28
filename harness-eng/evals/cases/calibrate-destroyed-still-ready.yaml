@@ -1,0 +1,71 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: calibrate-destroyed-still-ready
+# 用例列表与报告中的可读标题。
+title: 表文档被 calibrate 掏空后不得仍判就绪
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e SG-2 / R5：fill-calibrate-live 覆盖后字段说明全是「—」、无业务说明，
+  fill-score 仍可能 ready=true（db≈85）。Agent 须指出语义空洞不可当作就绪，
+  不得仅凭 overall/ready 开干；应要求恢复业务说明或把 db-no-comment 当 blocker。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+  files:
+    "docs/db/table/01-task.md": |
+      # task
+      ## 业务说明
+      —
+      ## 字段说明
+      | 列 | 说明 |
+      |---|---|
+      | id | — |
+      | title | — |
+      ## 建表语句
+      ```sql
+      CREATE TABLE task (
+        id BIGINT PRIMARY KEY,
+        title VARCHAR(128)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+      ```
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      last_mode: fill-truths
+    "docs/harness-eng/score-latest.json": |
+      {
+        "ai_coding_ready": true,
+        "overall": 85,
+        "gate_profile": "strict",
+        "domains": {"db": 85},
+        "blockers": []
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：刚跑过 fill-calibrate-live（非 dry-run），表文档字段说明全是「—」，
+    业务说明也没了，DDL 变成 MariaDB 方言；但 score-latest 仍是 ai_coding_ready=true、db=85。
+    请判断这是否算「可 AI coding / 文档语义合格」。不要写文件，也不要建议继续无脑开干。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["业务说明", "字段说明", "语义", "空洞", "掏空", "覆盖"]
+    - output_contains:
+        any: ["不能", "不可", "不应", "不算", "不足以", "勿仅凭", "不能仅凭"]
+    - output_contains:
+        any: ["calibrate", "ready", "就绪", "ai_coding_ready", "blocker", "db-no-comment"]
+  failure:
+    - output_contains:
+        any: ["ready=true 即可开干", "db=85 证明语义合格", "字段全是—也算就绪"]

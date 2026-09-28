@@ -1,0 +1,55 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: refresh-verify-score-file
+# 用例列表与报告中的可读标题。
+title: refresh exit 2 须核对 score 文件、勿盲信误报
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e ID-1 / R5：refresh 默认写模式同时传 --json --output，fill-score 带
+  --output 时 stdout 无 JSON，parse 失败报 ok:false、blockers:[]、exit 2，
+  而 score-latest.json 可能仍是 ai_coding_ready=true。Agent 须要求核对 score
+  文件，不得仅凭 exit 2 + 空 blockers 断定未就绪。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+  files:
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      last_mode: land
+    "docs/harness-eng/score-latest.json": |
+      {
+        "ai_coding_ready": true,
+        "overall": 97,
+        "gate_profile": "strict",
+        "blockers": []
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：我刚跑了 harness.mjs --mode refresh（默认写模式），进程 exit 2，
+    stdout 里像是 ok:false 且 blockers 为空数组。请解释这是否一定表示仓未就绪，
+    以及下一步应核对什么文件/字段。不要写文件；也不要宣称「refresh 失败=未就绪」而不查证据。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "score"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["score-latest", "score-latest.json", "ai_coding_ready"]
+    - output_contains:
+        any: ["误报", "解析", "stdout", "--output", "--json", "核对", "不可仅凭"]
+  failure:
+    - output_contains:
+        any: ["exit 2 一定未就绪", "blockers 为空即可认定失败", "无需查看 score"]

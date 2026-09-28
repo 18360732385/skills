@@ -1,0 +1,47 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: migration-naming-repo-local
+# 用例列表与报告中的可读标题。
+title: 迁移命名须跟仓内 Flyway 惯例、勿强加源仓 DDL/DML 正则
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e LT-7 / PB-1：hooks/rule 13 默认 ^V[0-9]{4}__(DDL|DML)__ 是源仓规范，
+  不是 Flyway 标准，会误导 cold agent。R9 探针仓内实际是 V{n}__snake。
+  Agent 回答迁移命名时应以仓内已有文件为准，不得把源仓正则说成通用标准。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/src/main/resources/db/migration/V1__init_schema.sql": |
+      -- Flyway
+      CREATE TABLE task (id BIGINT PRIMARY KEY);
+    "backend/AGENTS.md": |
+      # backend
+      ## 迁移
+      使用 Flyway，文件名形如 V{n}__snake_case.sql，由应用自动迁移。
+
+input:
+  prompt: |
+    点名 harness-eng：本仓已有 V1__init_schema.sql，backend AGENTS 写的是
+    V{n}__snake_case + 自动迁移。我要加 tag 列，新迁移文件应怎么命名？
+    不要写文件。请不要把别的仓库的 V####__(DDL|DML)__ 命名说成 Flyway 通用标准。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["V2__", "V{n}__", "snake", "init_schema", "仓内", "本仓", "已有"]
+    - output_contains:
+        any: ["Flyway", "migration", "迁移"]
+  failure:
+    - output_contains:
+        any: ["必须使用 V[0-9]{4}__(DDL|DML)", "Flyway 标准就是 DDL/DML 分段", "必须按序人工执行到 mysql"]

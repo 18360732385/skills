@@ -1,0 +1,47 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: monorepo-dual-module-agents
+# 用例列表与报告中的可读标题。
+title: monorepo 分册须区分 spring 与 frontend、勿单选 spring 双渲
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e QF-7 / LT-2 / MS-1：Q_MODULE_AGENTS 单选 spring 后，frontend/AGENTS.md
+  会被 Spring 模板渲坏（出现 mvn -f frontend/pom.xml）。Agent 在 land 计划中须
+  明确 backend→spring、frontend→frontend（或二次 files 重渲），且未确认不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng：前后端 monorepo，我要 land，分册希望 backend 用 Spring 模板、
+    frontend 用前端模板。请说明 Q_MODULE_AGENTS / 分册渲染怎么处理才不会把
+    frontend 渲成 Spring（例如出现 mvn -f frontend/pom.xml）。
+    本轮只给 WritePlan 或参数策略，我还没确认，不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  files_not_exist:
+    - "AGENTS.md"
+    - "frontend/AGENTS.md"
+  must_not_contain:
+    - "写盘完成"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["frontend", "前端"]
+    - output_contains:
+        any: ["spring", "Spring", "backend"]
+    - output_contains:
+        any: ["分册", "MODULE_AGENTS", "Q_MODULE_AGENTS", "模板", "files"]
+    - files_not_exist:
+        - "frontend/AGENTS.md"
+  failure:
+    - output_contains:
+        any: ["两个目录都用 spring 即可", "frontend 也选 spring", "写盘完成"]

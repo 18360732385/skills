@@ -1,18 +1,24 @@
 #!/usr/bin/env node
 /**
- * fill-merge — canonical merge CLI (0.3.7+ / 0.6.0-dev M3).
+ * fill-merge — canonical merge CLI (0.3.7+ / 0.6.0-dev M3 / 0.7.26 P2).
  *
  * Usage:
  *   node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --check
  *   node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir <dir> --target <ssot.md> --write
+ *   node scripts/fill-merge.mjs --domain db ... --target-dir docs/db/table --split-by table --write
  *   node scripts/fill-merge.mjs --domain api ... --write --enrich-dto --source-root <java-root>
  *
  * api extras (--enrich-dto / --module / --auto-fill / --source-root / --out) live on this CLI.
  * Domain list: templates/_meta/domains.yaml
  */
+import fs from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
-import { mergeDomain } from "./lib/merge-domain.mjs";
+import {
+  mergeDomain,
+  mergeDomainSplitByTable,
+  updateDomainIndex,
+} from "./lib/merge-domain.mjs";
 import { mergeApi } from "./lib/merge-api.mjs";
 import { defaultContractDomains } from "./lib/domains.mjs";
 
@@ -24,7 +30,12 @@ function parseArgs(argv) {
     inventory: null,
     workDir: null,
     target: null,
+    targetDir: null,
+    splitBy: null,
     header: null,
+    footer: null,
+    preserveOrder: true,
+    updateIndex: false,
     module: null,
     check: false,
     write: false,
@@ -43,7 +54,13 @@ function parseArgs(argv) {
     else if (a === "--inventory") out.inventory = argv[++i];
     else if (a === "--work-dir") out.workDir = argv[++i];
     else if (a === "--target") out.target = argv[++i];
+    else if (a === "--target-dir") out.targetDir = argv[++i];
+    else if (a === "--split-by") out.splitBy = argv[++i];
     else if (a === "--header") out.header = argv[++i];
+    else if (a === "--footer") out.footer = argv[++i];
+    else if (a === "--preserve-order") out.preserveOrder = true;
+    else if (a === "--no-preserve-order") out.preserveOrder = false;
+    else if (a === "--update-index") out.updateIndex = true;
     else if (a === "--module") out.module = argv[++i];
     else if (a === "--check") out.check = true;
     else if (a === "--write") out.write = true;
@@ -65,10 +82,14 @@ function printHelp() {
   console.log(`Usage:
   node scripts/fill-merge.mjs --domain <${ids}> --inventory <inv.json> --work-dir <docs/<d>/.fill-work> --check
   node scripts/fill-merge.mjs --domain <id> --inventory <inv.json> --work-dir ... --target <ssot.md> --write
+  node scripts/fill-merge.mjs --domain db ... --target-dir docs/db/table --split-by table --write
   node scripts/fill-merge.mjs --domain api ... --write --enrich-dto --source-root <java-root>
-  node scripts/fill-merge.mjs --domain api ... --auto-fill --module <name>
 
-Options: --gold --force-write --skip-acceptance --header <md>
+Options:
+  --gold --force-write --skip-acceptance --header <md> --footer <md>
+  --preserve-order (default) | --no-preserve-order
+  --target-dir <dir> --split-by table   # db/redis: one file per inventory item
+  --update-index                        # refresh api.md / func.md / db.md index rows
 api-only: --enrich-dto --source-root --auto-fill --module --out
 `);
 }
@@ -97,13 +118,19 @@ try {
     console.error("Specify --check and/or --write");
     process.exit(1);
   }
-  if (args.write && !args.target) {
-    console.error("--write requires --target");
+
+  const splitByTable =
+    args.splitBy === "table" ||
+    (args.targetDir && (args.domain === "db" || args.domain === "redis"));
+
+  if (args.write && !args.target && !args.targetDir && !splitByTable) {
+    console.error("--write requires --target or --target-dir");
     process.exit(1);
   }
 
+  let report = null;
   if (args.domain === "api") {
-    mergeApi({
+    report = mergeApi({
       inventory: args.inventory,
       workDir: args.workDir,
       target: args.target,
@@ -120,8 +147,33 @@ try {
       gold: args.gold,
       scriptsDir: __dirname,
     });
+  } else if (args.write && splitByTable) {
+    const dir =
+      args.targetDir ||
+      (args.domain === "db"
+        ? "docs/db/table"
+        : args.domain === "redis"
+          ? "docs/redis/keys"
+          : null);
+    if (!dir) {
+      console.error("--split-by table requires --target-dir for this domain");
+      process.exit(1);
+    }
+    report = mergeDomainSplitByTable({
+      inventory: args.inventory,
+      workDir: args.workDir,
+      targetDir: dir,
+      domain: args.domain,
+      gold: args.gold,
+      forceWrite: args.forceWrite,
+      skipAcceptance: args.skipAcceptance,
+      scriptsDir: __dirname,
+      header: args.header,
+      footer: args.footer,
+      preserveOrder: args.preserveOrder,
+    });
   } else {
-    mergeDomain({
+    report = mergeDomain({
       inventory: args.inventory,
       workDir: args.workDir,
       target: args.write ? args.target : null,
@@ -131,7 +183,25 @@ try {
       skipAcceptance: args.skipAcceptance,
       scriptsDir: __dirname,
       header: args.header,
+      footer: args.footer,
+      preserveOrder: args.preserveOrder,
     });
+  }
+
+  if (args.write && args.updateIndex && report) {
+    // work-dir = docs/<domain>/.fill-work → domain root = docs/<domain>
+    const domainRoot = path.resolve(args.workDir, "..");
+    const docsRoot = path.resolve(domainRoot, "..");
+    const idx = updateDomainIndex({
+      root: fs.existsSync(path.join(domainRoot, `${args.domain}.md`))
+        ? docsRoot
+        : domainRoot,
+      domain: args.domain,
+      inventory: args.inventory,
+      targetDir: args.targetDir || null,
+      target: args.target || null,
+    });
+    if (idx?.updated) console.error(`Updated index ${idx.path}`);
   }
 } catch (e) {
   console.error(String(e && e.stack ? e.stack : e));

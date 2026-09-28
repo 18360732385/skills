@@ -1,0 +1,42 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: questions-s-star-recommend
+# 用例列表与报告中的可读标题。
+title: recommended_when 含 S_* 时不得把推荐值一律当成 null
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e QF-2 / R1：questions-next 的 evalWhen 不认 S_* / domains_has_api，
+  含字母的剩余表达式直接 false，Q_RULE21、Q_FRONTEND_RULE 等推荐值为 null。
+  Agent 在问答中应能结合探测信号给出合理推荐，或明示「引擎推荐值为 null 是缺陷」。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng：探测已得到 S_SPRING、S_FRONTEND（前后端 monorepo）。
+    我在答 land 问答，questions-next 对 Q_FRONTEND_RULE / 依赖栈信号的题给出的
+    recommended 却是 null。请说明这是否表示「没有推荐」，以及你是否仍应按探测信号给出推荐，
+    并点名可能的引擎缺陷（evalWhen / S_*）。本轮只讨论推荐值，不要写盘。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "写盘完成"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["S_FRONTEND", "S_SPRING", "探测", "信号"]
+    - output_contains:
+        any: ["推荐", "recommended", "null"]
+    - output_contains:
+        any: ["缺陷", "bug", "evalWhen", "S_*", "不认", "恒 false", "误判"]
+  failure:
+    - output_contains:
+        any: ["recommended=null 就一定没有推荐", "必须忽略探测信号", "S_* 本就不该影响推荐"]

@@ -1,0 +1,43 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: resume-on-exists-skip
+# 用例列表与报告中的可读标题。
+title: 显式续跑须说明 on_exists=skip 并等待确认
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e ID-5：resume/upgrade 若不带 on_exists=skip 会 create refused。
+  Skill/resume 规格要求半成品续跑默认 skip。本用例验证 Agent 在显式 resume
+  且未确认时，计划中体现 skip/不覆盖已有 AGENTS，且不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/partial-agents
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng：请对当前半成品仓执行 resume（续跑），补齐缺口。
+    已有 AGENTS.md 不要覆盖重写。本轮先给 WritePlan / 参数要点，
+    我还没确认，请不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "写盘完成"
+  files_not_exist:
+    - "docs/harness-eng/harness-meta.yaml"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["resume", "续跑"]
+    - output_contains:
+        any: ["on_exists", "skip", "不覆盖", "merge", "保留"]
+    - files_not_exist:
+        - "docs/harness-eng/harness-meta.yaml"
+  failure:
+    - output_contains:
+        any: ["已写入 AGENTS", "覆盖重写 AGENTS", "写盘完成", "on_exists=fail"]

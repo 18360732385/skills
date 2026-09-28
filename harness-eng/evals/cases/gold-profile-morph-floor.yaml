@@ -1,0 +1,59 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: gold-profile-morph-floor
+# 用例列表与报告中的可读标题。
+title: 仅切 gate_profile=gold 时须警示 morph_floor 可能仍被 strict 写死
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e SG-6 / R8：land 生成的 score-policy 在 gate: 下显式写了 morph_floor: 75，
+  gold 缺省 95 只在「未设置」时生效；只改 gate_profile: gold 会被静默降级。
+  Agent 须说明不能只改 profile 名，要核对生效门槛或把显式 morph_floor 置空/覆盖。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+  files:
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      gate_profile: strict
+      last_mode: land
+    "docs/harness-eng/score-policy.yaml": |
+      gate_profile: strict
+      gate:
+        morph_floor: 75
+        todo_scan: truths
+      profiles:
+        gold:
+          # 注释常写「gold 缺省 95」，但显式 morph_floor 会覆盖
+          note: defaults apply only when unset
+
+input:
+  prompt: |
+    点名 harness-eng：我想把门禁从 strict 切到 gold，有人说只要把 score-policy /
+    meta 的 gate_profile 改成 gold 就行。请判断这样是否一定用上 gold 的 morph 门槛（例如 95），
+    以及应核对哪些字段。不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "morph_floor"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["morph_floor", "morph"]
+    - output_contains:
+        any: ["75", "95", "显式", "覆盖", "静默", "缺省", "未设置"]
+    - output_contains:
+        any: ["gold", "gate_profile", "score-policy"]
+  failure:
+    - output_contains:
+        any: ["只改 gate_profile 就一定是 gold 门槛", "无需看 morph_floor", "改名即可生效 95"]

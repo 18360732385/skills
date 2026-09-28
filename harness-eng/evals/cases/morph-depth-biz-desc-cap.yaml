@@ -1,0 +1,64 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: morph-depth-biz-desc-cap
+# 用例列表与报告中的可读标题。
+title: 按模板写「业务说明」时须识别 morph 正则导致 gold 不可达
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e SG-3 / R8：morph-depth 正则捕获组只绑定「表级」分支，模板必需的
+  「## 业务说明」先匹配却捕不到正文，深度分封顶，db 难到 95，gold 全缺省不可达。
+  Agent 须识别评分器缺陷，不得要求把表级约束挪到业务说明之前来「凑分」。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+  files:
+    "docs/db/table/01-task.md": |
+      # task
+      ## 业务说明
+      任务主表：承载看板卡片的标题、状态与负责人；与 project 多对一。
+      主键 id；title 非空；状态枚举与后端 TaskStatus 一致。
+      ## 表级约束
+      主键 id；唯一索引 uk_task_project_title(project_id, title)；
+      外键 project_id → project(id) ON DELETE CASCADE。
+      ## 字段说明
+      | 列 | 说明 |
+      |---|---|
+      | id | 主键 |
+      | title | 标题 |
+    "docs/harness-eng/score-policy.yaml": |
+      gate_profile: gold
+      gate:
+        morph_floor: 95
+    "docs/harness-eng/work/r8-morph-note.md": |
+      副本实验：仅把「表级约束」挪到「## 业务说明」之前，深度分 15→25；
+      按模板顺序（业务说明在前）永远判「业务说明偏薄」。
+
+input:
+  prompt: |
+    点名 harness-eng：这张表文档严格按模板写了充实的「## 业务说明」和「表级约束」，
+    但 gold 门槛下仍报 morph_floor:db 偏薄（约 90<95）。有人建议把表级约束挪到业务说明前面凑分。
+    请判断根因更可能是评分器正则缺陷还是文档本身不合格，以及正确处置。不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "业务说明"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["正则", "捕获", "morph", "评分器", "缺陷", "bug"]
+    - output_contains:
+        any: ["业务说明", "表级"]
+    - output_contains:
+        any: ["不要为凑分", "不应挪", "不要挪", "不是文档不合格", "模板顺序", "不可达", "缺陷"]
+  failure:
+    - output_contains:
+        any: ["必须把表级约束挪到业务说明之前", "文档不合格所以 gold 失败", "按模板写就会天然达标"]

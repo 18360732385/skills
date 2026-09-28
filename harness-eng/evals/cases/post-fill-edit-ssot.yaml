@@ -1,0 +1,51 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: post-fill-edit-ssot
+# 用例列表与报告中的可读标题。
+title: 首填后维护须改 SSOT、禁止回填 .fill-work 重 merge
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e FC-8 / PB-3：首填完成后若回 .fill-work 重跑 fill-merge，会用本机
+  gitignore 旧状态回退手改。Agent 应说明维护路径是直接编辑 docs 下 SSOT，
+  refresh 只重建 inventory；本轮不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/mature-claude
+  git:
+    init: true
+  files:
+    "docs/api/modules/01-tasks.md": |
+      # tasks API
+      ## GET /api/tasks
+      已首填完成的契约真相。
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      last_mode: fill-truths
+
+input:
+  prompt: |
+    点名 harness-eng：api/func/db 已经首填并 merge 进 docs 了。现在代码加了一个字段，
+    我该改哪里？是直接改 docs 下的契约 SSOT，还是回到 .fill-work 重跑 fill-merge？
+    请给出维护路径说明。不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["SSOT", "docs/api", "直接编辑", "直接改"]
+    - output_contains:
+        any: [".fill-work", "fill-merge", "重跑"]
+    - output_contains:
+        any: ["不要", "勿", "避免", "禁止", "不应"]
+  failure:
+    - output_contains:
+        any: ["必须回 .fill-work 重跑 merge", "首填后只能重跑 fill-merge", "不要改 SSOT"]

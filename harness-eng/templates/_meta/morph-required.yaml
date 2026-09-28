@@ -42,7 +42,7 @@ domains:
       pattern: '#{2,3}\s*方法清单|方法功能|入参|出参|\|\s*方法\s*\|'
     - id: req-links
       kind: re
-      pattern: '关联\s*(API|接口|表)|相关表|关联接口'
+      pattern: '关联\s*(API|接口|表|文档)|相关表|关联接口'
     - id: dens-method-desc
       kind: named
       name: dens-method-desc

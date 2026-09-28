@@ -1,0 +1,71 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: module-agents-zh-todo-scan
+# 用例列表与报告中的可读标题。
+title: 分册中文标题下的 TODO 不得被 entry_ready 漏报
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e SG-7 / R1：entry_ready 只认英文 ## Commands|Critical，分册用中文标题时
+  分册里的 TODO(harness-eng) 查不到。Agent 审 readiness 时须人工扫分册中文段，
+  不得仅凭根 AGENTS / score 无 entry_todo 就宣称入口干净。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "AGENTS.md": |
+      # root
+      ## Commands
+      | Task | Command |
+      |---|---|
+      | test | echo ok |
+    "backend/AGENTS.md": |
+      # backend
+      ## 常用命令
+      | 任务 | 命令 |
+      |---|---|
+      | 测试 | TODO(harness-eng): 补 mvn 实测 |
+      ## 关键约束
+      - 边界：仅后端
+    "frontend/AGENTS.md": |
+      # frontend
+      ## 常用命令
+      | 任务 | 命令 |
+      |---|---|
+      | 测试 | npm test |
+    "docs/harness-eng/score-latest.json": |
+      {
+        "ai_coding_ready": false,
+        "overall": 40,
+        "blockers": ["coverage_ready"],
+        "entry_todo": []
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：根 AGENTS 的 Commands 已无 TODO，score 的 entry_todo 也是空数组，
+    但 backend/AGENTS.md 在「## 常用命令」下仍有 TODO(harness-eng)。
+    请判断入口文档是否已干净、评分器会不会漏报，以及宣称就绪前还应查什么。不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "TODO"
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["分册", "backend/AGENTS", "中文", "常用命令"]
+    - output_contains:
+        any: ["漏报", "识别不到", "只认英文", "entry_ready", "entry_todo", "缺陷"]
+    - output_contains:
+        any: ["不干净", "未干净", "仍有 TODO", "不能宣称", "不可宣称", "还需"]
+  failure:
+    - output_contains:
+        any: ["entry_todo 为空即入口干净", "分册中文段无需检查", "根 AGENTS 无 TODO 即可就绪"]

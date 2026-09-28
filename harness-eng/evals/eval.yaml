@@ -1,0 +1,69 @@
+# skill-up 评测配置 schema 版本；勿改此值。
+schema_version: v1alpha1
+
+environment:
+  # 用例运行环境；纯对话/闸门行为用 none。
+  # 可选：none | opensandbox | docker。
+  type: none
+
+skills:
+  # 运行前安装到 Agent Engine 的被测 Skill。
+  # source 可选：local_path。
+  - source: local_path
+    # 相对本 Skill 根目录（含 SKILL.md）的路径。
+    path: .
+
+engine:
+  # 执行 prompt 的 Agent Engine。
+  # 内置：claude_code | codex | qodercli | qwen_code。
+  name: claude_code
+
+cases:
+  # 相对 Skill 根的用例 YAML 列表。
+  # 路由/闸门基线 + taskboard-fullstack e2e 实战回归（分析报告 P0/P1）。
+  files:
+    # —— 路由 / 确认闸门 ——
+    - evals/cases/audit-no-write.yaml
+    - evals/cases/land-awaits-confirm.yaml
+    - evals/cases/mature-defaults-audit.yaml
+    - evals/cases/partial-defaults-resume.yaml
+    - evals/cases/all-recommend-still-needs-confirm.yaml
+    - evals/cases/resume-on-exists-skip.yaml
+    # —— land / monorepo / L5（LT-1、QF-4、QF-7、CD-4）——
+    - evals/cases/monorepo-land-detects-stacks.yaml
+    - evals/cases/monorepo-dual-module-agents.yaml
+    - evals/cases/land-l5-ssot-in-writeplan.yaml
+    - evals/cases/land-gate-profile-in-plan.yaml
+    # —— 就绪 / 评分（SG-1、SG-2、SG-3、SG-6、SG-7、ID-1、ID-2、ID-3/4）——
+    - evals/cases/ready-requires-ai-coding-gate.yaml
+    - evals/cases/docs-stale-score-not-ready.yaml
+    - evals/cases/calibrate-destroyed-still-ready.yaml
+    - evals/cases/morph-depth-biz-desc-cap.yaml
+    - evals/cases/refresh-verify-score-file.yaml
+    - evals/cases/refresh-includes-db-domain.yaml
+    - evals/cases/fresh-clone-rescan-coverage.yaml
+    - evals/cases/gold-profile-morph-floor.yaml
+    - evals/cases/module-agents-zh-todo-scan.yaml
+    # —— fill / 维护（FC-1、FC-2/3、FC-4、FC-8、LT-5、LT-7）——
+    - evals/cases/calibrate-live-dry-run-first.yaml
+    - evals/cases/inventory-feature-package-roots.yaml
+    - evals/cases/inventory-db-honors-alter.yaml
+    - evals/cases/post-fill-edit-ssot.yaml
+    - evals/cases/migration-naming-repo-local.yaml
+    - evals/cases/seed-commands-prefill.yaml
+    # —— hooks / 问答 / 口径（HS-1、HS-2、HS-3、QF-1、QF-2、DU-1）——
+    - evals/cases/hook-glob-double-star.yaml
+    - evals/cases/hook-file-glob-trailing-slash.yaml
+    - evals/cases/migration-dir-needs-slash.yaml
+    - evals/cases/questions-batch-remaining.yaml
+    - evals/cases/questions-s-star-recommend.yaml
+    - evals/cases/rule13-agents-consistency.yaml
+  # 各用例可覆盖的默认约束。
+  defaults:
+    timeout_seconds: 600
+    max_turns: 20
+
+report:
+  # 跑完后的报告格式。
+  # 可选：json | junit | html。
+  formats: [json, html]

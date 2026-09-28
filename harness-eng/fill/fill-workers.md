@@ -145,3 +145,9 @@ fill-auto-api 骨架带 quality: heuristic，须本 worker 精填后再 acceptan
 ## 拆页（merge 后）
 
 单模块接口数 **≥ 200**：拆为 `NN-….md` + `NN-…-part2.md`…，索引注明 part。
+
+## 首填后维护（与 [fill.md](fill.md) 对齐）
+
+- 首填 merge 进 `docs/<domain>/…` **之后**：改真相请直接改 SSOT；**禁止**用过期 `.fill-work` 再 merge 覆盖手改。
+- db 多表：`fill-merge --target-dir docs/db/table --split-by table --write [--update-index]`。
+- `refresh` 只重扫 inventory / score，不重写 SSOT 正文。

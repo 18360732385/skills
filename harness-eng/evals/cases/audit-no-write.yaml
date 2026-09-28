@@ -1,0 +1,47 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: audit-no-write
+# 用例列表与报告中的可读标题。
+title: 审计模式只读、不向目标仓写盘
+# 可选背景：覆盖的行为或回归点。
+description: |
+  验证用户明确要求「审计」时，Agent 按 audit 规格输出缺口报告，
+  且不对 NEW_CODE_NO_HARNESS 目标仓创建 AGENTS.md / harness-meta 等施工产物。
+
+context:
+  # 相对 Skill 根的仓库夹具；模拟无 harness 的 Java 栈仓。
+  repo_fixture: scripts/fixtures/new-code
+  git:
+    init: true
+
+input:
+  # 发给 Agent 的单轮用户 prompt。
+  prompt: |
+    请用 harness-eng 对当前仓库做审计（audit）。
+    只对照阶梯看已具备与缺口，不要写任何文件，也不要进入 land/resume。
+
+expect:
+  # 低成本门槛；失败则跳过 judge。
+  must_contain:
+    - "缺口"
+  must_not_contain:
+    - "已写入"
+  files_not_exist:
+    - "AGENTS.md"
+    - "docs/harness-eng/harness-meta.yaml"
+    - ".cursor/harness-meta.yaml"
+
+judge:
+  # 评分策略：rule_based | agent_judge | script。
+  type: rule_based
+  # rule_based 下须全部满足的成功断言。
+  success:
+    - output_contains:
+        any: ["审计", "audit", "Audit"]
+    - output_contains:
+        any: ["缺口", "已具备", "L0", "L1"]
+    - files_not_exist:
+        - "AGENTS.md"
+        - "docs/harness-eng/harness-meta.yaml"
+  failure:
+    - output_contains:
+        any: ["已写入 AGENTS", "写盘完成", "land 完成"]

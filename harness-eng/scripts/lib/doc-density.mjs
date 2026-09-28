@@ -1,11 +1,27 @@
 /**
  * Document density helpers for fill-score / acceptance (0.2.27+).
+ * 0.7.25: SG-2 hollow — not filled; SG-5 per-table / per-section header reset.
  * No npm deps.
  */
 
 const OK_PLACEHOLDER = /^(未知|—|–|-|N\/A|n\/a|无|暂无|null|NULL|\(空\))$/;
 
-function splitTableRows(block) {
+/** True if cell is empty or a non-informative placeholder (— counts empty for fill ratio). */
+export function isEmptyOrHollow(v) {
+  const s = String(v ?? "")
+    .replace(/`/g, "")
+    .trim();
+  if (!s) return true;
+  if (/^TODO/i.test(s)) return true;
+  if (OK_PLACEHOLDER.test(s)) return true;
+  return false;
+}
+
+/**
+ * Split markdown table rows. Resets headers when a new header-like row appears
+ * (SG-5: multi-table docs must not reuse first table's headers).
+ */
+export function splitTableRows(block) {
   const lines = String(block || "").split(/\r?\n/);
   const rows = [];
   let headers = null;
@@ -17,11 +33,13 @@ function splitTableRows(block) {
       .map((c) => c.trim())
       .filter((_, i, arr) => i > 0 && i < arr.length - 1);
     if (!cells.length) continue;
-    if (!headers) {
+    const looksHeader = cells.some((c) =>
+      /参数名|类型|必填|说明|示例|字段名|COMMENT|方法|签名|返回|服务类/.test(c)
+    );
+    if (!headers || looksHeader) {
       headers = cells;
       continue;
     }
-    if (cells.some((c) => /参数名|类型|必填|说明|示例|字段名|COMMENT/.test(c))) continue;
     rows.push(cells);
   }
   return { headers, rows };
@@ -46,9 +64,9 @@ export function apiExampleFillRatio(text) {
       total++;
       const v = (cells[exIdx] ?? "").replace(/`/g, "").trim();
       if (!v) empty++;
-      else if (OK_PLACEHOLDER.test(v)) {
-        /* ok */
-      }
+      else if (OK_PLACEHOLDER.test(v) && v !== "—" && v !== "-" && v !== "–") {
+        /* 未知 etc. ok for api examples */
+      } else if (isEmptyOrHollow(v)) empty++;
     }
   }
   if (!hasColumn || !total) return { ratio: 0, empty, total, hasColumn };
@@ -58,7 +76,6 @@ export function apiExampleFillRatio(text) {
 /** @returns {{ ratio: number, filled: number, total: number }} */
 export function dbCommentFillRatio(text) {
   const raw = String(text || "");
-  // Prefer ## 字段 table COMMENT column
   const sec = raw.match(/##\s*字段[\s\S]*?(?=\n##\s+|$)/i);
   const body = sec ? sec[0] : raw;
   const { headers, rows } = splitTableRows(body);
@@ -67,13 +84,12 @@ export function dbCommentFillRatio(text) {
     if (cIdx >= 0 && rows.length) {
       let filled = 0;
       for (const cells of rows) {
-        const v = (cells[cIdx] ?? "").replace(/`/g, "").trim();
-        if (v && !/^TODO/i.test(v)) filled++;
+        const v = cells[cIdx] ?? "";
+        if (!isEmptyOrHollow(v)) filled++;
       }
       return { ratio: filled / rows.length, filled, total: rows.length };
     }
   }
-  // DDL COMMENT heuristic
   const cols = (raw.match(/^\s*`[^`]+`[^,\n]*,?/gm) || []).length;
   const comments = (raw.match(/COMMENT\s+'/gi) || []).length;
   if (cols > 0) {
@@ -93,7 +109,8 @@ export function redisHasTtlContent(text) {
   const sec = String(text || "").match(/##\s*TTL[\s\S]*?(?=\n##\s+|$)/i);
   if (!sec) return false;
   const b = sec[0];
-  if (/未知|业务\/运行时|无过期|-1|永不过期|\d+\s*(秒|分|小时|天|s|m|h)/i.test(b)) return true;
+  if (/未知|业务\/运行时|无过期|-1|永不过期|\d+\s*(秒|分|小时|天|s|m|h)/i.test(b))
+    return true;
   if (/\|\s*`[^`]+`\s*\|/.test(b)) return true;
   if (/TODO\(harness-eng\)/i.test(b) && b.length < 80) return false;
   return b.replace(/##\s*TTL/i, "").trim().length > 8;
@@ -107,15 +124,19 @@ export function redisHasExampleOrUnknown(text) {
   const sec = raw.match(/##\s*Key\s*模式[\s\S]*?(?=\n##\s+|$)/i);
   if (sec && /示例/.test(sec[0]) && /\|/.test(sec[0])) {
     const { rows } = splitTableRows(sec[0]);
-    if (rows.some((r) => r.some((c) => c && c !== "—" && !/^TODO/i.test(c)))) return true;
+    if (rows.some((r) => r.some((c) => c && !isEmptyOrHollow(c)))) return true;
   }
   return false;
 }
 
-/** Method table: 功能说明 column non-empty rate */
+/** Method table under ### 方法清单 (SG-5 section-scoped). */
 export function funcMethodDescFillRatio(text) {
   const raw = String(text || "");
-  const { headers, rows } = splitTableRows(raw);
+  const sec =
+    raw.match(/#{2,3}\s*方法清单[\s\S]*?(?=\n#{2,3}\s+|$)/i) ||
+    raw.match(/#{2,3}\s*方法功能[\s\S]*?(?=\n#{2,3}\s+|$)/i);
+  const body = sec ? sec[0] : raw;
+  const { headers, rows } = splitTableRows(body);
   if (!headers || !rows.length) return { ratio: 0, empty: 0, total: 0 };
   const descIdx = headers.findIndex((h) => /功能说明|说明|语义/.test(h));
   const nameIdx = headers.findIndex((h) => /方法|签名|名称/.test(h));
@@ -123,8 +144,26 @@ export function funcMethodDescFillRatio(text) {
   let empty = 0;
   for (const cells of rows) {
     const desc = (cells[descIdx] ?? "").replace(/`/g, "").trim();
-    const name = nameIdx >= 0 ? (cells[nameIdx] ?? "").replace(/`/g, "").trim() : "";
-    if (!desc || desc === name || /^TODO/i.test(desc)) empty++;
+    const name =
+      nameIdx >= 0 ? (cells[nameIdx] ?? "").replace(/`/g, "").trim() : "";
+    if (!desc || desc === name || isEmptyOrHollow(desc)) empty++;
   }
-  return { ratio: (rows.length - empty) / rows.length, empty, total: rows.length };
+  return {
+    ratio: (rows.length - empty) / rows.length,
+    empty,
+    total: rows.length,
+  };
+}
+
+/** Doc field column names from ## 字段 table (for SG-1 drift). */
+export function parseDbDocFieldNames(text) {
+  const sec = String(text || "").match(/##\s*字段[\s\S]*?(?=\n##\s+|$)/i);
+  if (!sec) return [];
+  const { headers, rows } = splitTableRows(sec[0]);
+  if (!headers || !rows.length) return [];
+  const nameIdx = headers.findIndex((h) => /字段名|列名|column|name/i.test(h));
+  const idx = nameIdx >= 0 ? nameIdx : 0;
+  return rows
+    .map((r) => (r[idx] ?? "").replace(/`/g, "").trim())
+    .filter((n) => n && !isEmptyOrHollow(n) && !/^字段/.test(n));
 }

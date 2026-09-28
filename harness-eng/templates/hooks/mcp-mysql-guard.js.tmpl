@@ -95,7 +95,8 @@ function sessionFor(key) {
     const m = server.match(GUARDED_SERVERS);
     if (!m) allow();
 
-    const env = m[1] || "";
+    // 0.7.26 HS-6: no capture group → fall back to full server name (avoid empty「 环境」)
+    const env = (m[1] != null && String(m[1]).length ? String(m[1]) : server) || "";
     const statements = extractStatements(payload);
     if (!statements.length) allow();
 

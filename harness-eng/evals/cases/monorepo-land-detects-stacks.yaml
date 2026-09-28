@@ -1,0 +1,48 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: monorepo-land-detects-stacks
+# 用例列表与报告中的可读标题。
+title: monorepo 冷启动须识别前后端栈并等待确认
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 taskboard-fullstack e2e（CD-4 / QF-7 / LT-2 / MS-1）：
+  backend/pom.xml + frontend/package.json 的平铺 monorepo 上要求 land 时，
+  Agent 应探测到 Spring 与前端栈，在 WritePlan/提问中体现前后端分册或模块意图，
+  且未确认前不写盘（避免误用单一 spring 模板直接落地）。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng：这是前后端 monorepo（backend Maven/Spring + frontend Vite）。
+    请按 land 施工仪式推进到至少 L1，但本轮我还没确认写盘。
+    请先完成探测与提问/WritePlan，明确前后端分册怎么处理，不要直接写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  files_not_exist:
+    - "AGENTS.md"
+    - "docs/harness-eng/harness-meta.yaml"
+  must_not_contain:
+    - "写盘完成"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["WritePlan", "确认", "推荐", "Fingerprint", "指纹", "探测"]
+    - output_contains:
+        any: ["S_SPRING", "Spring", "Maven", "backend"]
+    - output_contains:
+        any: ["S_FRONTEND", "frontend", "Vite", "前端"]
+    - files_not_exist:
+        - "AGENTS.md"
+        - "docs/harness-eng/harness-meta.yaml"
+  failure:
+    - output_contains:
+        any: ["已写入 AGENTS", "写盘完成", "无需确认", "frontend 也用 Spring"]

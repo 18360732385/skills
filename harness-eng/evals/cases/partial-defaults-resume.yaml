@@ -1,0 +1,45 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: partial-defaults-resume
+# 用例列表与报告中的可读标题。
+title: PARTIAL 仓未指定模式时默认续跑、未确认不写盘
+# 可选背景：覆盖的行为或回归点。
+description: |
+  对照 e2e 分流规则：已有 AGENTS 但未满阶的 PARTIAL 仓，用户仅点名 harness-eng
+  且未要求 land/upgrade 时，应默认 resume（补齐缺口），不得按空仓 land 覆盖，
+  且在确认闸门前不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/partial-agents
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng，帮我处理一下当前仓库。
+    我没有指定 land / upgrade / resume，请按 skill 默认分流来做；
+    本轮先说明模式与缺口，不要写任何文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_contain:
+    - "resume"
+  must_not_contain:
+    - "已写入"
+  files_not_exist:
+    - "docs/harness-eng/harness-meta.yaml"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["resume", "续跑", "Resume"]
+    - output_contains:
+        any: ["PARTIAL", "半成品", "缺口", "补齐"]
+    - files_not_exist:
+        - "docs/harness-eng/harness-meta.yaml"
+  failure:
+    - output_contains:
+        any: ["按空仓 land", "覆盖 AGENTS", "开始写盘", "已写入 AGENTS"]

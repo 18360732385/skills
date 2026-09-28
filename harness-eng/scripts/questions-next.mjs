@@ -8,7 +8,10 @@
  *
  * answers.json fields (all optional except driving ones as available):
  *   type, mode, ladder, multi_workspace, large_repo,
- *   answered: ["Q_MODE", ...], current_batch, signals: ["S_AGENTS_ROOT"]
+ *   answered: ["Q_MODE", ...], current_batch, signals: ["S_AGENTS_ROOT"],
+ *   domains: ["api","func"] (for domains_has_*)
+ *
+ * 0.7.25: remaining/truncated; S_* + domains_has_* in evalWhen; question-level recommended_when
  */
 import fs from "fs";
 import path from "path";
@@ -45,13 +48,21 @@ function ladderOrd(l) {
   return m[l];
 }
 
-function evalWhen(expr, ctx) {
+export function evalWhen(expr, ctx) {
   if (!expr || expr === "always") return true;
   if (expr === "large_repo") return Boolean(ctx.large_repo);
   if (expr === "multi_workspace") return Boolean(ctx.multi_workspace);
   const type = ctx.type || "";
   const mode = ctx.mode || "";
   const ladder = ctx.ladder || "L0";
+  const signals = Array.isArray(ctx.signals) ? ctx.signals : [];
+  const domains = Array.isArray(ctx.domains)
+    ? ctx.domains
+    : Array.isArray(ctx.meta?.domains)
+      ? ctx.meta.domains
+      : [];
+  const domainSet = new Set(domains.map((d) => String(d).toLowerCase()));
+
   let e = String(expr);
   e = e.replace(/type\s*==\s*(\w+)/g, (_, t) => (type === t ? "true" : "false"));
   e = e.replace(/mode\s*==\s*([\w-]+)/g, (_, m) => (mode === m ? "true" : "false"));
@@ -60,6 +71,11 @@ function evalWhen(expr, ctx) {
   );
   e = e.replace(/\blarge_repo\b/g, ctx.large_repo ? "true" : "false");
   e = e.replace(/\bmulti_workspace\b/g, ctx.multi_workspace ? "true" : "false");
+  // 0.7.25 QF-2: fingerprint signals
+  e = e.replace(/\b(S_[A-Z0-9_]+)\b/g, (_, s) => (signals.includes(s) ? "true" : "false"));
+  e = e.replace(/\bdomains_has_([a-z0-9_]+)\b/g, (_, d) =>
+    domainSet.has(String(d).toLowerCase()) ? "true" : "false"
+  );
   if (!/^(true|false|\(|\)|\s|\||&|!)+$/.test(e)) {
     if (/[a-zA-Z_]/.test(e)) return false;
   }
@@ -105,7 +121,16 @@ function getByPath(obj, dotted) {
   return cur;
 }
 
-function pickRecommended(q, ctx) {
+export function pickRecommended(q, ctx) {
+  // 0.7.25 QF-2: question-level recommended_when (booleans / explicit recommended)
+  if (q.recommended_when) {
+    if (evalWhen(q.recommended_when, ctx)) {
+      if (q.recommended !== undefined) return q.recommended;
+      if (q.type === "boolean") return true;
+    } else if (q.type === "boolean" && q.recommended === undefined) {
+      return false;
+    }
+  }
   if (q.recommended !== undefined) return q.recommended;
   if (q.recommended_from) {
     const from = getByPath(ctx, q.recommended_from);
@@ -115,12 +140,24 @@ function pickRecommended(q, ctx) {
   if (q.recommended_fallback !== undefined && Array.isArray(q.recommended_fallback))
     return q.recommended_fallback;
   if (q.options) {
-    const hit = q.options.find((o) => o.recommended === true);
-    if (hit) return hit.value;
-    const cond = q.options.find(
-      (o) => o.recommended_when && evalWhen(o.recommended_when, ctx)
-    );
-    if (cond) return cond.value;
+    // 0.7.26 QF-6: multi → all options matching recommended / recommended_when
+    if (q.type === "multi") {
+      const hits = q.options
+        .filter(
+          (o) =>
+            o.recommended === true ||
+            (o.recommended_when && evalWhen(o.recommended_when, ctx))
+        )
+        .map((o) => o.value);
+      if (hits.length) return hits;
+    } else {
+      const hit = q.options.find((o) => o.recommended === true);
+      if (hit) return hit.value;
+      const cond = q.options.find(
+        (o) => o.recommended_when && evalWhen(o.recommended_when, ctx)
+      );
+      if (cond) return cond.value;
+    }
   }
   return null;
 }
@@ -191,19 +228,25 @@ function main() {
     return;
   }
 
-  const questions = [];
+  const eligible = [];
   for (const q of batch.questions || []) {
     if (answered.has(q.id)) continue;
     if (!questionEligible(q, ctx)) continue;
-    questions.push({
-      id: q.id,
-      text: q.text,
-      type: q.type,
-      options: q.options || null,
-      recommended: pickRecommended(q, ctx),
-    });
-    if (questions.length >= (batch.max || 5)) break;
+    eligible.push(q);
   }
+
+  const max = batch.max || 5;
+  const slice = eligible.slice(0, max);
+  const remainingIds = eligible.slice(max).map((q) => q.id);
+  const truncated = remainingIds.length > 0;
+
+  const questions = slice.map((q) => ({
+    id: q.id,
+    text: q.text,
+    type: q.type,
+    options: q.options || null,
+    recommended: pickRecommended(q, ctx),
+  }));
 
   console.log(
     JSON.stringify(
@@ -212,7 +255,11 @@ function main() {
         done: false,
         batch_id: batch.id,
         questions,
-        hint: "不确定请回复：全部推荐（不等于写盘确认）",
+        truncated,
+        remaining: remainingIds,
+        hint: truncated
+          ? "本批已截断：先答当前题，勿将 batch 标为已答；再次调用会继续吐 remaining"
+          : "不确定请回复：全部推荐（不等于写盘确认）",
         all_recommend_phrases: doc.all_recommend_phrases || [],
       },
       null,
@@ -221,9 +268,14 @@ function main() {
   );
 }
 
-try {
-  main();
-} catch (e) {
-  console.error(String(e && e.stack ? e.stack : e));
-  process.exit(1);
+import { pathToFileURL } from "url";
+const isMain =
+  process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
+if (isMain) {
+  try {
+    main();
+  } catch (e) {
+    console.error(String(e && e.stack ? e.stack : e));
+    process.exit(1);
+  }
 }

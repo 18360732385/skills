@@ -21,6 +21,34 @@ import { isCliMain } from "./cli-main.mjs";
 import { defaultInventoryPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { createProgress } from "./progress-log.mjs";
+import { writeInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
+
+/** Lowest common ancestor directory of absolute file paths. */
+export function commonAncestorDir(files) {
+  if (!files?.length) return null;
+  const parts = files.map((f) => path.resolve(f).replace(/\\/g, "/").split("/"));
+  let common = parts[0];
+  for (let i = 1; i < parts.length; i++) {
+    const p = parts[i];
+    let j = 0;
+    while (j < common.length && j < p.length && common[j] === p[j]) j++;
+    common = common.slice(0, j);
+    if (!common.length) break;
+  }
+  if (!common.length) return null;
+  // If LCA is a file's parent chain ending at a file segment, drop last if it looks like a file
+  let dir = common.join("/") || "/";
+  // On Windows, path like C:/foo — path.resolve handles drive
+  if (files.every((f) => fs.existsSync(f) && fs.statSync(f).isFile())) {
+    // common should be a directory; if last segment looks like a filename, pop
+    const last = common[common.length - 1];
+    if (last && /\.[a-zA-Z0-9]+$/.test(last)) {
+      common = common.slice(0, -1);
+      dir = common.join("/") || "/";
+    }
+  }
+  return path.normalize(dir);
+}
 
 const DEFAULT_EXCLUDE_BASE = ["BaseController", "BaseRestController", "AbstractController"];
 
@@ -292,10 +320,18 @@ function guessControllerRoot(root, moduleName) {
   for (const jr of javaRoots) {
     const files = walkJava(jr);
     if (files.length) {
-      // controller root = common ancestor named controller
-      const sample = files[0].replace(/\\/g, "/");
-      const i = sample.toLowerCase().lastIndexOf("/controller/");
-      if (i >= 0) return path.normalize(sample.slice(0, i + "/controller".length));
+      // Prefer a shared …/controller/ directory when all files live under one
+      const withCtrl = files
+        .map((f) => f.replace(/\\/g, "/"))
+        .filter((s) => s.toLowerCase().includes("/controller/"));
+      if (withCtrl.length === files.length) {
+        const sample = withCtrl[0];
+        const i = sample.toLowerCase().lastIndexOf("/controller/");
+        if (i >= 0) return path.normalize(sample.slice(0, i + "/controller".length));
+      }
+      // 0.7.24: package-by-feature — LCA of all *Controller.java (not dirname(first))
+      const lca = commonAncestorDir(files);
+      if (lca) return lca;
       return path.dirname(files[0]);
     }
   }
@@ -423,7 +459,7 @@ function scanOneModule(
 
   const report = {
     ok: true,
-    root,
+    root: ".",
     module: moduleName || null,
     controllerRoot: path.relative(root, controllerRoot).replace(/\\/g, "/"),
     generatedAt: new Date().toISOString().slice(0, 10),
@@ -456,16 +492,23 @@ function scanOneModule(
  * (often gitignored). Does not write disk.
  * @returns {object|null}
  */
-export function scanApiInventoryMemory(root) {
-  const r = scanOneModule(root, null, null, 80, null, DEFAULT_EXCLUDE_BASE, {
-    write: false,
-  });
+export function scanApiInventoryMemory(root, controllerRootArg = null) {
+  const r = scanOneModule(
+    root,
+    null,
+    controllerRootArg,
+    80,
+    null,
+    DEFAULT_EXCLUDE_BASE,
+    { write: false }
+  );
   if (!r || r.ok === false) return null;
   if (!Array.isArray(r.endpoints) || !r.endpoints.length) return null;
   return {
     ok: true,
-    root,
+    root: ".",
     module: r.module || null,
+    controllerRoot: r.controllerRoot || null,
     endpoints: r.endpoints,
     shards: r.shards || [],
     sources: ["<memory-rescan>"],
@@ -572,6 +615,15 @@ export function main(argv = process.argv) {
       report.error ||
         "Cannot locate controller root. Pass --controller-root <rel> (directory containing *Controller.java trees)."
     );
+  }
+  if (report.controllerRoot && (report.stats?.endpoints || 0) > 0) {
+    try {
+      const rel =
+        toRootRelative(root, report.controllerRoot) || report.controllerRoot;
+      writeInventoryMeta(root, { api: { controller_root: rel } });
+    } catch {
+      /* meta optional */
+    }
   }
   console.log(JSON.stringify(report, null, 2));
   exitFromReport(report);

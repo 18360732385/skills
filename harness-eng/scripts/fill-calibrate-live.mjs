@@ -4,15 +4,12 @@
  * calibrate db CREATE TABLE + redis key families via direct drivers.
  *
  * Usage:
- *   node scripts/fill-calibrate-live.mjs --root <TARGET> [--profile dev] [--help]
+ *   node scripts/fill-calibrate-live.mjs --root <TARGET> [--profile mysql]
  *   node scripts/fill-calibrate-live.mjs --root <TARGET> --dry-run
+ *   node scripts/fill-calibrate-live.mjs --root <TARGET> --write-ddl
  *
- * Connection (no inventing secrets):
- *   1) mcp 真密（按优先级）：
- *      .cursor/mcp.json → .mcp.json → .trae/mcp.json → .qoder/mcp.json
- *      → `.codex/config.toml` → `.codex/config.toml.example`（env_vars 名 → 本机 process.env）
- *      Trae：.trae/mcp.json 须在 IDE Settings → MCP 开关启用（磁盘产物 ≠ 已接入）
- *   2) application-<profile>.yml (or application.yml)
+ * 0.7.24: default = compare/diff only（不写盘）。显式 --write-ddl 才替换「建表语句」代码块；
+ * --dry-run 是默认行为的别名。整文件 writeTableDoc 仅用于新建缺失表文档。
  *
  * Prefer fill-mcp + host MCP when available. This is the fallback path (0.2.10+; multi-path 0.5.2+; Codex toml 0.7.8+).
  */
@@ -21,12 +18,40 @@ import path from "path";
 import { createRequire } from "module";
 import os from "os";
 import { loadMcpCredentials } from "./lib/mcp-paths.mjs";
+import { isCliMain } from "./lib/cli-main.mjs";
+import { writeFillMcpProfile } from "./lib/inventory-meta.mjs";
+
+/** mysql2 createConnection whitelist (0.7.26 FC-11) — drop MCP metadata like `server`. */
+const MYSQL2_CONN_KEYS = new Set([
+  "host",
+  "port",
+  "user",
+  "password",
+  "database",
+  "charset",
+  "timezone",
+  "ssl",
+  "socketPath",
+  "uri",
+  "connectTimeout",
+]);
+
+function mysql2ConnectionConfig(cfg) {
+  if (!cfg || typeof cfg !== "object") return {};
+  const out = {};
+  for (const [k, v] of Object.entries(cfg)) {
+    if (MYSQL2_CONN_KEYS.has(k) && v != null) out[k] = v;
+  }
+  return out;
+}
 
 function parseArgs(argv) {
   const out = {
     root: null,
     profile: "dev",
-    dryRun: false,
+    dryRun: true, // 0.7.24: default compare-only
+    writeDdl: false,
+    writeRedis: false,
     maxRedis: 80,
     help: false,
   };
@@ -35,7 +60,13 @@ function parseArgs(argv) {
     if (a === "--root") out.root = argv[++i];
     else if (a === "--profile") out.profile = argv[++i];
     else if (a === "--dry-run") out.dryRun = true;
-    else if (a === "--max-redis") out.maxRedis = Number(argv[++i]) || 80;
+    else if (a === "--write-ddl") {
+      out.writeDdl = true;
+      out.dryRun = false;
+    } else if (a === "--write-redis") {
+      out.writeRedis = true;
+      out.dryRun = false;
+    } else if (a === "--max-redis") out.maxRedis = Number(argv[++i]) || 80;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -44,12 +75,45 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/fill-calibrate-live.mjs --root <TARGET> [--profile dev] [--dry-run]
+  node scripts/fill-calibrate-live.mjs --root <TARGET> [--profile mysql]
+  node scripts/fill-calibrate-live.mjs --root <TARGET> --dry-run
+  node scripts/fill-calibrate-live.mjs --root <TARGET> --write-ddl [--write-redis]
 
-Calibrate docs/db/table via MySQL SHOW CREATE TABLE and docs/redis/keys via Redis SCAN.
-Reads credentials from mcp.json | .codex/config.toml (env_vars→env) | application-<profile>.yml; never invents.
+Default (0.7.24): compare/diff only — does NOT overwrite table docs.
+  --write-ddl    replace only the CREATE TABLE fenced block in existing docs
+                 (preserves 业务说明 / 字段说明 / 变更记录); creates stub if missing
+  --write-redis  write redis key family docs + inventory (opt-in)
+  --dry-run      alias for default compare-only
+
+Reads credentials from mcp.json | .codex/config.toml | application-<profile>.yml; never invents.
 Requires mysql2 + ioredis (install once under TEMP/harness-mcp-calibrate).
 `);
+}
+
+/** Replace ## 建表语句 fenced sql block; preserve rest of file. */
+export function replaceCreateTableBlock(md, ddl) {
+  const fence = "```sql\n" + ddl.trim() + "\n```";
+  if (/##\s*建表语句[\s\S]*?```sql[\s\S]*?```/i.test(md)) {
+    return md.replace(/##\s*建表语句[\s\S]*?```sql[\s\S]*?```/i, `## 建表语句\n\n${fence}`);
+  }
+  // No section — append
+  return md.replace(/\s*$/, `\n\n## 建表语句\n\n${fence}\n`);
+}
+
+function extractCreateSqlFence(md) {
+  const m = md.match(/##\s*建表语句[\s\S]*?```sql\s*([\s\S]*?)```/i);
+  return m ? m[1].trim() : null;
+}
+
+function ddlLooksHollow(md) {
+  // Minimal acceptance: field comment column all "—" and no 业务说明 body → warn
+  const fieldSec = md.match(/##\s*字段[\s\S]*?(?=\n##\s+|$)/);
+  if (!fieldSec) return false;
+  const rows = fieldSec[0].match(/^\|[^|\n]+\|/gm) || [];
+  const data = rows.filter((r) => !/---/.test(r) && !/字段名/.test(r));
+  if (!data.length) return false;
+  const allEmpty = data.every((r) => /\|\s*—\s*\|\s*$/.test(r.trim()) || /\| — \|$/.test(r));
+  return allEmpty;
 }
 
 function loadDrivers() {
@@ -265,7 +329,7 @@ async function main() {
       }
     }
     const conn = await mysql.createConnection({
-      ...mysqlCfg,
+      ...mysql2ConnectionConfig(mysqlCfg),
       connectTimeout: 10000,
     });
     const tables = inv.tables?.length
@@ -301,17 +365,44 @@ async function main() {
           meta = { nn, file: `${nn}-${name}.md` };
           byName.set(name, meta);
         }
-        if (!args.dryRun) {
+        const docPath = path.join(tableDir, meta.file);
+        const liveDdl = ddl.trim();
+        let existing = null;
+        if (fs.existsSync(docPath)) existing = fs.readFileSync(docPath, "utf8");
+        const prevDdl = existing ? extractCreateSqlFence(existing) : null;
+        const changed = !prevDdl || prevDdl.replace(/\s+/g, " ") !== liveDdl.replace(/\s+/g, " ");
+        if (!args.writeDdl) {
+          // default / --dry-run: compare only
+          if (changed) {
+            stats.db_diff = (stats.db_diff || 0) + 1;
+            console.error(`[calibrate] diff ${meta.file}: DDL ${prevDdl ? "changed" : "missing in doc"}`);
+          } else {
+            stats.db_unchanged = (stats.db_unchanged || 0) + 1;
+          }
+        } else if (existing) {
+          const patched = replaceCreateTableBlock(existing, liveDdl);
+          if (ddlLooksHollow(patched)) {
+            console.error(
+              `[calibrate] abort write ${meta.file}: field comments look hollow (db-no-comment risk)`
+            );
+            stats.db_err++;
+          } else {
+            fs.writeFileSync(docPath, patched, "utf8");
+            stats.db_wrote = (stats.db_wrote || 0) + 1;
+          }
+        } else {
+          // new file only under --write-ddl
           fs.writeFileSync(
-            path.join(tableDir, meta.file),
+            docPath,
             writeTableDoc(
               name,
-              ddl,
+              liveDdl,
               `mysql://${mysqlCfg.database}#SHOW CREATE TABLE ${name}`,
               cols.length ? cols : t.columns || []
             ),
             "utf8"
           );
+          stats.db_wrote = (stats.db_wrote || 0) + 1;
         }
         stats.db_ok++;
       } catch (e) {
@@ -323,7 +414,7 @@ async function main() {
       }
     }
     await conn.end();
-    if (!args.dryRun && inv.tables) {
+    if (args.writeDdl && inv.tables) {
       fs.mkdirSync(path.dirname(invPath), { recursive: true });
       fs.writeFileSync(invPath, JSON.stringify(inv, null, 2));
     }
@@ -401,13 +492,13 @@ async function main() {
 |---|---|---|---|---|
 | v0.2 | 扫描 | fill-calibrate-live | harness-eng | ${new Date().toISOString().slice(0, 10)} |
 `;
-      if (!args.dryRun) fs.writeFileSync(path.join(keysDir, `${nn}-${safe}.md`), body, "utf8");
+      if (args.writeRedis) fs.writeFileSync(path.join(keysDir, `${nn}-${safe}.md`), body, "utf8");
       stats.redis_families++;
     }
     stats.redis_keys = samples.length;
 
     const redisInvPath = path.join(root, "docs", "redis", ".fill-work", "inventory.json");
-    if (!args.dryRun) {
+    if (args.writeRedis) {
       const redisInv = fs.existsSync(redisInvPath)
         ? JSON.parse(fs.readFileSync(redisInvPath, "utf8"))
         : { keys: [] };
@@ -440,11 +531,40 @@ async function main() {
     "—— fill-calibrate-live 摘要 ——\n" +
       `db_ok=${stats.db_ok} db_miss=${stats.db_miss} redis_keys=${stats.redis_keys} families=${stats.redis_families}`
   );
+
+  // 0.7.26 FC-10: record profile used for live calibrate into meta
+  if (args.profile) {
+    try {
+      writeFillMcpProfile(root, args.profile);
+    } catch {
+      /* meta optional */
+    }
+  }
+
+  // 0.7.26 SG-9: inventory has tables but db_ok=0 → empty gate / fail
+  let invTableCount = 0;
+  try {
+    const invPath = path.join(root, "docs", "db", ".fill-work", "inventory.json");
+    if (fs.existsSync(invPath)) {
+      const inv = JSON.parse(fs.readFileSync(invPath, "utf8"));
+      invTableCount = Array.isArray(inv.tables) ? inv.tables.length : 0;
+    }
+  } catch {
+    invTableCount = 0;
+  }
+  if (mysqlCfg && invTableCount > 0 && stats.db_ok === 0) {
+    console.error(
+      `fill-calibrate-live: db_ok=0 but inventory has ${invTableCount} table(s) (empty gate)`
+    );
+    process.exitCode = 2;
+  }
 }
 
-try {
-  await main();
-} catch (e) {
-  console.error(String(e && e.stack ? e.stack : e));
-  process.exit(1);
+if (isCliMain(import.meta.url)) {
+  try {
+    await main();
+  } catch (e) {
+    console.error(String(e && e.stack ? e.stack : e));
+    process.exit(1);
+  }
 }

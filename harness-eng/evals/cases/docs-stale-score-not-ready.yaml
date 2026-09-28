@@ -1,0 +1,79 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: docs-stale-score-not-ready
+# 用例列表与报告中的可读标题。
+title: 代码已加字段而文档未同步时不得仅凭 score 宣称就绪
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e SG-1 / PB-4 / R9：代码与迁移已加 tag，docs 回退到旧版时，
+  fill-score 仍可能 ready=true、overall 高。Agent 须指出缺少字段级漂移检测、
+  不得仅凭 score-latest 宣称可 AI coding；应要求对照代码/迁移与契约文档。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/src/main/resources/db/migration/V1__init_schema.sql": |
+      CREATE TABLE task (
+        id BIGINT PRIMARY KEY,
+        title VARCHAR(128) NOT NULL
+      );
+    "backend/src/main/resources/db/migration/V2__add_task_tag.sql": |
+      ALTER TABLE task ADD COLUMN tag VARCHAR(32);
+    "backend/src/main/java/com/example/taskboard/task/TaskResponse.java": |
+      package com.example.taskboard.task;
+      public record TaskResponse(Long id, String title, String tag) {}
+    "docs/db/table/02-task.md": |
+      # task
+      ## 业务说明
+      任务表（旧版，未含 tag）。
+      ## 字段说明
+      | 列 | 说明 |
+      |---|---|
+      | id | 主键 |
+      | title | 标题 |
+      ## 建表语句
+      ```sql
+      CREATE TABLE task (id BIGINT PRIMARY KEY, title VARCHAR(128) NOT NULL);
+      ```
+    "docs/harness-eng/harness-meta.yaml": |
+      skill_version: "0.7.24"
+      ladder: L4
+      domains: [api, func, db]
+      last_mode: fill-truths
+    "docs/harness-eng/score-latest.json": |
+      {
+        "ai_coding_ready": true,
+        "overall": 97,
+        "gate_profile": "strict",
+        "blockers": []
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：代码与 V2 迁移已经给 task 加了 tag 字段，但 docs/db 表文档还是旧版（没有 tag）。
+    仓里 score-latest.json 却是 ai_coding_ready=true、overall=97。
+    请判断能不能据此宣称「可 AI coding / 契约已与代码一致」。不要写文件。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+  must_contain:
+    - "tag"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["漂移", "不一致", "未同步", "文档落后", "字段级", "盲区"]
+    - output_contains:
+        any: ["不能", "不可", "不应", "不足以", "不能仅凭", "勿仅凭"]
+    - output_contains:
+        any: ["ai_coding_ready", "score", "就绪"]
+  failure:
+    - output_contains:
+        any: ["score 已是 true 即可开干", "overall 97 证明文档与代码一致", "无需核对文档"]

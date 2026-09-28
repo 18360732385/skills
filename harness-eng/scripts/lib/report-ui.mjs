@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Build human-facing `ui` projection from fill-score JSON.
  * 报告壳主键：`ui.report_schema`（现 0.4.0）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。

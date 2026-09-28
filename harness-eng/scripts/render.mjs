@@ -42,6 +42,47 @@ import {
   migrateHarnessMetaIfNeeded,
   migrateMcpUsageGuideIfNeeded,
 } from "./lib/harness-meta.mjs";
+import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
+
+/** Map short variant name → template path. */
+function moduleAgentsTmplPath(v) {
+  if (v === "spring") return "agents/AGENTS.module.spring.md.tmpl";
+  if (v === "frontend") return "agents/AGENTS.module.frontend.md.tmpl";
+  return "agents/AGENTS.module.md.tmpl";
+}
+
+/**
+ * 0.7.25 QF-7/LT-2/MS-1: pick module AGENTS template per directory.
+ * Order: module_agents_by_dir → filesystem probe → global module_agents_template fallback.
+ * Global spring/frontend must NOT override a frontend-only (or spring-only) sibling dir.
+ */
+function resolveModuleAgentsTemplate(root, dir, params) {
+  const rel = String(dir).replace(/\\/g, "/");
+  const byDir = params.module_agents_by_dir || params.moduleAgentsByDir || {};
+  if (byDir[rel] || byDir[path.basename(rel)]) {
+    return moduleAgentsTmplPath(byDir[rel] || byDir[path.basename(rel)]);
+  }
+  const abs = path.join(root, rel);
+  const hasPom = fs.existsSync(path.join(abs, "pom.xml"));
+  const hasPkg = fs.existsSync(path.join(abs, "package.json"));
+  if (hasPom && !hasPkg) return moduleAgentsTmplPath("spring");
+  if (hasPkg && !hasPom) return moduleAgentsTmplPath("frontend");
+  if (hasPom && hasPkg) {
+    try {
+      const pom = fs.readFileSync(path.join(abs, "pom.xml"), "utf8");
+      if (/spring-boot/i.test(pom)) return moduleAgentsTmplPath("spring");
+    } catch {
+      /* fall through */
+    }
+    return moduleAgentsTmplPath("frontend");
+  }
+  const global = params.module_agents_template;
+  if (global === "spring" || global === "frontend" || global === "default") {
+    return moduleAgentsTmplPath(global === "default" ? "default" : global);
+  }
+  // auto / unset → generic
+  return moduleAgentsTmplPath("default");
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "..");
@@ -232,14 +273,43 @@ function scanPomModules(root) {
  * Spring 分册 Maven 命令：有根聚合 pom（含 &lt;module&gt;）→ -pl；否则 → -f &lt;module&gt;。
  * @returns {{ test: string, run: string, note: string, forbid: string }}
  */
+/** 0.7.26 LT-3: discover application-<profile> under module/resources (skip common/default). */
+function detectSpringProfiles(root, moduleDir) {
+  const dirs = [
+    path.join(root, moduleDir || ".", "src", "main", "resources"),
+    path.join(root, "src", "main", "resources"),
+  ];
+  const found = new Set();
+  for (const d of dirs) {
+    if (!fs.existsSync(d)) continue;
+    for (const f of fs.readdirSync(d)) {
+      const m = /^application-([^.]+)\.(ya?ml|properties)$/i.exec(f);
+      if (m && !/^(common|default)$/i.test(m[1])) found.add(m[1]);
+    }
+  }
+  return [...found];
+}
+
+function springProfileFlag(root, moduleDir) {
+  const profiles = detectSpringProfiles(root, moduleDir);
+  if (!profiles.length) return "";
+  const pick = profiles.includes("dev")
+    ? "dev"
+    : profiles.includes("local")
+      ? "local"
+      : profiles[0];
+  return ` -Dspring-boot.run.profiles=${pick}`;
+}
+
 function mavenCmdsForModule(root, moduleDir) {
   const dir = String(moduleDir || ".").replace(/\\/g, "/").replace(/\/$/, "") || ".";
   const hasRootPom = fs.existsSync(path.join(root, "pom.xml"));
   const isReactor = hasRootPom && scanPomModules(root).length > 0;
+  const pFlag = springProfileFlag(root, dir);
   if (isReactor) {
     return {
       test: `mvn -pl ${dir} -am test`,
-      run: `mvn -pl ${dir} spring-boot:run -Dspring-boot.run.profiles=dev`,
+      run: `mvn -pl ${dir} spring-boot:run${pFlag}`,
       note: "Maven 命令**必须在仓库根**执行（reactor / `${revision}` 等只从根解析）",
       forbid: `\`mvn -pl ${dir} -am spring-boot:run\`（正确：不加 \`-am\`；Maven 必须在仓库根）`,
     };
@@ -247,13 +317,24 @@ function mavenCmdsForModule(root, moduleDir) {
   const fArg = dir === "." ? "pom.xml" : `${dir}/pom.xml`;
   return {
     test: `mvn -f ${fArg} test`,
-    run: `mvn -f ${fArg} spring-boot:run -Dspring-boot.run.profiles=dev`,
+    run: `mvn -f ${fArg} spring-boot:run${pFlag}`,
     note: "本仓**无根聚合 pom**（或根 pom 无 `<module>`）；用 `mvn -f <module>/pom.xml`，勿假设 `-pl` / 仓库根 reactor",
     forbid: `勿使用 \`mvn -pl ${dir}\`（无根聚合时必失败）；改用 \`mvn -f ${fArg}\``,
   };
 }
 
-const SPRING_DB_BLOCK_ENABLED = `### 各环境库名（骨架）
+/** 0.7.26 LT-4: prefill migration mode/dir from params when known. */
+function buildSpringDbBlock(params) {
+  const ph = (params && params.placeholders) || {};
+  const mode =
+    (params && (params.db_migration_mode || params.DB_MIGRATION_MODE)) ||
+    ph.DB_MIGRATION_MODE ||
+    "manual_sql";
+  const migDir =
+    (params && (params.db_migration_dir || params.DB_MIGRATION_DIR)) ||
+    ph.DB_MIGRATION_DIR ||
+    "**/db/migration/";
+  return `### 各环境库名（骨架）
 
 | Profile | 配置文件 | MySQL 库名 |
 |---|---|---|
@@ -261,11 +342,14 @@ const SPRING_DB_BLOCK_ENABLED = `### 各环境库名（骨架）
 
 ## 库表迁移
 
-- 迁移模式：TODO(harness-eng): flyway / manual_sql / none（与 \`docs/db/db.md\` 声明一致）
+- **迁移模式**：\`${mode}\`
+- **迁移目录**：\`${migDir}\`
+- **约定 SSOT**：\`docs/db/db.md\`（迁移模式、命名正则、表文档演进、\`_change.sql\`）
+- 迁移模式与命名以该文件为准；本分册不重复写死源仓正则
 - **禁止**修改已发布迁移脚本；新变更只追加下一版本
 - manual_sql 模式：发版 / 新环境须人工按序执行；勿伪造 \`flyway_schema_history\`
-- 版本号 SSOT：TODO(harness-eng): 迁移目录与命名约定（勿采信 plan 正文「当前最高 Vn」）
 `;
+}
 
 const SPRING_DB_BLOCK_DISABLED = `> 本仓未启用 \`db\` 契约域；各环境库名表与迁移节省略。启用 db 域后补齐并同步 \`docs/db/\`。
 `;
@@ -306,6 +390,64 @@ function ensureYamlListPlaceholders(params, placeholders) {
   } else if (ph.AI_TOOLS_YAML == null) {
     ph.AI_TOOLS_YAML = "[]";
   }
+  return ph;
+}
+
+/**
+ * 0.7.26 LT-11 配套：为常见占位提供可推导缺省，避免 land/resume 因 PROJECT_NAME↔REPO_NAME
+ * 别名或未传 DATE/LADDER 等而整批失败。params.placeholders 显式值优先。
+ */
+function ensureStandardPlaceholders(params, placeholders, root) {
+  const ph = { ...placeholders };
+  const set = (k, v) => {
+    if (ph[k] == null || ph[k] === "") ph[k] = v;
+  };
+  const name =
+    ph.REPO_NAME ||
+    ph.PROJECT_NAME ||
+    params.repo_name ||
+    params.project_name ||
+    (root ? path.basename(path.resolve(root)) : "project");
+  const desc =
+    ph.REPO_DESC ||
+    ph.PROJECT_DESC ||
+    params.repo_desc ||
+    params.project_desc ||
+    name;
+  set("REPO_NAME", name);
+  set("PROJECT_NAME", name);
+  set("REPO_DESC", desc);
+  set("PROJECT_DESC", desc);
+  set("DATE", new Date().toISOString().slice(0, 10));
+  set("LADDER_TARGET", String(params.ladder || params.ladder_target || "L0"));
+  set("AGENTS_VARIANT", String(params.agents_variant || params.agentsVariant || "solo"));
+  set("GLOB_PROFILE", String(params.glob_profile || params.globProfile || "standard"));
+  const mods = params.module_dirs || params.moduleDirs || [];
+  set(
+    "MODULE_DIRS",
+    Array.isArray(mods) ? mods.join(", ") : String(mods || "")
+  );
+  set(
+    "DB_MIGRATION_MODE",
+    String(params.db_migration_mode || params.DB_MIGRATION_MODE || "manual_sql")
+  );
+  set(
+    "DB_MIGRATION_DIR",
+    String(params.db_migration_dir || params.DB_MIGRATION_DIR || "**/db/migration/")
+  );
+  set("BASE_PACKAGE", String(params.base_package || params.BASE_PACKAGE || ""));
+  set("FRONTEND_DIR", String(params.frontend_dir || params.FRONTEND_DIR || "frontend"));
+  set("GLOB_API", "**/controller/**,**/*Controller.java,docs/api/**");
+  set("GLOB_FUNC", "**/src/**,docs/func/**");
+  set("GLOB_DB", "**/db/**,docs/db/**");
+  set("GLOB_JOBS", "docs/jobs/**");
+  set("GLOB_KB", "docs/agent-kb/**");
+  set("GLOB_SUPERPOWERS", "docs/superpowers/**");
+  set("GLOB_AI_TOOLS", ".cursor/**");
+  set("GLOB_OBSERVABILITY", "**/src/**");
+  set("GLOB_FRONTEND", "**/frontend/**,**/src/**");
+  set("STACK_BADGES", "");
+  set("OPENAPI_BRIDGE_TIP", "");
   return ph;
 }
 
@@ -459,36 +601,96 @@ function parseSimpleYamlMap(text) {
 }
 
 function formatYamlValue(v) {
-  if (Array.isArray(v)) return `[${v.join(", ")}]`;
-  return String(v);
+  if (Array.isArray(v)) {
+    return `[${v.map((x) => JSON.stringify(String(x))).join(", ")}]`;
+  }
+  const s = String(v);
+  // Quote when needed (preserve intentional quotes for versions / modes)
+  if (/[:#{}\[\],&*?|>!%@`]/.test(s) || /^(true|false|null|\d+)/i.test(s) || /\s/.test(s)) {
+    return JSON.stringify(s);
+  }
+  return s;
 }
 
+/**
+ * Split existing YAML into top-level key blocks (preserves nested inventory / comments).
+ * @returns {{ header: string, blocks: Map<string,string>, order: string[] }}
+ */
+function splitYamlTopLevelBlocks(text) {
+  const lines = String(text || "").split(/\r?\n/);
+  const header = [];
+  const blocks = new Map();
+  const order = [];
+  let i = 0;
+  while (i < lines.length) {
+    const t = lines[i].trim();
+    if (!t || t.startsWith("#")) {
+      header.push(lines[i]);
+      i++;
+      continue;
+    }
+    break;
+  }
+  let curKey = null;
+  let curLines = [];
+  const flush = () => {
+    if (!curKey) return;
+    blocks.set(curKey, curLines.join("\n"));
+    if (!order.includes(curKey)) order.push(curKey);
+    curKey = null;
+    curLines = [];
+  };
+  for (; i < lines.length; i++) {
+    const line = lines[i];
+    const m = /^([A-Za-z0-9_-]+)\s*:/.exec(line);
+    if (m && !/^\s/.test(line)) {
+      flush();
+      curKey = m[1];
+      curLines = [line];
+    } else if (curKey) {
+      curLines.push(line);
+    }
+  }
+  flush();
+  return { header: header.join("\n"), blocks, order };
+}
+
+/**
+ * 0.7.26 ID-6: merge managed keys while preserving nested blocks (inventory) and mid-file comments.
+ */
 function mergeYamlMaps(existingText, incomingText) {
   const exist = parseSimpleYamlMap(existingText);
   const incoming = parseSimpleYamlMap(incomingText);
-  const out = { ...exist.map };
+  const split = splitYamlTopLevelBlocks(existingText);
+  const outBlocks = new Map(split.blocks);
+  const order = [...split.order];
+
   for (const [k, v] of Object.entries(incoming.map)) {
-    if (YAML_MANAGED_KEYS.has(k)) out[k] = v;
-    else if (!(k in out)) out[k] = v;
-    // else: keep existing non-managed key
-  }
-  const order = [];
-  for (const k of exist.order) {
-    if (k in out) order.push(k);
-  }
-  for (const k of Object.keys(out)) {
+    if (!YAML_MANAGED_KEYS.has(k) && outBlocks.has(k)) continue;
+    const line = `${k}: ${formatYamlValue(v)}`;
+    outBlocks.set(k, line);
     if (!order.includes(k)) order.push(k);
   }
-  const header =
-    exist.headerComments.length > 0
-      ? exist.headerComments
-      : incoming.headerComments;
-  const lines = [...header];
-  if (lines.length && lines[lines.length - 1].trim() !== "") lines.push("");
-  for (const k of order) {
-    lines.push(`${k}: ${formatYamlValue(out[k])}`);
+
+  // Append new non-managed keys from incoming only if missing
+  for (const [k, v] of Object.entries(incoming.map)) {
+    if (YAML_MANAGED_KEYS.has(k)) continue;
+    if (outBlocks.has(k)) continue;
+    outBlocks.set(k, `${k}: ${formatYamlValue(v)}`);
+    order.push(k);
   }
-  return lines.join("\n").replace(/\s*$/, "") + "\n";
+
+  const header =
+    split.header.trim().length > 0
+      ? split.header
+      : exist.headerComments.join("\n");
+  const parts = [];
+  if (header) parts.push(header.replace(/\s*$/, ""));
+  for (const k of order) {
+    const block = outBlocks.get(k);
+    if (block != null) parts.push(block.replace(/\s*$/, ""));
+  }
+  return parts.join("\n") + "\n";
 }
 
 function isYamlTarget(targetRel, item) {
@@ -567,9 +769,38 @@ function parseManifestFiles(manifestText) {
             : e.when_rulehook === false || e.when_rulehook === "false"
               ? false
               : undefined,
+        when_domains: normalizeWhenList(e.when_domains),
+        when_mcp: normalizeWhenList(e.when_mcp),
       };
     })
     .filter(Boolean);
+}
+
+/** Parse when_domains / when_mcp list from manifest (string | array). */
+function normalizeWhenList(raw) {
+  if (raw == null || raw === "") return undefined;
+  if (Array.isArray(raw)) {
+    const a = raw.map((x) => String(x).trim().toLowerCase()).filter(Boolean);
+    return a.length ? a : undefined;
+  }
+  const s = String(raw)
+    .replace(/^\[|\]$/g, "")
+    .split(",")
+    .map((x) => x.trim().replace(/^["']|["']$/g, "").toLowerCase())
+    .filter(Boolean);
+  return s.length ? s : undefined;
+}
+
+/** mcp engines selected via params.mcp / mcp_engines / Q_MCP answers. */
+function resolveMcpEngines(params) {
+  const raw =
+    (params && (params.mcp || params.mcp_engines || params.mcp_servers)) || [];
+  const list = Array.isArray(raw) ? raw : String(raw).split(",");
+  return new Set(
+    list
+      .map((x) => String(x || "").trim().toLowerCase())
+      .filter((x) => x && x !== "browser")
+  );
 }
 
 function expandFromManifest(manifestPath, params, root) {
@@ -590,7 +821,10 @@ function expandFromManifest(manifestPath, params, root) {
   const skipBasicGate = hooksFamily.includes("commit-gate-extended");
   // keep params in sync so expandHooksFamily / placeholders 一致
   params.hooks_family = hooksFamily;
-  const domains = new Set(params.domains || []);
+  const domains = new Set(
+    (params.domains || []).map((d) => String(d).toLowerCase())
+  );
+  const mcpEngines = resolveMcpEngines(params);
   const variant = params.agents_variant || "solo";
   const includeOptional = new Set(normalizeIncludeOptional(params.include_optional));
   let moduleDirs = params.module_dirs || [];
@@ -610,6 +844,19 @@ function expandFromManifest(manifestPath, params, root) {
       .filter(Boolean)
   );
   const files = [];
+
+  /** 0.7.26 LT-6/LT-8: when_domains / when_mcp gates. */
+  function passesWhenGates(e) {
+    if (e.when_domains && e.when_domains.length) {
+      if (![...e.when_domains].some((d) => domains.has(d))) return false;
+    }
+    if (e.when_mcp && e.when_mcp.length) {
+      // empty mcp selection → skip gated hooks (must explicitly select mysql etc.)
+      if (!mcpEngines.size) return false;
+      if (![...e.when_mcp].some((m) => mcpEngines.has(m))) return false;
+    }
+    return true;
+  }
 
   function actionForTarget(targetRel, entryId, entry) {
     const relNorm = String(targetRel || "").replace(/\\/g, "/");
@@ -730,12 +977,6 @@ function expandFromManifest(manifestPath, params, root) {
     }
 
     if (e.id === "agents-module") {
-      const moduleTmpl =
-        params.module_agents_template === "spring"
-          ? "agents/AGENTS.module.spring.md.tmpl"
-          : params.module_agents_template === "frontend"
-            ? "agents/AGENTS.module.frontend.md.tmpl"
-            : e.template;
       const domainsLower = new Set(
         [...domains].map((d) => String(d).toLowerCase())
       );
@@ -743,10 +984,9 @@ function expandFromManifest(manifestPath, params, root) {
       for (const dir of moduleDirs) {
         const name = path.basename(dir);
         const target = `${dir}/AGENTS.md`;
-        const maven =
-          params.module_agents_template === "spring"
-            ? mavenCmdsForModule(root, dir)
-            : null;
+        const moduleTmpl = resolveModuleAgentsTemplate(root, dir, params);
+        const isSpring = /AGENTS\.module\.spring/.test(moduleTmpl);
+        const maven = isSpring ? mavenCmdsForModule(root, dir) : null;
         files.push({
           id: e.id,
           template: moduleTmpl,
@@ -772,11 +1012,15 @@ function expandFromManifest(manifestPath, params, root) {
       continue;
     }
 
-    // L5：rules 落到 SSOT 侧，由 sync.mjs 分发到各工具目录
-    let itemTarget =
-      agentConfig && typeof e.target === "string" && e.target.startsWith(".cursor/rules/")
-        ? `docs/agent-config/rules/${path.basename(e.target)}`
-        : e.target;
+    // L5：rules / Codex hooks 落到 SSOT 侧，由 sync.mjs 分发到各工具目录
+    let itemTarget = e.target;
+    if (agentConfig && typeof e.target === "string") {
+      if (e.target.startsWith(".cursor/rules/")) {
+        itemTarget = `docs/agent-config/rules/${path.basename(e.target)}`;
+      } else if (e.target.startsWith(".codex/hooks/")) {
+        itemTarget = `docs/agent-config/hooks/${path.basename(e.target)}`;
+      }
+    }
     if (e.id === "harness-meta") itemTarget = HARNESS_META_CANONICAL;
     if (e.id === "mcp-readme") itemTarget = MCP_USAGE_GUIDE_CANONICAL;
     const action = actionForTarget(itemTarget, e.id, e);
@@ -1153,6 +1397,25 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   ) {
     rendered = filterGitignoreSnippet(rendered, opts.mcpTracking || "example_only");
   }
+  // 0.7.25 LT-5: Q_SEED → prefill Commands from package.json / pom
+  const seedOn =
+    opts.seed !== false &&
+    opts.params?.seed !== false &&
+    opts.params?.Q_SEED !== false &&
+    opts.params?.q_seed !== false;
+  if (
+    seedOn &&
+    /AGENTS\.md$/i.test(targetRel.replace(/\\/g, "/")) &&
+    /TODO\(harness-eng\)/i.test(rendered)
+  ) {
+    const relNorm = targetRel.replace(/\\/g, "/");
+    const allMods = opts.params?.module_dirs || opts.params?.moduleDirs || [];
+    // 分册只预填本目录；根 AGENTS 汇总各模块
+    const moduleDirs = /\/AGENTS\.md$/i.test(relNorm)
+      ? [path.dirname(relNorm)].filter((d) => d && d !== ".")
+      : allMods;
+    rendered = applyCommandsPrefill(rendered, root, { moduleDirs });
+  }
   const unresolvedPlaceholders = findUnresolvedPlaceholders(rendered);
 
   if (dryRun) {
@@ -1190,7 +1453,10 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   }
 
   if (action === "create") {
-    if (exists) throw new Error(`create refused: ${targetRel} already exists (use merge/skip/backup-create)`);
+    if (exists)
+      throw new Error(
+        `create refused: ${targetRel} already exists (use merge/skip/backup-create/replace)`
+      );
     ensureDir(abs);
     writeRenderedFile(abs, rendered, targetRel);
     log.push({
@@ -1285,7 +1551,8 @@ function main() {
   }
   const root = path.resolve(args.root);
   const params = JSON.parse(fs.readFileSync(path.resolve(args.params), "utf8"));
-  const placeholders = ensureYamlListPlaceholders(params, params.placeholders || {});
+  let placeholders = ensureYamlListPlaceholders(params, params.placeholders || {});
+  placeholders = ensureStandardPlaceholders(params, placeholders, root);
   // 0.5.0 计算占位：agent_config / pitfalls 词表 / hooks 家族（params.placeholders 优先）
   const agentConfig = resolveAgentConfig(params);
   if (placeholders.AGENT_CONFIG == null) {
@@ -1309,6 +1576,16 @@ function main() {
   if (placeholders.AI_TOOLS_JSON == null) {
     const tools = Array.isArray(params.ai_tools) ? params.ai_tools : [];
     placeholders.AI_TOOLS_JSON = JSON.stringify(tools);
+  }
+  // 0.7.26 ID-6: LAST_MODE from params.mode or placeholders
+  if (placeholders.LAST_MODE == null || placeholders.LAST_MODE === "") {
+    placeholders.LAST_MODE = String(params.mode || params.last_mode || "land");
+  }
+  // 0.7.26 LT-11: common hook placeholders get safe defaults so manifest expand
+  // does not leave {{CODE_PREFIXES}} (fatal unresolved) when Agent omits them
+  if (placeholders.CODE_PREFIXES == null || placeholders.CODE_PREFIXES === "") {
+    placeholders.CODE_PREFIXES =
+      params.code_prefixes || params.CODE_PREFIXES || "src/";
   }
   Object.assign(
     placeholders,
@@ -1350,7 +1627,7 @@ function main() {
 
   const mcpTracking = resolveMcpTracking(params, root);
   for (const item of files) {
-    applyOne(root, item, placeholders, args.dryRun, log, { mcpTracking });
+    applyOne(root, item, placeholders, args.dryRun, log, { mcpTracking, params });
   }
 
   const unresolved = [];
@@ -1381,16 +1658,18 @@ function main() {
   }
 
   if (unresolved.length) {
-    console.warn("⚠️ 未解析的占位符:");
+    // 0.7.26 LT-11: unresolved placeholders are fatal (silent {{X}} corrupts hooks)
+    console.error("未解析的占位符（exit 1）:");
     for (const u of unresolved) {
-      console.warn(`  ${u.target}: ${u.placeholders.join(", ")}`);
+      console.error(`  ${u.target}: ${u.placeholders.join(", ")}`);
     }
   }
 
+  const ok = unresolved.length === 0;
   console.log(
     JSON.stringify(
       {
-        ok: true,
+        ok,
         dryRun: args.dryRun,
         backup: !!args.backup,
         root,
@@ -1403,6 +1682,7 @@ function main() {
       2
     )
   );
+  if (!ok && !args.dryRun) process.exitCode = 1;
 }
 
 try {

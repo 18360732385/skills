@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.23
- * HARNESS_ENG_VERSION: 0.7.23
+ * HARNESS_SYNC_TMPL_ID: 0.7.26
+ * HARNESS_ENG_VERSION: 0.7.26
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -42,8 +42,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.23";
-const HARNESS_ENG_VERSION = "0.7.23";
+const HARNESS_SYNC_TMPL_ID = "0.7.26";
+const HARNESS_ENG_VERSION = "0.7.26";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = {{AI_TOOLS_JSON}};
@@ -734,15 +734,85 @@ planSkills();
 planClaudeMd();
 planSkillsManagedManifests();
 
+/** 0.7.26 HS-7: hooks.json / settings hooks 引用的脚本必须在 plan 或磁盘上存在 */
+function collectHookScriptRefs() {
+  const refs = new Set();
+  const re = /(?:^|[\s"'`])((?:\.[a-zA-Z0-9_-]+\/hooks\/|docs\/agent-config\/hooks\/)[^\s"'`]+)/g;
+  function scanText(text) {
+    if (!text || typeof text !== "string") return;
+    let m;
+    const r = new RegExp(re.source, "g");
+    while ((m = r.exec(text)) !== null) {
+      const p = m[1].replace(/\\/g, "/").replace(/^\.\//, "");
+      if (/\.(js|cmd|mjs)$/i.test(p)) refs.add(p);
+    }
+  }
+  function walkObj(o) {
+    if (!o) return;
+    if (typeof o === "string") {
+      scanText(o);
+      return;
+    }
+    if (Array.isArray(o)) {
+      for (const x of o) walkObj(x);
+      return;
+    }
+    if (typeof o === "object") {
+      for (const v of Object.values(o)) walkObj(v);
+    }
+  }
+  for (const [rel, content] of plan.entries()) {
+    if (!/(hooks\.json|settings\.json)$/i.test(rel)) continue;
+    try {
+      walkObj(JSON.parse(content));
+    } catch {
+      scanText(content);
+    }
+  }
+  // Also scan on-disk hooks.json if planned
+  for (const rel of [
+    ".codex/hooks.json",
+    ".cursor/hooks.json",
+    ".trae/hooks.json",
+    ".claude/settings.json",
+    ".qoder/settings.json",
+    ".codebuddy/settings.json",
+  ]) {
+    if (plan.has(rel)) continue;
+    const abs = path.join(ROOT, rel);
+    if (!fs.existsSync(abs)) continue;
+    try {
+      walkObj(JSON.parse(fs.readFileSync(abs, "utf8")));
+    } catch {
+      /* ignore */
+    }
+  }
+  return [...refs];
+}
+
+function checkHookRefsExist() {
+  const missing = [];
+  for (const rel of collectHookScriptRefs()) {
+    const inPlan = plan.has(rel);
+    const onDisk = fs.existsSync(path.join(ROOT, rel));
+    if (!inPlan && !onDisk) missing.push(rel);
+  }
+  return missing;
+}
+
 const { diffs, stale, unmanaged } = apply();
 if (CHECK_ONLY) {
+  const missingHooks = checkHookRefsExist();
   if (unmanaged.length) {
     console.error(`[agent-config] unmanaged（skills 清单外，不删除） ${unmanaged.length} 处：`);
     for (const f of unmanaged) console.error(`  - ${f} (unmanaged)`);
   }
-  if (diffs.length || stale.length) {
-    console.error(`[agent-config] 漂移 ${diffs.length} 处，过期文件 ${stale.length} 处：`);
+  if (diffs.length || stale.length || missingHooks.length) {
+    console.error(
+      `[agent-config] 漂移 ${diffs.length} 处，过期文件 ${stale.length} 处，悬空 hook 引用 ${missingHooks.length} 处：`
+    );
     for (const f of [...diffs, ...stale.map((s) => s + " (stale)")]) console.error(`  - ${f}`);
+    for (const f of missingHooks) console.error(`  - ${f} (missing-hook-ref)`);
     console.error("请执行：node scripts/agent-config/sync.mjs");
     process.exit(1);
   }

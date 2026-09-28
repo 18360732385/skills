@@ -58,8 +58,10 @@ alwaysApply: false
 - `.md` 与 `_change.sql` 同行提交；禁止只改索引漏更真相
 - 迁移类翻车回流 `docs/agent-kb/pitfalls.md`
 
-## 迁移模式（`db.md` 索引须声明）
+## 迁移模式与命名（SSOT：`docs/db/db.md`）
 
-- `flyway`：自动 / 半自动迁移；只追加新版本，禁改已发布脚本。推荐文件名：`V[0-9]{4}__(DDL|DML)__[a-z0-9_]+\.sql`；DDL/DML 分文件；下一号以目录最高号 +1 为准，**勿**把「当前最高号」写进 AGENTS/README 当硬编码上限。
-- `manual_sql`：**无** Flyway 依赖（`spring.flyway.*` 不生效）；发版 / 新环境须**人工按序**执行迁移脚本；空库首迁以 `db.md` 声明的基线序列为准；`*_change.sql` 仅追溯 / 增量草稿，勿当首迁等价物；勿伪造 `flyway_schema_history`。
+- **命名、表文档演进、`_change.sql`、头注释、flyway vs 人工执行** → 以 `docs/db/db.md`「维护约定」为准；本 rule 不另写死源仓正则。
+- `flyway`：自动 / 半自动迁移；只追加新版本，禁改已发布脚本。默认文件名 `V{n}__snake.sql`（见 db.md）。
+- `manual_sql`：**无** Flyway 依赖；发版 / 新环境须**人工按序**执行；`*_change.sql` 仅追溯 / 增量草稿；勿伪造 `flyway_schema_history`。
 - `none`：无迁移脚本（表结构靠 `table/` 真相维护）。
+- 建表语句块 = 变更后**完整** CREATE TABLE；下一号以目录最高号 +1 为准，**勿**把「当前最高号」写进 AGENTS/README。

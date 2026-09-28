@@ -15,6 +15,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { mergeApiInventories, loadDomainInventory } from "./lib/inventory-paths.mjs";
 import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
+import { readInventoryMeta } from "./lib/inventory-meta.mjs";
 import { createProgress } from "./lib/progress-log.mjs";
 import { writeProgress } from "./lib/progress-file.mjs";
 import {
@@ -24,6 +25,11 @@ import {
   redisHasExampleOrUnknown,
   redisHasTtlContent,
 } from "./lib/doc-density.mjs";
+import {
+  detectDbFieldDrift,
+  detectApiFieldDrift,
+  hasBusinessBody,
+} from "./lib/field-drift.mjs";
 import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
@@ -105,6 +111,7 @@ function parseArgs(argv) {
     focus: "full", // 0.3.1: morph | gate | full — 只裁剪中文摘要
     domains: [], // 0.3.4: CLI override; empty → meta / disk / core
     migratePolicy: false,
+    help: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -135,6 +142,7 @@ function parseArgs(argv) {
     else if (a === "--write-progress") out.writeProgress = true;
     else if (a === "--output") out.output = argv[++i];
     else if (a === "--json") out.json = true;
+    else if (a === "--help" || a === "-h") out.help = true;
     else if (a === "--focus") {
       const f = String(argv[++i] || "full").toLowerCase();
       if (!["morph", "gate", "full"].includes(f))
@@ -142,8 +150,31 @@ function parseArgs(argv) {
       out.focus = f;
     } else throw new Error(`Unknown arg: ${a}`);
   }
+  if (out.help) return out;
   if (!out.root) throw new Error("Required: --root <TARGET>");
   return out;
+}
+
+function printHelp() {
+  console.log(`Usage:
+  node scripts/fill-score.mjs --root <TARGET> [options]
+
+Options:
+  --root <path>           Target repo root (required)
+  --output <path>         Write score JSON (relative paths resolve against --root)
+  --json                  Print full JSON to stdout (also when --output is set)
+  --inventory <path>      API inventory JSON (else docs/api/.fill-work or memory rescan)
+  --domains a,b,c         Domain list override
+  --focus morph|gate|full Summary focus (default full)
+  --ready-quality <n>     Morph quality floor override
+  --ready-coverage <n>    Coverage ratio override
+  --compare <path>        Previous score JSON for diff hints
+  --quiet / --verbose / --summary-only / --write-progress / --migrate-policy
+  --help, -h
+
+Path note (0.7.26 SG-10): --output is relative to --root; fill-report-html --score
+likewise prefers --root when both are given.
+`);
 }
 
 function buildSuggestUpgrade(report, metaLadder) {
@@ -359,7 +390,7 @@ function buildChecks(text, domain, policy) {
       "has-field-comment",
       (fc.filled > 0 && fc.ratio >= 0.2) || (dens.total > 0 && dens.ratio >= 0.2)
     );
-    add("has-business-desc", /业务说明|表说明|用途[：:]|表级/.test(raw));
+    add("has-business-desc", hasBusinessBody(raw));
   }
   if (domain === "redis") {
     add(
@@ -434,7 +465,8 @@ function scoreTruthFile(text, domain, policy) {
     if ((fc.filled > 0 && fc.ratio >= 0.2) || (dens.total > 0 && dens.ratio >= 0.2))
       score += 15;
     else issues.push("缺字段说明/COMMENT");
-    if (/业务说明|表说明|用途[：:]|表级/.test(raw)) score += 5;
+    // 0.7.25 SG-2: heading-only 业务说明不得分
+    if (hasBusinessBody(raw)) score += 5;
   }
   if (domain === "redis") {
     if (/##\s*Key 模式/.test(raw) && !/从业务调用方补全/.test(raw) && !/模式 \| TODO/i.test(raw))
@@ -514,14 +546,19 @@ function loadJson(p) {
 function coverageFromInventory(inventory, docEndpointCount) {
   if (!inventory || !inventory.endpoints) return null;
   const code = inventory.endpoints.length;
-  const covered = Math.min(docEndpointCount, code);
-  const ratio = code ? covered / code : 0;
-  return {
+  // 0.7.24: do not silently clamp covered>code to hide inventory undercount
+  const ratio = code ? docEndpointCount / code : 0;
+  const out = {
     covered: docEndpointCount,
     code,
-    ratio: Math.round(ratio * 1000) / 1000,
-    percent: Math.round(ratio * 100),
+    ratio: Math.round(Math.min(ratio, 1) * 1000) / 1000,
+    percent: Math.round(Math.min(ratio, 1) * 100),
   };
+  if (code > 0 && docEndpointCount > code) {
+    out.anomaly = "covered_gt_code";
+    out.raw_ratio = Math.round(ratio * 1000) / 1000;
+  }
+  return out;
 }
 
 /** Count documented Redis key patterns in truth md (table rows with `pattern`). */
@@ -544,13 +581,17 @@ function coverageByDomain(root, apiCoverage) {
   if (dbInv && Array.isArray(dbInv.tables)) {
     const code = dbInv.tables.length;
     const docs = domainFiles(root, "db").length;
-    const ratio = code ? Math.min(docs, code) / code : 0;
+    const ratio = code ? docs / code : 0;
     out.db = {
       covered: docs,
       code,
-      ratio: Math.round(ratio * 1000) / 1000,
-      percent: Math.round(ratio * 100),
+      ratio: Math.round(Math.min(ratio, 1) * 1000) / 1000,
+      percent: Math.round(Math.min(ratio, 1) * 100),
     };
+    if (code > 0 && docs > code) {
+      out.db.anomaly = "covered_gt_code";
+      out.db.raw_ratio = Math.round(ratio * 1000) / 1000;
+    }
   }
   const redisInv = loadDomainInventory(root, "redis");
   if (redisInv && Array.isArray(redisInv.keys)) {
@@ -569,26 +610,30 @@ function coverageByDomain(root, apiCoverage) {
   }
   const funcInv = loadDomainInventory(root, "func");
   if (funcInv && Array.isArray(funcInv.modules)) {
+    // 0.7.26 FC-7: coverage by Service, not modules
     const code = funcInv.modules.reduce(
       (n, m) => n + (m.services?.length || m.stats?.services || 0),
       0
     );
-    const docs = domainFiles(root, "func").length;
-    const ratio = code ? Math.min(docs, Math.max(code, 1)) / Math.max(code, 1) : 0;
-    // func coverage: modules with truths / modules in inventory (fallback file count)
-    const invMods = funcInv.modules.length;
-    const coveredMods = Math.min(docs, invMods || docs);
+    let docs = 0;
+    for (const f of domainFiles(root, "func")) {
+      const text = fs.readFileSync(f, "utf8");
+      const secs = text.match(/^##\s+\d+\.\s+/gm);
+      if (secs) docs += secs.length;
+      else if (/Service|服务/.test(text)) docs += 1;
+    }
+    const ratio = code ? docs / code : 0;
     out.func = {
-      covered: coveredMods,
-      code: invMods || code,
-      ratio: invMods
-        ? Math.round((coveredMods / invMods) * 1000) / 1000
-        : Math.round(ratio * 1000) / 1000,
-      percent: invMods
-        ? Math.round((coveredMods / invMods) * 100)
-        : Math.round(ratio * 100),
-      unit: "modules",
+      covered: docs,
+      code: code || docs,
+      ratio: Math.round(Math.min(ratio, 1) * 1000) / 1000,
+      percent: Math.round(Math.min(ratio, 1) * 100),
+      unit: "services",
     };
+    if (code > 0 && docs > code) {
+      out.func.anomaly = "covered_gt_code";
+      out.func.raw_ratio = Math.round(ratio * 1000) / 1000;
+    }
   }
   // 0.3.5: jobs coverage prefers inventory.tasks vs docs
   const jobsInv = loadDomainInventory(root, "jobs");
@@ -784,6 +829,12 @@ function loadScorePolicy(root) {
   const nl = raw.match(/require_no_lagging_domain:\s*(true|false)/i);
   if (nl) gate.require_no_lagging_domain = nl[1].toLowerCase() === "true";
   if (base.gate_profile === "gold") {
+    // 0.7.25 SG-6: land 曾写死的 strict 指纹（75 / truths）在切 gold 时视为未设置
+    if (gate.morph_floor === 75) delete gate.morph_floor;
+    if (gate.todo_scan === "truths") {
+      delete gate.todo_scan;
+      delete explicit.todo_scan;
+    }
     base.gate = applyGoldGateDefaults(gate, explicit);
     base.coverage_targets = applyGoldCoverageDefaults(base.coverage_targets);
     if (!mode) base.coverage_mode = "all_domains";
@@ -955,6 +1006,10 @@ function scanSemanticApi(root) {
 
 function main() {
   const args = parseArgs(process.argv);
+  if (args.help) {
+    printHelp();
+    return;
+  }
   const root = path.resolve(args.root);
   if (!fs.existsSync(root)) throw new Error(`root missing: ${root}`);
   const metaFull = readHarnessMeta(root);
@@ -984,7 +1039,9 @@ function main() {
       coverageSource = "file";
     } else {
       try {
-        inventory = scanApiInventoryMemory(root);
+        // 0.7.24: honor persisted controller_root from harness-meta
+        const ctrlRoot = readInventoryMeta(root)?.api?.controller_root || null;
+        inventory = scanApiInventoryMemory(root, ctrlRoot);
         if (inventory) coverageSource = "rescanned";
       } catch (e) {
         progress.log(`inventory rescan skip: ${e.message || e}`);
@@ -1010,7 +1067,7 @@ function main() {
   );
   const report = {
     ok: true,
-    root,
+    root: ".",
     modules: args.modules,
     scored_domains: domains,
     threshold: args.threshold,
@@ -1217,16 +1274,30 @@ function main() {
   report.draft_vs_ssot =
     "SSOT 须过 acceptance；heuristic draft 仅 .fill-work（见 truth-quality.md）";
 
+  // 0.7.25 SG-1: field-level doc↔code drift (strict/gold blocker)
+  const dbDrift = detectDbFieldDrift(root);
+  const apiDrift = detectApiFieldDrift(root, inventory);
+  report.field_drift = {
+    db: dbDrift,
+    api: apiDrift,
+    ok: dbDrift.ok && apiDrift.ok,
+  };
+  const driftBlockers = [
+    ...(gateProfile === "strict" || gateProfile === "gold" ? dbDrift.blockers : []),
+    ...(gateProfile === "strict" || gateProfile === "gold" ? apiDrift.blockers : []),
+  ];
+
   const baseAiOk =
     skel.ok && coverageReady && semanticOk && (plan.present ? planClosed : false);
   const gateEval = evaluateAiCodingGate(report, scorePolicy, gold);
-  const aiCoding = baseAiOk && gateEval.ok;
+  const aiCoding = baseAiOk && gateEval.ok && driftBlockers.length === 0;
   const baseBlockers = [
     !skel.ok && "skeleton_ready",
     !coverageReady && "coverage_ready",
     !semanticOk && "semantic_ready",
     !plan.present && "fill_plan_missing",
     plan.present && !planClosed && "fill_plan_open_batches",
+    ...driftBlockers,
   ].filter(Boolean);
 
   report.skeleton_ready = skel;
@@ -1339,6 +1410,7 @@ function main() {
   );
 
   // 0.2.19 / 0.7.18: --output 相对路径相对 --root（避免 cwd=skill 目录写进技能仓）
+  // 0.7.24: --json 时无论是否 --output 都向 stdout 打 JSON（refresh 依赖 stdout 解析）
   if (args.output) {
     const outAbs = path.isAbsolute(args.output)
       ? path.resolve(args.output)
@@ -1346,7 +1418,8 @@ function main() {
     fs.mkdirSync(path.dirname(outAbs), { recursive: true });
     fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
     console.error(`Wrote ${outAbs}`);
-  } else {
+  }
+  if (args.json || !args.output) {
     console.log(JSON.stringify(report, null, 2));
   }
 

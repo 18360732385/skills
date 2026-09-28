@@ -268,8 +268,10 @@ function indent(text, pad) {
 /** 单个 code 条件：'/regex/' → new RegExp（JSON 字符串包裹，避免分隔符冲突）；否则前缀匹配。 */
 function codePred(entry) {
   const s = String(entry);
+  // 0.7.26 HS-4: docs/** 变更不算代码侧（避免改索引误报契约同步）
+  const docsGuard = `!f.startsWith("docs/") && `;
   if (s.length > 1 && s.startsWith("/") && s.endsWith("/")) {
-    return `new RegExp(${JSON.stringify(s.slice(1, -1))}).test(f)`;
+    return `${docsGuard}new RegExp(${JSON.stringify(s.slice(1, -1))}).test(f)`;
   }
   return `f.startsWith(${JSON.stringify(s)})`;
 }
@@ -287,25 +289,41 @@ function loadRegistry() {
 
 /**
  * Expand a comma-separated glob list into hook code predicates.
- * `frontend/src/api/**` → prefix `frontend/src/api/`；含 `*` 的片段转简易 regex。
+ * Trailing double-star dirs become path prefixes; globs with wildcards become regexes.
+ * 0.7.24: expand double-star before single-star (sentinel) so nested Controller globs match;
+ * bare file paths stay exact (no forced trailing slash).
  */
 export function globListToCodePreds(globCsv) {
   if (!globCsv || typeof globCsv !== "string") return [];
   const out = [];
+  const DIR = "\u0000DIR\u0000";
+  const STAR = "\u0000STAR\u0000";
   for (const raw of globCsv.split(/[,;]/)) {
     let g = raw.trim().replace(/\\/g, "/");
     if (!g) continue;
     g = g.replace(/^\*\*\//, "");
     if (g.endsWith("/**")) {
-      out.push(g.slice(0, -3).replace(/\*\*/g, "").replace(/\/$/, "") + "/");
+      const prefix = g
+        .slice(0, -3)
+        .replace(/\*\*/g, "")
+        .replace(/\/+/g, "/")
+        .replace(/\/$/, "");
+      out.push(prefix ? prefix + "/" : "");
       continue;
     }
-    if (g.includes("*")) {
+    if (g.includes("*") || g.includes("?")) {
       const esc = g
         .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-        .replace(/\*\*/g, ".*")
-        .replace(/\*/g, "[^/]*");
+        .replace(/\*\*/g, DIR)
+        .replace(/\*/g, STAR)
+        .replace(new RegExp(DIR.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), ".*")
+        .replace(new RegExp(STAR.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "[^/]*");
       out.push(`/${esc}/`);
+      continue;
+    }
+    // HS-2: 文件级精确路径（含扩展名）勿追加 /
+    if (/\.[a-zA-Z0-9]+$/.test(g)) {
+      out.push(g);
       continue;
     }
     out.push(g.endsWith("/") ? g : g + "/");
@@ -448,10 +466,12 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     })
   );
   const registry = loadRegistry();
-  const migDir =
+  const migDirRaw =
     (params && params.db_migration_dir) ||
     (registry.db && registry.db.hook_migration_dir) ||
     "db/migration/";
+  // 0.7.24 HS-3: always trailing slash so MIGRATION_RE matches path/V*.sql
+  const migDir = String(migDirRaw).replace(/\\/g, "/").replace(/\/?$/, "/");
   put("DB_MIGRATION_DIR", migDir);
   // flyway 自动迁移仓关闭「人工同步环境」提醒：MIGRATION_ENVS 置空
   const migMode =
@@ -460,9 +480,22 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     "";
   put("MIGRATION_ENVS", migMode === "flyway" ? "" : "dev / test / uat");
   // 正则源统一以 JSON 字符串形式下发，模板用 new RegExp(...) 包裹（避免 / 分隔符冲突）
+  // 0.7.25 LT-7: default Flyway standard; params.migration_name_re / MIGRATION_NAME_RE override
+  const migNameRe =
+    (params && (params.migration_name_re || params.MIGRATION_NAME_RE)) ||
+    (ph.MIGRATION_NAME_RE != null && String(ph.MIGRATION_NAME_RE)) ||
+    "^V[0-9]+__[a-z0-9_]+\\.sql$";
   put(
     "MIGRATION_NAME_RE",
-    JSON.stringify("^V[0-9]{4}__(DDL|DML)__[a-z0-9_]+\\.sql$")
+    JSON.stringify(String(migNameRe).replace(/^\/|\/$/g, ""))
+  );
+  const headerKeys =
+    (params && params.migration_header_keys) ||
+    (ph.MIGRATION_HEADER_KEYS != null && ph.MIGRATION_HEADER_KEYS) ||
+    '["时间","撰写","目的","类型"]';
+  put(
+    "MIGRATION_HEADER_KEYS",
+    typeof headerKeys === "string" ? headerKeys : JSON.stringify(headerKeys)
   );
   put(
     "JOBS_YML_RE",
@@ -573,6 +606,24 @@ export function expandHooksFamily(params, agentConfig, actionForTarget, root) {
           ".codebuddy/hooks/claude-adapter.js"
         );
       }
+    }
+  }
+
+  // 0.7.24 LT-1: L5+codex — Codex 专用产物进 SSOT（sync 再投放到 .codex/hooks/）
+  if (agentConfig && has("codex")) {
+    push("hookfam-codex-adapter", "hooks/codex-adapter.js", "docs/agent-config/hooks/codex-adapter.js");
+    push(
+      "hookfam-codex-stop",
+      "hooks/codex-stop-checklist.js.tmpl",
+      "docs/agent-config/hooks/codex-stop-checklist.js"
+    );
+    push("hookfam-codex-cmd", "hooks/codex-hook.cmd", "docs/agent-config/hooks/codex-hook.cmd");
+    if (selection.includes("mysql-guard")) {
+      push(
+        "hookfam-codex-mysql-guard",
+        "hooks/mcp-mysql-guard.js.tmpl",
+        "docs/agent-config/hooks/mcp-mysql-guard.js"
+      );
     }
   }
   return out;

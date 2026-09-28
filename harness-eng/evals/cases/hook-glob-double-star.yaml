@@ -1,0 +1,59 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: hook-glob-double-star
+# 用例列表与报告中的可读标题。
+title: 业务分包 Controllers 的 **/* glob 须警示 hook 可能永不命中
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e HS-1 / R11：hooks-checks 先把 ** 换成 .* 再把 * 换成 [^/]*，
+  得到 .[^/]*，导致 backend/.../**/*Controller.java 永不匹配，契约同步提醒失效。
+  Agent 在规划 Q_GLOBS / soft-gate 时须警示该风险或给出可命中写法，本轮不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/stack-monorepo-fe-be
+  git:
+    init: true
+  files:
+    "backend/src/main/java/com/example/taskboard/task/TaskController.java": |
+      package com.example.taskboard.task;
+      import org.springframework.web.bind.annotation.*;
+      @RestController
+      @RequestMapping("/api/tasks")
+      public class TaskController {
+        @GetMapping public String list() { return "[]"; }
+      }
+    "backend/src/main/java/com/example/taskboard/project/ProjectController.java": |
+      package com.example.taskboard.project;
+      import org.springframework.web.bind.annotation.*;
+      @RestController
+      @RequestMapping("/api/projects")
+      public class ProjectController {
+        @GetMapping public String list() { return "[]"; }
+      }
+
+input:
+  prompt: |
+    点名 harness-eng：本仓按业务分包，Controller 分散在多个包下。
+    有人打算把 Q_GLOBS / soft-gate 写成 backend/src/main/java/**/*Controller.java。
+    请说明这种写法在当前 hook 的 glob→regex 转换下是否可靠；若有风险，应怎么规避或验证。
+    不要写文件，也不要执行会改仓的命令。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  must_not_contain:
+    - "已写入"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["glob", "正则", "regex", "命中", "匹配", "hook"]
+    - output_contains:
+        any: ["风险", "永不", "失效", "不匹配", "缺陷", "警示", "单测", "实测"]
+    - output_contains:
+        any: ["Controller", "**/*", "业务分包"]
+  failure:
+    - output_contains:
+        any: ["**/*Controller.java 一定可靠", "无需验证即可用于 soft-gate", "glob 转换无缺陷"]

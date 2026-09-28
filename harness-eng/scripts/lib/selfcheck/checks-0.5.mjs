@@ -939,6 +939,7 @@ assert(
           GLOB_PROFILE: "wide",
           LAST_MODE: "resume",
           AI_TOOLS_YAML: "[cursor]",
+          CODE_PREFIXES: "src/",
         },
       }),
       "utf8"
@@ -957,7 +958,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.7\.23"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(/^skill_version:\s*"?0\.7\.26"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"

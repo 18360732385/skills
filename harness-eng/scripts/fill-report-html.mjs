@@ -375,7 +375,9 @@ function main() {
 
   if (!args.noScoreCopy) {
     ensureDir(path.dirname(scoreOut));
-    fs.writeFileSync(scoreOut, JSON.stringify(scoreForUi, null, 2) + "\n", "utf8");
+    // 0.7.26 ID-7: do not write synthesized diff back into score-latest.json
+    const { diff: _omitDiff, ...scoreClean } = scoreForUi;
+    fs.writeFileSync(scoreOut, JSON.stringify(scoreClean, null, 2) + "\n", "utf8");
   }
 
   if (!args.noHistoryAppend) {

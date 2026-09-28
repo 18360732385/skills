@@ -192,7 +192,13 @@ export function checkEntryReady(root) {
     const sections = text.split(/^##\s+/m);
     for (const sec of sections) {
       const head = (sec.split(/\r?\n/)[0] || "").trim();
-      if (!/^(Commands|Critical)\b/i.test(head)) continue;
+      // 0.7.26 SG-7: Chinese section titles (分册常用「命令」「关键 / 禁区」)
+      if (
+        !/^(Commands|Critical|命令|常用命令|关键|关键约束|Never\s*do|禁止|禁区)\b/i.test(
+          head
+        )
+      )
+        continue;
       if (/TODO\(harness-eng\)/i.test(sec)) {
         files.push(path.relative(root, abs).replace(/\\/g, "/"));
         break;

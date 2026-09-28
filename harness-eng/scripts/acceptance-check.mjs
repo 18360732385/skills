@@ -385,15 +385,36 @@ function checkDbFile(file, text, gold) {
     warnings.push({ id: "db-no-changelog", file, detail: "missing 变更记录" });
   }
   // 0.2.27: COMMENT or explicit 未知
-  const hasComment = /COMMENT\s+'/i.test(text) || (/##\s*字段/.test(text) && /注释|COMMENT/.test(text));
+  // 0.7.25 SG-2: field table with only — / empty comments → hollow blocker
+  const hollowRe = /^(—|–|-|N\/A|n\/a|无|暂无|null|NULL|\(空\))?$/i;
+  let hollowFields = false;
+  const fieldSec = text.match(/##\s*字段[\s\S]*?(?=\n##\s+|$)/i);
+  if (fieldSec) {
+    const rows = fieldSec[0].match(/^\|[^|\n]+\|/gm) || [];
+    const data = rows.filter((r) => !/---/.test(r) && !/字段名/.test(r));
+    if (data.length) {
+      hollowFields = data.every((r) => {
+        const cells = r
+          .split("|")
+          .map((c) => c.trim())
+          .filter(Boolean);
+        const comment = cells[cells.length - 1] || "";
+        return !comment || hollowRe.test(comment) || /^TODO/i.test(comment);
+      });
+    }
+  }
+  const hasComment =
+    /COMMENT\s+'/i.test(text) || (/##\s*字段/.test(text) && /注释|COMMENT/.test(text));
   const unknownOk = /未知/.test(text) && /(COMMENT|注释|字段说明)/.test(text);
-  if (!hasComment && !unknownOk) {
+  if ((!hasComment && !unknownOk) || hollowFields) {
     const item = {
       id: "db-no-comment",
       file,
-      detail: "missing field COMMENT and no explicit 未知",
+      detail: hollowFields
+        ? "field comments are all empty/— (hollow calibrate doc)"
+        : "missing field COMMENT and no explicit 未知",
     };
-    if (gold) blockers.push(item);
+    if (gold || hollowFields) blockers.push(item);
     else warnings.push(item);
   }
   return { blockers, warnings, sections: 1, pass: blockers.length ? 0 : 1 };

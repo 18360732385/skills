@@ -1,0 +1,47 @@
+# 报告中的稳定用例 ID；须与文件名（去 .yaml）一致。
+id: land-l5-ssot-in-writeplan
+# 用例列表与报告中的可读标题。
+title: L5+Codex 落地计划须走 agent-config SSOT/sync
+# 可选背景：覆盖的行为或回归点。
+description: |
+  来自 e2e LT-1 / HS-7：L5 且启用 codex 时，hooks 应投放到 docs/agent-config/hooks/
+  再经 sync 生成，而不是让 Agent 宣称可直渲 .codex/hooks 作为最终落点。
+  本用例验证未确认写盘前，WritePlan/说明中出现 SSOT 或 sync 口径，且不写盘。
+
+context:
+  repo_fixture: scripts/fixtures/new-code
+  git:
+    init: true
+
+input:
+  prompt: |
+    点名 harness-eng：请规划对本仓 land 到 L5，AI 工具面要同时包含 cursor 与 codex，
+    并启用 agent_config / 配置 SSOT 管线。
+    本轮只出示探测、提问批次或 WritePlan，说明 hooks/rules 如何经 SSOT 与 sync 落地；
+    我还没有确认，请不要写任何文件，也不要直接往 .codex/hooks 落最终脚本。
+
+constraints:
+  timeout_seconds: 600
+  max_turns: 20
+
+expect:
+  files_not_exist:
+    - "AGENTS.md"
+    - "docs/harness-eng/harness-meta.yaml"
+    - ".codex/hooks.json"
+  must_not_contain:
+    - "写盘完成"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        any: ["WritePlan", "确认", "L5", "agent_config", "agent-config"]
+    - output_contains:
+        any: ["sync", "SSOT", "docs/agent-config"]
+    - files_not_exist:
+        - "AGENTS.md"
+        - "docs/harness-eng/harness-meta.yaml"
+  failure:
+    - output_contains:
+        any: ["已写入 AGENTS", "写盘完成", "直接写入 .codex/hooks", "无需 sync"]

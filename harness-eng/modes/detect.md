@@ -88,6 +88,8 @@ git rev-parse --show-toplevel
 {engine}-{profile}     例：mysql-dev、mysql-test、oracle-uat、redis-dev
 ```
 
+**去重（0.7.26 CD-3）**：若 `profile` 与 `engine` 同名（如引擎=mysql 且唯一 profile 也叫 mysql），写 **`{engine}-local`**（`mysql-local`），禁止拼出 `mysql-mysql`。若 profile 已带 `{engine}-` 前缀则原样使用。脚本：`scripts/lib/mcp-server-name.mjs` → `mcpServerName(engine, profile)`。
+
 抽不出连接信息的「profile × 引擎」→ 记入 `matrix_gap: no_creds`（不纳入应有集合；Fingerprint 备注列出）。  
 Fingerprint 摘要须打印：**应有 MCP 矩阵**（列表）+ **已有 mcp.json server 名**（若 `S_MCP`）+ 覆盖缺口。
 

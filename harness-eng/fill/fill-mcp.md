@@ -60,7 +60,8 @@
 写完真密 mcp.json 后，若会话工具列表仍无对应 server：
 
 1. 提示 **Reload Window / 新开 Agent**（【推荐】）
-2. 改走 [`fill-calibrate-live.mjs`](../scripts/fill-calibrate-live.mjs)（见 `--help`）
+2. 改走 [`fill-calibrate-live.mjs`](../scripts/fill-calibrate-live.mjs)（见 `--help`）  
+   **0.7.24+**：默认只对比 DDL（不写盘）；确认后再 `--write-ddl`（仅替换「建表语句」代码块，保留业务说明/字段说明/变更记录）。勿在无备份时裸跑旧版「默认整文件覆盖」。
 3. 可选跑 [`session-live`](../modes/session-live.md) 落盘证据（MCP 项将为 `fail`/`unproven`）
 4. 两路径皆失败 → 闸门未过，停填充
 
@@ -100,10 +101,27 @@ redis-dev / redis-test / …
 |---|---|
 | 默认 | **`test`**（提问 `Q_FILL_MCP_PROFILE`；【推荐】test） |
 | 落盘 | `docs/harness-eng/harness-meta.yaml` → `fill_mcp_profile`（读侧可回退 `.cursor/`） |
-| 用途 | 烟测扫库、fill-calibrate-live、agents 实据优先用 `{engine}-{profile}`（如 `mysql-test` / `redis-test`） |
+| 回写（0.7.26 FC-10） | Agent 选定/切换主环境后**必须**更新 meta；`fill-calibrate-live --profile <p>` 成功路径也会回写 |
+| 用途 | 烟测扫库、fill-calibrate-live、agents 实据优先用 `{engine}-{profile}`（如 `mysql-test` / `redis-test`；同名去重见 detect CD-3 → `mysql-local`） |
 | 与矩阵 | 矩阵仍按 detect 装配多环境；**主环境 ≠ 只装一个 server** |
 
 WritePlan 须写明：「本轮扫库/SCAN 使用 mysql-{profile} + redis-{profile}」。
+
+## calibrate-live 驱动（0.7.26 DU-5）
+
+本机一次性安装（脚本会在这些路径自动探测）：
+
+```bash
+# macOS / Linux
+mkdir -p "${TMPDIR:-/tmp}/harness-mcp-calibrate" && cd "${TMPDIR:-/tmp}/harness-mcp-calibrate" && npm init -y && npm i mysql2 ioredis
+
+# Windows (PowerShell)
+New-Item -ItemType Directory -Force "$env:TEMP\harness-mcp-calibrate" | Out-Null
+Set-Location "$env:TEMP\harness-mcp-calibrate"; npm init -y; npm i mysql2 ioredis
+```
+
+可选：`NODE_PATH=%TEMP%\harness-mcp-calibrate\node_modules`（一般不必，脚本会扫 TEMP）。  
+**默认只对比**；写 DDL 用 `--write-ddl`（见上文）。
 
 ## 密文策略
 

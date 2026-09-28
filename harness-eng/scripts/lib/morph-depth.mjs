@@ -88,7 +88,8 @@ export function morphDepthBonus(raw, domain) {
     } else {
       issues.push("深度:缺方法说明");
     }
-    if (/关联\s*(API|接口|表)|相关表|关联接口/.test(text)) {
+    // 0.7.25 SG-4: also accept ### 关联文档
+    if (/关联\s*(API|接口|表|文档)|相关表|关联接口/.test(text)) {
       parts.links = 8;
       points += 8;
     } else {
@@ -112,8 +113,18 @@ export function morphDepthBonus(raw, domain) {
     } else {
       issues.push("深度:COMMENT 不足");
     }
-    const biz = text.match(/业务说明|表说明|用途[：:]|表级([\s\S]{0,400})/);
-    if (biz && String(biz[0] || "").replace(/业务说明|表说明|用途[：:]|表级/g, "").trim().length > 20) {
+    // 0.7.25 SG-3: capture section body, not only the 「表级」branch
+    const bizSec = text.match(
+      /##\s*(?:业务说明|表说明)\s*\n([\s\S]{0,400}?)(?=\n##\s+|$)/i
+    );
+    const bizInline = text.match(/用途[：:]\s*([^\n]{20,400})/);
+    const bizTableLevel = text.match(/表级[^\n]*\n([\s\S]{0,400}?)(?=\n##\s+|$)/);
+    const bizBody = String(
+      (bizSec && bizSec[1]) || (bizInline && bizInline[1]) || (bizTableLevel && bizTableLevel[1]) || ""
+    )
+      .replace(/```[\s\S]*?```/g, "")
+      .trim();
+    if (bizBody.length > 20) {
       parts.business = 10;
       points += 10;
     } else {

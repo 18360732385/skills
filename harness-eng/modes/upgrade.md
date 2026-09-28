@@ -57,6 +57,30 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.25 → 0.7.26 迁移要点
+
+1. **meta**：`skill_version` → `0.7.26`；resume/upgrade 默认 `on_exists=skip`（可显式覆盖）
+2. **报告**：建议 gitignore `report-latest.html` / `run-latest.json` / `score-history.jsonl`；score JSON 不再被 report 写入 diff
+3. **fill-merge**：db 可用 `--target-dir` + `--split-by table`；func 覆盖按 Service
+4. **MCP 命名**：profile 与引擎同名时用 `{engine}-local`（避免 `mysql-mysql`）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.26`）后再 sync
+
+## 0.7.24 → 0.7.25 迁移要点
+
+1. **meta**：`skill_version` → `0.7.25`
+2. **评分 / 漂移**：strict 下字段级 `doc_field_drift`；空壳 db 字段说明不过闸；`score-policy` 的 `morph_floor`/`todo_scan` 为 null（随 `gate_profile`）
+3. **分册 / seed**：前后端 monorepo 按目录选模板；`Q_SEED` 预填 Commands
+4. **迁移约定**：默认 Flyway `V{n}__snake.sql`；命名 SSOT 在 `docs/db/db.md`；rule 13 / hooks 只指针
+5. **问答**：`remaining`/`truncated`；land 会问 `Q_GATE_PROFILE`
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.25`）后再 sync
+
+## 0.7.23 → 0.7.24 迁移要点
+
+1. **meta**：`skill_version` → `0.7.24`；可选回填 `inventory.api.controller_root` / `inventory.db.sql_root`（下次 fill-inventory 也会写）
+2. **L5+codex**：确认 `docs/agent-config/hooks/` 含 `codex-adapter.js` / `codex-stop-checklist.js` / `codex-hook.cmd`；`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.24`）后再 sync；`sync --check` 会验 hooks 引用完整性
+3. **calibrate**：勿再裸跑默认写盘；对比用默认/`--dry-run`，写 DDL 用 `--write-ddl`
+4. **hooks glob**：若自定 `**/…/*X.java`，升级后门禁应能命中（此前 `**/*` 转换错误）
+
 ## 0.7.22 → 0.7.23 迁移要点
 
 1. **meta**：`skill_version` → `0.7.23`
