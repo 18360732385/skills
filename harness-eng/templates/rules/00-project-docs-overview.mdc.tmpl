@@ -28,7 +28,7 @@ alwaysApply: true
 | **改业务 / 契约** | 分册 AGENTS → `docs/func\|api\|db\|redis\|jobs` 索引+真相 → 代码 |
 | **改 Cron / 定时任务** | `docs/jobs/jobs.md` → `tasks/NN-*.md` → Scheduler / Registry / yml（rule `20`） |
 | **发版 / 上线清单** | 用户点名 `release-eng`（若本仓启用） |
-| **交付收口** | 读并执行 [`docs/agent-kb/delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)（唯一正文）；**宣称交付 / 合并前 / feature-eng close** 时跑；进行中主题可中途 commit |
+| **交付收口** | 读并执行 [`docs/agent-kb/delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)（唯一正文）；**宣称交付 / 合并前 / 主题收口**时跑；进行中主题可中途 commit |
 
 ## 同步一句
 
@@ -49,7 +49,7 @@ TODO(harness-eng): 将本仓稳定高频翻车压缩为 3～7 行薄片，回链
 
 ## 提交门禁
 
-- **交付收口**：正文见 [`docs/agent-kb/delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)。**仅当**用户宣称主题主功能交付 / 要求收口（如 feature-eng close）时执行；进行中（`docs/runs/active/` 且 `stage ≠ done`）允许中途 commit（rule `18`）。
+- **交付收口**：正文见 [`docs/agent-kb/delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)。**仅当**用户宣称主题主功能交付 / 要求主题收口时执行；进行中（`docs/runs/active/` 且 `stage ≠ done`）允许中途 commit（rule `18`）。
 - **superpowers / runs**：宣称交付时按清单 §3 双归档；勿因本条在实现期强制假收口。
 - **契约同步**（若装 hooks 家族 `commit-gate-extended`）：commit 时按暂存路径软提醒漏同步 `docs/func|api|db|redis|jobs` 真相（domains.yaml `hook:` 段驱动）。
 - **SQL/环境**（同上）：暂存含 `db/migration/*.sql` 时软提醒按迁移模式人工同步到各环境（不自动执行）。

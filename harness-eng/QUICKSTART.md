@@ -32,7 +32,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 
 ## 能否 AI Coding（10 秒）
 
-打开目标仓 `docs/harness-eng/report-latest.html`（施工仪表盘）。此处「开干」= **仓库开干**（`ai_coding_ready`），≠ feature-eng 环 5「计划 Go 闸」。
+打开目标仓 `docs/harness-eng/report-latest.html`（施工仪表盘）。此处「开干」= **仓库开干**（`ai_coding_ready`），≠ 主题环「计划 Go 闸」（如环 5 `gates.go`）。
 
 | 决策台 | 结论 |
 |---|---|
@@ -76,4 +76,4 @@ fill 家族 CLI（inventory / merge / plan / score / report）见 [fill/README.m
 PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BOM** 文件再传路径。完整示例 SSOT：[write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
 
 多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.20**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.23**）。

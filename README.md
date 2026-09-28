@@ -61,6 +61,7 @@ skills/
 ├── feature-eng/
 │   ├── _meta/
 │   ├── config/
+│   ├── conventions/
 │   ├── scripts/
 │   ├── templates/
 │   ├── CHANGELOG.md
@@ -91,10 +92,10 @@ skills/
 |----------|-------------|
 | [harness-eng/SKILL.md](harness-eng/SKILL.md) | 施工仪式入口：落地 / 续跑 / 流水线 / 审计 / 填充 |
 | [harness-eng/QUICKSTART.md](harness-eng/QUICKSTART.md) | harness-eng 一页纸 |
-| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.6.7） |
+| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.7.23） |
 | [feature-eng/SKILL.md](feature-eng/SKILL.md) | 开发流程入口：init / rebind / start / resume / status / advance / close |
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
-| [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.18-dev）；须点名加载 |
+| [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.21）；须点名加载 |
 | [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / resume / audit / seal |
 | [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.3.17） |
 | [ip-peitu-tietie/SKILL.md](ip-peitu-tietie/SKILL.md) | 帖帖配图入口：策略 shot list / 单张生成 / QA |

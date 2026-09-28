@@ -1,8 +1,8 @@
 # 交付收口清单（唯一正文）
 
-> **SSOT**：本文件由 harness-eng 渲染（`docs/agent-kb/delivery-checklist.md`）。  
-> rule `00` / `18` / `19`、根 AGENTS「踩坑回流」、stop-checklist、feature-eng close **只留指针**，勿在他处复述步骤正文。  
-> **时机**：**宣称交付 / 合并前 / feature-eng close** 时执行；**进行中主题允许中途 commit**，勿因本清单强制假收口。
+> **SSOT**：本文件由本仓工程化渲染（`docs/agent-kb/delivery-checklist.md`）。  
+> rule `00` / `18` / `19`、根 AGENTS「踩坑回流」、stop-checklist、主题收口流程 **只留指针**，勿在他处复述步骤正文。  
+> **时机**：**宣称交付 / 合并前 / 主题收口**时执行；**进行中主题允许中途 commit**，勿因本清单强制假收口。
 
 按顺序勾选（本主题无该项则标 N/A）：
 
@@ -11,12 +11,12 @@
 - [ ] 本主题改动的 `docs/func|api|db|redis|jobs` 真相已与代码对齐（无契约树 → N/A）
 - [ ] 漏同步项已补齐或记入残留并获用户接受
 
-## 2. harness 快照刷新（可选）
+## 2. 工程化快照刷新（可选）
 
-- [ ] 若存在 harness-eng：代跑  
-  `node <harness-eng>/scripts/harness.mjs --mode refresh --root .`  
+- [ ] 若存在 `scripts/agent-kb/refresh-score.mjs`：代跑  
+  `node scripts/agent-kb/refresh-score.mjs --root .`  
   （缺 inventory 会重扫；写 `docs/harness-eng/score-latest.json`）
-- [ ] 失败：列出 blockers；用户接受残留则在 runs `回链.md` 标 `harness_snapshot: stale`；无 harness → N/A
+- [ ] 失败：列出 blockers；用户接受残留则在 runs `回链.md` 写 `eng_snapshot: stale`（读侧兼容旧 `harness_snapshot`）；无工程化 meta / 无脚本 → N/A
 
 ## 3. superpowers + runs 双归档
 

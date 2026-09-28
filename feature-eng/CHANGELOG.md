@@ -1,10 +1,41 @@
 # feature-eng CHANGELOG
 
+## 0.2.21 — 2026-09-28
+
+正式号（**无 `-dev` 后缀**；自本版起版本钉不再使用 `-dev`）。相对 0.2.20-dev：**不**改默认绑定 skill 名；`eng_land` 仍 false（旧键 `harness_land` 已废弃）；`feature.mjs` 不写盘。本版落实 **P3/P4**：
+
+- **P3 schema**：`progress.yaml` 顶栏 `schema: topic-run/1`（可选；旧主题缺省仍合法）
+- **P4 字段**：`eng_probe` / `eng_snapshot` 新键写入；读侧兼容旧 `harness_probe` / `harness_snapshot`；close **只写** `eng_snapshot`；manifest `eng_land: false`
+- **selfcheck / VERIFY**：PIN `0.2.21`
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.21 | 2026-09-28 | P3 schema + P4 字段；正式钉（无 -dev） |
+| 0.2.20-dev | 2026-09-28 | P0/P1/P2 解耦：能力探测 + 中性 refresh |
+| 0.2.18-dev | 2026-09-28 | 批 E：bridges 收窄 · close 死链 · ARCHIVE 提交 |
+
+## 0.2.20-dev — 2026-09-28
+
+V0.7.X 开发钉。相对 0.2.18-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **P0/P1/P2 解耦**（对齐工程化仓 0.7.22）：
+
+- **P0 文案**：SKILL「可选接力（工程化仓）」；`harness-eng` 仅为常见实现别名；禁 sync / 消歧用语中性化
+- **P1 能力探测**：start/resume 按工程化 meta 软探测；close 优先 `delivery-checklist`（不硬钉「harness 渲染」）；init/rebind/flow 禁代跑目标仓 `scripts/agent-config/sync.mjs`；domain-bridge 去掉字面 `harness_meta`
+- **P2 refresh**：close 优先 `scripts/agent-kb/refresh-score.mjs`，否则回退工程化 skill `harness.mjs --mode refresh`；回链**双写** `eng_snapshot` + `harness_snapshot`
+- **字段**：`harness_probe` 名保留（P4 再改）；读侧兼容仅旧键
+- **selfcheck / VERIFY**：PIN 0.2.20-dev
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.20-dev | 2026-09-28 | P0/P1/P2 解耦：能力探测 + 中性 refresh |
+| 0.2.18-dev | 2026-09-28 | 批 E：bridges 收窄 · close 死链 · ARCHIVE 提交 |
+| 0.2.17-dev | 2026-09-27 | 批 D：delivery-checklist + harness refresh 接力 |
+| 0.2.16-dev | 2026-09-27 | 批 C：绑定 SSOT→docs/runs + 禁 sync + unattended |
+
 ## 0.2.18-dev — 2026-09-28
 
 V0.7.X 开发钉。相对 0.2.17-dev：**不**改默认绑定 skill 名；`harness_land` 仍 false；`feature.mjs` 不写盘。本版落实 **批 E：domain-bridge 收窄 · close 死链 · ARCHIVE 提交列**：
 
-- **E9 domain-bridge**：判据收窄为破坏性变更 / 跨模块共享模型 / 新限界上下文；仅新增 REST 且目标仓已有 `docs/api`（或 harness_meta / 契约同步）→ **默认 skipped**
+- **E9 domain-bridge**：判据收窄为破坏性变更 / 跨模块共享模型 / 新限界上下文；仅新增 REST 且目标仓已有 `docs/api`（或契约同步脚本/管线信号）→ **默认 skipped**
 - **E11 close**：归档后改写 `docs/runs/active/<slug>/` 死链；`close-check` 对 archive/artifacts 残留 active 路径 FAIL
 - **E13 ARCHIVE「提交」列**：合并前 PR/MR URL 或 `pr:<n>`；合并后 merge commit SHA；不合规 warn（不阻断独立仓）
 - **selfcheck / VERIFY**：PIN 0.2.18-dev

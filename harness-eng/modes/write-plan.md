@@ -92,7 +92,7 @@ Q_SEED: 是
 **推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.20'}}), 'utf8')"
+node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{PROJECT_NAME:'x',PROJECT_DESC:'x',CODE_PREFIXES:'src/',SKILL_VERSION:'0.7.23'}}), 'utf8')"
 node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 ```
 
@@ -130,7 +130,7 @@ node scripts/harness.mjs --root <TARGET> --params params.json --mode land
 
 ### P1 — 契约可协作
 
-4. **下一会话**点名 **feature-eng**（`init` 或 `start`）做需求开发；**勿在本会话继续 land/fill**
+4. **若**团队有主题流程控制器：**下一会话**点名其 `init` / `start`（别名如 feature-eng）；否则本 skill Done 即可。**勿在本会话继续 land/fill** 去代跑主题流程
 5. 为每个启用契约域补充首个 `01-*.md` 真相，或跑 `seed-truths`
 6. 填写 Never do **域**红线（只写本仓真实约束）
 

@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.18-dev)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck (0.2.21)：静态断言 + 夹具行为断言。
  * 覆盖：manifest · modes/ 入口 · modes/specs/ · feature.mjs · 绑定 · 模板 · lib ·
  * status-scan --cwd · gate-evidence · fixtures · CHANGELOG。
  */
@@ -39,7 +39,7 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.18-dev";
+const PIN = "0.2.21";
 
 const MODES = [
   "modes/init.md",
@@ -1735,29 +1735,52 @@ assert(
   "binding.md links 设计笔记 tmpl"
 );
 
-// 0.2.18-dev：批 E domain-bridge / close 死链 / ARCHIVE 提交；其上 0.2.17 批 D
+// 0.2.21：P3 schema + P4 字段；其上 0.2.20-dev P0/P1/P2 · 0.2.18 批 E
+assert(/## 0\.2\.21\b/.test(changelog || ""), "CHANGELOG has ## 0.2.21 block");
+assert(/## 0\.2\.20-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.20-dev block");
 assert(/## 0\.2\.18-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.18-dev block");
 assert(/## 0\.2\.17-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.17-dev block");
 assert(/## 0\.2\.16-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.16-dev block");
 assert(/## 0\.2\.15-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.15-dev block");
 assert(/## 0\.2\.14-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.14-dev block");
+assert(/P3\/P4|topic-run\/1|eng_probe/.test(changelog || ""), "CHANGELOG mentions P3/P4");
+assert(/可选接力（工程化仓）|P0\/P1\/P2|协议解耦/.test(changelog || ""), "CHANGELOG mentions protocol decouple");
 assert(/破坏性变更|新限界上下文|默认 skipped/.test(changelog || ""), "CHANGELOG mentions batch E bridges");
 assert(/死链|active\/|merge commit SHA|pr:<n>/.test(changelog || ""), "CHANGELOG mentions batch E close");
-assert(/delivery-checklist|harness refresh|harness_snapshot/.test(changelog || ""), "CHANGELOG mentions batch D");
+assert(/delivery-checklist|harness refresh|harness_snapshot|refresh-score|eng_snapshot/.test(changelog || ""), "CHANGELOG mentions batch D / P2 refresh");
 assert(/unattended|docs\/runs\/stage-bindings/.test(changelog || ""), "CHANGELOG mentions batch C");
+assert(!/conventions\/repo-layout|_contracts\/repo-layout/.test(changelog || ""), "CHANGELOG has no P5 repo-layout");
+assert(!exists("conventions/repo-layout.md"), "no conventions/repo-layout.md (P5 rolled back)");
+assert(/schema:\s*topic-run\/1/.test(progressTmpl), "progress.tmpl has schema topic-run/1");
+assert(/eng_land:\s*false/.test(manifest || ""), "manifest eng_land false");
+assert(!/harness_land:/.test(manifest || ""), "manifest dropped harness_land key");
 const closeMd = read("modes/close.md") || "";
 assert(/delivery-checklist\.md/.test(closeMd), "close.md prefers delivery-checklist");
-assert(/--mode refresh|mode refresh/.test(closeMd), "close.md calls harness refresh");
-assert(/harness_snapshot/.test(closeMd), "close.md records harness_snapshot");
+assert(/refresh-score\.mjs/.test(closeMd), "close.md prefers refresh-score.mjs");
+assert(/--mode refresh|mode refresh/.test(closeMd), "close.md falls back to harness refresh");
+assert(/eng_snapshot/.test(closeMd), "close.md records eng_snapshot");
+assert(/回链只写 `eng_snapshot|只写 `eng_snapshot/.test(closeMd), "close.md writes only eng_snapshot");
+assert(!/双写.*eng_snapshot|eng_snapshot.*双写|强制双写/.test(closeMd), "close.md no forced dual-write of snapshots");
+assert(/harness_snapshot/.test(closeMd), "close.md documents read-compat harness_snapshot");
 assert(/verify 之后|不是.*每次.*commit/.test(closeMd), "close.md timing after verify");
 assert(/死链改写|runs\/active\//.test(closeMd), "E11 close.md dead-link rewrite");
 assert(/merge commit SHA|pr:<n>|squash/.test(closeMd), "E13 close.md ARCHIVE 提交钉死");
+assert(!/harness 渲染/.test(closeMd), "close.md no hard harness-render brand");
 const bridgesMd = read("modes/specs/bridges.md") || "";
 assert(
   /破坏性变更/.test(bridgesMd) && /新限界上下文/.test(bridgesMd) && /默认 skipped/.test(bridgesMd),
   "E9 bridges.md narrow domain-bridge criteria"
 );
 assert(/docs\/api|契约同步/.test(bridgesMd), "E9 bridges.md REST+docs/api → skipped");
+assert(!/harness_meta/.test(bridgesMd), "bridges.md dropped harness_meta literal");
+assert(
+  /scripts\/agent-config\/sync\.mjs/.test(initMdEarly) && /若存在/.test(initMdEarly),
+  "init.md forbids target-repo sync.mjs by path"
+);
+assert(
+  /scripts\/agent-config\/sync\.mjs/.test(rebindMdEarly),
+  "rebind.md forbids target-repo sync.mjs by path"
+);
 {
   const deadDir = fs.mkdtempSync(path.join(os.tmpdir(), "feature-e11-dead-"));
   try {
@@ -1819,13 +1842,18 @@ assert(/docs\/api|契约同步/.test(bridgesMd), "E9 bridges.md REST+docs/api �
     fs.rmSync(warnDir, { recursive: true, force: true });
   }
 }
-assert(/与 harness-eng 的配合与互斥/.test(skill || ""), "SKILL has harness compat section");
+assert(/可选接力（工程化仓）/.test(skill || ""), "SKILL has optional handoff section");
+assert(
+  !/与 harness-eng 的配合与互斥/.test(skill || ""),
+  "SKILL dropped hard couple heading"
+);
 assert(/软探测|从不.*land|不阻断/.test(skill || ""), "SKILL soft probe never requires land");
 assert(/docs\/runs\/stage-bindings\.yaml/.test(skill || ""), "SKILL mentions target bindings SSOT");
 assert(/modes\/specs\/flow/.test(skill || ""), "SKILL links modes/specs/flow");
 assert(/modes\/specs\/gates/.test(skill || ""), "SKILL links modes/specs/gates");
 assert(/≤6/.test(index) || /≤6 文件/.test(index), "AGENT-INDEX says ≤6");
-assert(/harness_probe/.test(startMd), "start.md has harness_probe");
+assert(/eng_probe/.test(startMd), "start.md has eng_probe");
+assert(/schema:\s*topic-run\/1/.test(startMd), "start.md writes schema topic-run/1");
 assert(/软·不阻断|不阻断/.test(startMd) && /ai_coding_ready/.test(startMd), "start probe soft + ai_coding_ready");
 assert(/静默跳过/.test(startMd), "start probe silent without meta");
 assert(/unattended/.test(startMd), "start.md has unattended run_mode");
@@ -1834,7 +1862,7 @@ assert(
   "start unattended central downgrade documented"
 );
 assert(
-  /unattended/.test(read("templates/progress.yaml.tmpl") || ""),
+  /unattended/.test(progressTmpl),
   "progress.tmpl mentions unattended"
 );
 assert(
@@ -1849,8 +1877,10 @@ assert(
   /lint-pitfalls\.mjs/.test(bindings || "") || /本主题写 on/.test(bindings || ""),
   "bindings comment documents start tighten to on"
 );
-assert(/harness_probe/.test(read("modes/resume.md") || ""), "resume.md optional harness_probe top-up");
+assert(/eng_probe/.test(read("modes/resume.md") || ""), "resume.md optional eng_probe top-up");
+assert(/eng_probe/.test(read("templates/回链.md.tmpl") || ""), "回链 tmpl uses eng_probe");
 assert(/ai_coding_ready/.test(read("QUICKSTART.md") || ""), "QUICKSTART mentions ai_coding_ready soft tip");
+assert(/eng_land/.test(skill || ""), "SKILL mentions eng_land");
 
 // --- report ---
 const total = ok.length + fail.length;

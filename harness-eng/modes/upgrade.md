@@ -57,6 +57,27 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.22 → 0.7.23 迁移要点
+
+1. **meta**：`skill_version` → `0.7.23`
+2. **checklist**：§2 只写 `eng_snapshot`（读侧兼容旧 `harness_snapshot`；不再要求双写）
+3. **hooks**：soft-gate 函数名 `listActiveTopicRuns`（去 Feature 品牌）
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.23`）后再 sync
+
+## 0.7.21 → 0.7.22 迁移要点
+
+1. **meta**：`skill_version` → `0.7.22`
+2. **L2**：land/resume 补渲 `scripts/agent-kb/refresh-score.mjs`（中性 refresh 入口）；`delivery-checklist` §2 改调该脚本；回链可用 `eng_snapshot`（兼容 `harness_snapshot`）
+3. **话术**：收口 / 移交继续以「宣称交付 / 主题收口」为准；主题流程控制器仅为可选别名
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.22`）后再 sync
+
+## 0.7.20 → 0.7.21 迁移要点
+
+1. **meta**：`skill_version` → `0.7.21`（docs-only：协议解耦文案；模式 / 阶梯 / 闸门语义不变）
+2. **话术**：收口时机 / hooks / 移交以「宣称交付 / 主题收口」为准；feature-eng 仅为可选别名
+3. **移交**：P1 主题流程控制器改为可选（有则用；无则本 skill Done 即可）
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.21`）后再 sync（与往期相同）
+
 ## 0.7.19 → 0.7.20 迁移要点
 
 1. **meta**：`skill_version` → `0.7.20`
@@ -69,7 +90,7 @@
 
 1. **meta**：`skill_version` → `0.7.19`
 2. **L2**：land/resume 补渲 `docs/agent-kb/delivery-checklist.md`；rule 00/18/19、AGENTS 改指针
-3. **行为**：`harness.mjs --mode refresh --root .` 可重建 inventory/score；feature-eng close 可选代跑
+3. **行为**：`harness.mjs --mode refresh --root .` 可重建 inventory/score；主题收口可选代跑
 4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.19`）后再 sync
 
 ## 0.7.17 → 0.7.18 迁移要点
@@ -95,9 +116,9 @@
 
 ## 0.7.14 → 0.7.15 迁移要点
 
-1. **meta**：`skill_version` → `0.7.15`（docs-only：与 feature-eng 消歧 / 移交指针；模式 / 阶梯 / 闸门语义不变）
-2. **术语**：对外「仓库开干」= `ai_coding_ready`；勿与 feature-eng「计划 Go 闸」混用
-3. **移交**：land/resume/upgrade Done 打印 P1「下一会话点名 feature-eng」
+1. **meta**：`skill_version` → `0.7.15`（docs-only：与主题流程消歧 / 移交指针；模式 / 阶梯 / 闸门语义不变）
+2. **术语**：对外「仓库开干」= `ai_coding_ready`；勿与主题环「计划 Go 闸」混用
+3. **移交**：land/resume/upgrade Done 打印 P1 主题流程指针（0.7.21 起改为可选）
 4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.15`）后再 sync（与往期相同）
 
 ## 0.7.13 → 0.7.14 迁移要点

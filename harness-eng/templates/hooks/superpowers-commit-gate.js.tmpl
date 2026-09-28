@@ -137,7 +137,7 @@ function evaluate(root) {
     return null;
   }
 
-  // feature-eng 进行中：勿诱导 verify 前假收口
+  // 主题过程态进行中：勿诱导 verify 前假收口
   const activeRunsDir = path.join(root, "docs", "runs", "active");
   let featureInFlight = [];
   try {
@@ -156,9 +156,9 @@ function evaluate(root) {
   }
   if (featureInFlight.length > 0) {
     return [
-      "【feature-eng 软提醒】暂存含业务代码，且有进行中主题：",
+      "【主题软提醒】暂存含业务代码，且有进行中主题：",
       ...featureInFlight.map((p) => `  - ${p}`),
-      "中途 commit 允许；收口在 feature-eng close / 宣称交付时（见 rule 18）。",
+      "中途 commit 允许；收口在宣称交付或主题收口时（见 rule 18）。",
       "纯 fix/chore 可忽略本提醒。",
     ].join("\n");
   }

@@ -17,7 +17,7 @@
  * Else: delegate to render.mjs with the same argv patterns.
  *
  * pipeline-skeleton = skeleton campaign write only (not fill-* / pipeline-fill).
- * refresh = rebuild inventory + acceptance + fill-score（feature-eng close 可选调用；exit 0/2/1）。
+ * refresh = rebuild inventory + acceptance + fill-score（主题收口可选调用；exit 0/2/1）。
  */
 import fs from "fs";
 import path from "path";

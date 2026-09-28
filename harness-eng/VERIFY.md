@@ -1,21 +1,59 @@
-# harness-eng 验收记录（0.7.20）
+# harness-eng 验收记录（0.7.23）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.20**（批 E：monorepo detect · entry_ready · GLOB hooks · sp skip；其上 0.7.19 批 D · 0.7.18 批 B · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.23**（P3 soft-gate/detect + P4 eng_snapshot 单写；其上 0.7.22 中性 refresh · 0.7.21 文案解耦 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.23 增量验收（P3/P4）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.23` | 有 |
+| CHANGELOG 标题 `## 0.7.23` | 有 |
+| soft-gate 含 `listActiveTopicRuns`；无 `listActiveFeatureRuns` | 有 |
+| detect `S_RUNS` 含「外部控制器可选」 | 有 |
+| checklist §2 只写 `eng_snapshot`（无「双写」要求） | 有 |
+| 无 `conventions/repo-layout.md` / `_contracts/repo-layout.md` | 有 |
+| upgrade `## 0.7.22 → 0.7.23` | 有 |
+| sync tmpl id `0.7.23` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.22 增量验收（P0/P1/P2 解耦）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.22` | 有 |
+| CHANGELOG 标题 `## 0.7.22`（及历史 `## 0.7.21`） | 有 |
+| `templates/scripts/refresh-score.mjs.tmpl` + manifest `kb-refresh-score` | 有 |
+| `delivery-checklist` §2 含 `scripts/agent-kb/refresh-score.mjs` 与 `eng_snapshot` | 有 |
+| rules/checklist 用户文案含「主题收口」或「宣称交付」；无硬钉「须点名 feature-eng」 | 有 |
+| SKILL「可选接力（主题流程）」；移交 P1 主题流程为可选别名 | 有 |
+| upgrade `## 0.7.21 → 0.7.22` | 有 |
+| sync tmpl id `0.7.22` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.21 增量验收（协议解耦文案）
+
+| 项 | 期望 |
+|---|---|
+| CHANGELOG 标题 `## 0.7.21` | 有（历史钉；现行见 0.7.22） |
+| SKILL「可选接力（主题流程）」；glossary「与主题流程控制器易混词」 | 有 |
+| 移交 P1 主题流程为可选；feature-eng 仅为别名 | 有 |
+| hooks/rules/delivery-checklist 用户文案含「主题收口」或「宣称交付」；无硬钉「须点名 feature-eng」 | 有 |
+| upgrade `## 0.7.20 → 0.7.21` | 有 |
 
 ## 0.7.20 增量验收（批 E）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.20` | 有 |
+| manifest / meta / questions 为 `0.7.20` | 有（历史钉；现行见 0.7.22） |
 | CHANGELOG 标题 `## 0.7.20`（E1/E2/E7/E8） | 有 |
 | `stack-monorepo-fe-be` → `S_STACK`/`S_SPRING`/`S_FRONTEND` | 有 |
 | strict `entry_todo`；`buildContractChecksJs`∪GLOB；sp skip 既有表 | 有 |
 | upgrade `## 0.7.19 → 0.7.20` | 有 |
-| sync tmpl id `0.7.20` | 有 |
+| sync tmpl id `0.7.20` | 有（历史；现行 `0.7.22`） |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.19 增量验收（批 D2–D4）
@@ -69,12 +107,12 @@
 | rule 18 含进行中可中途 commit、禁止假收口、交付双归档 | 有 |
 | upgrade `## 0.7.15 → 0.7.16` | 有 |
 
-## 0.7.15 增量验收（与 feature-eng 消歧与接力）
+## 0.7.15 增量验收（与主题流程消歧与接力）
 
 | 项 | 期望 |
 |---|---|
 | CHANGELOG 标题 `## 0.7.15` | 有 |
-| SKILL「配合与互斥」；glossary 易混词；移交含 feature-eng | 有 |
+| SKILL 接力节；glossary 易混词；移交含主题流程指针（0.7.22 起可选） | 有 |
 | 仓库开干 ≠ 计划 Go；续跑工程化 ≠ 续跑主题 | 有 |
 | upgrade `## 0.7.14 → 0.7.15` | 有 |
 

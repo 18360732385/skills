@@ -643,7 +643,7 @@ function expandFromManifest(manifestPath, params, root) {
     if (entryId === "rulehook-toml" || entryId === "rulehook-readme") {
       return fs.existsSync(path.join(root, targetRel)) ? "skip" : "create";
     }
-    // E8: 既有 superpowers 索引或 feature-eng runs → 不 H2 merge 双表
+    // E8: 既有 superpowers 索引或 runs 过程态 → 不 H2 merge 双表
     if (entryId === "sp-readme" || entryId === "sp-archive") {
       const absSp = path.join(root, targetRel);
       if (fs.existsSync(absSp)) {

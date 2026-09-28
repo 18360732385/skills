@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.20"
+version: "0.7.23"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -193,7 +193,12 @@ files:
     ladder: L2
     template: docs/agent-kb/delivery-checklist.md
     target: docs/agent-kb/delivery-checklist.md
-    note: "交付收口唯一正文；rule 00/18/19、AGENTS、feature-eng close 只留指针"
+    note: "交付收口唯一正文；rule 00/18/19、AGENTS、主题收口流程只留指针"
+  - id: kb-refresh-score
+    ladder: L2
+    template: scripts/refresh-score.mjs.tmpl
+    target: scripts/agent-kb/refresh-score.mjs
+    note: "中性 refresh 入口；委托工程化 skill harness.mjs --mode refresh"
   - id: rule-19
     ladder: L2
     template: rules/19-agent-kb.mdc.tmpl

@@ -200,8 +200,8 @@ function codeTouchedByPrefixes(staged) {
   return staged.some((f) => prefixes.some((p) => f.startsWith(p)));
 }
 
-/** feature-eng 进行中主题：docs/runs/active/<slug>/progress.yaml 且 stage ≠ done */
-function listActiveFeatureRuns(root) {
+/** 主题过程态进行中：docs/runs/active/<slug>/progress.yaml 且 stage ≠ done（不强制读 schema） */
+function listActiveTopicRuns(root) {
   const activeDir = path.join(root, "docs", "runs", "active");
   const out = [];
   let slugs = [];
@@ -252,15 +252,15 @@ function collectSuperpowersReminders(root, staged) {
   if (activePlans.length === 0 || !codeTouchedByPrefixes(staged) || indexTouched) {
     return [];
   }
-  const featureRuns = listActiveFeatureRuns(root);
-  if (featureRuns.length > 0) {
-    const shown = featureRuns
+  const topicRuns = listActiveTopicRuns(root);
+  if (topicRuns.length > 0) {
+    const shown = topicRuns
       .slice(0, 3)
       .map((r) => `${r.slug}（环 ${r.stage}）`)
       .join("、");
-    const more = featureRuns.length > 3 ? ` 等 ${featureRuns.length} 个` : "";
+    const more = topicRuns.length > 3 ? ` 等 ${topicRuns.length} 个` : "";
     return [
-      `- feature-eng：主题进行中（${shown}${more}）；中途 commit 允许，收口在 feature-eng close / 宣称交付时（见 rule 18）；纯 fix/chore 可忽略`,
+      `- 主题进行中（${shown}${more}）；中途 commit 允许，收口在宣称交付或主题收口时（见 rule 18）；纯 fix/chore 可忽略`,
     ];
   }
   const shown = activePlans.slice(0, 3).join("、");

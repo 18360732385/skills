@@ -1,7 +1,7 @@
 ﻿# gates — 环间 L1 / L2 / 硬闸
 
 环间 **L1（形状）** + **L2（语义）** + 硬闸（原 artifacts + gates-review + gates-common）。环节/绑定见 [flow.md](flow.md)。  
-**消歧**：此处 L1/L2 **≠** harness-eng 阶梯 L1/L2（契约骨架 / 知识回流）。环 5「计划 Go 闸」**≠** harness 仓库开干（`ai_coding_ready`）。
+**消歧**：此处 L1/L2 **≠** 工程化仓阶梯 L1/L2（契约骨架 / 知识回流）。环 5「计划 Go 闸」**≠** 仓库开干（`ai_coding_ready`）。
 
 ## Part A — 产物契约（环间 L1）
 
@@ -441,7 +441,7 @@
 
 - 通过：L1+L2（离开 plan）过；三问语义成立：①任务依赖无环 ②契约变更已列入首批 ③每任务有可测验收；用户短确认（若尚未在 plan 审中显式 yes）。写 `gates.go`。
 - 失败：补 plan；不得进 Proto 桥。
-- **≠** harness-eng 仓库开干（`ai_coding_ready`）。
+- **≠** 仓库开干（`ai_coding_ready`；工程化仓口径）。
 
 ## Proto 桥（环 5→6）
 

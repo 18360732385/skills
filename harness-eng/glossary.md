@@ -35,10 +35,10 @@
 | **自动填充** | `fill-truths-auto` | **仅脚本、对话不推荐**；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | **填充引擎** | `Q_FILL_ENGINE` | `agents`【推荐】/ `hybrid`（可选）/ `auto`（legacy） |
 | **inventory 默认路径** | — | `docs/<domain>/.fill-work/inventory*.json`（fill-score 可自动发现） |
-| **续跑工程化** | `resume` | 已有一半 harness：读 meta/指纹，**只补缺口**（幂等）。**≠** feature-eng 续跑主题（`docs/runs/active`） |
+| **续跑工程化** | `resume` | 已有一半 harness：读 meta/指纹，**只补缺口**（幂等）。**≠** 主题环续跑主题（`docs/runs/active`） |
 | **完整度打分** | `fill-score` | 双轴：形态 + 仓库开干；见 [fill-score.md](fill/fill-score.md) |
 | **形态诊断** | `fill-morph` | 只看形态轴；引擎同 fill-score `--focus morph` |
-| **仓库开干闸** | `fill-gate` | 只看开干清单 / gate（仓库级 `ai_coding_ready`）；引擎同 fill-score `--focus gate`。**≠** feature-eng 环 5「计划 Go 闸」 |
+| **仓库开干闸** | `fill-gate` | 只看开干清单 / gate（仓库级 `ai_coding_ready`）；引擎同 fill-score `--focus gate`。**≠** 主题环「计划 Go 闸」（如环 5 `gates.go`） |
 | **填充** | `fill-*` | 骨架后：MCP → inventory → fill-plan → agents，见 [fill.md](fill/fill.md) |
 | **收益递减早停** | pipeline | **以 Plan 批次关闭 + semantic_ready / ai_coding_ready 为准** |
 
@@ -121,16 +121,16 @@
 | **WritePlan** | 写入前计划表 + 渲染预览；确认后才写盘 |
 | **AI 工具面** | `Q_AI_TOOL`：Cursor / Claude / Codex / Qoder / Trae / WorkBuddy；可自定义入口。适配层非 SSOT，见 [ai-tools.md](host/ai-tools.md) |
 
-## 与 feature-eng 易混词
+## 与主题流程控制器易混词
 
-| 本 skill 说法 | 含义 | 勿与 feature-eng 混淆 |
+| 本 skill 说法 | 含义 | 勿与主题环混淆 |
 |---|---|---|
 | **仓库开干** / 可 AI coding | 仅 `ai_coding_ready` | ≠ 环 5 **计划 Go 闸**（`gates.go`） |
 | **续跑工程化** | 模式 `resume`：补 harness 缺口 | ≠ **续跑主题**（`docs/runs/active`） |
 | 阶梯 **L1 / L2** | 契约骨架 / 知识回流 | ≠ 环间 L1（形状）/ L2（语义） |
 | **Gate** / `fill-gate` | 仓库开干清单焦点 | ≠ 环 9 门禁闸 |
 
-配合顺序：本 skill 准备 → **新会话**点名 feature-eng；同会话勿并行。详见 [SKILL.md](SKILL.md)「配合与互斥」。
+可选接力：本 skill 独立完整；若团队有主题流程控制器（别名如 feature-eng），工程化后**新会话**再点名。详见 [SKILL.md](SKILL.md)「可选接力（主题流程）」。
 
 ## 确认闸门（对用户提示语）
 

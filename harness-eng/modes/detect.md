@@ -32,7 +32,7 @@ git rev-parse --show-toplevel
 | `S_FRONTEND` | 平铺 `frontend/package.json`，或 `apps/*`+`package.json`，或根/一层子目录 `package.json` 含 React/Vite/Vue/Next/workspace（协作包脚注；**不要求**已有 rule 17） |
 | `S_KB` | `docs/agent-kb/` **且至少 1 个非空文件** |
 | `S_SP` | `docs/superpowers/` **且至少 1 个非空文件**（**外部流程产物**；见类型判定） |
-| `S_RUNS` | `docs/runs/` 存在（feature-eng 过程态；**外部流程产物**；见类型判定） |
+| `S_RUNS` | `docs/runs/` 存在（主题过程态；外部控制器可选；**外部流程产物**；见类型判定） |
 | `S_HOOKS` | 任一：`.cursor/hooks.json` **或** Claude 系 settings 含 `hooks` 段（`.claude/settings.json` / `.qoder/settings.json` / `.codebuddy/settings.json`）**或** `.trae/hooks.json` **或** `.codex/hooks.json` **或** `.githooks/pre-commit`。**非仅 Cursor** |
 | `S_MCP` | `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json` 或任一 `mcp.json.example` |
 | `S_CLAUDE` | `CLAUDE.md` 或 `.claude/` |

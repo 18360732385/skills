@@ -6,7 +6,7 @@
 
 - 推荐包 SSOT（技能包内种子）：[`config/stage-bindings.example.yaml`](../config/stage-bindings.example.yaml)。「推荐 ≠ 强制」见 [flow.md](specs/flow.md)。
 - **运行时绑定 SSOT（目标仓）**：`docs/runs/stage-bindings.yaml`。技能包内 `config/stage-bindings.yaml` 仅作种子 / 回退，**不是**业务仓 SSOT。
-- **禁止**代跑 `scripts/agent-config/sync.mjs`（那是 harness L5 管线；会误伤项目级 skills）。绑定不经 sync 分发。
+- **禁止**代跑目标仓 `scripts/agent-config/sync.mjs`（若存在；L5 配置 sync 会误伤项目级 skills）。绑定不经 sync 分发。
 - **首问**必停：先展示固定表（中文名 + skill + 产物），再让用户选择；未选不写盘。
 - 用户可选：①一键采用全部推荐 ②逐环改绑 ③某环指定其他已装/待装 skill ④某环暂不绑定（`null`）。
 
@@ -67,9 +67,9 @@
    - 可选：该环 `input_contract`（薄 skill 建议补必传字段；可跳过）
 4. **安装缺失**：选中但当前环境没有的 skill，给出安装方式并**经用户同意**后执行；安装失败则该环写 `null` 并说明。
    - 完成标准：每个非 null 绑定能在已安装列表中**按名命中**；未命中 → 改 `null`。
-   - **推荐用户级安装**本 skill 与厨师 skill；**勿**把 feature-eng 拷进项目级 `.cursor/skills/` 指望 harness sync 托管。
+   - **推荐用户级安装**本 skill 与厨师 skill；**勿**把本 skill 拷进项目级 `.cursor/skills/` 指望工程化 sync 托管。
 5. **预览 diff**：写盘前展示新旧绑定对照（含 `defaults`；环节列带中文名）；用户确认后写入目标仓 **`docs/runs/stage-bindings.yaml`**（若无 `docs/runs/` 则先建目录）。
-6. **禁止 sync**：本步**不**探测、不代跑 `scripts/agent-config/sync.mjs`。一行说明：「绑定 SSOT 在目标仓 `docs/runs/stage-bindings.yaml`；与 harness L5 sync 无关。」
+6. **禁止 sync**：本步**不**探测、不代跑目标仓 `scripts/agent-config/sync.mjs`（若存在）。一行说明：「绑定 SSOT 在目标仓 `docs/runs/stage-bindings.yaml`；与 L5 配置 sync 无关。」
 7. **收尾**：提示「后续 start/resume 沿用本绑定；改映射用 rebind。推荐包只是起点（见 [flow.md](specs/flow.md)）。start 可按主题覆盖 `invoke` / `run_mode`（含 `unattended`）/ `handoff_policy` / `review_policy`。过闸后由控制器主动调起下一 skill（见 advance）。domain 为条件环，多数主题会跳过。」
 
 ## 硬闸

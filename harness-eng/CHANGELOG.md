@@ -1,8 +1,37 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.14 → 0.7.15 → 0.7.16 → 0.7.17 → 0.7.18 → 0.7.19 → 0.7.20`（当前 **0.7.20**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.20 → 0.7.21 → 0.7.22 → 0.7.23`（当前 **0.7.23**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.23 — 2026-09-28（P3/P4：soft-gate 去品牌 + eng_snapshot 单写）
+
+### Improved
+- **P3**：`git-commit-soft-gate`：`listActiveFeatureRuns` → `listActiveTopicRuns`；detect `S_RUNS` 备注改为「主题过程态（外部控制器可选）」
+- **P4**：`delivery-checklist` §2 只写 `eng_snapshot`（读侧兼容旧 `harness_snapshot`；取消强制双写）
+
+### Docs / pack
+- 回滚误加的共享 `repo-layout` / `_contracts`（P5 不做）
+- upgrade `0.7.22 → 0.7.23`；manifest / meta / sync tmpl / questions → `0.7.23`
+
+## 0.7.22 — 2026-09-28（P0/P1/P2：协议解耦 + 中性 refresh）
+
+### Added
+- **P2**：L2 模板 `scripts/agent-kb/refresh-score.mjs`（`kb-refresh-score`）；解析 `HARNESS_ENG_ROOT` / 常见用户 skills 路径后委托 `harness.mjs --mode refresh`
+- **P2**：`delivery-checklist` §2 改调中性 `refresh-score`；回链双写 `eng_snapshot` + 兼容 `harness_snapshot`
+
+### Docs / pack
+- **P0**：热路径 / rules / checklist 以「宣称交付 / 主题收口」为准；`feature-eng` 仅为可选别名
+- **P1 对齐**：移交 / 探测话术按能力与路径（不硬钉对方 skill 名）
+- upgrade `0.7.21 → 0.7.22`；manifest / meta / sync tmpl / questions → `0.7.22`
+
+## 0.7.21 — 2026-09-28（docs-only：协议解耦文案）
+
+### Docs / pack
+- **解耦**：热路径与目标仓模板以「宣称交付 / 主题收口 / 主题过程态」为准；`feature-eng` 仅为可选别名（不改 detect/render/hooks/fill 行为）
+- **移交**：land/resume Done 的主题流程 P1 改为可选（有控制器则新会话接力；否则本 skill Done 即可）
+- SKILL 专节「可选接力（主题流程）」；glossary「与主题流程控制器易混词」
+- upgrade `0.7.20 → 0.7.21`；manifest / meta / sync tmpl / questions → `0.7.21`（已被 0.7.22 覆盖）
 
 ## 0.7.20 — 2026-09-27（批 E：monorepo detect · entry_ready · GLOB hooks · sp skip）
 

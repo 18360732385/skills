@@ -1,9 +1,9 @@
-﻿# feature-eng 版本清单（权威号）
+# feature-eng 版本清单（权威号）
 
-version: "0.2.18-dev"
+version: "0.2.21"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
-harness_land: false
+eng_land: false
 description: >-
   开发流程控制器：过程态 docs/runs/{active|archive}/<slug>/（与 superpowers 平级）；
   机读 progress.yaml；人读文档中文短名（回链/测试用例/测试报告/交接等）；

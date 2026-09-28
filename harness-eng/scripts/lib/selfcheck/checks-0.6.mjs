@@ -504,7 +504,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.7.20", "manifest version exactly 0.7.20");
+  assert(verLine && verLine[1] === "0.7.23", "manifest version exactly 0.7.23");
 
   const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -856,7 +856,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.7.20", "current manifest pin 0.7.20");
+  assert(manVer063 === "0.7.23", "current manifest pin 0.7.23");
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(
@@ -1276,8 +1276,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const gloss067 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
-  assert(/版本：\*\*0\.7\.20\*\*/.test(fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8")),
-    "使用手册-摘要 version 0.7.20"
+  assert(/版本：\*\*0\.7\.23\*\*/.test(fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8")),
+    "使用手册-摘要 version 0.7.23"
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
 }
@@ -1352,6 +1352,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.16 → 0\.7\.17/.test(upgrade068), "upgrade has 0.7.16 → 0.7.17");
   assert(/0\.7\.17 → 0\.7\.18/.test(upgrade068), "upgrade has 0.7.17 → 0.7.18");
   assert(/0\.7\.19 → 0\.7\.20/.test(upgrade068), "upgrade has 0.7.19 → 0.7.20");
+  assert(/0\.7\.20 → 0\.7\.21/.test(upgrade068), "upgrade has 0.7.20 → 0.7.21");
+  assert(/0\.7\.21 → 0\.7\.22/.test(upgrade068), "upgrade has 0.7.21 → 0.7.22");
+  assert(/0\.7\.22 → 0\.7\.23/.test(upgrade068), "upgrade has 0.7.22 → 0.7.23");
   assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
   assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
 
@@ -1372,10 +1375,13 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.17 增量验收/.test(verify068), "VERIFY 0.7.17 section");
   assert(/0\.7\.18 增量验收/.test(verify068), "VERIFY 0.7.18 section");
   assert(/0\.7\.20 增量验收/.test(verify068), "VERIFY 0.7.20 section");
+  assert(/0\.7\.21 增量验收/.test(verify068), "VERIFY 0.7.21 section");
+  assert(/0\.7\.22 增量验收/.test(verify068), "VERIFY 0.7.22 section");
+  assert(/0\.7\.23 增量验收/.test(verify068), "VERIFY 0.7.23 section");
   assert(/0\.7\.6 增量验收/.test(verify068), "VERIFY keeps 0.7.6 section");
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/0\.7\.20/.test(syncTmpl068), "sync tmpl id 0.7.20");
+  assert(/0\.7\.23/.test(syncTmpl068), "sync tmpl id 0.7.23");
   assert(/mergeRulehookCodexHooks/.test(syncTmpl068), "sync tmpl merges rulehook");
   assert(/policy\.json/.test(syncTmpl068) && /resolveMcpServerPolicy/.test(syncTmpl068), "sync tmpl MCP policy-aware");
   assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");

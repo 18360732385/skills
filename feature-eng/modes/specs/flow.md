@@ -102,7 +102,7 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 
 - 流程只定义环节、硬闸（见上文 Part A、[gates.md](gates.md)）；产物形状与语义见 [gates.md](gates.md)；**不写死**环节用哪个 skill。
 - **运行时绑定 SSOT**：目标仓 `docs/runs/stage-bindings.yaml`。解析序：目标仓 → 技能包 `config/stage-bindings.yaml`（回退）→ 皆无则 init。
-- **禁止**代跑 harness `scripts/agent-config/sync.mjs` 来「同步」本绑定；feature-eng 与 L5 sync **解耦**。技能本体推荐**用户级**安装，勿依赖项目级 `.cursor/skills/feature-eng/`。
+- **禁止**代跑目标仓 `scripts/agent-config/sync.mjs`（若存在）来「同步」本绑定；本控制器与 L5 配置 sync **解耦**。技能本体推荐**用户级**安装，勿依赖项目级 `.cursor/skills/` 托管。
 - 绑定写入**目标仓**并由团队 MR 共用；个人差异走 `rebind`。
 - **推荐 ≠ 强制**：目标仓绑定与推荐包种子 [`config/stage-bindings.example.yaml`](../../config/stage-bindings.example.yaml) 里的 skill 名都是建议，不是死绑；init/rebind **首问**须用户选（一键采用推荐 / 逐环改 / 指定其他 skill）。
 

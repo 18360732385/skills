@@ -1,6 +1,6 @@
 # close — 收口（环 11）
 
-本页 = feature-eng **内建最小收口**（无目标仓清单时兜底）。若目标仓存在 `docs/agent-kb/delivery-checklist.md`（harness 渲染），**以其为正文**并在 `门禁清单.md` 勾选；本页步骤 1–3 改为指针，勿双写细节。hooks / alwaysApply 更严时以仓库为准。
+本页 = feature-eng **内建最小收口**（无目标仓清单时兜底）。若目标仓存在 `docs/agent-kb/delivery-checklist.md`，**以其为正文**并在 `门禁清单.md` 勾选；本页步骤 1–3 改为指针，勿双写细节。hooks / alwaysApply 更严时以仓库为准。
 
 **时机**：verify 之后；**不是**每次实现期 commit。
 
@@ -13,22 +13,25 @@
 ## 步骤（B/F）
 
 0. **仓库收口清单（优先）**  
-   若存在 `docs/agent-kb/delivery-checklist.md` → Read 并按该文件勾选执行（契约 → harness refresh → superpowers/runs → pitfalls → AGENTS）；在主题 `门禁清单.md`（或回链）记「按 delivery-checklist」。然后跳到步骤 4（runs 归档若清单已含则核对勾选即可）与步骤 5。  
+   若存在 `docs/agent-kb/delivery-checklist.md` → Read 并按该文件勾选执行（契约 → 工程化 refresh → superpowers/runs → pitfalls → AGENTS）；在主题 `门禁清单.md`（或回链）记「按 delivery-checklist」。然后跳到步骤 4（runs 归档若清单已含则核对勾选即可）与步骤 5。  
    若**无**该文件 → 继续下方内建最小集（1–3）。
 
 1. **契约同步（内建）**  
    若仓内存在 `docs/func` / `docs/api` / `docs/db` / `docs/redis` / `docs/jobs`（或团队等价契约目录）：逐项确认本主题变更已同步；未同步 → 列缺项，先补。  
    若无此类目录：记「本仓无契约文档树」并跳过，不阻断。
 
-1b. **harness refresh（可选；有 harness 时）**  
-   - 探测 `docs/harness-eng/harness-meta.yaml`（或遗留 `.cursor/harness-meta.yaml`）。  
-   - **有 meta** → 代跑：  
-     `node <harness-eng技能目录>/scripts/harness.mjs --mode refresh --root <目标仓根>`  
-     （路径以本机安装为准；常见用户级 skills 目录。）  
-   - exit **0**：记回链 `harness_snapshot: refreshed`（可附 score 路径）。  
-   - exit **2**：列出 blockers；用户接受残留 → 回链 `harness_snapshot: stale` + blockers 摘要；不接受则停。  
-   - exit **1** / 命令不可用：回链 `harness_snapshot: stale`（reason=refresh_failed|unavailable），不阻断 close（独立模式）。  
-   - **无 meta**：跳过本步，不写 stale。
+1b. **工程化快照刷新（可选）**  
+   调用序（钉死）：
+   1. 若存在 `scripts/agent-kb/refresh-score.mjs` → 代跑：  
+      `node scripts/agent-kb/refresh-score.mjs --root <目标仓根>`
+   2. 否则若存在工程化 meta（`docs/harness-eng/harness-meta.yaml` 或遗留 `.cursor/harness-meta.yaml`）→ 回退：  
+      `node <工程化skill目录>/scripts/harness.mjs --mode refresh --root <目标仓根>`  
+      （路径以本机安装为准；常见用户级 skills 目录下的 `harness-eng`。）
+   3. 否则跳过本步，**不写** stale。  
+   - exit **0**：回链只写 `eng_snapshot: refreshed`（可附 score 路径）。  
+   - exit **2**：列出 blockers；用户接受残留 → 只写 `eng_snapshot: stale` + blockers 摘要；不接受则停。  
+   - exit **1** / 命令不可用：只写 `eng_snapshot: stale`（reason=refresh_failed|unavailable），不阻断 close（独立模式）。  
+   - 读侧：新键优先；旧主题仅有 `harness_snapshot` 仍有效。
 
 2. **superpowers 收口（内建最小集）**  
    - Spec/Plan（若存在）文首徽章改「已交付」  
@@ -59,7 +62,7 @@
    - 无 pitfalls 台账：三问仍要口头/写入 runs 小结，并注明「本仓无 L2 pitfalls」；`on` 时仍须有脚本（否则阻断）
 
 4. **runs 收尾与归档**  
-   - `progress.yaml`：`stage=done` + updated_at；`回链.md` 补齐最终产物指针（含 `harness_snapshot` 若适用）  
+   - `progress.yaml`：`stage=done` + updated_at；`回链.md` 补齐最终产物指针（含 `eng_snapshot`；读侧兼容旧 `harness_snapshot` 若适用）  
    - `git mv docs/runs/active/<slug> → docs/runs/archive/<slug>`（`archive/` 不存在则先建；**未跟踪**则用普通 `mv`，勿 `git mv`）  
    - 若有 `docs/runs/README.md` 进行中表：删本主题行  
    - 若主题仍在旧路径 `docs/superpowers/runs/<slug>/`：迁到 `docs/runs/archive/<slug>/` 并注明已从旧路径迁移
@@ -67,7 +70,7 @@
 4b. **死链改写（只改路径字符串）**  
    归档后扫描主题根 `docs/runs/archive/<slug>/`，以及回链 / `progress.artifacts` 列出的 chef、审核、Spec/Plan 产物：将仍指向 `docs/runs/active/<slug>/`（或归档前 Spec/Plan 路径）的字符串改写为对应 archive 路径。**勿**改写语义正文，只替换路径。
 
-5. 输出交付摘要：路径、各环节产物、测试报告通过率（F）、残留风险、本仓跳过的可选增强项、`harness_snapshot` 状态。
+5. 输出交付摘要：路径、各环节产物、测试报告通过率（F）、残留风险、本仓跳过的可选增强项、`eng_snapshot`（读侧兼容旧 `harness_snapshot`）状态。
 
 ## 双归档 L1 检查单（O7，可勾选）
 
@@ -75,7 +78,7 @@
 
 ### runs active → archive
 - [ ] `progress.yaml`：`stage=done` + `gates.close` 已写 + updated_at
-- [ ] `回链.md` 最终产物指针补齐（含 chef_mode / authorized_by / env_notes / harness_snapshot 若适用）
+- [ ] `回链.md` 最终产物指针补齐（含 chef_mode / authorized_by / env_notes / `eng_snapshot`（读侧兼容旧 `harness_snapshot`）若适用）
 - [ ] `docs/runs/active/<slug>/` → `docs/runs/archive/<slug>/`（已跟踪用 `git mv`，否则 `mv`）
 - [ ] 若有 `docs/runs/README.md` 进行中表：已删本主题行
 - [ ] 主题 archive 树与 artifacts 指向文件中**无** `docs/runs/active/<slug>` 死链（步骤 4b）

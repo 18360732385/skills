@@ -1,6 +1,6 @@
 # feature-eng 环节 → skill 绑定（技能包种子 / 回退；非业务仓 SSOT）
 # 业务仓运行时 SSOT：docs/runs/stage-bindings.yaml（由 init / rebind 写入目标仓）。
-# 本文件仅作种子与无目标仓文件时的回退；禁止代跑 harness sync.mjs。
+# 本文件仅作种子与无目标仓文件时的回退；禁止代跑目标仓 scripts/agent-config/sync.mjs（若存在）。
 # 下列为推荐默认；首问规则见 modes/specs/flow.md。skill: null = 未绑定。
 # 可绑环节键名固定为下列 11 个；控制器自有环节不在此列。
 
