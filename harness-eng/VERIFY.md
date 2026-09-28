@@ -4,7 +4,20 @@
 
 ## 版本
 
-当前 **0.7.29**（e2e P1：upgrade hooks · inventory meta · 评分假绿；其上 0.7.27 e2e P0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.29**（e2e P2：填契约 / 幂等 / UX；其上 0.7.28 e2e P1 · 0.7.27 e2e P0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.29 增量验收（e2e P2）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.29`；templates / meta / questions / sync tmpl 一致 | 有 |
+| calibrate：compare 有 DDL diff；`--write-ddl` 保留说明；`tables:[]` → empty_inventory | 有 |
+| inventory-db 保发现序；`--update-index` 进「表文档」节；缺索引 exit 1 | 有 |
+| 预填匹配「常用命令」；未解析占位不写盘；YAML 布尔保型 | 有 |
+| report 不 churn score-latest；inventory `--out` 相对 root；`--gate-profile` | 有 |
+| api requestFields + func method drift；README/AGENTS SSOT + githooks tip | 有 |
+| CHANGELOG 标题 `## 0.7.29`；upgrade `## 0.7.28 → 0.7.29` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.28 增量验收（e2e P1）
 
