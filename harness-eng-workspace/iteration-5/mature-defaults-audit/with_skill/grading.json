@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "output_contains{all:[MATURE]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (all:[MATURE])"
+    },
+    {
+      "text": "output_contains{any:[审计 audit Audit]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+    },
+    {
+      "text": "output_contains{any:[已具备 缺口 L0 L1 L2]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[已具备 缺口 L0 L1 L2])"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1
+  }
+}

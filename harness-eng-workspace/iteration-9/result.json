@@ -1,0 +1,49 @@
+{
+  "skill_name": "harness-eng",
+  "schema_version": "v1alpha1",
+  "engine_name": "claude_code",
+  "model_name": "",
+  "requested_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "applied_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "start_time": "2026-09-28T11:20:28.016369848+08:00",
+  "end_time": "2026-09-28T11:20:28.43350948+08:00",
+  "case_results": [
+    {
+      "case_id": "land-awaits-confirm",
+      "title": "落地意图须先过确认闸门、未确认不写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到至少 L0。\n按施工仪式推进；我还没有确认写盘，请先出示计划或提问，不要直接写文件。\n"
+    },
+    {
+      "case_id": "partial-defaults-resume",
+      "title": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做；\n本轮先说明模式与缺口，不要写任何文件。\n"
+    }
+  ],
+  "total_tokens": 0,
+  "judge_tokens": 0,
+  "overall_tokens": 0
+}

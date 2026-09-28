@@ -1,0 +1,13 @@
+{
+  "eval_id": 0,
+  "eval_name": "审计模式只读、不向目标仓写盘",
+  "prompt": "请用 harness-eng 对当前仓库做审计（audit）。\n只对照阶梯看已具备与缺口，不要写任何文件，也不要进入 land/resume。\n",
+  "assertions": [
+    "expect.must_contain",
+    "expect.must_not_contain",
+    "expect.files_not_exist",
+    "output_contains{any:[审计 audit Audit]}",
+    "output_contains{any:[缺口 已具备 L0 L1]}",
+    "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]"
+  ]
+}

@@ -1,0 +1,501 @@
+{
+  "skill_name": "harness-eng",
+  "schema_version": "v1alpha1",
+  "engine_name": "claude_code",
+  "model_name": "kimi-k2.6",
+  "requested_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic",
+    "model": "kimi-k2.6"
+  },
+  "applied_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic",
+    "model": "kimi-k2.6"
+  },
+  "observed_configuration": {
+    "version": "2.1.283"
+  },
+  "start_time": "2026-09-28T11:10:41.038012902+08:00",
+  "end_time": "2026-09-28T11:42:38.248740068+08:00",
+  "case_results": [
+    {
+      "case_id": "audit-no-write",
+      "title": "审计模式只读、不向目标仓写盘",
+      "status": "PASS",
+      "duration_ms": 74605,
+      "turns": 1,
+      "input_tokens": 24182,
+      "output_tokens": 1841,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 1,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{any:[审计 audit Audit]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+          },
+          {
+            "text": "output_contains{any:[缺口 已具备 L0 L1]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[缺口 已具备 L0 L1])"
+          },
+          {
+            "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          }
+        ],
+        "summary": {
+          "passed": 6,
+          "failed": 0,
+          "total": 6,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "请用 harness-eng 对当前仓库做审计（audit）。\n只对照阶梯看已具备与缺口，不要写任何文件，也不要进入 land/resume。\n",
+      "response": "# harness-eng audit — fixture-new-code\n\n目标根: `/tmp/skill-up-1727576492`  \n类型: `NEW_CODE`（Maven/Java；完全未落地）  \nmeta: **无 meta**\n\n---\n\n## 已具备\n\n### L0 协作入口\n- [x] 无（根 `AGENTS.md` 缺失）\n- [x] 无（`.cursor/rules/karpathy-guidelines.mdc` 缺失）\n- [x] 无（`.cursor/rules/00-project-docs-overview.mdc` 缺失）\n- [x] 无（`docs/harness-eng/harness-meta.yaml` 缺失；也无遗留 `.cursor/harness-meta.yaml`）\n- [x] 无（rule 21 / rule 17 均未生成）\n\n### L1 契约骨架\n- [x] 无（`docs/func/` 缺失 + rule 11 缺失）\n- [x] 无（`docs/api/` 缺失 + rule 12 缺失）\n- [x] 无（`docs/db/` 缺失 + rule 13 缺失）\n- [x] 无（`docs/redis/` 缺失 + rule 16 缺失）\n- [x] 无（`docs/jobs/` 缺失 + rule 20 缺失）\n\n### L1 超集 / 过程包\n- [x] 无（`docs/releases` 缺失）\n- [x] 无（前端协作包未生成）\n\n### L2 知识回流\n- [x] 无（`docs/agent-kb/` 四文件全部缺失）\n- [x] 无（rule 19 缺失）\n\n### L3 规划与软门禁\n- [x] 无（`docs/superpowers/README.md` 缺失）\n- [x] 无（rule 18 缺失）\n- [x] 无（hooks 全缺失：无 `.cursor/hooks.json`、无 `.githooks/pre-commit`、无 `.claude/settings.json` hooks 等）\n\n### L4 工具连接样例\n- [x] 无（`mcp.json.example` 缺失）\n- [x] 无（`docs/harness-eng/mcp-usage-guide.md` 缺失）\n\n### L5 配置 SSOT 管线\n- [x] 无（`docs/agent-config/` 缺失）\n- [x] 无（`scripts/agent-config/sync.mjs` 缺失）\n\n---\n\n## 缺口\n\n| 阶梯 | 缺失路径 / 文件 | 建议动作 |\n|---|---|---|\n| **L0** | 根 `AGENTS.md` | `land` 或 `pipeline` 补齐 |\n| **L0** | `docs/harness-eng/harness-meta.yaml` | `land` 写入 meta 快照 |\n| **L0** | `.cursor/rules/karpathy-guidelines.mdc` | `land` 渲染 alwaysApply rule |\n| **L0** | `.cursor/rules/00-project-docs-overview.mdc` | `land` 渲染 alwaysApply rule |\n| **L1** | `docs/func/` + `11-func-sync.mdc` | 按探测域选择后 `land` |\n| **L1** | `docs/api/` + `12-api-sync.mdc` | 按探测域选择后 `land` |\n| **L1** | `docs/db/` + `13-db-sync.mdc` | 按探测域选择后 `land` |\n| **L1** | `docs/redis/` + `16-redis-sync.mdc` | 按探测域选择后 `land` |\n| **L1** | `docs/jobs/` + `20-jobs-sync.mdc` | 若探测到 jobs 域则 `land` |\n| **L2** | `docs/agent-kb/` 四文件 + `19-agent-kb.mdc` | `land` 或 `upgrade` 到 L2 |\n| **L3** | `docs/superpowers/README.md` + `18-superpowers-corpus.mdc` | `upgrade` 到 L3 |\n| **L3** | `.cursor/hooks.json` / `.githooks/pre-commit` / `.claude/settings.json` hooks | `upgrade` 到 L3 |\n| **L4** | `.cursor/mcp.json.example` + `mcp-usage-guide.md` | `upgrade` 到 L4 |\n| **L5** | `docs/agent-config/` + `scripts/agent-config/sync.mjs` | `upgrade` 到 L5（多工具仓推荐） |\n\n---\n\n## 反模式\n\n| 检查 | 结果 |\n|---|---|\n| alwaysApply 过多 / 整份 pitfalls alwaysApply | **不涉及**（无 rules） |\n| plan / archive 当契约 SSOT | **不涉及**（无 superpowers） |\n| `.cursor/mcp.json` 含明文密且被跟踪 | **不涉及**（无 MCP 文件） |\n| `S_SECRETS_LEAK`（README/yml） | 未发现（仅 pom.xml，无密文） |\n| 根 AGENTS 与分册严重漂移且无冲突裁决 | **不涉及**（无 AGENTS） |\n| 分册 AGENTS 空壳 | **不涉及**（无分册） |\n| Never do 无 Pn 回链 | **不涉及**（无 AGENTS） |\n| 路径速查空壳 | **不涉及**（无 AGENTS） |\n| meta.ai_tools 与入口/镜像 rules 不一致 | **不涉及**（无 meta） |\n| pitfalls 稳定 ID 重号 | **不涉及**（无 pitfalls） |\n| pitfalls 未过 lint | **不涉及**（无 lint 脚本） |\n| L5 仓生成物漂移 / 手改生成物 | **不涉及**（非 L5） |\n| L5 与直渲混用 | **不涉及**（非 L5） |\n| 把 Codex `.mdc` 镜像当成已支持 | **不涉及**（无 Codex 资产） |\n| 把旧 `ready.ok` / 形态分当真「可 AI coding」 | **不涉及**（无 ready.ok） |\n| 把形态覆盖 / inventory 覆盖当真「深真全」 | **不涉及**（未跑 fill） |\n| 默认 auto / 启发式脚本写 SSOT | **不涉及**（无 SSOT） |\n\n---\n\n## 建议下一阶\n\n- **当前最高完整阶**：无（低于 L0）\n- **仓库特征**：Maven/Java 空壳项目；无业务代码；无现成文档\n- **建议**：\n  - 若这是**新仓库/教学 fixture**：直接 `land` 到 **L2**（协作入口 + 契约骨架 + 知识回流），或 `pipeline`（大仓首次推荐，默认 L4）\n  - 若暂时不想写盘：可先做 `write-meta-only`（仅写 `docs/harness-eng/harness-meta.yaml` 快照，记录 ladder / domains / ai_tools，零模板渲染）\n  - 后续填充契约深度：`fill-plan --gold` → `fill-truths-agents` → acceptance → merge；**开干只看 `ai_coding_ready` + `gold_ratio`**\n\n---\n\n## 会话仪表盘\n\n```\n┌─────────────────────────────────────────┐\n│ 阶段：audit（审计完成）                  │\n│ 现状：不可 AI coding（低于 L0）          │\n│ 工作：对照 L0–L5 全阶梯逐项勾选，零命中  │\n│ 下一步：land 补齐 L0–L2，或 pipeline 到  │\n│         L4（大仓首次推荐）               │\n└─────────────────────────────────────────┘\n```",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "land-awaits-confirm",
+      "title": "落地意图须先过确认闸门、未确认不写盘",
+      "status": "PASS",
+      "duration_ms": 186781,
+      "turns": 4,
+      "input_tokens": 36861,
+      "output_tokens": 2762,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 4,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{any:[WritePlan 确认 推荐 Fingerprint 指纹]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[WritePlan 确认 推荐 Fingerprint 指纹])"
+          },
+          {
+            "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          }
+        ],
+        "summary": {
+          "passed": 4,
+          "failed": 0,
+          "total": 4,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到至少 L0。\n按施工仪式推进；我还没有确认写盘，请先出示计划或提问，不要直接写文件。\n",
+      "response": "探测完毕。下面是完整的 **Fingerprint**、**类型判定** 与 **RecommendedProfile**；随后进入条件提问（每批 ≤5 题）。\n\n---\n\n## 🔍 Fingerprint 表\n\n| 信号 | 值 | 备注 |\n|---|---|---|\n| `S_GIT` | ✅ | git 已初始化，尚无 commit |\n| `S_EMPTY` | ✅ | 无 `src/`、无 harness 指纹 |\n| `S_STACK` | ✅ | `pom.xml`（Maven） |\n| `S_NO_FLYWAY` | ✅ | 无 Flyway 目录/配置 |\n| `S_CLAUDE` | ⚠️ | `.claude/` 存在，但**此为 skill 自身安装目录，非用户既有 AI 工具配置** |\n| `S_AGENTS_ROOT` | ❌ | 无 |\n| `S_RULES` | ❌ | 无 |\n| `S_FUNC` / `S_API` / `S_DB` / `S_REDIS` / `S_JOBS` | ❌ | 无契约目录 |\n| `S_HOOKS` / `S_MCP` / `S_HARNESS_META` | ❌ | 无 |\n| `S_SECRETS_LEAK` | ❌ | 无泄露线索 |\n| `S_ENV_PROFILES` | `[local]` | 无 profile 文件，默认 local |\n| `S_DB_ENGINE` / `S_STACK_REDIS` | — | 无依赖，未探测到引擎 |\n| `S_SPRING` / `S_SLF4J` | ❌ | pom.xml 无相关依赖 |\n\n**类型判定**: `NEW_CODE_NO_HARNESS`（有栈信号，无任何 harness 产物）\n\n---\n\n## 📦 RecommendedProfile\n\n- **模式**: `land` — 理由：有代码（pom.xml）但无 harness，全量脚手架\n- **目标阶梯**: `L4 工具连接样例` — 理由：小仓默认骨架一次到位；你要求\"至少 L0\"，L0–L4 均可，规范默认推 L4（如只想 L0/L1/L2 请在下方选）\n- **契约域**: `func, api, db` — 理由：Java/Maven 默认三域；仓库当前为空，预建骨架待后续填充\n- **分册**: `solo` — 理由：单模块/无模块\n- **glob**: `wide` — 理由：小仓\n- **Rule14 / Rule21 / 前端协作包 / 安全预填**: 是 / 否 / 否 / 是\n- **AI 工具面**: `[]` — **未探测到任何 AI 工具配置，须至少选一项**\n- **MCP 跟踪策略**: `example_only`（仅 example 入库，真密走 `.gitignore`）\n- **db 迁移模式**: `manual_sql` — 推荐：无 Flyway，且为空仓\n- **gate_profile**: `strict`\n\n\u003e 不确定请回复：**全部推荐**\n\u003e （或逐题选 A/B…；自定义工具请写「工具名=…; 入口路径=…」）\n\n---\n\n## ❓ 条件提问（第 1 批）\n\n本仓当前无任何 AI 工具入口，以下问题需你确认：\n\n1. **Q_LADDER — 目标阶梯？**\n   - A. `L0` 协作入口（AGENTS + rules + meta，无契约骨架）\n   - B. `L1` 契约骨架（+ func/api/db 索引与 sync rules）\n   - C. `L2` 知识回流（+ agent-kb）\n   - D. `L4` 工具连接样例（+ hooks 软提醒 + MCP example）⭐ **推荐**\n   - E. `L5` 配置 SSOT 管线（多工具仓才推）\n\n2. **Q_AI_TOOL — 本仓使用哪些 AI 编程工具？**（至少选一项，多选）\n   - A. `cursor`\n   - B. `claude`（Claude Code）\n   - C. `codex`（高 · 纪律 B；不做 `.mdc` 镜像）\n   - D. `qoder`\n   - E. `trae`（高）\n   - F. `workbuddy`\n   - G. `自定义`（请写「工具名=…; 入口路径=…」）\n\n3. **Q_NAME — 仓库短名？**\n   - 推荐：`fixture-new-code`（来自 pom.xml `\u003cartifactId\u003e`）\n\n4. **Q_DESC — 一句话职责？**\n   - 推荐：`harness-eng NEW_CODE_NO_HARNESS fixture`（来自 pom.xml `\u003cdescription\u003e`）\n\n5. **Q_DB_MIGRATION — db 域迁移模式？**（若选 L1+）\n   - A. `manual_sql`（人工按序执行 SQL；无 Flyway）⭐ **推荐**\n   - B. `flyway`\n   - C. `none`\n\n---\n\n请回复题号+选项（如 `1-D, 2-A, 3-推荐, 4-推荐, 5-A`），或直接回复 **全部推荐**。收齐答题后，我将出示 **WritePlan**（白话摘要 + 文件预览），等你回复「确认」再写盘。",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "mature-defaults-audit",
+      "title": "MATURE 仓未指定模式时默认走审计",
+      "status": "PASS",
+      "duration_ms": 105063,
+      "turns": 3,
+      "input_tokens": 31536,
+      "output_tokens": 1893,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 3,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{all:[MATURE]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (all:[MATURE])"
+          },
+          {
+            "text": "output_contains{any:[审计 audit Audit]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+          },
+          {
+            "text": "output_contains{any:[已具备 缺口 L0 L1 L2]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[已具备 缺口 L0 L1 L2])"
+          }
+        ],
+        "summary": {
+          "passed": 5,
+          "failed": 0,
+          "total": 5,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做。\n",
+      "response": "探测完成。以下是当前仓库的 **Fingerprint 信号表**：\n\n---\n\n## 🔍 Fingerprint 信号表\n\n| 信号 | 值 | 备注 |\n|---|---|---|\n| `S_GIT` | ✅ | `.git` 存在 |\n| `S_AGENTS_ROOT` | ✅ | 根 `AGENTS.md` |\n| `S_RULES` | ✅ | `.claude/rules/00-overview.md` 非空（`.claude/rules`，非仅 Cursor） |\n| `S_00` | ❌ | 无 `00-*.mdc`（当前为 `.md`） |\n| `S_FUNC` | ❌ | 无 `docs/func/` |\n| `S_API` | ✅ | `docs/api/api.md` 非空 |\n| `S_DB` | ❌ | 无 `docs/db/` |\n| `S_REDIS` | ❌ | 无 `docs/redis/` |\n| `S_JOBS` | ❌ | 无 `docs/jobs/` |\n| `S_KB` | ✅ | `docs/agent-kb/README.md` 非空 |\n| `S_SP` | ❌ | 无 `docs/superpowers/` |\n| `S_RUNS` | ❌ | 无 `docs/runs/` |\n| `S_HOOKS` | ❌ | 无 hooks 配置 |\n| `S_MCP` | ❌ | 无 mcp.json |\n| `S_CLAUDE` | ✅ | `.claude/` 存在 |\n| `S_STACK` | ❌ | 无技术栈文件（pom.xml / package.json / go.mod 等） |\n| `S_HARNESS_META` | ❌ | 无 `docs/harness-eng/harness-meta.yaml` |\n| `S_SECRETS_LEAK` | ❌ | 无密文泄露 |\n| `S_FRONTEND` | ❌ | 无前端工程 |\n| `S_MULTI_TOOL` | ❌ | 仅 `.claude/` 一个 AI 工具入口 |\n| `S_AGENT_CONFIG` | ❌ | 无 L5 配置管线 |\n| `S_ENV_PROFILES` | `[local]` | 无 profile 文件，默认 local |\n\n---\n\n## 🏷️ 类型判定\n\n**MATURE** — 根 `AGENTS.md` + 任一宿主 `rules`（`.claude/rules`）+ 至少一个契约域（`S_API`）+ 知识回流（`S_KB`）齐套。  \n⚠️ 但缺少 `S_HARNESS_META`（无 `docs/harness-eng/harness-meta.yaml`），且仅有 `api` 一个契约域，`func/db/redis/jobs` 均缺失。\n\n---\n\n## 📦 推荐包 RecommendedProfile\n\n- **模式**: `audit`（MATURE 默认分流）— 理由：已有 AGENTS + rules + api + kb，先审计缺口\n- **目标阶梯**: 若补齐/升级则 **L4 工具连接样例** — 理由：小仓默认直达 hooks/MCP example\n- **契约域**: `api`（已有）；`func, db, redis, jobs` 均缺失\n- **分册**: `solo`（无子模块）\n- **glob**: `wide`（小仓/无源码）\n- **Rule14 / Rule21 / Rule17 / 安全预填**: 是 / 否 / 否 / 是\n- **AI 工具面**: `claude` — 理由：探测到 `.claude/`\n- **MCP 跟踪策略**: `example_only`（L4 理想态）\n- **L5 配置 SSOT 管线**: 否（单工具仓，无 `S_MULTI_TOOL`）\n- **hooks 家族**: `commit-gate-extended, after-edit`（若升至 L3+）\n\n\u003e 不确定怎么选？可直接回复：**全部推荐**（采用上表；收齐参数后仍出 WritePlan，写盘过闸门）。\n\n---\n\n## ❓ 本轮动作（MATURE 仓库）\n\n1. **先审计**（默认）— 输出缺口清单、反模式、覆盖评分\n2. **补齐**（resume）— 补齐缺失的 harness-meta、func/db/redis/jobs 契约骨架等\n3. **升阶**（upgrade）— 从当前状态升级到更高阶梯（如 L3 hooks / L4 MCP）\n\n请回复选项编号（1/2/3），或回复 **全部推荐**。",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "partial-defaults-resume",
+      "title": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "status": "PASS",
+      "duration_ms": 44547,
+      "turns": 2,
+      "input_tokens": 17571,
+      "output_tokens": 1029,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 2,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{any:[resume 续跑 Resume]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[resume 续跑 Resume])"
+          },
+          {
+            "text": "output_contains{any:[PARTIAL 半成品 缺口 补齐]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[PARTIAL 半成品 缺口 补齐])"
+          },
+          {
+            "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          }
+        ],
+        "summary": {
+          "passed": 6,
+          "failed": 0,
+          "total": 6,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做；\n本轮先说明模式与缺口，不要写任何文件。\n",
+      "response": "## 模式判定\n\n按 **harness-eng** 默认分流规则：\n\n| 条件 | 结果 |\n|---|---|\n| 已有 `AGENTS.md`（骨架级） | ✅ |\n| 无 `docs/harness-eng/harness-meta.yaml` | ✅ |\n| 无 `.cursor/rules`、无契约文档、无回流目录 | ✅ |\n\n**判定模式：`resume`**（半成品续跑工程化）\n\n\u003e 注：当前仓库不是大仓，且已有 PARTIAL 的 `AGENTS.md`，故走 `resume` 而非 `land` / `pipeline`。\n\n---\n\n## 当前缺口\n\n| 层级 | 项 | 状态 |\n|---|---|---|\n| **元数据** | `docs/harness-eng/harness-meta.yaml`（skill_version、ladder、domains） | ❌ 缺失 |\n| **AGENTS.md** | 目录、角色、工作流、约定、SSOT、层级路由等完整章节 | ⚠️ 仅有 `Never do` + `Commands` |\n| **AI 编码规则** | `.cursor/rules` / `.cursor/rules.md` | ❌ 缺失 |\n| **契约文档** | `docs/harness-eng/` 下 func / api / db / redis / jobs 等分册 | ❌ 缺失 |\n| **知识回流** | `docs/plans/`、`docs/runs/` 规划目录 | ❌ 缺失 |\n| **Hooks / MCP** | `.claude/settings.json` hooks、MCP 配置 | ❌ 缺失 |\n\n当前约为 **L0 偏下**（仅有骨架级 AGENTS.md），距离可宣称 `ai_coding_ready` 尚需补齐 L1–L2 必备项。\n\n---\n\n## 下一步建议\n\n1. **定根确认**：目标根即 `/tmp/skill-up-2415912961`（单根小仓），是否以此为准？\n2. **类型判定**：从现有文件看，本仓为通用脚手架/Fixture 类（无业务代码栈），推荐走 **轻量 resume**（无需 db/redis/jobs 等重型契约）。\n3. **提问批次**：确认根后，我会按 `questions.yaml` 发起 ≤5 条条件提问（可一键「全部推荐」）。\n4. **WritePlan → 确认闸门 → 写盘**。\n\n请确认：\n- **目标根** 是否为 `/tmp/skill-up-2415912961`？\n- 是否接受 **resume** 模式、轻量阶梯（无需 db/redis/jobs）？\n\n确认后即进入提问批次。",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "monorepo-land-detects-stacks",
+      "title": "monorepo 冷启动须识别前后端栈并等待确认",
+      "status": "PASS",
+      "duration_ms": 463516,
+      "turns": 1,
+      "input_tokens": 59629,
+      "output_tokens": 3483,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 1,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{any:[WritePlan 确认 推荐 Fingerprint 指纹 探测]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[WritePlan 确认 推荐 Fingerprint 指纹 探测])"
+          },
+          {
+            "text": "output_contains{any:[S_SPRING Spring Maven backend]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[S_SPRING Spring Maven backend])"
+          },
+          {
+            "text": "output_contains{any:[S_FRONTEND frontend Vite 前端]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[S_FRONTEND frontend Vite 前端])"
+          },
+          {
+            "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          }
+        ],
+        "summary": {
+          "passed": 6,
+          "failed": 0,
+          "total": 6,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：这是前后端 monorepo（backend Maven/Spring + frontend Vite）。\n请按 land 施工仪式推进到至少 L1，但本轮我还没确认写盘。\n请先完成探测与提问/WritePlan，明确前后端分册怎么处理，不要直接写文件。\n",
+      "response": "## 探测结果 — Fingerprint\n\n| 信号 | 是/否 | 备注 |\n|---|---|---|\n| S_GIT | 是 | 全新仓库，零提交 |\n| S_STACK | 是 | `backend/pom.xml` + `frontend/package.json` |\n| S_SPRING | 是 | Spring Boot 3.3.4 |\n| S_FRONTEND | 是 | React 18 + Vite 5 |\n| S_EMPTY | 否 | 有栈入口文件（虽无 `src/`） |\n| S_AGENTS_ROOT | 否 | 无根 `AGENTS.md` |\n| S_RULES | 否 | 无 `.cursor/rules` 等 |\n| S_FUNC / S_API / S_DB / S_REDIS / S_JOBS | 否 | 无契约目录与调度指纹 |\n| S_HARNESS_META | 否 | 无 `docs/harness-eng/harness-meta.yaml` |\n| S_NO_FLYWAY | 是 | 无 Flyway 目录/配置 |\n| S_SQL_DIR | 否 | 无手写 SQL |\n| S_DB_ENGINE | — | 无 JDBC 依赖（空 POM） |\n| S_STACK_REDIS | 否 | 无 Redis 依赖 |\n| S_SLF4J | 否 | 无 Java 源码（Spring Boot 默认带，但 detect 按源码命中） |\n| S_SECRETS_LEAK | 否 | `README.fixture.md` 无密 |\n| S_CLAUDE | 是 | `.claude/` 存在（**注**：为 harness-eng skill 安装目录，非项目级外源配置） |\n| S_MULTI_TOOL | 否 | 未探测到项目级 AI 工具入口 |\n| S_ENV_PROFILES | [local] | 无 `application-*.yml`，默认 local |\n\n**MCP 矩阵**：无 db/redis 引擎，暂无需 server 集合。  \n**类型判定**：`NEW_CODE_NO_HARNESS`（有源码信号，无任何 harness 产物）。\n\n---\n\n## 推荐包 RecommendedProfile\n\n- **模式**: `land` — 有代码无 harness，全量 scaffold\n- **目标阶梯**: `L1`（契约骨架）— 满足「至少 L1」；空壳仓库 L3+ hooks/MCP 暂无实质 commit 可监视，建议先到 L1，有代码后再 `upgrade`\n- **契约域**: `func, api, db` — Java/Maven 默认；无 Redis/Jobs 信号\n- **分册**: `modules(all)` — 根薄 + `backend/` + `frontend/` 各一份分册\n- **glob**: `wide`（小仓/空壳）\n- **Rule14（中文文档）/ Rule17（前端协作）/ Rule21（可观测）**: 是 / 是 / **否**（无 SLF4J 源码命中，建议有代码后补装）\n- **db 迁移模式**: `manual_sql`（无 Flyway）\n- **安全预填 Q_SEED**: 是\n- **AI 工具面**: `[]`（未探测到任何宿主；须你确认）\n- **L5 SSOT 管线**: 否（单工具仓默认否）\n- **Gate profile**: `strict`\n\n\u003e 不确定请回复：**全部推荐**（采用上表；收齐后出 WritePlan，写盘仍须确认）。\n\n---\n\n## 关键问题：前后端分册怎么处理？\n\n本仓是**前后端分离 monorepo**，但 skill 的 `module_agents_template` 只能**全局设一个值**（`spring` / `frontend` / `default`），render 时**所有模块分册用同一个模板**。这导致：\n\n| 方案 | backend/AGENTS.md | frontend/AGENTS.md | 评价 |\n|---|---|---|---|\n| A. `default`（通用分册） | 中性模板，留 TODO | 中性模板，留 TODO | ✅ 无错配，最干净 |\n| B. `spring` | 专业 Spring 分册（Maven 纪律、DB Block、分层约定） | ❌ 也生成 Spring 分册（内容错配） | 后端收益高，但 frontend 需手工替换 |\n| C. `frontend` | ❌ 生成前端分册 | 专业前端分册 | 后端错配 |\n| D. `solo`（不分册） | — | — | 根 AGENTS 厚写，放弃「根薄分册厚」 |\n\n**我的推荐**：选 **A（modules + default 通用分册）**。理由：\n1. 空壳仓库无实际代码，通用分册的 TODO 占位符正好对应未来填充；\n2. 避免 frontend 被强行塞入 Maven/Spring 内容；\n3. 等 backend 有实体代码后，可 `upgrade` 为 `spring` 专业分册；frontend 同理可换 `frontend` 分册。\n\n若你坚持 backend 现在就落专业 Spring 分册，可选 **B**，但需接受 `frontend/AGENTS.md` 首轮内容错配、后续手工替换。\n\n---\n\n## 提问（请回复编号或「全部推荐」）\n\n### 第一批（全局与目标）\n\n1. **Q_TARGET_ROOT**：`/tmp/skill-up-1720389881` — 确认？\n2. **Q_MODE**：`land`（落地）— 确认？\n3. **Q_LADDER**：`L1`（契约骨架）— 或你希望直接 `L2` / `L4`？\n4. **Q_CONTRACT**：`func, api, db` — 或加减某个域？\n5. **Q_NAME**：`stack-monorepo-fe-be`（取自 README）— 或有其他短名？\n\n### 第二批（分册与栈）\n\n6. **Q_MODULES**：`all`（根 + backend + frontend 各一份 AGENTS）— 或 `solo` / `few`？\n7. **Q_MODULE_AGENTS**：`default`（通用分册）— 或你选 `spring` / `frontend`？（见上文分析）\n8. **Q_STACK**：Spring Boot 3.3.4 + React 18 + Vite 5 — 确认？\n9. **Q_GLOBS**：`stack_default`（栈默认 globs）— 确认？\n\n### 第三批（规则与工具）\n\n10. **Q_RULE14**：安装中文文档规则 — **是**？\n11. **Q_RULE17**：安装前端协作规则 — **是**？\n12. **Q_RULE21**：安装后端可观测/注释规则 — **否**？（Spring Boot 默认带 SLF4J，但无源码，建议暂缓）\n13. **Q_DB_MIGRATION**：`manual_sql`（无 Flyway）— 确认？\n14. **Q_AI_TOOL**：本仓要用哪些 AI 编程工具？（多选）\n    - `cursor` / `claude` / `codex`（高·不做 .mdc 镜像）/ `qoder` / `trae`（高）/ `workbuddy` / 自定义\n\n---\n\n请回复**全部推荐**（按上表推荐值直接收齐），或逐题回答。收齐后我出 **WritePlan**（含文件清单与渲染预览），你再回复 **确认** 才进入写盘。",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "land-l5-ssot-in-writeplan",
+      "title": "L5+Codex 落地计划须走 agent-config SSOT/sync",
+      "status": "PASS",
+      "duration_ms": 281465,
+      "turns": 1,
+      "input_tokens": 33186,
+      "output_tokens": 5833,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 1,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{any:[WritePlan 确认 L5 agent_config agent-config]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[WritePlan 确认 L5 agent_config agent-config])"
+          },
+          {
+            "text": "output_contains{any:[sync SSOT docs/agent-config]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[sync SSOT docs/agent-config])"
+          },
+          {
+            "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          }
+        ],
+        "summary": {
+          "passed": 5,
+          "failed": 0,
+          "total": 5,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请规划对本仓 land 到 L5，AI 工具面要同时包含 cursor 与 codex，\n并启用 agent_config / 配置 SSOT 管线。\n本轮只出示探测、提问批次或 WritePlan，说明 hooks/rules 如何经 SSOT 与 sync 落地；\n我还没有确认，请不要写任何文件，也不要直接往 .codex/hooks 落最终脚本。\n",
+      "response": "## 探测结果 Fingerprint\n\n| 信号 | 是/否 | 备注 |\n|---|---|---|\n| `S_GIT` | 是 | git 根 `/tmp/skill-up-1739498757` |\n| `S_EMPTY` | **近空** | 有 `pom.xml`（Maven 标识），但无 `src/`、无 Java 源码、无 harness 指纹 |\n| `S_STACK` | 是 | Maven (`pom.xml`)；`artifactId=fixture-new-code` |\n| `S_SPRING` | 否 | pom.xml 无 `spring-boot` 依赖 |\n| `S_SLF4J` | 否 | 无 Java 源码可扫描 |\n| `S_AGENTS_ROOT` | 否 | 无根 `AGENTS.md` |\n| `S_RULES` | 否 | 无 `.cursor/rules`、`.claude/rules` 等任何宿主规则 |\n| `S_HOOKS` | 否 | 无 hooks 配置 |\n| `S_MCP` | 否 | 无 `mcp.json` / `mcp.json.example` |\n| `S_FUNC` / `S_API` / `S_DB` / `S_REDIS` / `S_JOBS` | 否 | 无契约目录 |\n| `S_FRONTEND` | 否 | 无前端包 |\n| `S_HARNESS_META` | 否 | 无 `docs/harness-eng/harness-meta.yaml` |\n| `S_AGENT_CONFIG` | 否 | 无 `docs/agent-config/` |\n| `S_MULTI_TOOL` | 否 | 仅 `.claude/` 为 skill 工作区，非宿主入口 |\n| `S_SECRETS_LEAK` | 否 | 无命中 |\n| `S_SQL_DIR` | 否 | 无手写 SQL 目录 |\n| `S_ENV_PROFILES` | `[local]` | 无 `application-*.yml` 等 profile 文件，默认 local |\n\n**仓库类型判定**：`NEW_CODE_NO_HARNESS`（有栈标识、无 harness 信号）→ 全量 scaffold。\n\n---\n\n## 推荐包 RecommendedProfile\n\n- **模式**: `land` — 全量脚手架\n- **目标阶梯**: **L5（配置 SSOT 管线）** — 用户指定\n- **契约域**: `func, api, db` — Maven 默认；近空仓可后续随源码扩张再补 redis/jobs\n- **分册**: `solo`（单仓无子模块）\n- **glob**: `wide`（小仓/空仓）\n- **Rule14 / Rule21 / Rule17 / 安全预填**: 是 / 否 / 否 / 是\n- **AI 工具面**: `cursor` + `codex` — 用户指定\n  - **Codex = 高（推荐纪律 B）**：`sync.mjs` 发出原生 Starlark rules / hooks / MCP toml / skills；**不做** `.mdc` 镜像\n- **MCP 跟踪策略**: `example_only`（无明文密文入库）\n- **agent_config**: **是** — L5 配置 SSOT 管线；多工具仓推荐\n- **hooks 家族**: `commit-gate-extended, after-edit`（L3+ 默认）\n- **fill**: 空仓暂无 db/redis 实据，暂不触发 `fill-mcp` 矩阵闸；MCP 仅装 example\n- **gate_profile**: `strict`\n- **ready_coverage**: `0.8`\n\n---\n\n## 提问批次（≤5）\n\n| # | 问题 | 推荐选项 |\n|---|---|---|\n| Q1 | **domains 确认**：当前近空仓，是否仍保留 `func, api, db` 三域骨架？（后续源码扩张可直接填入） | 【推荐】保留三域；若只想最小集可回复 `func,api` 或 `func` |\n| Q2 | **预授权**：是否确认预授权后续 `resume` / `fill-*` 轮次自动写盘？ | 否（默认逐轮确认） |\n\n可直接回复：**全部推荐**（= 保留三域、不预授权）。  \n或回复：**确认**（若对以上推荐无异议，直接进入 WritePlan）。\n\n---\n\n## WritePlan 预览\n\n### 白话摘要\n\n- **模式**: 全新落地 `land` — 仓库从无 harness 工程化骨架到完整 L5。\n- **阶梯**: 直达 **L5（配置 SSOT 管线）** — 契约真相、软门禁、MCP 样例、多工具配置管线一次装齐。\n- **AI 工具面**: 同时托管 **Cursor**（原生 `.mdc` rules + hooks）与 **Codex**（Starlark rules + TOML MCP + skills）— 两者共用同一份 `AGENTS.md` + `docs/**` 契约真相。\n- **SSOT 机制**: 不再直渲 `.cursor/rules` 或 `.codex/rules`；所有宿主配置以 `docs/agent-config/` 为唯一真相源，经 `sync.mjs` 幂等分发到各工具目录，漂移可检。\n- **风险**: 近空仓，大量占位符将写为 `TODO(harness-eng)`；P0 移交需人工核实红线与 Commands。\n\n### 技术摘要\n\n```\n仓库类型: NEW_CODE_NO_HARNESS\n目标根: /tmp/skill-up-1739498757\n模式: land\n目标阶梯: L5（配置 SSOT 管线）\n契约域: func, api, db\nagents_variant: solo\nglob_profile: wide\non_exists: fail（空仓）\nQ_SEED: 是\nai_tools: [cursor, codex]\nagent_config: true\n将新建: ~25（SSOT + L0–L5 骨架） | 合并: 0 | 跳过: 0\n风险: 触及 MCP=是（example_only）；S_SECRETS_LEAK=否；Codex=高·纪律B\n```\n\n### hooks / rules 如何经 SSOT 与 sync 落地（L5 核心机制）\n\n| 层级 | 内容 | 说明 |\n|---|---|---|\n| **SSOT 真相源** | `docs/agent-config/` | `rules/`（含 `00-harness-ssot.mdc`、`11/12/13/16-*-sync*.mdc`）、`hooks/hooks.config.json`、MCP settings |\n| **分发引擎** | `scripts/agent-config/sync.mjs` | 幂等脚本；从 SSOT 读取规格 → 按 `ai_tools` 列表生成各宿主目录 |\n| **Cursor 侧生成物** | `.cursor/rules/*.mdc`、`.cursor/hooks.json` | 由 sync 分发；带 `GENERATED` 标记；**勿手改**（手改会被 `--check` 标漂移） |\n| **Codex 侧生成物** | `.codex/rules/*.star`（Starlark）、`.codex/hooks.json`、`.codex/config.toml.example`、`.agents/skills/` | 原生 Codex 协议；**不做** `.mdc` 镜像；纪律 B |\n| **hooks 统一协议** | `docs/agent-config/hooks/hooks.config.json` 驱动 | Cursor 族直用；Claude 族经 `claude-adapter.js`；Codex 族经 `codex-adapter.js` 转译事件 |\n| **漂移校验** | `node scripts/agent-config/sync.mjs --check` | 比对生成物与 SSOT；不一致时报错；CI/本地可挂 |\n| **变更流程** | 改 `docs/agent-config/` → 跑 `sync.mjs` → 各工具目录同步更新 | 禁止直接改 `.cursor/rules` 或 `.codex/rules`；防止「宿主孤儿」与 SSOT 分叉 |\n\n**所有权声明**：L5 下，`.cursor/rules/`、`.codex/rules/` 等宿主目录属 `sync.mjs` 托管；land 过程先写 SSOT + sync 脚本，随后触发一次 sync 完成首次分发。\n\n### 拟装文件预览（SSOT 侧）\n\n| 目标路径 | 动作 | 模板源 | 阶梯 |\n|---|---|---|---|\n| `AGENTS.md` | create | `templates/agents/AGENTS.root.solo.md.tmpl` | L0 |\n| `docs/harness-eng/harness-meta.yaml` | create | `templates/_meta/harness-meta.yaml.tmpl` | L0 |\n| `.cursor/rules/karpathy-guidelines.mdc` | **sync 生成** | `templates/rules/karpathy-guidelines.mdc` → 经 sync | L0 |\n| `.cursor/rules/00-project-docs-overview.mdc` | **sync 生成** | `templates/rules/00-project-docs-overview.mdc` → 经 sync | L0 |\n| `docs/agent-config/README.md` | create | `templates/agent-config/README.md.tmpl` | L5 |\n| `docs/agent-config/rules/00-harness-ssot.mdc` | create | `templates/agent-config/rules/00-harness-ssot.mdc.tmpl` | L5 |\n| `docs/agent-config/rules/11-func-sync.mdc` | create | `templates/agent-config/rules/11-func-sync.mdc.tmpl` | L1 |\n| `docs/agent-config/rules/12-api-sync.mdc` | create | `templates/agent-config/rules/12-api-sync.mdc.tmpl` | L1 |\n| `docs/agent-config/rules/13-db-sync.mdc` | create | `templates/agent-config/rules/13-db-sync.mdc.tmpl` | L1 |\n| `docs/agent-config/rules/14-security.mdc` | create | `templates/agent-config/rules/14-security.mdc.tmpl` | L0 |\n| `docs/agent-config/rules/16-kb-sync.mdc` | create | `templates/agent-config/rules/16-kb-sync.mdc.tmpl` | L2 |\n| `docs/agent-config/hooks/hooks.config.json` | create | `templates/agent-config/hooks/hooks.config.json.tmpl` | L3 |\n| `scripts/agent-config/sync.mjs` | create | `templates/agent-config/sync.mjs` | L5 |\n| `.cursor/hooks.json` | **sync 生成** | 由 `sync.mjs` 从 `hooks.config.json` 分发 | L3 |\n| `.codex/hooks.json` | **sync 生成** | 由 `sync.mjs` 从 `hooks.config.json` 经 `codex-adapter.js` 分发 | L3 |\n| `.codex/config.toml.example` | **sync 生成** | 由 `sync.mjs` 分发（MCP example，无密） | L4 |\n| `.githooks/pre-commit` + gate | create | `templates/githooks/pre-commit` / `gate.mjs` | L3 |\n| `docs/func/func.md` + `templates/` + `modules/README.md` | create | `templates/docs/func/` | L1 |\n| `docs/api/api.md` + `templates/` + `modules/README.md` | create | `templates/docs/api/` | L1 |\n| `docs/db/db.md` + `templates/` + `table/README.md` | create | `templates/docs/db/` | L1 |\n| `docs/agent-kb/`（4 文件） | create | `templates/docs/agent-kb/` | L2 |\n| `docs/superpowers/README.md` + `ARCHIVE.md` | create | `templates/docs/superpowers/` | L3 |\n| `docs/harness-eng/mcp-usage-guide.md` | create | `templates/docs/harness-eng/mcp-usage-guide.md` | L4 |\n| `.cursor/mcp.json.example` / `.mcp.json.example` | create | `templates/mcp/mcp.json.example` | L4 |\n| `.gitignore` snippet（建议忽略真密 mcp.json） | merge | snippet | L4 |\n\n\u003e 注：L5 下 `.cursor/rules/*.mdc`、`.codex/rules/*.star`、`.codex/hooks.json`、`.agents/skills/` 等**不**由 land 直渲，而由 `sync.mjs` 首次运行生成；写入后可通过 `node scripts/agent-config/sync.mjs --check` 验漂移。\n\n### 装后烟测（L3+ / L4 / L5）\n\n- **hooks**：`.cursor/hooks.json` + `.codex/hooks.json` + `.githooks/pre-commit` 均 fail-open（软提醒，不拦截提交）。\n- **MCP**：仅 `.cursor/mcp.json.example` / `.mcp.json.example` / `.codex/config.toml.example`；真密不入库。\n- **sync**：跑 `node scripts/agent-config/sync.mjs --check` 应无漂移报错。\n- **gitignore**：建议追加 `.cursor/mcp.json`、`.mcp.json`、`.trae/mcp.json`。\n\n---\n\n## 确认闸门\n\n请回复 **确认**（或 `按计划执行` / `LGTM`）后开始写入。  \n多轮可回复 **确认预授权**（后续 `resume` / `fill-*` 自动写盘，无需再等闸门）。\n\n**硬闸**：在未收到上述确认前，本 skill **不会**写入任何文件，也不会直接往 `.codex/hooks` 落最终脚本。",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "all-recommend-still-needs-confirm",
+      "title": "全部推荐只收齐答题、写盘仍须确认",
+      "status": "PASS",
+      "duration_ms": 113188,
+      "turns": 2,
+      "input_tokens": 33876,
+      "output_tokens": 2076,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 2,
+        "turns_total": 2,
+        "assertion_results": [
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          },
+          {
+            "text": "output_contains{any:[确认 WritePlan 按计划执行 LGTM 预授权]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[确认 WritePlan 按计划执行 LGTM 预授权])"
+          }
+        ],
+        "summary": {
+          "passed": 4,
+          "failed": 0,
+          "total": 4,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到 L2。\n先按施工仪式提问或出示推荐包；本轮不要写文件。\n",
+      "response": "收到。「全部推荐」协议已收齐除 **AI 工具面** 外全部参数。\n\n由于未探测到任何 AI 工具入口，该字段无法自动推断，**必须追问一次**：\n\n---\n\n## 追问（仅此一题）\n\n**Q3. 本仓要用哪些 AI 编程工具？**（多选，至少选一项）\n\n| 工具 | 勾选 |\n|---|---|\n| Cursor | [ ] |\n| Claude Code | [ ] |\n| Codex（高 · 不做 .mdc 镜像） | [ ] |\n| Qoder | [ ] |\n| Trae（高） | [ ] |\n| WorkBuddy | [ ] |\n| 自定义（请写明工具名与入口路径） | [ ] |\n\n\u003e 这将决定生成哪个宿主的规则文件、指针文件与 hooks 结构。L2 不装 MCP，但 L0 入口规则仍需落在你选中的工具目录。\n\n---\n\n收齐后，我将出具 **WritePlan**（白话摘要 + 文件预览），等你回复「确认」才过闸门写盘。本轮不创建任何文件。",
+      "observed_version": "2.1.283",
+      "turn_results": [
+        {
+          "turn_number": 1,
+          "content": "点名 harness-eng：请给当前仓库落地（land）到 L2。\n先按施工仪式提问或出示推荐包；本轮不要写文件。\n",
+          "response": "探测完成。以下是 **Fingerprint 表**与类型判定：\n\n---\n\n## Fingerprint\n\n| 信号 | 值 | 备注 |\n|---|---|---|\n| `S_GIT` | ✅ 是 | `.git` 存在 |\n| `S_EMPTY` | ❌ 否 | 有 `pom.xml` |\n| `S_AGENTS_ROOT` | ❌ 否 | 无根 `AGENTS.md` |\n| `S_AGENTS_MOD` | ❌ 否 | 无子目录 `AGENTS.md` |\n| `S_RULES` | ❌ 否 | 无任一宿主 rules |\n| `S_FUNC` | ❌ 否 | 无 `docs/func/` |\n| `S_API` | ❌ 否 | 无 `docs/api/` |\n| `S_DB` | ❌ 否 | 无 `docs/db/` |\n| `S_REDIS` | ❌ 否 | 无 `docs/redis/` |\n| `S_JOBS` | ❌ 否 | 无调度指纹 |\n| `S_FRONTEND` | ❌ 否 | 无前端工程 |\n| `S_KB` | ❌ 否 | 无 `docs/agent-kb/` |\n| `S_SP` | ❌ 否 | 无 `docs/superpowers/` |\n| `S_RUNS` | ❌ 否 | 无 `docs/runs/` |\n| `S_HOOKS` | ❌ 否 | 无 hooks 配置 |\n| `S_MCP` | ❌ 否 | 无 mcp.json |\n| `S_CLAUDE` | ❌ 否 | 无 `CLAUDE.md` / `.claude/`（仅有 `.claude/skills` 为技能目录，不计入） |\n| `S_STACK` | ✅ 是 | `pom.xml` 存在 |\n| `S_HARNESS_META` | ❌ 否 | 无 meta |\n| `S_SECRETS_LEAK` | ❌ 否 | 未发现 |\n| `S_SQL_DIR` | ❌ 否 | 无手写 SQL 目录 |\n| `S_NO_FLYWAY` | ✅ 是 | 无 `db/migration`、无 flyway |\n| `S_DB_ENGINE` | — | 无引擎依赖（pom 极简） |\n| `S_STACK_REDIS` | ❌ 否 | 无 Redis 依赖 |\n| `S_SLF4J` | ❌ 否 | 无 Java 源码 |\n| `S_SPRING` | ❌ 否 | 无 spring-boot |\n| `S_AGENT_CONFIG` | ❌ 否 | 无 L5 管线 |\n| `S_MULTI_TOOL` | ❌ 否 | 仅 0 个 AI 工具入口 |\n| `S_ENV_PROFILES` | `[local]` | 无 profile 文件，默认 local |\n\n**类型判定**：`NEW_CODE_NO_HARNESS`（有 Maven 骨架，无任何 harness 信号）\n\n---\n\n## 推荐包 RecommendedProfile\n\n- **模式**: `land`（落地）— 理由：新代码骨架，首次全量 scaffold\n- **目标阶梯**: `L2` 知识回流 — 理由：用户明确要求 L2\n- **契约域**: `func, api, db` — 理由：Java/Maven 默认三域；无 Redis/Jobs 信号\n- **分册**: `solo`（仅根 AGENTS）— 理由：单模块小仓\n- **glob**: `wide`（全仓）— 理由：小仓/单模块\n- **Rule14 / Rule21 / 前端协作包 / 安全预填**: **是** / **否** / **否** / **是**\n- **AI 工具面**: `[]`（未探测到）— 须确认\n- **MCP 跟踪策略**: 不涉及（L2 无 L4 MCP）\n- **fill / pipeline**: 本轮不走填充\n\n---\n\n## 第一批提问（batch-0）\n\n用户已明确「落地到 L2」，以下收齐剩余参数（每批 ≤5）：\n\n**Q1. 目标仓库根路径？**\n→ 探测到单根 `/tmp/skill-up-730882295`，请确认或修改。\n\n**Q2. 启用哪些契约域？**（L1+）\n- [x] `func`（函数/服务层契约）\n- [x] `api`（接口层契约）\n- [x] `db`（数据层契约）\n- [ ] `redis`（无 Redis 信号）\n- [ ] `jobs`（无调度信号）\n\n**Q3. 本仓要用哪些 AI 编程工具？**（多选）\n- [ ] Cursor\n- [ ] Claude Code\n- [ ] Codex（高 · 不做 .mdc 镜像）\n- [ ] Qoder\n- [ ] Trae（高）\n- [ ] WorkBuddy\n- [ ] 自定义（工具名=…; 入口路径=…）\n\n\u003e ⚠️ 未探测到任何 AI 工具入口，**必须至少选一项**才能生成对应宿主适配。\n\n**Q4. db 域迁移模式？**\n- [ ] flyway（自动/半自动迁移）\n- [x] `manual_sql`（人工按序执行）— 推荐：无 Flyway 依赖\n- [ ] none（无迁移脚本）\n\n**Q5. 仓库短名 / 一句话职责是否采用 pom.xml 推断？**\n- 短名：`fixture-new-code`\n- 职责：`harness-eng NEW_CODE_NO_HARNESS fixture`\n- [x] 是，采用推断\n- [ ] 否，我修改（请写下）\n\n---\n\n\u003e 不确定怎么选？可直接回复：**全部推荐**（采用上表已勾选项；收齐后出 WritePlan，确认闸门后写盘）。\n\n本轮不输出文件，等待确认。",
+          "status": "completed"
+        },
+        {
+          "turn_number": 2,
+          "content": "全部推荐。\n注意：我只同意用推荐值填完问题，还没有确认写盘，请不要创建任何文件。\n",
+          "response": "收到。「全部推荐」协议已收齐除 **AI 工具面** 外全部参数。\n\n由于未探测到任何 AI 工具入口，该字段无法自动推断，**必须追问一次**：\n\n---\n\n## 追问（仅此一题）\n\n**Q3. 本仓要用哪些 AI 编程工具？**（多选，至少选一项）\n\n| 工具 | 勾选 |\n|---|---|\n| Cursor | [ ] |\n| Claude Code | [ ] |\n| Codex（高 · 不做 .mdc 镜像） | [ ] |\n| Qoder | [ ] |\n| Trae（高） | [ ] |\n| WorkBuddy | [ ] |\n| 自定义（请写明工具名与入口路径） | [ ] |\n\n\u003e 这将决定生成哪个宿主的规则文件、指针文件与 hooks 结构。L2 不装 MCP，但 L0 入口规则仍需落在你选中的工具目录。\n\n---\n\n收齐后，我将出具 **WritePlan**（白话摘要 + 文件预览），等你回复「确认」才过闸门写盘。本轮不创建任何文件。",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "case_id": "ready-requires-ai-coding-gate",
+      "title": "宣称可 AI coding 须依据 ai_coding_ready 而非口头 overall",
+      "status": "PASS",
+      "duration_ms": 49774,
+      "turns": 1,
+      "input_tokens": 31795,
+      "output_tokens": 792,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 1,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{all:[ai_coding_ready]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (all:[ai_coding_ready])"
+          },
+          {
+            "text": "output_contains{any:[fill-score gate score-policy 开干 就绪]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[fill-score gate score-policy 开干 就绪])"
+          }
+        ],
+        "summary": {
+          "passed": 4,
+          "failed": 0,
+          "total": 4,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：这个仓看起来文档已经很齐了。\n请判断现在能不能宣称「可 AI coding / 开干」。\n不要写文件；说明你依据的闸门字段或命令（例如 fill-score / ai_coding_ready），\n若本环境还没跑分，请明确不能仅凭观感宣布就绪。\n",
+      "response": "**结论：不能宣称「可 AI coding / 开干」。**\n\n依据如下：\n\n1. **未跑分，无实证**  \n   本环境不存在 `docs/harness-eng/score-latest.json`，也未执行过 `scripts/fill-score.mjs`。按照 `fill-score.md` 与 `fill-gate.md` 的定义，「开干」结论必须由脚本产出，不能凭文件存在与否的观感判定。\n\n2. **缺 `fill-plan` → `ai_coding_ready=false`**  \n   根据 `ai-coding-gate.mjs` 与 `fill-score.md` 的公式：  \n   ```\n   ai_coding_ready = skeleton_ready \u0026\u0026 coverage_ready \u0026\u0026 semantic_ready \u0026\u0026 fill_plan.all_closed\n   ```  \n   缺 `fill-plan` 时，`ai_coding_ready` 直接为 `false`。本仓没有 `docs/harness-eng/fill-plan` 或 `fill-progress.yaml`，此闸门已阻断。\n\n3. **契约文档仅为 fixture 最小集**  \n   - `AGENTS.md`：仅含 `## Commands` 骨架，无 `## Critical` / `## Truths` / `## Rules` 等 strict 闸要求的入口就绪项。  \n   - `docs/api/api.md`：仅一行占位，无接口地址、请求方式、参数章、evidence 等探针档要求。  \n   - 无 `docs/harness-eng/score-policy.yaml`，无 `gate_profile` 设定，无法进入 strict/gold 评估流。\n\n4. **需执行的命令**  \n   若要得到正式结论，应先运行：  \n   ```bash\n   node scripts/fill-score.mjs --root /tmp/skill-up-4037803060 --focus gate --summary-only\n   ```  \n   产出 `score-latest.json` 后，查看其中 `ai_coding_ready` 与 `blockers` 字段，才能决定是否可宣布开干。",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "resume-on-exists-skip",
+      "title": "显式续跑须说明 on_exists=skip 并等待确认",
+      "status": "PASS",
+      "duration_ms": 277841,
+      "turns": 1,
+      "input_tokens": 43113,
+      "output_tokens": 3417,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 1,
+        "turns_total": 1,
+        "assertion_results": [
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "output_contains{any:[resume 续跑]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[resume 续跑])"
+          },
+          {
+            "text": "output_contains{any:[on_exists skip 不覆盖 merge 保留]}",
+            "passed": true,
+            "evidence": "output satisfies all contains checks (any:[on_exists skip 不覆盖 merge 保留])"
+          },
+          {
+            "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          }
+        ],
+        "summary": {
+          "passed": 5,
+          "failed": 0,
+          "total": 5,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请对当前半成品仓执行 resume（续跑），补齐缺口。\n已有 AGENTS.md 不要覆盖重写。本轮先给 WritePlan / 参数要点，\n我还没确认，请不要写文件。\n",
+      "response": "## 指纹探测 Fingerprint\n\n| 信号 | 值 | 备注 |\n|---|---|---|\n| `S_GIT` | 是 | git 仓 |\n| `S_AGENTS_ROOT` | 是 | 根 `AGENTS.md` 存在（仅含 Never do + Commands 极简骨架） |\n| `S_RULES` | 否 | 无 `.cursor/rules`、`.claude/rules`、`.qoder/rules`、`.trae/rules`、`.codebuddy/rules` |\n| `S_00` | 否 | 无 `00-*.mdc` |\n| `S_KARPATHY` | 否 | 无 `karpathy-guidelines.mdc` |\n| `S_FUNC` / `S_API` / `S_DB` / `S_REDIS` / `S_JOBS` | 否 | 无契约目录 |\n| `S_KB` | 否 | 无 `docs/agent-kb/` |\n| `S_HOOKS` | 否 | 无 hooks 配置 |\n| `S_MCP` | 否 | 无 `mcp.json` / example |\n| `S_HARNESS_META` | 否 | 无 `docs/harness-eng/harness-meta.yaml` |\n| `S_STACK` | 否 | 无 `pom.xml` / `package.json` / `go.mod` 等 |\n| `S_EMPTY` | 是 | 无常见源码入口，除 AGENTS.md 外无 harness 指纹 |\n| `S_SECRETS_LEAK` | 否 | 无命中 |\n| `S_CLAUDE` | 否 | `.claude/` 下仅 `skills/` 为 skill 自身文件，非仓库产物 |\n| `S_MULTI_TOOL` | 否 | 未探测到多宿主入口 |\n\n**类型判定**: `PARTIAL`（有 `AGENTS_ROOT` 但不满足 `MATURE`） → **resume（续跑）**\n\n---\n\n## 已有 / 缺口表（按阶梯）\n\n| 阶梯 | 已有 | 缺口 |\n|---|---|---|\n| **L0 协作入口** | `AGENTS.md`（极简骨架） | `harness-meta.yaml`、`karpathy-guidelines.mdc`、`00-project-docs-overview.mdc`、可选 `rule-14` |\n| **L1 契约骨架** | 无 | `docs/{domain}/` 索引 + templates + 真相 README、sync rules（11/12/13/16/20） |\n| **L2 知识回流** | 无 | `docs/agent-kb/` 四文件、`19-agent-kb.mdc` |\n| **L3 规划与软门禁** | 无 | `docs/superpowers/README.md`、`18-superpowers-corpus.mdc`、hooks（Cursor/Claude/兜底）、`.githooks/pre-commit` |\n| **L4 工具连接样例** | 无 | `mcp.json.example`、`mcp-usage-guide.md`、`.gitignore` snippet |\n| **L5 配置 SSOT** | 无 | `docs/agent-config/`、`sync.mjs` |\n\n---\n\n## 推荐包 RecommendedProfile\n\n- **模式**: `resume`（续跑） — 理由：已有 `AGENTS.md` 但未齐套\n- **目标阶梯**: **L4**（工具连接样例） — 理由：小仓默认一次到位；但**无源码栈**，L1 契约域只能空壳落地\n- **契约域**: `func, api, db, redis, jobs` — 理由：无栈信号，默认全域空壳（若只想到 L0 可不装）\n- **分册**: `solo`（仅根） — 理由：无模块信号\n- **glob**: `wide`（小仓默认）— 但 globs 无法推断，留 TODO 预填\n- **Rule14 / Rule21 / Rule17 / 安全预填**: **是** / 否（非 Java） / 否（无前端） / **是**\n- **AI 工具面**: `[]`（未探测到任何入口）— **须确认**：是否至少启用 Cursor？\n- **MCP 跟踪策略**: `example_only`（仅 example 入库，真密走 `.gitignore`）\n- **L5 SSOT 管线**: 否（单工具/无信号仓默认否）\n\n不确定请回复：**全部推荐**  \n（或逐题选 A/B…；自定义工具请写「工具名=…; 入口路径=…」；写盘前仍需对 WritePlan 回复「确认」等）\n\n---\n\n## WritePlan（草案）\n\n### 白话摘要\n\n- **模式**: 续跑 — 只补缺；已有 `AGENTS.md` 同名章节正文保留，缺失章节（Critical、文档优先级、AI 协作规则等）以 H2 章节级追加\n- **阶梯**: 补齐到 **L4**（协作入口 → 契约骨架 → 知识回流 → 软门禁 → MCP 样例）\n- **契约域**: 若接受 L1+，func / api / db / redis / jobs 五域均以**空壳骨架**落地（索引 + templates + 真相 README），待后续 `seed-truths` 或 `fill-truths` 填实\n- **本轮**: 补齐 rules（Karpathy + 00 总览 + 14 中文文档）、五域 sync rules、agent-kb、superpowers、hooks 兜底、MCP example + 使用说明\n- **风险**: 仓库无技术栈信号，Commands / globs / 模块列表均安全预填为 `TODO(harness-eng)`，需人工后续补真值\n\n### 技术摘要\n\n```text\n仓库类型: PARTIAL\n目标根: /tmp/skill-up-771594351\n模式: resume\n目标阶梯: L4\n契约域: func, api, db, redis, jobs（空壳）\nagents_variant: solo\nglob_profile: wide\non_exists: skip\nQ_SEED: 是\n预授权: 否\n将新建: ~28 项 | 合并: 1 项 (AGENTS.md) | 跳过: 0\n风险: 无栈信号，globs 与 Commands 为 TODO；未触及 MCP 真密；S_SECRETS_LEAK=否\n```\n\n### 文件动作表（按阶梯）\n\n| 目标路径 | 动作 | 说明 | 阶梯 |\n|---|---|---|---|\n| `AGENTS.md` | **merge** | 保留现有 `Never do` + `Commands`，追加 Critical、文档优先级、AI 协作规则等 H2 章节 | L0 |\n| `docs/harness-eng/harness-meta.yaml` | create | 记 `skill_version` / `ladder` / `domains` / `last_mode=resume` | L0 |\n| `.cursor/rules/karpathy-guidelines.mdc` | create | `alwaysApply: true` | L0 |\n| `.cursor/rules/00-project-docs-overview.mdc` | create | `alwaysApply: true` | L0 |\n| `.cursor/rules/14-chinese-skill-docs.mdc` | create | 可选；中文文档规则 | L0 |\n| `.cursor/rules/11-func-sync.mdc` | create | globs 预填 TODO | L1 |\n| `.cursor/rules/12-api-sync.mdc` | create | globs 预填 TODO | L1 |\n| `.cursor/rules/13-db-sync.mdc` | create | globs 预填 TODO | L1 |\n| `.cursor/rules/16-redis-sync.mdc` | create | globs 预填 TODO | L1 |\n| `.cursor/rules/20-jobs-sync.mdc` | create | globs 预填 TODO | L1 |\n| `docs/func/func.md` + `templates/` + `modules/README.md` | create | 空壳索引 | L1 |\n| `docs/api/api.md` + `templates/` + `modules/README.md` | create | 空壳索引 | L1 |\n| `docs/db/db.md` + `templates/` + `table/README.md` | create | 空壳索引；迁移模式留 TODO | L1 |\n| `docs/redis/redis.md` + `templates/` + `keys/README.md` | create | 空壳索引 | L1 |\n| `docs/jobs/jobs.md` + `templates/` + `tasks/README.md` | create | 空壳索引 | L1 |\n| `docs/agent-kb/README.md` / `architecture-overview.md` / `pitfalls.md` / `accepted-gaps.md` | create | 知识回流骨架 | L2 |\n| `.cursor/rules/19-agent-kb.mdc` | create | agent-kb 同步规则 | L2 |\n| `docs/superpowers/README.md` | create | 含进行中表骨架 | L3 |\n| `.cursor/rules/18-superpowers-corpus.mdc` | create | superpowers 同步规则 | L3 |\n| `.cursor/hooks.json` | create | fail-open 软提醒 | L3 |\n| `.claude/settings.json` hooks | create | 若启用 claude | L3 |\n| `.githooks/pre-commit` + gate | create | 兜底软提醒；建议 `chmod +x` + `git config core.hooksPath .githooks` | L3 |\n| `docs/harness-eng/mcp-usage-guide.md` | create | 含「勿提交真密」约定 | L4 |\n| `.cursor/mcp.json.example` | create | 无密占位（mysql / redis / browser server 骨架） | L4 |\n| `.gitignore` snippet | **merge** | 追加 `.cursor/mcp.json` / `.mcp.json` / `.trae/mcp.json` 忽略 | L4 |\n\n### 渲染预览\n\n**`AGENTS.md` merge 后将追加（示例，安全预填）**：\n```markdown\n## Critical（红线）\n- TODO(harness-eng): 补充本仓真实 Critical 红线\n\n## 文档优先级\n1. `docs/func/func.md` — 功能契约索引\n2. `docs/api/api.md` — 接口契约索引\n3. `docs/db/db.md` — 库表契约索引\n...\n\n## AI 协作规则\n- 改契约前读真相、改后回写\n- 提交前跑 `echo ok`\n```\n\n**各 sync rule `globs:` 占位（预填）**：\n- `11-func-sync.mdc`: `globs: \"TODO(harness-eng): **/src/main/java/**/*.java,docs/func/**\"`\n- `12-api-sync.mdc`: `globs: \"TODO(harness-eng): **/controller/**/*.java,docs/api/**\"`\n- `13-db-sync.mdc`: `globs: \"TODO(harness-eng): **/db/migration/**,docs/db/**\"`\n- `16-redis-sync.mdc`: `globs: \"TODO(harness-eng): docs/redis/**\"`\n- `20-jobs-sync.mdc`: `globs: \"TODO(harness-eng): docs/jobs/**\"`\n\n**装后烟测**：\n- hooks：Cursor 原生 hooks + `.githooks/pre-commit` 兜底，均 fail-open（不拦截提交）\n- MCP：仅 `.cursor/mcp.json.example` 无密；真密 `.cursor/mcp.json` 已建议进 `.gitignore`\n- `.gitignore`：检查是否已忽略 `.cursor/mcp.json`\n\n### render 参数要点（`params.json`）\n\n```json\n{\n  \"ladder\": \"L4\",\n  \"domains\": [\"func\", \"api\", \"db\", \"redis\", \"jobs\"],\n  \"agents_variant\": \"solo\",\n  \"include_optional\": [\"rule-14\"],\n  \"on_exists\": \"skip\",\n  \"expandFromManifest\": true,\n  \"placeholders\": {\n    \"PROJECT_NAME\": \"fixture-partial\",\n    \"PROJECT_DESC\": \"TODO(harness-eng): 一句话职责\",\n    \"CODE_PREFIXES\": \"TODO(harness-eng): 业务路径前缀\",\n    \"SKILL_VERSION\": \"0.7.23\"\n  }\n}\n```\n\n---\n\n## 待确认参数（≤5 题）\n\n1. **目标阶梯**：建议 **L4**（空壳骨架一次到位），或只要 **L0**（仅补齐 rules + meta）？\n2. **契约域**：若 L1+，五域全空壳？或跳过部分域（如只留 `func, api`）？\n3. **AI 工具面**：当前未探测到任何工具；至少启用 **Cursor** 吗？或同时启用 `claude` / `codex` / `trae`？\n4. **分册与 globs**：无栈信号，保持 `solo` + globs 留 TODO？\n5. **安全预填**：默认 **是**（Commands / 模块列表 / globs 预填骨架），是否接受？\n\n\u003e 请回复 **确认**（或 `按计划执行` / `LGTM`）后开始写入。多轮可回复 **确认预授权**。`全部推荐` 只收齐答题；写盘仍须本确认。",
+      "observed_version": "2.1.283"
+    }
+  ],
+  "total_tokens": 334875,
+  "judge_tokens": 0,
+  "overall_tokens": 334875
+}

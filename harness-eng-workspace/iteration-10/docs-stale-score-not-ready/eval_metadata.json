@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "代码已加字段而文档未同步时不得仅凭 score 宣称就绪",
+  "prompt": "点名 harness-eng：代码与 V2 迁移已经给 task 加了 tag 字段，但 docs/db 表文档还是旧版（没有 tag）。\n仓里 score-latest.json 却是 ai_coding_ready=true、overall=97。\n请判断能不能据此宣称「可 AI coding / 契约已与代码一致」。不要写文件。\n",
+  "assertions": null
+}

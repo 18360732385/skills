@@ -1,0 +1,415 @@
+{
+  "metadata": {
+    "skill_name": "harness-eng",
+    "skill_path": "/mnt/d/workspace/gitHub/skills/harness-eng",
+    "timestamp": "2026-09-28T03:42:38Z",
+    "evals_run": [
+      0
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "eval_name": "审计模式只读、不向目标仓写盘",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 74.605,
+        "tokens": 26023,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[审计 audit Audit]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+        },
+        {
+          "text": "output_contains{any:[缺口 已具备 L0 L1]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[缺口 已具备 L0 L1])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "落地意图须先过确认闸门、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 186.781,
+        "tokens": 39623,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[WritePlan 确认 推荐 Fingerprint 指纹]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[WritePlan 确认 推荐 Fingerprint 指纹])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "MATURE 仓未指定模式时默认走审计",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 105.063,
+        "tokens": 33429,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{all:[MATURE]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (all:[MATURE])"
+        },
+        {
+          "text": "output_contains{any:[审计 audit Audit]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+        },
+        {
+          "text": "output_contains{any:[已具备 缺口 L0 L1 L2]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[已具备 缺口 L0 L1 L2])"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 44.547,
+        "tokens": 18600,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[resume 续跑 Resume]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[resume 续跑 Resume])"
+        },
+        {
+          "text": "output_contains{any:[PARTIAL 半成品 缺口 补齐]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[PARTIAL 半成品 缺口 补齐])"
+        },
+        {
+          "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "monorepo 冷启动须识别前后端栈并等待确认",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 463.516,
+        "tokens": 63112,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[WritePlan 确认 推荐 Fingerprint 指纹 探测]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[WritePlan 确认 推荐 Fingerprint 指纹 探测])"
+        },
+        {
+          "text": "output_contains{any:[S_SPRING Spring Maven backend]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[S_SPRING Spring Maven backend])"
+        },
+        {
+          "text": "output_contains{any:[S_FRONTEND frontend Vite 前端]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[S_FRONTEND frontend Vite 前端])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "L5+Codex 落地计划须走 agent-config SSOT/sync",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 281.465,
+        "tokens": 39019,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[WritePlan 确认 L5 agent_config agent-config]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[WritePlan 确认 L5 agent_config agent-config])"
+        },
+        {
+          "text": "output_contains{any:[sync SSOT docs/agent-config]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[sync SSOT docs/agent-config])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "全部推荐只收齐答题、写盘仍须确认",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 113.188,
+        "tokens": 35952,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        },
+        {
+          "text": "output_contains{any:[确认 WritePlan 按计划执行 LGTM 预授权]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[确认 WritePlan 按计划执行 LGTM 预授权])"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "宣称可 AI coding 须依据 ai_coding_ready 而非口头 overall",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 49.774,
+        "tokens": 32587,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{all:[ai_coding_ready]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (all:[ai_coding_ready])"
+        },
+        {
+          "text": "output_contains{any:[fill-score gate score-policy 开干 就绪]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[fill-score gate score-policy 开干 就绪])"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "显式续跑须说明 on_exists=skip 并等待确认",
+      "configuration": "with_skill",
+      "run_number": 8,
+      "result": {
+        "pass_rate": 1,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 277.841,
+        "tokens": 46530,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[resume 续跑]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[resume 续跑])"
+        },
+        {
+          "text": "output_contains{any:[on_exists skip 不覆盖 merge 保留]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[on_exists skip 不覆盖 merge 保留])"
+        },
+        {
+          "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1,
+        "stddev": 0,
+        "min": 1,
+        "max": 1
+      },
+      "time_seconds": {
+        "mean": 177.41999999999996,
+        "stddev": 131.96347716361188,
+        "min": 44.547,
+        "max": 463.516
+      },
+      "tokens": {
+        "mean": 37208.333333333336,
+        "stddev": 11905.193787213675,
+        "min": 18600,
+        "max": 63112
+      }
+    },
+    "without_skill": null,
+    "delta": null
+  }
+}

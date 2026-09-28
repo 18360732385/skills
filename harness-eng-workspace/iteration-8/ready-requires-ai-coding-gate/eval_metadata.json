@@ -1,0 +1,11 @@
+{
+  "eval_id": 0,
+  "eval_name": "宣称可 AI coding 须依据 ai_coding_ready 而非口头 overall",
+  "prompt": "点名 harness-eng：这个仓看起来文档已经很齐了。\n请判断现在能不能宣称「可 AI coding / 开干」。\n不要写文件；说明你依据的闸门字段或命令（例如 fill-score / ai_coding_ready），\n若本环境还没跑分，请明确不能仅凭观感宣布就绪。\n",
+  "assertions": [
+    "expect.must_contain",
+    "expect.must_not_contain",
+    "output_contains{all:[ai_coding_ready]}",
+    "output_contains{any:[fill-score gate score-policy 开干 就绪]}"
+  ]
+}

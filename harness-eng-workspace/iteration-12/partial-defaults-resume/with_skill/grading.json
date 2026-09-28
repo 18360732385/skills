@@ -1,0 +1,40 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.files_not_exist",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "output_contains{any:[resume 续跑 Resume]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[resume 续跑 Resume])"
+    },
+    {
+      "text": "output_contains{any:[PARTIAL 半成品 缺口 补齐]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[PARTIAL 半成品 缺口 补齐])"
+    },
+    {
+      "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+      "passed": true,
+      "evidence": "none of the forbidden files exist"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1
+  }
+}

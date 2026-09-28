@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "仅切 gate_profile=gold 时须警示 morph_floor 可能仍被 strict 写死",
+  "prompt": "点名 harness-eng：我想把门禁从 strict 切到 gold，有人说只要把 score-policy /\nmeta 的 gate_profile 改成 gold 就行。请判断这样是否一定用上 gold 的 morph 门槛（例如 95），\n以及应核对哪些字段。不要写文件。\n",
+  "assertions": null
+}

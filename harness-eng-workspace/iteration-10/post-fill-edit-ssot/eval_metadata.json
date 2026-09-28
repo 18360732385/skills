@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "首填后维护须改 SSOT、禁止回填 .fill-work 重 merge",
+  "prompt": "点名 harness-eng：api/func/db 已经首填并 merge 进 docs 了。现在代码加了一个字段，\n我该改哪里？是直接改 docs 下的契约 SSOT，还是回到 .fill-work 重跑 fill-merge？\n请给出维护路径说明。不要写文件。\n",
+  "assertions": null
+}

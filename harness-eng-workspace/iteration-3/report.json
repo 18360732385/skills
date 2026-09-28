@@ -1,0 +1,62 @@
+{
+  "skill_name": "harness-eng",
+  "schema_version": "v1alpha1",
+  "engine_name": "claude_code",
+  "model_name": "",
+  "requested_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "applied_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "start_time": "2026-09-28T10:31:26.7055565+08:00",
+  "end_time": "2026-09-28T10:31:26.7127728+08:00",
+  "case_results": [
+    {
+      "case_id": "audit-no-write",
+      "title": "审计模式只读、不向目标仓写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: claude_code: agent CLI execution on Windows requires a bash target shell",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "请用 harness-eng 对当前仓库做审计（audit）。\n只对照阶梯看已具备与缺口，不要写任何文件，也不要进入 land/resume。\n"
+    },
+    {
+      "case_id": "land-awaits-confirm",
+      "title": "落地意图须先过确认闸门、未确认不写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: claude_code: agent CLI execution on Windows requires a bash target shell",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到至少 L0。\n按施工仪式推进；我还没有确认写盘，请先出示计划或提问，不要直接写文件。\n"
+    },
+    {
+      "case_id": "mature-defaults-audit",
+      "title": "MATURE 仓未指定模式时默认走审计",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: claude_code: agent CLI execution on Windows requires a bash target shell",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做。\n"
+    }
+  ],
+  "total_tokens": 0,
+  "judge_tokens": 0,
+  "overall_tokens": 0
+}

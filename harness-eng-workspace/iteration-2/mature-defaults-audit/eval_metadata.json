@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "MATURE 仓未指定模式时默认走审计",
+  "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做。\n",
+  "assertions": [
+    "expect.must_contain",
+    "expect.must_not_contain",
+    "output_contains{all:[MATURE]}",
+    "output_contains{any:[审计 audit Audit]}",
+    "output_contains{any:[已具备 缺口 L0 L1 L2]}"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "MATURE 仓未指定模式时默认走审计",
+  "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做。\n",
+  "assertions": null
+}

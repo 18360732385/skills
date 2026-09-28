@@ -1,0 +1,140 @@
+{
+  "skill_name": "harness-eng",
+  "schema_version": "v1alpha1",
+  "engine_name": "claude_code",
+  "model_name": "",
+  "requested_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "applied_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "start_time": "2026-09-28T10:54:13.847817864+08:00",
+  "end_time": "2026-09-28T10:54:14.320301707+08:00",
+  "case_results": [
+    {
+      "case_id": "audit-no-write",
+      "title": "审计模式只读、不向目标仓写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "请用 harness-eng 对当前仓库做审计（audit）。\n只对照阶梯看已具备与缺口，不要写任何文件，也不要进入 land/resume。\n"
+    },
+    {
+      "case_id": "land-awaits-confirm",
+      "title": "落地意图须先过确认闸门、未确认不写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到至少 L0。\n按施工仪式推进；我还没有确认写盘，请先出示计划或提问，不要直接写文件。\n"
+    },
+    {
+      "case_id": "mature-defaults-audit",
+      "title": "MATURE 仓未指定模式时默认走审计",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做。\n"
+    },
+    {
+      "case_id": "partial-defaults-resume",
+      "title": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做；\n本轮先说明模式与缺口，不要写任何文件。\n"
+    },
+    {
+      "case_id": "monorepo-land-detects-stacks",
+      "title": "monorepo 冷启动须识别前后端栈并等待确认",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：这是前后端 monorepo（backend Maven/Spring + frontend Vite）。\n请按 land 施工仪式推进到至少 L1，但本轮我还没确认写盘。\n请先完成探测与提问/WritePlan，明确前后端分册怎么处理，不要直接写文件。\n"
+    },
+    {
+      "case_id": "land-l5-ssot-in-writeplan",
+      "title": "L5+Codex 落地计划须走 agent-config SSOT/sync",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请规划对本仓 land 到 L5，AI 工具面要同时包含 cursor 与 codex，\n并启用 agent_config / 配置 SSOT 管线。\n本轮只出示探测、提问批次或 WritePlan，说明 hooks/rules 如何经 SSOT 与 sync 落地；\n我还没有确认，请不要写任何文件，也不要直接往 .codex/hooks 落最终脚本。\n"
+    },
+    {
+      "case_id": "all-recommend-still-needs-confirm",
+      "title": "全部推荐只收齐答题、写盘仍须确认",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到 L2。\n先按施工仪式提问或出示推荐包；本轮不要写文件。\n"
+    },
+    {
+      "case_id": "ready-requires-ai-coding-gate",
+      "title": "宣称可 AI coding 须依据 ai_coding_ready 而非口头 overall",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：这个仓看起来文档已经很齐了。\n请判断现在能不能宣称「可 AI coding / 开干」。\n不要写文件；说明你依据的闸门字段或命令（例如 fill-score / ai_coding_ready），\n若本环境还没跑分，请明确不能仅凭观感宣布就绪。\n"
+    },
+    {
+      "case_id": "resume-on-exists-skip",
+      "title": "显式续跑须说明 on_exists=skip 并等待确认",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent claude_code preflight failed: version check failed for claude_code (exit 126): /mnt/c/Users/18360/AppData/Roaming/npm/claude: 12: exec: /mnt/c/Users/18360/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/bin/claude.exe: Exec format error\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请对当前半成品仓执行 resume（续跑），补齐缺口。\n已有 AGENTS.md 不要覆盖重写。本轮先给 WritePlan / 参数要点，\n我还没确认，请不要写文件。\n"
+    }
+  ],
+  "total_tokens": 0,
+  "judge_tokens": 0,
+  "overall_tokens": 0
+}

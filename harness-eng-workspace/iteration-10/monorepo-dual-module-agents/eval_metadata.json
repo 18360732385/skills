@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "monorepo 分册须区分 spring 与 frontend、勿单选 spring 双渲",
+  "prompt": "点名 harness-eng：前后端 monorepo，我要 land，分册希望 backend 用 Spring 模板、\nfrontend 用前端模板。请说明 Q_MODULE_AGENTS / 分册渲染怎么处理才不会把\nfrontend 渲成 Spring（例如出现 mvn -f frontend/pom.xml）。\n本轮只给 WritePlan 或参数策略，我还没确认，不要写文件。\n",
+  "assertions": null
+}

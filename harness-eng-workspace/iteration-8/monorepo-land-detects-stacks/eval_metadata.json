@@ -1,0 +1,13 @@
+{
+  "eval_id": 0,
+  "eval_name": "monorepo 冷启动须识别前后端栈并等待确认",
+  "prompt": "点名 harness-eng：这是前后端 monorepo（backend Maven/Spring + frontend Vite）。\n请按 land 施工仪式推进到至少 L1，但本轮我还没确认写盘。\n请先完成探测与提问/WritePlan，明确前后端分册怎么处理，不要直接写文件。\n",
+  "assertions": [
+    "expect.must_not_contain",
+    "expect.files_not_exist",
+    "output_contains{any:[WritePlan 确认 推荐 Fingerprint 指纹 探测]}",
+    "output_contains{any:[S_SPRING Spring Maven backend]}",
+    "output_contains{any:[S_FRONTEND frontend Vite 前端]}",
+    "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]"
+  ]
+}

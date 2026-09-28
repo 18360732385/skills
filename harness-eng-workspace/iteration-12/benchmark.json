@@ -1,0 +1,678 @@
+{
+  "metadata": {
+    "skill_name": "harness-eng",
+    "skill_path": "/mnt/d/workspace/gitHub/skills/harness-eng",
+    "timestamp": "2026-09-28T05:10:01Z",
+    "evals_run": [
+      0
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "eval_name": "审计模式只读、不向目标仓写盘",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 187.347,
+        "tokens": 31651,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[审计 audit Audit]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+        },
+        {
+          "text": "output_contains{any:[缺口 已具备 L0 L1]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[缺口 已具备 L0 L1])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "落地意图须先过确认闸门、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 246.95,
+        "tokens": 60724,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "turn_response_contains[turn=1]{contains_any:[推荐 Fingerprint 指纹 提问 Q_]}",
+          "passed": true,
+          "evidence": "turn 1 response contains all required keywords (contains_any:[推荐 Fingerprint 指纹 提问 Q_])"
+        },
+        {
+          "text": "turn_response_contains[turn=2]{contains_any:[WritePlan 写盘计划 产物预览]}",
+          "passed": true,
+          "evidence": "turn 2 response contains all required keywords (contains_any:[WritePlan 写盘计划 产物预览])"
+        },
+        {
+          "text": "turn_response_contains[turn=2]{contains_any:[确认 按计划执行 LGTM 预授权]}",
+          "passed": true,
+          "evidence": "turn 2 response contains all required keywords (contains_any:[确认 按计划执行 LGTM 预授权])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "MATURE 仓未指定模式时默认走审计",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 1,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 105.756,
+        "tokens": 33784,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{all:[MATURE]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (all:[MATURE])"
+        },
+        {
+          "text": "output_contains{any:[审计 audit Audit]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+        },
+        {
+          "text": "output_contains{any:[已具备 缺口 L0 L1 L2]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[已具备 缺口 L0 L1 L2])"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 36.376,
+        "tokens": 18194,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[resume 续跑 Resume]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[resume 续跑 Resume])"
+        },
+        {
+          "text": "output_contains{any:[PARTIAL 半成品 缺口 补齐]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[PARTIAL 半成品 缺口 补齐])"
+        },
+        {
+          "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "全部推荐只收齐答题、写盘仍须确认",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 299.334,
+        "tokens": 33288,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "显式续跑须说明 on_exists=skip 并等待确认",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 1,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 135.14,
+        "tokens": 36119,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[resume 续跑]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[resume 续跑])"
+        },
+        {
+          "text": "output_contains{any:[on_exists skip 不覆盖 merge 保留]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[on_exists skip 不覆盖 merge 保留])"
+        },
+        {
+          "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "monorepo 冷启动须识别前后端栈并等待确认",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 179.973,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "monorepo 分册须区分 spring 与 frontend、勿单选 spring 双渲",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 182.591,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "L5+Codex 落地计划须走 agent-config SSOT/sync",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 185.801,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "land 路径 WritePlan 仍须包含 gate_profile",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 182.962,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "宣称可 AI coding 须依据 ai_coding_ready 而非口头 overall",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 185.817,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "代码已加字段而文档未同步时不得仅凭 score 宣称就绪",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 177.94,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "表文档被 calibrate 掏空后不得仍判就绪",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 169.134,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "按模板写「业务说明」时须识别 morph 正则导致 gold 不可达",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 182.254,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "refresh exit 2 须核对 score 文件、勿盲信误报",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 182.263,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "refresh 报告 domains 须含 db、勿吞解析错误回退为 api/func",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 184.406,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "新 clone 无 .fill-work 时不得把失真覆盖当成就绪证据",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 180.535,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "仅切 gate_profile=gold 时须警示 morph_floor 可能仍被 strict 写死",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 180.992,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "分册中文标题下的 TODO 不得被 entry_ready 漏报",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 179.33,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "calibrate-live 须先 dry-run、警示覆盖风险",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 189.311,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "业务分包+Flyway 须显式 inventory 根参数",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 184.032,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "db inventory 须叠加 ALTER、勿只认 CREATE TABLE",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 176.88,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "首填后维护须改 SSOT、禁止回填 .fill-work 重 merge",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 168.975,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "迁移命名须跟仓内 Flyway 惯例、勿强加源仓 DDL/DML 正则",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 180.308,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "Q_SEED=是时须说明 Commands 仍可能全是 TODO",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 170.597,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "业务分包 Controllers 的 **/* glob 须警示 hook 可能永不命中",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 182.689,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "文件级 glob 被追加 / 后须警示永不命中",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 167.257,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "db_migration_dir 缺尾斜杠时须警示 after-edit 永不命中",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 183.78,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "问答批次截断后须续问、勿把未吐出题标为已答",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 178.935,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "recommended_when 含 S_* 时不得把推荐值一律当成 null",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 187.563,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "rule 13 与 AGENTS 迁移口径冲突时须统一、勿各说各话",
+      "configuration": "with_skill",
+      "run_number": 12,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 186.098,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.16129032258064516,
+        "stddev": 0.36779852422552833,
+        "min": 0,
+        "max": 1
+      },
+      "time_seconds": {
+        "mean": 178.10729032258064,
+        "stddev": 39.20873419417237,
+        "min": 36.376,
+        "max": 299.334
+      },
+      "tokens": {
+        "mean": 6895.4838709677415,
+        "stddev": 15134.093898238762,
+        "min": 0,
+        "max": 60724
+      }
+    },
+    "without_skill": null,
+    "delta": null
+  }
+}

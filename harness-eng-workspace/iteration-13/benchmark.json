@@ -1,0 +1,116 @@
+{
+  "metadata": {
+    "skill_name": "harness-eng",
+    "skill_path": "/mnt/d/workspace/gitHub/skills/harness-eng",
+    "timestamp": "2026-09-28T04:33:28Z",
+    "evals_run": [
+      0
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "eval_name": "落地意图须先过确认闸门、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 13,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 300.626,
+        "tokens": 70148,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "turn_response_contains[turn=1]{contains_any:[推荐 Fingerprint 指纹 提问 Q_]}",
+          "passed": true,
+          "evidence": "turn 1 response contains all required keywords (contains_any:[推荐 Fingerprint 指纹 提问 Q_])"
+        },
+        {
+          "text": "turn_response_contains[turn=2]{contains_any:[WritePlan 写盘计划 产物预览]}",
+          "passed": true,
+          "evidence": "turn 2 response contains all required keywords (contains_any:[WritePlan 写盘计划 产物预览])"
+        },
+        {
+          "text": "turn_response_contains[turn=2]{contains_any:[确认 按计划执行 LGTM 预授权]}",
+          "passed": true,
+          "evidence": "turn 2 response contains all required keywords (contains_any:[确认 按计划执行 LGTM 预授权])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 13,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 182.978,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "全部推荐只收齐答题、写盘仍须确认",
+      "configuration": "with_skill",
+      "run_number": 13,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 179.945,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.3333333333333333,
+        "stddev": 0.4714045207910317,
+        "min": 0,
+        "max": 1
+      },
+      "time_seconds": {
+        "mean": 221.183,
+        "stddev": 56.18832891268434,
+        "min": 179.945,
+        "max": 300.626
+      },
+      "tokens": {
+        "mean": 23382.666666666668,
+        "stddev": 33068.084324449286,
+        "min": 0,
+        "max": 70148
+      }
+    },
+    "without_skill": null,
+    "delta": null
+  }
+}

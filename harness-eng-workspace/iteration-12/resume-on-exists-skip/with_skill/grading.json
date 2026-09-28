@@ -1,0 +1,35 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.files_not_exist",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "output_contains{any:[resume 续跑]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[resume 续跑])"
+    },
+    {
+      "text": "output_contains{any:[on_exists skip 不覆盖 merge 保留]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[on_exists skip 不覆盖 merge 保留])"
+    },
+    {
+      "text": "files_not_exist: [docs/harness-eng/harness-meta.yaml]",
+      "passed": true,
+      "evidence": "none of the forbidden files exist"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 1
+  }
+}

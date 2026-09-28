@@ -1,0 +1,40 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.files_not_exist",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "output_contains{any:[审计 audit Audit]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+    },
+    {
+      "text": "output_contains{any:[缺口 已具备 L0 L1]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[缺口 已具备 L0 L1])"
+    },
+    {
+      "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+      "passed": true,
+      "evidence": "none of the forbidden files exist"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1
+  }
+}

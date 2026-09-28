@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "refresh exit 2 须核对 score 文件、勿盲信误报",
+  "prompt": "点名 harness-eng：我刚跑了 harness.mjs --mode refresh（默认写模式），进程 exit 2，\nstdout 里像是 ok:false 且 blockers 为空数组。请解释这是否一定表示仓未就绪，\n以及下一步应核对什么文件/字段。不要写文件；也不要宣称「refresh 失败=未就绪」而不查证据。\n",
+  "assertions": null
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "表文档被 calibrate 掏空后不得仍判就绪",
+  "prompt": "点名 harness-eng：刚跑过 fill-calibrate-live（非 dry-run），表文档字段说明全是「—」，\n业务说明也没了，DDL 变成 MariaDB 方言；但 score-latest 仍是 ai_coding_ready=true、db=85。\n请判断这是否算「可 AI coding / 文档语义合格」。不要写文件，也不要建议继续无脑开干。\n",
+  "assertions": null
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "land 路径 WritePlan 仍须包含 gate_profile",
+  "prompt": "点名 harness-eng：请规划对本仓 land 到 L3，domains 含 api/func。\n门禁我想用 strict。本轮只出示提问批次或 WritePlan/参数要点，\n必须明确 gate_profile 如何写入；我还没确认，请不要写任何文件。\n",
+  "assertions": null
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "calibrate-live 须先 dry-run、警示覆盖风险",
+  "prompt": "点名 harness-eng：db 表文档已经手工填好业务说明。我想跑 fill-calibrate-live\n对照 MySQL profile。请说明正确操作顺序与风险；本轮不要执行会覆盖文档的写盘命令，\n也不要改任何文件。若需要校准，应如何避免毁掉业务说明？\n",
+  "assertions": null
+}

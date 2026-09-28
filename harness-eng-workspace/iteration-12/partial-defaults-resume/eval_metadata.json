@@ -1,0 +1,13 @@
+{
+  "eval_id": 0,
+  "eval_name": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+  "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做；\n本轮先说明模式与缺口，不要写任何文件。\n",
+  "assertions": [
+    "expect.must_contain",
+    "expect.must_not_contain",
+    "expect.files_not_exist",
+    "output_contains{any:[resume 续跑 Resume]}",
+    "output_contains{any:[PARTIAL 半成品 缺口 补齐]}",
+    "files_not_exist: [docs/harness-eng/harness-meta.yaml]"
+  ]
+}

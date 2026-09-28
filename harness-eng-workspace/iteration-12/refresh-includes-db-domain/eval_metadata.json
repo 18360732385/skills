@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "refresh 报告 domains 须含 db、勿吞解析错误回退为 api/func",
+  "prompt": "点名 harness-eng：harness-meta.yaml 里 domains 明确是 [api, func, db]，\n但我刚跑 refresh，报告里 domains 只有 [api, func]，db 没有做 inventory。\n请解释这是否正常、根因可能在哪、下一步应核对什么。不要写文件。\n",
+  "assertions": null
+}

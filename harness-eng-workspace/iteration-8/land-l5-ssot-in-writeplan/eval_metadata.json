@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "L5+Codex 落地计划须走 agent-config SSOT/sync",
+  "prompt": "点名 harness-eng：请规划对本仓 land 到 L5，AI 工具面要同时包含 cursor 与 codex，\n并启用 agent_config / 配置 SSOT 管线。\n本轮只出示探测、提问批次或 WritePlan，说明 hooks/rules 如何经 SSOT 与 sync 落地；\n我还没有确认，请不要写任何文件，也不要直接往 .codex/hooks 落最终脚本。\n",
+  "assertions": [
+    "expect.must_not_contain",
+    "expect.files_not_exist",
+    "output_contains{any:[WritePlan 确认 L5 agent_config agent-config]}",
+    "output_contains{any:[sync SSOT docs/agent-config]}",
+    "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "db_migration_dir 缺尾斜杠时须警示 after-edit 永不命中",
+  "prompt": "点名 harness-eng：params 里 db_migration_dir 写成\nbackend/src/main/resources/db/migration（没有末尾 /）。\n请说明这对 after-edit / 迁移即时提醒有何影响，以及 land 或重渲 hooks 时应怎么处理。\n不要写文件。\n",
+  "assertions": null
+}

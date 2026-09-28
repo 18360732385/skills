@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "分册中文标题下的 TODO 不得被 entry_ready 漏报",
+  "prompt": "点名 harness-eng：根 AGENTS 的 Commands 已无 TODO，score 的 entry_todo 也是空数组，\n但 backend/AGENTS.md 在「## 常用命令」下仍有 TODO(harness-eng)。\n请判断入口文档是否已干净、评分器会不会漏报，以及宣称就绪前还应查什么。不要写文件。\n",
+  "assertions": null
+}

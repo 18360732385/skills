@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "文件级 glob 被追加 / 后须警示永不命中",
+  "prompt": "点名 harness-eng：有人想在 soft-gate / CONTRACT_CHECKS 里用精确文件 glob：\nbackend/src/main/java/com/example/taskboard/task/Task.java\n以及 **/common/**。请说明当前 hooks-checks 的 glob→regex 对这些写法是否可靠；\n若会失效，现象是什么、怎么验证。不要写文件。\n",
+  "assertions": null
+}

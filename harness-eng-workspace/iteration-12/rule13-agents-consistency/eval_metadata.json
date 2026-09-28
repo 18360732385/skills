@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "rule 13 与 AGENTS 迁移口径冲突时须统一、勿各说各话",
+  "prompt": "点名 harness-eng：backend/AGENTS.md 说 Flyway 自动迁移 + V{n}__snake，\n但 .cursor/rules/13-db-doc-sync.mdc 要求 V####__(DDL|DML)__ 且人工执行到 mysql、\n建表语句必须是完整 CREATE TABLE。cold agent 该听谁的？请给出统一维护口径建议。\n不要写文件。\n",
+  "assertions": null
+}

@@ -1,0 +1,163 @@
+{
+  "metadata": {
+    "skill_name": "harness-eng",
+    "skill_path": "/mnt/d/workspace/gitHub/skills/harness-eng",
+    "timestamp": "2026-09-28T02:38:44Z",
+    "evals_run": [
+      0
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "eval_name": "审计模式只读、不向目标仓写盘",
+      "configuration": "with_skill",
+      "run_number": 5,
+      "result": {
+        "pass_rate": 1,
+        "passed": 6,
+        "failed": 0,
+        "total": 6,
+        "time_seconds": 60.771,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[审计 audit Audit]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+        },
+        {
+          "text": "output_contains{any:[缺口 已具备 L0 L1]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[缺口 已具备 L0 L1])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "落地意图须先过确认闸门、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 5,
+      "result": {
+        "pass_rate": 1,
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "time_seconds": 73.544,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.files_not_exist",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{any:[WritePlan 确认 推荐 Fingerprint 指纹]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[WritePlan 确认 推荐 Fingerprint 指纹])"
+        },
+        {
+          "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+          "passed": true,
+          "evidence": "none of the forbidden files exist"
+        }
+      ]
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "MATURE 仓未指定模式时默认走审计",
+      "configuration": "with_skill",
+      "run_number": 5,
+      "result": {
+        "pass_rate": 1,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 191.43,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "expect.must_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "expect.must_not_contain",
+          "passed": true,
+          "evidence": "all checks passed"
+        },
+        {
+          "text": "output_contains{all:[MATURE]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (all:[MATURE])"
+        },
+        {
+          "text": "output_contains{any:[审计 audit Audit]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[审计 audit Audit])"
+        },
+        {
+          "text": "output_contains{any:[已具备 缺口 L0 L1 L2]}",
+          "passed": true,
+          "evidence": "output satisfies all contains checks (any:[已具备 缺口 L0 L1 L2])"
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1,
+        "stddev": 0,
+        "min": 1,
+        "max": 1
+      },
+      "time_seconds": {
+        "mean": 108.58166666666666,
+        "stddev": 58.81423940018457,
+        "min": 60.771,
+        "max": 191.43
+      },
+      "tokens": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "without_skill": null,
+    "delta": null
+  }
+}

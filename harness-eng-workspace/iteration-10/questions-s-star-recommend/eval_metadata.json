@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "recommended_when 含 S_* 时不得把推荐值一律当成 null",
+  "prompt": "点名 harness-eng：探测已得到 S_SPRING、S_FRONTEND（前后端 monorepo）。\n我在答 land 问答，questions-next 对 Q_FRONTEND_RULE / 依赖栈信号的题给出的\nrecommended 却是 null。请说明这是否表示「没有推荐」，以及你是否仍应按探测信号给出推荐，\n并点名可能的引擎缺陷（evalWhen / S_*）。本轮只讨论推荐值，不要写盘。\n",
+  "assertions": null
+}

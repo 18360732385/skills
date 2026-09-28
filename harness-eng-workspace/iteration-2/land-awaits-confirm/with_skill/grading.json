@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.files_not_exist",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "output_contains{any:[WritePlan 确认 推荐 Fingerprint 指纹]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[WritePlan 确认 推荐 Fingerprint 指纹])"
+    },
+    {
+      "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+      "passed": true,
+      "evidence": "none of the forbidden files exist"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "业务分包 Controllers 的 **/* glob 须警示 hook 可能永不命中",
+  "prompt": "点名 harness-eng：本仓按业务分包，Controller 分散在多个包下。\n有人打算把 Q_GLOBS / soft-gate 写成 backend/src/main/java/**/*Controller.java。\n请说明这种写法在当前 hook 的 glob→regex 转换下是否可靠；若有风险，应怎么规避或验证。\n不要写文件，也不要执行会改仓的命令。\n",
+  "assertions": null
+}

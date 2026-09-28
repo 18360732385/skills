@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "新 clone 无 .fill-work 时不得把失真覆盖当成就绪证据",
+  "prompt": "点名 harness-eng：新 clone 后直接 fill-score，coverage_source=rescanned，\napi 变成 covered=14/code=3，db/func 覆盖消失；但 ai_coding_ready 和 overall 仍与本机一致。\n请判断这是否证明「新 clone 结果一致 / 可 AI coding」，下一步应怎么重建可信覆盖。\n不要写文件。\n",
+  "assertions": null
+}

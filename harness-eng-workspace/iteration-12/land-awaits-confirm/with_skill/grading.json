@@ -1,0 +1,40 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.files_not_exist",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "turn_response_contains[turn=1]{contains_any:[推荐 Fingerprint 指纹 提问 Q_]}",
+      "passed": true,
+      "evidence": "turn 1 response contains all required keywords (contains_any:[推荐 Fingerprint 指纹 提问 Q_])"
+    },
+    {
+      "text": "turn_response_contains[turn=2]{contains_any:[WritePlan 写盘计划 产物预览]}",
+      "passed": true,
+      "evidence": "turn 2 response contains all required keywords (contains_any:[WritePlan 写盘计划 产物预览])"
+    },
+    {
+      "text": "turn_response_contains[turn=2]{contains_any:[确认 按计划执行 LGTM 预授权]}",
+      "passed": true,
+      "evidence": "turn 2 response contains all required keywords (contains_any:[确认 按计划执行 LGTM 预授权])"
+    },
+    {
+      "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+      "passed": true,
+      "evidence": "none of the forbidden files exist"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1
+  }
+}

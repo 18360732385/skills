@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "Q_SEED=是时须说明 Commands 仍可能全是 TODO",
+  "prompt": "点名 harness-eng：land 时我答了 Q_SEED=是，期望从 backend/pom.xml 与 frontend/package.json\n预填 Commands。结果根 AGENTS.md 的 Commands 仍是 TODO(harness-eng)。\n请说明这是否符合当前实现，以及我应如何补全。不要写文件，也不要声称「SEED 已预填成功」。\n",
+  "assertions": null
+}

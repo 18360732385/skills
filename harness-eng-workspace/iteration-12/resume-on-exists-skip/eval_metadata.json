@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "显式续跑须说明 on_exists=skip 并等待确认",
+  "prompt": "点名 harness-eng：请对当前半成品仓执行 resume（续跑），补齐缺口。\n已有 AGENTS.md 不要覆盖重写。本轮先给 WritePlan / 参数要点，\n我还没确认，请不要写文件。\n",
+  "assertions": [
+    "expect.must_not_contain",
+    "expect.files_not_exist",
+    "output_contains{any:[resume 续跑]}",
+    "output_contains{any:[on_exists skip 不覆盖 merge 保留]}",
+    "files_not_exist: [docs/harness-eng/harness-meta.yaml]"
+  ]
+}

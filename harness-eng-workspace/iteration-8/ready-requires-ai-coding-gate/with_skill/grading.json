@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "output_contains{all:[ai_coding_ready]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (all:[ai_coding_ready])"
+    },
+    {
+      "text": "output_contains{any:[fill-score gate score-policy 开干 就绪]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[fill-score gate score-policy 开干 就绪])"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1
+  }
+}

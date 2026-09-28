@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "db inventory 须叠加 ALTER、勿只认 CREATE TABLE",
+  "prompt": "点名 harness-eng：Flyway 已有 V1 CREATE TABLE task 与 V2 ALTER 增加 tag。\n请说明默认 fill-inventory / inventory-db 能否看到 tag 列；若看不到，对评分与表文档\n（建表语句块）意味着什么，维护上应怎么做。不要写文件。\n",
+  "assertions": null
+}

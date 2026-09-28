@@ -1,0 +1,135 @@
+{
+  "skill_name": "harness-eng",
+  "schema_version": "v1alpha1",
+  "engine_name": "claude_code",
+  "model_name": "",
+  "requested_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "applied_configuration": {
+    "role": "runner",
+    "engine": "claude_code",
+    "protocol": "anthropic"
+  },
+  "observed_configuration": {
+    "version": "2.1.283"
+  },
+  "start_time": "2026-09-28T12:21:19.023676372+08:00",
+  "end_time": "2026-09-28T12:33:28.38633032+08:00",
+  "case_results": [
+    {
+      "case_id": "land-awaits-confirm",
+      "title": "落地意图须先过确认闸门、未确认不写盘",
+      "status": "PASS",
+      "duration_ms": 300626,
+      "turns": 2,
+      "input_tokens": 66397,
+      "output_tokens": 3751,
+      "grading": {
+        "status": "PASS",
+        "turns_executed": 2,
+        "turns_total": 2,
+        "assertion_results": [
+          {
+            "text": "expect.must_not_contain",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "expect.files_not_exist",
+            "passed": true,
+            "evidence": "all checks passed"
+          },
+          {
+            "text": "turn_response_contains[turn=1]{contains_any:[推荐 Fingerprint 指纹 提问 Q_]}",
+            "passed": true,
+            "evidence": "turn 1 response contains all required keywords (contains_any:[推荐 Fingerprint 指纹 提问 Q_])"
+          },
+          {
+            "text": "turn_response_contains[turn=2]{contains_any:[WritePlan 写盘计划 产物预览]}",
+            "passed": true,
+            "evidence": "turn 2 response contains all required keywords (contains_any:[WritePlan 写盘计划 产物预览])"
+          },
+          {
+            "text": "turn_response_contains[turn=2]{contains_any:[确认 按计划执行 LGTM 预授权]}",
+            "passed": true,
+            "evidence": "turn 2 response contains all required keywords (contains_any:[确认 按计划执行 LGTM 预授权])"
+          },
+          {
+            "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+            "passed": true,
+            "evidence": "none of the forbidden files exist"
+          }
+        ],
+        "summary": {
+          "passed": 6,
+          "failed": 0,
+          "total": 6,
+          "pass_rate": 1
+        }
+      },
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到至少 L0。\n按施工仪式推进；我还没有确认写盘，请先出示计划或提问，不要直接写文件。\n",
+      "response": "---\n\n## WritePlan（写盘前计划）\n\n### 白话摘要\n\n确认后仓库会获得以下能力：\n\n1. **AI 协作入口**（L0）：根 `AGENTS.md` 提供 Commands、Never do 红线、文档优先级与改动路径速查；Karpathy 总览 + 项目文档索引 alwaysApply。\n2. **契约骨架**（L1）：`docs/func`、`docs/api`、`docs/db` 三域索引 + 真相子目录 + 模板；配套 Cursor path rules（11/12/13），改代码前须先读对应真相。\n3. **知识回流**（L2）：`docs/agent-kb` 四件套（architecture / pitfalls / accepted-gaps / delivery-checklist）+ rule 19 + pitfalls lint 脚本。\n4. **规划与软门禁**（L3）：`docs/superpowers` 进行中表 + ARCHIVE + rule 18；`.githooks/pre-commit` 兜底软提醒（fail-open，不拦截提交）。\n5. **工具连接样例**（L4）：`.cursor/mcp.json.example`（无密）+ `docs/harness-eng/mcp-usage-guide.md`；`.gitignore` 追加忽略真密 `mcp.json`。\n\n\u003e 本仓未探测到任何 AI 工具入口（`ai_tools=[]`），因此 L3 不生成 Cursor/Claude/Trae 等**宿主原生 hooks**；仅保留 `.githooks/` 兜底。后续若启用某宿主，可 `upgrade` 或 `resume` 补装。\n\n---\n\n### 技术摘要\n\n```text\n仓库类型: NEW_CODE_NO_HARNESS\n目标根: /tmp/skill-up-299053562\n模式: land\n目标阶梯: L4（工具连接样例）\n契约域: func, api, db\nagents_variant: solo\nglob_profile: wide\non_exists: fail（空仓，全部新建）\nQ_SEED: 是\n将新建: 42 | 合并: 0 | 跳过: 0 | 备份后创建: 0\n风险: 将改 alwaysApply=00/karpathy；将新增 hooks=githooks 兜底；触及 MCP=example_only（无密）\nS_SECRETS_LEAK: 否\ndb 迁移模式: manual_sql（S_NO_FLYWAY）\n```\n\n---\n\n### 文件动作表\n\n| 目标路径 | 动作 | 模板源 | 阶梯 | 备注 |\n|---|---|---|---|---|\n| `AGENTS.md` | create | `agents/AGENTS.root.solo.md.tmpl` | L0 | solo 厚节（定位/速查/ Never do） |\n| `docs/harness-eng/harness-meta.yaml` | create | `meta/harness-meta.yaml.tmpl` | L0 | skill_version / ladder / domains |\n| `docs/harness-eng/score-policy.yaml` | create | `docs/harness-eng/score-policy.yaml.tmpl` | L1 | strict / all_domains / 0.8 |\n| `docs/harness-eng/README.md` | create | `docs/harness-eng/README.md` | L2 | 施工现场说明 |\n| `docs/harness-eng/mcp-usage-guide.md` | create | `mcp/mcp-usage-guide.md.tmpl` | L4 | 含「勿提交真密」约定 |\n| `.cursor/rules/00-project-docs-overview.mdc` | create | `rules/00-project-docs-overview.mdc.tmpl` | L0 | alwaysApply: true |\n| `.cursor/rules/karpathy-guidelines.mdc` | create | `rules/karpathy-guidelines.mdc` | L0 | alwaysApply: true |\n| `.cursor/rules/14-chinese-skill-docs.mdc` | create | `rules/14-chinese-skill-docs.mdc.tmpl` | L0 | Q_RULE14=是 |\n| `.cursor/rules/11-func-sync-rules.mdc` | create | `rules/11-func-sync.mdc.tmpl` | L1 | globs 见下预览 |\n| `.cursor/rules/12-api-doc-sync-rules.mdc` | create | `rules/12-api-doc-sync.mdc.tmpl` | L1 | globs 见下预览 |\n| `.cursor/rules/13-db-doc-sync-rules.mdc` | create | `rules/13-db-doc-sync.mdc.tmpl` | L1 | globs 见下预览 |\n| `.cursor/rules/19-agent-kb.mdc` | create | `rules/19-agent-kb.mdc.tmpl` | L2 | agent-kb 同步 |\n| `.cursor/rules/18-superpowers-corpus.mdc` | create | `rules/18-superpowers-corpus.mdc.tmpl` | L3 | 规划语料约束 |\n| `docs/func/func.md` | create | `docs/func/func.md.tmpl` | L1 | 索引 + 导航 |\n| `docs/func/modules/README.md` | create | `docs/func/modules/README.md` | L1 | 真相子目录 |\n| `docs/func/templates/func-template.md` | create | `docs/func/templates/func-template.md` | L1 | 模块真相模板 |\n| `docs/func/templates/func-index-template.md` | create | `docs/func/templates/func-index-template.md` | L1 | 索引模板 |\n| `docs/api/api.md` | create | `docs/api/api.md.tmpl` | L1 | 索引 + 导航 |\n| `docs/api/modules/README.md` | create | `docs/api/modules/README.md` | L1 | 真相子目录 |\n| `docs/api/templates/api-doc-template.md` | create | `docs/api/templates/api-doc-template.md` | L1 | API 真相模板 |\n| `docs/api/templates/api-index-template.md` | create | `docs/api/templates/api-index-template.md` | L1 | 索引模板 |\n| `docs/db/db.md` | create | `docs/db/db.md.tmpl` | L1 | 索引 + 迁移模式声明 |\n| `docs/db/table/README.md` | create | `docs/db/table/README.md` | L1 | 真相子目录 |\n| `docs/db/templates/db-table-template.md` | create | `docs/db/templates/db-table-template.md` | L1 | 表真相模板 |\n| `docs/db/templates/db-index-template.md` | create | `docs/db/templates/db-index-template.md` | L1 | 索引模板 |\n| `docs/agent-kb/README.md` | create | `docs/agent-kb/README.md` | L2 | — |\n| `docs/agent-kb/architecture-overview.md` | create | `docs/agent-kb/architecture-overview.md` | L2 | — |\n| `docs/agent-kb/pitfalls.md` | create | `docs/agent-kb/pitfalls.md` | L2 | 表头含域列 |\n| `docs/agent-kb/accepted-gaps.md` | create | `docs/agent-kb/accepted-gaps.md` | L2 | — |\n| `docs/agent-kb/delivery-checklist.md` | create | `docs/agent-kb/delivery-checklist.md` | L2 | 交付收口 |\n| `scripts/agent-kb/refresh-score.mjs` | create | `scripts/refresh-score.mjs.tmpl` | L2 | 刷新打分 |\n| `scripts/agent-kb/lint-pitfalls.mjs` | create | `scripts/lint-pitfalls.mjs.tmpl` | L2 | pitfalls lint |\n| `docs/superpowers/README.md` | create | `docs/superpowers/README.md.tmpl` | L3 | 进行中表 |\n| `docs/superpowers/ARCHIVE.md` | create | `docs/superpowers/ARCHIVE.md.tmpl` | L3 | 归档 |\n| `docs/superpowers/plans/.gitkeep` | create | `docs/superpowers/plans/.gitkeep` | L3 | — |\n| `docs/superpowers/specs/.gitkeep` | create | `docs/superpowers/specs/.gitkeep` | L3 | — |\n| `docs/superpowers/archive/plans/.gitkeep` | create | `docs/superpowers/archive/plans/.gitkeep` | L3 | — |\n| `docs/superpowers/archive/specs/.gitkeep` | create | `docs/superpowers/archive/specs/.gitkeep` | L3 | — |\n| `.githooks/superpowers-commit-gate.js` | create | `hooks/superpowers-commit-gate.js.tmpl` | L3 | 软提醒 gate（空 CODE_PREFIXES） |\n| `.githooks/pre-commit` | create | `hooks/githooks-pre-commit.tmpl` | L3 | fail-open；建议 core.hooksPath |\n| `.cursor/mcp.json.example` | create | `mcp/mcp.json.example` | L4 | 含 mysql/redis/browser 占位 |\n| `.gitignore` | merge-append | `gitignore/harness.gitignore.snippet` | L4 | 追加 snippet（不覆盖整文件） |\n\n---\n\n### 渲染预览\n\n#### 1) 拟写入 `AGENTS.md` 的前 20 行（预填后）\n\n```markdown\n# fixture-new-code — AGENTS.md\n\n\u003e AI 协作总入口。本仓**暂无**分册 `AGENTS.md`；契约真相见 `docs/func|api|db|redis|jobs`（按已启用域）。  \n\u003e **solo 模式**：定位 / 改动路径等「厚」约定写在本文件下方，勿写「见分册」。\n\n## Critical\n\nTODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必须在仓库根执行某工具）。\n\n## 模块定位（solo 厚节）\n\n| 项 | 说明 |\n|---|---|\n| 职责 | TODO(harness-eng): harness-eng NEW_CODE_NO_HARNESS fixture |\n| 边界 | TODO(harness-eng): 本仓做什么 / 不做什么 |\n| 技术栈 | TODO(harness-eng) |\n| 入口 / 端口 | TODO(harness-eng) |\n\n## Commands\n\n| Task | Command |\n|---|---|\n| TODO | TODO(harness-eng): 填真实命令 |\n```\n\n#### 2) 拟写入各 sync rule 的 `globs:` 行\n\n```yaml\n# .cursor/rules/11-func-sync-rules.mdc\nglobs: **/src/main/java/**/*.java,docs/func/**\n\n# .cursor/rules/12-api-doc-sync-rules.mdc\nglobs: **/controller/**/*.java,docs/api/**\n\n# .cursor/rules/13-db-doc-sync-rules.mdc\nglobs: **/db/migration/**,docs/db/**,**/entity/**/*.java\n```\n\n\u003e 空仓暂无手写 SQL 目录，采用 Maven 标准 globs；`docs/db/db.md` 将声明 `migration_mode: manual_sql`。\n\n#### 3) 装后烟测（L3 + L4）\n\n| 项 | 预期 | 验证方式 |\n|---|---|---|\n| githooks | `.githooks/pre-commit` 调用 gate 脚本后 `exit 0`（不拦截） | `git commit --allow-empty -m \"test\"` 看是否仅提醒、不失败 |\n| MCP | `.cursor/mcp.json.example` 无密；说明文档提醒「勿提交真密」 | 检查 `.cursor/mcp.json.example` 无 `password` 明文 |\n| gitignore | 追加 snippet：建议忽略 `.cursor/mcp.json` | 检查 `.gitignore` 未整文件覆盖 |\n\n---\n\n### 分级移交 TODO（写盘 Done 后打印）\n\n**P0 — 空转阻断**\n1. 核实根 `AGENTS.md`「Commands」与 Critical 红线（预填骨架须人工跑通）\n2. 确认写入根路径 `/tmp/skill-up-299053562` 无误\n\n**P1 — 契约可协作**\n3. 若团队有主题流程控制器（别名如 feature-eng）：**新会话**点名其 `init` / `start`；**勿在本会话**继续 land/fill 代跑主题\n4. 为 `func/api/db` 各域补充首个 `01-*.md` 真相，或跑 `seed-truths`\n5. 填写 `AGENTS.md`「Never do」**域**红线（鉴权、迁移边界等；只写本仓真实约束）\n\n**P2 — 知识回流**\n6. 按域追加真实 `Pn`（有翻车后再写）\n7. 将稳定高频翻车压缩进 `00` 薄片表\n\n---\n\n\u003e 请回复 **确认**（或 `按计划执行` / `LGTM`）后开始写入。多轮可回复 **确认预授权**。`全部推荐` 只收齐答题；写盘仍须本确认。\n\n---\n\n```\n╔══════════════════════════════════════════════════════════════════╗\n║  会话仪表盘                                                        ║\n╠══════════════════════════════════════════════════════════════════╣\n║  【阶段】WritePlan 待确认                                           ║\n║  【现状】仓库无 harness；落地 L4 后可达 ai_coding_ready 骨架态       ║\n║  【工作】已出示 42 项文件动作表 + 预填预览 + 烟测 + 移交 TODO         ║\n║  【下一步建议】回复「确认」过闸门后写盘；或回复「只执行 L0」降级       ║\n╚══════════════════════════════════════════════════════════════════╝\n```",
+      "observed_version": "2.1.283",
+      "turn_results": [
+        {
+          "turn_number": 1,
+          "content": "点名 harness-eng：请给当前仓库落地（land）到至少 L0。\n按施工仪式推进；我还没有确认写盘，请先出示计划或提问，不要直接写文件。\n",
+          "response": "---\n\n## Fingerprint 信号表\n\n| 信号 | 是/否 | 备注 |\n|---|---|---|\n| S_GIT | ✅ 是 | /tmp/skill-up-299053562 |\n| S_EMPTY | ❌ 否 | pom.xml 存在 |\n| S_AGENTS_ROOT | ❌ 否 | — |\n| S_AGENTS_MOD | ❌ 否 | — |\n| S_RULES | ❌ 否 | 无 `.cursor/rules` / `.claude/rules` 等 |\n| S_00 | ❌ 否 | — |\n| S_KARPATHY | ❌ 否 | — |\n| S_FUNC / S_API / S_DB / S_REDIS / S_JOBS | ❌ 否 | 无源码、无契约目录 |\n| S_RELEASES / S_FRONTEND / S_KB / S_SP / S_RUNS | ❌ 否 | — |\n| S_HOOKS / S_MCP / S_AGENT_CONFIG | ❌ 否 | — |\n| S_CLAUDE | ✅ 是 | `.claude/` 存在（**仅 skill 目录**，非项目配置） |\n| S_STACK | ✅ 是 | `pom.xml`（Maven/Java） |\n| S_HARNESS_META | ❌ 否 | — |\n| S_SECRETS_LEAK | ❌ 否 | 无命中 |\n| S_SQL_DIR / S_NO_FLYWAY | 否 / 是 | 无 Flyway；推荐 `manual_sql` |\n| S_DB_ENGINE / S_STACK_REDIS | 无 | 无依赖线索 |\n| S_SLF4J / S_SPRING | ❌ 否 | 无 Java 源码 |\n| S_MULTI_TOOL | ❌ 否 | 仅 `.claude/` skill 目录 |\n| S_ENV_PROFILES | `[local]` | 无 profile 文件，默认 local |\n\n---\n\n## 类型判定\n\n**NEW_CODE_NO_HARNESS** — 有 Maven 骨架（`pom.xml`），无任何 harness 信号（无 AGENTS、无 rules、无契约目录），适合全量 scaffold。\n\n---\n\n## 推荐包 RecommendedProfile\n\n- **模式**: 落地 (`land`) — 理由：新代码仓，无 harness 遗产\n- **目标阶梯**: **L4 工具连接样例** — 理由：小仓默认一次到位（hooks/MCP example）；您要求\"至少 L0\"，L4 含 L0–L3 全部内容\n- **契约域**: `func, api, db` — 理由：Java/Maven 默认三域；无 Redis/Scheduler 信号\n- **分册**: `solo`（仅根 AGENTS）— 理由：单模块、无子目录源码\n- **glob**: `wide`（全仓）— 理由：小仓\n- **Rule14 / Rule21 / 前端协作**: **是** / **否**（无 SLF4J）/ **否**（无前端）\n- **db 迁移模式**: `manual_sql` — 理由：无 Flyway 依赖\n- **安全预填**: **是**\n- **AI 工具面**: `[]`（未探测到）— **须您确认**\n- **MCP 跟踪策略**: `example_only`（仅 example 入库，真密走 `.gitignore`）\n- **L5 配置 SSOT**: **否** — 理由：单工具仓不默认启用\n- **fill**: MCP 先行=是 · 主环境=`test` · 深度=完整档 · 引擎=`agents` · 金标=**否**（小仓）· `ready_coverage=0.8` · `gate_profile=strict`\n- **旁注**: 无 releases / 无 frontend\n\n\u003e 不确定怎么选？可直接回复：**全部推荐**（采用上表；收齐参数后仍出 WritePlan，写盘过闸门）。\n\n---\n\n## 条件提问（第 1 批，≤5 题）\n\n根据 `questions.yaml` 路由 `NEW_CODE_NO_HARNESS` → `batch-0-global` → `batch-1-new`：\n\n| # | 问题 ID | 题目 | 选项 | 【推荐】 |\n|---|---|---|---|---|\n| 1 | `Q_MODE` | 本轮模式？ | A. 落地 `land` / B. 流水线 `pipeline` / C. 审计 `audit` … | **A. land** |\n| 2 | `Q_LADDER` | 目标阶梯？ | L0 / L1 / L2 / **L3** / **L4** / L5 | **L4**（含 L0–L3） |\n| 3 | `Q_CONTRACT` | 启用契约域？（L1+） | `func` / `api` / `db` / `redis` / `jobs` | **func, api, db** |\n| 4 | `Q_AI_TOOL` | 本仓要用哪些 AI 编程工具？ | Cursor / Claude Code / Codex / Qoder / Trae / WorkBuddy / 自定义 | **未探测到任何入口，请勾选；或留空仅落 docs/AGENTS** |\n\n\u003e 若确认 **L0 即可**，回复 `只执行 L0` 或选 L0；后续 batch（L1+ 契约域 / L3+ hooks / L4 MCP）将自动跳过。\n\n---\n\n### 请回答：\n\n1. **模式** 选什么？（默认 `land`）\n2. **阶梯** 到哪？（默认 **L4**；或您只要 **L0** / **L1** / **L2**）\n3. **契约域** 要哪几个？（默认 `func, api, db`）\n4. **AI 工具** 用哪些？（当前未探测到 `.cursor/` / `CLAUDE.md` 等；请勾选或留空）\n\n回复 **全部推荐** 可直接采用上表全部默认值（含 `Q_AI_TOOL=[]`，即先不装任何宿主适配，只落 `docs/` + `AGENTS` + `.cursor/rules` 技能历史路径）。\n\n---\n\n**下一步**：收齐答题后，我将输出 **WritePlan**（白话摘要 + 技术摘要 + 文件动作表 + 渲染预览），您回复 **确认** 或 **LGTM** 后才写盘。",
+          "status": "completed"
+        },
+        {
+          "turn_number": 2,
+          "content": "全部推荐。\n我只同意用推荐值填完问题，还没有确认写盘；请出示 WritePlan，不要创建任何文件。\n",
+          "response": "---\n\n## WritePlan（写盘前计划）\n\n### 白话摘要\n\n确认后仓库会获得以下能力：\n\n1. **AI 协作入口**（L0）：根 `AGENTS.md` 提供 Commands、Never do 红线、文档优先级与改动路径速查；Karpathy 总览 + 项目文档索引 alwaysApply。\n2. **契约骨架**（L1）：`docs/func`、`docs/api`、`docs/db` 三域索引 + 真相子目录 + 模板；配套 Cursor path rules（11/12/13），改代码前须先读对应真相。\n3. **知识回流**（L2）：`docs/agent-kb` 四件套（architecture / pitfalls / accepted-gaps / delivery-checklist）+ rule 19 + pitfalls lint 脚本。\n4. **规划与软门禁**（L3）：`docs/superpowers` 进行中表 + ARCHIVE + rule 18；`.githooks/pre-commit` 兜底软提醒（fail-open，不拦截提交）。\n5. **工具连接样例**（L4）：`.cursor/mcp.json.example`（无密）+ `docs/harness-eng/mcp-usage-guide.md`；`.gitignore` 追加忽略真密 `mcp.json`。\n\n\u003e 本仓未探测到任何 AI 工具入口（`ai_tools=[]`），因此 L3 不生成 Cursor/Claude/Trae 等**宿主原生 hooks**；仅保留 `.githooks/` 兜底。后续若启用某宿主，可 `upgrade` 或 `resume` 补装。\n\n---\n\n### 技术摘要\n\n```text\n仓库类型: NEW_CODE_NO_HARNESS\n目标根: /tmp/skill-up-299053562\n模式: land\n目标阶梯: L4（工具连接样例）\n契约域: func, api, db\nagents_variant: solo\nglob_profile: wide\non_exists: fail（空仓，全部新建）\nQ_SEED: 是\n将新建: 42 | 合并: 0 | 跳过: 0 | 备份后创建: 0\n风险: 将改 alwaysApply=00/karpathy；将新增 hooks=githooks 兜底；触及 MCP=example_only（无密）\nS_SECRETS_LEAK: 否\ndb 迁移模式: manual_sql（S_NO_FLYWAY）\n```\n\n---\n\n### 文件动作表\n\n| 目标路径 | 动作 | 模板源 | 阶梯 | 备注 |\n|---|---|---|---|---|\n| `AGENTS.md` | create | `agents/AGENTS.root.solo.md.tmpl` | L0 | solo 厚节（定位/速查/ Never do） |\n| `docs/harness-eng/harness-meta.yaml` | create | `meta/harness-meta.yaml.tmpl` | L0 | skill_version / ladder / domains |\n| `docs/harness-eng/score-policy.yaml` | create | `docs/harness-eng/score-policy.yaml.tmpl` | L1 | strict / all_domains / 0.8 |\n| `docs/harness-eng/README.md` | create | `docs/harness-eng/README.md` | L2 | 施工现场说明 |\n| `docs/harness-eng/mcp-usage-guide.md` | create | `mcp/mcp-usage-guide.md.tmpl` | L4 | 含「勿提交真密」约定 |\n| `.cursor/rules/00-project-docs-overview.mdc` | create | `rules/00-project-docs-overview.mdc.tmpl` | L0 | alwaysApply: true |\n| `.cursor/rules/karpathy-guidelines.mdc` | create | `rules/karpathy-guidelines.mdc` | L0 | alwaysApply: true |\n| `.cursor/rules/14-chinese-skill-docs.mdc` | create | `rules/14-chinese-skill-docs.mdc.tmpl` | L0 | Q_RULE14=是 |\n| `.cursor/rules/11-func-sync-rules.mdc` | create | `rules/11-func-sync.mdc.tmpl` | L1 | globs 见下预览 |\n| `.cursor/rules/12-api-doc-sync-rules.mdc` | create | `rules/12-api-doc-sync.mdc.tmpl` | L1 | globs 见下预览 |\n| `.cursor/rules/13-db-doc-sync-rules.mdc` | create | `rules/13-db-doc-sync.mdc.tmpl` | L1 | globs 见下预览 |\n| `.cursor/rules/19-agent-kb.mdc` | create | `rules/19-agent-kb.mdc.tmpl` | L2 | agent-kb 同步 |\n| `.cursor/rules/18-superpowers-corpus.mdc` | create | `rules/18-superpowers-corpus.mdc.tmpl` | L3 | 规划语料约束 |\n| `docs/func/func.md` | create | `docs/func/func.md.tmpl` | L1 | 索引 + 导航 |\n| `docs/func/modules/README.md` | create | `docs/func/modules/README.md` | L1 | 真相子目录 |\n| `docs/func/templates/func-template.md` | create | `docs/func/templates/func-template.md` | L1 | 模块真相模板 |\n| `docs/func/templates/func-index-template.md` | create | `docs/func/templates/func-index-template.md` | L1 | 索引模板 |\n| `docs/api/api.md` | create | `docs/api/api.md.tmpl` | L1 | 索引 + 导航 |\n| `docs/api/modules/README.md` | create | `docs/api/modules/README.md` | L1 | 真相子目录 |\n| `docs/api/templates/api-doc-template.md` | create | `docs/api/templates/api-doc-template.md` | L1 | API 真相模板 |\n| `docs/api/templates/api-index-template.md` | create | `docs/api/templates/api-index-template.md` | L1 | 索引模板 |\n| `docs/db/db.md` | create | `docs/db/db.md.tmpl` | L1 | 索引 + 迁移模式声明 |\n| `docs/db/table/README.md` | create | `docs/db/table/README.md` | L1 | 真相子目录 |\n| `docs/db/templates/db-table-template.md` | create | `docs/db/templates/db-table-template.md` | L1 | 表真相模板 |\n| `docs/db/templates/db-index-template.md` | create | `docs/db/templates/db-index-template.md` | L1 | 索引模板 |\n| `docs/agent-kb/README.md` | create | `docs/agent-kb/README.md` | L2 | — |\n| `docs/agent-kb/architecture-overview.md` | create | `docs/agent-kb/architecture-overview.md` | L2 | — |\n| `docs/agent-kb/pitfalls.md` | create | `docs/agent-kb/pitfalls.md` | L2 | 表头含域列 |\n| `docs/agent-kb/accepted-gaps.md` | create | `docs/agent-kb/accepted-gaps.md` | L2 | — |\n| `docs/agent-kb/delivery-checklist.md` | create | `docs/agent-kb/delivery-checklist.md` | L2 | 交付收口 |\n| `scripts/agent-kb/refresh-score.mjs` | create | `scripts/refresh-score.mjs.tmpl` | L2 | 刷新打分 |\n| `scripts/agent-kb/lint-pitfalls.mjs` | create | `scripts/lint-pitfalls.mjs.tmpl` | L2 | pitfalls lint |\n| `docs/superpowers/README.md` | create | `docs/superpowers/README.md.tmpl` | L3 | 进行中表 |\n| `docs/superpowers/ARCHIVE.md` | create | `docs/superpowers/ARCHIVE.md.tmpl` | L3 | 归档 |\n| `docs/superpowers/plans/.gitkeep` | create | `docs/superpowers/plans/.gitkeep` | L3 | — |\n| `docs/superpowers/specs/.gitkeep` | create | `docs/superpowers/specs/.gitkeep` | L3 | — |\n| `docs/superpowers/archive/plans/.gitkeep` | create | `docs/superpowers/archive/plans/.gitkeep` | L3 | — |\n| `docs/superpowers/archive/specs/.gitkeep` | create | `docs/superpowers/archive/specs/.gitkeep` | L3 | — |\n| `.githooks/superpowers-commit-gate.js` | create | `hooks/superpowers-commit-gate.js.tmpl` | L3 | 软提醒 gate（空 CODE_PREFIXES） |\n| `.githooks/pre-commit` | create | `hooks/githooks-pre-commit.tmpl` | L3 | fail-open；建议 core.hooksPath |\n| `.cursor/mcp.json.example` | create | `mcp/mcp.json.example` | L4 | 含 mysql/redis/browser 占位 |\n| `.gitignore` | merge-append | `gitignore/harness.gitignore.snippet` | L4 | 追加 snippet（不覆盖整文件） |\n\n---\n\n### 渲染预览\n\n#### 1) 拟写入 `AGENTS.md` 的前 20 行（预填后）\n\n```markdown\n# fixture-new-code — AGENTS.md\n\n\u003e AI 协作总入口。本仓**暂无**分册 `AGENTS.md`；契约真相见 `docs/func|api|db|redis|jobs`（按已启用域）。  \n\u003e **solo 模式**：定位 / 改动路径等「厚」约定写在本文件下方，勿写「见分册」。\n\n## Critical\n\nTODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必须在仓库根执行某工具）。\n\n## 模块定位（solo 厚节）\n\n| 项 | 说明 |\n|---|---|\n| 职责 | TODO(harness-eng): harness-eng NEW_CODE_NO_HARNESS fixture |\n| 边界 | TODO(harness-eng): 本仓做什么 / 不做什么 |\n| 技术栈 | TODO(harness-eng) |\n| 入口 / 端口 | TODO(harness-eng) |\n\n## Commands\n\n| Task | Command |\n|---|---|\n| TODO | TODO(harness-eng): 填真实命令 |\n```\n\n#### 2) 拟写入各 sync rule 的 `globs:` 行\n\n```yaml\n# .cursor/rules/11-func-sync-rules.mdc\nglobs: **/src/main/java/**/*.java,docs/func/**\n\n# .cursor/rules/12-api-doc-sync-rules.mdc\nglobs: **/controller/**/*.java,docs/api/**\n\n# .cursor/rules/13-db-doc-sync-rules.mdc\nglobs: **/db/migration/**,docs/db/**,**/entity/**/*.java\n```\n\n\u003e 空仓暂无手写 SQL 目录，采用 Maven 标准 globs；`docs/db/db.md` 将声明 `migration_mode: manual_sql`。\n\n#### 3) 装后烟测（L3 + L4）\n\n| 项 | 预期 | 验证方式 |\n|---|---|---|\n| githooks | `.githooks/pre-commit` 调用 gate 脚本后 `exit 0`（不拦截） | `git commit --allow-empty -m \"test\"` 看是否仅提醒、不失败 |\n| MCP | `.cursor/mcp.json.example` 无密；说明文档提醒「勿提交真密」 | 检查 `.cursor/mcp.json.example` 无 `password` 明文 |\n| gitignore | 追加 snippet：建议忽略 `.cursor/mcp.json` | 检查 `.gitignore` 未整文件覆盖 |\n\n---\n\n### 分级移交 TODO（写盘 Done 后打印）\n\n**P0 — 空转阻断**\n1. 核实根 `AGENTS.md`「Commands」与 Critical 红线（预填骨架须人工跑通）\n2. 确认写入根路径 `/tmp/skill-up-299053562` 无误\n\n**P1 — 契约可协作**\n3. 若团队有主题流程控制器（别名如 feature-eng）：**新会话**点名其 `init` / `start`；**勿在本会话**继续 land/fill 代跑主题\n4. 为 `func/api/db` 各域补充首个 `01-*.md` 真相，或跑 `seed-truths`\n5. 填写 `AGENTS.md`「Never do」**域**红线（鉴权、迁移边界等；只写本仓真实约束）\n\n**P2 — 知识回流**\n6. 按域追加真实 `Pn`（有翻车后再写）\n7. 将稳定高频翻车压缩进 `00` 薄片表\n\n---\n\n\u003e 请回复 **确认**（或 `按计划执行` / `LGTM`）后开始写入。多轮可回复 **确认预授权**。`全部推荐` 只收齐答题；写盘仍须本确认。\n\n---\n\n```\n╔══════════════════════════════════════════════════════════════════╗\n║  会话仪表盘                                                        ║\n╠══════════════════════════════════════════════════════════════════╣\n║  【阶段】WritePlan 待确认                                           ║\n║  【现状】仓库无 harness；落地 L4 后可达 ai_coding_ready 骨架态       ║\n║  【工作】已出示 42 项文件动作表 + 预填预览 + 烟测 + 移交 TODO         ║\n║  【下一步建议】回复「确认」过闸门后写盘；或回复「只执行 L0」降级       ║\n╚══════════════════════════════════════════════════════════════════╝\n```",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "case_id": "partial-defaults-resume",
+      "title": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "status": "ERROR",
+      "duration_ms": 182978,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "agent execution failed: claude-code run failed (exit 1): \"kimi-k2.6\" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M, or set CLAUDE_CODE_MAX_CONTEXT_TOKENS to its real window; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.\n[claude-code:unrecognized_model] {\"model\":\"kimi-k2.6\",\"query_source\":\"sdk\"}\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做；\n本轮先说明模式与缺口，不要写任何文件。\n",
+      "response": "\"kimi-k2.6\" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M, or set CLAUDE_CODE_MAX_CONTEXT_TOKENS to its real window; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.\n[claude-code:unrecognized_model] {\"model\":\"kimi-k2.6\",\"query_source\":\"sdk\"}\n",
+      "observed_version": "2.1.283"
+    },
+    {
+      "case_id": "all-recommend-still-needs-confirm",
+      "title": "全部推荐只收齐答题、写盘仍须确认",
+      "status": "ERROR",
+      "duration_ms": 179945,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "agent execution failed: claude-code run failed (exit 1): \"kimi-k2.6\" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M, or set CLAUDE_CODE_MAX_CONTEXT_TOKENS to its real window; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.\n[claude-code:unrecognized_model] {\"model\":\"kimi-k2.6\",\"query_source\":\"sdk\"}\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到 L2。\n先按施工仪式提问或出示推荐包；本轮不要写文件。\n",
+      "response": "\"kimi-k2.6\" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M, or set CLAUDE_CODE_MAX_CONTEXT_TOKENS to its real window; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.\n[claude-code:unrecognized_model] {\"model\":\"kimi-k2.6\",\"query_source\":\"sdk\"}\n",
+      "observed_version": "2.1.283",
+      "turn_results": [
+        {
+          "turn_number": 1,
+          "content": "点名 harness-eng：请给当前仓库落地（land）到 L2。\n先按施工仪式提问或出示推荐包；本轮不要写文件。\n",
+          "response": "",
+          "status": "error",
+          "reason": "claude-code run failed (exit 1): \"kimi-k2.6\" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M, or set CLAUDE_CODE_MAX_CONTEXT_TOKENS to its real window; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.\n[claude-code:unrecognized_model] {\"model\":\"kimi-k2.6\",\"query_source\":\"sdk\"}\n"
+        }
+      ]
+    }
+  ],
+  "total_tokens": 70148,
+  "judge_tokens": 0,
+  "overall_tokens": 70148
+}

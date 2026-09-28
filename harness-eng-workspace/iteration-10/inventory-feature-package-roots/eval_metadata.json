@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "业务分包+Flyway 须显式 inventory 根参数",
+  "prompt": "点名 harness-eng：这是前后端 monorepo，后端按业务分包（task/project 各有 Controller），\n迁移在 backend/src/main/resources/db/migration（Flyway）。\n请规划 fill-inventory（api + db）要怎么跑，才能数全接口并找到迁移；\n说明默认参数的陷阱。本轮只给命令与参数建议，不要写文件、不要执行会改仓的命令。\n",
+  "assertions": null
+}

@@ -1,0 +1,49 @@
+{
+  "skill_name": "harness-eng",
+  "schema_version": "v1alpha1",
+  "engine_name": "codex",
+  "model_name": "",
+  "requested_configuration": {
+    "role": "runner",
+    "engine": "codex",
+    "protocol": "openai"
+  },
+  "applied_configuration": {
+    "role": "runner",
+    "engine": "codex",
+    "protocol": "openai"
+  },
+  "start_time": "2026-09-28T12:34:09.763145004+08:00",
+  "end_time": "2026-09-28T12:34:10.259569875+08:00",
+  "case_results": [
+    {
+      "case_id": "partial-defaults-resume",
+      "title": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent codex preflight failed: version check failed for codex (exit 127): /mnt/c/Users/18360/AppData/Roaming/npm/codex: 15: exec: node: not found\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng，帮我处理一下当前仓库。\n我没有指定 land / upgrade / resume，请按 skill 默认分流来做；\n本轮先说明模式与缺口，不要写任何文件。\n"
+    },
+    {
+      "case_id": "all-recommend-still-needs-confirm",
+      "title": "全部推荐只收齐答题、写盘仍须确认",
+      "status": "ERROR",
+      "duration_ms": 0,
+      "turns": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "error": "failed to setup case environment: agent codex preflight failed: version check failed for codex (exit 127): /mnt/c/Users/18360/AppData/Roaming/npm/codex: 15: exec: node: not found\n",
+      "grading": null,
+      "configuration": "with_skill",
+      "prompt": "点名 harness-eng：请给当前仓库落地（land）到 L2。\n先按施工仪式提问或出示推荐包；本轮不要写文件。\n"
+    }
+  ],
+  "total_tokens": 0,
+  "judge_tokens": 0,
+  "overall_tokens": 0
+}

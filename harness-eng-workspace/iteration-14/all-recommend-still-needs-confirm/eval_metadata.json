@@ -1,0 +1,6 @@
+{
+  "eval_id": 0,
+  "eval_name": "全部推荐只收齐答题、写盘仍须确认",
+  "prompt": "点名 harness-eng：请给当前仓库落地（land）到 L2。\n先按施工仪式提问或出示推荐包；本轮不要写文件。\n",
+  "assertions": null
+}

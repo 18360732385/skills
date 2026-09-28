@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "expect.must_not_contain",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "expect.files_not_exist",
+      "passed": true,
+      "evidence": "all checks passed"
+    },
+    {
+      "text": "files_not_exist: [AGENTS.md docs/harness-eng/harness-meta.yaml]",
+      "passed": true,
+      "evidence": "none of the forbidden files exist"
+    },
+    {
+      "text": "output_contains{any:[确认 WritePlan 按计划执行 LGTM 预授权]}",
+      "passed": true,
+      "evidence": "output satisfies all contains checks (any:[确认 WritePlan 按计划执行 LGTM 预授权])"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1
+  }
+}

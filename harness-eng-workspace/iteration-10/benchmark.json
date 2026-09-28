@@ -1,0 +1,533 @@
+{
+  "metadata": {
+    "skill_name": "harness-eng",
+    "skill_path": "/mnt/d/workspace/gitHub/skills/harness-eng",
+    "timestamp": "2026-09-28T04:08:55Z",
+    "evals_run": [
+      0
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 0,
+      "eval_name": "审计模式只读、不向目标仓写盘",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "落地意图须先过确认闸门、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "MATURE 仓未指定模式时默认走审计",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "PARTIAL 仓未指定模式时默认续跑、未确认不写盘",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "全部推荐只收齐答题、写盘仍须确认",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "显式续跑须说明 on_exists=skip 并等待确认",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "monorepo 冷启动须识别前后端栈并等待确认",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "monorepo 分册须区分 spring 与 frontend、勿单选 spring 双渲",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "L5+Codex 落地计划须走 agent-config SSOT/sync",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "land 路径 WritePlan 仍须包含 gate_profile",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "宣称可 AI coding 须依据 ai_coding_ready 而非口头 overall",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "代码已加字段而文档未同步时不得仅凭 score 宣称就绪",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "表文档被 calibrate 掏空后不得仍判就绪",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "按模板写「业务说明」时须识别 morph 正则导致 gold 不可达",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "refresh exit 2 须核对 score 文件、勿盲信误报",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "refresh 报告 domains 须含 db、勿吞解析错误回退为 api/func",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "新 clone 无 .fill-work 时不得把失真覆盖当成就绪证据",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "仅切 gate_profile=gold 时须警示 morph_floor 可能仍被 strict 写死",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "分册中文标题下的 TODO 不得被 entry_ready 漏报",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "calibrate-live 须先 dry-run、警示覆盖风险",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "业务分包+Flyway 须显式 inventory 根参数",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "db inventory 须叠加 ALTER、勿只认 CREATE TABLE",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "首填后维护须改 SSOT、禁止回填 .fill-work 重 merge",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "迁移命名须跟仓内 Flyway 惯例、勿强加源仓 DDL/DML 正则",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "Q_SEED=是时须说明 Commands 仍可能全是 TODO",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "业务分包 Controllers 的 **/* glob 须警示 hook 可能永不命中",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "文件级 glob 被追加 / 后须警示永不命中",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "db_migration_dir 缺尾斜杠时须警示 after-edit 永不命中",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "问答批次截断后须续问、勿把未吐出题标为已答",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "recommended_when 含 S_* 时不得把推荐值一律当成 null",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    },
+    {
+      "eval_id": 0,
+      "eval_name": "rule 13 与 AGENTS 迁移口径冲突时须统一、勿各说各话",
+      "configuration": "with_skill",
+      "run_number": 10,
+      "result": {
+        "pass_rate": 0,
+        "passed": 0,
+        "failed": 0,
+        "total": 0,
+        "time_seconds": 0,
+        "tokens": 0,
+        "errors": 0
+      },
+      "expectations": null
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "time_seconds": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      },
+      "tokens": {
+        "mean": 0,
+        "stddev": 0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "without_skill": null,
+    "delta": null
+  }
+}
