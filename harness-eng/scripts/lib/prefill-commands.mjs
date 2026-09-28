@@ -75,10 +75,11 @@ export function applyCommandsPrefill(md, root, opts = {}) {
   const { rows } = collectCommandPrefill(root, opts);
   if (!rows.length) return md;
   const table = formatCommandsTableRows(rows);
-  // Replace placeholder TODO command rows under ## Commands
-  if (/##\s*Commands[\s\S]*?TODO\(harness-eng\)/i.test(md)) {
+  // 0.7.29 LT-5: match ## Commands or ## 常用命令 (same as ai-coding-gate)
+  const headingRe = /##\s*(?:Commands|常用命令)[\s\S]*?TODO\(harness-eng\)/i;
+  if (headingRe.test(md)) {
     return md.replace(
-      /(##\s*Commands[\s\S]*?\|\s*---\|\s*---\s*\|\s*\n)([\s\S]*?)(?=\n##\s+|$)/i,
+      /(##\s*(?:Commands|常用命令)[\s\S]*?\|\s*---\|\s*---\s*\|\s*\n)([\s\S]*?)(?=\n##\s+|$)/i,
       (_, head) => `${head}${table}\n\n`
     );
   }

@@ -35,6 +35,13 @@ export function loadJsonSafe(p) {
   }
 }
 
+/** 0.7.29 SG-10: resolve --out relative to --root (absolute paths unchanged). */
+export function resolveInventoryOutPath(root, outOverride, domain, moduleName = null) {
+  if (!outOverride) return defaultInventoryPath(root, domain, moduleName);
+  if (path.isAbsolute(outOverride)) return path.resolve(outOverride);
+  return path.resolve(root, outOverride);
+}
+
 /** Dedupe key for an API inventory endpoint (0.2.29+). */
 export function endpointDedupeKey(ep) {
   if (!ep || typeof ep !== "object") return "";

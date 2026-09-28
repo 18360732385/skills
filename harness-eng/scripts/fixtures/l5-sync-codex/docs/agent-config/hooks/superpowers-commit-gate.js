@@ -137,10 +137,36 @@ function evaluate(root) {
     return null;
   }
 
+  // 主题过程态进行中：勿诱导 verify 前假收口
+  const activeRunsDir = path.join(root, "docs", "runs", "active");
+  let featureInFlight = [];
+  try {
+    for (const slug of fs.readdirSync(activeRunsDir)) {
+      const prog = path.join(activeRunsDir, slug, "progress.yaml");
+      if (!fs.existsSync(prog)) continue;
+      const raw = fs.readFileSync(prog, "utf8");
+      const stageM = raw.match(/^stage:\s*(\S+)/m);
+      const stage = stageM ? stageM[1].replace(/['"]/g, "") : "";
+      if (stage && stage !== "done" && stage !== "null") {
+        featureInFlight.push(`${slug}（环 ${stage}）`);
+      }
+    }
+  } catch {
+    /* no runs */
+  }
+  if (featureInFlight.length > 0) {
+    return [
+      "【主题软提醒】暂存含业务代码，且有进行中主题：",
+      ...featureInFlight.map((p) => `  - ${p}`),
+      "中途 commit 允许；收口在宣称交付或主题收口时（见 rule 18）。",
+      "纯 fix/chore 可忽略本提醒。",
+    ].join("\n");
+  }
+
   return [
     "【superpowers 软提醒】暂存含业务代码，且仍有进行中 plan：",
     ...activePlans.map((p) => `  - ${p}`),
-    "若本提交完成某主题主功能：先按 rule 18 收口再 commit。",
+    "若本提交**宣称交付**某主题主功能：先按 rule 18 收口再 commit；进行中勿假收口。",
     "纯 fix/chore 可忽略本提醒。",
   ].join("\n");
 }

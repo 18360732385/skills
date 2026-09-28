@@ -3,7 +3,8 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。
 
-**拓扑（0.2.21）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。
+**拓扑（0.2.22）**：`modes/` 仅 7 个用户入口 · `modes/specs/` 4 本契约手册 · `config/` · `templates/` · `scripts/`。  
+**发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（文档钉头 + 仓根 README 行）→ ③ 手写 [CHANGELOG.md](CHANGELOG.md) / [VERIFY.md](VERIFY.md) 增量 → ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。
 
 ## 必读（写盘 / 调起前）≤6 文件
 

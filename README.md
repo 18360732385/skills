@@ -95,9 +95,9 @@ skills/
 | [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.7.23） |
 | [feature-eng/SKILL.md](feature-eng/SKILL.md) | 开发流程入口：init / rebind / start / resume / status / advance / close |
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
-| [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.21）；须点名加载 |
+| [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.22）；须点名加载 |
 | [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / resume / audit / seal |
-| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.3.17） |
+| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.3.20-dev |
 | [ip-peitu-tietie/SKILL.md](ip-peitu-tietie/SKILL.md) | 帖帖配图入口：策略 shot list / 单张生成 / QA |
 | [ip-peitu-tietie/CONTEXT.md](ip-peitu-tietie/CONTEXT.md) | 帖帖配图上下文与资产索引 |
 

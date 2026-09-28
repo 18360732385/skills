@@ -1,24 +1,54 @@
-﻿# harness-eng 验收记录（0.7.26）
+﻿# harness-eng 验收记录（0.7.29）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.26**（e2e P2：幂等·路径 · fill-merge · L 级收口；其上 0.7.25 P1 · 0.7.24 P0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.29**（e2e P1：upgrade hooks · inventory meta · 评分假绿；其上 0.7.27 e2e P0 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.28 增量验收（e2e P1）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.28`；templates / meta / questions / sync tmpl 一致 | 有 |
+| upgrade 默认 replace hook 家族脚本；`upgrade_fix_hooks: false` 可关 | 有 |
+| `--controller-root` 写 `module_roots` 不覆盖全仓根 | 有 |
+| `covered_gt_code` → coverage_ready=false | 有 |
+| `acceptance_warnings_max: null` 不 explicit；gold warnings=0 | 有 |
+| doc-density 窄表头；HS-4 docs/ 前缀 docsGuard | 有 |
+| 缺 inventory 时 `pass=false` | 有 |
+| CHANGELOG 标题 `## 0.7.28`；upgrade `## 0.7.27 → 0.7.28` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.27 增量验收（e2e P0 热修）
+
+| 项 | 期望 |
+|---|---|
+| manifest / meta / questions 为 `0.7.27` | 有 |
+| CHANGELOG 标题 `## 0.7.27` | 有 |
+| `buildSpringDbBlock` 可调用；无 `SPRING_DB_BLOCK_ENABLED` 引用 | 有 |
+| sync 按 SSOT 接线 soft-gate；无 mysql-guard 时不硬编码 mysql matcher | 有 |
+| `passesWhenGates` 在 expand 循环中调用 | 有 |
+| `DB_MIGRATION_DIR` 经 ensure→hook 链路带尾斜杠 | 有 |
+| 中文「常用命令」TODO 可被 `checkEntryReady` 检出 | 有 |
+| fill-score `report.root` 为绝对路径 | 有 |
+| upgrade `## 0.7.26 → 0.7.27` | 有 |
+| sync tmpl id `0.7.27` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.26 增量验收（e2e P2）
 
 | 项 | 期望 |
 |---|---|
-| manifest / meta / questions 为 `0.7.26` | 有 |
+| manifest / meta / questions 为 `0.7.26` | 有（历史钉；现行见 0.7.27） |
 | CHANGELOG 标题 `## 0.7.26` | 有 |
 | resume/upgrade 默认 `on_exists=skip`；meta `last_mode` | 有 |
 | gitignore 含 report-latest / run-latest / score-history | 有 |
-| score/inventory `root` 为 `"."` | 有 |
+| score/inventory `root` 为 `"."`（0.7.26；0.7.27 fill-score 改绝对路径） | 有 |
 | fill-merge `--split-by table`；func `unit=services` | 有 |
 | DU-4 stdout 可 JSON.parse；LT-11 未解析占位非 0 | 有 |
 | upgrade `## 0.7.25 → 0.7.26` | 有 |
-| sync tmpl id `0.7.26` | 有 |
+| sync tmpl id `0.7.26` | 有（历史钉；现行见 0.7.27） |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.25 增量验收（e2e P1）

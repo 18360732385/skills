@@ -1,8 +1,8 @@
 /**
- * Persist / read inventory scan roots from harness-meta.yaml (0.7.24).
+ * Persist / read inventory scan roots from harness-meta.yaml (0.7.24+).
  *
  * inventory:
- *   api: { controller_root: "..." }
+ *   api: { controller_root: "...", module_roots: { "<rel>": "..." } }
  *   db: { sql_root: "..." }
  */
 import fs from "fs";
@@ -12,7 +12,7 @@ import { parse as parseYaml } from "./yaml.mjs";
 
 /**
  * @param {string} root
- * @returns {{ api?: { controller_root?: string }, db?: { sql_root?: string } }}
+ * @returns {{ api?: { controller_root?: string, module_roots?: Record<string,string> }, db?: { sql_root?: string } }}
  */
 export function readInventoryMeta(root) {
   const found = findHarnessMetaFile(root);
@@ -26,6 +26,16 @@ export function readInventoryMeta(root) {
       out.api = {};
       if (inv.api.controller_root)
         out.api.controller_root = String(inv.api.controller_root).replace(/\\/g, "/");
+      if (inv.api.module_roots && typeof inv.api.module_roots === "object") {
+        out.api.module_roots = {};
+        for (const [k, v] of Object.entries(inv.api.module_roots)) {
+          if (v != null && String(v).trim())
+            out.api.module_roots[String(k).replace(/\\/g, "/")] = String(v).replace(
+              /\\/g,
+              "/"
+            );
+        }
+      }
     }
     if (inv.db && typeof inv.db === "object") {
       out.db = {};
@@ -40,7 +50,7 @@ export function readInventoryMeta(root) {
 /**
  * Merge inventory roots into harness-meta.yaml (preserve rest of file as much as possible).
  * @param {string} root
- * @param {{ api?: { controller_root?: string }, db?: { sql_root?: string } }} patch
+ * @param {{ api?: { controller_root?: string, module_roots?: Record<string,string> }, db?: { sql_root?: string } }} patch
  */
 export function writeInventoryMeta(root, patch) {
   if (!patch || (!patch.api && !patch.db)) return;
@@ -50,16 +60,42 @@ export function writeInventoryMeta(root, patch) {
 
   let raw = fs.readFileSync(dest.abs, "utf8");
   const existing = readInventoryMeta(root);
+  const nextApi = { ...(existing.api || {}) };
+  if (patch.api) {
+    if (patch.api.controller_root != null)
+      nextApi.controller_root = String(patch.api.controller_root).replace(/\\/g, "/");
+    if (patch.api.module_roots && typeof patch.api.module_roots === "object") {
+      nextApi.module_roots = {
+        ...(nextApi.module_roots || {}),
+        ...Object.fromEntries(
+          Object.entries(patch.api.module_roots).map(([k, v]) => [
+            String(k).replace(/\\/g, "/"),
+            String(v).replace(/\\/g, "/"),
+          ])
+        ),
+      };
+    }
+  }
   const next = {
-    api: { ...(existing.api || {}), ...(patch.api || {}) },
+    api: nextApi,
     db: { ...(existing.db || {}), ...(patch.db || {}) },
   };
 
   const lines = [];
   lines.push("inventory:");
-  if (next.api?.controller_root) {
+  const hasApi =
+    next.api?.controller_root ||
+    (next.api?.module_roots && Object.keys(next.api.module_roots).length);
+  if (hasApi) {
     lines.push("  api:");
-    lines.push(`    controller_root: "${next.api.controller_root}"`);
+    if (next.api.controller_root)
+      lines.push(`    controller_root: "${next.api.controller_root}"`);
+    if (next.api.module_roots && Object.keys(next.api.module_roots).length) {
+      lines.push("    module_roots:");
+      for (const [k, v] of Object.entries(next.api.module_roots)) {
+        lines.push(`      "${k}": "${v}"`);
+      }
+    }
   }
   if (next.db?.sql_root) {
     lines.push("  db:");
@@ -70,10 +106,7 @@ export function writeInventoryMeta(root, patch) {
   const block = lines.join("\n") + "\n";
   if (/^inventory:\s*$/m.test(raw) || /^inventory:\s*\n/m.test(raw)) {
     // Replace existing inventory: … until next top-level key
-    raw = raw.replace(
-      /^inventory:\s*\n(?:[ \t]+.*\n)*/m,
-      block
-    );
+    raw = raw.replace(/^inventory:\s*\n(?:[ \t]+.*\n)*/m, block);
   } else {
     // Append before trailing newline or at end
     raw = raw.replace(/\s*$/, "\n") + block;

@@ -1,8 +1,8 @@
 ﻿#!/usr/bin/env node
 /**
- * feature-eng selfcheck (0.2.21)：静态断言 + 夹具行为断言。
+ * feature-eng selfcheck：静态断言 + 夹具行为断言。版本 PIN 读自 `_meta/manifest.yaml`。
  * 覆盖：manifest · modes/ 入口 · modes/specs/ · feature.mjs · 绑定 · 模板 · lib ·
- * status-scan --cwd · gate-evidence · fixtures · CHANGELOG。
+ * status-scan --cwd · gate-evidence · fixtures · CHANGELOG · sync-skill-version --check。
  */
 import fs from "fs";
 import os from "os";
@@ -18,6 +18,7 @@ import {
   validateProgressEnums,
   validateMonorepoPackages,
 } from "./lib/progress-shape.mjs";
+import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
@@ -39,7 +40,8 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.2.21";
+const PIN = readSkillVersion(skillRoot);
+const VER_RE = escapeSemverRe(PIN);
 
 const MODES = [
   "modes/init.md",
@@ -1735,8 +1737,17 @@ assert(
   "binding.md links 设计笔记 tmpl"
 );
 
-// 0.2.21：P3 schema + P4 字段；其上 0.2.20-dev P0/P1/P2 · 0.2.18 批 E
-assert(/## 0\.2\.21\b/.test(changelog || ""), "CHANGELOG has ## 0.2.21 block");
+// 0.2.22+：版本 SSOT；其上 0.2.21 P3/P4 · 0.2.20-dev P0/P1/P2 · 0.2.18 批 E
+assert(new RegExp(`## ${VER_RE}\\b`).test(changelog || ""), `CHANGELOG has ## ${PIN} block`);
+
+{
+  const syncCheck = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts/sync-skill-version.mjs"), "--check"],
+    { encoding: "utf8" }
+  );
+  assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
+}
 assert(/## 0\.2\.20-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.20-dev block");
 assert(/## 0\.2\.18-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.18-dev block");
 assert(/## 0\.2\.17-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.17-dev block");

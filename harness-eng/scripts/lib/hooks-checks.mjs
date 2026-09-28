@@ -273,6 +273,11 @@ function codePred(entry) {
   if (s.length > 1 && s.startsWith("/") && s.endsWith("/")) {
     return `${docsGuard}new RegExp(${JSON.stringify(s.slice(1, -1))}).test(f)`;
   }
+  // 0.7.28 HS-4: prefix preds under docs/ also get docsGuard
+  const norm = s.replace(/\\/g, "/");
+  if (norm.startsWith("docs/")) {
+    return `${docsGuard}f.startsWith(${JSON.stringify(s)})`;
+  }
   return `f.startsWith(${JSON.stringify(s)})`;
 }
 
@@ -466,13 +471,15 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     })
   );
   const registry = loadRegistry();
+  // 0.7.24 HS-3: always trailing slash so MIGRATION_RE matches path/V*.sql
+  // 0.7.27: force-normalize even when ensureStandardPlaceholders already set the key
   const migDirRaw =
+    (ph.DB_MIGRATION_DIR != null && String(ph.DB_MIGRATION_DIR)) ||
     (params && params.db_migration_dir) ||
     (registry.db && registry.db.hook_migration_dir) ||
     "db/migration/";
-  // 0.7.24 HS-3: always trailing slash so MIGRATION_RE matches path/V*.sql
   const migDir = String(migDirRaw).replace(/\\/g, "/").replace(/\/?$/, "/");
-  put("DB_MIGRATION_DIR", migDir);
+  out.DB_MIGRATION_DIR = migDir;
   // flyway 自动迁移仓关闭「人工同步环境」提醒：MIGRATION_ENVS 置空
   const migMode =
     (ph.DB_MIGRATION_MODE != null && String(ph.DB_MIGRATION_MODE)) ||
@@ -546,8 +553,9 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
 /**
  * 选中 hook 的脚本文件条目。
  * L5：单份 SSOT（docs/agent-config/hooks/）；否则按工具直渲副本。
+ * @param {Set<string>} [mcpEngines] selected MCP engines (mysql-guard needs mysql)
  */
-export function expandHooksFamily(params, agentConfig, actionForTarget, root) {
+export function expandHooksFamily(params, agentConfig, actionForTarget, root, mcpEngines) {
   const selection = resolveHooksFamily(params, root);
   const tools = new Set(
     (Array.isArray(params && params.ai_tools) ? params.ai_tools : [])
@@ -555,6 +563,17 @@ export function expandHooksFamily(params, agentConfig, actionForTarget, root) {
       .filter(Boolean)
   );
   const has = (t) => (tools.size ? tools.has(t) : t === "cursor");
+  const mcp =
+    mcpEngines instanceof Set
+      ? mcpEngines
+      : new Set(
+          (Array.isArray(params && (params.mcp || params.mcp_engines))
+            ? params.mcp || params.mcp_engines
+            : []
+          )
+            .map((x) => String(x || "").trim().toLowerCase())
+            .filter(Boolean)
+        );
   const out = [];
   const seen = new Set();
   const push = (id, template, target) => {
@@ -565,6 +584,8 @@ export function expandHooksFamily(params, agentConfig, actionForTarget, root) {
 
   for (const key of selection) {
     const def = HOOK_DEFS[key];
+    // 0.7.27 LT-8: mysql-guard requires mysql MCP selected
+    if (key === "mysql-guard" && !mcp.has("mysql")) continue;
     if (agentConfig) {
       push(`hookfam-${key}`, def.template, `docs/agent-config/hooks/${def.script}`);
       continue;
@@ -618,7 +639,8 @@ export function expandHooksFamily(params, agentConfig, actionForTarget, root) {
       "docs/agent-config/hooks/codex-stop-checklist.js"
     );
     push("hookfam-codex-cmd", "hooks/codex-hook.cmd", "docs/agent-config/hooks/codex-hook.cmd");
-    if (selection.includes("mysql-guard")) {
+    // 0.7.27: mysql-guard SSOT only when selected AND mysql MCP present
+    if (selection.includes("mysql-guard") && mcp.has("mysql")) {
       push(
         "hookfam-codex-mysql-guard",
         "hooks/mcp-mysql-guard.js.tmpl",

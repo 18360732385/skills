@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.26
- * HARNESS_ENG_VERSION: 0.7.26
+ * HARNESS_SYNC_TMPL_ID: 0.7.29
+ * HARNESS_ENG_VERSION: 0.7.29
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -42,8 +42,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.26";
-const HARNESS_ENG_VERSION = "0.7.26";
+const HARNESS_SYNC_TMPL_ID = "0.7.29";
+const HARNESS_ENG_VERSION = "0.7.29";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = ["cursor", "claude"];
@@ -288,7 +288,7 @@ function finalizeCodexHooksDoc(doc) {
   return doc;
 }
 
-/** Codex hooks：优先 SSOT codex/hooks.json，否则默认 PreToolUse(^Bash$)+mcp__mysql+Stop */
+/** Codex hooks：优先 SSOT codex/hooks.json，否则按 SSOT 已有脚本接线（0.7.27 LT-1） */
 function planCodexHooks(allScripts, scriptsDir) {
   let hooksDoc;
   if (ssotExists("codex", "hooks.json")) {
@@ -298,49 +298,65 @@ function planCodexHooks(allScripts, scriptsDir) {
       hooksDoc = { hooks: {} };
     }
   } else {
+    // 0.7.27 LT-1: gate script = soft-gate if present in SSOT, else basic
+    const gateScript = allScripts.includes("git-commit-soft-gate.js")
+      ? "git-commit-soft-gate.js"
+      : allScripts.includes("superpowers-commit-gate.js")
+        ? "superpowers-commit-gate.js"
+        : ssotExists("hooks", "git-commit-soft-gate.js")
+          ? "git-commit-soft-gate.js"
+          : "superpowers-commit-gate.js";
+    const hasMysqlGuard =
+      allScripts.includes("mcp-mysql-guard.js") || ssotExists("hooks", "mcp-mysql-guard.js");
     // Unix: bash $(git …). Windows: commandWindows + codex-hook.cmd（避免 PowerShell 嵌套引号）
     const adapterUnix =
-      'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" commit-gate superpowers-commit-gate.js';
+      'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" commit-gate ' +
+      gateScript;
     const adapterWin =
-      "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" commit-gate superpowers-commit-gate.js";
-    const mysqlUnix =
-      'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" mcp-guard mcp-mysql-guard.js';
-    const mysqlWin =
-      "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" mcp-guard mcp-mysql-guard.js";
+      "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" commit-gate " +
+      gateScript;
     const stopUnix =
       'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-stop-checklist.js"';
     const stopWin =
       "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" --direct codex-stop-checklist.js";
+    const preToolUse = [
+      {
+        matcher: "^Bash$",
+        hooks: [
+          {
+            type: "command",
+            command: adapterUnix,
+            commandWindows: adapterWin,
+            timeout: 12,
+            statusMessage: "Checking Bash commit gate",
+          },
+        ],
+      },
+    ];
+    // 0.7.27: only wire mysql matcher when SSOT has the guard script
+    if (hasMysqlGuard) {
+      const mysqlUnix =
+        'node "$(git rev-parse --show-toplevel)/.codex/hooks/codex-adapter.js" mcp-guard mcp-mysql-guard.js';
+      const mysqlWin =
+        "for /f %i in ('git rev-parse --show-toplevel') do @call \"%i\\.codex\\hooks\\codex-hook.cmd\" mcp-guard mcp-mysql-guard.js";
+      preToolUse.push({
+        matcher: "mcp__mysql",
+        hooks: [
+          {
+            type: "command",
+            command: mysqlUnix,
+            commandWindows: mysqlWin,
+            timeout: 8,
+            statusMessage: "Checking MySQL MCP",
+          },
+        ],
+      });
+    }
     hooksDoc = {
       _generated: HEADER_JSON,
       description: "harness-eng Codex hooks (fail-open)",
       hooks: {
-        PreToolUse: [
-          {
-            matcher: "^Bash$",
-            hooks: [
-              {
-                type: "command",
-                command: adapterUnix,
-                commandWindows: adapterWin,
-                timeout: 12,
-                statusMessage: "Checking Bash commit gate",
-              },
-            ],
-          },
-          {
-            matcher: "mcp__mysql",
-            hooks: [
-              {
-                type: "command",
-                command: mysqlUnix,
-                commandWindows: mysqlWin,
-                timeout: 8,
-                statusMessage: "Checking MySQL MCP",
-              },
-            ],
-          },
-        ],
+        PreToolUse: preToolUse,
         Stop: [
           {
             hooks: [
@@ -734,15 +750,92 @@ planSkills();
 planClaudeMd();
 planSkillsManagedManifests();
 
+/** 0.7.26 HS-7: hooks.json / settings hooks 引用的脚本必须在 plan 或磁盘上存在 */
+function collectHookScriptRefs() {
+  const refs = new Set();
+  const re = /(?:^|[\s"'`])((?:\.[a-zA-Z0-9_-]+\/hooks\/|docs\/agent-config\/hooks\/)[^\s"'`]+)/g;
+  // 0.7.27 HS-7: Codex adapter bare filenames → .codex/hooks/<script> (only when command is Codex)
+  const bareRe =
+    /(?:codex-adapter\.js|codex-hook\.cmd)(?:[^"'\\n]*?)(?:commit-gate|mcp-guard|--direct)\s+([A-Za-z0-9_.-]+\.(?:js|cmd|mjs))\b/g;
+  function scanText(text) {
+    if (!text || typeof text !== "string") return;
+    let m;
+    const r = new RegExp(re.source, "g");
+    while ((m = r.exec(text)) !== null) {
+      const p = m[1].replace(/\\/g, "/").replace(/^\.\//, "");
+      if (/\.(js|cmd|mjs)$/i.test(p)) refs.add(p);
+    }
+    const br = new RegExp(bareRe.source, "g");
+    while ((m = br.exec(text)) !== null) {
+      refs.add(`.codex/hooks/${m[1]}`);
+    }
+  }
+  function walkObj(o) {
+    if (!o) return;
+    if (typeof o === "string") {
+      scanText(o);
+      return;
+    }
+    if (Array.isArray(o)) {
+      for (const x of o) walkObj(x);
+      return;
+    }
+    if (typeof o === "object") {
+      for (const v of Object.values(o)) walkObj(v);
+    }
+  }
+  for (const [rel, content] of plan.entries()) {
+    if (!/(hooks\.json|settings\.json)$/i.test(rel)) continue;
+    try {
+      walkObj(JSON.parse(content));
+    } catch {
+      scanText(content);
+    }
+  }
+  // Also scan on-disk hooks.json if planned
+  for (const rel of [
+    ".codex/hooks.json",
+    ".cursor/hooks.json",
+    ".trae/hooks.json",
+    ".claude/settings.json",
+    ".qoder/settings.json",
+    ".codebuddy/settings.json",
+  ]) {
+    if (plan.has(rel)) continue;
+    const abs = path.join(ROOT, rel);
+    if (!fs.existsSync(abs)) continue;
+    try {
+      walkObj(JSON.parse(fs.readFileSync(abs, "utf8")));
+    } catch {
+      /* ignore */
+    }
+  }
+  return [...refs];
+}
+
+function checkHookRefsExist() {
+  const missing = [];
+  for (const rel of collectHookScriptRefs()) {
+    const inPlan = plan.has(rel);
+    const onDisk = fs.existsSync(path.join(ROOT, rel));
+    if (!inPlan && !onDisk) missing.push(rel);
+  }
+  return missing;
+}
+
 const { diffs, stale, unmanaged } = apply();
 if (CHECK_ONLY) {
+  const missingHooks = checkHookRefsExist();
   if (unmanaged.length) {
     console.error(`[agent-config] unmanaged（skills 清单外，不删除） ${unmanaged.length} 处：`);
     for (const f of unmanaged) console.error(`  - ${f} (unmanaged)`);
   }
-  if (diffs.length || stale.length) {
-    console.error(`[agent-config] 漂移 ${diffs.length} 处，过期文件 ${stale.length} 处：`);
+  if (diffs.length || stale.length || missingHooks.length) {
+    console.error(
+      `[agent-config] 漂移 ${diffs.length} 处，过期文件 ${stale.length} 处，悬空 hook 引用 ${missingHooks.length} 处：`
+    );
     for (const f of [...diffs, ...stale.map((s) => s + " (stale)")]) console.error(`  - ${f}`);
+    for (const f of missingHooks) console.error(`  - ${f} (missing-hook-ref)`);
     console.error("请执行：node scripts/agent-config/sync.mjs");
     process.exit(1);
   }

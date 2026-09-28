@@ -17,7 +17,7 @@
 import fs from "fs";
 import path from "path";
 import { isCliMain } from "./cli-main.mjs";
-import { defaultInventoryPath } from "./inventory-paths.mjs";
+import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { createProgress } from "./progress-log.mjs";
 
@@ -415,9 +415,7 @@ export function main(argv = process.argv) {
   }
 
   const shards = shardTasks(tasks, args.shardSize);
-  const outPath = args.out
-    ? path.resolve(args.out)
-    : defaultInventoryPath(root, "jobs");
+  const outPath = resolveInventoryOutPath(root, args.out, "jobs");
 
   const report = {
     ok: true,

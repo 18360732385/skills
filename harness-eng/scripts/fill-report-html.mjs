@@ -89,7 +89,8 @@ function usage() {
 Injects fill-score JSON (+ ui Dashboard v2 投影 + optional meta/run) into
 templates/report/harness-report.html.tmpl → docs/harness-eng/report-latest.html
 
-Also writes docs/harness-eng/score-latest.json (UTF-8) unless --no-score-copy.
+Also writes docs/harness-eng/score-latest.json (UTF-8) unless --no-score-copy
+or --score already points at that same path (0.7.29: avoid churn).
 Appends ${HISTORY_REL} unless --no-history-append or --dry-run.
 --history → docs/harness-eng/history/report-<timestamp>.html
 
@@ -336,12 +337,23 @@ function main() {
   const defaultOut = path.join(root, DEFAULT_REPORT_REL);
   const outPath = path.resolve(args.out || defaultOut);
   const scoreOut = path.join(root, DEFAULT_SCORE_REL);
+  // 0.7.29 ID-7: when --score is already score-latest.json, do not rewrite it
+  let skipScoreCopy = !!args.noScoreCopy;
+  if (!skipScoreCopy && scorePath) {
+    try {
+      const a = path.resolve(scorePath);
+      const b = path.resolve(scoreOut);
+      if (a === b) skipScoreCopy = true;
+    } catch {
+      /* ignore */
+    }
+  }
 
   const result = {
     ok: true,
     root,
     out: outPath.replace(/\\/g, "/"),
-    score_out: args.noScoreCopy ? null : scoreOut.replace(/\\/g, "/"),
+    score_out: skipScoreCopy ? null : scoreOut.replace(/\\/g, "/"),
     history_jsonl: null,
     bytes: Buffer.byteLength(html, "utf8"),
     dry_run: args.dryRun,
@@ -373,7 +385,7 @@ function main() {
   ensureHarnessEngReadme(root);
   fs.writeFileSync(outPath, html, "utf8");
 
-  if (!args.noScoreCopy) {
+  if (!skipScoreCopy) {
     ensureDir(path.dirname(scoreOut));
     // 0.7.26 ID-7: do not write synthesized diff back into score-latest.json
     const { diff: _omitDiff, ...scoreClean } = scoreForUi;

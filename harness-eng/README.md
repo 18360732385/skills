@@ -2,9 +2,9 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.7.26**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
+**当前版本：0.7.29**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
-**0.7.26**：e2e P2（resume 默认 skip · meta 保真 · 报告 gitignore · 相对 root · fill-merge 拆分 · func services 覆盖 · L 级收口）。**0.7.25**：e2e P1（漂移 / morph·gold / 分册·seed / 迁移 SSOT / 问答）。**0.7.24**：e2e P0（refresh 可信 · L5 Codex hooks SSOT · glob→regex · calibrate 默认不写盘）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
+**0.7.28**：e2e P1（upgrade hooks 自动 replace · inventory module_roots · covered_gt_code 阻断 · gold warnings null 语义 · doc-density · HS-4 docsGuard · 缺 inventory 不假绿）。**0.7.27**：e2e P0 热修（NEW-1 阻断崩溃 · L5 Codex 门禁真接线 · when_* 接通 · HS-3 斜杠 · SG-7 CJK · fill-score 绝对 root）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
 **使用手册（人读）**：[guide/使用手册.html](guide/使用手册.html) · [guide/使用手册.md](guide/使用手册.md) · [guide/使用手册-摘要.md](guide/使用手册-摘要.md)

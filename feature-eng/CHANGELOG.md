@@ -1,5 +1,21 @@
 # feature-eng CHANGELOG
 
+## 0.2.22 — 2026-09-28
+
+版本单点维护（对齐 harness-eng 发版流程）：
+
+- **`scripts/lib/skill-version.mjs`**：从 `_meta/manifest.yaml` 读权威号
+- **`scripts/sync-skill-version.mjs`**：同步文档钉头 + 仓根 README feature-eng 行；`--check` 挂 selfcheck
+- **selfcheck**：`PIN` 改读 manifest（不再硬编码字面量）
+- **发版流程**：改根 manifest → sync → 手写 CHANGELOG/VERIFY → selfcheck（见 AGENT-INDEX）
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| 0.2.22 | 2026-09-28 | 版本单点维护：manifest SSOT + sync-skill-version |
+| 0.2.21 | 2026-09-28 | P3 schema + P4 字段；正式钉（无 -dev） |
+| 0.2.20-dev | 2026-09-28 | P0/P1/P2 解耦：能力探测 + 中性 refresh |
+| 0.2.18-dev | 2026-09-28 | 批 E：bridges 收窄 · close 死链 · ARCHIVE 提交 |
+
 ## 0.2.21 — 2026-09-28
 
 正式号（**无 `-dev` 后缀**；自本版起版本钉不再使用 `-dev`）。相对 0.2.20-dev：**不**改默认绑定 skill 名；`eng_land` 仍 false（旧键 `harness_land` 已废弃）；`feature.mjs` 不写盘。本版落实 **P3/P4**：

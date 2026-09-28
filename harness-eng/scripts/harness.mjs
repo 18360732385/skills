@@ -138,20 +138,25 @@ function loadParams(paramsPath) {
  * @returns {{ params: object, paramsPath: string, tmp?: string }}
  */
 function applyModeDefaults(params, mode, paramsPath) {
-  const next = { ...params };
-  let dirty = false;
+  const next = { ...params, mode };
+  let dirty = true; // always rewrite so render sees params.mode
   if (
     (mode === "resume" || mode === "upgrade") &&
     (next.on_exists == null || next.on_exists === "")
   ) {
     next.on_exists = "skip";
-    dirty = true;
+  }
+  // 0.7.28: upgrade 默认重渲行为修复类 hooks（可用 upgrade_fix_hooks:false 关闭）
+  if (
+    mode === "upgrade" &&
+    next.upgrade_fix_hooks == null
+  ) {
+    next.upgrade_fix_hooks = true;
   }
   const ph = { ...(next.placeholders || {}) };
   if (ph.LAST_MODE == null || ph.LAST_MODE === "") {
     ph.LAST_MODE = mode;
     next.placeholders = ph;
-    dirty = true;
   } else if (!next.placeholders) {
     next.placeholders = ph;
   }
@@ -261,6 +266,16 @@ function announceMode(mode) {
   console.error(`harness: mode=${mode}。公开入口 scripts/harness.mjs。`);
 }
 
+/** 0.7.29 HS-8: remind target repo to enable git hooks after land. */
+function tipGitHooks(root, mode) {
+  if (!["land", "resume", "upgrade"].includes(mode)) return;
+  const hooksDir = path.join(path.resolve(root), ".githooks");
+  if (!fs.existsSync(hooksDir)) return;
+  console.error(
+    "harness: 启用 Git 门禁（若尚未配置）：git config core.hooksPath .githooks"
+  );
+}
+
 export function main(argv = process.argv) {
   const args = parseArgs(argv);
   if (args.help) {
@@ -327,7 +342,10 @@ export function main(argv = process.argv) {
       process.exit(runFreshnessCheck(args.root, skillRoot));
     }
     const st = forward(runRender(args));
-    if (st === 0) maybeMigrateScorePolicy(args.root, mode, args.dryRun);
+    if (st === 0) {
+      maybeMigrateScorePolicy(args.root, mode, args.dryRun);
+      if (!args.dryRun) tipGitHooks(args.root, mode);
+    }
     process.exit(st);
   }
 
@@ -367,6 +385,7 @@ export function main(argv = process.argv) {
   const synced = runSync(args.root);
   // sync 的 [agent-config] 行不得污染 stdout（Agent 可能 JSON.parse land 输出）
   const syncStatus = forward(synced, { stdoutToStderr: true });
+  if (syncStatus === 0) tipGitHooks(args.root, mode);
   process.exit(syncStatus);
 }
 

@@ -12,7 +12,7 @@
 import fs from "fs";
 import path from "path";
 import { isCliMain } from "./cli-main.mjs";
-import { defaultInventoryPath } from "./inventory-paths.mjs";
+import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 
 function parseArgs(argv) {
@@ -166,8 +166,11 @@ function scanModule(root, mod) {
 }
 
 function writeInventory(root, moduleName, payload, outOverride) {
-  const outPath = path.resolve(
-    outOverride || defaultInventoryPath(root, "func", moduleName || null)
+  const outPath = resolveInventoryOutPath(
+    root,
+    outOverride,
+    "func",
+    moduleName || null
   );
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(payload, null, 2), "utf8");

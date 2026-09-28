@@ -27,8 +27,11 @@ import {
 import { scanSignals } from "../detect-signals.mjs";
 import { HOOK_DEFS } from "../hooks-checks.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "../../harness.mjs";
+import { readSkillVersion, escapeSemverRe } from "../skill-version.mjs";
 
 export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
+  const EXPECTED = readSkillVersion(skillRoot);
+  const VER_RE = escapeSemverRe(EXPECTED);
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
   const handbookMd = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
   const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
@@ -317,6 +320,7 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
         ai_tools: ["cursor", "claude", "qoder", "trae", "workbuddy"],
         agents_variant: "solo",
         hooks_family: family,
+        mcp: ["mysql"],
         expandFromManifest: true,
         placeholders: basePlaceholders,
       }),
@@ -530,6 +534,7 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
         ai_tools: ["cursor", "claude", "qoder", "trae", "workbuddy"],
         agents_variant: "solo",
         hooks_family: family,
+        mcp: ["mysql"],
         expandFromManifest: true,
         placeholders: { ...basePlaceholders, LADDER_TARGET: "L5" },
       }),
@@ -958,7 +963,7 @@ assert(
     );
     const migrated = fs.readFileSync(path.join(tmpR, "docs/harness-eng/harness-meta.yaml"), "utf8");
     assert(/custom_user_key:\s*keep-me/.test(migrated), "render migrate+merge keeps user keys");
-    assert(/^skill_version:\s*"?0\.7\.26"?\s*$/m.test(migrated), "render migrate+merge updates skill_version");
+    assert(new RegExp(`^skill_version:\\s*"?${VER_RE}"?\\s*$`, "m").test(migrated), "render migrate+merge updates skill_version");
     assert(
       fs.existsSync(path.join(tmpR, ".cursor/harness-meta.yaml")),
       "render leaves legacy meta file"

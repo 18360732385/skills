@@ -18,25 +18,43 @@ export function isEmptyOrHollow(v) {
 }
 
 /**
- * Split markdown table rows. Resets headers when a new header-like row appears
+ * Split markdown table rows. Resets headers when a new structural header row appears
  * (SG-5: multi-table docs must not reuse first table's headers).
+ * 0.7.28 NEW-4: do not treat data cells containing 返回/说明/类型/方法 as headers.
  */
 export function splitTableRows(block) {
   const lines = String(block || "").split(/\r?\n/);
   const rows = [];
   let headers = null;
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     if (!/^\|/.test(line)) continue;
     if (/^\|\s*:?-{2,}/.test(line)) continue;
     const cells = line
       .split("|")
       .map((c) => c.trim())
-      .filter((_, i, arr) => i > 0 && i < arr.length - 1);
+      .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
     if (!cells.length) continue;
+    // Structural header tokens only (not values like「返回类型说明」)
     const looksHeader = cells.some((c) =>
-      /参数名|类型|必填|说明|示例|字段名|COMMENT|方法|签名|返回|服务类/.test(c)
+      /^(参数名|字段名|COMMENT|必填|示例|服务类|Name|Type|Required)$/i.test(c) ||
+      /参数名|字段名|^COMMENT$|必填|^示例|服务类/.test(c)
     );
-    if (!headers || looksHeader) {
+    // Accept new header only if none yet, or next line is a markdown separator
+    let nextIsSep = false;
+    for (let j = i + 1; j < lines.length; j++) {
+      if (!/^\|/.test(lines[j])) break;
+      if (/^\|\s*:?-{2,}/.test(lines[j])) {
+        nextIsSep = true;
+        break;
+      }
+      break;
+    }
+    if (!headers || (looksHeader && nextIsSep)) {
+      headers = cells;
+      continue;
+    }
+    if (!headers && looksHeader) {
       headers = cells;
       continue;
     }

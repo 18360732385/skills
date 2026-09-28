@@ -11,7 +11,7 @@
 import fs from "fs";
 import path from "path";
 import { isCliMain } from "./cli-main.mjs";
-import { defaultInventoryPath } from "./inventory-paths.mjs";
+import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { writeInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
 
@@ -452,7 +452,7 @@ export function main(argv = process.argv) {
     warnings.push(`table ${key}: entity-only (no CREATE TABLE in sql-root)`);
   }
 
-  tables.sort((a, b) => a.name.localeCompare(b.name));
+  // 0.7.29 FC-6: preserve SQL/migration discovery order (do not alpha-sort names)
   const report = {
     ok: true,
     root: ".",
@@ -471,7 +471,7 @@ export function main(argv = process.argv) {
   }
 
   const json = JSON.stringify(report, null, 2);
-  const outPath = path.resolve(args.out || defaultInventoryPath(root, "db"));
+  const outPath = resolveInventoryOutPath(root, args.out, "db");
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, json, "utf8");
   console.error(

@@ -4,7 +4,8 @@
 人读一页纸：[QUICKSTART.md](QUICKSTART.md)。闸门词表：[write-plan.md](modes/write-plan.md)。
 
 **拓扑**：`modes/` · `fill/` · `host/`。对外四支 / 三档见 [SKILL.md](SKILL.md)；细阶仍 L0–L5。  
-**manifest 双写**：[`_meta/manifest.yaml`](_meta/manifest.yaml) ≡ [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)（`version` 须一致）。
+**manifest 双写**：[`_meta/manifest.yaml`](_meta/manifest.yaml) ≡ [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)（`version` 须一致）。  
+**发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（机械副本 + 文档钉头）→ ③ 手写 [CHANGELOG.md](CHANGELOG.md) / [modes/upgrade.md](modes/upgrade.md) / [VERIFY.md](VERIFY.md) 增量 → ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。
 
 ## 必读（写盘前）≤8
 

@@ -192,9 +192,9 @@ export function checkEntryReady(root) {
     const sections = text.split(/^##\s+/m);
     for (const sec of sections) {
       const head = (sec.split(/\r?\n/)[0] || "").trim();
-      // 0.7.26 SG-7: Chinese section titles (分册常用「命令」「关键 / 禁区」)
+      // 0.7.27 SG-7: JS \\b does not bound CJK — English use \\b, Chinese use $
       if (
-        !/^(Commands|Critical|命令|常用命令|关键|关键约束|Never\s*do|禁止|禁区)\b/i.test(
+        !/^(?:Commands|Critical|Never\s*do)\b|^(?:命令|常用命令|关键|关键约束|禁止|禁区)$/i.test(
           head
         )
       )

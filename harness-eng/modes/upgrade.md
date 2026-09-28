@@ -57,6 +57,32 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.28 → 0.7.29 迁移要点
+
+1. **meta**：`skill_version` → `0.7.29`
+2. **calibrate**：空 `inventory.json`（`tables:[]`）不再假 ready；compare 默认打印 DDL diff；`--write-ddl` 保留建表说明行
+3. **merge**：`--update-index` 失败（缺索引）会 exit 1；表顺序跟发现序（不再字母排序）
+4. **render**：未解析 `{{…}}` 占位不再半写文件；meta YAML 布尔保持 boolean
+5. **score / inventory**：`fill-score --gate-profile`；inventory `--out` 相对 `--root`；report 对已是 `score-latest` 的输入不回写
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.29`）后再 sync
+
+## 0.7.27 → 0.7.28 迁移要点
+
+1. **meta**：`skill_version` → `0.7.28`
+2. **发版（维护本 skill）**：只改 `_meta/manifest.yaml` 的 `version`，再跑 `node scripts/sync-skill-version.mjs`；CHANGELOG / upgrade / VERIFY 增量仍手写
+3. **upgrade hooks**：默认自动 **replace** soft-gate / after-edit / commit-gate / mysql-guard / stop-checklist（含 L5 SSOT 与各宿主 hooks）。关闭：`params.upgrade_fix_hooks: false`
+4. **仍须手 replace（防覆盖用户正文）**：rule 13（`13-db-doc-sync`）、`docs/db/db.md` 维护约定节——若旧仓仍是源仓命名/缺约定，请显式 replace 或手合并
+5. **目标仓**：land/resume/upgrade 写出的 `harness-meta.skill_version` 由 render 从技能包 SSOT 注入
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.28`）后再 sync
+
+## 0.7.26 → 0.7.27 迁移要点
+
+1. **meta**：`skill_version` → `0.7.27`
+2. **阻断**：分册 + Spring + db 域时 land/resume/upgrade 不再 ReferenceError（`buildSpringDbBlock`）
+3. **L5+codex**：刷新 `sync.mjs`（tmpl id `0.7.27`）后再 sync——hooks.json 按 SSOT 接线 soft-gate；无 mysql-guard 脚本时不写 mysql matcher
+4. **评分**：`fill-score` 的 `report.root` 为绝对路径（strict 入口 TODO 不跟 CWD）；中文 AGENTS「常用命令」节可被门禁扫描
+5. **hooks**：`DB_MIGRATION_DIR` 必带尾斜杠（after-edit 迁移提醒恢复）
+
 ## 0.7.25 → 0.7.26 迁移要点
 
 1. **meta**：`skill_version` → `0.7.26`；resume/upgrade 默认 `on_exists=skip`（可显式覆盖）

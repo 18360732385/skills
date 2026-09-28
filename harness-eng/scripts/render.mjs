@@ -43,6 +43,7 @@ import {
   migrateMcpUsageGuideIfNeeded,
 } from "./lib/harness-meta.mjs";
 import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
+import { readSkillVersion } from "./lib/skill-version.mjs";
 
 /** Map short variant name → template path. */
 function moduleAgentsTmplPath(v) {
@@ -431,9 +432,12 @@ function ensureStandardPlaceholders(params, placeholders, root) {
     "DB_MIGRATION_MODE",
     String(params.db_migration_mode || params.DB_MIGRATION_MODE || "manual_sql")
   );
+  // 0.7.27 HS-3: trailing slash so after-edit MIGRATION_RE matches (before buildHookPlaceholders put-skip)
   set(
     "DB_MIGRATION_DIR",
     String(params.db_migration_dir || params.DB_MIGRATION_DIR || "**/db/migration/")
+      .replace(/\\/g, "/")
+      .replace(/\/?$/, "/")
   );
   set("BASE_PACKAGE", String(params.base_package || params.BASE_PACKAGE || ""));
   set("FRONTEND_DIR", String(params.frontend_dir || params.FRONTEND_DIR || "frontend"));
@@ -591,8 +595,18 @@ function parseSimpleYamlMap(text) {
       val = inner
         ? inner.split(",").map((s) => s.trim().replace(/^["']|["']$/g, ""))
         : [];
-    } else {
-      val = val.replace(/^["']|["']$/g, "");
+    } else if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    } else if (/^(true|false)$/i.test(val)) {
+      // 0.7.29 ID-6: keep YAML booleans as booleans
+      val = /^true$/i.test(val);
+    } else if (/^null$/i.test(val)) {
+      val = null;
+    } else if (/^-?\d+(\.\d+)?$/.test(val)) {
+      val = Number(val);
     }
     if (!(key in map)) order.push(key);
     map[key] = val;
@@ -604,6 +618,10 @@ function formatYamlValue(v) {
   if (Array.isArray(v)) {
     return `[${v.map((x) => JSON.stringify(String(x))).join(", ")}]`;
   }
+  // 0.7.29 ID-6: emit bare YAML scalars for native types
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (v === null) return "null";
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
   const s = String(v);
   // Quote when needed (preserve intentional quotes for versions / modes)
   if (/[:#{}\[\],&*?|>!%@`]/.test(s) || /^(true|false|null|\d+)/i.test(s) || /\s/.test(s)) {
@@ -803,6 +821,32 @@ function resolveMcpEngines(params) {
   );
 }
 
+/** 0.7.28: upgrade 自动 replace 的 hook 脚本（行为修复类）。 */
+const UPGRADE_FIX_HOOK_SCRIPTS = new Set([
+  "git-commit-soft-gate.js",
+  "after-edit-reminder.js",
+  "superpowers-commit-gate.js",
+  "mcp-mysql-guard.js",
+  "stop-delivery-checklist.js",
+  "codex-stop-checklist.js",
+  "codex-adapter.js",
+  "claude-adapter.js",
+  "codex-hook.cmd",
+]);
+
+function isUpgradeFixHookTarget(relNorm) {
+  const rel = String(relNorm || "").replace(/\\/g, "/");
+  const base = path.basename(rel);
+  if (!UPGRADE_FIX_HOOK_SCRIPTS.has(base)) return false;
+  return (
+    rel.startsWith("docs/agent-config/hooks/") ||
+    /^(\.cursor|\.claude|\.codex|\.qoder|\.trae|\.codebuddy|\.githooks)\/hooks\//.test(
+      rel
+    ) ||
+    rel.startsWith(".githooks/")
+  );
+}
+
 function expandFromManifest(manifestPath, params, root) {
   const text = fs.readFileSync(manifestPath, "utf8");
   const entries = parseManifestFiles(text);
@@ -866,6 +910,15 @@ function expandFromManifest(manifestPath, params, root) {
       const absSync = path.join(root, relNorm);
       return fs.existsSync(absSync) ? "replace" : "create";
     }
+    // 0.7.28 P1: upgrade 默认 replace 行为修复类 hook 脚本（可用 upgrade_fix_hooks:false 关闭）
+    const fixHooks =
+      (params.mode === "upgrade" || params.last_mode === "upgrade") &&
+      params.upgrade_fix_hooks !== false &&
+      params.upgrade_fix_hooks !== "false";
+    if (fixHooks && isUpgradeFixHookTarget(relNorm)) {
+      const absHook = path.join(root, relNorm);
+      return fs.existsSync(absHook) ? "replace" : "create";
+    }
     if (entryId === "gitignore-snippet") return "merge";
     if (entryId === "harness-meta") {
       migrateHarnessMetaIfNeeded(root);
@@ -927,6 +980,7 @@ function expandFromManifest(manifestPath, params, root) {
     if (!e || !e.id || seenIds.has(e.id)) return;
     if (e.optional && !includeOptional.has(e.id)) return;
     if (e.when && e.when.agents_variant && e.when.agents_variant !== variant) return;
+    if (!passesWhenGates(e)) return;
     if (e.when_ai_tools && e.when_ai_tools.length) {
       if (!aiTools.size) return;
       if (!e.when_ai_tools.some((t) => aiTools.has(String(t).toLowerCase()))) return;
@@ -969,6 +1023,7 @@ function expandFromManifest(manifestPath, params, root) {
     if (e.when && e.when.agents_variant && e.when.agents_variant !== variant) continue;
     if (e.when_agent_config != null && e.when_agent_config !== agentConfig) continue;
     if (e.when_rulehook != null && e.when_rulehook !== rulehook) continue;
+    if (!passesWhenGates(e)) continue;
     if (skipBasicGate && BASIC_GATE_IDS.includes(e.id)) continue;
     if (e.optional && !includeOptional.has(e.id)) continue;
     if (e.when_ai_tools && e.when_ai_tools.length) {
@@ -1002,7 +1057,7 @@ function expandFromManifest(manifestPath, params, root) {
                   MAVEN_DISCIPLINE_NOTE: maven.note,
                   MAVEN_FORBID_LINE: maven.forbid,
                   SPRING_DB_BLOCK: dbEnabled
-                    ? SPRING_DB_BLOCK_ENABLED
+                    ? buildSpringDbBlock(params)
                     : SPRING_DB_BLOCK_DISABLED,
                 }
               : {}),
@@ -1050,7 +1105,9 @@ function expandFromManifest(manifestPath, params, root) {
   // L3+：非 Cursor 宿主镜像全量 .cursor/rules（L5 由 sync 托管，此处跳过）
   files.push(...expandHostRuleMirrors(files, params, agentConfig, actionForTarget, root));
   // hooks 家族脚本（0.5.0+；L5 → docs/agent-config/hooks/，否则按工具直渲）
-  files.push(...expandHooksFamily(params, agentConfig, actionForTarget, root));
+  files.push(
+    ...expandHooksFamily(params, agentConfig, actionForTarget, root, mcpEngines)
+  );
   return files;
 }
 
@@ -1384,6 +1441,17 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   const tmplPath = path.join(TEMPLATES, item.template);
   if (!fs.existsSync(tmplPath)) throw new Error(`Template not found: ${tmplPath}`);
   let rendered = renderPlaceholders(fs.readFileSync(tmplPath, "utf8"), ph);
+  // Force skill_version from SSOT so a stale tmpl cannot land an old pin.
+  if (item.id === "harness-meta") {
+    const sv = readSkillVersion(SKILL_ROOT);
+    rendered = rendered.replace(
+      /^skill_version:\s*"[^"]*"/m,
+      `skill_version: "${sv}"`
+    );
+    if (!/^skill_version:\s*/m.test(rendered)) {
+      rendered = `skill_version: "${sv}"\n` + rendered;
+    }
+  }
   if (item.contentTransform === "mdc-to-host-md") {
     const rel = String(targetRel || "").replace(/\\/g, "/");
     rendered = transformMdcToHostMd(rendered, {
@@ -1440,6 +1508,17 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
     return;
   }
 
+  // 0.7.29 LT-11: do not write partial files when placeholders remain unresolved
+  if (unresolvedPlaceholders.length) {
+    log.push({
+      target: targetRel,
+      action,
+      status: "skipped-unresolved",
+      unresolvedPlaceholders,
+    });
+    return;
+  }
+
   if (action === "replace") {
     ensureDir(abs);
     writeRenderedFile(abs, rendered, targetRel);
@@ -1447,7 +1526,6 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       target: targetRel,
       action: "replace",
       status: "written",
-      unresolvedPlaceholders: unresolvedPlaceholders.length ? unresolvedPlaceholders : undefined,
     });
     return;
   }
@@ -1463,7 +1541,6 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       target: targetRel,
       action: "create",
       status: "written",
-      unresolvedPlaceholders: unresolvedPlaceholders.length ? unresolvedPlaceholders : undefined,
     });
     return;
   }
@@ -1480,7 +1557,6 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       target: targetRel,
       action: "backup-create",
       status: "written",
-      unresolvedPlaceholders: unresolvedPlaceholders.length ? unresolvedPlaceholders : undefined,
     });
     return;
   }
@@ -1493,7 +1569,6 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
         target: targetRel,
         action: "merge",
         status: "created-as-new",
-        unresolvedPlaceholders: unresolvedPlaceholders.length ? unresolvedPlaceholders : undefined,
       });
       return;
     }
@@ -1523,11 +1598,13 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       merged = mergeMarkdown(cur, rendered, isMdc);
       log.push({ target: targetRel, action: "merge", status: "merged", mergePreview });
     }
-    writeRenderedFile(abs, merged, targetRel);
     const unresolvedMerged = findUnresolvedPlaceholders(merged);
     if (unresolvedMerged.length) {
+      log[log.length - 1].status = "skipped-unresolved";
       log[log.length - 1].unresolvedPlaceholders = unresolvedMerged;
+      return;
     }
+    writeRenderedFile(abs, merged, targetRel);
     return;
   }
 

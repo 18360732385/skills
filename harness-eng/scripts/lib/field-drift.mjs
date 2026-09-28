@@ -59,6 +59,11 @@ export function detectDbFieldDrift(root) {
   const inv = loadDomainInventory(root, "db");
   const gaps = [];
   const blockers = [];
+  // 0.7.29 NEW-8: inventory present with tables:[] is not ready (empty_inventory)
+  if (inv && Array.isArray(inv.tables) && inv.tables.length === 0) {
+    blockers.push("empty_inventory:db");
+    return { ok: false, gaps, blockers };
+  }
   if (!inv || !Array.isArray(inv.tables) || !inv.tables.length) {
     return { ok: true, gaps, blockers };
   }
@@ -97,8 +102,11 @@ export function detectDbFieldDrift(root) {
 /**
  * Lightweight api drift: inventory endpoint param/response names vs field tables in api modules.
  * Only flags when inventory has structured field lists.
+ * @param {string} root
+ * @param {object} apiInventory
+ * @param {{ missingRatio?: number }} [opts]  default 0.3 (0.7.29 SG-1; was 0.5)
  */
-export function detectApiFieldDrift(root, apiInventory) {
+export function detectApiFieldDrift(root, apiInventory, opts = {}) {
   const gaps = [];
   const blockers = [];
   if (!apiInventory?.endpoints?.length) return { ok: true, gaps, blockers };
@@ -138,10 +146,49 @@ export function detectApiFieldDrift(root, apiInventory) {
   }
   if (!codeFields.size) return { ok: true, gaps, blockers };
   const missing = [...codeFields].filter((c) => !docFields.has(c));
-  // Only block when a clear majority of code fields are missing (avoid false positive on sparse inventory)
-  if (missing.length && missing.length >= Math.max(1, Math.ceil(codeFields.size * 0.5))) {
+  const ratio =
+    typeof opts.missingRatio === "number" && Number.isFinite(opts.missingRatio)
+      ? opts.missingRatio
+      : 0.3;
+  if (missing.length && missing.length >= Math.max(1, Math.ceil(codeFields.size * ratio))) {
     gaps.push({ missing_in_doc: missing.slice(0, 20) });
     blockers.push(`doc_field_drift:api:${missing.slice(0, 8).join("+")}`);
+  }
+  return { ok: blockers.length === 0, gaps, blockers };
+}
+
+/**
+ * 0.7.29 SG-1: func inventory method names vs docs/func module tables / checklists.
+ */
+export function detectFuncMethodDrift(root, funcInventory) {
+  const gaps = [];
+  const blockers = [];
+  const inv = funcInventory || loadDomainInventory(root, "func");
+  const modules = inv?.modules || (inv?.services ? [{ services: inv.services }] : []);
+  if (!modules.length) return { ok: true, gaps, blockers };
+  const dir = truthsPath(root, "func", loadDomainRegistry());
+  if (!fs.existsSync(dir)) return { ok: true, gaps, blockers };
+  const docText = fs
+    .readdirSync(dir)
+    .filter((n) => /\.md$/i.test(n) && !/^README/i.test(n))
+    .map((n) => fs.readFileSync(path.join(dir, n), "utf8"))
+    .join("\n")
+    .toLowerCase();
+  const codeMethods = new Set();
+  for (const mod of modules) {
+    for (const svc of mod.services || []) {
+      for (const m of svc.methods || []) {
+        const n = typeof m === "string" ? m : m.name;
+        if (n && n.length > 2) codeMethods.add(String(n).toLowerCase());
+      }
+    }
+  }
+  if (!codeMethods.size) return { ok: true, gaps, blockers };
+  const missing = [...codeMethods].filter((name) => !docText.includes(name));
+  // Skeleton: block only when majority of methods absent from all func docs
+  if (missing.length && missing.length >= Math.max(1, Math.ceil(codeMethods.size * 0.5))) {
+    gaps.push({ missing_in_doc: missing.slice(0, 20) });
+    blockers.push(`doc_method_drift:func:${missing.slice(0, 8).join("+")}`);
   }
   return { ok: blockers.length === 0, gaps, blockers };
 }

@@ -201,7 +201,13 @@ try {
       targetDir: args.targetDir || null,
       target: args.target || null,
     });
-    if (idx?.updated) console.error(`Updated index ${idx.path}`);
+    if (idx?.updated) {
+      console.error(`Updated index ${idx.path}`);
+    } else if (idx?.reason) {
+      // 0.7.29 FC-9: --update-index must not silently no-op on missing index/dir
+      console.error(`fill-merge --update-index failed: ${idx.reason}${idx?.path ? ` (${idx.path})` : ""}`);
+      process.exitCode = 1;
+    }
   }
 } catch (e) {
   console.error(String(e && e.stack ? e.stack : e));

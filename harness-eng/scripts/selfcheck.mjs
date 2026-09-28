@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
- * 0.7.26: e2e P0（refresh / L5 hooks SSOT / glob→regex / calibrate 默认 compare）; 其上 0.7.23 P3/P4（listActiveTopicRuns · eng_snapshot 单写）; 0.7.22 中性 refresh-score; 0.7.20 批 E.
+ * 0.7.27: e2e P0 hotfix（NEW-1 buildSpringDbBlock · LT-1/HS-7 sync SSOT · passesWhenGates · HS-3 slash · SG-7 CJK · NEW-2 abs root）; 其上 0.7.26 e2e P2; 0.7.23 P3/P4; 0.7.22 中性 refresh-score; 0.7.20 批 E.
  * 0.7.17: 批 A P0（L5 ladderOrd · score-policy land · 全角 evidence · githooks +x · Spring mvn -f）.
  * 0.7.16: docs/runs + rule18 mid-commit (+0.7.15 handoff).
  * 0.7.13: handbook rewrite (+0.7.12 guide/ / 0.7.11 dual-write / 0.7.10 compress).
@@ -40,6 +40,7 @@ import {
   applyGoldCoverageDefaults,
   evaluateAiCodingGate,
   countHarnessTodos,
+  checkEntryReady,
 } from "./lib/ai-coding-gate.mjs";
 import { parseDomainsYaml, resolveScoreDomains, expandDomainPackEntries, parseDomainPacksYaml, defaultContractDomains, knownContractDomainIds } from "./lib/domains.mjs";
 import {
@@ -58,6 +59,16 @@ import {
   buildHookPlaceholders,
   HOOK_DEFS,
 } from "./lib/hooks-checks.mjs";
+import { splitTableRows } from "./lib/doc-density.mjs";
+import {
+  replaceCreateTableBlock,
+  formatDdlDiff,
+  extractShowCreateDdl,
+  normalizeDdlForCompare,
+} from "./fill-calibrate-live.mjs";
+import { updateDomainIndex } from "./lib/merge-domain.mjs";
+import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
+import { resolveInventoryOutPath } from "./lib/inventory-paths.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
 import {
   DOC_MOVES,
@@ -68,9 +79,12 @@ import {
 } from "./lib/doc-paths.mjs";
 import { runChecks05 } from "./lib/selfcheck/checks-0.5.mjs";
 import { runChecks06 } from "./lib/selfcheck/checks-0.6.mjs";
+import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
+const EXPECTED = readSkillVersion(skillRoot);
+const VER_RE = escapeSemverRe(EXPECTED);
 const fail = [];
 const ok = [];
 
@@ -174,7 +188,7 @@ assert(
 
 // --- 0.2.19 questions.yaml variant naming ---
 const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
-assert(/version:\s*"0\.7\.26"/.test(qYaml), "questions.yaml version 0.7.26");
+assert(new RegExp(`version:\\s*"${VER_RE}"`).test(qYaml), `questions.yaml version ${EXPECTED}`);
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(qYaml), "questions.yaml not leftover 0.6.2");
 assert(/Q_READY_COVERAGE/.test(qYaml), "questions has Q_READY_COVERAGE");
 assert(/Q_FILL_MCP_PROFILE/.test(qYaml), "questions has Q_FILL_MCP_PROFILE");
@@ -220,25 +234,30 @@ const manifest = fs.readFileSync(
   path.join(skillRoot, "templates/_meta/manifest.yaml"),
   "utf8"
 );
-assert(/version:\s*"0\.7\.26"/.test(manifest), "manifest 0.7.26");
+assert(new RegExp(`version:\\s*"${VER_RE}"`).test(manifest), `manifest ${EXPECTED}`);
 const rootManifestPath = path.join(skillRoot, "_meta/manifest.yaml");
 assert(fs.existsSync(rootManifestPath), "root _meta/manifest.yaml present");
 const rootManifest = fs.readFileSync(rootManifestPath, "utf8");
-assert(/version:\s*"0\.7\.26"/.test(rootManifest), "root _meta manifest 0.7.26");
+assert(new RegExp(`version:\\s*"${VER_RE}"`).test(rootManifest), `root _meta manifest ${EXPECTED}`);
 {
   const rv = (rootManifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
   const tv = (manifest.match(/^version:\s*"([^"]+)"/m) || [])[1];
   assert(rv === tv, "root _meta version matches templates/_meta");
+  assert(rv === EXPECTED, "root manifest version == SSOT EXPECTED");
 }
 assert(!/version:\s*"0\.6\.2"(?!-)/.test(manifest), "manifest not leftover 0.6.2");
 const metaTmpl = fs.readFileSync(
   path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
   "utf8"
 );
-assert(/skill_version:\s*"0\.7\.26"/.test(metaTmpl), "harness-meta 0.7.26");
+assert(new RegExp(`skill_version:\\s*"${VER_RE}"`).test(metaTmpl), `harness-meta ${EXPECTED}`);
 assert(!/skill_version:\s*"0\.6\.2"(?!-)/.test(metaTmpl), "harness-meta not leftover 0.6.2");
 assert(/ready_coverage:\s*0\.8/.test(metaTmpl), "harness-meta ready_coverage 0.8");
 assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile test");
+{
+  const syncCheck = runNode([path.join(skillRoot, "scripts/sync-skill-version.mjs"), "--check"]);
+  assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
+}
 const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
 const changelog05x = fs.readFileSync(
   path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md"),
@@ -264,7 +283,8 @@ assert(/^## 0\.7\.0\b/m.test(changelog), "CHANGELOG 0.7.0");
 assert(/^## 0\.7\.3\b/m.test(changelog), "CHANGELOG 0.7.3");
 assert(/^## 0\.7\.4\b/m.test(changelog), "CHANGELOG 0.7.4");
 assert(/^## 0\.7\.5\b/m.test(changelog), "CHANGELOG 0.7.5");
-assert(/^## 0\.7\.26\b/m.test(changelog), "CHANGELOG 0.7.26");
+assert(new RegExp(`^## ${VER_RE}\\b`, "m").test(changelog), `CHANGELOG ${EXPECTED}`);
+assert(/^## 0\.7\.26\b/m.test(changelog), "CHANGELOG keeps 0.7.26");
 assert(/^## 0\.7\.25\b/m.test(changelog), "CHANGELOG keeps 0.7.25");
 assert(/^## 0\.7\.24\b/m.test(changelog), "CHANGELOG keeps 0.7.24");
 assert(/^## 0\.7\.23\b/m.test(changelog), "CHANGELOG keeps 0.7.23");
@@ -462,7 +482,7 @@ assert(
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
 const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-assert(/验收记录（0\.7\.26）/.test(verifyMd) && /当前 \*\*0\.7\.26\*\*/.test(verifyMd), "VERIFY is 0.7.26");
+assert(new RegExp(`验收记录（${VER_RE}）`).test(verifyMd) && new RegExp(`当前 \\*\\*${VER_RE}\\*\\*`).test(verifyMd), `VERIFY is ${EXPECTED}`);
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
@@ -475,8 +495,8 @@ assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
 const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
-assert(/当前版本：0\.7\.26/.test(readme), "README header version 0.7.26");
-assert(/0\.7\.26/.test(readme), "README mentions 0.7.26");
+assert(new RegExp(`当前版本：${VER_RE}`).test(readme), `README header version ${EXPECTED}`);
+assert(new RegExp(VER_RE).test(readme), `README mentions ${EXPECTED}`);
 assert(!/当前 \*\*0\.2\.25\*\*/.test(readme), "README no stale 0.2.25 footer");
 assert(!/selfcheck-0\.2\.15/.test(readme), "README does not pin stale selfcheck 0.2.15");
 assert(/selfcheck\.mjs/.test(readme), "README pins selfcheck.mjs");
@@ -486,13 +506,13 @@ assert(/archive\/selfcheck/.test(readme), "README points archive selfcheck");
 const handbookMd = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.md"), "utf8");
 const quickstartMd = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
 const ladderMd = readDoc("ladder.md");
-assert(/版本：\*\*0\.7\.26\*\*/.test(handbookMd), "使用手册.md version 0.7.26");
-assert(/当前 \*\*0\.7\.26\*\*/.test(quickstartMd), "QUICKSTART version 0.7.26");
+assert(new RegExp(`版本：\\*\\*${VER_RE}\\*\\*`).test(handbookMd), `使用手册.md version ${EXPECTED}`);
+assert(new RegExp(`当前 \\*\\*${VER_RE}\\*\\*`).test(quickstartMd), `QUICKSTART version ${EXPECTED}`);
 assert(/selfcheck\.mjs/.test(quickstartMd), "QUICKSTART pins selfcheck.mjs");
 assert(/selfcheck\.mjs/.test(handbookMd), "使用手册.md pins selfcheck.mjs");
 assert(fs.existsSync(path.join(skillRoot, "guide", "使用手册.html")), "使用手册.html present");
 const handbookHtml = fs.readFileSync(path.join(skillRoot, "guide", "使用手册.html"), "utf8");
-assert(/v0\.7\.26/.test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
+assert(new RegExp(`v${VER_RE}`).test(handbookHtml) && /id="s6"/.test(handbookHtml), "使用手册.html version + #s6");
 assert(
   /harness\.mjs/.test(handbookHtml) && /fill-inventory\.mjs --domain/.test(handbookHtml),
   "使用手册.html documents unified CLI"
@@ -1186,7 +1206,7 @@ if (fs.existsSync(fixture)) {
   assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
-  assert(/version:\s*"0\.7\.26"/.test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), "manifest 0.7.26");
+  assert(new RegExp(`version:\\s*"${VER_RE}"`).test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), `manifest ${EXPECTED}`);
 }
 
 // --- 0.7.3–0.7.14: Codex hooks + Skills + MCP policy + calibrate + rulehook + docs compress/dedupe ---
@@ -1605,8 +1625,18 @@ if (fs.existsSync(fixture)) {
   const renderSrc = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
   assert(/\{\{MAVEN_TEST_CMD\}\}/.test(spring) && /\{\{MAVEN_DISCIPLINE_NOTE\}\}/.test(spring), "spring variant Maven discipline placeholders");
   assert(/\{\{SPRING_DB_BLOCK\}\}/.test(spring), "spring variant has SPRING_DB_BLOCK slot");
-  assert(/manual_sql/.test(renderSrc) && /SPRING_DB_BLOCK_ENABLED/.test(renderSrc), "spring variant mentions migration mode when db enabled");
+  assert(
+    /manual_sql/.test(renderSrc) &&
+      /function buildSpringDbBlock/.test(renderSrc) &&
+      !/SPRING_DB_BLOCK_ENABLED/.test(renderSrc),
+    "spring variant uses buildSpringDbBlock (no dead SPRING_DB_BLOCK_ENABLED)"
+  );
   assert(/module_agents_template/.test(renderSrc), "render supports module_agents_template");
+  assert(/if\s*\(\s*!passesWhenGates\(e\)\s*\)/.test(renderSrc), "0.7.27 passesWhenGates is called in expand loop");
+  assert(
+    /DB_MIGRATION_DIR/.test(renderSrc) && renderSrc.includes('.replace(/\\/?$/, "/")'),
+    "0.7.27 ensureStandardPlaceholders normalizes DB_MIGRATION_DIR slash"
+  );
   assert(/previewMarkdownMerge/.test(renderSrc), "render has previewMarkdownMerge");
   assert(/mergePreview/.test(renderSrc), "render logs mergePreview");
   const q = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
@@ -1819,7 +1849,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   assert(/SKILLS_DIRS/.test(syncTmplB), "sync tmpl has SKILLS_DIRS");
   assert(/harness-managed\.json/.test(syncTmplB), "sync tmpl writes harness-managed.json");
   assert(/unmanaged/.test(syncTmplB), "sync tmpl reports unmanaged");
-  assert(/HARNESS_ENG_VERSION = "0\.7\.26"/.test(syncTmplB), "sync tmpl version 0.7.26");
+  assert(new RegExp(`HARNESS_ENG_VERSION = "${VER_RE}"`).test(syncTmplB), `sync tmpl version ${EXPECTED}`);
 
   const invApi = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-api.mjs"), "utf8");
   assert(/scanApiInventoryMemory/.test(invApi), "inventory-api exports scanApiInventoryMemory");
@@ -2006,6 +2036,17 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
     phMig.DB_MIGRATION_DIR === "backend/src/main/resources/db/migration/",
     "E7 HS-3 migration dir gets trailing slash"
   );
+  // 0.7.27 HS-3: force-normalize when existing already set without slash
+  const phMigChained = buildHookPlaceholders({
+    params: { domains: ["db"] },
+    agentConfig: false,
+    existing: { DB_MIGRATION_DIR: "backend/src/main/resources/db/migration" },
+    root: skillRoot,
+  });
+  assert(
+    phMigChained.DB_MIGRATION_DIR === "backend/src/main/resources/db/migration/",
+    "0.7.27 HS-3 chained existing DB_MIGRATION_DIR gets trailing slash"
+  );
   const checksJs = buildContractChecksJs(["api"], { GLOB_API: "frontend/src/api/**" });
   assert(/frontend\/src\/api/.test(checksJs), "E7 buildContractChecksJs unions GLOB_API");
   const checksArr = new Function(`return (${checksJs});`)();
@@ -2115,6 +2156,403 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   assert(/chmodSync/.test(renderSrcA) && /maybeChmodExecutable/.test(renderSrcA), "render chmods hooks");
   assert(/mavenCmdsForModule/.test(renderSrcA) && /mvn -f/.test(renderSrcA), "render Spring mvn -f branch");
   assert(/可执行/.test(ladderMd), "ladder checks hook executable bit");
+}
+
+// --- 0.7.27 e2e P0 hotfix: NEW-1 · SG-7 · NEW-2 · LT-1 sync · LT-6/8 ---
+{
+  const syncTmpl27 = fs.readFileSync(
+    path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"),
+    "utf8"
+  );
+  assert(/git-commit-soft-gate\.js/.test(syncTmpl27), "0.7.27 sync prefers soft-gate when present");
+  assert(/hasMysqlGuard/.test(syncTmpl27), "0.7.27 sync gates mysql matcher on SSOT");
+  assert(
+    /codex-adapter\\\.js\|codex-hook\\\.cmd/.test(syncTmpl27) &&
+      /commit-gate\|mcp-guard\|--direct/.test(syncTmpl27),
+    "0.7.27 collectHookScriptRefs parses Codex adapter bare scripts"
+  );
+  assert(new RegExp(`→ ${VER_RE}`).test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), `upgrade has → ${EXPECTED}`);
+
+  // NEW-1: spring+db module dry-run must not ReferenceError; preview has migration mode
+  const tmpSpring = fs.mkdtempSync(path.join(os.tmpdir(), "harness-027-spring-"));
+  try {
+    fs.mkdirSync(path.join(tmpSpring, "demo-be"), { recursive: true });
+    fs.writeFileSync(path.join(tmpSpring, "demo-be", "pom.xml"), "<project/>\n", "utf8");
+    const paramsPath = path.join(tmpSpring, "params.json");
+    fs.writeFileSync(
+      paramsPath,
+      JSON.stringify({
+        ladder: "L0",
+        domains: ["db"],
+        agents_variant: "modules",
+        module_dirs: ["demo-be"],
+        module_agents_template: "spring",
+        db_migration_mode: "flyway",
+        db_migration_dir: "demo-be/src/main/resources/db/migration",
+        on_exists: "skip",
+        expandFromManifest: true,
+        placeholders: {
+          REPO_NAME: "demo",
+          REPO_DESC: "demo",
+          MODULE_DIRS: "demo-be",
+          DATE: "2026-09-28",
+          LADDER_TARGET: "L0",
+          AGENTS_VARIANT: "modules",
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "land",
+        },
+      }),
+      "utf8"
+    );
+    const r = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpSpring,
+      "--params",
+      paramsPath,
+      "--dry-run",
+    ]);
+    assert(r.status === 0, "0.7.27 NEW-1 spring+db dry-run exits 0");
+    assert(!/ReferenceError|SPRING_DB_BLOCK_ENABLED is not defined/.test(String(r.stderr || "") + String(r.stdout || "")), "0.7.27 NEW-1 no ReferenceError");
+    // write for real to assert SPRING_DB_BLOCK substitution (dry-run preview may omit extras)
+    const rWrite = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpSpring,
+      "--params",
+      paramsPath,
+    ]);
+    assert(rWrite.status === 0, "0.7.27 NEW-1 spring+db write exits 0");
+    const agentsBody = fs.readFileSync(path.join(tmpSpring, "demo-be", "AGENTS.md"), "utf8");
+    assert(
+      /迁移模式/.test(agentsBody) && /flyway/.test(agentsBody),
+      "0.7.27 NEW-1 SPRING_DB_BLOCK has migration mode from buildSpringDbBlock"
+    );
+  } finally {
+    fs.rmSync(tmpSpring, { recursive: true, force: true });
+  }
+
+  // SG-7: Chinese section title TODO detection
+  const tmpZh = fs.mkdtempSync(path.join(os.tmpdir(), "harness-027-zh-"));
+  try {
+    fs.writeFileSync(
+      path.join(tmpZh, "AGENTS.md"),
+      "# demo\n\n## 常用命令\n\n| Task | Command |\n|---|---|\n| build | TODO(harness-eng) |\n",
+      "utf8"
+    );
+    const zh = checkEntryReady(tmpZh);
+    assert(!zh.ok && zh.files.includes("AGENTS.md"), "0.7.27 SG-7 Chinese 常用命令 TODO detected");
+  } finally {
+    fs.rmSync(tmpZh, { recursive: true, force: true });
+  }
+
+  // NEW-2: fill-score --root from skill CWD must still see entry_todo
+  const tmpScore = fs.mkdtempSync(path.join(os.tmpdir(), "harness-027-score-"));
+  try {
+    fs.writeFileSync(
+      path.join(tmpScore, "AGENTS.md"),
+      "# demo\n\n## Commands\n\n| Task | Command |\n|---|---|\n| build | TODO(harness-eng) |\n",
+      "utf8"
+    );
+    fs.mkdirSync(path.join(tmpScore, "docs", "harness-eng"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpScore, "docs", "harness-eng", "score-policy.yaml"),
+      "gate_profile: strict\ngate:\n  forbid_harness_todo: false\n",
+      "utf8"
+    );
+    const scoreOut = path.join(tmpScore, "score.json");
+    const rScore = runNode(
+      [
+        path.join(skillRoot, "scripts/fill-score.mjs"),
+        "--root",
+        tmpScore,
+        "--domains",
+        "api",
+        "--json",
+        "--output",
+        scoreOut,
+      ],
+      { cwd: skillRoot }
+    );
+    assert(rScore.status === 0 || rScore.status === 2, "0.7.27 NEW-2 fill-score runs from skill CWD");
+    let report = null;
+    if (fs.existsSync(scoreOut)) {
+      try {
+        report = JSON.parse(fs.readFileSync(scoreOut, "utf8"));
+      } catch {
+        report = null;
+      }
+    }
+    if (!report) {
+      try {
+        report = JSON.parse(rScore.stdout || "");
+      } catch {
+        report = null;
+      }
+    }
+    assert(report && path.isAbsolute(String(report.root || "")), "0.7.27 NEW-2 report.root is absolute");
+    assert(
+      report &&
+        report.ai_coding_ready &&
+        Array.isArray(report.ai_coding_ready.blockers) &&
+        report.ai_coding_ready.blockers.some((b) => String(b).startsWith("entry_todo:")),
+      "0.7.27 NEW-2 entry_todo when fill-score run from skill CWD"
+    );
+  } finally {
+    fs.rmSync(tmpScore, { recursive: true, force: true });
+  }
+
+  // LT-6/8: no redis domain → no redis-doc-sync; no mysql MCP → no mcp-mysql-guard
+  const tmpGate = fs.mkdtempSync(path.join(os.tmpdir(), "harness-027-gate-"));
+  try {
+    const paramsPath = path.join(tmpGate, "params.json");
+    fs.writeFileSync(
+      paramsPath,
+      JSON.stringify({
+        ladder: "L5",
+        agent_config: true,
+        domains: ["api"],
+        ai_tools: ["codex"],
+        mcp: [],
+        hooks_family: ["commit-gate"],
+        on_exists: "skip",
+        expandFromManifest: true,
+        placeholders: {
+          REPO_NAME: "demo",
+          REPO_DESC: "demo",
+          DATE: "2026-09-28",
+          LADDER_TARGET: "L5",
+          AGENTS_VARIANT: "solo",
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "land",
+        },
+      }),
+      "utf8"
+    );
+    const r = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpGate,
+      "--params",
+      paramsPath,
+      "--dry-run",
+    ]);
+    assert(r.status === 0, "0.7.27 LT-6/8 dry-run exits 0");
+    let out = null;
+    try {
+      out = JSON.parse(r.stdout);
+    } catch {
+      out = null;
+    }
+    const targets = (out && out.results ? out.results : []).map((x) => String(x.target || ""));
+    assert(
+      !targets.some((t) => /redis-doc-sync/.test(t)),
+      "0.7.27 LT-6 no redis-doc-sync without redis domain"
+    );
+    assert(
+      !targets.some((t) => /mcp-mysql-guard/.test(t)),
+      "0.7.27 LT-8 no mcp-mysql-guard without mysql MCP"
+    );
+    assert(
+      targets.some((t) => /superpowers-commit-gate\.js|git-commit-soft-gate\.js/.test(t)),
+      "0.7.27 LT-1 L5 renders commit gate into SSOT"
+    );
+  } finally {
+    fs.rmSync(tmpGate, { recursive: true, force: true });
+  }
+}
+
+// --- 0.7.28 e2e P1: upgrade hooks · SG-6 · HS-4 · SG-5 · ID-3/4 ---
+{
+  const renderSrc28 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/isUpgradeFixHookTarget/.test(renderSrc28), "0.7.28 upgrade fix-hooks helper");
+  assert(/upgrade_fix_hooks/.test(renderSrc28), "0.7.28 upgrade_fix_hooks gate");
+
+  // SG-6: null acceptance_warnings_max is not explicit
+  const scoreSrc28 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(
+    /aw\[1\] !== "null"/.test(scoreSrc28) &&
+      /explicit\.acceptance_warnings_max = true/.test(scoreSrc28),
+    "0.7.28 SG-6 null warnings not explicit"
+  );
+  const policyTmpl28 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/harness-eng/score-policy.yaml.tmpl"),
+    "utf8"
+  );
+  assert(/null=按 profile/.test(policyTmpl28), "0.7.28 score-policy tmpl null=profile");
+
+  // HS-4: docs/ prefix gets docsGuard
+  const hooksSrc28 = fs.readFileSync(path.join(skillRoot, "scripts/lib/hooks-checks.mjs"), "utf8");
+  assert(
+    /norm\.startsWith\("docs\/"\)/.test(hooksSrc28) ||
+      /startsWith\("docs\/"\)[\s\S]{0,80}docsGuard/.test(hooksSrc28),
+    "0.7.28 HS-4 docs prefix docsGuard"
+  );
+  const predsDocs = globListToCodePreds("docs/api/**");
+  assert(predsDocs.includes("docs/api/"), "0.7.28 HS-4 glob expands docs/api/");
+  const checksDocs = buildContractChecksJs(["api"], { GLOB_API: "docs/api/**" });
+  assert(
+    /!f\.startsWith\("docs\/"\)/.test(checksDocs) && /docs\/api\//.test(checksDocs),
+    "0.7.28 HS-4 docs/api/** code pred guarded"
+  );
+
+  // SG-5 / NEW-4: narrow header — data row with 返回类型 must not reset headers
+  const tbl = `| 参数名 | 类型 | 示例 |
+|---|---|---|
+| foo | string | a |
+| bar | 返回类型说明 | b |
+`;
+  const split = splitTableRows(tbl);
+  assert(split.rows.length === 2, "0.7.28 SG-5 data rows not misclassified as headers");
+
+  // ID-4: pass=false when covIncomplete
+  assert(
+    /covIncomplete \? false : report\.ready\.ok/.test(scoreSrc28),
+    "0.7.28 ID-4 no morph-pass without inventory"
+  );
+  assert(/covered_gt_code/.test(scoreSrc28) && /inventory_undercount/.test(scoreSrc28), "0.7.28 ID-3 anomaly blocks ready");
+
+  // upgrade replace soft-gate when mode=upgrade
+  const tmpUp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-028-up-"));
+  try {
+    const hooksDir = path.join(tmpUp, ".cursor", "hooks");
+    fs.mkdirSync(hooksDir, { recursive: true });
+    const oldGate = path.join(hooksDir, "git-commit-soft-gate.js");
+    fs.writeFileSync(oldGate, "// OLD .[^/]* fingerprint\nconst x = 1;\n", "utf8");
+    const paramsPath = path.join(tmpUp, "params.json");
+    fs.writeFileSync(
+      paramsPath,
+      JSON.stringify({
+        mode: "upgrade",
+        upgrade_fix_hooks: true,
+        ladder: "L4",
+        domains: ["api"],
+        ai_tools: ["cursor"],
+        hooks_family: ["commit-gate-extended"],
+        on_exists: "skip",
+        expandFromManifest: true,
+        placeholders: {
+          REPO_NAME: "up",
+          REPO_DESC: "up",
+          DATE: "2026-09-28",
+          LADDER_TARGET: "L4",
+          AGENTS_VARIANT: "solo",
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "upgrade",
+          CODE_PREFIXES: "src/",
+        },
+      }),
+      "utf8"
+    );
+    const r = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpUp,
+      "--params",
+      paramsPath,
+    ]);
+    assert(r.status === 0, "0.7.28 upgrade render exits 0");
+    const body = fs.readFileSync(oldGate, "utf8");
+    assert(!/OLD \.\[\^\/\]\*/.test(body), "0.7.28 upgrade replaced soft-gate");
+    assert(/CONTRACT_CHECKS|permission|git/.test(body), "0.7.28 upgrade soft-gate looks rendered");
+  } finally {
+    fs.rmSync(tmpUp, { recursive: true, force: true });
+  }
+
+  assert(
+    /0\.7\.27 → 0\.7\.28/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.28 upgrade.md migration section"
+  );
+}
+
+// --- 0.7.29 e2e P2: calibrate · merge · render · inventory · score UX ---
+{
+  // FC-1: replaceCreateTableBlock preserves 说明
+  const mdWithNote = `## 建表语句\n\n> 以下建表语句**始终为最新完整版本**\n\n\`\`\`sql\nCREATE TABLE t (id INT);\n\`\`\`\n`;
+  const patched = replaceCreateTableBlock(mdWithNote, "CREATE TABLE t (id INT, name VARCHAR(10));");
+  assert(/始终为最新完整版本/.test(patched), "0.7.29 FC-1 write-ddl keeps 说明");
+  assert(/name VARCHAR/.test(patched), "0.7.29 FC-1 write-ddl updates fence");
+  assert(formatDdlDiff("a\nb", "a\nc").includes("-"), "0.7.29 FC-1 formatDdlDiff");
+  assert(
+    extractShowCreateDdl({ "Create Table": "CREATE TABLE x(id int)" }) === "CREATE TABLE x(id int)",
+    "0.7.29 FC-1 SHOW CREATE MySQL key"
+  );
+  assert(
+    normalizeDdlForCompare("CREATE TABLE t(id int) ENGINE=InnoDB COMMENT='x'") ===
+      normalizeDdlForCompare("CREATE TABLE t(id int)"),
+    "0.7.29 FC-1 normalize strips ENGINE/COMMENT"
+  );
+
+  // FC-9: updateDomainIndex targets ## 表文档
+  const tmpIdx = fs.mkdtempSync(path.join(os.tmpdir(), "harness-029-idx-"));
+  try {
+    const docsDb = path.join(tmpIdx, "docs", "db");
+    const tableDir = path.join(docsDb, "table");
+    fs.mkdirSync(tableDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(docsDb, "db.md"),
+      `# db\n\n## 表文档\n\n| 名称 | 文件 | 备注 |\n|---|---|---|\n| 01-old | [\`01-old.md\`](table/01-old.md) | — |\n\n## 变更记录（索引级）\n\n| 版本 | 类型 | 内容 | 操作人 | 更新时间 |\n|---|---|---|---|---|\n| v0.1 | init | x | y | 2026-01-01 |\n`,
+      "utf8"
+    );
+    fs.writeFileSync(path.join(tableDir, "01-old.md"), "# old\n", "utf8");
+    fs.writeFileSync(path.join(tableDir, "02-new.md"), "# new\n", "utf8");
+    const r = updateDomainIndex({ root: tmpIdx, domain: "db", targetDir: tableDir });
+    assert(r.updated, "0.7.29 FC-9 index updated");
+    const body = fs.readFileSync(path.join(docsDb, "db.md"), "utf8");
+    const changelogSec = body.split(/##\s*变更记录/)[1] || "";
+    assert(/02-new/.test(body), "0.7.29 FC-9 new row present");
+    assert(!/02-new/.test(changelogSec), "0.7.29 FC-9 row not in 变更记录");
+  } finally {
+    fs.rmSync(tmpIdx, { recursive: true, force: true });
+  }
+
+  // LT-5: 常用命令 prefill
+  const prefillSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/prefill-commands.mjs"), "utf8");
+  assert(/常用命令/.test(prefillSrc), "0.7.29 LT-5 matches 常用命令");
+  assert(typeof applyCommandsPrefill === "function", "0.7.29 LT-5 applyCommandsPrefill export");
+
+  // LT-11: skipped-unresolved
+  const renderSrc29 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/skipped-unresolved/.test(renderSrc29), "0.7.29 LT-11 skip write on unresolved");
+  assert(/typeof v === "boolean"/.test(renderSrc29), "0.7.29 ID-6 formatYamlValue booleans");
+
+  // SG-10: resolveInventoryOutPath
+  const rootFake = path.join(os.tmpdir(), "harness-029-root");
+  assert(
+    resolveInventoryOutPath(rootFake, "docs/out.json", "api").replace(/\\/g, "/").endsWith("docs/out.json"),
+    "0.7.29 SG-10 relative --out under root"
+  );
+
+  // ID-7 / SG-10 CLI / SG-1
+  const reportSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-report-html.mjs"), "utf8");
+  assert(/skipScoreCopy/.test(reportSrc), "0.7.29 ID-7 skipScoreCopy when score is latest");
+  const scoreSrc29 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/--gate-profile/.test(scoreSrc29), "0.7.29 SG-10 --gate-profile");
+  assert(/detectFuncMethodDrift/.test(scoreSrc29), "0.7.29 SG-1 func drift wired");
+  assert(/requestFields/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-api.mjs"), "utf8")), "0.7.29 SG-1 requestFields");
+  assert(/empty_inventory:db/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/field-drift.mjs"), "utf8")), "0.7.29 NEW-8 empty inventory drift");
+
+  // FC-8 / HS-8 docs
+  const heReadme = fs.readFileSync(path.join(skillRoot, "templates/docs/harness-eng/README.md"), "utf8");
+  assert(/\.fill-work/.test(heReadme) && /hooksPath/.test(heReadme), "0.7.29 FC-8/HS-8 README tips");
+  assert(
+    /\.fill-work/.test(fs.readFileSync(path.join(skillRoot, "templates/agents/AGENTS.root.md.tmpl"), "utf8")),
+    "0.7.29 FC-8 AGENTS tip"
+  );
+  assert(/tipGitHooks/.test(fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8")), "0.7.29 HS-8 land tip");
+
+  // LT-7 HEADER
+  assert(
+    /时间 \/ 撰写 \/ 目的 \/ 类型/.test(
+      fs.readFileSync(path.join(skillRoot, "templates/rules/13-db-doc-sync.mdc.tmpl"), "utf8")
+    ),
+    "0.7.29 LT-7 rule13 HEADER align"
+  );
+
+  assert(
+    /0\.7\.28 → 0\.7\.29/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.29 upgrade.md migration section"
+  );
 }
 
 // --- 0.5.x suites (lib/selfcheck/checks-0.5.mjs) ---

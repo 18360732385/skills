@@ -22,7 +22,15 @@
 旧版默认写在 `docs/agent-kb/harness-report-latest.html`。  
 **0.2.12+** 新写入改到本目录；**0.2.13+** Dashboard v2；**0.2.14+** `score-history.jsonl`；**0.2.15+** `progress.yaml` / `suggest_upgrade`。
 
+## 首填后维护
+
+- 契约与 AGENTS 的 **SSOT 在目标仓 `docs/**` / `AGENTS.md`**；首填校准后请直接改这些文件。
+- **勿**用 `docs/<domain>/.fill-work/` 回退或覆盖已人工修订的真相（`.fill-work` 仅 inventory / 批处理工作区）。
+- Git 门禁（若已 land `.githooks/`）：在目标仓执行一次  
+  `git config core.hooksPath .githooks`
+
 ## 禁止
 
 - 把本目录当成契约真相或 pitfalls 台账
 - 写入含密码的 MCP / 连接串到可提交契约或报告（评分与报告不含密文；连接参数放 local 真密文件）
+- 用 `.fill-work` 覆盖已确认的 SSOT 正文

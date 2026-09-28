@@ -1,5 +1,19 @@
 # release-eng CHANGELOG
 
+## 0.3.20-dev — 2026-09-28（版本单点维护：manifest SSOT + sync-skill-version）
+
+### 产品
+
+- **`scripts/lib/skill-version.mjs`**：从 `_meta/manifest.yaml` 读权威号
+- **`scripts/sync-skill-version.mjs`**：同步文档钉头 + 仓根 README release-eng 行；`--check` 挂 selfcheck
+- **selfcheck**：`PIN` 改读 manifest；仓根 README 钉号纳入断言
+- **发版流程**：改根 manifest → sync → 手写 CHANGELOG/VERIFY → selfcheck（见 AGENT-INDEX）
+- **不**改仪式语义、脚本行为、`harness_land`；QUICKSTART 仍不钉号
+
+### 版本钉
+
+- `_meta/manifest.yaml` → `0.3.20-dev`（叠在 0.3.19-dev 之上）
+
 ## 0.3.19-dev — 2026-09-19（统一薄入口 release.mjs + 模式 md 迁入 modes/）
 
 ### 产品

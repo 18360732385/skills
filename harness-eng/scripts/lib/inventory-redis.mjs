@@ -12,7 +12,7 @@
 import fs from "fs";
 import path from "path";
 import { isCliMain } from "./cli-main.mjs";
-import { defaultInventoryPath } from "./inventory-paths.mjs";
+import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 
 function parseArgs(argv) {
@@ -418,7 +418,7 @@ export function main(argv = process.argv) {
   if (!merged.length) pushWarning(report, "no redis key patterns found");
 
   const json = JSON.stringify(report, null, 2);
-  const outPath = path.resolve(args.out || defaultInventoryPath(root, "redis"));
+  const outPath = resolveInventoryOutPath(root, args.out, "redis");
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, json, "utf8");
   console.error(

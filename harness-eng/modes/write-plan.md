@@ -92,11 +92,17 @@ Q_SEED: 是
 **推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
 
 ```bash
-node -e "require('fs').writeFileSync('params.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{REPO_NAME:'x',REPO_DESC:'x',CODE_PREFIXES:'src/',DATE:'2026-09-28'},on_exists:'fail'}), 'utf8')"
-node scripts/harness.mjs --root <TARGET> --params params.json --mode land
+# land（空仓 / 强制新建）：on_exists=fail
+node -e "require('fs').writeFileSync('params-land.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{REPO_NAME:'x',REPO_DESC:'x',CODE_PREFIXES:'src/',DATE:'2026-09-28'},on_exists:'fail'}), 'utf8')"
+node scripts/harness.mjs --root <TARGET> --params params-land.json --mode land
+
+# resume / upgrade（已有产物）：on_exists=skip（勿照抄 land 的 fail）
+node -e "require('fs').writeFileSync('params-resume.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{REPO_NAME:'x',REPO_DESC:'x',CODE_PREFIXES:'src/',DATE:'2026-09-28'},on_exists:'skip'}), 'utf8')"
+node scripts/harness.mjs --root <TARGET> --params params-resume.json --mode resume
 ```
 
 冲突动作含 **`replace`**（覆盖已有目标）；`create` 冲突时报错也会提示 `merge/skip/backup-create/replace`。
+`resume`/`upgrade` 默认会注入 `on_exists: skip`（见 [resume.md](resume.md)）；手写 params 时请显式写 `skip`，勿用 land 示例的 `fail`。
 
 他处（SKILL / pipeline / fill-score / QUICKSTART）只指针到此，不复述长文或完整示例。
 

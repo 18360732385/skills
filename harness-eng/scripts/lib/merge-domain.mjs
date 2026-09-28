@@ -490,28 +490,50 @@ export function updateDomainIndex(opts) {
     .readdirSync(absDir)
     .filter((f) => /^\d+-.*\.md$/i.test(f) && !/_change\.sql$/i.test(f))
     .sort();
+  // 0.7.29 FC-9: splice only under the domain index section (not 变更记录)
+  const sectionHeading =
+    domain === "db"
+      ? "表文档"
+      : domain === "redis"
+        ? "Key 文档"
+        : domain === "jobs"
+          ? "任务文档"
+          : "模块文档";
   let changed = false;
   for (const f of files) {
     const stem = f.replace(/\.md$/i, "");
     const link = domain === "db" ? `table/${f}` : domain === "redis" ? `keys/${f}` : `modules/${f}`;
     if (text.includes(f) || text.includes(stem)) continue;
-    // Append a simple index row under first markdown table, or at end
     const row = `| ${stem} | [\`${f}\`](${link}) | — |\n`;
-    if (/^\|[^\n]+\|\s*$/m.test(text)) {
-      // after last table row
-      const lines = text.split(/\r?\n/);
+    const secRe = new RegExp(
+      `(##\\s*${sectionHeading}\\s*\\n)([\\s\\S]*?)(?=\\n##\\s+|$)`,
+      "i"
+    );
+    const sec = text.match(secRe);
+    if (sec) {
+      const body = sec[2];
+      const lines = body.split(/\r?\n/);
       let lastTable = -1;
       for (let i = 0; i < lines.length; i++) {
         if (/^\|/.test(lines[i])) lastTable = i;
       }
+      let nextBody;
       if (lastTable >= 0) {
         lines.splice(lastTable + 1, 0, row.trimEnd());
-        text = lines.join("\n");
-        changed = true;
-        continue;
+        nextBody = lines.join("\n");
+      } else {
+        nextBody =
+          body.replace(/\s*$/, "") +
+          `\n\n| 名称 | 文件 | 备注 |\n|---|---|---|\n${row}`;
       }
+      text = text.replace(secRe, `${sec[1]}${nextBody}`);
+      changed = true;
+      continue;
     }
-    text = text.replace(/\s*$/, `\n\n## 索引\n\n| 名称 | 文件 | 备注 |\n|---|---|---|\n${row}`);
+    text = text.replace(
+      /\s*$/,
+      `\n\n## ${sectionHeading}\n\n| 名称 | 文件 | 备注 |\n|---|---|---|\n${row}`
+    );
     changed = true;
   }
   if (changed) {

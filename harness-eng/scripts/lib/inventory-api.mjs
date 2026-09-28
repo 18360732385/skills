@@ -18,10 +18,10 @@
 import fs from "fs";
 import path from "path";
 import { isCliMain } from "./cli-main.mjs";
-import { defaultInventoryPath } from "./inventory-paths.mjs";
+import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { createProgress } from "./progress-log.mjs";
-import { writeInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
+import { writeInventoryMeta, readInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
 
 /** Lowest common ancestor directory of absolute file paths. */
 export function commonAncestorDir(files) {
@@ -178,6 +178,46 @@ function isConcreteRestController(text, className, excludeBase) {
   return /@(?:RestController|Controller)\b/.test(lastChunk);
 }
 
+function extractParamFieldNames(paramsSrc) {
+  const fields = [];
+  const src = String(paramsSrc || "");
+  for (const m of src.matchAll(
+    /@(?:RequestParam|PathVariable|RequestHeader)\s*\(\s*(?:value\s*=\s*|name\s*=\s*)?["']([^"']+)["']/g
+  )) {
+    fields.push(m[1]);
+  }
+  for (const m of src.matchAll(
+    /@(?:RequestParam|PathVariable|RequestHeader)(?:\([^)]*\))?(?:\s*@[\w]+(?:\([^)]*\))?)*\s+[\w.<>,\s\[\]]+\s+(\w+)\s*(?:,|$)/g
+  )) {
+    if (!/^(required|defaultValue|value|name)$/i.test(m[1])) fields.push(m[1]);
+  }
+  return [...new Set(fields)];
+}
+
+/** Best-effort VO/DTO field names from same compilation unit (bounded). */
+function extractTypeFieldNames(fileText, typeName) {
+  if (!typeName) return [];
+  const simple = String(typeName)
+    .replace(/\.?<[^>]*>/g, "")
+    .replace(/^.*\./, "")
+    .trim();
+  if (!simple || /^(String|Integer|Long|Boolean|Object|Map|List|Set|void|int|long|boolean|ResponseEntity|Result|ApiResult)$/i.test(simple)) {
+    return [];
+  }
+  const idx = fileText.search(new RegExp(`(?:class|record|interface)\\s+${simple}\\b`));
+  if (idx < 0) return [];
+  const slice = fileText.slice(idx, idx + 4000);
+  const fields = [];
+  for (const m of slice.matchAll(
+    /(?:private|protected|public)\s+(?:static\s+)?(?:final\s+)?[\w.<>,\s\[\]]+\s+(\w+)\s*[;=]/g
+  )) {
+    const n = m[1];
+    if (/^(class|static|final|serialVersionUID)$/i.test(n)) continue;
+    fields.push(n);
+  }
+  return [...new Set(fields)].slice(0, 40);
+}
+
 function extractEndpointsFromFile(absFile, root, excludeBase = DEFAULT_EXCLUDE_BASE) {
   const text = fs.readFileSync(absFile, "utf8");
   const classDecl = text.match(/public\s+(?:abstract\s+)?class\s+(\w+)/);
@@ -224,6 +264,12 @@ function extractEndpointsFromFile(absFile, root, excludeBase = DEFAULT_EXCLUDE_B
       /@RequestBody(?:\([^)]*\))?(?:\s*@[\w]+(?:\([^)]*\))?)*\s+(List\s*<\s*[\w.?]+\s*>|[\w.]+)/
     );
     if (rb) bodyType = rb[1].replace(/\s+/g, "");
+    // 0.7.29 SG-1: field skeletons for drift (empty ok)
+    const requestFields = [
+      ...extractParamFieldNames(params),
+      ...extractTypeFieldNames(text, bodyType),
+    ];
+    const responseFields = extractTypeFieldNames(text, ret);
     rows.push({
       package: pkg,
       controller: cls,
@@ -232,6 +278,8 @@ function extractEndpointsFromFile(absFile, root, excludeBase = DEFAULT_EXCLUDE_B
       method,
       bodyType,
       retType: ret,
+      requestFields: [...new Set(requestFields)],
+      responseFields: [...new Set(responseFields)],
       evidence: `${rel}#${method}`,
     });
   }
@@ -476,8 +524,11 @@ function scanOneModule(
   if (!write) {
     return report;
   }
-  const outPath = path.resolve(
-    outOverride || defaultInventoryPath(root, "api", moduleName || null)
+  const outPath = resolveInventoryOutPath(
+    root,
+    outOverride,
+    "api",
+    moduleName || null
   );
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf8");
@@ -620,7 +671,17 @@ export function main(argv = process.argv) {
     try {
       const rel =
         toRootRelative(root, report.controllerRoot) || report.controllerRoot;
-      writeInventoryMeta(root, { api: { controller_root: rel } });
+      const existingRoot = String(
+        readInventoryMeta(root).api?.controller_root || ""
+      ).replace(/\\/g, "/");
+      // 0.7.28 ID-3: explicit --controller-root must not clobber a different persisted full-tree root
+      if (args.controllerRoot && existingRoot && existingRoot !== rel) {
+        writeInventoryMeta(root, {
+          api: { module_roots: { [rel]: rel } },
+        });
+      } else {
+        writeInventoryMeta(root, { api: { controller_root: rel } });
+      }
     } catch {
       /* meta optional */
     }

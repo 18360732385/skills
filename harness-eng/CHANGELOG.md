@@ -1,8 +1,63 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.20 → 0.7.21 → 0.7.22 → 0.7.23 → 0.7.24 → 0.7.25 → 0.7.26`（当前 **0.7.26**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：`… → 0.7.0 → … → 0.7.20 → 0.7.21 → 0.7.22 → 0.7.23 → 0.7.24 → 0.7.25 → 0.7.26 → 0.7.27 → 0.7.28 → 0.7.29`（当前 **0.7.29**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
 > 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
+
+## 0.7.29 — 2026-09-28（e2e P2：填契约 / 幂等 / UX）
+
+### Fixed
+- **FC-1 / NEW-8**：calibrate 默认 compare 输出 DDL diff；`--write-ddl` 保留「建表语句」说明行；`tables:[]` + mysql → `empty_inventory`（exit 2）；SHOW CREATE 兼容 MariaDB 键名
+- **FC-6**：`inventory-db` 取消表名字母序，保留发现序（preserve-order 生效）
+- **FC-9**：`--update-index` 只写入「表文档/模块文档」节；`index_missing` 非静默 exit 1
+- **LT-5**：预填匹配 `## 常用命令`
+- **LT-7 / DU-1**：rule 13 迁移头注释与 `MIGRATION_HEADER_KEYS` 统一（时间/撰写/目的/类型）
+- **LT-11**：未解析占位符不写盘（`skipped-unresolved`）
+- **ID-6 / NEW-7**：YAML merge 保持布尔/数字原生类型
+- **ID-7**：`fill-report-html` 输入已是 `score-latest.json` 时不回写 churn
+- **SG-10**：inventory `--out` 相对 `--root`；`fill-score --gate-profile`
+
+### Added
+- **SG-1**：api `requestFields`/`responseFields` 骨架；漂移阈值默认 0.3（`api_field_missing_ratio`）；func 方法名级 drift
+- **FC-8 / HS-8**：目标仓 README / AGENTS 首填后 SSOT 提示；land 成功提示 `core.hooksPath .githooks`
+- **ID-5**：write-plan 分 land=`fail` / resume=`skip` 示例
+
+### Docs / pack
+- upgrade `0.7.28 → 0.7.29`；manifest / meta / sync tmpl / questions → `0.7.29`
+
+## 0.7.28 — 2026-09-28（e2e P1：upgrade hooks · inventory meta · 评分假绿）
+
+### Fixed
+- **upgrade hooks**：默认 replace soft-gate / after-edit / commit-gate / mysql-guard / stop-checklist（`upgrade_fix_hooks: false` 可关）；rule13 / db.md 仍 skip，见 upgrade.md
+- **ID-3 / NEW-3**：显式 `--controller-root` 写入 `module_roots`，不覆盖全仓 `controller_root`；`covered_gt_code` 阻断 `coverage_ready`
+- **SG-6 / NEW-6**：`acceptance_warnings_max: null` 不再标 explicit（gold 缺省 warnings=0 生效）
+- **SG-5 / NEW-4**：`doc-density` 表头启发式收窄，数据行含「返回/说明」不再切表
+- **HS-4**：`docs/` 前缀谓词加 docsGuard
+- **ID-4**：缺 inventory 时 `report.pass=false`，suggest 指向 refresh
+
+### Added
+- **`scripts/lib/skill-version.mjs`**：从 `_meta/manifest.yaml` 读权威号；`escapeSemverRe`
+- **`scripts/sync-skill-version.mjs`**：机械副本 + 文档钉头同步；`--check` 可挂 selfcheck
+- **render**：写 `harness-meta` 时强制注入 SSOT `skill_version`
+
+### Changed
+- **selfcheck**：当前号断言读 `EXPECTED`（不再硬编码散落字面量）
+
+### Docs / pack
+- upgrade `0.7.27 → 0.7.28`；manifest / meta / sync tmpl / questions → `0.7.28`
+
+## 0.7.27 — 2026-09-28（e2e P0 热修：阻断崩溃 · 门禁真接线 · when_* 接通）
+
+### Fixed
+- **NEW-1**：`render.mjs` 分册 Spring+db 调用 `buildSpringDbBlock(params)`（不再引用已删常量 `SPRING_DB_BLOCK_ENABLED`）；land/resume/upgrade 可跑
+- **LT-1 / HS-7**：`sync.mjs` 按 SSOT 实际脚本接线 soft-gate vs basic；无 `mcp-mysql-guard.js` 时不写 mysql matcher；`checkHookRefsExist` 解析 adapter 裸文件名
+- **LT-6 / LT-8 / NEW-9**：接通 `passesWhenGates`（此前为死代码）；`expandHooksFamily` 的 mysql-guard 需 mysql MCP
+- **HS-3 / NEW-5**：`ensureStandardPlaceholders` + `buildHookPlaceholders` 强制 `DB_MIGRATION_DIR` 尾斜杠（不再被 put-skip 回退）
+- **SG-7**：中文 AGENTS 节标题正则去掉错误 `\b`（CJK 可匹配）
+- **NEW-2**：`fill-score` 的 `report.root` 写绝对路径，门禁不再跟 process CWD
+
+### Docs / pack
+- upgrade `0.7.26 → 0.7.27`；manifest / meta / sync tmpl / questions → `0.7.27`
 
 ## 0.7.26 — 2026-09-28（e2e P2：幂等·路径 · fill-merge · L 级收口）
 

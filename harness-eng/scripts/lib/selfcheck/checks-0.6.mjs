@@ -22,8 +22,11 @@ import {
   loadMcpCredentials,
 } from "../mcp-paths.mjs";
 import { mergeRulehookCodexHooks } from "../codex-rulehook.mjs";
+import { readSkillVersion, escapeSemverRe } from "../skill-version.mjs";
 
 export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
+  const EXPECTED = readSkillVersion(skillRoot);
+  const VER_RE = escapeSemverRe(EXPECTED);
   // Re-load hot docs so this suite does not depend on outer-scope consts from selfcheck.mjs
   const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
@@ -504,7 +507,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
-  assert(verLine && verLine[1] === "0.7.26", "manifest version exactly 0.7.26");
+  assert(verLine && verLine[1] === EXPECTED, `manifest version exactly ${EXPECTED}`);
 
   const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
@@ -856,7 +859,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 {
   const man063 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
   const manVer063 = (man063.match(/^version:\s*"([^"]+)"/m) || [])[1];
-  assert(manVer063 === "0.7.26", "current manifest pin 0.7.26");
+  assert(manVer063 === EXPECTED, `current manifest pin ${EXPECTED}`);
 
   const syncTmpl063 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(
@@ -1279,8 +1282,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const gloss067 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/Pn 回流/.test(gloss067) && /前后端契约剖面/.test(gloss067), "glossary Pn + FE profile");
 
-  assert(/版本：\*\*0\.7\.26\*\*/.test(fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8")),
-    "使用手册-摘要 version 0.7.26"
+  assert(new RegExp(`版本：\\*\\*${VER_RE}\\*\\*`).test(fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8")),
+    `使用手册-摘要 version ${EXPECTED}`
   );
   assert(/Pn 回流|前后端契约/.test(fs.readFileSync(path.join(skillRoot, "README.md"), "utf8")), "README blurb 0.6.7 Pn/FE");
 }
@@ -1361,6 +1364,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.23 → 0\.7\.24/.test(upgrade068), "upgrade has 0.7.23 → 0.7.24");
   assert(/0\.7\.24 → 0\.7\.25/.test(upgrade068), "upgrade has 0.7.24 → 0.7.25");
   assert(/0\.7\.25 → 0\.7\.26/.test(upgrade068), "upgrade has 0.7.25 → 0.7.26");
+  assert(/0\.7\.26 → 0\.7\.27/.test(upgrade068), "upgrade has 0.7.26 → 0.7.27");
+  assert(new RegExp(`→ ${VER_RE}`).test(upgrade068), `upgrade has → ${EXPECTED}`);
   assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
   assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
 
@@ -1387,10 +1392,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.7\.24 增量验收/.test(verify068), "VERIFY 0.7.24 section");
   assert(/0\.7\.25 增量验收/.test(verify068), "VERIFY 0.7.25 section");
   assert(/0\.7\.26 增量验收/.test(verify068), "VERIFY 0.7.26 section");
+  assert(/0\.7\.27 增量验收/.test(verify068), "VERIFY 0.7.27 section");
+  assert(new RegExp(`${VER_RE} 增量验收`).test(verify068), `VERIFY ${EXPECTED} section`);
   assert(/0\.7\.6 增量验收/.test(verify068), "VERIFY keeps 0.7.6 section");
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
-  assert(/0\.7\.26/.test(syncTmpl068), "sync tmpl id 0.7.26");
+  assert(new RegExp(VER_RE).test(syncTmpl068), `sync tmpl id ${EXPECTED}`);
   assert(/mergeRulehookCodexHooks/.test(syncTmpl068), "sync tmpl merges rulehook");
   assert(/policy\.json/.test(syncTmpl068) && /resolveMcpServerPolicy/.test(syncTmpl068), "sync tmpl MCP policy-aware");
   assert(/\.agents\/skills/.test(syncTmpl068), "sync writes Codex skills path");

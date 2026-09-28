@@ -90,11 +90,12 @@ Requires mysql2 + ioredis (install once under TEMP/harness-mcp-calibrate).
 `);
 }
 
-/** Replace ## 建表语句 fenced sql block; preserve rest of file. */
+/** Replace only the fenced ```sql block under ## 建表语句; preserve heading + 说明. */
 export function replaceCreateTableBlock(md, ddl) {
   const fence = "```sql\n" + ddl.trim() + "\n```";
+  // Prefer: keep ## 建表语句 … prose, swap only ```sql…```
   if (/##\s*建表语句[\s\S]*?```sql[\s\S]*?```/i.test(md)) {
-    return md.replace(/##\s*建表语句[\s\S]*?```sql[\s\S]*?```/i, `## 建表语句\n\n${fence}`);
+    return md.replace(/(##\s*建表语句[\s\S]*?)```sql[\s\S]*?```/i, `$1${fence}`);
   }
   // No section — append
   return md.replace(/\s*$/, `\n\n## 建表语句\n\n${fence}\n`);
@@ -103,6 +104,58 @@ export function replaceCreateTableBlock(md, ddl) {
 function extractCreateSqlFence(md) {
   const m = md.match(/##\s*建表语句[\s\S]*?```sql\s*([\s\S]*?)```/i);
   return m ? m[1].trim() : null;
+}
+
+/** Normalize SHOW CREATE DDL for compare (strip ENGINE/COMMENT noise; keep structure). */
+export function normalizeDdlForCompare(ddl) {
+  return String(ddl || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*ENGINE\s*=\s*\w+/gi, "")
+    .replace(/\s*DEFAULT\s+CHARSET\s*=\s*\w+/gi, "")
+    .replace(/\s*COLLATE\s*=\s*\w+/gi, "")
+    .replace(/\s*COMMENT\s*=\s*'[^']*'/gi, "")
+    .replace(/\s*COMMENT\s+'[^']*'/gi, "")
+    .trim()
+    .toLowerCase();
+}
+
+/** Short unified-ish diff for stderr (cap lines). */
+export function formatDdlDiff(prevDdl, liveDdl, maxLines = 40) {
+  const a = String(prevDdl || "").split(/\r?\n/);
+  const b = String(liveDdl || "").split(/\r?\n/);
+  const out = [];
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n && out.length < maxLines; i++) {
+    const la = a[i];
+    const lb = b[i];
+    if (la === lb) continue;
+    if (la != null && lb == null) out.push(`- ${la}`);
+    else if (la == null && lb != null) out.push(`+ ${lb}`);
+    else {
+      out.push(`- ${la}`);
+      out.push(`+ ${lb}`);
+    }
+  }
+  if (out.length >= maxLines) out.push("… (diff truncated)");
+  return out.join("\n");
+}
+
+/** Extract CREATE TABLE SQL from SHOW CREATE TABLE row (MySQL + MariaDB keys). */
+export function extractShowCreateDdl(row) {
+  if (!row || typeof row !== "object") return null;
+  const prefer = ["Create Table", "Create table", "Create Table ", "CREATE TABLE"];
+  for (const k of prefer) {
+    if (typeof row[k] === "string" && row[k]) return row[k];
+  }
+  for (const [k, v] of Object.entries(row)) {
+    if (typeof v === "string" && /create\s+table/i.test(k) && /CREATE\s+TABLE/i.test(v)) {
+      return v;
+    }
+  }
+  // Fallback: second column (table name, ddl)
+  const vals = Object.values(row);
+  if (vals.length >= 2 && typeof vals[1] === "string") return vals[1];
+  return null;
 }
 
 function ddlLooksHollow(md) {
@@ -316,7 +369,8 @@ async function main() {
 
   if (mysqlCfg) {
     const invPath = path.join(root, "docs", "db", ".fill-work", "inventory.json");
-    const inv = fs.existsSync(invPath)
+    const invExists = fs.existsSync(invPath);
+    const inv = invExists
       ? JSON.parse(fs.readFileSync(invPath, "utf8"))
       : { tables: [] };
     const tableDir = path.join(root, "docs", "db", "table");
@@ -328,13 +382,23 @@ async function main() {
         if (m) byName.set(m[2], { nn: m[1], file: f });
       }
     }
+    // 0.7.29 NEW-8: explicit empty inventory must not fall back to doc scan
+    const invTables = Array.isArray(inv.tables) ? inv.tables : [];
+    if (invExists && invTables.length === 0) {
+      stats.empty_inventory = true;
+      console.error(
+        "fill-calibrate-live: inventory.json has tables:[] — refuse doc-scan fallback (empty_inventory)"
+      );
+      process.exitCode = 2;
+    } else {
     const conn = await mysql.createConnection({
       ...mysql2ConnectionConfig(mysqlCfg),
       connectTimeout: 10000,
     });
-    const tables = inv.tables?.length
-      ? inv.tables
+    const tables = invTables.length
+      ? invTables
       : [...byName.keys()].map((name) => ({ name }));
+    stats.diffs = stats.diffs || [];
     for (const t of tables) {
       const name = t.name;
       if (!name) continue;
@@ -344,10 +408,7 @@ async function main() {
           stats.db_miss++;
           continue;
         }
-        const ddl =
-          rows[0]["Create Table"] ||
-          rows[0]["Create table"] ||
-          Object.values(rows[0])[1];
+        const ddl = extractShowCreateDdl(rows[0]);
         if (!ddl || typeof ddl !== "string") {
           stats.db_miss++;
           continue;
@@ -370,12 +431,19 @@ async function main() {
         let existing = null;
         if (fs.existsSync(docPath)) existing = fs.readFileSync(docPath, "utf8");
         const prevDdl = existing ? extractCreateSqlFence(existing) : null;
-        const changed = !prevDdl || prevDdl.replace(/\s+/g, " ") !== liveDdl.replace(/\s+/g, " ");
+        const changed =
+          !prevDdl ||
+          normalizeDdlForCompare(prevDdl) !== normalizeDdlForCompare(liveDdl);
         if (!args.writeDdl) {
-          // default / --dry-run: compare only
+          // default / --dry-run: compare only — emit readable diff (FC-1)
           if (changed) {
             stats.db_diff = (stats.db_diff || 0) + 1;
-            console.error(`[calibrate] diff ${meta.file}: DDL ${prevDdl ? "changed" : "missing in doc"}`);
+            const snippet = formatDdlDiff(prevDdl || "(missing)", liveDdl);
+            stats.diffs.push({ file: meta.file, table: name, diff: snippet });
+            console.error(
+              `[calibrate] diff ${meta.file}: DDL ${prevDdl ? "changed" : "missing in doc"}`
+            );
+            if (snippet) console.error(snippet);
           } else {
             stats.db_unchanged = (stats.db_unchanged || 0) + 1;
           }
@@ -418,6 +486,7 @@ async function main() {
       fs.mkdirSync(path.dirname(invPath), { recursive: true });
       fs.writeFileSync(invPath, JSON.stringify(inv, null, 2));
     }
+    } // end else (non-empty inventory)
   }
 
   if (redisCfg) {
@@ -542,17 +611,24 @@ async function main() {
   }
 
   // 0.7.26 SG-9: inventory has tables but db_ok=0 → empty gate / fail
+  // 0.7.29 NEW-8: inventory exists with tables:[] + mysql → empty_inventory
   let invTableCount = 0;
+  let invFileExists = false;
   try {
     const invPath = path.join(root, "docs", "db", ".fill-work", "inventory.json");
     if (fs.existsSync(invPath)) {
+      invFileExists = true;
       const inv = JSON.parse(fs.readFileSync(invPath, "utf8"));
       invTableCount = Array.isArray(inv.tables) ? inv.tables.length : 0;
     }
   } catch {
     invTableCount = 0;
   }
-  if (mysqlCfg && invTableCount > 0 && stats.db_ok === 0) {
+  if (mysqlCfg && invFileExists && invTableCount === 0) {
+    stats.empty_inventory = true;
+    console.error("fill-calibrate-live: empty_inventory (tables:[]) with mysql configured");
+    process.exitCode = 2;
+  } else if (mysqlCfg && invTableCount > 0 && stats.db_ok === 0) {
     console.error(
       `fill-calibrate-live: db_ok=0 but inventory has ${invTableCount} table(s) (empty gate)`
     );

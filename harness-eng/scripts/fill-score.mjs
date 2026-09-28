@@ -28,6 +28,7 @@ import {
 import {
   detectDbFieldDrift,
   detectApiFieldDrift,
+  detectFuncMethodDrift,
   hasBusinessBody,
 } from "./lib/field-drift.mjs";
 import {
@@ -111,6 +112,7 @@ function parseArgs(argv) {
     focus: "full", // 0.3.1: morph | gate | full — 只裁剪中文摘要
     domains: [], // 0.3.4: CLI override; empty → meta / disk / core
     migratePolicy: false,
+    gateProfile: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -128,7 +130,12 @@ function parseArgs(argv) {
         .filter(Boolean);
     else if (a === "--threshold") out.threshold = Number(argv[++i]) || 80;
     else if (a === "--migrate-policy") out.migratePolicy = true;
-    else if (a === "--inventory") out.inventory = argv[++i];
+    else if (a === "--gate-profile") {
+      const gp = String(argv[++i] || "").toLowerCase();
+      if (!["strict", "gold", "legacy"].includes(gp))
+        throw new Error("--gate-profile must be strict|gold|legacy");
+      out.gateProfile = gp;
+    } else if (a === "--inventory") out.inventory = argv[++i];
     else if (a === "--compare") out.compare = argv[++i];
     else if (a === "--ready-quality") {
       out.readyQuality = Number(argv[++i]) || 80;
@@ -169,6 +176,7 @@ Options:
   --ready-quality <n>     Morph quality floor override
   --ready-coverage <n>    Coverage ratio override
   --compare <path>        Previous score JSON for diff hints
+  --gate-profile <name>   Override score-policy gate_profile (strict|gold|legacy)
   --quiet / --verbose / --summary-only / --write-progress / --migrate-policy
   --help, -h
 
@@ -751,6 +759,8 @@ function defaultScorePolicy() {
     },
     // 无 score-policy 文件 → legacy；有文件但未写 gate_profile → 0.3.0 升 strict
     gate_profile: "legacy",
+    // 0.7.29 SG-1: api field missing ratio for drift blockers
+    api_field_missing_ratio: 0.3,
     gate: {
       morph_floor: null,
       template_completeness_min: null,
@@ -800,6 +810,8 @@ function loadScorePolicy(root) {
   const gp = raw.match(/^\s*gate_profile:\s*(\w+)/m);
   // 0.3.0 破坏性：有 score-policy 但未写 gate_profile → strict（存量升档）
   base.gate_profile = gp ? gp[1] : "strict";
+  const afr = raw.match(/api_field_missing_ratio:\s*([0-9.]+)/);
+  if (afr) base.api_field_missing_ratio = Number(afr[1]);
   const gate = base.gate || {};
   const explicit = {};
   const mf = raw.match(/morph_floor:\s*([0-9.]+|null)/);
@@ -821,10 +833,10 @@ function loadScorePolicy(root) {
   const ab = raw.match(/acceptance_blockers_max:\s*([0-9]+|null)/);
   if (ab && ab[1] !== "null") gate.acceptance_blockers_max = Number(ab[1]);
   const aw = raw.match(/acceptance_warnings_max:\s*([0-9]+|null)/);
-  if (aw) {
+  // 0.7.28 SG-6: null = unset (inherit profile default), not explicit disable
+  if (aw && aw[1] !== "null") {
     explicit.acceptance_warnings_max = true;
-    if (aw[1] !== "null") gate.acceptance_warnings_max = Number(aw[1]);
-    else gate.acceptance_warnings_max = null;
+    gate.acceptance_warnings_max = Number(aw[1]);
   }
   const nl = raw.match(/require_no_lagging_domain:\s*(true|false)/i);
   if (nl) gate.require_no_lagging_domain = nl[1].toLowerCase() === "true";
@@ -872,6 +884,17 @@ function evaluateCoverageReady(
     if (!row || typeof row.ratio !== "number") continue;
     if (!(row.code > 0)) continue;
     domainsPresent.push(d);
+    // 0.7.28 ID-3: covered_gt_code must not pass via capped ratio
+    if (row.anomaly === "covered_gt_code") {
+      gaps.push({
+        domain: d,
+        ratio: row.raw_ratio ?? row.ratio,
+        target: targets[d],
+        delta: null,
+        anomaly: "covered_gt_code",
+      });
+      continue;
+    }
     if (row.ratio + 1e-9 < targets[d]) {
       gaps.push({
         domain: d,
@@ -906,9 +929,21 @@ function evaluateCoverageReady(
     ok =
       overallCoverage != null &&
       typeof overallCoverage.ratio === "number" &&
-      overallCoverage.ratio + 1e-9 >= readyCoverage;
+      overallCoverage.ratio + 1e-9 >= readyCoverage &&
+      overallCoverage.anomaly !== "covered_gt_code";
     effective = overallCoverage?.ratio ?? null;
+    if (overallCoverage?.anomaly === "covered_gt_code") {
+      gaps.push({
+        domain: "api",
+        ratio: overallCoverage.raw_ratio ?? overallCoverage.ratio,
+        target: readyCoverage,
+        delta: null,
+        anomaly: "covered_gt_code",
+      });
+    }
   }
+  // any domain anomaly fails coverage_ready
+  if (gaps.some((g) => g.anomaly === "covered_gt_code")) ok = false;
   return {
     ok,
     mode,
@@ -1025,6 +1060,15 @@ function main() {
     policyMigrated = migrateScorePolicyFile(root);
   }
   const scorePolicy = loadScorePolicy(root);
+  // 0.7.29 SG-10: CLI --gate-profile overrides score-policy.yaml
+  if (args.gateProfile) {
+    scorePolicy.gate_profile = args.gateProfile;
+    if (args.gateProfile === "gold") {
+      scorePolicy.gate = applyGoldGateDefaults(scorePolicy.gate || {}, {});
+    } else if (args.gateProfile === "strict") {
+      scorePolicy.gate = applyStrictGateDefaults(scorePolicy.gate || {}, {});
+    }
+  }
   const progress = createProgress({ quiet: args.quiet, label: "fill-score" });
   progress.log("start");
 
@@ -1067,7 +1111,8 @@ function main() {
   );
   const report = {
     ok: true,
-    root: ".",
+    // 0.7.27 NEW-2: absolute root so ai-coding-gate does not scan process CWD
+    root,
     modules: args.modules,
     scored_domains: domains,
     threshold: args.threshold,
@@ -1276,15 +1321,23 @@ function main() {
 
   // 0.7.25 SG-1: field-level doc↔code drift (strict/gold blocker)
   const dbDrift = detectDbFieldDrift(root);
-  const apiDrift = detectApiFieldDrift(root, inventory);
+  const apiRatio =
+    Number.isFinite(Number(scorePolicy.api_field_missing_ratio))
+      ? Number(scorePolicy.api_field_missing_ratio)
+      : 0.3;
+  const apiDrift = detectApiFieldDrift(root, inventory, { missingRatio: apiRatio });
+  const funcInv = loadDomainInventory(root, "func");
+  const funcDrift = detectFuncMethodDrift(root, funcInv);
   report.field_drift = {
     db: dbDrift,
     api: apiDrift,
-    ok: dbDrift.ok && apiDrift.ok,
+    func: funcDrift,
+    ok: dbDrift.ok && apiDrift.ok && funcDrift.ok,
   };
   const driftBlockers = [
     ...(gateProfile === "strict" || gateProfile === "gold" ? dbDrift.blockers : []),
     ...(gateProfile === "strict" || gateProfile === "gold" ? apiDrift.blockers : []),
+    ...(gateProfile === "strict" || gateProfile === "gold" ? funcDrift.blockers : []),
   ];
 
   const baseAiOk =
@@ -1294,6 +1347,8 @@ function main() {
   const baseBlockers = [
     !skel.ok && "skeleton_ready",
     !coverageReady && "coverage_ready",
+    covEval.gaps?.some((g) => g.anomaly === "covered_gt_code") &&
+      "inventory_undercount:covered_gt_code",
     !semanticOk && "semantic_ready",
     !plan.present && "fill_plan_missing",
     plan.present && !planClosed && "fill_plan_open_batches",
@@ -1336,10 +1391,8 @@ function main() {
     blockers: [...baseBlockers, ...gateEval.blockers],
     gate: gateEval,
   };
-  // pass tracks morph ready when inventory present; without inventory stay quality-only vs --threshold
-  report.pass = covIncomplete
-    ? report.overall >= args.threshold
-    : report.ready.ok;
+  // 0.7.28 ID-4: without inventory never morph-pass (was overall>=threshold fake green)
+  report.pass = covIncomplete ? false : report.ready.ok;
 
   if (prev && typeof prev.overall === "number") {
     report.diff = {
@@ -1376,10 +1429,14 @@ function main() {
     report.suggest_next = "skeleton_ready=false → upgrade/resume 到 L4（hooks/MCP example）";
   } else if (covIncomplete) {
     report.suggest_next =
-      "补 inventory（默认 docs/api/.fill-work/）后再判 coverage_ready；fill-mcp【推荐】→ agents";
+      "缺 inventory → 先跑 node scripts/harness.mjs --mode refresh --root <仓> 再 fill-score；勿用形态分当覆盖";
   } else if (!coverageReady) {
-    report.suggest_next =
-      "补覆盖：inventory → fill-plan 批次 → fill-truths-agents";
+    const und =
+      covEval.gaps &&
+      covEval.gaps.some((g) => g.anomaly === "covered_gt_code");
+    report.suggest_next = und
+      ? "coverage anomaly covered_gt_code（inventory 低估）→ 重扫全仓 inventory / 修复 controller_root 后再判 ready"
+      : "补覆盖：inventory → fill-plan 批次 → fill-truths-agents";
   } else {
     report.suggest_next =
       "继续 fill-truths-agents / fill-calibrate-live；开干只看 ai_coding_ready 与 gate blockers";

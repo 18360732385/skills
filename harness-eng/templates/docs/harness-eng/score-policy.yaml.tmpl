@@ -40,6 +40,7 @@ density:
 # - strict：并入下方 gate（形态≥75 · TODO 真相面 · blockers=0）
 # - gold：形态≥95 · 完成度≥95 · 覆盖 100% · TODO 扫面 B · blockers/warnings=0 · 语义收紧
 # 【推荐】新仓/大仓仍 strict；契约贴顶后显式升 gold
+# 0.7.29 SG-1: api_field_missing_ratio: 0.3  （缺文档字段占比阈值）
 gate_profile: strict
 
 gate:
@@ -51,5 +52,5 @@ gate:
   todo_scan: null                 # null=按 profile（strict truths / gold harness_docs）
   gold_ratio_min: null
   acceptance_blockers_max: 0
-  acceptance_warnings_max: null   # gold 缺省 0；null=不检
+  acceptance_warnings_max: null   # null=按 profile（gold→0；strict 亦→0）；显式数字才覆盖
   require_no_lagging_domain: false

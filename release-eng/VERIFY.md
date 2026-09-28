@@ -1,20 +1,32 @@
-# release-eng 验收记录（0.3.19-dev）
+# release-eng 验收记录（0.3.20-dev）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.19-dev**（统一 `release.mjs` + 模式 md 迁入 `modes/`；P0 门禁包继承）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前 **0.3.20-dev**（版本单点维护：manifest SSOT · sync-skill-version；其上 0.3.19-dev 薄入口 / modes/）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
 
-本版**不**改发版仪式语义与既有脚本行为契约（相对 0.3.18-dev）；含统一薄入口与模式 md 迁入 `modes/`。
+本版**不**改发版仪式语义与既有脚本行为契约（相对 0.3.19-dev）；含版本单点维护与仓根 README 钉号对齐。
+
+## 0.3.20-dev 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| `_meta/manifest.yaml` 为权威 `0.3.20-dev`；SKILL / AGENT-INDEX / README / VERIFY + 仓根 README 钉头一致 | 有 |
+| `node scripts/sync-skill-version.mjs --check` exit 0 | 有 |
+| selfcheck `PIN` 读自 manifest | 有 |
+| CHANGELOG 含 `## 0.3.20-dev` 且保留 `## 0.3.19-dev` | 有 |
+| AGENT-INDEX 记载发版四步 | 有 |
+| QUICKSTART 仍不钉号 | 有 |
 
 ## 0.3.19-dev 增量验收
 
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / QUICKSTART / VERIFY 钉 **0.3.19-dev** | 有 |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.3.19-dev** | 有（历史钉；现行见 0.3.20-dev） |
 | CHANGELOG 含 `## 0.3.19-dev` 且保留 `## 0.3.18-dev` | 有 |
 | 模式 md 位于 `modes/`（prepare/resume/audit/seal/freeze/write-plan/gates-*/questions/ai-track/bootstrap/recommended/idempotency） | 有 |
 | [modes/README.md](modes/README.md) 索引表存在 | 有 |

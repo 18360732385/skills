@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * release-eng selfcheck (0.3.19-dev)：静态断言 + 纯函数/形断言。
+ * release-eng selfcheck：静态断言 + 纯函数/形断言。版本 PIN 读自 `_meta/manifest.yaml`。
  * 覆盖：manifest · modes/ 模式文件 · 关键脚本 · fixtures 种子 ·
  * AGENT-INDEX / QUICKSTART / VERIFY · 钉号链 ·
  * identityFromBranch · 截断5 · shortCommitHash · artifacts.json 形 ·
- * seal-check --help · release.mjs --help/modes。
+ * seal-check --help · release.mjs --help/modes · sync-skill-version --check。
  *
  * 非 harness land：不对齐 harness 自动 land 流水线。
  */
@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import { spawnSync } from "child_process";
 import { fileURLToPath, pathToFileURL } from "url";
+import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
@@ -33,7 +34,8 @@ function exists(rel) {
   return fs.existsSync(path.join(skillRoot, rel));
 }
 
-const PIN = "0.3.19-dev";
+const PIN = readSkillVersion(skillRoot);
+const VER_RE = escapeSemverRe(PIN);
 
 const MODES = [
   "modes/prepare.md",
@@ -80,7 +82,7 @@ const FIXTURE_SEED = [
 const manifest = read("_meta/manifest.yaml");
 assert(manifest != null, "manifest.yaml exists");
 assert(
-  manifest != null && /version:\s*"0\.3\.19-dev"/.test(manifest),
+  manifest != null && new RegExp(`version:\\s*"${VER_RE}"`).test(manifest),
   `manifest version == ${PIN}`
 );
 assert(
@@ -137,7 +139,7 @@ assert(
 );
 assert(skill != null && /VERIFY\.md/.test(skill), "SKILL links VERIFY");
 assert(
-  skill != null && /0\.3\.19-dev/.test(skill),
+  skill != null && skill.includes(PIN),
   `SKILL pins ${PIN}`
 );
 
@@ -145,7 +147,7 @@ assert(exists("AGENT-INDEX.md"), "AGENT-INDEX.md exists");
 const index = read("AGENT-INDEX.md") || "";
 assert(/必读/.test(index), "AGENT-INDEX has 必读");
 assert(/按需/.test(index), "AGENT-INDEX has 按需");
-assert(/0\.3\.19-dev/.test(index), `AGENT-INDEX pins ${PIN}`);
+assert(index.includes(PIN), `AGENT-INDEX pins ${PIN}`);
 assert(
   /非 harness land|harness_land:\s*false|harness land/.test(index),
   "AGENT-INDEX marks non-harness-land"
@@ -181,8 +183,8 @@ assert(
 const changelog = read("CHANGELOG.md");
 assert(changelog != null, "CHANGELOG.md exists");
 assert(
-  changelog != null && /^##\s+0\.3\.19-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.3.19-dev heading"
+  changelog != null && new RegExp(`^##\\s+${VER_RE}\\b`, "m").test(changelog),
+  `CHANGELOG has ## ${PIN} heading`
 );
 assert(
   changelog != null && /^##\s+0\.3\.18-dev\b/m.test(changelog),
@@ -192,6 +194,29 @@ assert(
   changelog != null && changelog.includes(PIN),
   `CHANGELOG mentions ${PIN}`
 );
+
+{
+  const syncCheck = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts/sync-skill-version.mjs"), "--check"],
+    { encoding: "utf8" }
+  );
+  assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
+}
+
+{
+  const repoRootReadmePath = path.join(skillRoot, "..", "README.md");
+  const repoRootReadme = fs.existsSync(repoRootReadmePath)
+    ? fs.readFileSync(repoRootReadmePath, "utf8")
+    : null;
+  assert(repoRootReadme != null, "repo root README.md exists (../README.md)");
+  assert(
+    new RegExp(
+      String.raw`release-eng/README\.md[^\n]*当前 ` + VER_RE
+    ).test(repoRootReadme || ""),
+    `repo root README release-eng row pins ${PIN}`
+  );
+}
 
 // =====================================================================
 // 0.3.18-dev 继承：纯函数 / 形断言（超出「文件存在」）
