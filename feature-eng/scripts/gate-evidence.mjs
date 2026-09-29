@@ -133,6 +133,25 @@ function parseAuthTable(huilian) {
   return map;
 }
 
+/**
+ * L2 审核 result 整行取值。模板占位 `pass | fail` 不是裁定。
+ * @returns {"pass"|"fail"|null}
+ */
+function parseReviewResult(body) {
+  if (!body) return null;
+  const m = String(body).match(/^(?:[-*]\s+)?result:\s*(.+)$/im);
+  if (!m) return null;
+  let v = m[1].trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim();
+  }
+  if (/^(pass|fail)$/i.test(v)) return v.toLowerCase();
+  return null;
+}
+
 /** 「仪式与降级」节存在且有实质行（非空、非纯 —） */
 function ritualSectionOk(huilian) {
   if (!huilian || !/##\s*仪式与降级/.test(huilian)) return false;
@@ -209,16 +228,17 @@ if (progress) {
       const body = read(reviewRel);
       if (!body) {
         issues.push(`gates.${gate} set but missing ${reviewRel}`);
-      } else if (!/result:\s*pass\b/i.test(body)) {
-        if (/result:\s*fail\b/i.test(body)) {
+      } else {
+        const verdict = parseReviewResult(body);
+        if (verdict === "pass") {
+          ok.push(`${reviewFile} result: pass`);
+        } else if (verdict === "fail") {
           issues.push(
             `${reviewRel} result: fail (ISO gates.${gate} requires result: pass)`
           );
         } else {
           issues.push(`${reviewRel} missing result: pass`);
         }
-      } else {
-        ok.push(`${reviewFile} result: pass`);
       }
     }
   }
