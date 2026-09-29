@@ -180,20 +180,32 @@ assert(
   "README no longer claims missing VERIFY/selfcheck"
 );
 
-const changelog = read("CHANGELOG.md");
-assert(changelog != null, "CHANGELOG.md exists");
+const logRoot = path.resolve(skillRoot, "..", "_log", "release-eng");
+function logExists(ver) {
+  return fs.existsSync(path.join(logRoot, `${ver}.md`));
+}
+const changelogIndex = read("CHANGELOG.md");
+assert(changelogIndex != null, "CHANGELOG.md exists");
 assert(
-  changelog != null && new RegExp(`^##\\s+${VER_RE}\\b`, "m").test(changelog),
-  `CHANGELOG has ## ${PIN} heading`
+  /_log\/release-eng\//.test(changelogIndex || ""),
+  "CHANGELOG points to _log/release-eng/"
 );
 assert(
-  changelog != null && /^##\s+0\.3\.18-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.3.18-dev heading"
-);
-assert(
-  changelog != null && changelog.includes(PIN),
+  changelogIndex != null && changelogIndex.includes(PIN),
   `CHANGELOG mentions ${PIN}`
 );
+assert(logExists(PIN), `_log/release-eng/${PIN}.md exists`);
+assert(
+  changelogIndex != null && changelogIndex.includes(`${PIN}.md`),
+  `CHANGELOG index links ${PIN}`
+);
+assert(logExists("0.3.18-dev"), "_log retains 0.3.18-dev");
+assert(
+  changelogIndex != null && changelogIndex.includes("0.3.18-dev.md"),
+  "CHANGELOG index links 0.3.18-dev"
+);
+assert(logExists("0.3.19-dev"), "_log retains 0.3.19-dev");
+
 
 {
   const syncCheck = spawnSync(

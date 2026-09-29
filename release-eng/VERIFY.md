@@ -5,7 +5,7 @@
 
 ## 版本
 
-当前 **0.3.20-dev**（版本单点维护：manifest SSOT · sync-skill-version；其上 0.3.19-dev 薄入口 / modes/）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)。
+当前 **0.3.20-dev**（版本单点维护：manifest SSOT · sync-skill-version；其上 0.3.19-dev 薄入口 / modes/）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
 
 本版**不**改发版仪式语义与既有脚本行为契约（相对 0.3.19-dev）；含版本单点维护与仓根 README 钉号对齐。
 
@@ -17,7 +17,7 @@
 | `_meta/manifest.yaml` 为权威 `0.3.20-dev`；SKILL / AGENT-INDEX / README / VERIFY + 仓根 README 钉头一致 | 有 |
 | `node scripts/sync-skill-version.mjs --check` exit 0 | 有 |
 | selfcheck `PIN` 读自 manifest | 有 |
-| CHANGELOG 含 `## 0.3.20-dev` 且保留 `## 0.3.19-dev` | 有 |
+| CHANGELOG 索引含 0.3.20-dev / 0.3.19-dev 且存在 `_log/release-eng/` 对应文件 | 有 |
 | AGENT-INDEX 记载发版四步 | 有 |
 | QUICKSTART 仍不钉号 | 有 |
 
@@ -27,7 +27,7 @@
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 | manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.3.19-dev** | 有（历史钉；现行见 0.3.20-dev） |
-| CHANGELOG 含 `## 0.3.19-dev` 且保留 `## 0.3.18-dev` | 有 |
+| CHANGELOG 索引含 0.3.19-dev / 0.3.18-dev 且存在对应 `_log/release-eng/` 文件 | 有 |
 | 模式 md 位于 `modes/`（prepare/resume/audit/seal/freeze/write-plan/gates-*/questions/ai-track/bootstrap/recommended/idempotency） | 有 |
 | [modes/README.md](modes/README.md) 索引表存在 | 有 |
 | SKILL / AGENT-INDEX / QUICKSTART 链接指向 `modes/` | 有 |

@@ -1,608 +1,105 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：`… → 0.7.0 → … → 0.7.28 → 0.7.29 → 0.7.30 → 0.7.31 → 0.7.32`（当前 **0.7.32**）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
-> 0.6.1 实证：[`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。0.6.0 路线（已收口）：[`_history/.../ROADMAP-0.6.0.md`](../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)。0.5.x 见 [`_history/.../CHANGELOG-0.5.x.md`](../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md)；0.4.0 及更早见 [`CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)。
-
-## 0.7.32 — 2026-09-28（e2e P2：冷启动文案 · 空 inventory · Codex matcher · upgrade 备份）
-
-### Fixed
-- **LT-6**：根 AGENTS 用 `DOCS_CONTRACT_TREE` / `AGENTS_SKILLS_LIST` 随 domains 裁剪，不再推荐未装的 redis/jobs skills
-- **LT-7**：`MIGRATION_HEADER_KEYS` 默认 `[]`；after-edit 对非 `V*` 的 `*.sql` 也做命名提醒
-- **LT-11**：`MYSQL_GUARD_SERVERS` 默认含 `mysql-local`（与 CD-3/fill-mcp 对齐）
-- **FC-6**：func evidence 用 `svc.class`；preserve-order 跟 inventory 发现序
-- **NEW-8**：缺/空 inventory 拒绝 write/doc-scan，不写空 `inventory.json`、不改写表 DDL
-- **ID-6**：resume/upgrade 强制 `LAST_MODE`；YAML managed 值未变保留原 block
-- **NEW-16**：`codex-hooks.json.tmpl` 无 mysql MCP 时不写 `mcp__mysql` matcher
-- **NEW-17**：upgrade replace fix-hook 前 `.bak-harness-*` + stderr 提示
-- **升级提示缺口**：freshness / upgrade 后启发式提示需手工 replace 的 rule13 / db.md / score-policy
-- **§7 #2**：api `--module` 过滤 inventory endpoints 再算 missing（§7 #4/#9 工具侧已在 0.7.31 收口）
-
-### Docs / pack
-- upgrade `0.7.31 → 0.7.32`；manifest / meta / sync tmpl / questions → `0.7.32`
-
-## 0.7.31 — 2026-09-28（e2e P1：假 ready · --no-write · DDL · DTO 漂移 · resume · bareRe · update-index）
-
-### Fixed
-- **ID-4**：scored 域缺 inventory → `missing_inventory:*`，`coverage_ready`/`pass`/`ai_coding_ready` 失败
-- **ID-3**：`refresh --no-write` 与 inventory `--no-write` 不写 inventory/meta/score
-- **FC-1**：DDL 归一化（反引号/`AUTO_INCREMENT`）；compare `db_diff>0` → exit 2；`--write-ddl` 纠正「与 Flyway 一致」文案
-- **SG-1**：跨文件 DTO 查找；api `missingRatio` 默认 0.15；注解参数缺失 ≥1 阻断；func 阈值 0.25
-- **ID-5**：resume/upgrade 遇 `on_exists=fail` 强制 skip；错误 stdout JSON
-- **HS-7**：Codex bareRe 认 `…js" commit-gate script.js`
-- **FC-9**：`.fill-work[/module]` 解析到 `docs/<domain>`；对齐表列；删「（待补充）」占位行
-
-### Docs / pack
-- upgrade `0.7.30 → 0.7.31`；manifest / meta / sync tmpl / questions → `0.7.31`
-
-## 0.7.30 — 2026-09-28（e2e P0 热修：meta 引号 · 假 gold · 预填跨节 · score root · Codex soft-gate）
-
-### Fixed
-- **NEW-10**：`yaml.mjs` map key 走 `parseScalar`；`inventory-meta` 读写去引号膨胀；安全 key 不再强制加引号
-- **NEW-12 / SG-10**：`reapplyGateProfile` 统一文件路径与 CLI `--gate-profile gold`（清除 strict 指纹后再填 gold 缺省）
-- **NEW-11 / LT-5**：`prefill-commands` 只改 Commands/常用命令节；无表时装标准表，不踩下一节契约表
-- **ID-8 / NEW-14**：`fill-score` 门禁用绝对 root，落盘/`--json` 的 `report.root` 为 `"."`
-- **NEW-15 / LT-1**：`git-commit-soft-gate` 识别 `--codex` / `HOST_SOFT`，提醒写 stderr（Codex adapter 可转发）
-
-### Docs / pack
-- upgrade `0.7.29 → 0.7.30`；manifest / meta / sync tmpl / questions → `0.7.30`
-
-## 0.7.29 — 2026-09-28（e2e P2：填契约 / 幂等 / UX）
-
-### Fixed
-- **FC-1 / NEW-8**：calibrate 默认 compare 输出 DDL diff；`--write-ddl` 保留「建表语句」说明行；`tables:[]` + mysql → `empty_inventory`（exit 2）；SHOW CREATE 兼容 MariaDB 键名
-- **FC-6**：`inventory-db` 取消表名字母序，保留发现序（preserve-order 生效）
-- **FC-9**：`--update-index` 只写入「表文档/模块文档」节；`index_missing` 非静默 exit 1
-- **LT-5**：预填匹配 `## 常用命令`
-- **LT-7 / DU-1**：rule 13 迁移头注释与 `MIGRATION_HEADER_KEYS` 统一（时间/撰写/目的/类型）
-- **LT-11**：未解析占位符不写盘（`skipped-unresolved`）
-- **ID-6 / NEW-7**：YAML merge 保持布尔/数字原生类型
-- **ID-7**：`fill-report-html` 输入已是 `score-latest.json` 时不回写 churn
-- **SG-10**：inventory `--out` 相对 `--root`；`fill-score --gate-profile`
-
-### Added
-- **SG-1**：api `requestFields`/`responseFields` 骨架；漂移阈值默认 0.3（`api_field_missing_ratio`）；func 方法名级 drift
-- **FC-8 / HS-8**：目标仓 README / AGENTS 首填后 SSOT 提示；land 成功提示 `core.hooksPath .githooks`
-- **ID-5**：write-plan 分 land=`fail` / resume=`skip` 示例
-
-### Docs / pack
-- upgrade `0.7.28 → 0.7.29`；manifest / meta / sync tmpl / questions → `0.7.29`
-
-## 0.7.28 — 2026-09-28（e2e P1：upgrade hooks · inventory meta · 评分假绿）
-
-### Fixed
-- **upgrade hooks**：默认 replace soft-gate / after-edit / commit-gate / mysql-guard / stop-checklist（`upgrade_fix_hooks: false` 可关）；rule13 / db.md 仍 skip，见 upgrade.md
-- **ID-3 / NEW-3**：显式 `--controller-root` 写入 `module_roots`，不覆盖全仓 `controller_root`；`covered_gt_code` 阻断 `coverage_ready`
-- **SG-6 / NEW-6**：`acceptance_warnings_max: null` 不再标 explicit（gold 缺省 warnings=0 生效）
-- **SG-5 / NEW-4**：`doc-density` 表头启发式收窄，数据行含「返回/说明」不再切表
-- **HS-4**：`docs/` 前缀谓词加 docsGuard
-- **ID-4**：缺 inventory 时 `report.pass=false`，suggest 指向 refresh
-
-### Added
-- **`scripts/lib/skill-version.mjs`**：从 `_meta/manifest.yaml` 读权威号；`escapeSemverRe`
-- **`scripts/sync-skill-version.mjs`**：机械副本 + 文档钉头同步；`--check` 可挂 selfcheck
-- **render**：写 `harness-meta` 时强制注入 SSOT `skill_version`
-
-### Changed
-- **selfcheck**：当前号断言读 `EXPECTED`（不再硬编码散落字面量）
-
-### Docs / pack
-- upgrade `0.7.27 → 0.7.28`；manifest / meta / sync tmpl / questions → `0.7.28`
-
-## 0.7.27 — 2026-09-28（e2e P0 热修：阻断崩溃 · 门禁真接线 · when_* 接通）
-
-### Fixed
-- **NEW-1**：`render.mjs` 分册 Spring+db 调用 `buildSpringDbBlock(params)`（不再引用已删常量 `SPRING_DB_BLOCK_ENABLED`）；land/resume/upgrade 可跑
-- **LT-1 / HS-7**：`sync.mjs` 按 SSOT 实际脚本接线 soft-gate vs basic；无 `mcp-mysql-guard.js` 时不写 mysql matcher；`checkHookRefsExist` 解析 adapter 裸文件名
-- **LT-6 / LT-8 / NEW-9**：接通 `passesWhenGates`（此前为死代码）；`expandHooksFamily` 的 mysql-guard 需 mysql MCP
-- **HS-3 / NEW-5**：`ensureStandardPlaceholders` + `buildHookPlaceholders` 强制 `DB_MIGRATION_DIR` 尾斜杠（不再被 put-skip 回退）
-- **SG-7**：中文 AGENTS 节标题正则去掉错误 `\b`（CJK 可匹配）
-- **NEW-2**：`fill-score` 的 `report.root` 写绝对路径，门禁不再跟 process CWD
-
-### Docs / pack
-- upgrade `0.7.26 → 0.7.27`；manifest / meta / sync tmpl / questions → `0.7.27`
-
-## 0.7.26 — 2026-09-28（e2e P2：幂等·路径 · fill-merge · L 级收口）
-
-### Fixed
-- **ID-5 / ID-6**：`resume`/`upgrade` 未显式设时默认 `on_exists=skip`；meta merge 保真嵌套 `inventory` + 注入 `last_mode`
-- **ID-7 / ID-8**：报告产物入 gitignore snippet；fill-report-html 不再把 `diff` 写回 score-latest；score/inventory `root` 写 `"."`
-- **FC-5 / FC-6 / FC-7 / FC-9**：fill-merge `--target-dir`/`--split-by table`、保序+`--footer`、`--update-index`；func 覆盖 `unit=services`
-- **FC-8**：fill 文档写明首填后改 SSOT、勿用 `.fill-work` 回退
-- **L 级**：DU-4 stdout 纯 JSON；LT-11 未解析占位非 0；HS-4/5/6；SG-7/9/10；LT-3/4/6/8/12/13；CD-3；QF-5/6；FC-10/11；HS-8；DU-5
-
-### Deferred
-- CD-1 detect CLI 全量信号、LT-9/10 大模板去领域化、DU-3 DTO 去重结构、SG-8 跨文档一致性引擎
-
-### Docs / pack
-- upgrade `0.7.25 → 0.7.26`；manifest / meta / sync tmpl / questions → `0.7.26`
-
-## 0.7.25 — 2026-09-28（e2e P1：漂移 / morph·gold / 分册·seed / 迁移 SSOT / 问答）
-
-### Fixed
-- **FC-4 / SG-1 / SG-2**：db inventory 叠加 ALTER；字段级 `doc_field_drift` 进 strict；空壳字段说明/`—` 不过闸
-- **SG-3 / SG-4 / SG-5 / SG-6**：业务说明深度捕获；`关联文档` 认 links；密度按表块解析；score-policy 不写死 morph_floor（gold 门槛生效）
-- **QF-7 / LT-2 / MS-1 / LT-5**：分册按目录探测（全局 spring 不盖 frontend）；Q_SEED 预填 Commands
-- **LT-7 / DU-1 / DU-2**：默认 Flyway 命名；`docs/db/db.md` 为约定 SSOT；rule/AGENTS/hook 指针化
-- **QF-1～4**：`remaining`/`truncated`；`S_*`/`domains_has_*`；`Q_CONTRACT` 挪到 ladder 之后；land 问 `Q_GATE_PROFILE`
-
-### Docs / pack
-- upgrade `0.7.24 → 0.7.25`；manifest / meta / sync tmpl / questions → `0.7.25`
-
-## 0.7.24 — 2026-09-28（e2e P0：refresh / L5 hooks / glob / calibrate）
-
-### Fixed
-- **ID-1**：`fill-score --json` 在带 `--output` 时仍向 stdout 打 JSON；`refresh` 可回读 score 文件双保险
-- **ID-2**：`refresh.loadDomains` 传 meta 原始 YAML；`parseMetaDomains` 接受已 parse 的对象
-- **FC-2 / FC-3 / ID-3/4**：api inventory 取 Controller LCA；db 自动发现 migration 根；`harness-meta.inventory` 持久化扫描根供 refresh / 重扫
-- **LT-1**：L5+codex hooks 投 `docs/agent-config/hooks/`（manifest `when_agent_config: false`）；`harness` 拒直渲 `.codex/hooks/`
-- **HS-7**：`sync --check` 校验 hooks.json 引用的脚本存在
-- **HS-1/2/3**：`globListToCodePreds` 分步占位；文件级 glob 精确匹配；`DB_MIGRATION_DIR` 补尾斜杠
-- **FC-1**：`fill-calibrate-live` 默认只对比 DDL；显式 `--write-ddl` 仅替换建表语句代码块
-
-### Docs / pack
-- upgrade `0.7.23 → 0.7.24`；manifest / meta / sync tmpl / questions → `0.7.24`
-
-## 0.7.23 — 2026-09-28（P3/P4：soft-gate 去品牌 + eng_snapshot 单写）
-
-### Improved
-- **P3**：`git-commit-soft-gate`：`listActiveFeatureRuns` → `listActiveTopicRuns`；detect `S_RUNS` 备注改为「主题过程态（外部控制器可选）」
-- **P4**：`delivery-checklist` §2 只写 `eng_snapshot`（读侧兼容旧 `harness_snapshot`；取消强制双写）
-
-### Docs / pack
-- 回滚误加的共享 `repo-layout` / `_contracts`（P5 不做）
-- upgrade `0.7.22 → 0.7.23`；manifest / meta / sync tmpl / questions → `0.7.23`
-
-## 0.7.22 — 2026-09-28（P0/P1/P2：协议解耦 + 中性 refresh）
-
-### Added
-- **P2**：L2 模板 `scripts/agent-kb/refresh-score.mjs`（`kb-refresh-score`）；解析 `HARNESS_ENG_ROOT` / 常见用户 skills 路径后委托 `harness.mjs --mode refresh`
-- **P2**：`delivery-checklist` §2 改调中性 `refresh-score`；回链双写 `eng_snapshot` + 兼容 `harness_snapshot`
-
-### Docs / pack
-- **P0**：热路径 / rules / checklist 以「宣称交付 / 主题收口」为准；`feature-eng` 仅为可选别名
-- **P1 对齐**：移交 / 探测话术按能力与路径（不硬钉对方 skill 名）
-- upgrade `0.7.21 → 0.7.22`；manifest / meta / sync tmpl / questions → `0.7.22`
-
-## 0.7.21 — 2026-09-28（docs-only：协议解耦文案）
-
-### Docs / pack
-- **解耦**：热路径与目标仓模板以「宣称交付 / 主题收口 / 主题过程态」为准；`feature-eng` 仅为可选别名（不改 detect/render/hooks/fill 行为）
-- **移交**：land/resume Done 的主题流程 P1 改为可选（有控制器则新会话接力；否则本 skill Done 即可）
-- SKILL 专节「可选接力（主题流程）」；glossary「与主题流程控制器易混词」
-- upgrade `0.7.20 → 0.7.21`；manifest / meta / sync tmpl / questions → `0.7.21`（已被 0.7.22 覆盖）
-
-## 0.7.20 — 2026-09-27（批 E：monorepo detect · entry_ready · GLOB hooks · sp skip）
-
-### Fixed / Improved
-- **E1**：`detect-signals` 一层子目录 `S_STACK`；新增 `S_SPRING` / `S_FRONTEND` / `S_SP` / `S_RUNS`；`detect.md` 钉 `S_SP`/`S_RUNS` 不算 harness PARTIAL 信号
-- **E2**：strict `entry_ready`——根/分册 AGENTS `## Commands`/`Critical` 仍含 `TODO(harness-eng)` → blocker `entry_todo`
-- **E7**：`buildContractChecksJs` 并上 `GLOB_API` 等；domains 默认含 `dto/`
-- **E8**：已有 `docs/runs/` 或 README/ARCHIVE 主题表时 sp-readme/archive `skip`（不 H2 双表补齐）
-
-### Docs / pack
-- upgrade `0.7.19 → 0.7.20`；manifest / meta / sync tmpl / questions → `0.7.20`
-
-## 0.7.19 — 2026-09-27（批 D2–D4：收口清单 + refresh）
-
-### Added
-- **D2**：`docs/agent-kb/delivery-checklist.md`（交付收口唯一正文）；rule 00/18/19、AGENTS、stop-checklist 改指针
-- **D4**：`harness.mjs --mode refresh`（inventory → acceptance → fill-score；exit 0/2/1；`--no-write` / `--dry-run`）
-
-### Fixed / Docs
-- **D3**：rule 18 钉死「交付/合并前收口，非每次 commit」；与 soft-gate（D1）口径一致
-- upgrade `0.7.18 → 0.7.19`；manifest / meta / sync tmpl / questions → `0.7.19`
-
-## 0.7.18 — 2026-09-27（批 B：分发安全 + 就绪可信；+ D1 soft-gate）
-
-### Fixed
-- **C1**：sync 对宿主 **skills** 目录只 prune `.harness-managed.json` 清单内文件；清单外报 unmanaged 并保留（不再静默删除 feature-eng 等项目级 skill）
-- **C9**：`fill-score` 缺 `.fill-work/inventory` 时内存重扫 API inventory；报告 `coverage_source: file|rescanned|missing`
-- **F14**：`fill-score --output` 相对路径相对 `--root` 解析
-- **C5 / D1**：`git-commit-soft-gate` 识别 `docs/runs/active/*/progress.yaml`（stage≠done）时提醒「主题进行中，收口在 feature-eng close」，不再诱导 verify 前假收口
-
-### Docs / pack
-- upgrade `0.7.17 → 0.7.18`；manifest / meta / sync tmpl / questions → `0.7.18`
-
-## 0.7.17 — 2026-09-27（批 A：L5/land 独立 P0）
-
-### Fixed
-- **F3**：`questions-next.mjs` `ladderOrd` 补 `L5:5`；未知阶抛错（不再静默 `-1` 跳过 hooks/MCP 批）
-- **F9**：`manifest` L1 落盘 `docs/harness-eng/score-policy.yaml`；meta 写 `gate_profile`；fill-score 无文件时明示 `legacy（无 score-policy）`
-- **F10**：`merge-api` / `merge-domain` 共用 `extractEvidence`（半角/全角 `evidence:` / `evidence：` 均认）
-- **F15**：render 写 `.githooks/*` / `*.sh` 后 `chmod 0o755`；ladder 自检查可执行位
-- **F17**：Spring 分册按根聚合 pom 分支：`mvn -pl` vs `mvn -f`；无 `db` 域省略库名表/迁移节
-
-### Docs / pack
-- upgrade `0.7.16 → 0.7.17`；manifest / meta / sync tmpl / questions → `0.7.17`
-
-## 0.7.16 — 2026-09-27（docs/runs 入图 + rule 18 中途 commit）
-
-### Docs / pack
-- **AGENTS**：Repo structure + 文档优先级增加 `docs/runs/` 指针（非契约 SSOT；不 land 整套 runs）
-- **rule 00**：文档权威 / 定向读序 / 交付收口含 runs active→archive；提交门禁与 rule 18 对齐
-- **rule 18**：进行中主题允许中途 commit；宣称交付时 superpowers + runs **双归档**；禁止假收口
-- **stop-checklist**：文案改为「宣称交付时须…；进行中可中途 commit」
-- upgrade `0.7.15 → 0.7.16`；manifest / meta / sync tmpl / questions → `0.7.16`
-
-## 0.7.15 — 2026-09-27（与 feature-eng 消歧与接力）
-
-### Docs / pack
-- **配合与互斥**：SKILL 短节（准备 → 新会话 feature-eng；同会话勿并行；可独立施工）
-- **术语**：仓库开干（`ai_coding_ready` / `fill-gate`）≠ feature 环 5「计划 Go 闸」；续跑工程化 ≠ 续跑主题；glossary 易混词表
-- **移交**：write-plan / prefill / land§7 P1 固定项「下一会话点名 feature-eng」
-- upgrade `0.7.14 → 0.7.15`；manifest / meta / sync tmpl / questions → `0.7.15`
-
-## 0.7.14 — 2026-09-26（报告壳 0.4.0 · 五台 + 宿主面）
-
-### Report / UI
-- **`report_schema` → 0.4.0**：`go_nogo` · `tasks[]` · `diagnose.story` · `ladder_progress`（施工阶梯）+ `pipeline_progress`（开干闸路径）· `host_surface`
-- **HTML 五台**：决策 / 诊断 / 任务 / 趋势 / **宿主**；默认仍进决策台；顶栏 live 胶囊 → 宿主台
-- **宿主面**：磁盘灰灯（present/absent，≠生效）+ session-live 彩灯；**不**绑进 `ai_coding_ready`
-- **趋势硬切断**：`report_schema < 0.4` 或 `morph_scale` 不符 → 灰显、不连线
-- **会话仪表盘**：消费同一 `buildReportUi`；有数据时多一行宿主面；手册脚注「五台读法」
-- **报告壳排版**：施工阶梯 L* 悬停说明；决策台 KPI 单行；覆盖+形态条同排；多域摘要两域一行、不达标域名红字
-- **会话仪表盘**：四边框 `┌─┐│└─┘`；叙事四句【阶段】【现状】【工作】【下一步建议】；**【现状】仅是否可 AI coding**
-
-### Docs / pack
-- upgrade `0.7.13 → 0.7.14`；manifest / meta / sync tmpl / questions → `0.7.14`
-- 手册 §6 五台读法 + 双轴进度；glossary `report_schema` **0.4.0**
-
-## 0.7.13 — 2026-09-26（使用手册大段改写）
-
-### Docs / pack
-- **人读对齐 Pass 1–2**：`guide/使用手册` 按对外四支 / 三档重写；砍 0.6.x 沉积脚注；html / 摘要同源同步
-- 语义冻结：模式 ID / L0–L5 / 闸门 / fill 行为不变
-- upgrade `0.7.12 → 0.7.13`；manifest / meta / sync tmpl / questions → `0.7.13`
-
-## 0.7.12 — 2026-09-26（guide/ 手册搬家）
-
-### Docs / pack
-- **Pass 2**：`使用手册.md` / `.html` / `使用手册-摘要.md` → `guide/`；根无 stub；`ROOT_KEEP` 不含手册
-- 删除技能树样例 `docs/harness-eng/README.md`（落地模板仍在 `templates/docs/harness-eng/`）
-- `modes/` · `fill/` · `host/` **不动名**；写盘 / fill 语义不变
-- upgrade `0.7.11 → 0.7.12`；manifest / meta / sync tmpl / questions → `0.7.12`
-
-## 0.7.11 — 2026-09-26（入口双写去重）
-
-### Docs / pack
-- **Pass 1.1**：QUICKSTART / glossary / pipeline* 长复述改 SSOT 指针；write-plan Windows 示例钉当前版本；SKILL 删「分支→Read」迷你表（路由仍 AGENT-INDEX）
-- 语义冻结：模式 ID / L0–L5 / 闸门 / fill 行为不变
-- upgrade `0.7.10 → 0.7.11`；manifest / meta / sync tmpl / questions → `0.7.11`
-
-## 0.7.10 — 2026-09-26（热路径编排压缩）
-
-### Docs / pack
-- **对外呈现**：模式四支（施工 · 流水线 · 审计/自证 · 填充）；阶梯三档（协作入口 · 契约与回流 · 门禁·工具·SSOT）；内部 ID / L0–L5 / 写盘语义不变
-- 压缩 `SKILL.md` · 按支重排 `AGENT-INDEX.md` · `QUICKSTART`「你要做什么」表 · `glossary` 对外对照指针
-- upgrade `0.7.9 → 0.7.10`；manifest / meta / sync tmpl / questions → `0.7.10`
-
-## 0.7.9 — 2026-09-24（可选 L4 rulehook 适配器）
-
-### Added
-- **可选 L4 rulehook**：`Q_RULEHOOK` / meta `rulehook` / 已有 `.rulehook/rulehook.toml` 才落盘；种子 ≤10 条短硬 deny
-- **`mergeRulehookCodexHooks`**（lib + sync tmpl）：存在 toml 时合并 `rulehook hook --target codex` 进 `.codex/hooks.json`，保留 harness soft hooks
-- **不** vendoring Python 包；须本机 PATH 有 `rulehook`；`fail_open`
-
-### Docs / pack
-- PARITY / MANUAL / adapters / rulehook README；upgrade `0.7.8 → 0.7.9`
-- P1 Codex 缺口（mcp-policy / calibrate / L4 rulehook）收口
-
-## 0.7.8 — 2026-09-24（calibrate 读 Codex TOML）
-
-### Added
-- **`parseCodexMcpToml` / `codexTomlToMcpDoc`**：轻量解析 `[mcp_servers.*]`；`env_vars` → `process.env`（可内联 `.env` 表）
-- **`loadMcpCredentials`**：JSON 无可用连接时回退 `.codex/config.toml` → `config.toml.example`；认 `MYSQL_PASSWORD` / `REDIS_URL`
-
-### Docs / pack
-- fill-calibrate-live / fill-mcp / PARITY / MANUAL / ai-tools / adapters；upgrade `0.7.7 → 0.7.8`
-- ~~P1 剩余：可选 L4 rulehook~~ → **0.7.9**
-
-## 0.7.7 — 2026-09-24（Codex MCP policy 精细开关）
-
-### Added
-- **`docs/agent-config/mcp/policy.json`**：`defaults` / `heuristics` / 按 server 覆盖 `enabled` + `approval_mode`
-- **`codex-mcp-toml.mjs` / sync**：写库类默认关；gitlab/chrome 等安全工具可建议开；显式 `servers.*` 优先
-- manifest `agent-config-mcp-policy`；`servers.example.json` 含 gitlab + mysql-test + redis-test 便于对照
-
-### Docs / pack
-- fill-mcp / CODEX-PARITY / MANUAL / adapters / upgrade `0.7.6 → 0.7.7`；P1 当时剩余：calibrate 读 toml / 可选 L4（**calibrate → 0.7.8**）
-
-## 0.7.6 — 2026-09-24（Codex 域 skills：redis / jobs / frontend）
-
-### Added
-- **L5 skills 种子**：`redis-doc-sync` · `jobs-doc-sync` · `frontend-web`（承接对应 `.mdc` 纪律摘要；**不做**全量镜像）
-- AGENTS「Rules 索引」、manifest `agent-config-skill-*`、fixture / selfcheck 对齐
-
-### Docs / pack
-- CODEX-PARITY / MANUAL / adapters / upgrade `0.7.5 → 0.7.6`
-- **NL 分层**：PARITY 写明 L0 SSOT → L1 Skills → L2 Starlark → L3 soft hooks → L4 可选 rulehook/deny（短硬红线，非默认依赖）
-- P1 当时剩余：mcp-policy / calibrate 读 toml / 可选 L4（**mcp-policy → 0.7.7**）
-
-## 0.7.5 — 2026-09-24（Codex Skills 种子 · 行为承接）
-
-### Added
-- **L5 skills 种子**：`docs/agent-config/skills/{contract-sync,api-doc-sync,db-doc-sync}/SKILL.md` → sync 到 `.agents/skills/`（及各宿主 `skills/`）；承接原 `.mdc` 同步纪律（**不做**全量镜像）
-- **manifest**：`agent-config-skill-*` + `agent-config-codex-rules-repository`（L5 SSOT Starlark）
-- AGENTS「Rules 索引」点名上述 skills；CODEX-PARITY NL 域规则 → **PASS**（薄种子）
-
-### Docs / pack
-- MANUAL / adapters / upgrade `0.7.4 → 0.7.5`；fixture `l5-sync-codex` 含 skills；selfcheck 钉种子存在与同步产物
-- **收口**：freshness / golden `HARNESS_SYNC_TMPL_ID` 与 manifest 对齐 **0.7.5**（selfcheck 按当前 version 动态断言）；README 纪律行补「Pn 回流 / 前后端契约」；MANUAL/PARITY 注明 Win `unified_exec` 可能绕过 PreToolUse
-
-## 0.7.4 — 2026-09-24（Codex hooks 家族 / Windows cmd / MCP 路径）
-
-### Fixed
-- **Windows hooks**：`commandWindows` 改走 **`codex-hook.cmd`**（`for /f` + git root），避免 PowerShell 嵌套引号在 `cmd /C` 外层包裹下静默失败
-- **mysql-guard**：默认 Codex hooks 增加 `PreToolUse` matcher `mcp__mysql`；`codex-adapter` 支持 **`mcp-guard`**（ask/deny → stderr，stdout 仍 `{}`）
-- **HOOK_DEFS**：登记 `events.codex`（`after-edit` 故意 omit）；`expandHooksFamily` / `hooks.config` 含 codex；manifest 增 `hooks-codex-cmd` / `hooks-codex-mysql-guard`
-- **mcp-paths**：`resolveMcpSecretTargets` 在含 `codex` 时包含 `.codex/config.toml`；fill-mcp 写明 calibrate **不**读 toml
-- **repository.rules**：增补 `git push --force` / `-f`、`git clean -xfd`
-
-### Docs / pack
-- CODEX-PARITY / MANUAL / adapters / upgrade `0.7.3 → 0.7.4`；selfcheck 钉 `codex-hook.cmd` + `mcp__mysql` + HOOK_DEFS.codex
-- sync tmpl / fixture `l5-sync-codex` → **0.7.4**
-
-## 0.7.3 — 2026-09-24（Codex hooks 生效链 PR1）
-
-### Fixed
-- **Codex hooks Windows**：`command` 保留 Unix `$(git …)`；新增 **`commandWindows`**（初版 PowerShell；**0.7.4** 改 cmd 启动器），避免 Win 下 `$()` 未展开导致 hook 静默 fail-open
-- **Codex Stop 去空壳**：`codex-stop-checklist.js` 对齐 Cursor stop 观察清单（git status / migration / superpowers / 代码前缀 → **stderr**；stdout 仍 `{}`）
-- **codex-adapter**：转发子进程 stderr；spawn/非零退出写诊断（仍 fail-open）
-- **gitignore**：snippet 增加 `.codex/config.toml`
-
-### Docs / pack
-- CODEX-MANUAL / PARITY / adapters/codex 同步；upgrade `0.7.2 → 0.7.3`；selfcheck 钉 `commandWindows` + Stop 非空壳 + gitignore
-- sync tmpl / fixture `l5-sync-codex` → **0.7.3**
-- AGENTS「Rules 索引」Codex 分支；MCP 启用仪式 / 入库约定
-
-## 0.7.2 — 2026-09-24（日落 CLI shim）
-
-### Fixed
-- **stop-checklist 不接管会话**：`claude-adapter` 的 `stop-check` 不再把清单映射为 `decision: "block"`（Claude 族 Trae/WorkBuddy/Claude/Qoder 曾因此强制续聊并自行提交）；`stop-delivery-checklist` 改为 stderr 观察向，**永不**返回 `followup_message`；推荐包默认去掉 `stop-checklist`
-
-### Breaking
-- **删除** `scripts/land.mjs`：写盘只认 `node scripts/harness.mjs`（`[--mode land]`）
-- **删除** 10 个域薄包装：`fill-inventory-{api,func,db,redis,jobs}.mjs`、`fill-merge-{api,func,db,redis,jobs}.mjs`
-- 替代：`fill-inventory.mjs --domain <id>` / `fill-merge.mjs --domain <id>`
-
-### Docs / pack
-- 热路径与 fill 索引只写统一 CLI；upgrade `0.7.1 → 0.7.2` 含命令替换表
-- selfcheck 断言 shim **缺席**；钉号 0.7.2
-- **还原并同步** `使用手册.html`（v0.7.2 · `#s6` · 公开 CLI 提示）；会话仪表盘优先链 HTML 第 6 章
-
-## 0.7.1 — 2026-09-23（热路径瘦身）
-
-### Docs / pack
-- **Codex 文案**：摘要 / QUICKSTART / README 对齐 **高 · 纪律 B**（去掉残留 P2）
-- **删根/host stub**：`detect`/`fill`/`pipeline`/`write-plan`/`fill-truths-auto`/`ROADMAP-0.6.0`、`CODEX-P0-MANUAL`、`TRAE-P0-EVIDENCE`
-- **手册收敛**：保留 `使用手册.md` + `使用手册-摘要.md`；删除 `使用手册.html`；会话仪表盘链改 md
-- **迁 `_history`**：`archive/` 正文（CHANGELOG-0.5 / ROADMAP / TRAE evidence）· `docs/superpowers` Codex 设计稿 → `superpowers-codex-0.6.9/`
-- **删一次性** `scripts/fixtures/_bump*` / `_patch*` / `_rebuild*`（保留 `_build-l5-sync-codex`）
-- **当时保留**：`land.mjs` 与域 CLI shim（**0.7.2 已硬删**）；运行时兼容（meta 回退 / gate legacy / ready.ok / ui.version）仍保留
-
-## 0.7.0 — 2026-09-23（形态重标定 · gold 可达 · ready 废弃）
-
-### Breaking
-- **形态分**：探针≈75 + 深度≈25 → 满分 **100**；`morph_cap=100`；`formula_ceiling≈100`；JSON `morph_scale: "0.7"`
-- **strict** `morph_floor`: 60 → **75**；**gold** `morph_floor`: 90 → **95**（仍双 95：完成度≥95）
-- **strict semantic**：`generic≤3 && unbound≤2 && tc≥70`（legacy 保持 5/3/50；gold 0/0/95）
-- **`ready.ok` 对外废弃**（JSON 保留 `deprecated: true`）；开干只看 `ai_coding_ready`
-- **report_schema** → **0.3.0**；旧 score-history 与 0.6.x overall **不可比**
-
-### Added
-- `scripts/lib/morph-depth.mjs` 深度档；`scripts/lib/score-policy-migrate.mjs` 字段级迁移 60→75 / gold 90→95
-- `fill-score --migrate-policy`；`harness.mjs` resume/upgrade/land 后自动迁移旧默认 morph_floor
-
-### Docs
-- fill-score / fill-gate / glossary / upgrade 迁移要点对齐 0.7.0
-
-## 0.6.9 — 2026-09-22（Codex → 高：分轨 SSOT · 纪律 B）
-
-> 设计：[`_history/.../superpowers-codex-0.6.9/specs/2026-09-22-codex-full-support-design.md`](../_history/harness-eng-docs-archive/superpowers-codex-0.6.9/specs/2026-09-22-codex-full-support-design.md)。**不**改 Trae / CodeBuddy 矩阵；生产装/升仍用 **`main`**。
-
-- **报告壳 0.2.26（施工指挥台 UX）**：IBM Plex Sans SC 正文；`prefers-reduced-motion` 关 CRT/glitch；命令一键复制；Escape 关模态；`#hash` 深链生效；←/→ `[` `]` 切台；趋势台参考分视觉降权；残差任务条纹+徽章分层
-- **会话仪表盘展示时机收紧**：SHOW 改为「本轮」模式步进 / 改盘意图 / 显式读数；中途 meta 与跑题 **HIDE**（不再因「工程会话未结束」硬附）；无目标根时仅 detect/定根轮出精简块。规格 [session-dashboard.md](modes/session-dashboard.md)
-- **密文对用户话术收窄**：不主动要求「别填密码」；仅编辑 local 真密配置（`mcp.json` / `.codex/config.toml`）时提醒可本地填、勿提交。技能模板/example/可提交产物仍无密；fill-mcp 经确认写 gitignore 路径。见 [SKILL.md](SKILL.md) · [fill-mcp.md](fill/fill-mcp.md)
-- **会话仪表盘里程碑再收**：SHOW 仅 **实质产出** / **闸门决策**（出示 WritePlan 或用户确认）/ **显式读数**；提问批次、定根前（无根）、等确认空轮、改 skill **HIDE**；取消无根精简例外。规格 [session-dashboard.md](modes/session-dashboard.md)
-- **精简会话仪表盘样式（方案 B）**：无 score 时标题「（精简）· 未打分」+ 加粗元信息行 + 「下一动作」；脚注复用全量 `详情请查询仪表盘`（file 链 / 未生成路径 · 手册 #s6）
-- **对齐**：Codex 矩阵 **高**；推荐纪律 **B**（探测 `.codex/` 或显式勾选）；**不做** `.mdc` 全量镜像
-- **MCP**：`mcp/servers*.json` → `.codex/config.toml.example`（`codex-mcp-toml.mjs` / L5 sync；无密钥；默认 `enabled=false`）
-- **Hooks**：`PreToolUse(^Bash$)` + `Stop` + `codex-adapter.js`
-- **Rules**：Starlark `docs/agent-config/codex/rules/*.rules` → `.codex/rules/`
-- **Skills**：L5 全量 → `.agents/skills/`（不 prune 用户自建）
-- **contract-sync**：L3+/L5 omit；L0–L2 仍写
-- **文档**：[CODEX-PARITY.md](host/CODEX-PARITY.md) · [CODEX-MANUAL.md](host/CODEX-MANUAL.md)；`CODEX-P0-MANUAL` stub
-- **fixture**：`scripts/fixtures/l5-sync-codex`
-- manifest / meta / sync tmpl · golden → **`0.6.9`**
-
-## 0.6.8-dev — 2026-09-19（Codex P0 增量解冻：PARITY + config.toml + hooks）
-
-> 0.6.7 跟进。**不**改 Trae / CodeBuddy 矩阵；**不**做 `.mdc` 全量镜像；生产装/升仍用 **`main`**（勿钉 `V0.6.X`）。
-
-### 本版要点
-
-- **Codex P0**：新增 [host/CODEX-PARITY.md](host/CODEX-PARITY.md)（AGENTS/config/MCP/hooks/skills 对照官方；PASS/PARTIAL；明确 **不做** `.mdc` 全量镜像）与 [host/CODEX-P0-MANUAL.md](host/CODEX-P0-MANUAL.md)（trust / `/hooks` / `/mcp` / skills 人验）
-- **config**：`templates/ai-tools/codex-config.toml.tmpl` → `.codex/config.toml.example`（stdio+http 注释示例；trusted-only；无密钥）
-- **hooks**：`codex-hooks.json` matcher 改为 Codex 正则 **`^Bash$`**；文档强调 `/hooks` trust
-- **skills**：文档官方 `.agents/skills`；L5 sync 仅写轻指针 `GENERATED.md`（不全量拷贝）
-- **措辞**：去掉「0.6.x 整列冻结 P2」→ **P0 增量解冻 / 仍不默认进全部推荐**；Cursor 级全家桶同构仍 out of scope
-- **金标纪律回捞（去域化，2026-09-22）**：从 c-be-sms-ai 抽可复用施工纪律进模板——`jobs-index-template` / `jobs.md.tmpl` / `job-template`（Never do、调度契约>func/api Cron 摘录、独立开关）；rule `12`/`13` 补判定清单+联动+同步操作表（保留 `{{GLOB_*}}`，不带回 Pn/业务名）；rule `20` 对齐四件套 + Never do。**不**把 AGENTS/pitfalls 真真相塞回 templates
-- **五契约域文案对齐（2026-09-22）**：注册表已是 api/func/db/redis/jobs；清除残留「四域」措辞与漏 `|jobs` 路径；`FALLBACK_CORE` / fill-plan jobs 验收 / questions pipeline 推荐 / 报告 UI 与宿主入口模板统一
-- **报告壳 0.2.25（2026-09-22）**：决策/任务台贯通 `warning_shards`+`--residual`；统一 `fill-inventory.mjs` 命令与 root 替换；分域中文标签；决策四态灯；Tab `#hash`；会话仪表盘 residual 提示
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.8-dev`**
-- 安装 URL 仍 **`main`**
-
-## 0.6.7 — 2026-09-18（正式钉号：Pn 回流运营 + 前后端契约门禁剖面）
-
-> 0.6.6 跟进。**不**改 Trae 矩阵、**不**重开 Codex、**不**回退 CodeBuddy 扁平 rules。
-
-### 本版要点
-
-- **Pn 回流运营**：根 AGENTS「踩坑回流」三问；pitfalls 路径速查通用骨架；Never do↔Pn 单写纪律；lint warn 校验回链；audit / prefill 移交
-- **前后端契约门禁剖面**：api `hook_code` 对 `packages/api-client|types|queries` 改 **regex**（嵌套 monorepo 可命中）；`S_FRONTEND`+api 时【推荐】GLOB_API 追加前端契约包；rule 12 对齐消费层
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.7`**（无 `-dev`）
-- 0.6.6 OpenAPI / 分册厚 / 0.6.5 API 7 列 / Trae 高钉号不回退
-
-## 0.6.6 — 2026-09-18（正式钉号：OpenAPI 闭环 + 分册厚 SSOT）
-
-> 0.6.5 跟进。**不**改 Trae 矩阵、**不**重开 Codex、**不**回退 CodeBuddy 扁平 rules。
-
-### 本版要点
-
-- **OpenAPI / Apifox 可选桥**（L1 伴生，`Q_APIFOX`）：去域化 `scripts/apifox/`（md→openapi→覆盖导入）；契约 SSOT 仍为 `docs/api/modules`；soft-gate `OPENAPI_BRIDGE_TIP` 软提醒
-- **分册 AGENTS 厚 SSOT**：根「分册真相」声明 + 通用/Spring/前端分册厚骨架（定位、动手前、改动路径速查、Never do↔Pn）；solo 根收厚节
-- **施工仪式**：land 移交 P1 精填分册；WritePlan 预览分册；audit 空壳启发式；upgrade `0.6.5 → 0.6.6`（已有分册 on_exists=skip）
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.6`**（无 `-dev`）
-- 0.6.5 API 7 列 / 0.6.4 CodeBuddy / Trae 高钉号不回退
-
-## 0.6.5 — 2026-09-17（正式钉号：API 字段表金标 + sync EOL）
-
-> 0.6.4 跟进。**不**改 Trae 矩阵、**不**重开 Codex、**不**回退 CodeBuddy 扁平 rules。
-
-### 本版要点
-
-- **API 模板**：新建/大改默认 7 列 `| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |`；说明/枚举/备注分列硬约束；旧 5 列兼容 acceptance。索引模板补「字段表约定」
-- **acceptance**：新增 `api-empty-desc`（说明空/套话/同参数名）、`api-empty-enum-remark`（有枚举/备注列则禁空单元格）；金标升 blocker
-- **fill-auto-api**：输出 7 列骨架并标 `quality: heuristic`（须 agents 精填后再 promote）
-- **truth-quality / fill-workers**：出入参与 worker 答案卡对齐 7 列 + 说明硬约束
-- **sync --check**：`sameText()` 两侧规范化 CRLF/LF，避免 Windows autocrlf / HEADER 注入造成假漂移（`l5-sync-golden` 绿）
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.5`**（无 `-dev`）
-- 0.6.4 CodeBuddy / Trae 高钉号不回退
-
-## 0.6.4 — 2026-09-16（正式钉号：CodeBuddy/WorkBuddy 官方对齐）
-
-> 由 **0.6.4-dev** 钉号。生产装/升仍用 **`main`**。**不**改 Trae 矩阵、**不**重开 Codex。
-
-### 本版要点
-
-- **Rules**：`.codebuddy/rules/<stem>.md` 扁平落盘；保留 `alwaysApply` / `globs` / `description` frontmatter（对齐 Trae；官方 CLI 亦认 `paths`）。旧 `<name>/RULE.mdc` 在托管前缀下故意 prune
-- **Hooks**：保持 Claude 系 **Bash** matcher；`$CODEBUDDY_PROJECT_DIR`；改 `settings.json` 后须 IDE **`/hooks` 面板**应用（save ≠ live）
-- **MCP**：根 `.mcp.json`；首次连接需审批；local > project > user；密钥 `${VAR}`
-- **permissions**：缺省时向 `.codebuddy/settings.json` 合并最小 `permissions`（不 wipe 已有）；**不**生成 `settings.local.json`
-- **settings 优先级**：CLI > `.codebuddy/settings.local.json` > `.codebuddy/settings.json` > `~/.codebuddy/settings.json`
-- **非目标**：`.codebuddy/agents/` 不由 harness 生成
-- **文档**：[host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md)
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.4`**（无 `-dev`）
-- 0.6.3 freshness / 报告壳钉号不回退
-
-## 0.6.3 — 2026-09-14（正式钉号：freshness · 热路径 · Trae P2 · 报告壳叙事）
-
-> 由 **0.6.3-dev** 钉号。生产装/升仍用 **`main`**。
-
-### 本版要点
-
-
-
-- **热路径去污**：session-dashboard / examples / resume 统一「确认后 `harness.mjs`」；矩阵标题改为 0.6.x；VERIFY 历史钉号标注「历史」；QUICKSTART 补 Trae skills 路径示例
-- **P1 发包再瘦**：`archive/selfcheck` 0.4.0/0.5.0/0.5.1 迁 `_history`；`.skillignore` 排除大体积归档
-- **P1 Trae T-P2-2…4**：提问脚注 / 热路径交叉链 / 审计·仪表盘「未生成≠未实证」
-- **报告壳叙事**：人读/页脚只认 `skill_version` + `report_schema`；`ui.version` 降为兼容别名（勿当 skill）
-- **升级三步**（L5）：装/升 skill（`main`）→ `harness.mjs --check-freshness` → 落后则刷新 `agent-config-sync` 再 `sync.mjs`
-- **热路径减脂（1/7/8/9）**：`archive/` 大块与 fill-truths-auto 全文迁 `_history/harness-eng-docs-archive/`；CHANGELOG 仅留 0.6 列车；`TRAE-P0-EVIDENCE` / `ROADMAP-0.6.0` 正文进 `archive/`（根/host 留 stub）
-- **热路径 CHANGELOG**：仅保留 0.6 列车；0.5.x 迁 `archive/CHANGELOG-0.5.x.md`
-- **P1 selfcheck 再拆**：`lib/selfcheck/checks-0.5.mjs`（0.5.2–0.5.10）
-- **P1 selfcheck 分包**：`scripts/lib/selfcheck/checks-0.6.mjs` 承接 0.6.x 断言；入口仍 `selfcheck.mjs`
-- **P1 热路径瘦身**：VERIFY 历史增量表迁 `archive/VERIFY-history-through-0.6.0.md`；`session-dash --help`；无 score 时仪表盘精简一行减噪
-Audit P0-1。技能升级后消费仓实例化 `scripts/agent-config/sync.mjs` 不再静默沿用旧 tmpl（Trae FM strip 等）。**不**改 Trae 矩阵、**不**重开 Codex。
-
-### 产品
-
-- **Freshness gate**：`templates/agent-config/sync.mjs.tmpl` 与落地脚本同带 `HARNESS_SYNC_TMPL_ID` / `HARNESS_ENG_VERSION`（与 skill 号一致）。`node scripts/harness.mjs --check-freshness --root <TARGET>`：无 consumer 脚本 skip（exit 0）；落后则打印刷新步骤并 **exit 1**
-- **L5 land/upgrade/resume**：`agent-config-sync` 已存在时 **replace**（不因 `on_exists=skip` 留下过期脚本）。刷新路径：land/render `agent-config-sync` → `node scripts/agent-config/sync.mjs`。见 [TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md) §0 · [conflict-policy.md](modes/conflict-policy.md) · [QUICKSTART.md](QUICKSTART.md)
-- **安装 URL**：生产装/升指向 `tree/main/harness-eng`。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升（勿从 `V0.6.X` 装生产）
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 / sync tmpl · golden → **`0.6.3`**（无 `-dev`）
-- 0.6.2 会话仪表盘钉号不回退
-
-## 0.6.2 — 2026-09-14（会话仪表盘去掉 mermaid）
-
-0.6.1 跟进。Trae（及部分宿主）渲染 footer `quadrantChart` 会出「Mermaid Syntax Error」；四台表已含覆盖/形态/参考分，象限图多余。
-
-### 产品
-
-- **会话仪表盘**：`renderSessionDashboardMarkdown` 不再输出 mermaid 围栏 / `quadrantChart`。有 score 时改一行纯文本：`施工态势：覆盖 X% × 形态 Y%（Q1 补形态 / Q2 理想区 / Q3 起步 / Q4 补覆盖）`（阈值 0.5）
-- Trae 会话内不再出现 Mermaid Syntax Error UI
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.2`**
-- 0.6.1 Trae 高钉号不回退
-
-## 0.6.1 — 2026-09-14（Trae 高：P0/P1 收口 · 正式钉号）
-
-矩阵 Trae **中高 → 高**。**不假装** Trae 走 Cursor 协议。hooks PASS **单独不授权**升 **高**；本版另有 MCP 面板 PASS + T-P1-3 / T-P1-4。**不**重开 0.6.0。
-
-### 产品
-
-- **FM 保留**：镜像到 Trae **保留** `alwaysApply` / `globs`（`render.mjs` / L5 `toHostMd` 按宿主分支；Claude/Qoder 仍 strip）。消费仓须 **刷新** `scripts/agent-config/sync.mjs` 后再 sync
-- **L5 00-harness-ssot via SSOT**：render 必写 `docs/agent-config/rules/00-harness-ssot.mdc`；宿主 00 / 冗余 1x 仍由 sync 托管（清 stale 正确，勿 git restore）
-- **RunCommand hooks + live PASS**（2026-09-14 Trae CN · c-be-sms-ai）：门禁 matcher `Bash|RunCommand`；`additionalContext` 注入【流程提醒】agent-config；软 allow；dry-run 跑完。勾 T-P0-3 / T-P1-2。Settings → Hooks 启用项目 hooks
-- **MCP 面板 PASS**（2026-09-14 Trae CN · c-be-sms-ai）：Settings MCP 显示 **12** 台 workspace servers（来自 `.trae/mcp.json`）。**ON**：gitlab、Apifox 导入、chrome-devtools。**OFF via toggle**（在场、非缺失）：sonarqube、redis-local/uat/test/dev、mysql-local（其余 mysql-* 多半在滚动区）。IDE **消费**文件；启用靠 Settings 开关。早先「缺 7 台」是误读。**T-P0-2 PASS**
-- **T-P1-3**：`ai-tools.md` / fill-mcp / `mcp-paths.mjs` 写清 `.trae/mcp.json` + IDE Settings 启用；无协议变更
-- **T-P1-4**：`mature-trae` + selfcheck 钉 Trae L5 sync 路径（薄断言；无巨型黄金树）
-- **T-P1-5**：矩阵 / 适配卡 / QUICKSTART / 手册 / selfcheck「中高」断言改为 **高**
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.1`**
-- 0.6.0 列车不重开
-
-### 0.6.1-dev — 2026-09-12（spike 笔记，已折叠）
-
-**当时不**把矩阵 Trae 中高改成高（hooks PASS **单独不授权**升 **高**；T-P1-5 仍等 MCP T-P0-2 / T-P1-3 / T-P1-4）。
-
-- **官方实证**：[host/TRAE-P0-EVIDENCE.md](host/TRAE-P0-EVIDENCE.md) — T-P0-1 docs PASS（原生 `alwaysApply` / `globs`）；T-P0-2 当时 partial（`.trae/mcp.json` + IDE 启用）；T-P0-3 docs PASS structure（`.trae/hooks.json`；官方终端 **`RunCommand`**）；T-P0-4 docs PASS（`.trae/skills/` 一等公民）
-- **实机回传**（2026-09-12 Trae CN）：T-P0-1 消费仓磁盘 FAIL（实例化 `sync.mjs` 仍旧 strip）；T-P0-2 **IDE 已消费** `mcp.json`；T-P0-3 待新会话；T-P0-4 会话 PASS
-- **实机回传续**（2026-09-12 Trae CN · c-be-sms-ai）：Round A 刷新后 T-P0-1 **磁盘+行为 PASS**（13 份、认 `globs`、无 `1x`）；Round C T-P0-3 **本机行为 FAIL**（`.trae/hooks.json` 当时 matcher=`Bash`）。事后判 **matcher 误诊**（`Bash` 永不匹配 `RunCommand`）
-- **T-P1-2 hooks**：`HOOK_DEFS.events.trae` 走 `TRAE_STYLE`（门禁 matcher `Bash|RunCommand`）；`claude-adapter.js` 软放行同时写 `systemMessage` + `hookSpecificOutput.additionalContext`。Claude/Qoder 仍 `Bash`。`.githooks` 仍兜底。消费仓须 sync + **Settings → Hooks 启用项目 hooks**
-- **Hooks 复测 PASS**（2026-09-14 Trae CN · c-be-sms-ai）：T-P1-2 后 live PreToolUse matcher `Bash|RunCommand` 注入 `additionalContext`；软 allow。勾 T-P0-3 / T-P1-2。hooks PASS **单独不授权**升 **高**
-- **升级注意**：消费仓必须 **刷新** `scripts/agent-config/sync.mjs`（从 tmpl 重落地）后再 sync
-- **人验清单**：[host/TRAE-P0-MANUAL.md](host/TRAE-P0-MANUAL.md)
-- **hotfix**：镜像到 Trae **保留** frontmatter；L5 00 via SSOT；`mature-trae` fixture
-- 中间号钉 **`0.6.1-dev`**；0.6.0 列车不重开
-
-## 0.6.0 — 2026-09-12（M1–M4：统一入口 · 文档拓扑 · fill 内聚 · 发包减脂 · 正式钉号）
-
-列车 `0.5.10 → 0.6.0-dev → 0.6.0` 收口。M1–M3 在 `-dev` 切片落地；本条把 G5 发包减脂与正式号钉齐。
-
-### 产品
-
-- **路线图**：[ROADMAP-0.6.0.md](ROADMAP-0.6.0.md) — 主题「入口单一、文档可导航、fill 可维护、发包可瘦」；G1–G7 / M1–M4 **已完成**
-- **G1 公开入口**（M1）：`scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 薄别名；L5/`agent_config` 仍拒直渲生成宿主路径并走 `sync.mjs`
-- **pipeline-skeleton**：仅骨架战役写盘，不跑 fill-* / 不进入 pipeline-fill
-- **文档指针**：SKILL / AGENT-INDEX / write-plan / conflict-policy / QUICKSTART / pipeline 以 harness CLI 为 Agent 主路径；`render.mjs --help` 指向公开入口
-- **G2 文档拓扑**（M2）：根 `*.md` **15**（≤20）。模式规格进 `modes/`，fill-* 进 `fill/`，`ai-tools` / `sync-hosts` 进 `host/`。仓库内链接已改；热路径旧路径留薄 stub（`write-plan` / `detect` / `fill` / `pipeline` / `fill-truths-auto`）
-- **AGENT-INDEX**：按新拓扑重写，必读 ≤8
-- **G3 fill 引擎内聚**（M3）：`fill-inventory.mjs --domain` / `fill-merge.mjs --domain` 为唯一实现入口；扫描/合并逻辑在 `lib/inventory-*` 与 `lib/merge-api.mjs`；域脚本为 **弃用** 薄包装（只转发 argv）。api `--enrich-dto` / `--module` / `--auto-fill` 挂在统一 merge CLI
-- **G4 fixture 黄金集**（M3）：`scripts/fixtures/l5-sync-golden`（`sync.mjs --check` 无漂移）+ `scripts/fixtures/multi-host-hooks`（Cursor / Claude / Qoder / Trae / WorkBuddy hooks 信号）；selfcheck 钉路径。既有 mature-claude / qoder-hooks / stack-node 保持
-- **G5 发包减脂**（M4）：热技能树 **不含** `archive/selfcheck/legacy/*.mjs` 体积；只留 INDEX 指针。全文在仓库 `_history/harness-eng-selfcheck-legacy/` 与 git 历史。`.skillignore` + [archive/README.md](archive/README.md) 写明 **安装 ≠ 全仓**。热包可保留近期 0.4/0.5 归档 selfcheck；`fill-truths-auto` 仍归档
-- **G6**：0.6.x **冻结 Codex P2**（M1 已冻；本版复核无新 Codex 能力），全量对等另立项（adapters/codex.md · host/ai-tools.md）
-- **G7**：manifest / meta / questions / README / VERIFY / QUICKSTART / 手册钉 **`0.6.0`**（去 `-dev`）；upgrade 收口 0.5.10 → 0.6.0 清单
-
-### 版本钉
-
-- manifest / meta / questions / README / VERIFY / QUICKSTART / 手册 → **`0.6.0`**（无 `-dev`）
-- selfcheck 断言 `0.6.0` + G5 发包清单 / `.skillignore` + M2 根 md 计数 / stub 策略
-
-## 更早版本
-
-- **0.5.10 → 0.5.0**：见 [archive/CHANGELOG-0.5.x.md](archive/CHANGELOG-0.5.x.md)
-- **0.4.0 及更早**：见仓库 [`_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md`](../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md)
+**列车**：当前 **0.7.32**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（一版本一文件）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/)。
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| [0.7.32](../_log/harness-eng/0.7.32.md) | 2026-09-28 | e2e P2：冷启动文案 · 空 inventory · Codex matcher · upgrade 备份 |
+| [0.7.31](../_log/harness-eng/0.7.31.md) | 2026-09-28 | e2e P1：假 ready · --no-write · DDL · DTO 漂移 · resume · bareRe · update-index |
+| [0.7.30](../_log/harness-eng/0.7.30.md) | 2026-09-28 | e2e P0 热修：meta 引号 · 假 gold · 预填跨节 · score root · Codex soft-gate |
+| [0.7.29](../_log/harness-eng/0.7.29.md) | 2026-09-28 | e2e P2：填契约 / 幂等 / UX |
+| [0.7.28](../_log/harness-eng/0.7.28.md) | 2026-09-28 | e2e P1：upgrade hooks · inventory meta · 评分假绿 |
+| [0.7.27](../_log/harness-eng/0.7.27.md) | 2026-09-28 | e2e P0 热修：阻断崩溃 · 门禁真接线 · when_* 接通 |
+| [0.7.26](../_log/harness-eng/0.7.26.md) | 2026-09-28 | e2e P2：幂等·路径 · fill-merge · L 级收口 |
+| [0.7.25](../_log/harness-eng/0.7.25.md) | 2026-09-28 | e2e P1：漂移 / morph·gold / 分册·seed / 迁移 SSOT / 问答 |
+| [0.7.24](../_log/harness-eng/0.7.24.md) | 2026-09-28 | e2e P0：refresh / L5 hooks / glob / calibrate |
+| [0.7.23](../_log/harness-eng/0.7.23.md) | 2026-09-28 | P3/P4：soft-gate 去品牌 + eng_snapshot 单写 |
+| [0.7.22](../_log/harness-eng/0.7.22.md) | 2026-09-28 | P0/P1/P2：协议解耦 + 中性 refresh |
+| [0.7.21](../_log/harness-eng/0.7.21.md) | 2026-09-28 | docs-only：协议解耦文案 |
+| [0.7.20](../_log/harness-eng/0.7.20.md) | 2026-09-27 | 批 E：monorepo detect · entry_ready · GLOB hooks · sp skip |
+| [0.7.19](../_log/harness-eng/0.7.19.md) | 2026-09-27 | 批 D2–D4：收口清单 + refresh |
+| [0.7.18](../_log/harness-eng/0.7.18.md) | 2026-09-27 | 批 B：分发安全 + 就绪可信；+ D1 soft-gate |
+| [0.7.17](../_log/harness-eng/0.7.17.md) | 2026-09-27 | 批 A：L5/land 独立 P0 |
+| [0.7.16](../_log/harness-eng/0.7.16.md) | 2026-09-27 | docs/runs 入图 + rule 18 中途 commit |
+| [0.7.15](../_log/harness-eng/0.7.15.md) | 2026-09-27 | 与 feature-eng 消歧与接力 |
+| [0.7.14](../_log/harness-eng/0.7.14.md) | 2026-09-26 | 报告壳 0.4.0 · 五台 + 宿主面 |
+| [0.7.13](../_log/harness-eng/0.7.13.md) | 2026-09-26 | 使用手册大段改写 |
+| [0.7.12](../_log/harness-eng/0.7.12.md) | 2026-09-26 | guide/ 手册搬家 |
+| [0.7.11](../_log/harness-eng/0.7.11.md) | 2026-09-26 | 入口双写去重 |
+| [0.7.10](../_log/harness-eng/0.7.10.md) | 2026-09-26 | 热路径编排压缩 |
+| [0.7.9](../_log/harness-eng/0.7.9.md) | 2026-09-24 | 可选 L4 rulehook 适配器 |
+| [0.7.8](../_log/harness-eng/0.7.8.md) | 2026-09-24 | calibrate 读 Codex TOML |
+| [0.7.7](../_log/harness-eng/0.7.7.md) | 2026-09-24 | Codex MCP policy 精细开关 |
+| [0.7.6](../_log/harness-eng/0.7.6.md) | 2026-09-24 | Codex 域 skills：redis / jobs / frontend |
+| [0.7.5](../_log/harness-eng/0.7.5.md) | 2026-09-24 | Codex Skills 种子 · 行为承接 |
+| [0.7.4](../_log/harness-eng/0.7.4.md) | 2026-09-24 | Codex hooks 家族 / Windows cmd / MCP 路径 |
+| [0.7.3](../_log/harness-eng/0.7.3.md) | 2026-09-24 | Codex hooks 生效链 PR1 |
+| [0.7.2](../_log/harness-eng/0.7.2.md) | 2026-09-24 | 日落 CLI shim |
+| [0.7.1](../_log/harness-eng/0.7.1.md) | 2026-09-23 | 热路径瘦身 |
+| [0.7.0](../_log/harness-eng/0.7.0.md) | 2026-09-23 | 形态重标定 · gold 可达 · ready 废弃 |
+| [0.6.9](../_log/harness-eng/0.6.9.md) | 2026-09-22 | Codex → 高：分轨 SSOT · 纪律 B |
+| [0.6.8-dev](../_log/harness-eng/0.6.8-dev.md) | 2026-09-19 | Codex P0 增量解冻：PARITY + config.toml + hooks |
+| [0.6.7](../_log/harness-eng/0.6.7.md) | 2026-09-18 | 正式钉号：Pn 回流运营 + 前后端契约门禁剖面 |
+| [0.6.6](../_log/harness-eng/0.6.6.md) | 2026-09-18 | 正式钉号：OpenAPI 闭环 + 分册厚 SSOT |
+| [0.6.5](../_log/harness-eng/0.6.5.md) | 2026-09-17 | 正式钉号：API 字段表金标 + sync EOL |
+| [0.6.4](../_log/harness-eng/0.6.4.md) | 2026-09-16 | 正式钉号：CodeBuddy/WorkBuddy 官方对齐 |
+| [0.6.3](../_log/harness-eng/0.6.3.md) | 2026-09-14 | 正式钉号：freshness · 热路径 · Trae P2 · 报告壳叙事 |
+| [0.6.2](../_log/harness-eng/0.6.2.md) | 2026-09-14 | 会话仪表盘去掉 mermaid |
+| [0.6.1](../_log/harness-eng/0.6.1.md) | 2026-09-14 | Trae 高：P0/P1 收口 · 正式钉号 |
+| [0.6.0](../_log/harness-eng/0.6.0.md) | 2026-09-12 | M1–M4：统一入口 · 文档拓扑 · fill 内聚 · 发包减脂 · 正式钉号 |
+| [0.5.10](../_log/harness-eng/0.5.10.md) | 2026-09-12 | audit P2：Codex 不默认 · 报告壳叙事 · 皆无探测 ≠ Cursor · 归档 |
+| [0.5.9](../_log/harness-eng/0.5.9.md) | 2026-09-12 | audit P1：热路径索引 · land 入口 · fill CLI · fixture |
+| [0.5.8](../_log/harness-eng/0.5.8.md) | 2026-09-12 | detect 多宿主诚实 + selfcheck 稳定名 + Codex P2 期望 |
+| [0.5.7](../_log/harness-eng/0.5.7.md) | 2026-09-12 | 契约 sync 指针去 Cursor 唯权威 + 减少冗余 1x |
+| [0.5.6](../_log/harness-eng/0.5.6.md) | 2026-09-12 | 施工 meta 迁入 docs/harness-eng |
+| [0.5.5](../_log/harness-eng/0.5.5.md) | 2026-09-12 | 安装说明 · 宿主无关 |
+| [0.5.4](../_log/harness-eng/0.5.4.md) | 2026-09-12 | 会话仪表盘 · 仅工程轮 SHOW |
+| [0.5.3](../_log/harness-eng/0.5.3.md) | 2026-09-11 | 会话仪表盘 · 每轮回复末尾 |
+| [0.5.2](../_log/harness-eng/0.5.2.md) | 2026-09-11 | 多宿主对等 P0 + sync-hosts 规格 |
+| [0.5.1](../_log/harness-eng/0.5.1.md) | 2026-09-11 | 多宿主对齐：Qoder/Trae hooks·MCP·rules |
+| [0.5.0](../_log/harness-eng/0.5.0.md) | 2026-08-31 | 配置 SSOT 管线 L5 / hooks 家族 / pitfalls 工程化 |
+| [0.4.0](../_log/harness-eng/0.4.0.md) | 2026-08-24 | 包模型：前端协作包 / 分册变体 / merge 预览 / 迁移模式 |
+| [0.3.10](../_log/harness-eng/0.3.10.md) | 2026-08-24 | 行为包：rule 21 |
+| [0.3.9](../_log/harness-eng/0.3.9.md) | 2026-08-24 | 源仓纪律回灌 |
+| [0.3.8](../_log/harness-eng/0.3.8.md) | 2026-08-14 | writing-for-agents P0–P3 |
+| [0.3.7](../_log/harness-eng/0.3.7.md) | 2026-08-14 | 域名单去硬编码 |
+| [0.3.6](../_log/harness-eng/0.3.6.md) | 2026-08-14 | 指针 / scheduler_link / 加域 recipe |
+| [0.3.5](../_log/harness-eng/0.3.5.md) | 2026-08-14 | 域包 packs + jobs inventory |
+| [0.3.4](../_log/harness-eng/0.3.4.md) | 2026-08-14 | jobs 域 + 域注册表 |
+| [0.3.3](../_log/harness-eng/0.3.3.md) | 2026-08-13 | gold 开干档 |
+| [0.3.2](../_log/harness-eng/0.3.2.md) | 2026-08-13 | writing-for-agents 收口 |
+| [0.3.1](../_log/harness-eng/0.3.1.md) | 2026-08-13 | Phase C · 同构 / 仪表降权 / morph·gate |
+| [0.3.0](../_log/harness-eng/0.3.0.md) | 2026-08-13 | Phase B · 严格开干 |
+| [0.2.29](../_log/harness-eng/0.2.29.md) | 2026-08-13 | Phase A · 开干闸/报告接线 |
+| [0.2.28](../_log/harness-eng/0.2.28.md) | 2026-08-12 | writing-for-agents W5 · 剪枝闭环 |
+| [0.2.27](../_log/harness-eng/0.2.27.md) | 2026-08-12 | score-policy · 列密度 · 四域对称闸 |
+| [0.2.26](../_log/harness-eng/0.2.26.md) | 2026-08-12 | 开干阈值 · 示例闸 · MCP 主环境 |
+| [0.2.25](../_log/harness-eng/0.2.25.md) | 2026-08-11 | writing-for-agents · 顶层剪枝 |
+| [0.2.24](../_log/harness-eng/0.2.24.md) | 2026-08-10 | 报告 UX · 指挥台升级 |
+| [0.2.23](../_log/harness-eng/0.2.23.md) | 2026-08-10 | 报告 UX · ui 投影 |
+| [0.2.22](../_log/harness-eng/0.2.22.md) | 2026-08-10 | 不把 L4 并入 L0；阶梯语义不变 |
+| [0.2.21](../_log/harness-eng/0.2.21.md) | 2026-08-10 | 新增 [upgrade.md](upgrade.md)（Done + 与 land/resume 边界） |
+| [0.2.20](../_log/harness-eng/0.2.20.md) | 2026-08-10 | W0：SKILL frontmatter；瘦身脚本墙；确认闸门 / 预授权词表 SSOT → [write-plan.md](write-plan.md) |
+| [0.2.19](../_log/harness-eng/0.2.19.md) | 2026-08-07 | P0 修复 fill-merge-api 多模块合并阻断：新增 --module 参数；自动按 inventory 证据集过滤 work-dir fragmen |
+| [0.2.18](../_log/harness-eng/0.2.18.md) | 2026-08-07 | 新增 [truth-quality.md](truth-quality.md)：深/真/全操作定义、反例表、.fill-work draft vs docs/  |
+| [0.2.17](../_log/harness-eng/0.2.17.md) | 2026-08-07 | 大仓 / pipeline 默认目标阶 = L4；推荐包不再默认停 L2（L2 仅「只要协作+索引、明确不深填」子集） |
+| [0.2.16](../_log/harness-eng/0.2.16.md) | 2026-08-07 | 默认填充引擎 hybrid：inventory / calibrate / dto 仍用脚本；真相完整档走 fill-truths-agents（多会话按模板精 |
+| [0.2.15](../_log/harness-eng/0.2.15.md) | 2026-08-06 | QUICKSTART.md：一页纸入口（场景表 + 写盘闸门 + 最短路径） |
+| [0.2.14](../_log/harness-eng/0.2.14.md) | 2026-08-06 | score-history.jsonl：fill-report-html 默认追加 docs/harness-eng/score-history.jsonl（- |
+| [0.2.13](../_log/harness-eng/0.2.13.md) | 2026-08-06 | HTML 报告分区升级：决策台 / 诊断台 / 任务台 / 技术细节（默认折叠） |
+| [0.2.12](../_log/harness-eng/0.2.12.md) | 2026-08-06 | 默认落点改为 docs/harness-eng/（与 docs/agent-kb 知识回流分离） |
+| [0.2.11](../_log/harness-eng/0.2.11.md) | 2026-08-06 | 新增 templates/report/harness-report.html.tmpl：自包含仪表盘（overall / ready / formula_ce |
+| [0.2.10](../_log/harness-eng/0.2.10.md) | 2026-08-06 | P0 fill-inventory-redis：默认扫描全部 */src/main/java；REDIS_* / SMS: / dict/captcha 可 p |
+| [0.2.9](../_log/harness-eng/0.2.9.md) | 2026-08-06 | P1 fill-truths-auto --merge：增量合并真相；输出 stats.written/merged/unchanged；pipeline 第二 |
+| [0.2.8](../_log/harness-eng/0.2.8.md) | 2026-08-05 | P0 fill-inventory-func.mjs：Service/Component inventory → func 真相可系统化填充 |
+| [0.2.7](../_log/harness-eng/0.2.7.md) | 2026-08-05 | P0 fill-truths-auto.mjs + [fill-truths-auto.md](fill-truths-auto.md)：四域从 invento |
+| [0.2.6](../_log/harness-eng/0.2.6.md) | 2026-08-05 | 新增 scripts/lib/yaml.mjs（vendored，无 npm）；render.mjs / questions-next.mjs 改用标准解析（报 |
+| [0.2.5](../_log/harness-eng/0.2.5.md) | 2026-08-05 | fill-score.mjs：db/redis 不按模块名过滤；有索引时域分 Math.max(15, avg) 保底（避免 seed 空壳后分数反降） |
+| [0.2.4](../_log/harness-eng/0.2.4.md) | 2026-08-05 | 重写 [fill-workers.md](fill-workers.md)：默认串行；并行仅为可选适配表（Cursor / Claude / Codex / Q |
+| [0.2.3](../_log/harness-eng/0.2.3.md) | 2026-08-05 | 新增 scripts/fill-merge-api.mjs（--check / --write；missing/dup 门禁）+ merge fixture |
+| [0.2.2](../_log/harness-eng/0.2.2.md) | 2026-08-05 | 推荐序：fill-score → fill-mcp（mysql/redis） → fill-truths → 再 score；跳过 MCP 不硬拦但须声明 |
+| [0.2.1](../_log/harness-eng/0.2.1.md) | 2026-08-05 | 版本递进约定：自 0.2.1 起按 0.2.1 → 0.2.2 → … → 0.3.0 补丁推进（本版为 fill 首发） |
+| [0.2.0](../_log/harness-eng/0.2.0.md) | 2026-08-05 | 新增 [ai-tools.md](ai-tools.md)：Cursor / Claude / Codex / Qoder / Trae / WorkBuddy |
+| [0.1.2](../_log/harness-eng/0.1.2.md) | 2026-08-05 | 新增 [glossary.md](glossary.md)：阶梯 L0–L4、模式、常用词中文说明 |

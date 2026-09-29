@@ -295,7 +295,7 @@
 ## 0.7.0 → 0.7.1 迁移要点
 
 1. **meta**：`skill_version` → `0.7.1`（文档/发包；无行为 breaking）
-2. **热路径**：根 stub / host TRAE evidence stub 已删；链 `modes/` · `CODEX-MANUAL` · `_history`（`使用手册.html` 于 **0.7.2** 还原）
+2. **热路径**：根 stub / host TRAE evidence stub 已删；链 `modes/` · `CODEX-MANUAL` · `_log`（`使用手册.html` 于 **0.7.2** 还原）
 3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.1`）
 4. **装/升 URL** 仍用 **`main`**
 
@@ -386,13 +386,13 @@
 ## 0.6.1-dev → 0.6.1 迁移要点（历史）
 
 1. **meta**：`skill_version` → `0.6.1`（resume / upgrade 写 meta 时对齐 manifest）
-2. **Trae 高**：官方实证全文 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**（MCP 走 `.trae/mcp.json` + Settings 开关）
+2. **Trae 高**：官方实证全文 [`_log/.../TRAE-P0-EVIDENCE.md`](../../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**（MCP 走 `.trae/mcp.json` + Settings 开关）
 3. **0.6.0 列车不重开**；人验 hooks/MCP 见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md)
 
 ## 0.6.0 → 0.6.1-dev 迁移要点（历史）
 
 1. **meta**：`skill_version` → `0.6.1`（本版已钉号；中间号曾是 `0.6.1-dev`）
-2. **Trae P0**：官方实证全文 [`_history/.../TRAE-P0-EVIDENCE.md`](../../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**
+2. **Trae P0**：官方实证全文 [`_log/.../TRAE-P0-EVIDENCE.md`](../../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**
 3. **0.6.0 列车不重开**；人验 hooks/MCP 见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md)
 
 ## 0.5.10 → 0.6.0 迁移要点（历史）
@@ -400,10 +400,10 @@
 1. **meta**：`skill_version` → `0.6.0`（resume / upgrade 写 meta 时对齐 manifest）
 2. **写盘入口**：Agent 优先 `scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton`）；`land.mjs` 为薄别名。勿把 `render.mjs` 当主路径
 3. **文档搬家**：规格在 `modes/` · `fill/` · `host/`（0.7.1 起根目录不再留旧路径 stub）
-4. **Codex（当时）**：0.6.0 列车曾 **冻结 P2**；**0.6.9+ 已升「高 · 纪律 B」**，勿当现行矩阵（历史路线见 [`_history/.../ROADMAP-0.6.0.md`](../../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md)）
+4. **Codex（当时）**：0.6.0 列车曾 **冻结 P2**；**0.6.9+ 已升「高 · 纪律 B」**，勿当现行矩阵（历史路线见 [`_log/.../ROADMAP-0.6.0.md`](../../_log/harness-eng/docs/ROADMAP-0.6.0.md)）
 5. **pipeline**：骨架战役用 `--mode pipeline-skeleton`（不跑 fill-*）
 6. **填充 CLI**：只认 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（api `--enrich-dto` 挂统一入口；0.7.2 起域 shim 已删）
-7. **发包**：默认安装 **不含** `archive/selfcheck/legacy` 体积（热树只留 INDEX）；开发全仓可读 `_history/harness-eng-selfcheck-legacy/` 或 git 历史。`fill-truths-auto` 仍见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
+7. **发包**：默认安装 **不含** `archive/selfcheck/legacy` 体积（热树只留 INDEX）；开发全仓可读 `_log/harness-eng/selfcheck-legacy/` 或 git 历史。`fill-truths-auto` 仍见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
 
 ## 0.5.9 → 0.5.10 迁移要点
 

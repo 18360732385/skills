@@ -2,7 +2,7 @@
 /**
  * feature-eng selfcheck：静态断言 + 夹具行为断言。版本 PIN 读自 `_meta/manifest.yaml`。
  * 覆盖：manifest · modes/ 入口 · modes/specs/ · feature.mjs · 绑定 · 模板 · lib ·
- * status-scan --cwd · gate-evidence · fixtures · CHANGELOG · sync-skill-version --check。
+ * status-scan --cwd · gate-evidence · fixtures · CHANGELOG/_log · sync-skill-version --check。
  */
 import fs from "fs";
 import os from "os";
@@ -378,49 +378,51 @@ assert(
   "close.md has close_pitfalls resolution order"
 );
 
-// --- CHANGELOG formal heading ---
-const changelog = read("CHANGELOG.md");
-assert(changelog != null, "CHANGELOG.md exists");
+// --- CHANGELOG index + _log/feature-eng/<ver>.md ---
+const logRoot = path.resolve(skillRoot, "..", "_log", "feature-eng");
+function logExists(ver) {
+  return fs.existsSync(path.join(logRoot, `${ver}.md`));
+}
+function readLog(ver) {
+  const p = path.join(logRoot, `${ver}.md`);
+  if (!fs.existsSync(p)) return null;
+  return fs.readFileSync(p, "utf8");
+}
+const changelogIndex = read("CHANGELOG.md");
+const changelog = fs.existsSync(logRoot)
+  ? fs
+      .readdirSync(logRoot)
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => fs.readFileSync(path.join(logRoot, f), "utf8"))
+      .join("\n")
+  : "";
+assert(changelogIndex != null, "CHANGELOG.md exists");
 assert(
-  changelog != null && /^##\s+0\.2\.12-dev\b/m.test(changelog),
-  "CHANGELOG has ## 0.2.12-dev heading"
+  /_log\/feature-eng\//.test(changelogIndex || ""),
+  "CHANGELOG points to _log/feature-eng/"
 );
 assert(
-  changelog != null && /^##\s+0\.2\.11-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.11-dev heading"
-);
-assert(
-  changelog != null && /^##\s+0\.2\.10-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.10-dev heading"
-);
-assert(
-  changelog != null && /^##\s+0\.2\.9-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.9-dev heading"
-);
-assert(
-  changelog != null && /^##\s+0\.2\.8-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.8-dev heading"
-);
-assert(
-  changelog != null && /^##\s+0\.2\.7-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.7-dev heading"
-);
-assert(
-  changelog != null && /^##\s+0\.2\.6-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.6-dev heading"
-);
-assert(
-  changelog != null && /^##\s+0\.2\.5-dev\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.5-dev heading"
-);
-assert(
-  changelog != null && /^##\s+0\.2\.4\b/m.test(changelog),
-  "CHANGELOG retains ## 0.2.4 heading"
-);
-assert(
-  changelog != null && changelog.includes(PIN),
+  changelogIndex != null && changelogIndex.includes(PIN),
   `CHANGELOG mentions ${PIN}`
 );
+assert(logExists(PIN), `_log/feature-eng/${PIN}.md exists`);
+for (const ver of [
+  "0.2.12-dev",
+  "0.2.11-dev",
+  "0.2.10-dev",
+  "0.2.9-dev",
+  "0.2.8-dev",
+  "0.2.7-dev",
+  "0.2.6-dev",
+  "0.2.5-dev",
+  "0.2.4",
+]) {
+  assert(logExists(ver), `_log/feature-eng/${ver}.md exists`);
+  assert(
+    changelogIndex != null && changelogIndex.includes(`${ver}.md`),
+    `CHANGELOG index links ${ver}`
+  );
+}
 
 // --- VERIFY / README smoke pointers ---
 assert(exists("VERIFY.md"), "VERIFY.md exists");
@@ -1253,7 +1255,7 @@ assert(
   "O7 close-check prints PASS"
 );
 
-assert(/O1|chef_mode/.test(changelog || ""), "CHANGELOG mentions O1/chef_mode");
+assert(/O1|chef_mode/.test(changelog || ""), "_log mentions O1/chef_mode");
 
 
 // =====================================================================
@@ -1338,8 +1340,8 @@ assert(/api_base_mode/.test(artifactsMd), "O14 artifacts.md has api_base_mode");
 assert(/proxy\|absolute|proxy.*absolute/.test(progressTmpl + artifactsMd + verify), "O14 proxy|absolute mode");
 assert(/api_base_mode:\s*proxy/.test(envSample), "O14 env sample has api_base_mode proxy");
 
-assert(/O8|sibling_repos/.test(changelog || ""), "CHANGELOG mentions O8/sibling_repos");
-assert(/## 0\.2\.7-dev/.test(changelog || ""), "CHANGELOG retains ## 0.2.7-dev");
+assert(/O8|sibling_repos/.test(changelog || ""), "_log mentions O8/sibling_repos");
+assert(logExists("0.2.7-dev"), "_log retains 0.2.7-dev");
 assert(/sibling-repos-shape/.test(fixReadme), "fixtures README lists sibling-repos-shape");
 assert(/env-notes-shape/.test(fixReadme), "fixtures README lists env-notes-shape");
 
@@ -1439,8 +1441,8 @@ assert(/monorepo_bootstrap|剥离/.test(startMd + initMd), "M6 start/init monore
 assert(/docs\/runs|superpowers/.test(startMd + initMd) && /剥离|子包/.test(startMd + initMd), "M6 strip package-level docs/runs|superpowers");
 assert(/HISTORY-split-repos/.test(startMd + initMd + changelog), "M6 HISTORY-split-repos pointer");
 
-assert(/M1|layout/.test(changelog || ""), "CHANGELOG mentions M1/layout");
-assert(/## 0\.2\.8-dev/.test(changelog || ""), "CHANGELOG retains ## 0.2.8-dev (end block)");
+assert(/M1|layout/.test(changelog || ""), "_log mentions M1/layout");
+assert(logExists("0.2.8-dev"), "_log retains 0.2.8-dev");
 assert(/monorepo-layout-shape/.test(fixReadme), "fixtures README lists monorepo-layout-shape");
 assert(/verify_commands|workdir_policy/.test(fixReadme), "fixtures README mentions M2/M5 fields");
 
@@ -1533,11 +1535,11 @@ assert(
   ),
   "gate-theater-bad reports fake transcript or missing review"
 );
-assert(/## 0\.2\.10-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.10-dev block");
-assert(/gate-evidence|闸门证据/.test(changelog || ""), "CHANGELOG mentions gate-evidence");
+assert(logExists("0.2.10-dev"), "_log has 0.2.10-dev");
+assert(/gate-evidence|闸门证据/.test(changelog || ""), "_log mentions gate-evidence");
 
 // 0.2.11-dev：P1
-assert(/## 0\.2\.11-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.11-dev block");
+assert(logExists("0.2.11-dev"), "_log has 0.2.11-dev");
 assert(/result:\s*pass|result: pass/.test(gatesCommon + skill), "0.2.11 gates require result: pass");
 assert(
   /fixture\|auto|user_task_fixture|占位/.test(gatesCommon + skill + (read("templates/回链.md.tmpl") || "")),
@@ -1661,7 +1663,7 @@ assert(quickPin.includes(PIN), `QUICKSTART pins ${PIN}`);
 assert(/stage-bindings\.minimal\.yaml/.test(manifest || ""), "manifest lists stage-bindings.minimal.yaml");
 
 // 0.2.12-dev：P2
-assert(/## 0\.2\.12-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.12-dev block");
+assert(logExists("0.2.12-dev"), "_log has 0.2.12-dev");
 assert(exists("scripts/lib/progress-shape.mjs"), "scripts/lib/progress-shape.mjs exists");
 assert(
   /--cwd/.test(read("scripts/status-scan.mjs") || ""),
@@ -1696,8 +1698,8 @@ assert(
   "context_delta → 术语增量 documented"
 );
 assert(
-  /术语增量\.md/.test(changelog || "") && /context-delta/.test(changelog || ""),
-  "CHANGELOG 0.2.1 footnote 术语增量"
+  /术语增量\.md/.test(readLog("0.2.1") || "") && /context-delta/.test(readLog("0.2.1") || ""),
+  "_log 0.2.1 footnote 术语增量"
 );
 
 const advEnumIssues = validateProgressEnums(advProgText);
@@ -1738,7 +1740,11 @@ assert(
 );
 
 // 0.2.22+：版本 SSOT；其上 0.2.21 P3/P4 · 0.2.20-dev P0/P1/P2 · 0.2.18 批 E
-assert(new RegExp(`## ${VER_RE}\\b`).test(changelog || ""), `CHANGELOG has ## ${PIN} block`);
+assert(logExists(PIN), `_log has ${PIN}`);
+assert(
+  changelogIndex != null && changelogIndex.includes(`${PIN}.md`),
+  `CHANGELOG index links ${PIN}`
+);
 
 {
   const syncCheck = spawnSync(
@@ -1748,19 +1754,28 @@ assert(new RegExp(`## ${VER_RE}\\b`).test(changelog || ""), `CHANGELOG has ## ${
   );
   assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
 }
-assert(/## 0\.2\.20-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.20-dev block");
-assert(/## 0\.2\.18-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.18-dev block");
-assert(/## 0\.2\.17-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.17-dev block");
-assert(/## 0\.2\.16-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.16-dev block");
-assert(/## 0\.2\.15-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.15-dev block");
-assert(/## 0\.2\.14-dev/.test(changelog || ""), "CHANGELOG has ## 0.2.14-dev block");
-assert(/P3\/P4|topic-run\/1|eng_probe/.test(changelog || ""), "CHANGELOG mentions P3/P4");
-assert(/可选接力（工程化仓）|P0\/P1\/P2|协议解耦/.test(changelog || ""), "CHANGELOG mentions protocol decouple");
-assert(/破坏性变更|新限界上下文|默认 skipped/.test(changelog || ""), "CHANGELOG mentions batch E bridges");
-assert(/死链|active\/|merge commit SHA|pr:<n>/.test(changelog || ""), "CHANGELOG mentions batch E close");
-assert(/delivery-checklist|harness refresh|harness_snapshot|refresh-score|eng_snapshot/.test(changelog || ""), "CHANGELOG mentions batch D / P2 refresh");
-assert(/unattended|docs\/runs\/stage-bindings/.test(changelog || ""), "CHANGELOG mentions batch C");
-assert(!/conventions\/repo-layout|_contracts\/repo-layout/.test(changelog || ""), "CHANGELOG has no P5 repo-layout");
+for (const ver of [
+  "0.2.20-dev",
+  "0.2.18-dev",
+  "0.2.17-dev",
+  "0.2.16-dev",
+  "0.2.15-dev",
+  "0.2.14-dev",
+  "0.2.21",
+]) {
+  assert(logExists(ver), `_log has ${ver}`);
+  assert(
+    changelogIndex != null && changelogIndex.includes(`${ver}.md`),
+    `CHANGELOG index links ${ver}`
+  );
+}
+assert(/P3\/P4|topic-run\/1|eng_probe/.test(changelog || ""), "_log mentions P3/P4");
+assert(/可选接力（工程化仓）|P0\/P1\/P2|协议解耦/.test(changelog || ""), "_log mentions protocol decouple");
+assert(/破坏性变更|新限界上下文|默认 skipped/.test(changelog || ""), "_log mentions batch E bridges");
+assert(/死链|active\/|merge commit SHA|pr:<n>/.test(changelog || ""), "_log mentions batch E close");
+assert(/delivery-checklist|harness refresh|harness_snapshot|refresh-score|eng_snapshot/.test(changelog || ""), "_log mentions batch D / P2 refresh");
+assert(/unattended|docs\/runs\/stage-bindings/.test(changelog || ""), "_log mentions batch C");
+assert(!/conventions\/repo-layout|_contracts\/repo-layout/.test(changelog || ""), "_log has no P5 repo-layout");
 assert(!exists("conventions/repo-layout.md"), "no conventions/repo-layout.md (P5 rolled back)");
 assert(/schema:\s*topic-run\/1/.test(progressTmpl), "progress.tmpl has schema topic-run/1");
 assert(/eng_land:\s*false/.test(manifest || ""), "manifest eng_land false");

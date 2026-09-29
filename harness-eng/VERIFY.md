@@ -4,7 +4,7 @@
 
 ## 版本
 
-当前 **0.7.32**（e2e P2：LT-6/7/11 · FC-6 · NEW-8/16/17 · ID-6 · 升级提示 · §7#2；其上 0.7.31 e2e P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.32**（e2e P2：LT-6/7/11 · FC-6 · NEW-8/16/17 · ID-6 · 升级提示 · §7#2；其上 0.7.31 e2e P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
 
 ## 0.7.32 增量验收（e2e P2）
 
@@ -21,7 +21,7 @@
 | upgrade fix-hook replace 有 `.bak-harness-*`；freshness 可提示手工 replace | 有 |
 | api `--module` 过滤 endpoints 再算 missing | 有 |
 | §7 #4/#9 工具侧：见 0.7.31 FC-9 / SG-1（本版不回归） | 有 |
-| CHANGELOG 标题 `## 0.7.32`；upgrade `## 0.7.31 → 0.7.32` | 有 |
+| CHANGELOG 索引含 0.7.32 且存在 `_log/harness-eng/0.7.32.md`；upgrade `## 0.7.31 → 0.7.32` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.31 增量验收（e2e P1）
@@ -372,7 +372,7 @@
 | manifest / meta / questions 为 `0.7.1` | 有 |
 | CHANGELOG 标题 `## 0.7.1` | 有 |
 | 无根 stub / 无 host TRAE evidence stub（`使用手册.html` 已于 0.7.2 还原） | 有 |
-| archive 正文与 Codex 设计稿在 `_history` | 有 |
+| archive 正文与 Codex 设计稿在 `_log/harness-eng` | 有 |
 | upgrade `## 0.7.0 → 0.7.1` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 
@@ -490,7 +490,7 @@
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
 | `node scripts/selfcheck-render.mjs` | 烟测 |
 | （历史）manifest / meta / questions 曾钉 `0.6.1` | 有 |
-| [`_history/.../TRAE-P0-EVIDENCE.md`](../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表；T-P0-2 MCP 面板 PASS | 有 |
+| [`_log/.../TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md) T-P0-1…4 状态表；T-P0-2 MCP 面板 PASS | 有 |
 | Trae 镜像保留 `alwaysApply` / `globs`；Claude/Qoder 仍 strip | 有 |
 | `mature-trae` 无 `.cursor/rules` 仍 MATURE；L5 sync 路径已钉 | 有 |
 | 适配卡去掉「若宿主支持」；矩阵 Trae **高** | 有 |
@@ -499,7 +499,7 @@
 
 ## 历史增量（已归档）
 
-完整表见仓库 [`_history/harness-eng-docs-archive/VERIFY-history-through-0.6.0.md`](../_history/harness-eng-docs-archive/VERIFY-history-through-0.6.0.md)。
+完整表见仓库 [`_log/harness-eng/docs/VERIFY-history-through-0.6.0.md`](../_log/harness-eng/docs/VERIFY-history-through-0.6.0.md)。
 
 | 里程碑 | 关键词（selfcheck 对照） | 归档 |
 |---|---|---|

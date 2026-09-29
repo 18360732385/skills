@@ -1757,29 +1757,23 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   assert(/report_schema|报告壳 ≠ skill/.test(reportTmpl0510), "report HTML pairs report_schema / 报告壳 ≠ skill");
 
   const changelog0510 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  const changelog05x = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md"), "utf8");
-  assert(/## 0\.5\.10/.test(changelog05x), "_history CHANGELOG-0.5.x has 0.5.10");
+  const logRoot05 = path.resolve(skillRoot, "../_log/harness-eng");
+  assert(fs.existsSync(path.join(logRoot05, "0.5.10.md")), "_log has 0.5.10");
   assert(
-    /CHANGELOG-0\.5\.x|_history\/harness-eng-docs-archive/.test(changelog0510),
-    "hot CHANGELOG points to 0.5 archive or _history"
+    /_log\/harness-eng\//.test(changelog0510) && changelog0510.includes("0.5.10.md"),
+    "hot CHANGELOG points to _log and 0.5.10"
   );
-  const archivedClPath = path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-through-0.4.md");
-  assert(fs.existsSync(archivedClPath), "_history CHANGELOG-through-0.4.md");
-  assert(fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md")), "_history CHANGELOG-0.5.x.md");
-  assert(!/^## 0\.5\.10/m.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "hot CHANGELOG no 0.5.10 section");
-  if (fs.existsSync(archivedClPath)) {
-    const archivedCl = fs.readFileSync(archivedClPath, "utf8");
-    assert(/## 0\.4\.0/.test(archivedCl), "archived CHANGELOG has 0.4.0");
-  }
-  assert(!/^## 0\.4\.0/m.test(changelog0510), "main CHANGELOG dropped 0.4.0 body");
+  assert(fs.existsSync(path.join(logRoot05, "0.4.0.md")), "_log has 0.4.0");
+  assert(!/^## 0\.5\.10/m.test(changelog0510), "hot CHANGELOG no 0.5.10 ## section");
+  assert(!/^## 0\.4\.0/m.test(changelog0510), "main CHANGELOG dropped 0.4.0 ## body");
 
   const autoIdx = path.join(skillRoot, "archive/fill-truths-auto/INDEX.md");
-  const histDocs = path.resolve(skillRoot, "../_history/harness-eng-docs-archive");
+  const histDocs = path.resolve(skillRoot, "../_log/harness-eng/docs");
   const autoSpec = path.join(histDocs, "fill-truths-auto.md");
   const autoScript = path.join(histDocs, "fill-truths-auto.mjs");
   assert(fs.existsSync(autoIdx), "archive/fill-truths-auto/INDEX.md");
-  assert(fs.existsSync(autoSpec), "_history fill-truths-auto spec");
-  assert(fs.existsSync(autoScript), "_history fill-truths-auto script");
+  assert(fs.existsSync(autoSpec), "_log fill-truths-auto spec");
+  assert(fs.existsSync(autoScript), "_log fill-truths-auto script");
   assert(!fs.existsSync(path.join(skillRoot, "archive/fill-truths-auto/fill-truths-auto.mjs")), "fill-truths-auto.mjs not in archive pack");
   assert(!fs.existsSync(path.join(skillRoot, "fill-truths-auto.md")), "no root fill-truths-auto stub");
   const autoIdxText = fs.readFileSync(autoIdx, "utf8");

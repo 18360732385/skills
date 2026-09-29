@@ -27,6 +27,19 @@ import { readSkillVersion, escapeSemverRe } from "../skill-version.mjs";
 export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const EXPECTED = readSkillVersion(skillRoot);
   const VER_RE = escapeSemverRe(EXPECTED);
+  const logRoot = path.resolve(skillRoot, "../_log/harness-eng");
+  const logExists = (ver) => fs.existsSync(path.join(logRoot, `${ver}.md`));
+  const readLog = (ver) => {
+    const lp = path.join(logRoot, `${ver}.md`);
+    return fs.existsSync(lp) ? fs.readFileSync(lp, "utf8") : "";
+  };
+  const changelogLogs = fs.existsSync(logRoot)
+    ? fs
+        .readdirSync(logRoot)
+        .filter((f) => /^\d+\.\d+\.\d/.test(f) && f.endsWith(".md"))
+        .map((f) => fs.readFileSync(path.join(logRoot, f), "utf8"))
+        .join("\n")
+    : "";
   // Re-load hot docs so this suite does not depend on outer-scope consts from selfcheck.mjs
   const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
@@ -51,8 +64,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.0-dev M1: harness CLI · ROADMAP · G6 freeze · version pin ---
 {
-  const roadmapPath = path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md");
-  assert(fs.existsSync(roadmapPath), "_history ROADMAP-0.6.0.md body");
+  const roadmapPath = path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md");
+  assert(fs.existsSync(roadmapPath), "_log ROADMAP-0.6.0.md body");
   assert(!fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "no root ROADMAP stub (0.7.1)");
   const roadmap = fs.readFileSync(roadmapPath, "utf8");
   assert(/G1/.test(roadmap) && /G7/.test(roadmap), "ROADMAP has G1–G7");
@@ -65,12 +78,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/CHANGELOG/.test(readme), "README points CHANGELOG (ROADMAP archived)");
   const agentIndex060 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
   assert(!/\]\(ROADMAP-0\.6\.0\.md\)/.test(agentIndex060), "AGENT-INDEX no root ROADMAP link");
-  const changelog060 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  const changelog060 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
   assert(
-    /## 0\.6\.0\b/.test(changelog060) && /ROADMAP-0\.6\.0/.test(changelog060),
+    /# 0\.6\.0\b/.test(changelog060) && /ROADMAP-0\.6\.0/.test(changelog060),
     "CHANGELOG 0.6.0 + ROADMAP"
   );
-  assert(/^## 0\.6\.0\b/m.test(changelog060), "CHANGELOG has formal 0.6.0 heading");
+  assert(/^# 0\.6\.0\b/m.test(changelog060), "CHANGELOG has formal 0.6.0 heading");
 
   assert(fs.existsSync(path.join(skillRoot, "scripts/harness.mjs")), "harness.mjs");
   const harnessHelp = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
@@ -261,12 +274,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/fill\/fill-score\.md/.test(skillM2), "SKILL points fill/fill-score.md");
   assert(/host\/ai-tools\.md/.test(skillM2), "SKILL points host/ai-tools.md");
 
-  const roadmapM2 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
+  const roadmapM2 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T2\.1/.test(roadmapM2) && /\[x\].*T2\.5/.test(roadmapM2), "ROADMAP G2 T2.1–T2.5 checked");
 
-  const changelogM2 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  const changelogM2 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
   assert(/G2|文档拓扑/.test(changelogM2), "CHANGELOG notes M2 / G2 文档拓扑");
-  assert(/## 0\.6\.0\b/.test(changelogM2), "CHANGELOG has formal 0.6.0");
+  assert(/# 0\.6\.0\b/.test(changelogM2), "CHANGELOG has formal 0.6.0");
 
   const verifyM2 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/M2/.test(verifyM2) && /根目录/.test(verifyM2), "VERIFY has M2 section");
@@ -429,13 +442,13 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(scanSignals(qoderFixM3).S_HOOKS, "qoder-hooks still S_HOOKS");
   assert(scanSignals(stackFixM3).S_STACK && !scanSignals(stackFixM3).MATURE, "stack-node still S_STACK only");
 
-  const roadmapM3 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
+  const roadmapM3 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T3\.1/.test(roadmapM3) && /\[x\].*T3\.3/.test(roadmapM3), "ROADMAP G3 T3.1–T3.3 checked");
   assert(/\[x\].*T4\.1/.test(roadmapM3) && /\[x\].*T4\.3/.test(roadmapM3), "ROADMAP G4 T4.1–T4.3 checked");
 
-  const changelogM3 = readRel("CHANGELOG.md");
+  const changelogM3 = readRel("CHANGELOG.md") + "\n" + changelogLogs;
   assert(/G3|fill 引擎|内聚/.test(changelogM3) && /G4|黄金集|fixture/.test(changelogM3), "CHANGELOG notes M3 G3/G4");
-  assert(/## 0\.6\.0\b/.test(changelogM3), "CHANGELOG has formal 0.6.0");
+  assert(/# 0\.6\.0\b/.test(changelogM3), "CHANGELOG has formal 0.6.0");
 
   const verifyM3 = readRel("VERIFY.md");
   assert(/M3/.test(verifyM3) && /l5-sync-golden|黄金/.test(verifyM3), "VERIFY has M3 section");
@@ -454,16 +467,16 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
   const archReadmeM4 = readRel("archive/README.md");
   assert(/安装\s*≠\s*全仓|安装不等于全仓|发包/.test(archReadmeM4), "archive README packaging policy");
-  assert(/legacy/.test(archReadmeM4) && /git|历史|_history/.test(archReadmeM4), "archive README points where legacy lives");
+  assert(/legacy/.test(archReadmeM4) && /git|历史|_log|_history/.test(archReadmeM4), "archive README points where legacy lives");
 
   const selfcheckReadmeM4 = readRel("archive/selfcheck/README.md");
-  assert(/INDEX|git|历史|_history/.test(selfcheckReadmeM4), "archive/selfcheck README points history");
+  assert(/INDEX|git|历史|_log|_history/.test(selfcheckReadmeM4), "archive/selfcheck README points history");
 
   const legacyDirM4 = path.join(skillRoot, "archive/selfcheck/legacy");
   const legacyIdxPath = path.join(legacyDirM4, "INDEX.md");
   assert(fs.existsSync(legacyIdxPath), "legacy INDEX remains in skill tree");
   const legacyIdxM4 = fs.existsSync(legacyIdxPath) ? readRel("archive/selfcheck/legacy/INDEX.md") : "";
-  assert(/git|_history|历史/.test(legacyIdxM4), "legacy INDEX explains history location");
+  assert(/git|_log|_history|历史/.test(legacyIdxM4), "legacy INDEX explains history location");
   const legacyMjsM4 = fs.existsSync(legacyDirM4)
     ? fs.readdirSync(legacyDirM4).filter((n) => n.endsWith(".mjs"))
     : ["missing-dir"];
@@ -486,37 +499,37 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     "fill-truths-auto remains archived"
   );
 
-  const historyDir = path.resolve(skillRoot, "../_history/harness-eng-selfcheck-legacy");
-  assert(fs.existsSync(path.join(historyDir, "INDEX.md")), "_history/harness-eng-selfcheck-legacy/INDEX.md");
+  const historyDir = path.resolve(skillRoot, "../_log/harness-eng/selfcheck-legacy");
+  assert(fs.existsSync(path.join(historyDir, "INDEX.md")), "_log/harness-eng/selfcheck-legacy/INDEX.md");
   assert(
     fs.existsSync(path.join(historyDir, "selfcheck-0.3.10.mjs")),
-    "legacy bulk lives in _history (0.3.10)"
+    "legacy bulk lives in _log (0.3.10)"
   );
   assert(
     fs.existsSync(path.join(historyDir, "selfcheck-0.2.10.mjs")),
-    "legacy bulk lives in _history (0.2.10)"
+    "legacy bulk lives in _log (0.2.10)"
   );
   assert(
     fs.existsSync(path.join(historyDir, "selfcheck-0.5.1.mjs")),
-    "0.5.1 bulk lives in _history after pack slim"
+    "0.5.1 bulk lives in _log after pack slim"
   );
   assert(
     fs.existsSync(path.join(historyDir, "selfcheck-0.4.0.mjs")),
-    "0.4.0 bulk lives in _history after pack slim"
+    "0.4.0 bulk lives in _log after pack slim"
   );
 
   const manifestM4 = readRel("templates/_meta/manifest.yaml");
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
   assert(verLine && verLine[1] === EXPECTED, `manifest version exactly ${EXPECTED}`);
 
-  const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
+  const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
   assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
   assert(/\[x\].*T7\.1/.test(roadmapM4) && /\[x\].*T7\.3/.test(roadmapM4), "ROADMAP G7 T7.1–T7.3 checked");
   assert(/列车已收口|列车完成|正式 0\.6\.0.*收口/.test(roadmapM4), "ROADMAP notes train complete");
   assert(/M1–M4 已|M1-M4 已|M4.*已完成|已完成（M1–M4）/.test(roadmapM4), "ROADMAP marks M1–M4 done");
 
-  const changelogM4 = readRel("CHANGELOG.md");
-  assert(/^## 0\.6\.0\b/m.test(changelogM4), "CHANGELOG formal 0.6.0 section");
+  const changelogM4 = readRel("CHANGELOG.md") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.0\b/m.test(changelogM4), "CHANGELOG formal 0.6.0 section");
   assert(!/^## Unreleased/m.test(changelogM4), "CHANGELOG no Unreleased heading");
   assert(/G5/.test(changelogM4) && /发包|legacy/.test(changelogM4), "CHANGELOG notes G5 slim pack");
   assert(/M1/.test(changelogM4) && /M2/.test(changelogM4) && /M3/.test(changelogM4) && /M4/.test(changelogM4), "CHANGELOG summarizes M1–M4");
@@ -539,8 +552,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.1: Trae 高 formal pin (evidence · MCP panel PASS · matrix 高) ---
 {
-  const evidencePath = path.resolve(skillRoot, "../_history/harness-eng-docs-archive/TRAE-P0-EVIDENCE.md");
-  assert(fs.existsSync(evidencePath), "_history TRAE-P0-EVIDENCE.md");
+  const evidencePath = path.resolve(skillRoot, "../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md");
+  assert(fs.existsSync(evidencePath), "_log TRAE-P0-EVIDENCE.md");
   assert(!fs.existsSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md")), "no host TRAE-P0-EVIDENCE stub");
   const evidence = fs.readFileSync(evidencePath, "utf8");
   assert(/T-P0-1/.test(evidence) && /T-P0-4/.test(evidence), "TRAE-P0-EVIDENCE has T-P0-1…4");
@@ -595,12 +608,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/新.*会话/.test(manual) && /git commit/.test(manual), "MANUAL hooks probe in new session");
   assert(/dry-run/.test(manual), "MANUAL keeps git commit --dry-run probe");
 
-  const changelog061 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.1\b/m.test(changelog061), "CHANGELOG formal 0.6.1 section");
+  const changelog061 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.1\b/m.test(changelog061), "CHANGELOG formal 0.6.1 section");
   assert(/0\.6\.1-dev/.test(changelog061), "CHANGELOG folds 0.6.1-dev notes");
   assert(/刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
   assert(/00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1 notes L5 SSOT 00");
-  const roadmap061 = fs.readFileSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/ROADMAP-0.6.0.md"), "utf8");
+  const roadmap061 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
   assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
   assert(/0\.6\.1/.test(roadmap061) && /高/.test(roadmap061), "ROADMAP notes 0.6.1 Trae 高 pin");
   const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
@@ -818,8 +831,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.2: session dashboard drops mermaid (Trae Syntax Error) ---
 {
-  const changelog062 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.2\b/m.test(changelog062), "CHANGELOG formal 0.6.2 section");
+  const changelog062 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.2\b/m.test(changelog062), "CHANGELOG formal 0.6.2 section");
   assert(/quadrantChart|mermaid/.test(changelog062) && /施工态势/.test(changelog062), "CHANGELOG 0.6.2 notes mermaid drop + 施工态势");
   const libDash062 = fs.readFileSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs"), "utf8");
   assert(!/quadrantChart/.test(libDash062) && !/```mermaid/.test(libDash062), "session-dashboard.mjs emits no mermaid");
@@ -914,8 +927,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const harnessHelp063 = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
   assert(harnessHelp063.status === 0 && /--check-freshness/.test(harnessHelp063.stdout), "harness --help lists --check-freshness");
 
-  const changelog063 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.3\b/m.test(changelog063), "CHANGELOG 0.6.3 heading");
+  const changelog063 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.3\b/m.test(changelog063), "CHANGELOG 0.6.3 heading");
   assert(/freshness|HARNESS_SYNC_TMPL_ID/.test(changelog063), "CHANGELOG notes freshness");
   assert(/tree\/main\/harness-eng/.test(changelog063), "CHANGELOG production install URL main");
   assert(/V0\.6\.X/.test(changelog063) && /合并进/.test(changelog063), "CHANGELOG notes V0.6.X is dev train then merge to main");
@@ -924,7 +937,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/0\.6\.2 → 0\.6\.3/.test(upgrade063), "upgrade has 0.6.2 → 0.6.3");
   assert(/刷新/.test(upgrade063) && /sync\.mjs/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade L5 must refresh sync.mjs");
 
-  assert(/^## 0\.6\.3\b/m.test(changelog063) && !((changelog063.match(/^## 0\.6\.3[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.3 no -dev heading");
+  assert(/^# 0\.6\.3\b/m.test(changelog063) && !((changelog063.match(/^# 0\.6\.3[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.3 no -dev heading");
   assert(/兼容别名/.test(changelog063) && /report_schema/.test(changelog063), "CHANGELOG notes report_schema / ui.version alias");
   assert(/升级三步/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade 0.6.3 has three-step playbook");
   const gloss063 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
@@ -1006,9 +1019,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const syncHosts064 = fs.readFileSync(path.join(skillRoot, "host/sync-hosts.md"), "utf8");
   assert(/CODEBUDDY-PARITY/.test(syncHosts064), "sync-hosts links CODEBUDDY-PARITY");
 
-  const changelog064 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.4\b/m.test(changelog064), "CHANGELOG 0.6.4 heading");
-  assert(/^## 0\.6\.4\b/m.test(changelog064) && !((changelog064.match(/^## 0\.6\.4[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.4 no -dev heading");
+  const changelog064 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.4\b/m.test(changelog064), "CHANGELOG 0.6.4 heading");
+  assert(/^# 0\.6\.4\b/m.test(changelog064) && !((changelog064.match(/^# 0\.6\.4[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.4 no -dev heading");
   assert(/正式钉号：CodeBuddy\/WorkBuddy/.test(changelog064), "CHANGELOG 0.6.4 formal pin subtitle");
   assert(/由 \*\*0\.6\.4-dev\*\* 钉号/.test(changelog064), "CHANGELOG notes promoted from 0.6.4-dev");
   assert(/（无 `-dev`）/.test(changelog064), "CHANGELOG pins without -dev");
@@ -1052,8 +1065,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const syncTmpl065 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(/function sameText/.test(syncTmpl065), "sync.mjs.tmpl sameText EOL-agnostic");
 
-  const changelog065 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.5\b/m.test(changelog065), "CHANGELOG keeps 0.6.5 heading");
+  const changelog065 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.5\b/m.test(changelog065), "CHANGELOG keeps 0.6.5 heading");
   assert(/正式钉号：API 字段表/.test(changelog065), "CHANGELOG 0.6.5 formal pin subtitle");
   assert(/sameText|EOL/.test(changelog065), "CHANGELOG notes sync EOL fix");
 
@@ -1066,8 +1079,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.6: OpenAPI bridge + thick module AGENTS (historical pin retained) ---
 {
-  const changelog066 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.6\b/m.test(changelog066), "CHANGELOG keeps 0.6.6 heading");
+  const changelog066 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.6\b/m.test(changelog066), "CHANGELOG keeps 0.6.6 heading");
   assert(/OpenAPI|分册厚/.test(changelog066), "CHANGELOG 0.6.6 OpenAPI + thick AGENTS");
 
   const upgrade066 = readDoc("upgrade.md");
@@ -1176,11 +1189,11 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 
 // --- 0.6.7: Pn reflux ops + FE/BE contract gate profile ---
 {
-  const changelog067 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.7\b/m.test(changelog067), "CHANGELOG 0.6.7 heading");
+  const changelog067 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.7\b/m.test(changelog067), "CHANGELOG 0.6.7 heading");
   assert(
-    /^## 0\.6\.7\b/m.test(changelog067) &&
-      !((changelog067.match(/^## 0\.6\.7[^\n]*/m) || [""])[0].includes("-dev")),
+    /^# 0\.6\.7\b/m.test(changelog067) &&
+      !((changelog067.match(/^# 0\.6\.7[^\n]*/m) || [""])[0].includes("-dev")),
     "CHANGELOG formal 0.6.7 no -dev heading"
   );
   assert(/Pn 回流|前后端契约/.test(changelog067), "CHANGELOG 0.6.7 Pn + FE gate");
@@ -1330,11 +1343,11 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/CODEX-PARITY/.test(agentIdx068), "AGENT-INDEX links CODEX-PARITY");
   assert(/CODEX-PARITY/.test(agentIdx068), "AGENT-INDEX links CODEX-PARITY (ROADMAP stub removed)");
 
-  const changelog068 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-  assert(/^## 0\.6\.9\b/m.test(changelog068), "CHANGELOG 0.6.9 heading");
-  assert(/^## 0\.7\.0\b/m.test(changelog068), "CHANGELOG 0.7.0 heading");
-  assert(/^## 0\.7\.2\b/m.test(changelog068), "CHANGELOG 0.7.1 heading");
-  assert(/^## 0\.6\.8-dev\b/m.test(changelog068), "CHANGELOG keeps 0.6.8-dev");
+  const changelog068 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
+  assert(/^# 0\.6\.9\b/m.test(changelog068), "CHANGELOG 0.6.9 heading");
+  assert(/^# 0\.7\.0\b/m.test(changelog068), "CHANGELOG 0.7.0 heading");
+  assert(/^# 0\.7\.2\b/m.test(changelog068), "CHANGELOG 0.7.1 heading");
+  assert(/^# 0\.6\.8-dev\b/m.test(changelog068), "CHANGELOG keeps 0.6.8-dev");
   assert(/Codex P0|增量解冻/.test(changelog068), "CHANGELOG Chinese Codex P0 entry");
   assert(/\*\*`main`\*\*|\*\*main\*\*/.test(changelog068), "CHANGELOG keeps main install URL");
 

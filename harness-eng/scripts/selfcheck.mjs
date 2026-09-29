@@ -265,56 +265,39 @@ assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile
   const syncCheck = runNode([path.join(skillRoot, "scripts/sync-skill-version.mjs"), "--check"]);
   assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
 }
-const changelog = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-const changelog05x = fs.readFileSync(
-  path.resolve(skillRoot, "../_history/harness-eng-docs-archive/CHANGELOG-0.5.x.md"),
-  "utf8"
-);
-assert(/## 0\.5\.2/.test(changelog05x), "archive CHANGELOG 0.5.2");
-assert(/## 0\.5\.3/.test(changelog05x), "archive CHANGELOG 0.5.3");
-assert(/## 0\.5\.4/.test(changelog05x), "archive CHANGELOG 0.5.4");
-assert(/## 0\.5\.5/.test(changelog05x), "archive CHANGELOG 0.5.5");
-assert(/## 0\.5\.6/.test(changelog05x), "archive CHANGELOG 0.5.6");
-assert(/## 0\.5\.7/.test(changelog05x), "archive CHANGELOG 0.5.7");
-assert(/## 0\.5\.8/.test(changelog05x), "archive CHANGELOG 0.5.8");
-assert(/## 0\.5\.9/.test(changelog05x), "archive CHANGELOG 0.5.9");
-assert(/## 0\.5\.10/.test(changelog05x), "archive CHANGELOG 0.5.10");
-assert(
-  /_history\/harness-eng-docs-archive\/CHANGELOG-0\.5\.x|archive\/CHANGELOG-0\.5\.x/.test(changelog),
-  "hot CHANGELOG points _history CHANGELOG-0.5.x"
-);
-assert(!/^## 0\.5\.10/m.test(changelog), "hot CHANGELOG dropped 0.5.x sections");
-assert(/## 0\.6\.2/.test(changelog), "CHANGELOG 0.6.2");
-assert(/^## 0\.6\.7\b/m.test(changelog) && !((changelog.match(/^## 0\.6\.7[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.7");
-assert(/^## 0\.7\.0\b/m.test(changelog), "CHANGELOG 0.7.0");
-assert(/^## 0\.7\.3\b/m.test(changelog), "CHANGELOG 0.7.3");
-assert(/^## 0\.7\.4\b/m.test(changelog), "CHANGELOG 0.7.4");
-assert(/^## 0\.7\.5\b/m.test(changelog), "CHANGELOG 0.7.5");
-assert(new RegExp(`^## ${VER_RE}\\b`, "m").test(changelog), `CHANGELOG ${EXPECTED}`);
-assert(/^## 0\.7\.26\b/m.test(changelog), "CHANGELOG keeps 0.7.26");
-assert(/^## 0\.7\.25\b/m.test(changelog), "CHANGELOG keeps 0.7.25");
-assert(/^## 0\.7\.24\b/m.test(changelog), "CHANGELOG keeps 0.7.24");
-assert(/^## 0\.7\.23\b/m.test(changelog), "CHANGELOG keeps 0.7.23");
-assert(/^## 0\.7\.22\b/m.test(changelog), "CHANGELOG keeps 0.7.22");
-assert(/^## 0\.7\.21\b/m.test(changelog), "CHANGELOG keeps 0.7.21");
-assert(/^## 0\.7\.20\b/m.test(changelog), "CHANGELOG keeps 0.7.20");
-assert(/^## 0\.7\.16\b/m.test(changelog), "CHANGELOG keeps 0.7.16");
-assert(/^## 0\.7\.15\b/m.test(changelog), "CHANGELOG keeps 0.7.15");
-assert(/^## 0\.7\.14\b/m.test(changelog), "CHANGELOG keeps 0.7.14");
-assert(/^## 0\.7\.12\b/m.test(changelog), "CHANGELOG keeps 0.7.12");
-assert(/^## 0\.7\.11\b/m.test(changelog), "CHANGELOG keeps 0.7.11");
-assert(/^## 0\.7\.10\b/m.test(changelog), "CHANGELOG keeps 0.7.10");
-assert(/^## 0\.7\.9\b/m.test(changelog), "CHANGELOG keeps 0.7.9");
-assert(/^## 0\.7\.8\b/m.test(changelog), "CHANGELOG keeps 0.7.8");
-assert(/^## 0\.7\.7\b/m.test(changelog), "CHANGELOG keeps 0.7.7");
-assert(/^## 0\.7\.6\b/m.test(changelog), "CHANGELOG keeps 0.7.6");
-assert(/^## 0\.7\.2\b/m.test(changelog), "CHANGELOG keeps 0.7.2");
-assert(/^## 0\.6\.8-dev\b/m.test(changelog), "CHANGELOG keeps 0.6.8-dev");
+const logRoot = path.resolve(skillRoot, "../_log/harness-eng");
+function logExists(ver) {
+  return fs.existsSync(path.join(logRoot, `${ver}.md`));
+}
+function readLog(ver) {
+  const p = path.join(logRoot, `${ver}.md`);
+  return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
+}
+const changelogIndex = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+const changelog = fs.existsSync(logRoot)
+  ? fs
+      .readdirSync(logRoot)
+      .filter((f) => /^\d+\.\d+\.\d/.test(f) && f.endsWith(".md"))
+      .map((f) => fs.readFileSync(path.join(logRoot, f), "utf8"))
+      .join("\n")
+  : "";
+assert(/_log\/harness-eng\//.test(changelogIndex), "CHANGELOG points to _log/harness-eng/");
+for (const ver of ["0.5.2","0.5.3","0.5.4","0.5.5","0.5.6","0.5.7","0.5.8","0.5.9","0.5.10"]) {
+  assert(logExists(ver), `_log has ${ver}`);
+  assert(changelogIndex.includes(`${ver}.md`), `CHANGELOG index links ${ver}`);
+}
+assert(!/^## 0\.5\.10/m.test(changelogIndex), "hot CHANGELOG dropped 0.5.x ## sections");
+for (const ver of [
+  "0.6.2","0.6.3","0.6.4","0.6.5","0.6.6","0.6.7","0.6.8-dev",
+  "0.7.0","0.7.2","0.7.3","0.7.4","0.7.5","0.7.6","0.7.7","0.7.8","0.7.9",
+  "0.7.10","0.7.11","0.7.12","0.7.14","0.7.15","0.7.16","0.7.20","0.7.21",
+  "0.7.22","0.7.23","0.7.24","0.7.25","0.7.26", EXPECTED,
+]) {
+  assert(logExists(ver), `_log has ${ver}`);
+  assert(changelogIndex.includes(`${ver}.md`), `CHANGELOG index links ${ver}`);
+}
+assert(!/# 0\.6\.7[^\n]*-dev/.test(readLog("0.6.7")), "CHANGELOG formal 0.6.7 no -dev");
 assert(/Codex P0|增量解冻/.test(changelog), "CHANGELOG Codex P0 Chinese entry");
-assert(/^## 0\.6\.6\b/m.test(changelog), "CHANGELOG keeps 0.6.6");
-assert(/^## 0\.6\.5\b/m.test(changelog), "CHANGELOG keeps 0.6.5");
-assert(/## 0\.6\.4/.test(changelog), "CHANGELOG keeps 0.6.4");
-assert(/## 0\.6\.3/.test(changelog), "CHANGELOG keeps 0.6.3");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -461,9 +444,9 @@ assert(
   "0.5.1 selfcheck not in archive hot pack"
 );
 {
-  const hist = path.resolve(skillRoot, "../_history/harness-eng-selfcheck-legacy");
-  assert(fs.existsSync(path.join(hist, "selfcheck-0.5.1.mjs")), "_history keeps 0.5.1 selfcheck");
-  assert(fs.existsSync(path.join(hist, "selfcheck-0.4.0.mjs")), "_history keeps 0.4.0 selfcheck");
+  const hist = path.resolve(skillRoot, "../_log/harness-eng/selfcheck-legacy");
+  assert(fs.existsSync(path.join(hist, "selfcheck-0.5.1.mjs")), "_log keeps 0.5.1 selfcheck");
+  assert(fs.existsSync(path.join(hist, "selfcheck-0.4.0.mjs")), "_log keeps 0.4.0 selfcheck");
 }
 assert(
   fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/INDEX.md")),
@@ -481,8 +464,8 @@ assert(
   "archive README no stale 0.3 hot-path line"
 );
 assert(
-  fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/VERIFY-history-through-0.2.27.md")),
-  "VERIFY history 0.2.27 in _history"
+  fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.2.27.md")),
+  "VERIFY history 0.2.27 in _log"
 );
 assert(
   !fs.existsSync(path.join(skillRoot, "archive/VERIFY-history-through-0.2.27.md")),
@@ -495,9 +478,9 @@ assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftove
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
-assert(fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/VERIFY-history-through-0.6.0.md")), "VERIFY 0.6 history in _history");
+assert(fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.6.0.md")), "VERIFY 0.6 history in _log");
 assert(/VERIFY-history-through-0\.6\.0/.test(verifyMd), "VERIFY points to 0.6 history archive");
-assert(/_history\/harness-eng-docs-archive/.test(verifyMd), "VERIFY points _history docs archive");
+assert(/_log\/harness-eng\/docs/.test(verifyMd), "VERIFY points _log/harness-eng/docs");
 assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
@@ -571,8 +554,8 @@ assert(/fill-report-html\.mjs/.test(skill), "SKILL points report to script");
 
 assert(!fs.existsSync(path.join(skillRoot, "OPTIMIZATION-PROPOSAL-0.2.x.md")), "OPTIMIZATION not in skill root");
 assert(
-  fs.existsSync(path.resolve(skillRoot, "../_history/harness-eng-docs-archive/OPTIMIZATION-PROPOSAL-0.2.x.md")),
-  "OPTIMIZATION in _history docs archive"
+  fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/OPTIMIZATION-PROPOSAL-0.2.x.md")),
+  "OPTIMIZATION in _log docs"
 );
 assert(
   !fs.existsSync(path.join(skillRoot, "archive/OPTIMIZATION-PROPOSAL-0.2.x.md")),
@@ -1535,8 +1518,8 @@ if (fs.existsSync(fixture)) {
     "fill-score 报告字段速查"
   );
   assert(
-    /_history|历史|迁出/.test(fs.readFileSync(path.join(skillRoot, "archive/README.md"), "utf8")),
-    "archive README points _history"
+    /_log|_history|历史|迁出/.test(fs.readFileSync(path.join(skillRoot, "archive/README.md"), "utf8")),
+    "archive README points _log"
   );
   assert(
     /契约域闭环/.test(readDoc("truth-quality.md")),
