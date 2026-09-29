@@ -46,6 +46,7 @@ Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disabl
 - 自造 `user_task_fixture` / `user_task_auto` 等占位 task id
 - 声称环完成但跳过 L2 / 不写 `审核-<stage>.md` / `result: fail` 仍写推进闸
 - `controller_proxy` 当作可跳过 advance / 硬闸的许可证
+- `express` 下跳过 Pre-Impl，或把 Pre-Impl「并进」首个实现提交
 - 只读 YAML `description` 或 SKILL 前几段就开干，不 Read `modes/`
 - 金样/旧夹具「审核文件可不落盘」——已废除；以本版证据条为准
 
@@ -62,6 +63,7 @@ Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disabl
 | 「description 已经写了流程」 | description 只触发加载；流程以 modes 为准 |
 | 「夹具说审核文件可不落盘」 | 0.2.10 起金样必须落盘；`result: fail` 仍写 ISO 亦 FAIL |
 | 「express 就跳过 Pre-Impl」 | express 只压缩 grill+design 确认节奏；Pre-Impl / Gate 仍按路径适用 |
+| 「express 就把 Pre-Impl 并进首个实现提交」 | 并入实现 = 跳过独立闸；Full 仍须单独 Pre-Impl（或路径等价闸），不得折进 implement |
 | 「inline 我就一边写代码一边改 progress」 | inline 只改调起形态；progress/回链/gates 仍只由 advance 写 |
 | 「B 路径 close 不用双归档」 | Bounded 仍须 active→archive；superpowers/archive 按 close L1 勾选，不得静默省略 runs 归档 |
 
