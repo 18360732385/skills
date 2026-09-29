@@ -9,6 +9,7 @@ V0.6.X 开发钉。相对 0.2.12-dev：**不**改默认绑定 skill 名；`harne
 - **废除**旧扁平 `binding.md` / `stages.md` / `artifacts.md` / `gates-*.md` / `*-bridge.md` / 根 `handoff.md`
 - **热路径**：AGENT-INDEX 必读 ≤6；feature.mjs modes 分入口/specs 两段；manifest `specs_dir` + 四手册名
 - **selfcheck / VERIFY**：PIN 0.2.13-dev；旧路径泄漏断言
+- **gate-evidence**：L2 `result` 须整行裁定为 `pass` 或 `fail`；模板占位 `pass | fail` 不得当 pass（负例 `gate-l2-unfilled-bad/`）
 
 | 版本 | 日期 | 说明 |
 |---|---|---|

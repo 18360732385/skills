@@ -11,11 +11,12 @@
 | `close-ready/` | close 后 archive 形状（`stage=done` + `gates.close` + 授权/审核证据） |
 | `gate-theater-bad/` | 闸门演戏负例（ISO gates + 假 transcript / 缺审核）→ gate-evidence FAIL |
 | `gate-l2-fail-bad/` | L2 `result: fail` 仍写 ISO 推进闸 → gate-evidence FAIL |
+| `gate-l2-unfilled-bad/` | L2 仍为模板 `result: pass | fail`（未裁定）仍写 ISO 推进闸 → gate-evidence FAIL |
 | `sibling-repos-shape/` | O8 `sibling_repos` 条目形状金标 |
 | `env-notes-shape/` | O11/O14/M2/M5 `pinned_deps` + `api_base_mode` + `verify_commands` + `workdir_policy` 形状金标 |
 | `monorepo-layout-shape/` | M1 `layout`/`packages`/`docs_root` 金标 + 冲突负例 |
 
-勿把本目录当真实主题 resume/close；`bindings-bad/` / `gate-theater-bad/` / `gate-l2-fail-bad/` 更勿拷进消费仓当正式过程态。
+勿把本目录当真实主题 resume/close；`bindings-bad/` / `gate-theater-bad/` / `gate-l2-fail-bad/` / `gate-l2-unfilled-bad/` 更勿拷进消费仓当正式过程态。
 
 ## 0.2.12-dev 字段
 

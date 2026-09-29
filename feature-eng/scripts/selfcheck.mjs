@@ -1550,6 +1550,21 @@ assert(
 );
 assert(/gate-l2-fail-bad/.test(fixReadme), "fixtures README lists gate-l2-fail-bad");
 
+const FIX_L2UNFILLED = "scripts/fixtures/gate-l2-unfilled-bad";
+const L2UNFILLED_SLUG = "2026-09-29-gate-l2-unfilled-bad";
+assert(exists(FIX_L2UNFILLED), "gate-l2-unfilled-bad fixture dir exists");
+assert(
+  exists(`${FIX_L2UNFILLED}/docs/runs/active/${L2UNFILLED_SLUG}/审核-design.md`),
+  "gate-l2-unfilled-bad 审核-design exists"
+);
+assert(
+  /result:\s*pass\s*\|\s*fail/.test(
+    read(`${FIX_L2UNFILLED}/docs/runs/active/${L2UNFILLED_SLUG}/审核-design.md`) || ""
+  ),
+  "gate-l2-unfilled-bad keeps template pass | fail"
+);
+assert(/gate-l2-unfilled-bad/.test(fixReadme), "fixtures README lists gate-l2-unfilled-bad");
+
 const advProgText = read(`${FIX_ADV}/docs/runs/active/${ADV_SLUG}/progress.yaml`) || "";
 const advSpec = nestedScalar(advProgText, "artifacts", "spec");
 const advPlan = nestedScalar(advProgText, "artifacts", "plan");
@@ -1606,6 +1621,38 @@ const geL2Expect = spawnSync(
   { encoding: "utf8" }
 );
 assert(geL2Expect.status === 0, "gate-evidence --expect-fail on gate-l2-fail-bad exit 0");
+
+const geL2Unfilled = spawnSync(
+  process.execPath,
+  [gateEvBin, "--cwd", path.join(skillRoot, FIX_L2UNFILLED), "--slug", L2UNFILLED_SLUG],
+  { encoding: "utf8" }
+);
+assert(
+  geL2Unfilled.status !== 0,
+  "gate-evidence on gate-l2-unfilled-bad exits non-zero"
+);
+assert(
+  /missing result:\s*pass/i.test(
+    `${geL2Unfilled.stdout || ""}${geL2Unfilled.stderr || ""}`
+  ),
+  "gate-l2-unfilled-bad reports missing result: pass (template pass | fail is not pass)"
+);
+const geL2UnfilledExpect = spawnSync(
+  process.execPath,
+  [
+    gateEvBin,
+    "--cwd",
+    path.join(skillRoot, FIX_L2UNFILLED),
+    "--slug",
+    L2UNFILLED_SLUG,
+    "--expect-fail",
+  ],
+  { encoding: "utf8" }
+);
+assert(
+  geL2UnfilledExpect.status === 0,
+  "gate-evidence --expect-fail on gate-l2-unfilled-bad exit 0"
+);
 
 const featBin = path.join(skillRoot, "scripts/feature.mjs");
 const featGe = spawnSync(
