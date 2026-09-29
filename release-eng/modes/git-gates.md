@@ -26,6 +26,9 @@ Exit：`0`=通过 · `2`=未通过 · `1`=错误。
 - `pass=false` → Done（中止）；向用户展示未推送摘要与 `git push` 处置  
 - fetch 失败（exit 1）→ 停止并说明 `error`
 
+**中止时禁止「评审用落盘」：**  
+「先把发版单落盘给评审，push 我稍后」「别堵着大家」→ 仍 **Done（中止）**。可把 freeze 草稿贴聊天/gist；**勿**写 `docs/releases/notes/**`、**勿**写 `artifacts.json`、**勿**出可执行定版 WritePlan。unpushed 不是「只挡上线、不挡写盘」。
+
 `--no-fetch` 仅排障用；默认会 `git fetch --prune`。
 
 ## 回退（脚本不可用时）

@@ -5,6 +5,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.3.21-dev](../_log/release-eng/0.3.21-dev.md) | 2026-09-29 | 纪律 bulletproof（Red Flags / 借口表；RED→GREEN 4/4） |
 | [0.3.20-dev](../_log/release-eng/0.3.20-dev.md) | 2026-09-28 | 版本单点维护：manifest SSOT + sync-skill-version |
 | [0.3.19-dev](../_log/release-eng/0.3.19-dev.md) | 2026-09-19 | 统一薄入口 release.mjs + 模式 md 迁入 modes/ |
 | [0.3.18-dev](../_log/release-eng/0.3.18-dev.md) | 2026-09-19 | P0 门禁包 / selfcheck |

@@ -1,20 +1,33 @@
-# release-eng 验收记录（0.3.20-dev）
+# release-eng 验收记录（0.3.21-dev）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.20-dev**（版本单点维护：manifest SSOT · sync-skill-version；其上 0.3.19-dev 薄入口 / modes/）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+当前 **0.3.21-dev**（纪律 bulletproof；其上 0.3.20-dev 版本单点维护 · 0.3.19-dev 薄入口 / modes/）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
 
-本版**不**改发版仪式语义与既有脚本行为契约（相对 0.3.19-dev）；含版本单点维护与仓根 README 钉号对齐。
+本版**不**改脚本行为契约；补 Agent 纪律防绕过（相对 0.3.20-dev）。
+
+## 0.3.21-dev 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| manifest / 文档钉头 **0.3.21-dev**；`sync-skill-version --check` | 有 |
+| SKILL：Red Flags + 借口表 + When NOT；description 为触发/症状（非流程摘要） | 有 |
+| gates-common：口述回显首问；逾期无口头豁免 | 有 |
+| git-gates：中止禁止评审落盘 | 有 |
+| write-plan：非确认词黑名单 | 有 |
+| RED→GREEN 记录 [`../_log/release-eng/RED-baseline-pressure.md`](../_log/release-eng/RED-baseline-pressure.md)：基线 4/4 B → VERIFY 4/4 A | 有 |
+| 仍标明非 harness land；脚本契约未改 | 有 |
 
 ## 0.3.20-dev 增量验收
 
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| `_meta/manifest.yaml` 为权威 `0.3.20-dev`；SKILL / AGENT-INDEX / README / VERIFY + 仓根 README 钉头一致 | 有 |
+| `_meta/manifest.yaml` 为权威 `0.3.20-dev`（历史钉；现行见 0.3.21-dev）；当时 SKILL / AGENT-INDEX / README / VERIFY + 仓根 README 钉头一致 | 有 |
 | `node scripts/sync-skill-version.mjs --check` exit 0 | 有 |
 | selfcheck `PIN` 读自 manifest | 有 |
 | CHANGELOG 索引含 0.3.20-dev / 0.3.19-dev 且存在 `_log/release-eng/` 对应文件 | 有 |
@@ -26,7 +39,7 @@
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.3.19-dev** | 有（历史钉；现行见 0.3.20-dev） |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.3.19-dev** | 有（历史钉；现行见 0.3.21-dev） |
 | CHANGELOG 索引含 0.3.19-dev / 0.3.18-dev 且存在对应 `_log/release-eng/` 文件 | 有 |
 | 模式 md 位于 `modes/`（prepare/resume/audit/seal/freeze/write-plan/gates-*/questions/ai-track/bootstrap/recommended/idempotency） | 有 |
 | [modes/README.md](modes/README.md) 索引表存在 | 有 |

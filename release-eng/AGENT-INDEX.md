@@ -3,7 +3,7 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。
 
-**拓扑（0.3.20-dev）**：`modes/` 模式规格（prepare / resume / audit / seal 等）· `scripts/release.mjs` 统一薄入口 · `scripts/` 仪式脚本 · `fixtures/docs/releases/` 骨架种子。  
+**拓扑（0.3.21-dev）**：`modes/` 模式规格（prepare / resume / audit / seal 等）· `scripts/release.mjs` 统一薄入口 · `scripts/` 仪式脚本 · `fixtures/docs/releases/` 骨架种子。  
 **发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（文档钉头 + 仓根 README 行）→ ③ 在 [`../_log/release-eng/<ver>.md`](../_log/release-eng/) 写要点并更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [VERIFY.md](VERIFY.md) 增量 → ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。  
 **非 harness land**（`harness_land: false`）——无自动 land 流水线；靠用户点名仪式。
 

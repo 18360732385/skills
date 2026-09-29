@@ -27,8 +27,10 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 
 ## 三条硬规则
 
-1. **首问齐**——发版日期 + 发版分支 +（基线或首次发版=`无`）后才进 push-gate。
-2. **确认词才写盘**——WritePlan / note-merge / seal 搬迁须过确认（或同会话预授权）；audit 永不写盘。
+1. **首问齐**——发版日期 + 发版分支 +（基线或首次发版=`无`）后才进 push-gate（权威口述须回显确认）。
+2. **确认词才写盘**——WritePlan / note-merge / seal 搬迁须过确认（或同会话预授权）；「继续吧」等非正式口语不算；audit 永不写盘。
 3. **非 harness land**——不对齐 harness 自动 land；跨仓靠整目录拷贝 + 点名仪式。
+
+逾期已定版仍在 `notes/` → 先 seal。push-gate 未通过 → 勿写 `notes/`（聊天可贴草稿）。Red Flags：[SKILL.md](SKILL.md)。
 
 详情：[SKILL.md](SKILL.md) · [modes/README.md](modes/README.md) · [gates-common.md](modes/gates-common.md) · [freeze.md](modes/freeze.md)
