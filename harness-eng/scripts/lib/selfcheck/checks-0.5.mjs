@@ -988,7 +988,7 @@ assert(
 );
 assert(/会话仪表盘/.test(skill), "SKILL mandates session dashboard footer");
 assert(/session-dashboard\.md/.test(skill), "SKILL points session-dashboard.md");
-assert(/实质施工产出/.test(skill) && /闸门决策/.test(skill), "SKILL gates dashboard to milestone SHOW");
+assert(/实质产出/.test(skill) && /闸门决策/.test(skill) && /SHOW\|HIDE/.test(skill), "SKILL gates dashboard to milestone SHOW");
 assert(/密文对用户话术/.test(skill) && /不主动要求用户/.test(skill), "SKILL secrets UX: no proactive dont-fill");
 assert(/仅.*local 真密配置/.test(skill) || /仅\*\*本轮在创建/.test(skill), "SKILL secrets UX: remind only on local secret files");
 assert(/不按「会话曾点名」/.test(skill), "SKILL dashboard not gated by session history");

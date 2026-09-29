@@ -1,11 +1,12 @@
 ---
 name: harness-eng
 description: >-
-  施工仪式：把 Agent Harness 工程化落地到目标仓库——生成/补齐 AGENTS.md、AI 编码规则
-  （如 .cursor/rules）、契约文档（func/api/db/redis/jobs）、hooks、MCP 配置、知识回流与规划目录。
-  用户点名 harness-eng，或说开干 / 落地 / 形态 / 覆盖 / 贴顶 / gate / 打分 / 审计 / 续跑 / 流水线 / 升阶 / 填充 / 会话自证 / session-live，
-  或要求生成 AGENTS.md / 仓库工程化 / AI 协作规则 / 文档与代码同步，
-  或定时 / Cron / Scheduler / jobs 契约填充时使用。
+  Use when the user names harness-eng, or says 落地 / land, 续跑 / resume,
+  升阶 / upgrade, 流水线 / pipeline, 审计 / audit, 填充 / fill, 打分 / score,
+  形态 / morph, 贴顶 / 覆盖 / gate, 会话自证 / session-live, 开干,
+  or asks for Agent Harness engineering on a target repo;
+  also when Cron / Scheduler / jobs 契约 work is requested.
+  Description is triggers only — read SKILL.md body before acting.
 ---
 
 # harness-eng
@@ -34,7 +35,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（0.7.2 起无 `land.mjs`）。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](modes/recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
-6. **本轮实质施工产出、闸门决策点（出示 WritePlan / 用户确认）、或显式读数**时回复末尾附可视化**会话仪表盘**（四边框 +【阶段】【现状】【工作】【下一步建议】各一句，现状仅 AI coding 可否；何时 SHOW/HIDE 见 [session-dashboard.md](modes/session-dashboard.md)）；有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。提问批次 / 定根前 / 等确认空轮 / 纯 meta / 版本 / 手册 / 跑题 / 改 skill **不附**整块（判定按本轮里程碑，不按「会话曾点名」）。HTML 持久报告为**五台**（决策/诊断/任务/趋势/宿主，`report_schema` 0.4.0）。
+6. 会话仪表盘：先按 [session-dashboard.md](modes/session-dashboard.md) 判定 **SHOW|HIDE**，**仅 SHOW 时**附四边框块（【阶段】【现状】【工作】【下一步建议】；现状仅 AI coding 可否）。可观察 SHOW 例：本轮完整出示 WritePlan（闸门决策点，**不必等确认/写盘**）；实质产出结论；用户显式读数。有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。判定按**本轮**里程碑，不按「会话曾点名」。HTML 五台（`report_schema` 0.4.0）另见手册。
 
 ## 模式分流（对外四支）
 
@@ -74,6 +75,8 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 
 ## 硬闸门（正目标）
 
+**违反确认闸门的字面 = 违反其精神。** 词表 SSOT：[write-plan.md](modes/write-plan.md)。
+
 - 写盘前拿到确认闸门等价词（或已预授权后续轮次）
 - 只写入已确认的 `Q_TARGET_ROOT`
 - 本 skill 只写目标仓 `AGENTS` / `.cursor/rules` / `docs`（及 fill-mcp 经确认的 `mcp.json`）
@@ -83,6 +86,21 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 - README 疑似密钥：只检测 + 移交人工（不自动删）
 - SSOT promote：仅过 acceptance；heuristic 标 `quality: heuristic` 且留在 `.fill-work`；宣称可 AI coding 仅看 `ai_coding_ready`
 - **填充 MCP 闸**：域/栈需 db·redis 时，矩阵+（烟测∨calibrate-live）达标后才进入填充（[fill-mcp.md](fill/fill-mcp.md)）
+
+| 借口 | 现实 |
+|---|---|
+| 「别确认了」= 已授权写盘 | 仅闸门词表（确认 / LGTM / …）或已预授权后续轮次才写盘 |
+| 演示 / 五分钟 / 时间紧 | 时限不废闸门；先出示 WritePlan，等词表 |
+| WritePlan 已在脑中 / 「按推荐」 | 须展示 WritePlan；「全部推荐」只收齐答题，≠写盘确认 |
+
+### Red Flags — STOP，先过闸门
+
+- 用户催「直接写入 / 别确认了」
+- 未出示 WritePlan 就要跑 `harness.mjs` / 写目标仓文件
+- 把「快点 / 演示」当成确认词
+- 「先写再补确认」
+
+**以上均 = 仍出示 WritePlan，等待 write-plan 词表。**
 
 读侧路由 SSOT 在 [AGENT-INDEX.md](AGENT-INDEX.md)（必读≤8 + 按支按需表）。高频指针：写盘/预授权 → [write-plan.md](modes/write-plan.md)；**打分 / score-policy / 覆盖裁决** → [fill-score.md](fill/fill-score.md)；AI 工具面 / 多宿主 → [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md)。
 

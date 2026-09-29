@@ -46,8 +46,12 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 本轮须满足**至少一条**（缺则 HIDE）：
 
 - **实质产出**：本轮已跑并汇报 `harness.mjs` / `land` / `render` / `audit` / `fill-score` / `fill-report-html` / `fill-plan`（关批或写盘）/ `fill-*` 写盘 / `upgrade` / `seed-truths` / `pipeline` 落盘步骤；**或**本轮给出审计结论 / 打分结论 / 开干闸结论（含只读 audit 出缺口清单）
-- **闸门决策点**：**出示 WritePlan** 等确认的那一轮；用户本轮说 **确认** / 改计划后继续 / 继续施工（含预授权后续轮的首写盘轮）
+- **闸门决策点**（可观察谓词，命中即 SHOW）：
+  1. **本轮正文已完整出示 WritePlan**（白话摘要 + 表/预览，等确认）→ **本轮末附仪表盘**（有 `Q_TARGET_ROOT`）
+  2. 用户本轮说 **确认** / 改计划后继续 / 继续施工（含预授权后续轮的首写盘轮）→ SHOW
 - **显式读数**：用户本轮明确要开干闸 / 完整度 / 会话仪表盘 / `report-latest` 读数 / 「现在能不能开干」（须已有目标根）
+
+**闸门决策点合同**：`本轮出示 WritePlan` ⇒ SHOW。与「尚未写盘」「等用户确认后再附」无关——确认轮之前的**出示轮**即决策点。
 
 **不够 SHOW 的常见误判**（一律 HIDE）：
 
@@ -63,8 +67,8 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 |---|---|
 | 尚无 `Q_TARGET_ROOT`（含 detect / 定根讨论） | **HIDE** |
 | 提问批次 / RecommendedProfile / fingerprint | **HIDE** |
-| 出示 WritePlan 等确认（该轮） | **SHOW** |
-| 正等 WritePlan 确认，用户本轮无确认且无改计划 | **HIDE** |
+| 出示 WritePlan 等确认（该轮） | **SHOW**（即使尚未写盘、用户尚未回复确认） |
+| 正等 WritePlan 确认，用户本轮无确认且无改计划（含只问版本） | **HIDE** |
 | 正等 WritePlan 确认，用户本轮说「确认」/ 改计划 / 继续施工 | **SHOW** |
 | 本轮跑 audit/fill-score 并出结论 | **SHOW** |
 | 首条只问「当前版本号多少」 | **HIDE** |

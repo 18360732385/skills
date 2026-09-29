@@ -4,6 +4,9 @@
 
 | 文件 | 说明 |
 |---|---|
+| `WRITING-SKILLS-P2.md` | writing-skills P2：会话仪表盘 SHOW/HIDE（P2-C 漏 SHOW → 闸门决策点合同） |
+| `WRITING-SKILLS-P1.md` | writing-skills P1：开干/续跑易混 + 同会话并行（control 未失败，跳过 GREEN） |
+| `WRITING-SKILLS-P0.md` | writing-skills P0：description 微测 + 确认闸门 / MATURE 压力基线 |
 | `TRAE-P0-EVIDENCE.md` | Trae P0 spike 实证全文 |
 | `ROADMAP-0.6.0.md` | 0.6.0 路线（已收口） |
 | `OPTIMIZATION-PROPOSAL-0.2.x.md` | 0.2.x 优化提案 |
