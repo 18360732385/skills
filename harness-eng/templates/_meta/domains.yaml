@@ -33,7 +33,8 @@ domains:
     morph_cap: 100
     optional: false
     pack: func
-    hook_code: ["/\/service\//", "/\/plugin\/tools\//"]
+    # 0.7.37: narrow /service/ (avoid clinic-service module path + entity under service/)
+    hook_code: ["/Service(Impl)?\\.java$/", "/\/plugin\/tools\//"]
     hook_docs: "docs/func/modules/"
     hook_tip: "rule 11：同步 docs/func/modules"
   db:

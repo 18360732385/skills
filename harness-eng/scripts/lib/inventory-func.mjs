@@ -52,7 +52,7 @@ function printHelp() {
 
 Default --out: docs/func/.fill-work/inventory.json
 
-Scans **/service/**/*.java and *Service(Impl)?.java / *Component.java.
+Scans *Service(Impl)?.java / *Component.java (excludes entity/mapper/job/properties paths).
 Output: { modules: [{ name, services: [{ class, evidence, methods, annotations }] }], stats }
 Exit: 0 ok · 2 warnings · 1 error
 `);
@@ -116,6 +116,11 @@ function discoverModuleDirs(root) {
   return [...new Set(nested)];
 }
 
+/**
+ * 0.7.37 FS-func-noise: do not treat every .java under /service/ as a service
+ * (entity/mapper/job under …/service/entity would inflate coverage).
+ * Keep *Service(Impl)?.java / *Component.java; drop entity|mapper|job|properties paths.
+ */
 function walkServices(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
   for (const name of fs.readdirSync(dir)) {
@@ -128,12 +133,12 @@ function walkServices(dir, acc = []) {
       continue;
     }
     if (st.isDirectory()) walkServices(p, acc);
-    else if (
-      /Service(Impl)?\.java$/i.test(name) ||
-      /Component\.java$/i.test(name) ||
-      (/\/service\//i.test(p.replace(/\\/g, "/")) && /\.java$/i.test(name))
-    ) {
-      acc.push(p);
+    else if (/\.java$/i.test(name)) {
+      const norm = p.replace(/\\/g, "/");
+      if (/\/(entity|mapper|job|jobs|properties)\//i.test(norm)) continue;
+      if (/Service(Impl)?\.java$/i.test(name) || /Component\.java$/i.test(name)) {
+        acc.push(p);
+      }
     }
   }
   return acc;

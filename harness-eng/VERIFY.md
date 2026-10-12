@@ -1,10 +1,22 @@
-﻿# harness-eng 验收记录（0.7.36）
+﻿# harness-eng 验收记录（0.7.37）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.36**（e2e-12 P0/P1：merge git_head · live sql_root · G8-like drift · mysql-guard · module-leak · LD-3；其上 0.7.35 e2e-11 P2 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.37**（e2e-13：bold-colon path · 根 Maven 预填 · 冷 clone live · func 收窄；其上 0.7.36 e2e-12 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.37 增量验收（e2e-13）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.37`；templates / meta / questions / sync tmpl 一致 | 有 |
+| `collectDocApiPaths` 认 `**接口地址：**`（无反引号）；改 path 出 `doc_path_drift` | 有 |
+| 根 Commands 预填：`-f backend/pom.xml -pl … -am`；无 Boot 无 `spring-boot:run` | 有 |
+| live 扫描成功 → 不记 `missing_inventory`；冷 clone 建议 refresh | 有 |
+| func inventory 排除 entity/mapper；soft-gate hook 收窄 `Service.java` | 有 |
+| CHANGELOG 索引含 0.7.37 且存在 `_log/harness-eng/0.7.37.md`；upgrade `## 0.7.36 → 0.7.37` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.36 增量验收（e2e-12 P0/P1）
 

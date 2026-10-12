@@ -57,6 +57,15 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.36 → 0.7.37 迁移要点
+
+1. **meta**：`skill_version` → `0.7.37`
+2. **api path drift**：`collectDocApiPaths` 兼容 `**接口地址：**`（粗体内冒号）；改 Controller path 须出 `doc_path_drift`
+3. **冷 clone**：`.fill-work` 仍 gitignore；`fill-score` 在 live 扫描成功时不再因 `missing_inventory` 单独卡死；建议新 clone 仍跑 `harness --mode refresh` 落盘
+4. **根 AGENTS Commands**：Maven 预填走 `mavenCmdsForModule`（`-f backend/pom.xml -pl … -am`；无 Boot 勿 `spring-boot:run`）
+5. **func inventory / soft-gate**：不再把 `/service/` 下任意 `.java` 当服务；hook 收窄为 `Service.java`
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.37`）后再 sync
+
 ## 0.7.35 → 0.7.36 迁移要点
 
 1. **meta**：`skill_version` → `0.7.36`
@@ -113,7 +122,7 @@
 ## 0.7.30 → 0.7.31 迁移要点
 
 1. **meta**：`skill_version` → `0.7.31`
-2. **评分**：缺任一 scored 域 inventory 会 `missing_inventory` / not ready；请先 `harness --mode refresh`
+2. **评分**：缺磁盘 inventory 时优先 `harness --mode refresh`；0.7.37+ live 扫描成功可不记 `missing_inventory`
 3. **refresh `--no-write`**：确认只读（不落 inventory/meta/score）
 4. **calibrate**：compare 有 DDL drift 时 exit 2；`--write-ddl` 会改写「与 Flyway 一致」说明
 5. **L5+codex**：刷新 `sync.mjs`（tmpl id `0.7.31`）——悬空 hook bare 名检测生效

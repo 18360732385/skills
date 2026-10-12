@@ -79,7 +79,7 @@ import {
   normalizeDdlForCompare,
 } from "./fill-calibrate-live.mjs";
 import { updateDomainIndex, extractInventoryEvidence } from "./lib/merge-domain.mjs";
-import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
+import { applyCommandsPrefill, collectCommandPrefill } from "./lib/prefill-commands.mjs";
 import { resolveInventoryOutPath, mergeApiInventories } from "./lib/inventory-paths.mjs";
 import { inventoryArgv } from "./lib/refresh.mjs";
 import {
@@ -2977,6 +2977,10 @@ allow({ agent_message: "[api] probe" });
     /0\.7\.35 → 0\.7\.36/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
     "0.7.36 upgrade.md migration section"
   );
+  assert(
+    /0\.7\.36 → 0\.7\.37/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.37 upgrade.md migration section"
+  );
 }
 
 // --- 0.7.33 e2e-11 P0: FS-1/FS-2 func modules · LD-1/LD-2 mysql-guard · FS-3 jobs ---
@@ -3514,13 +3518,13 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     fs.rmSync(sqlMetaTmp, { recursive: true, force: true });
   }
 
-  // G8-like: api path drift
+  // G8-like: api path drift (0.7.37: no-backtick bold-colon template form)
   const pathTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-036-path-"));
   try {
     fs.mkdirSync(path.join(pathTmp, "docs", "api", "modules"), { recursive: true });
     fs.writeFileSync(
       path.join(pathTmp, "docs", "api", "modules", "01-demo.md"),
-      "## 1. list\n\n**接口地址：** `/api/old`\n**请求方式：** GET\n",
+      "## 1. list\n\n**接口地址：** /api/old\n**请求方式：** GET\n",
       "utf8"
     );
     const pd = detectApiFieldDrift(pathTmp, {
@@ -3528,7 +3532,19 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     });
     assert(
       !pd.ok && pd.blockers.some((b) => /doc_path_drift:api/.test(b)),
-      `0.7.36 api path drift fires (got ${JSON.stringify(pd.blockers)})`
+      `0.7.36/37 api path drift fires without backticks (got ${JSON.stringify(pd.blockers)})`
+    );
+    fs.writeFileSync(
+      path.join(pathTmp, "docs", "api", "modules", "01-demo.md"),
+      "## 1. list\n\n**接口地址：** /api/renamed\n**请求方式：** GET\n",
+      "utf8"
+    );
+    const pdOk = detectApiFieldDrift(pathTmp, {
+      endpoints: [{ method: "GET", path: "/api/renamed", requestFields: [] }],
+    });
+    assert(
+      !pdOk.blockers.some((b) => /doc_path_drift:api/.test(b)),
+      `0.7.37 matching bold-colon path must not doc_path_drift (got ${JSON.stringify(pdOk.blockers)})`
     );
   } finally {
     fs.rmSync(pathTmp, { recursive: true, force: true });
@@ -3580,6 +3596,118 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     /class\s+\\w\*Cache|G-redis-false-KEY/.test(redisSrc36),
     "0.7.36 redis Cache neighborhood / KEY promote"
   );
+}
+
+// --- 0.7.37 e2e-13: bold-colon path · root Maven prefill · cold live inventory · func narrow ---
+{
+  const driftSrc37 = fs.readFileSync(path.join(skillRoot, "scripts/lib/field-drift.mjs"), "utf8");
+  assert(
+    /接口地址\[：:\]\?\\\*\\\*\[：:\]\?/.test(driftSrc37) ||
+      /\\\*\\\*接口地址\[：:\]\?\\\*\\\*/.test(driftSrc37),
+    "0.7.37 collectDocApiPaths accepts bold-colon"
+  );
+
+  const fxNest37 = path.join(skillRoot, "scripts/fixtures/nested-reactor-func");
+  const prefill = collectCommandPrefill(fxNest37, {
+    moduleDirs: ["backend/order-service"],
+  });
+  assert(
+    prefill.rows.some((r) =>
+      /mvn -f backend\/pom\.xml -pl order-service -am test/.test(r.cmd)
+    ),
+    `0.7.37 root prefill nested reactor (got ${JSON.stringify(prefill.rows)})`
+  );
+  assert(
+    !prefill.rows.some((r) => /mvn -f backend\/order-service\/pom\.xml/.test(r.cmd)),
+    "0.7.37 prefill must not use leaf module pom -f"
+  );
+  assert(
+    !prefill.rows.some((r) => /spring-boot:run/.test(r.cmd)),
+    "0.7.37 prefill no spring-boot:run without Boot app"
+  );
+
+  const scoreSrc37 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(
+    /liveInventorySatisfies|0\.7\.37 cold-fill-work/.test(scoreSrc37),
+    "0.7.37 fill-score live satisfies missing_inventory"
+  );
+
+  const funcSrc37 = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-func.mjs"), "utf8");
+  assert(/FS-func-noise|entity\|mapper\|job/.test(funcSrc37), "0.7.37 inventory-func FS-func-noise filter");
+  assert(
+    !/\/\\\/service\\\/\/i\.test\(p\.replace/.test(funcSrc37),
+    "0.7.37 inventory-func dropped bare /service/ walk"
+  );
+
+  const domYaml37 = fs.readFileSync(path.join(skillRoot, "templates/_meta/domains.yaml"), "utf8");
+  assert(
+    /Service\(Impl\)\?.*java\$\//.test(domYaml37),
+    "0.7.37 domains.yaml func hook_code narrowed to Service.java"
+  );
+  assert(
+    !/func:[\s\S]*?hook_code:\s*\["\\\/\\\/service\\\/\//.test(domYaml37),
+    "0.7.37 no bare /\\/service\\// func hook"
+  );
+
+  // func inventory: entity under service/ must not count
+  const funcTmp37 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-037-func-"));
+  try {
+    const javaBase = path.join(
+      funcTmp37,
+      "backend",
+      "demo",
+      "src",
+      "main",
+      "java",
+      "com",
+      "x"
+    );
+    fs.mkdirSync(path.join(javaBase, "service", "entity"), { recursive: true });
+    fs.mkdirSync(path.join(funcTmp37, "backend"), { recursive: true });
+    fs.writeFileSync(
+      path.join(funcTmp37, "backend", "pom.xml"),
+      "<project><modules><module>demo</module></modules></project>\n",
+      "utf8"
+    );
+    fs.writeFileSync(path.join(funcTmp37, "backend", "demo", "pom.xml"), "<project/>\n", "utf8");
+    fs.writeFileSync(
+      path.join(javaBase, "service", "entity", "Appointment.java"),
+      "package com.x.service.entity;\npublic class Appointment {}\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(javaBase, "service", "AppointmentService.java"),
+      "package com.x.service;\nimport org.springframework.stereotype.Service;\n@Service\npublic class AppointmentService {}\n",
+      "utf8"
+    );
+    const invOut = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/fill-inventory.mjs"),
+        "--domain",
+        "func",
+        "--root",
+        funcTmp37,
+        "--modules",
+        "backend/demo",
+        "--no-write",
+      ],
+      { encoding: "utf8", cwd: skillRoot, windowsHide: true }
+    );
+    assert(invOut.status === 0 || invOut.status === 2, `0.7.37 func inventory exit (got ${invOut.status}): ${invOut.stderr}`);
+    const out = String(invOut.stdout || "");
+    const i = out.indexOf("{");
+    const j = out.lastIndexOf("}");
+    const report = JSON.parse(out.slice(i, j + 1));
+    const services = (report.modules || []).flatMap((m) => m.services || []);
+    assert(
+      services.some((s) => s.class === "AppointmentService") &&
+        !services.some((s) => s.class === "Appointment"),
+      `0.7.37 func inventory excludes entity (got ${JSON.stringify(services.map((s) => s.class))})`
+    );
+  } finally {
+    fs.rmSync(funcTmp37, { recursive: true, force: true });
+  }
 }
 
 console.log(`ok: ${ok.length}`);

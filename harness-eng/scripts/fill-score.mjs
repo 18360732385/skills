@@ -1331,10 +1331,21 @@ function main() {
   report.next_shards = nextShardsFromInventory(inventory);
 
   // 0.7.31 ID-4: scored contract domains missing inventory must not stay ready
+  // 0.7.37 cold-fill-work: liveInventoryScan success counts (disk .fill-work may be gitignored)
   const INV_SCORE_DOMAINS = new Set(["api", "func", "db", "redis", "jobs"]);
+  function liveInventorySatisfies(domain, live) {
+    if (!live || typeof live !== "object") return false;
+    if (domain === "api") return Array.isArray(live.endpoints);
+    if (domain === "func") return Array.isArray(live.modules);
+    if (domain === "db") return Array.isArray(live.tables);
+    if (domain === "redis") return Array.isArray(live.keys);
+    if (domain === "jobs") return Array.isArray(live.tasks);
+    return false;
+  }
   const missingInventoryDomains = [];
   for (const d of domains) {
     if (!INV_SCORE_DOMAINS.has(d)) continue;
+    if (liveInventorySatisfies(d, liveByDomain[d])) continue;
     if (d === "api") {
       if (!inventory) missingInventoryDomains.push("api");
     } else if (!loadDomainInventory(root, d)) {

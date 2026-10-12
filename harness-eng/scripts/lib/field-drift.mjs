@@ -99,17 +99,20 @@ export function detectDbFieldDrift(root) {
   return { ok: blockers.length === 0, gaps, blockers };
 }
 
-/** Collect METHOD + path tokens from api docs (接口地址 / 请求方式 / GET `/path`). */
+/**
+ * Collect METHOD + path tokens from api docs (接口地址 / 请求方式 / GET `/path`).
+ * 0.7.37: accept colon inside or outside bold (`**接口地址：**` from fill-auto-api).
+ */
 function collectDocApiPaths(docText) {
   const paths = new Set();
   const methodsByNear = [];
   const text = String(docText || "");
-  // **接口地址：** /api/x  or **接口地址:** `/api/x`
-  for (const m of text.matchAll(/\*\*接口地址\*\*[：:]\s*`?([^\s`*]+)`?/gi)) {
+  // **接口地址：** /api/x | **接口地址:** `/api/x` | **接口地址**： /api/x
+  for (const m of text.matchAll(/\*\*接口地址[：:]?\*\*[：:]?\s*`?([^\s`*]+)`?/gi)) {
     const p = m[1].trim();
     if (p.startsWith("/")) paths.add(p);
   }
-  for (const m of text.matchAll(/\*\*请求方式\*\*[：:]\s*`?([A-Z]+)`?/gi)) {
+  for (const m of text.matchAll(/\*\*请求方式[：:]?\*\*[：:]?\s*`?([A-Z]+)`?/gi)) {
     methodsByNear.push(m[1].toUpperCase());
   }
   // METHOD `/path` or METHOD /path

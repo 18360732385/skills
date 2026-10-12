@@ -1,8 +1,10 @@
 /**
  * Prefill AGENTS Commands from package.json / Maven (0.7.25 LT-5).
+ * 0.7.37: Maven rows use mavenCmdsForModule (nested reactor / no false spring-boot:run).
  */
 import fs from "fs";
 import path from "path";
+import { mavenCmdsForModule } from "./maven-cmds.mjs";
 
 function readJson(p) {
   try {
@@ -30,14 +32,13 @@ function pkgScripts(root, dirRel) {
 function mavenRows(root, dirRel) {
   const pom = path.join(root, dirRel || ".", "pom.xml");
   if (!fs.existsSync(pom)) return [];
-  const flag = dirRel && dirRel !== "." ? `-f ${dirRel}/pom.xml` : "";
-  return [
-    { task: "test", cmd: `mvn ${flag} test`.replace(/\s+/g, " ").trim() },
-    {
-      task: "run",
-      cmd: `mvn ${flag} spring-boot:run`.replace(/\s+/g, " ").trim(),
-    },
-  ];
+  const cmds = mavenCmdsForModule(root, dirRel || ".");
+  const rows = [{ task: "test", cmd: cmds.test }];
+  // Only emit run when module has @SpringBootApplication (mavenCmds sets run to spring-boot:run)
+  if (/spring-boot:run/.test(cmds.run)) {
+    rows.push({ task: "run", cmd: cmds.run });
+  }
+  return rows;
 }
 
 /**

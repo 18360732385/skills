@@ -75,5 +75,7 @@ fill 家族 CLI（inventory / merge / plan / score / report）见 [fill/README.m
 
 PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BOM** 文件再传路径。完整示例 SSOT：[write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
 
+**冷 clone**：`docs/**/.fill-work/` 默认 gitignore。新 clone 建议 `node scripts/harness.mjs --mode refresh --root <TARGET>` 落盘 inventory；0.7.37+ 若 live 扫描成功，fill-score 不再仅因缺磁盘 inventory 记 `missing_inventory`。
+
 多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.36**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.37**）。
