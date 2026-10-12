@@ -537,17 +537,18 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     if (mcpNames.length) {
       const alts = [
         ...new Set(
-          mcpNames.map((n) => {
+          mcpNames.flatMap((n) => {
             const raw = String(n).trim().toLowerCase();
-            // engine-only "mysql" → mysql-local (CD-3); already-prefixed keep as-is
-            if (raw === "mysql") return mcpServerName("mysql", "mysql");
-            if (/^mysql-/.test(raw)) return raw;
-            return mcpServerName("mysql", raw);
+            // 0.7.36 G-mysql-guard-scope: engine-only "mysql" → local|dev (align fill-mcp mysql-dev)
+            if (raw === "mysql") return ["mysql-local", "mysql-dev"];
+            if (/^mysql-/.test(raw)) return [raw];
+            return [mcpServerName("mysql", raw)];
           })
         ),
       ];
       resolvedMysqlGuard = alts.length === 1 ? alts[0] : `(${alts.join("|")})`;
     } else {
+      // default covers fill-mcp mysql-dev and CD-3 mysql-local
       resolvedMysqlGuard = "mysql-(local|dev|test|uat)";
     }
   }

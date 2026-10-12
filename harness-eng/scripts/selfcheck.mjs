@@ -69,6 +69,7 @@ import { isInventoryStale } from "./lib/git-head.mjs";
 import {
   detectRedisKeyDrift,
   detectJobsTaskDrift,
+  detectApiFieldDrift,
 } from "./lib/field-drift.mjs";
 import { splitTableRows } from "./lib/doc-density.mjs";
 import {
@@ -79,7 +80,8 @@ import {
 } from "./fill-calibrate-live.mjs";
 import { updateDomainIndex, extractInventoryEvidence } from "./lib/merge-domain.mjs";
 import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
-import { resolveInventoryOutPath } from "./lib/inventory-paths.mjs";
+import { resolveInventoryOutPath, mergeApiInventories } from "./lib/inventory-paths.mjs";
+import { inventoryArgv } from "./lib/refresh.mjs";
 import {
   writeInventoryMeta,
   readInventoryMeta,
@@ -2971,6 +2973,10 @@ allow({ agent_message: "[api] probe" });
     /0\.7\.34 → 0\.7\.35/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
     "0.7.35 upgrade.md migration section"
   );
+  assert(
+    /0\.7\.35 → 0\.7\.36/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.36 upgrade.md migration section"
+  );
 }
 
 // --- 0.7.33 e2e-11 P0: FS-1/FS-2 func modules · LD-1/LD-2 mysql-guard · FS-3 jobs ---
@@ -3099,12 +3105,17 @@ allow({ agent_message: "[api] probe" });
     root: null,
   });
   assert(
-    phMysqlEngine.MYSQL_GUARD_SERVERS === "mysql-local",
-    `0.7.33 LD-2 mcp=mysql → mysql-local (got ${phMysqlEngine.MYSQL_GUARD_SERVERS})`
+    /mysql-local/.test(phMysqlEngine.MYSQL_GUARD_SERVERS) &&
+      /mysql-dev/.test(phMysqlEngine.MYSQL_GUARD_SERVERS),
+    `0.7.36 G-mysql-guard-scope mcp=mysql → local|dev (got ${phMysqlEngine.MYSQL_GUARD_SERVERS})`
   );
   assert(
     new RegExp("^" + phMysqlEngine.MYSQL_GUARD_SERVERS + "$").test("mysql-local"),
-    "0.7.33 LD-2 mysql-local matches"
+    "0.7.36 mysql-local matches"
+  );
+  assert(
+    new RegExp("^" + phMysqlEngine.MYSQL_GUARD_SERVERS + "$").test("mysql-dev"),
+    "0.7.36 mysql-dev matches"
   );
   let threwInvalid = false;
   try {
@@ -3441,6 +3452,135 @@ runChecks05({ skillRoot, docPath, readDoc, assert, runNode });
 
 // --- 0.6.x suites (lib/selfcheck/checks-0.6.mjs) ---
 runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
+
+// --- 0.7.36 e2e-12 P0/P1: merge git_head · live sql_root · path/schedule drift · module-leak · LD-3 bare ---
+{
+  // G-api-merge-stale: merge preserves consistent git_head
+  const mergeTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-036-merge-"));
+  try {
+    const fill = path.join(mergeTmp, "docs", "api", ".fill-work");
+    fs.mkdirSync(fill, { recursive: true });
+    const head = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    fs.writeFileSync(
+      path.join(fill, "inventory-a.json"),
+      JSON.stringify({
+        git_head: head,
+        module: "a",
+        endpoints: [{ method: "GET", path: "/a", evidence: "a#1" }],
+      }),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(fill, "inventory-b.json"),
+      JSON.stringify({
+        git_head: head,
+        module: "b",
+        endpoints: [{ method: "POST", path: "/b", evidence: "b#1" }],
+      }),
+      "utf8"
+    );
+    const merged = mergeApiInventories(mergeTmp);
+    assert(merged && merged.git_head === head, "0.7.36 mergeApiInventories preserves git_head");
+    assert(isInventoryStale(merged, head) === false, "0.7.36 merged inventory not stale vs own head");
+    assert(isInventoryStale(merged, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb") === true, "0.7.36 merged stale on mismatch");
+  } finally {
+    fs.rmSync(mergeTmp, { recursive: true, force: true });
+  }
+
+  // G-db-live-sql-root: inventoryArgv replays sql_root
+  const sqlArgv = inventoryArgv("db", "/tmp/x", { noWrite: true });
+  assert(sqlArgv.includes("--no-write"), "0.7.36 inventoryArgv noWrite");
+  const sqlMetaTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-036-sql-"));
+  try {
+    const md = path.join(sqlMetaTmp, "docs", "harness-eng");
+    fs.mkdirSync(md, { recursive: true });
+    fs.writeFileSync(
+      path.join(md, "harness-meta.yaml"),
+      'skill_version: "0.7.36"\ninventory:\n  db:\n    sql_root: backend/src/main/resources/db/migration\n',
+      "utf8"
+    );
+    writeInventoryMeta(sqlMetaTmp, {
+      db: { sql_root: "backend/src/main/resources/db/migration" },
+    });
+    const argv = inventoryArgv("db", sqlMetaTmp, { noWrite: true });
+    assert(
+      argv.includes("--sql-root") &&
+        argv.includes("backend/src/main/resources/db/migration"),
+      `0.7.36 live/refresh argv has sql_root (got ${argv.join(" ")})`
+    );
+    const scoreSrc36 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+    assert(/inventoryArgv/.test(scoreSrc36), "0.7.36 fill-score liveInventoryScan uses inventoryArgv");
+  } finally {
+    fs.rmSync(sqlMetaTmp, { recursive: true, force: true });
+  }
+
+  // G8-like: api path drift
+  const pathTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-036-path-"));
+  try {
+    fs.mkdirSync(path.join(pathTmp, "docs", "api", "modules"), { recursive: true });
+    fs.writeFileSync(
+      path.join(pathTmp, "docs", "api", "modules", "01-demo.md"),
+      "## 1. list\n\n**接口地址：** `/api/old`\n**请求方式：** GET\n",
+      "utf8"
+    );
+    const pd = detectApiFieldDrift(pathTmp, {
+      endpoints: [{ method: "GET", path: "/api/renamed", requestFields: [] }],
+    });
+    assert(
+      !pd.ok && pd.blockers.some((b) => /doc_path_drift:api/.test(b)),
+      `0.7.36 api path drift fires (got ${JSON.stringify(pd.blockers)})`
+    );
+  } finally {
+    fs.rmSync(pathTmp, { recursive: true, force: true });
+  }
+
+  // G8-like: jobs schedule drift (truths_dir = docs/jobs/tasks)
+  const schedTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-036-sched-"));
+  try {
+    fs.mkdirSync(path.join(schedTmp, "docs", "jobs", "tasks"), { recursive: true });
+    fs.writeFileSync(
+      path.join(schedTmp, "docs", "jobs", "tasks", "01-close.md"),
+      "# close-stale\n\ntask_code: close-stale-resolved\ncron: 0 0 * * *\n",
+      "utf8"
+    );
+    const sd = detectJobsTaskDrift(schedTmp, {
+      tasks: [
+        {
+          task_code: "close-stale-resolved",
+          scheduler: { method: "run", fixedRate: "86400000" },
+        },
+      ],
+    });
+    assert(
+      !sd.ok && sd.blockers.some((b) => /doc_schedule_drift:jobs/.test(b)),
+      `0.7.36 jobs schedule drift fires (got ${JSON.stringify(sd.blockers)})`
+    );
+  } finally {
+    fs.rmSync(schedTmp, { recursive: true, force: true });
+  }
+
+  // LD-3: bare module name resolves nested reactor
+  const fxNest36 = path.join(skillRoot, "scripts/fixtures/nested-reactor-func");
+  const mvnBare = mavenCmdsForModule(fxNest36, "order-service");
+  assert(
+    /mvn -f backend\/pom\.xml -pl order-service -am test/.test(mvnBare.test),
+    `0.7.36 LD-3 bare leaf resolves nested (got ${mvnBare.test})`
+  );
+
+  // G-api-module-leak: module mode returns null (source guard)
+  const apiSrc36 = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-api.mjs"), "utf8");
+  assert(
+    /G-api-module-leak|must not fall back to other modules/.test(apiSrc36),
+    "0.7.36 G-api-module-leak no root fallback in module mode"
+  );
+
+  // G-redis-false-KEY: Cache class / colon KEY promote
+  const redisSrc36 = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-redis.mjs"), "utf8");
+  assert(
+    /class\s+\\w\*Cache|G-redis-false-KEY/.test(redisSrc36),
+    "0.7.36 redis Cache neighborhood / KEY promote"
+  );
+}
 
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);

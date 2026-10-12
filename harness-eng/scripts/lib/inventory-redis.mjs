@@ -114,6 +114,9 @@ function shouldPromoteRedis(k) {
   if (/REDIS_|CAPTCHA_CODE|SYS_DICT_KEY|ENABLE_SYS_DICT|LOGIN_TOKEN|REPEAT_SUBMIT|RATE_LIMIT/i.test(ev))
     return true;
   if (/@Cacheable|redis call|opsFor\.set|RedisCache/i.test(note + ev)) return true;
+  // 0.7.36 G-redis-false-KEY: colon key next to Cache class / KEY const
+  if (/:/.test(pat) && /Cache/i.test(ev) && /#(KEY|\w*KEY|\w*Cache)/i.test(ev)) return true;
+  if (/:/.test(pat) && /const\s+\w*KEY/i.test(note) && /Cache|\.java#/i.test(ev)) return true;
   return false;
 }
 
@@ -132,7 +135,10 @@ function isNoisePattern(val) {
 function fileHasRedisDriver(text) {
   return (
     /RedisTemplate|StringRedisTemplate|RedissonClient|@Cacheable|redisCache/i.test(text) ||
-    /opsForValue|opsForHash|opsForList|opsForSet/i.test(text)
+    /opsForValue|opsForHash|opsForList|opsForSet/i.test(text) ||
+    // 0.7.36: Spring Cache facade / *Cache class body counts as redis neighborhood
+    /@Cache(Evict|Put|able)?\b|RedisCacheManager|implements\s+\w*Cache\b/i.test(text) ||
+    /\bclass\s+\w*Cache\b/.test(text)
   );
 }
 

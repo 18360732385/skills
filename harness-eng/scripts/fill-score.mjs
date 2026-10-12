@@ -34,6 +34,7 @@ import {
   hasBusinessBody,
 } from "./lib/field-drift.mjs";
 import { readGitHead, isInventoryStale } from "./lib/git-head.mjs";
+import { inventoryArgv } from "./lib/refresh.mjs";
 import { spawnSync } from "child_process";
 import {
   applyStrictGateDefaults,
@@ -707,15 +708,17 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
 
 /**
  * 0.7.34 FS-4: memory rescan via fill-inventory --no-write (stdout JSON).
+ * 0.7.36 G-db-live-sql-root: replay meta sql_root / controller_root / func modules (same as refresh).
  * @param {string} root
  * @param {string} domain
  * @returns {object|null}
  */
 function liveInventoryScan(root, domain) {
   const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "fill-inventory.mjs");
+  const argv = inventoryArgv(domain, path.resolve(root), { noWrite: true });
   const r = spawnSync(
     process.execPath,
-    [script, "--domain", domain, "--root", root, "--no-write"],
+    [script, ...argv],
     { encoding: "utf8", cwd: root, maxBuffer: 20 * 1024 * 1024, windowsHide: true }
   );
   if (r.status !== 0 && r.status !== 2) return null;

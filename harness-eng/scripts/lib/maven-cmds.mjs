@@ -73,6 +73,28 @@ export function resolveNestedReactor(root, moduleDir) {
       return { reactorRel: parent, pl: child };
     }
   }
+  // 0.7.36 LD-3: bare leaf name (ticket-api) → find */pom.xml that lists it as <module>
+  if (parts.length === 1 && dir !== ".") {
+    let names = [];
+    try {
+      names = fs.readdirSync(root);
+    } catch {
+      names = [];
+    }
+    for (const name of names) {
+      if (name === "node_modules" || name === ".git" || name === "target") continue;
+      const pom = path.join(root, name, "pom.xml");
+      if (!fs.existsSync(pom)) continue;
+      const nestedMods = listPomModules(pom);
+      if (
+        nestedMods.some(
+          (m) => m === dir || m.endsWith("/" + dir) || path.basename(m) === dir
+        )
+      ) {
+        return { reactorRel: name, pl: dir };
+      }
+    }
+  }
   // One-level child is itself a reactor leaf (backend with no modules) — no nested -pl
   return null;
 }

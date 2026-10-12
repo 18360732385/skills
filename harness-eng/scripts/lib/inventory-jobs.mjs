@@ -250,22 +250,41 @@ function extractEnumTasks(root, file) {
   return tasks;
 }
 
+function parseScheduledArgs(args) {
+  const out = {};
+  if (!args) return out;
+  const cron = args.match(/\bcron\s*=\s*"([^"]*)"/);
+  if (cron) out.cron = cron[1];
+  const fr = args.match(/\bfixedRate\s*=\s*(\d+)/);
+  if (fr) out.fixedRate = fr[1];
+  const fd = args.match(/\bfixedDelay\s*=\s*(\d+)/);
+  if (fd) out.fixedDelay = fd[1];
+  const frs = args.match(/\bfixedRateString\s*=\s*"([^"]*)"/);
+  if (frs) out.fixedRateString = frs[1];
+  const fds = args.match(/\bfixedDelayString\s*=\s*"([^"]*)"/);
+  if (fds) out.fixedDelayString = fds[1];
+  return out;
+}
+
 function extractScheduled(root, file) {
   const text = fs.readFileSync(file, "utf8");
   const classM = text.match(/class\s+(\w+)/);
   const cls = classM ? classM[1] : path.basename(file, ".java");
   const methods = [];
   // 0.7.33 FS-3: any return type (not only void) after @Scheduled
+  // 0.7.36: capture cron/fixedRate/fixedDelay for schedule drift
   const re =
-    /@Scheduled\s*(?:\([^)]*\))?\s*(?:public|protected|private)?\s*(?:final\s+)?(?:[\w.<>,\s\[\]]+\s+)?(\w+)\s*\(/g;
+    /@Scheduled\s*(?:\(([^)]*)\))?\s*(?:public|protected|private)?\s*(?:final\s+)?(?:[\w.<>,\s\[\]]+\s+)?(\w+)\s*\(/g;
   let m;
   while ((m = re.exec(text)) !== null) {
-    const method = m[1];
+    const method = m[2];
     if (/^(if|for|while|switch|catch|return|new|class)$/.test(method)) continue;
+    const sched = parseScheduledArgs(m[1] || "");
     methods.push({
       schedulerClass: cls,
       method,
       evidence: `${rel(root, file)}#${method}`,
+      ...sched,
     });
   }
   return methods;

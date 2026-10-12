@@ -409,8 +409,10 @@ function guessControllerRoot(root, moduleName) {
         return c;
       }
     }
+    // 0.7.36 G-api-module-leak: module mode must not fall back to other modules under root
+    return null;
   }
-  // fallback: first controller tree under root
+  // fallback: first controller tree under root (only when no --modules)
   const javaRoots = [];
   function findJava(d, depth) {
     if (depth > 6 || !fs.existsSync(d)) return;

@@ -1,10 +1,23 @@
-﻿# harness-eng 验收记录（0.7.35）
+﻿# harness-eng 验收记录（0.7.36）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.35**（e2e-11 P2：bak/chmod/backfill/skill_root · frontend 覆盖 · merge · gold · Codex agent_message；其上 0.7.34 e2e-11 P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.36**（e2e-12 P0/P1：merge git_head · live sql_root · G8-like drift · mysql-guard · module-leak · LD-3；其上 0.7.35 e2e-11 P2 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.36 增量验收（e2e-12 P0/P1）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.36`；templates / meta / questions / sync tmpl 一致 | 有 |
+| `mergeApiInventories` 保留一致 `git_head`；无 stamp 时 stamp 当前 HEAD | 有 |
+| `fill-score` live 经 `inventoryArgv` 回放 `sql_root` / controller_root / func modules | 有 |
+| api `doc_path_drift`；jobs `doc_schedule_drift`；redis Cache/KEY → redis_true | 有 |
+| mysql-guard `mcp=mysql` → local\|dev；api `--modules` 禁止仓根 controller 回退 | 有 |
+| 裸模块名 LD-3 → `-f backend/pom.xml -pl …` | 有 |
+| CHANGELOG 索引含 0.7.36 且存在 `_log/harness-eng/0.7.36.md`；upgrade `## 0.7.35 → 0.7.36` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.35 增量验收（e2e-11 P2）
 

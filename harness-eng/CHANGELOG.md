@@ -1,11 +1,12 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.35**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.7.36**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（一版本一文件）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/)。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.7.36](../_log/harness-eng/0.7.36.md) | 2026-10-12 | e2e-12 P0/P1：merge git_head · live sql_root · G8-like drift · mysql-guard · module-leak · LD-3 |
 | [0.7.35](../_log/harness-eng/0.7.35.md) | 2026-10-12 | e2e-11 P2：bak/chmod/backfill/skill_root · frontend 覆盖 · merge · gold · Codex agent_message |
 | [0.7.34](../_log/harness-eng/0.7.34.md) | 2026-10-10 | e2e-11 P1：inventory 新鲜度 · 嵌套 Maven · JOBS_YML_RE · morph · detect |
 | [0.7.33](../_log/harness-eng/0.7.33.md) | 2026-10-10 | e2e-11 P0：func modules · mysql-guard land/正则 · jobs @Scheduled |

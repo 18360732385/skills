@@ -57,6 +57,17 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.35 → 0.7.36 迁移要点
+
+1. **meta**：`skill_version` → `0.7.36`
+2. **api inventory**：多模块 merge 保留一致 `git_head`；勿再依赖仓内 wrapper 绕过 `inventory_stale:api`
+3. **fill-score live**：自动回放 meta `sql_root` / `controller_root` / func `--modules`（可去掉 db 浅 symlink 依赖）
+4. **漂移**：改 api path / redis KEY / `@Scheduled` 默认值后，不 refresh 也会 blocker（`doc_path_drift` / redis key / `doc_schedule_drift`）
+5. **mysql-guard**：缺省/`mcp=mysql` 同时覆盖 `mysql-local` 与 `mysql-dev`
+6. **api `--modules`**：无 Controller 模块 skip，不再漏扫其它模块
+7. **AGENTS Maven**：裸模块名也会解析到嵌套 reactor `-f backend/pom.xml -pl …`
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.36`）后再 sync
+
 ## 0.7.34 → 0.7.35 迁移要点
 
 1. **meta**：`skill_version` → `0.7.35`；land/upgrade 回写 `skill_root`（refresh-score 候选）

@@ -53,7 +53,8 @@ function parseFillScoreJson(stdout) {
   }
 }
 
-function inventoryArgv(domain, absRoot, { noWrite = false } = {}) {
+/** Replay meta paths for inventory CLI (refresh + fill-score live scan). */
+export function inventoryArgv(domain, absRoot, { noWrite = false } = {}) {
   const argv = ["--domain", domain, "--root", absRoot];
   const inv = readInventoryMeta(absRoot);
   if (domain === "api" && inv.api?.controller_root) {

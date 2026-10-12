@@ -99,9 +99,43 @@ export function detectDbFieldDrift(root) {
   return { ok: blockers.length === 0, gaps, blockers };
 }
 
+/** Collect METHOD + path tokens from api docs (接口地址 / 请求方式 / GET `/path`). */
+function collectDocApiPaths(docText) {
+  const paths = new Set();
+  const methodsByNear = [];
+  const text = String(docText || "");
+  // **接口地址：** /api/x  or **接口地址:** `/api/x`
+  for (const m of text.matchAll(/\*\*接口地址\*\*[：:]\s*`?([^\s`*]+)`?/gi)) {
+    const p = m[1].trim();
+    if (p.startsWith("/")) paths.add(p);
+  }
+  for (const m of text.matchAll(/\*\*请求方式\*\*[：:]\s*`?([A-Z]+)`?/gi)) {
+    methodsByNear.push(m[1].toUpperCase());
+  }
+  // METHOD `/path` or METHOD /path
+  for (const m of text.matchAll(
+    /\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b\s*`(\/[^`\s]+)`/gi
+  )) {
+    paths.add(`${m[1].toUpperCase()}:${m[2]}`);
+    paths.add(m[2]);
+  }
+  for (const m of text.matchAll(
+    /\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b\s+(\/[^\s`*|]+)/gi
+  )) {
+    paths.add(`${m[1].toUpperCase()}:${m[2]}`);
+    paths.add(m[2]);
+  }
+  // bare `/api/...` in backticks
+  for (const m of text.matchAll(/`(\/[a-zA-Z0-9_/{}.\-]+)`/g)) {
+    if (m[1].length > 1) paths.add(m[1]);
+  }
+  return { paths, methodsByNear };
+}
+
 /**
  * Lightweight api drift: inventory endpoint param/response names vs field tables in api modules.
- * Only flags when inventory has structured field lists.
+ * 0.7.36 G8-like: also METHOD+path set vs docs (path rename / missing endpoint).
+ * Only flags when inventory has structured field lists (fields) or path tokens (path).
  * @param {string} root
  * @param {object} apiInventory
  * @param {{ missingRatio?: number }} [opts]  default 0.15 (0.7.31 SG-1; was 0.3)
@@ -112,11 +146,46 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
   if (!apiInventory?.endpoints?.length) return { ok: true, gaps, blockers };
   const dir = truthsPath(root, "api", loadDomainRegistry());
   if (!fs.existsSync(dir)) return { ok: true, gaps, blockers };
-  const docText = fs
-    .readdirSync(dir)
-    .filter((n) => /\.md$/i.test(n) && !/^README/i.test(n))
-    .map((n) => fs.readFileSync(path.join(dir, n), "utf8"))
-    .join("\n");
+  const docFiles = [];
+  function walkMd(d, depth = 0) {
+    if (depth > 6 || !fs.existsSync(d)) return;
+    for (const n of fs.readdirSync(d)) {
+      if (/^README/i.test(n) || n === ".fill-work") continue;
+      const p = path.join(d, n);
+      let st;
+      try {
+        st = fs.statSync(p);
+      } catch {
+        continue;
+      }
+      if (st.isDirectory()) walkMd(p, depth + 1);
+      else if (/\.md$/i.test(n)) docFiles.push(p);
+    }
+  }
+  walkMd(dir);
+  const docText = docFiles.map((f) => fs.readFileSync(f, "utf8")).join("\n");
+  const { paths: docPaths } = collectDocApiPaths(docText);
+
+  // 0.7.36: path/method set drift (G8-like)
+  const codePaths = [];
+  for (const ep of apiInventory.endpoints) {
+    const method = String(ep.method || ep.httpMethod || "").toUpperCase();
+    const p = String(ep.path || ep.url || "").trim();
+    if (!p) continue;
+    codePaths.push({ method, path: p, key: method ? `${method}:${p}` : p });
+  }
+  if (codePaths.length && docPaths.size) {
+    const missingPaths = codePaths.filter(
+      (c) => !docPaths.has(c.path) && !(c.method && docPaths.has(c.key))
+    );
+    // block when ≥1 code endpoint path absent from docs (strict path rename detection)
+    if (missingPaths.length >= 1) {
+      const sample = missingPaths.slice(0, 8).map((c) => c.key || c.path);
+      gaps.push({ missing_paths_in_doc: sample });
+      blockers.push(`doc_path_drift:api:${sample.join("+")}`);
+    }
+  }
+
   const docFields = new Set();
   for (const secName of ["请求参数", "响应参数", "字段"]) {
     const re = new RegExp(`###?\\s*${secName}([\\s\\S]*?)(?=###?\\s*|##\\s+|$)`, "gi");
@@ -132,7 +201,8 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
       }
     }
   }
-  if (!docFields.size) return { ok: true, gaps, blockers };
+  if (!docFields.size && blockers.length) return { ok: false, gaps, blockers };
+  if (!docFields.size) return { ok: blockers.length === 0, gaps, blockers };
   const codeFields = new Set();
   const annotationFields = new Set();
   for (const ep of apiInventory.endpoints) {
@@ -149,7 +219,9 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
       if (n) codeFields.add(String(n).toLowerCase());
     }
   }
-  if (!codeFields.size && !annotationFields.size) return { ok: true, gaps, blockers };
+  if (!codeFields.size && !annotationFields.size) {
+    return { ok: blockers.length === 0, gaps, blockers };
+  }
 
   // 0.7.31: undocumented @RequestParam/@PathVariable → immediate blocker
   const missingAnn = [...annotationFields].filter((c) => !docFields.has(c));
@@ -165,7 +237,7 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
       : 0.15;
   if (missing.length && missing.length >= Math.max(1, Math.ceil(codeFields.size * ratio))) {
     gaps.push({ missing_in_doc: missing.slice(0, 20) });
-    if (!blockers.length) {
+    if (!blockers.some((b) => b.startsWith("doc_field_drift:"))) {
       blockers.push(`doc_field_drift:api:${missing.slice(0, 8).join("+")}`);
     }
   }
@@ -260,6 +332,7 @@ export function detectRedisKeyDrift(root, redisInventory) {
 
 /**
  * 0.7.34 FS-4/G8: jobs inventory tasks vs docs/jobs task md / index.
+ * 0.7.36 G8-like: also compare @Scheduled cron/fixedRate/fixedDelay defaults in docs.
  */
 export function detectJobsTaskDrift(root, jobsInventory) {
   const gaps = [];
@@ -289,6 +362,24 @@ export function detectJobsTaskDrift(root, jobsInventory) {
   if (missing.length) {
     gaps.push({ missing_in_doc: missing.slice(0, 20) });
     blockers.push(`doc_task_drift:jobs:${missing.slice(0, 8).join("+")}`);
+  }
+
+  // schedule default drift: cron / fixedRate / fixedDelay present in inventory but absent in docs
+  const missingSched = [];
+  for (const t of inv.tasks) {
+    const sched = t.scheduler || {};
+    const tokens = [sched.cron, sched.fixedRate, sched.fixedDelay, sched.fixedRateString, sched.fixedDelayString]
+      .map((x) => (x == null ? "" : String(x).trim()))
+      .filter(Boolean);
+    for (const tok of tokens) {
+      if (!docText.includes(tok.toLowerCase())) {
+        missingSched.push(`${t.task_code || t.slug || "?"}:${tok}`);
+      }
+    }
+  }
+  if (missingSched.length) {
+    gaps.push({ missing_schedule_in_doc: missingSched.slice(0, 20) });
+    blockers.push(`doc_schedule_drift:jobs:${missingSched.slice(0, 8).join("+")}`);
   }
   return { ok: blockers.length === 0, gaps, blockers };
 }

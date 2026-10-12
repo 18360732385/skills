@@ -3,6 +3,7 @@
  */
 import fs from "fs";
 import path from "path";
+import { stampInventoryGitHead } from "./git-head.mjs";
 
 export function defaultInventoryPath(root, domain, moduleName = null) {
   const base = path.join(root, "docs", domain, ".fill-work");
@@ -63,9 +64,16 @@ export function mergeApiInventories(root) {
   const seen = new Set();
   let module = null;
   let dupSkipped = 0;
+  /** @type {string[]} */
+  const heads = [];
+  let invCount = 0;
   for (const f of files) {
     const j = loadJsonSafe(f);
     if (!j || !Array.isArray(j.endpoints)) continue;
+    invCount++;
+    if (j.git_head != null && String(j.git_head).trim()) {
+      heads.push(String(j.git_head).trim());
+    }
     if (!module && j.module) module = j.module;
     for (const ep of j.endpoints) {
       const k = endpointDedupeKey(ep);
@@ -79,7 +87,7 @@ export function mergeApiInventories(root) {
     if (Array.isArray(j.shards)) shards.push(...j.shards);
   }
   if (!endpoints.length) return null;
-  return {
+  const report = {
     ok: true,
     root,
     module,
@@ -89,6 +97,16 @@ export function mergeApiInventories(root) {
     dup_skipped: dupSkipped,
     sources: files.map((f) => path.relative(root, f).replace(/\\/g, "/")),
   };
+  // 0.7.36 G-api-merge-stale: preserve consistent git_head from shards (FS-5)
+  const uniq = [...new Set(heads)];
+  if (heads.length === invCount && uniq.length === 1) {
+    report.git_head = uniq[0];
+  } else if (heads.length === 0) {
+    // legacy inventories without stamp — attach current HEAD so merge is not forever stale
+    stampInventoryGitHead(report, root);
+  }
+  // mixed / partial heads → leave unset → isInventoryStale=true (correct)
+  return report;
 }
 
 export function loadDomainInventory(root, domain) {
