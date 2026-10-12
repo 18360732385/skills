@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.7.32"
+version: "0.7.35"
 
 all_recommend_phrases:
   - 全部推荐
@@ -60,11 +60,11 @@ batches:
         type: multi
         when_ladder_min: L1
         options:
-          - { value: func, label: func }
-          - { value: api, label: api }
-          - { value: db, label: db }
-          - { value: redis, label: redis }
-          - { value: jobs, label: jobs（Cron/Scheduler）, recommended_when: "S_JOBS" }
+          - { value: func, label: func, recommended_when: "S_CODE_FUNC || S_FUNC || S_SPRING" }
+          - { value: api, label: api, recommended_when: "S_CODE_API || S_API || S_SPRING" }
+          - { value: db, label: db, recommended_when: "S_CODE_DB || S_DB || S_SQL_DIR || S_NO_FLYWAY" }
+          - { value: redis, label: redis, recommended_when: "S_CODE_REDIS || S_REDIS || S_STACK_REDIS" }
+          - { value: jobs, label: jobs（Cron/Scheduler）, recommended_when: "S_JOBS || S_CODE_JOBS" }
       - id: Q_NAME
         text: 仓库短名？
         type: text
@@ -151,7 +151,7 @@ batches:
       - id: Q_AGENT_CONFIG
         text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs --check；启用后 .cursor/ 等为生成物）？含 Codex 时 sync 发出原生 rules/hooks/MCP/skills（不做 .mdc 镜像）
         type: boolean
-        recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
+        recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG || ladder >= L5"
       # 0.7.26 QF-4: land 路径可达（勿只放在 batch-fill）
       - id: Q_GATE_PROFILE
         text: 开干档 gate_profile？（写入 score-policy；strict=常用；gold=高门槛）
@@ -216,7 +216,7 @@ batches:
       - id: Q_AGENT_CONFIG
         text: 是否启用 L5 配置 SSOT 管线（docs/agent-config/ + sync.mjs）？含 Codex 时 sync 发出原生全家桶（高·纪律 B）
         type: boolean
-        recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG"
+        recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG || ladder >= L5"
 
   - id: batch-1-mature
     when: "type == MATURE"

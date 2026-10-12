@@ -113,12 +113,12 @@ export function morphDepthBonus(raw, domain) {
     } else {
       issues.push("深度:COMMENT 不足");
     }
-    // 0.7.25 SG-3: capture section body, not only the 「表级」branch
+    // 0.7.25 SG-3 / 0.7.34 FS-6: capture full section body (no {0,400} cap — long 业务说明 must not fail)
     const bizSec = text.match(
-      /##\s*(?:业务说明|表说明)\s*\n([\s\S]{0,400}?)(?=\n##\s+|$)/i
+      /##\s*(?:业务说明|表说明)\s*\n([\s\S]*?)(?=\n##\s+|$)/i
     );
-    const bizInline = text.match(/用途[：:]\s*([^\n]{20,400})/);
-    const bizTableLevel = text.match(/表级[^\n]*\n([\s\S]{0,400}?)(?=\n##\s+|$)/);
+    const bizInline = text.match(/用途[：:]\s*([^\n]{20,})/);
+    const bizTableLevel = text.match(/表级[^\n]*\n([\s\S]*?)(?=\n##\s+|$)/);
     const bizBody = String(
       (bizSec && bizSec[1]) || (bizInline && bizInline[1]) || (bizTableLevel && bizTableLevel[1]) || ""
     )

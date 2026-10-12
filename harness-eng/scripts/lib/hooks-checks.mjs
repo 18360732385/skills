@@ -22,6 +22,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { parseDomainsYaml } from "./domains.mjs";
 import fs from "fs";
+import { mcpServerName } from "./mcp-server-name.mjs";
+import { readMysqlGuardServers, writeMysqlGuardServers } from "./inventory-meta.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "../..");
@@ -505,20 +507,26 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     "MIGRATION_HEADER_KEYS",
     typeof headerKeys === "string" ? headerKeys : JSON.stringify(headerKeys)
   );
+  // 0.7.34 HK-1/G7: parseDomainsYaml keeps literal \\. from YAML; normalize before JSON.stringify
   put(
     "JOBS_YML_RE",
     JSON.stringify(
-      (registry.jobs && registry.jobs.hook_yml_re) ||
-        "(application[^/]*\\.ya?ml|config/.*\\.ya?ml)$"
+      String(
+        (registry.jobs && registry.jobs.hook_yml_re) ||
+          "(application[^/]*\\.ya?ml|config/.*\\.ya?ml)$"
+      ).replace(/\\\\/g, "\\")
     )
   );
-  // 0.7.32 LT-11: align with CD-3 / fill-mcp mysql-local (plus legacy env names)
+  // 0.7.32 LT-11 / 0.7.33 LD-2: align with CD-3 (mysql → mysql-local); reject empty capture
+  const fromMeta = root ? readMysqlGuardServers(root) : null;
   const mysqlServers =
     (params && (params.mysql_guard_servers || params.MYSQL_GUARD_SERVERS)) ||
     (ph.MYSQL_GUARD_SERVERS != null && String(ph.MYSQL_GUARD_SERVERS)) ||
+    fromMeta ||
     null;
+  let resolvedMysqlGuard;
   if (mysqlServers) {
-    put("MYSQL_GUARD_SERVERS", String(mysqlServers).replace(/^\^|\$$/g, ""));
+    resolvedMysqlGuard = String(mysqlServers).replace(/^\^|\$$/g, "");
   } else {
     const mcpNames = [];
     const mcpList = (params && (params.mcp || params.mcp_servers || params.mcpServers)) || [];
@@ -527,10 +535,39 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
       if (name && /mysql/i.test(String(name))) mcpNames.push(String(name).replace(/^mcp__?/, ""));
     }
     if (mcpNames.length) {
-      const alts = [...new Set(mcpNames.map((n) => n.replace(/^mysql-?/, "mysql-").replace(/^mysql$/, "mysql-local")))];
-      put("MYSQL_GUARD_SERVERS", alts.length === 1 ? alts[0] : `(${alts.join("|")})`);
+      const alts = [
+        ...new Set(
+          mcpNames.map((n) => {
+            const raw = String(n).trim().toLowerCase();
+            // engine-only "mysql" → mysql-local (CD-3); already-prefixed keep as-is
+            if (raw === "mysql") return mcpServerName("mysql", "mysql");
+            if (/^mysql-/.test(raw)) return raw;
+            return mcpServerName("mysql", raw);
+          })
+        ),
+      ];
+      resolvedMysqlGuard = alts.length === 1 ? alts[0] : `(${alts.join("|")})`;
     } else {
-      put("MYSQL_GUARD_SERVERS", "mysql-(local|dev|test|uat)");
+      resolvedMysqlGuard = "mysql-(local|dev|test|uat)";
+    }
+  }
+  // LD-2: never emit empty capture like ^mysql-$
+  if (
+    !resolvedMysqlGuard ||
+    resolvedMysqlGuard === "mysql-" ||
+    /^mysql-\)$/.test(resolvedMysqlGuard) ||
+    /\(\)|^\(\|$|\|$/.test(resolvedMysqlGuard)
+  ) {
+    throw new Error(
+      `MYSQL_GUARD_SERVERS invalid (${JSON.stringify(resolvedMysqlGuard)}); pass mysql_guard_servers or select mysql MCP with a real server name`
+    );
+  }
+  put("MYSQL_GUARD_SERVERS", resolvedMysqlGuard);
+  if (root && resolvedMysqlGuard) {
+    try {
+      writeMysqlGuardServers(root, resolvedMysqlGuard);
+    } catch {
+      /* meta optional */
     }
   }
   // 0.7.32 NEW-16: only emit mcp__mysql matcher when mysql MCP selected
@@ -686,14 +723,7 @@ export function expandHooksFamily(params, agentConfig, actionForTarget, root, mc
       "docs/agent-config/hooks/codex-stop-checklist.js"
     );
     push("hookfam-codex-cmd", "hooks/codex-hook.cmd", "docs/agent-config/hooks/codex-hook.cmd");
-    // 0.7.27: mysql-guard SSOT only when selected AND mysql MCP present
-    if (selection.includes("mysql-guard") && mcp.has("mysql")) {
-      push(
-        "hookfam-codex-mysql-guard",
-        "hooks/mcp-mysql-guard.js.tmpl",
-        "docs/agent-config/hooks/mcp-mysql-guard.js"
-      );
-    }
+    // 0.7.33 LD-1: mysql-guard SSOT already from hookfam-mysql-guard (no second push)
   }
   return out;
 }

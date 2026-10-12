@@ -31,13 +31,45 @@ function parseArgs(argv) {
   return out;
 }
 
-function skillCandidates() {
+function skillRootFromMeta(repoRoot) {
+  // 0.7.35 HK-5 / G6: docs/harness-eng/harness-meta.yaml → skill_root
+  const candidates = [
+    path.join(repoRoot, "docs", "harness-eng", "harness-meta.yaml"),
+    path.join(repoRoot, ".cursor", "harness-meta.yaml"),
+  ];
+  for (const meta of candidates) {
+    if (!fs.existsSync(meta)) continue;
+    try {
+      const raw = fs.readFileSync(meta, "utf8");
+      const m = raw.match(/^\s*skill_root:\s*(.+)\s*$/m);
+      if (!m) continue;
+      let v = m[1].trim();
+      if (v.startsWith('"') && v.endsWith('"')) {
+        try {
+          v = JSON.parse(v);
+        } catch {
+          v = v.slice(1, -1);
+        }
+      } else if (v.startsWith("'") && v.endsWith("'")) {
+        v = v.slice(1, -1);
+      }
+      if (v) return path.resolve(v);
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
+
+function skillCandidates(repoRoot) {
   const home = os.homedir();
   const fromEnv = process.env.HARNESS_ENG_ROOT
     ? [path.resolve(process.env.HARNESS_ENG_ROOT)]
     : [];
+  const fromMeta = skillRootFromMeta(repoRoot);
   return [
     ...fromEnv,
+    ...(fromMeta ? [fromMeta] : []),
     path.join(home, ".cursor", "skills", "harness-eng"),
     path.join(home, ".agents", "skills", "harness-eng"),
     path.join(home, ".claude", "skills", "harness-eng"),
@@ -45,8 +77,8 @@ function skillCandidates() {
   ];
 }
 
-function resolveHarnessSkill() {
-  for (const dir of skillCandidates()) {
+function resolveHarnessSkill(repoRoot) {
+  for (const dir of skillCandidates(repoRoot)) {
     const harness = path.join(dir, "scripts", "harness.mjs");
     if (fs.existsSync(harness)) return { skillRoot: dir, harness };
   }
@@ -62,6 +94,7 @@ if (args.help) {
 
 环境:
   HARNESS_ENG_ROOT  工程化 skill 目录（含 scripts/harness.mjs）
+  或 docs/harness-eng/harness-meta.yaml 的 skill_root（land/upgrade 回写）
 
 委托:
   node <skill>/scripts/harness.mjs --mode refresh --root <仓根> …
@@ -69,10 +102,10 @@ if (args.help) {
   process.exit(0);
 }
 
-const found = resolveHarnessSkill();
+const found = resolveHarnessSkill(args.root);
 if (!found) {
   console.error(
-    "refresh-score: 未找到工程化 skill（设 HARNESS_ENG_ROOT，或安装 harness-eng 到用户 skills 目录）"
+    "refresh-score: 未找到工程化 skill（设 HARNESS_ENG_ROOT、meta.skill_root，或安装 harness-eng 到用户 skills 目录）"
   );
   process.exit(1);
 }

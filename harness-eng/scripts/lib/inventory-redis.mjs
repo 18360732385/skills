@@ -14,6 +14,7 @@ import path from "path";
 import { isCliMain } from "./cli-main.mjs";
 import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
+import { stampInventoryGitHead } from "./git-head.mjs";
 
 function parseArgs(argv) {
   const out = { root: null, sourceRoot: null, out: null, help: false, noWrite: false };
@@ -280,14 +281,16 @@ function extractKeys(text, rel, root) {
     });
   }
 
-  // @Cacheable key / cacheNames
+  // @Cacheable key / cacheNames / positional "name"
   const cacheRe = /@Cacheable\s*\(([^)]*)\)/gi;
   while ((m = cacheRe.exec(text)) !== null) {
     const args = m[1];
-    const cn = args.match(/(?:cacheNames|value)\s*=\s*\{?\s*"([^"]+)"/);
-    if (cn) {
+    const named = args.match(/(?:cacheNames|value)\s*=\s*\{?\s*"([^"]+)"/);
+    const positional = !named && args.match(/^\s*"([^"]+)"\s*$/);
+    const pattern = named ? named[1] : positional ? positional[1] : null;
+    if (pattern) {
       keys.push({
-        pattern: cn[1],
+        pattern,
         evidence: `${rel}#@Cacheable`,
         note: "@Cacheable",
         redis: true,
@@ -416,6 +419,7 @@ export function main(argv = process.argv) {
       java_roots: sourceRoots.length,
     },
   };
+  stampInventoryGitHead(report, root);
   if (!merged.length) pushWarning(report, "no redis key patterns found");
 
   const json = JSON.stringify(report, null, 2);

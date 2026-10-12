@@ -35,6 +35,7 @@ import {
   resolveAgentConfig,
   resolveRulehook,
 } from "./lib/hooks-checks.mjs";
+import { mavenCmdsForModule as mavenCmdsForModuleLib, listPomModules } from "./lib/maven-cmds.mjs";
 import {
   HARNESS_META_CANONICAL,
   MCP_USAGE_GUIDE_CANONICAL,
@@ -257,23 +258,9 @@ function normalizeIncludeOptional(v) {
 
 /** Scan Maven <module> entries from root pom.xml (fs only, UTF-8). */
 function scanPomModules(root) {
-  const pom = path.join(root, "pom.xml");
-  if (!fs.existsSync(pom)) return [];
-  const text = fs.readFileSync(pom, "utf8");
-  const mods = [];
-  const re = /<module>\s*([^<]+?)\s*<\/module>/g;
-  let m;
-  while ((m = re.exec(text)) !== null) {
-    const name = m[1].trim().replace(/\\/g, "/");
-    if (name && !name.includes("..")) mods.push(name);
-  }
-  return [...new Set(mods)];
+  return listPomModules(path.join(root, "pom.xml"));
 }
 
-/**
- * Spring 分册 Maven 命令：有根聚合 pom（含 &lt;module&gt;）→ -pl；否则 → -f &lt;module&gt;。
- * @returns {{ test: string, run: string, note: string, forbid: string }}
- */
 /** 0.7.26 LT-3: discover application-<profile> under module/resources (skip common/default). */
 function detectSpringProfiles(root, moduleDir) {
   const dirs = [
@@ -302,26 +289,14 @@ function springProfileFlag(root, moduleDir) {
   return ` -Dspring-boot.run.profiles=${pick}`;
 }
 
+/** 0.7.34 LD-3: nested reactor via lib/maven-cmds.mjs; append Spring profile to run. */
 function mavenCmdsForModule(root, moduleDir) {
-  const dir = String(moduleDir || ".").replace(/\\/g, "/").replace(/\/$/, "") || ".";
-  const hasRootPom = fs.existsSync(path.join(root, "pom.xml"));
-  const isReactor = hasRootPom && scanPomModules(root).length > 0;
-  const pFlag = springProfileFlag(root, dir);
-  if (isReactor) {
-    return {
-      test: `mvn -pl ${dir} -am test`,
-      run: `mvn -pl ${dir} spring-boot:run${pFlag}`,
-      note: "Maven 命令**必须在仓库根**执行（reactor / `${revision}` 等只从根解析）",
-      forbid: `\`mvn -pl ${dir} -am spring-boot:run\`（正确：不加 \`-am\`；Maven 必须在仓库根）`,
-    };
+  const base = mavenCmdsForModuleLib(root, moduleDir);
+  const pFlag = springProfileFlag(root, moduleDir);
+  if (pFlag && /spring-boot:run/.test(base.run)) {
+    return { ...base, run: `${base.run}${pFlag}` };
   }
-  const fArg = dir === "." ? "pom.xml" : `${dir}/pom.xml`;
-  return {
-    test: `mvn -f ${fArg} test`,
-    run: `mvn -f ${fArg} spring-boot:run${pFlag}`,
-    note: "本仓**无根聚合 pom**（或根 pom 无 `<module>`）；用 `mvn -f <module>/pom.xml`，勿假设 `-pl` / 仓库根 reactor",
-    forbid: `勿使用 \`mvn -pl ${dir}\`（无根聚合时必失败）；改用 \`mvn -f ${fArg}\``,
-  };
+  return base;
 }
 
 /** 0.7.26 LT-4: prefill migration mode/dir from params when known. */
@@ -355,22 +330,38 @@ function buildSpringDbBlock(params) {
 const SPRING_DB_BLOCK_DISABLED = `> 本仓未启用 \`db\` 契约域；各环境库名表与迁移节省略。启用 db 域后补齐并同步 \`docs/db/\`。
 `;
 
-/** .githooks/* 与 *.sh 写盘后设可执行位（Unix；Windows 上尽力而为，git index 见 ladder 自检）。 */
+/**
+ * Hook / shell 写盘后设可执行位（Unix；Windows 上尽力而为，git index 见 ladder 自检）。
+ * 0.7.35 HK-3: also .codex/hooks · .cursor/hooks · docs/agent-config/hooks
+ */
 function maybeChmodExecutable(abs, targetRel) {
   const rel = String(targetRel || "").replace(/\\/g, "/");
   const base = path.basename(rel);
+  const inHostHooks =
+    rel.startsWith(".codex/hooks/") ||
+    rel.startsWith(".cursor/hooks/") ||
+    rel.startsWith("docs/agent-config/hooks/");
   const isHook =
     rel.startsWith(".githooks/") ||
     /\.sh$/i.test(rel) ||
     base === "pre-commit" ||
     base === "commit-msg" ||
-    base === "pre-push";
+    base === "pre-push" ||
+    (inHostHooks && /\.(js|mjs|sh|cmd)$/i.test(base));
   if (!isHook) return;
   try {
     fs.chmodSync(abs, 0o755);
   } catch {
     /* Windows / 只读盘：忽略；ladder 自检会提示 git update-index --chmod=+x */
   }
+}
+
+/** Normalize text for identical-content compare (EOL + trailing whitespace). */
+function normalizeRenderedForCompare(text) {
+  return String(text || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n+$/, "\n");
 }
 
 function writeRenderedFile(abs, content, targetRel) {
@@ -1564,10 +1555,31 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
 
   if (action === "replace") {
     // 0.7.32 NEW-17: upgrade fix-hook replace → backup first + stderr tip
+    // 0.7.35 HK-2: identical content → skip backup and write (no .bak churn)
     const isFixHook =
       opts.params &&
       (opts.params.mode === "upgrade" || opts.params.last_mode === "upgrade") &&
       isUpgradeFixHookTarget(targetRel);
+    if (exists) {
+      let disk = "";
+      try {
+        disk = fs.readFileSync(abs, "utf8");
+      } catch {
+        disk = "";
+      }
+      if (
+        disk &&
+        normalizeRenderedForCompare(disk) === normalizeRenderedForCompare(rendered)
+      ) {
+        maybeChmodExecutable(abs, targetRel);
+        log.push({
+          target: targetRel,
+          action: "replace",
+          status: "unchanged",
+        });
+        return;
+      }
+    }
     if (exists && isFixHook) {
       const bak = `${abs}.bak-harness-${todayStamp()}`;
       try {

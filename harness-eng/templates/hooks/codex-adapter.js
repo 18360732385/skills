@@ -157,8 +157,13 @@ function softMcpHint(parsed) {
         command,
         cwd: payload.cwd || payload.workspace_root || process.cwd(),
       };
-      runScript(script, cursorish, ["--codex"]);
-      out({});
+      const r = runScript(script, cursorish, ["--codex"]);
+      // 0.7.35 NEW-15: merge child stdout agent_message into adapter response
+      const merged = {};
+      if (r && r.parsed && typeof r.parsed === "object" && r.parsed.agent_message) {
+        merged.agent_message = r.parsed.agent_message;
+      }
+      out(merged);
       return;
     }
 

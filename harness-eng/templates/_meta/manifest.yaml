@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.32"
+version: "0.7.35"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -357,14 +357,7 @@ files:
     when_ai_tools: codex
     when_agent_config: false
     note: Windows commandWindows launcher（git root → adapter / --direct）
-  - id: hooks-codex-mysql-guard
-    ladder: L3
-    template: hooks/mcp-mysql-guard.js.tmpl
-    target: .codex/hooks/mcp-mysql-guard.js
-    placeholders: [MYSQL_GUARD_SERVERS]
-    when_ai_tools: codex
-    when_agent_config: false
-    when_mcp: mysql
+  # 0.7.33 LD-1: mysql-guard 仅由 expandHooksFamily 产出（勿静态双写 .codex/hooks）
   - id: codex-rules-repository
     ladder: L3
     template: ai-tools/codex/rules/repository.rules

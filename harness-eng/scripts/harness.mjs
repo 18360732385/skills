@@ -7,6 +7,7 @@
  *       [--mode land|resume|upgrade|pipeline-skeleton]
  *       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
  *   node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write]
+ *   node scripts/harness.mjs --mode backfill --root <TARGET> --findings <path>
  *   node scripts/harness.mjs --check-freshness --root <TARGET>
  *
  * Reads harness-meta (docs/harness-eng/ then .cursor/ fallback).
@@ -34,13 +35,53 @@ import {
   runFreshnessCheck,
   warnManualReplaceGaps,
 } from "./lib/sync-freshness.mjs";
-import { migrateScorePolicyFile } from "./lib/score-policy-migrate.mjs";
+import {
+  migrateScorePolicyFile,
+  applyGateProfileToPolicyFile,
+} from "./lib/score-policy-migrate.mjs";
+import { writeSkillRoot } from "./lib/inventory-meta.mjs";
 import { runRefresh } from "./lib/refresh.mjs";
+import { buildBackfillPlan } from "./lib/backfill-plan.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
 
-const MODES = ["land", "resume", "upgrade", "pipeline-skeleton", "refresh"];
+const MODES = [
+  "land",
+  "resume",
+  "upgrade",
+  "pipeline-skeleton",
+  "refresh",
+  "backfill",
+];
+
+/** 0.7.35 HK-5: stamp skill_root into harness-meta for refresh-score. */
+function maybeWriteSkillRoot(root, skillRoot, mode, dryRun) {
+  if (dryRun) return;
+  if (!["land", "resume", "upgrade"].includes(mode)) return;
+  try {
+    writeSkillRoot(root, skillRoot);
+  } catch (e) {
+    console.error(`harness: skill_root write skipped: ${e.message}`);
+  }
+}
+
+/** 0.7.35 FS-9: resume/upgrade params.gate_profile → score-policy.yaml */
+function maybeApplyGateProfile(root, params, mode, dryRun) {
+  if (dryRun) return;
+  if (mode !== "resume" && mode !== "upgrade") return;
+  const gp =
+    params?.gate_profile ||
+    params?.placeholders?.GATE_PROFILE ||
+    params?.GATE_PROFILE;
+  if (!gp) return;
+  const r = applyGateProfileToPolicyFile(root, gp);
+  if (r.changed) {
+    console.error(
+      `harness: score-policy gate_profile ${r.from} → ${r.to}（mode=${mode}）`
+    );
+  }
+}
 
 function maybeMigrateScorePolicy(root, mode, dryRun) {
   if (dryRun) return;
@@ -91,6 +132,7 @@ function parseArgs(argv) {
     noWrite: false,
     help: false,
     checkFreshness: false,
+    findings: null,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -100,6 +142,7 @@ function parseArgs(argv) {
     else if (a === "--params") out.params = argv[++i];
     else if (a === "--manifest") out.manifest = argv[++i];
     else if (a === "--mode") out.mode = String(argv[++i] || "land");
+    else if (a === "--findings") out.findings = argv[++i];
     else if (a === "--no-sync") out.noSync = true;
     else if (a === "--no-write") out.noWrite = true;
     else if (a === "--check-freshness") out.checkFreshness = true;
@@ -115,6 +158,7 @@ function printHelp() {
       [--mode land|resume|upgrade|pipeline-skeleton]
       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
   node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write]
+  node scripts/harness.mjs --mode backfill --root <TARGET> --findings <file|dir>
   node scripts/harness.mjs --check-freshness --root <TARGET>
 
 Canonical Agent write entry (0.6.0+).
@@ -125,6 +169,7 @@ Canonical Agent write entry (0.6.0+).
   pipeline-skeleton: skeleton campaign write only — 不跑 fill-* / pipeline-fill.
   refresh: 重建 inventory → acceptance → fill-score（写 score-latest.json）；
     exit 0=ai_coding_ready · 2=未开干(warn) · 1=脚本失败；--no-write 不落盘 score。
+  backfill: 读探针 findings → stdout WritePlan（不写盘）；见 modes/backfill.md。
   --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与目标仓
     scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
 `);
@@ -270,6 +315,12 @@ function announceMode(mode) {
     );
     return;
   }
+  if (mode === "backfill") {
+    console.error(
+      "harness: mode=backfill（探针 findings → WritePlan；不写盘；见 modes/backfill.md）。"
+    );
+    return;
+  }
   console.error(`harness: mode=${mode}。公开入口 scripts/harness.mjs。`);
 }
 
@@ -311,6 +362,17 @@ export function main(argv = process.argv) {
     }
     process.exit(exitCode);
   }
+  if (modeEarly === "backfill") {
+    if (!args.root || !args.findings) {
+      printHelp();
+      process.exit(1);
+    }
+    announceMode("backfill");
+    const plan = buildBackfillPlan(args.findings, { root: args.root });
+    process.stdout.write(plan.markdown);
+    if (!plan.paths.length) process.exit(2);
+    process.exit(0);
+  }
 
   if (!args.root || !args.params) {
     printHelp();
@@ -319,7 +381,7 @@ export function main(argv = process.argv) {
   const mode = String(args.mode || "land").toLowerCase();
   if (!MODES.includes(mode)) {
     throw new Error(
-      `Unknown --mode ${args.mode} (use land|resume|upgrade|pipeline-skeleton|refresh)`
+      `Unknown --mode ${args.mode} (use land|resume|upgrade|pipeline-skeleton|refresh|backfill)`
     );
   }
 
@@ -351,6 +413,8 @@ export function main(argv = process.argv) {
     const st = forward(runRender(args));
     if (st === 0) {
       maybeMigrateScorePolicy(args.root, mode, args.dryRun);
+      maybeApplyGateProfile(args.root, params, mode, args.dryRun);
+      maybeWriteSkillRoot(args.root, skillRoot, mode, args.dryRun);
       if (!args.dryRun) tipGitHooks(args.root, mode);
       if (mode === "upgrade" && !args.dryRun) warnManualReplaceGaps(args.root);
     }
@@ -368,6 +432,8 @@ export function main(argv = process.argv) {
   if (renderStatus !== 0) process.exit(renderStatus);
 
   maybeMigrateScorePolicy(args.root, mode, args.dryRun);
+  maybeApplyGateProfile(args.root, params, mode, args.dryRun);
+  maybeWriteSkillRoot(args.root, skillRoot, mode, args.dryRun);
 
   const afterFresh = compareSyncFreshness(args.root, skillRoot);
   if (beforeFresh.status === "stale" && afterFresh.status === "fresh") {

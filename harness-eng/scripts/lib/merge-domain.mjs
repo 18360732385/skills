@@ -182,6 +182,14 @@ export function mergeDomain(opts) {
 
   // Build inventory evidence set
   const invItems = extractInventoryEvidence(inv, domain);
+  // 0.7.33 FS-3: refuse empty SSOT when inventory has 0 items (fragments would be dropped)
+  if (invItems.length === 0) {
+    console.error(
+      `FAIL: inventory for domain ${domain} has 0 items; refuse to write empty SSOT (fix inventory scan or pass matching fragments)`
+    );
+    process.exitCode = 1;
+    throw new Error(`merge aborted: empty inventory for ${domain}`);
+  }
   const invEvidenceSet = new Set(invItems.map((x) => normalizeEvidence(x.evidence)).filter(Boolean));
   const invKeys = invItems.map((x) => normalizeEvidence(x.evidence)).filter(Boolean);
 
@@ -377,6 +385,14 @@ export function mergeDomainSplitByTable(opts) {
   if (!files.length) throw new Error(`no markdown in work-dir: ${workDir}`);
 
   const invItems = extractInventoryEvidence(inv, domain);
+  // 0.7.33 FS-3: same empty-inventory guard as mergeDomain
+  if (invItems.length === 0) {
+    console.error(
+      `FAIL: inventory for domain ${domain} has 0 items; refuse to write empty SSOT`
+    );
+    process.exitCode = 1;
+    throw new Error(`merge aborted: empty inventory for ${domain}`);
+  }
   const ordered = preserveOrder
     ? invItems
     : [...invItems].sort((a, b) =>
@@ -453,6 +469,19 @@ export function mergeDomainSplitByTable(opts) {
     fs.writeFileSync(outPath, parts.join(""), "utf8");
     written.push(outName);
     console.error(`Wrote SSOT ${outPath}`);
+    // 0.7.35 FS-8: companion _change.sql stub when missing
+    if (domain === "db") {
+      const changeName = `${fileNn}-${name}_change.sql`;
+      const changePath = path.join(targetDir, changeName);
+      if (!fs.existsSync(changePath)) {
+        fs.writeFileSync(
+          changePath,
+          `-- ${changeName}\n-- stub created by fill-merge (0.7.35 FS-8); append DDL diffs here.\n`,
+          "utf8"
+        );
+        console.error(`Wrote stub ${changePath}`);
+      }
+    }
     nn++;
   }
 
@@ -495,10 +524,60 @@ export function updateDomainIndex(opts) {
   const absDir = path.resolve(dir);
   if (!fs.existsSync(absDir)) return { updated: false, path: indexPath, reason: "target_dir_missing" };
 
-  const files = fs
+  const onDisk = fs
     .readdirSync(absDir)
-    .filter((f) => /^\d+-.*\.md$/i.test(f) && !/_change\.sql$/i.test(f))
-    .sort();
+    .filter((f) => /^\d+-.*\.md$/i.test(f) && !/_change\.sql$/i.test(f));
+  // 0.7.35 FS-8: prefer inventory discovery order when provided
+  let files = onDisk.slice().sort();
+  const invPath = opts.inventory;
+  if (invPath && fs.existsSync(path.resolve(invPath))) {
+    try {
+      const inv = JSON.parse(fs.readFileSync(path.resolve(invPath), "utf8"));
+      const labels = [];
+      if (Array.isArray(inv.tables)) {
+        for (const t of inv.tables) {
+          const lab = String(t.name || t.table || t.label || "").toLowerCase();
+          if (lab) labels.push(lab);
+        }
+      } else if (Array.isArray(inv.modules)) {
+        for (const m of inv.modules) {
+          for (const s of m.services || []) {
+            const lab = String(s.class || s.name || s.label || "").toLowerCase();
+            if (lab) labels.push(lab);
+          }
+        }
+      } else if (Array.isArray(inv.endpoints)) {
+        for (const e of inv.endpoints) {
+          const lab = String(e.name || e.path || e.label || "").toLowerCase();
+          if (lab) labels.push(lab);
+        }
+      } else if (Array.isArray(inv.tasks)) {
+        for (const t of inv.tasks) {
+          const lab = String(t.task_code || t.slug || t.id || "").toLowerCase();
+          if (lab) labels.push(lab);
+        }
+      }
+      if (labels.length) {
+        const rank = new Map(labels.map((l, i) => [l, i]));
+        files = onDisk.slice().sort((a, b) => {
+          const sa = a.replace(/^\d+-/, "").replace(/\.md$/i, "").toLowerCase();
+          const sb = b.replace(/^\d+-/, "").replace(/\.md$/i, "").toLowerCase();
+          const ra = rank.has(sa)
+            ? rank.get(sa)
+            : labels.findIndex((l) => sa.includes(l) || l.includes(sa));
+          const rb = rank.has(sb)
+            ? rank.get(sb)
+            : labels.findIndex((l) => sb.includes(l) || l.includes(sb));
+          const ia = ra < 0 ? 1e9 : ra;
+          const ib = rb < 0 ? 1e9 : rb;
+          if (ia !== ib) return ia - ib;
+          return a.localeCompare(b);
+        });
+      }
+    } catch {
+      /* keep alpha sort */
+    }
+  }
   // 0.7.29 FC-9: splice only under the domain index section (not 变更记录)
   const sectionHeading =
     domain === "db"

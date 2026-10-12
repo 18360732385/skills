@@ -14,6 +14,8 @@ import path from "path";
 import { isCliMain } from "./cli-main.mjs";
 import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
+import { writeInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
+import { stampInventoryGitHead } from "./git-head.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -56,33 +58,62 @@ Exit: 0 ok · 2 warnings · 1 error
 `);
 }
 
-function listMavenModules(root) {
-  const pom = path.join(root, "pom.xml");
-  if (!fs.existsSync(pom)) return [];
-  const text = fs.readFileSync(pom, "utf8");
+/** Read `<module>` paths from a pom.xml; keep relative paths (no basename pop). */
+function listMavenModulesFromPom(pomPath) {
+  if (!fs.existsSync(pomPath)) return [];
+  const text = fs.readFileSync(pomPath, "utf8");
   const mods = [];
   const re = /<module>\s*([^<]+)\s*<\/module>/gi;
   let m;
   while ((m = re.exec(text)) !== null) {
-    const name = m[1].trim().replace(/\\/g, "/").split("/").pop();
-    if (name) mods.push(name);
+    const name = m[1].trim().replace(/\\/g, "/").replace(/\/$/, "");
+    if (name && !name.includes("..")) mods.push(name);
   }
   return [...new Set(mods)];
 }
 
+function listMavenModules(root) {
+  return listMavenModulesFromPom(path.join(root, "pom.xml"));
+}
+
+/**
+ * Discover Maven module dirs relative to repo root.
+ * 0.7.33: nested reactor (e.g. backend/pom.xml with &lt;module&gt;order-service&lt;/module&gt;)
+ * → backend/order-service when repo root has no aggregator pom.
+ */
 function discoverModuleDirs(root) {
-  const fromPom = listMavenModules(root);
-  if (fromPom.length) return fromPom;
-  return fs.readdirSync(root).filter((n) => {
+  const fromRoot = listMavenModules(root);
+  if (fromRoot.length) return fromRoot;
+
+  const nested = [];
+  let entries = [];
+  try {
+    entries = fs.readdirSync(root);
+  } catch {
+    return [];
+  }
+  for (const n of entries) {
+    if (n === "target" || n === "node_modules" || n === ".git") continue;
+    const sub = path.join(root, n);
+    let st;
     try {
-      return (
-        fs.statSync(path.join(root, n)).isDirectory() &&
-        fs.existsSync(path.join(root, n, "pom.xml"))
-      );
+      st = fs.statSync(sub);
     } catch {
-      return false;
+      continue;
     }
-  });
+    if (!st.isDirectory()) continue;
+    const subPom = path.join(sub, "pom.xml");
+    if (!fs.existsSync(subPom)) continue;
+    const childMods = listMavenModulesFromPom(subPom);
+    if (childMods.length) {
+      for (const m of childMods) {
+        nested.push(`${n}/${m}`.replace(/\\/g, "/"));
+      }
+    } else {
+      nested.push(n);
+    }
+  }
+  return [...new Set(nested)];
 }
 
 function walkServices(dir, acc = []) {
@@ -227,6 +258,7 @@ export function main(argv = process.argv) {
       empty_modules: warnings.length,
     },
   };
+  stampInventoryGitHead(report, root);
   if (!report.stats.services) pushWarning(report, "no services found");
 
   // Per-module files when multi; single combined when one module or --out set
@@ -250,6 +282,15 @@ export function main(argv = process.argv) {
       }
       // Also write merged inventory.json for fill-truths-auto discovery
       written.push(writeInventory(root, null, report, null));
+    }
+  }
+
+  if (!args.noWrite && modules.length) {
+    try {
+      const relMods = modules.map((m) => toRootRelative(root, m) || m);
+      writeInventoryMeta(root, { func: { modules: relMods } });
+    } catch {
+      /* meta optional */
     }
   }
 

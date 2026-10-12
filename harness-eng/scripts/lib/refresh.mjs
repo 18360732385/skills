@@ -62,6 +62,10 @@ function inventoryArgv(domain, absRoot, { noWrite = false } = {}) {
   if (domain === "db" && inv.db?.sql_root) {
     argv.push("--sql-root", inv.db.sql_root);
   }
+  // 0.7.33 FS-1/G1: replay func --modules from harness-meta
+  if (domain === "func" && Array.isArray(inv.func?.modules) && inv.func.modules.length) {
+    argv.push("--modules", inv.func.modules.join(","));
+  }
   if (noWrite) argv.push("--no-write");
   return argv;
 }

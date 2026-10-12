@@ -14,6 +14,7 @@ import { isCliMain } from "./cli-main.mjs";
 import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { writeInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
+import { stampInventoryGitHead } from "./git-head.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -474,6 +475,7 @@ export function main(argv = process.argv) {
       entity_tables: entityMap.size,
     },
   };
+  stampInventoryGitHead(report, root);
   if (!tables.length) {
     pushWarning(report, "no CREATE TABLE found");
   }

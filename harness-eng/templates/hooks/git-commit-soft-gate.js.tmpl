@@ -78,7 +78,12 @@ function readStdin() {
 
 function allow(extra = {}) {
   if (HOST_SOFT) {
+    // 0.7.30 NEW-15: stderr for hosts that forward it
+    // 0.7.35 NEW-15 residual: also stdout JSON so Codex/adapter can surface agent_message
     if (extra.agent_message) console.error(extra.agent_message);
+    const payload = {};
+    if (extra.agent_message) payload.agent_message = extra.agent_message;
+    process.stdout.write(JSON.stringify(payload));
     process.exit(0);
   }
   process.stdout.write(JSON.stringify({ permission: "allow", ...extra }));

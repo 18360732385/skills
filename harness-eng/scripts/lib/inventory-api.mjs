@@ -22,6 +22,7 @@ import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { createProgress } from "./progress-log.mjs";
 import { writeInventoryMeta, readInventoryMeta, toRootRelative } from "./inventory-meta.mjs";
+import { stampInventoryGitHead } from "./git-head.mjs";
 
 /** Lowest common ancestor directory of absolute file paths. */
 export function commonAncestorDir(files) {
@@ -584,6 +585,7 @@ function scanOneModule(
       shards: shards.length,
     },
   };
+  stampInventoryGitHead(report, root);
 
   if (!write) {
     return report;

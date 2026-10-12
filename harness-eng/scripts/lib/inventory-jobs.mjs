@@ -20,6 +20,7 @@ import { isCliMain } from "./cli-main.mjs";
 import { resolveInventoryOutPath } from "./inventory-paths.mjs";
 import { exitFromReport, pushWarning } from "./exit-codes.mjs";
 import { createProgress } from "./progress-log.mjs";
+import { stampInventoryGitHead } from "./git-head.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -50,7 +51,7 @@ function printHelp() {
 
 Scans:
   - *TaskCode*.java / SyncTaskCode enum string constants
-  - *Scheduler.java @Scheduled methods
+  - any *.java with @Scheduled or SchedulingConfigurer (not only *Scheduler.java)
   - application*.yml cron keys (*.cron.*)
 
 Links:
@@ -254,18 +255,25 @@ function extractScheduled(root, file) {
   const classM = text.match(/class\s+(\w+)/);
   const cls = classM ? classM[1] : path.basename(file, ".java");
   const methods = [];
-  // @Scheduled(...) ... void methodName(
+  // 0.7.33 FS-3: any return type (not only void) after @Scheduled
   const re =
-    /@Scheduled\s*(?:\([^)]*\))?\s*(?:public|protected|private)?\s*(?:final\s+)?void\s+(\w+)\s*\(/g;
+    /@Scheduled\s*(?:\([^)]*\))?\s*(?:public|protected|private)?\s*(?:final\s+)?(?:[\w.<>,\s\[\]]+\s+)?(\w+)\s*\(/g;
   let m;
   while ((m = re.exec(text)) !== null) {
+    const method = m[1];
+    if (/^(if|for|while|switch|catch|return|new|class)$/.test(method)) continue;
     methods.push({
       schedulerClass: cls,
-      method: m[1],
-      evidence: `${rel(root, file)}#${m[1]}`,
+      method,
+      evidence: `${rel(root, file)}#${method}`,
     });
   }
   return methods;
+}
+
+/** True if file body looks like a Spring scheduler / job class. */
+function isSchedulerJava(text) {
+  return /@Scheduled\b/.test(text) || /\bSchedulingConfigurer\b/.test(text);
 }
 
 function extractCronKeys(root, file) {
@@ -310,9 +318,16 @@ export function main(argv = process.argv) {
   const progress = createProgress({ quiet: args.quiet, label: "fill-inventory-jobs" });
   progress.log("scan");
 
-  const warnings = [];
   const enumFiles = walkJava(root, [], (name) => /TaskCode/i.test(name));
-  const schedulerFiles = walkJava(root, [], (name) => /Scheduler\.java$/i.test(name));
+  // 0.7.33 FS-3: any .java with @Scheduled / SchedulingConfigurer (not only *Scheduler.java)
+  const allJava = walkJava(root, [], (name) => /\.java$/i.test(name));
+  const schedulerFiles = allJava.filter((f) => {
+    try {
+      return isSchedulerJava(fs.readFileSync(f, "utf8"));
+    } catch {
+      return false;
+    }
+  });
   const ymlFiles = [];
   for (const base of [
     path.join(root, "sms-ai", "src", "main", "resources"),
@@ -346,6 +361,16 @@ export function main(argv = process.argv) {
   const cronKeys = [];
   for (const f of [...new Set(ymlFiles)]) cronKeys.push(...extractCronKeys(root, f));
 
+  const report = {
+    ok: true,
+    root,
+    generatedAt: new Date().toISOString(),
+    tasks: [],
+    shards: [],
+    stats: {},
+    warnings: [],
+  };
+
   if (!tasks.length && scheduled.length) {
     // fallback: invent tasks from scheduled methods
     for (const s of scheduled) {
@@ -364,7 +389,10 @@ export function main(argv = process.argv) {
         scheduler_link: "exact",
       });
     }
-    pushWarning(warnings, "no-enum", "No *TaskCode* enum found; used @Scheduled methods as tasks");
+    pushWarning(report, {
+      code: "no-enum",
+      message: "No *TaskCode* enum found; used @Scheduled methods as tasks",
+    });
   }
 
   for (const t of tasks) {
@@ -373,14 +401,16 @@ export function main(argv = process.argv) {
       t.scheduler_link = m.link;
       if (m.scheduled) t.scheduler = m.scheduled;
       if (m.link === "heuristic") {
-        pushWarning(
-          warnings,
-          "heuristic-scheduler",
-          `${t.task_code} → ${m.scheduled?.method || "?"} (heuristic; do not promote unmarked)`
-        );
+        pushWarning(report, {
+          code: "heuristic-scheduler",
+          message: `${t.task_code} → ${m.scheduled?.method || "?"} (heuristic; do not promote unmarked)`,
+        });
       }
       if (m.ambiguous) {
-        pushWarning(warnings, "ambiguous-scheduler", `${t.task_code} matched multiple @Scheduled methods`);
+        pushWarning(report, {
+          code: "ambiguous-scheduler",
+          message: `${t.task_code} matched multiple @Scheduled methods`,
+        });
       }
     } else if (!t.scheduler_link) {
       t.scheduler_link = "exact";
@@ -404,36 +434,30 @@ export function main(argv = process.argv) {
     if (group.length <= 1) continue;
     for (const t of group) {
       if (t.scheduler_link === "exact") t.scheduler_link = "heuristic";
-      pushWarning(
-        warnings,
-        "ambiguous-scheduler",
-        `${t.task_code} shares ${key} with ${group.length - 1} other task(s)`
-      );
+      pushWarning(report, {
+        code: "ambiguous-scheduler",
+        message: `${t.task_code} shares ${key} with ${group.length - 1} other task(s)`,
+      });
     }
   }
 
   if (!tasks.length) {
-    pushWarning(warnings, "empty", "No jobs tasks discovered");
+    pushWarning(report, { code: "empty", message: "No jobs tasks discovered" });
   }
 
   const shards = shardTasks(tasks, args.shardSize);
   const outPath = resolveInventoryOutPath(root, args.out, "jobs");
 
-  const report = {
-    ok: true,
-    root,
-    generatedAt: new Date().toISOString(),
-    tasks,
-    shards,
-    stats: {
-      tasks: tasks.length,
-      enums: enumFiles.length,
-      scheduledMethods: scheduled.length,
-      cronKeys: cronKeys.length,
-      documentedHint: "docs/jobs/tasks/NN-{slug}.md",
-    },
-    warnings,
+  report.tasks = tasks;
+  report.shards = shards;
+  report.stats = {
+    tasks: tasks.length,
+    enums: enumFiles.length,
+    scheduledMethods: scheduled.length,
+    cronKeys: cronKeys.length,
+    documentedHint: "docs/jobs/tasks/NN-{slug}.md",
   };
+  stampInventoryGitHead(report, root);
 
   if (!args.noWrite) {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -443,7 +467,7 @@ export function main(argv = process.argv) {
     progress.log(`--no-write tasks=${tasks.length} (stdout only)`);
   }
   console.log(JSON.stringify({ ...report, out: path.relative(root, outPath).replace(/\\/g, "/") }, null, 2));
-  exitFromReport(report, warnings);
+  exitFromReport(report);
 }
 
 if (isCliMain(import.meta.url)) {

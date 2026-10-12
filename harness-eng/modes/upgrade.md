@@ -57,6 +57,37 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.34 → 0.7.35 迁移要点
+
+1. **meta**：`skill_version` → `0.7.35`；land/upgrade 回写 `skill_root`（refresh-score 候选）
+2. **upgrade**：内容相同的 fix-hook 不再生成 `.bak-harness-*`；建议 gitignore 已含该模式
+3. **hooks**：宿主 hooks 目录脚本 chmod 0755（含 sync）
+4. **backfill**：`harness.mjs --mode backfill --findings <path>` 出 WritePlan，不写盘
+5. **func 覆盖**：`docs/func/frontend/` / `*-frontend*.md` 不计 covered
+6. **merge**：db 表文档旁 `_change.sql` stub；索引序跟 inventory
+7. **gold**：resume/upgrade `gate_profile=gold` 会改写 score-policy
+8. **Codex**：commit soft-gate 提醒同时在 stdout JSON `agent_message`
+9. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.35`）后再 sync
+
+## 0.7.33 → 0.7.34 迁移要点
+
+1. **meta**：`skill_version` → `0.7.34`
+2. **inventory 新鲜度**：各域 inventory 带 `git_head`；改代码后须 refresh，否则 `fill-score` → `inventory_stale` / `ai_coding_ready=false`
+3. **覆盖分母**：api/func/db/redis/jobs 以 live 重扫 code 为准；redis/jobs `docs>code` 记 `covered_gt_code`（不再 `Math.min` 假绿）
+4. **漂移**：未文档化的 redis key / jobs task 进入 `field_drift` blockers
+5. **AGENTS Maven**：嵌套 reactor 用 `-f <聚合>/pom.xml -pl <子模块>`；勿再裸 `-f backend/<mod>/pom.xml`
+6. **hooks**：`JOBS_YML_RE` 已反转义；upgrade 后重渲 hooks 即可
+7. **问答**：仅有 `@Scheduled` 源码也会 `S_JOBS`；L5 推荐 `Q_AGENT_CONFIG`
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.34`）后再 sync
+
+## 0.7.32 → 0.7.33 迁移要点
+
+1. **meta**：`skill_version` → `0.7.33`
+2. **func inventory**：`--modules` 会写入 `inventory.func.modules`；新 clone / refresh 自动回放（嵌套 `backend/` reactor 也会发现）
+3. **mysql-guard**：land 不再因 Codex 条目重复中断；`mcp: mysql` 渲染为 `mysql-local`（非法 `mysql-` 直接报错）；`mysql_guard_servers` 写入 meta
+4. **jobs**：`*Job.java` 等带 `@Scheduled` 的类计入 inventory；inventory 为 0 时 merge 拒写空 SSOT
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.33`）后再 sync
+
 ## 0.7.31 → 0.7.32 迁移要点
 
 1. **meta**：`skill_version` → `0.7.32`

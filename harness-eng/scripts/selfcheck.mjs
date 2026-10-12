@@ -58,8 +58,18 @@ import {
   buildContractChecksJs,
   globListToCodePreds,
   buildHookPlaceholders,
+  expandHooksFamily,
+  resolveAgentConfig,
   HOOK_DEFS,
 } from "./lib/hooks-checks.mjs";
+import { mavenCmdsForModule } from "./lib/maven-cmds.mjs";
+import { morphDepthBonus } from "./lib/morph-depth.mjs";
+import { pickRecommended } from "./questions-next.mjs";
+import { isInventoryStale } from "./lib/git-head.mjs";
+import {
+  detectRedisKeyDrift,
+  detectJobsTaskDrift,
+} from "./lib/field-drift.mjs";
 import { splitTableRows } from "./lib/doc-density.mjs";
 import {
   replaceCreateTableBlock,
@@ -74,7 +84,13 @@ import {
   writeInventoryMeta,
   readInventoryMeta,
   stripWrappingQuotes,
+  writeMysqlGuardServers,
+  readMysqlGuardServers,
+  writeSkillRoot,
+  readSkillRoot,
 } from "./lib/inventory-meta.mjs";
+import { applyGateProfileToPolicyFile } from "./lib/score-policy-migrate.mjs";
+import { buildBackfillPlan } from "./lib/backfill-plan.mjs";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
 import {
@@ -1078,7 +1094,12 @@ if (fs.existsSync(fixture)) {
     path.join(skillRoot, "templates/docs/harness-eng/score-policy.yaml.tmpl"),
     "utf8"
   );
-  assert(/gate_profile:\s*strict/.test(policyTmpl), "score-policy tmpl strict");
+  // 0.7.35 FS-9: tmpl uses {{GATE_PROFILE}} (render defaults to strict)
+  assert(
+    /gate_profile:\s*"\{\{GATE_PROFILE\}\}"/.test(policyTmpl) ||
+      /gate_profile:\s*strict/.test(policyTmpl),
+    "score-policy tmpl strict"
+  );
   assert(/coverage_mode:\s*all_domains/.test(policyTmpl), "score-policy tmpl all_domains");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/覆盖.*形态.*开干|三词/.test(gloss), "glossary three leading words");
@@ -1195,7 +1216,11 @@ if (fs.existsSync(fixture)) {
     path.join(skillRoot, "templates/docs/harness-eng/score-policy.yaml.tmpl"),
     "utf8"
   );
-  assert(/gate_profile:\s*strict/.test(policyTmpl), "tmpl default still strict");
+  assert(
+    /gate_profile:\s*"\{\{GATE_PROFILE\}\}"/.test(policyTmpl) ||
+      /gate_profile:\s*strict/.test(policyTmpl),
+    "tmpl default still strict"
+  );
   assert(/todo_scan:/.test(policyTmpl) && /acceptance_warnings_max:/.test(policyTmpl), "tmpl gold fields");
   assert(/gold/.test(readDoc("fill-gate.md")), "fill-gate docs gold");
   assert(new RegExp(`version:\\s*"${VER_RE}"`).test(fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")), `manifest ${EXPECTED}`);
@@ -2184,7 +2209,11 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
 
   const renderSrcA = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
   assert(/chmodSync/.test(renderSrcA) && /maybeChmodExecutable/.test(renderSrcA), "render chmods hooks");
-  assert(/mavenCmdsForModule/.test(renderSrcA) && /mvn -f/.test(renderSrcA), "render Spring mvn -f branch");
+  const mavenCmdsSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/maven-cmds.mjs"), "utf8");
+  assert(
+    /mavenCmdsForModule/.test(renderSrcA) && /mvn -f/.test(mavenCmdsSrc),
+    "render Spring mvn -f branch"
+  );
   assert(/可执行/.test(ladderMd), "ladder checks hook executable bit");
 }
 
@@ -2683,6 +2712,9 @@ const HOST_SOFT = GIT_MODE || CODEX_MODE;
 function allow(extra = {}) {
   if (HOST_SOFT) {
     if (extra.agent_message) console.error(extra.agent_message);
+    const payload = {};
+    if (extra.agent_message) payload.agent_message = extra.agent_message;
+    process.stdout.write(JSON.stringify(payload));
     process.exit(0);
   }
   process.stdout.write(JSON.stringify({ permission: "allow", ...extra }));
@@ -2698,7 +2730,11 @@ allow({ agent_message: "[api] probe" });
     });
     assert(rCodex.status === 0, "0.7.30 NEW-15 mini --codex exit 0");
     assert(/\[api\] probe/.test(rCodex.stderr || ""), "0.7.30 NEW-15 reminder on stderr");
-    assert(!/\[api\] probe/.test(rCodex.stdout || ""), "0.7.30 NEW-15 not on stdout");
+    // 0.7.35: Codex also gets agent_message on stdout JSON (NEW-15 residual)
+    assert(
+      /"agent_message"\s*:\s*"\[api\] probe"/.test(rCodex.stdout || ""),
+      "0.7.30/0.7.35 NEW-15 agent_message on stdout JSON"
+    );
     const rCursor = spawnSync(process.execPath, [miniPath], {
       encoding: "utf8",
       windowsHide: true,
@@ -2923,6 +2959,481 @@ allow({ agent_message: "[api] probe" });
     /0\.7\.31 → 0\.7\.32/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
     "0.7.32 upgrade.md migration section"
   );
+  assert(
+    /0\.7\.32 → 0\.7\.33/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.33 upgrade.md migration section"
+  );
+  assert(
+    /0\.7\.33 → 0\.7\.34/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.34 upgrade.md migration section"
+  );
+  assert(
+    /0\.7\.34 → 0\.7\.35/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.35 upgrade.md migration section"
+  );
+}
+
+// --- 0.7.33 e2e-11 P0: FS-1/FS-2 func modules · LD-1/LD-2 mysql-guard · FS-3 jobs ---
+{
+  // FS-1/FS-2: nested reactor discovery + meta persistence + refresh replay
+  const fxFunc = path.join(skillRoot, "scripts/fixtures/nested-reactor-func");
+  assert(fs.existsSync(path.join(fxFunc, "backend/pom.xml")), "0.7.33 nested-reactor-func fixture");
+  const invFuncTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-033-func-"));
+  try {
+    // copy fixture into temp so we can write inventory/meta
+    const copyDir = (src, dest) => {
+      fs.mkdirSync(dest, { recursive: true });
+      for (const name of fs.readdirSync(src)) {
+        const s = path.join(src, name);
+        const d = path.join(dest, name);
+        if (fs.statSync(s).isDirectory()) copyDir(s, d);
+        else fs.copyFileSync(s, d);
+      }
+    };
+    copyDir(fxFunc, invFuncTmp);
+    const r = runNode([
+      path.join(skillRoot, "scripts/fill-inventory.mjs"),
+      "--domain",
+      "func",
+      "--root",
+      invFuncTmp,
+    ]);
+    assert(r.status === 0 || r.status === 2, "0.7.33 FS-1 inventory-func exit ok");
+    const inv = readInventoryMeta(invFuncTmp);
+    assert(
+      Array.isArray(inv.func?.modules) &&
+        inv.func.modules.some((m) => /backend\/order-service/.test(m)),
+      "0.7.33 FS-1 meta persists func.modules"
+    );
+    const invJson = path.join(invFuncTmp, "docs/func/.fill-work");
+    const invFiles = fs.existsSync(invJson)
+      ? fs.readdirSync(invJson).filter((f) => f.startsWith("inventory"))
+      : [];
+    assert(invFiles.length > 0, "0.7.33 FS-1 wrote func inventory file");
+    let services = 0;
+    for (const f of invFiles) {
+      const j = JSON.parse(fs.readFileSync(path.join(invJson, f), "utf8"));
+      services += j.stats?.services || 0;
+    }
+    assert(services >= 1, "0.7.33 FS-1 nested reactor finds services without --modules");
+
+    // refresh argv must replay --modules
+    const refreshSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/refresh.mjs"), "utf8");
+    assert(
+      /domain === "func"/.test(refreshSrc) && /inv\.func\?\.modules/.test(refreshSrc),
+      "0.7.33 FS-1 refresh replays func modules"
+    );
+    writeInventoryMeta(invFuncTmp, {
+      func: { modules: ["backend/order-service"] },
+    });
+    writeInventoryMeta(invFuncTmp, {
+      api: { controller_root: "backend/order-service/src/main/java" },
+    });
+    const round = readInventoryMeta(invFuncTmp);
+    assert(
+      round.func?.modules?.includes("backend/order-service") &&
+        round.api?.controller_root === "backend/order-service/src/main/java",
+      "0.7.33 FS-1 meta keeps func+api after merge write"
+    );
+  } finally {
+    fs.rmSync(invFuncTmp, { recursive: true, force: true });
+  }
+
+  // LD-1: mysql-guard target appears once for L5 SSOT and for L4+codex
+  assert(
+    !/id:\s*hooks-codex-mysql-guard/.test(
+      fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8")
+    ),
+    "0.7.33 LD-1 manifest has no static hooks-codex-mysql-guard"
+  );
+  assert(
+    !/push\(\s*"hookfam-codex-mysql-guard"/.test(
+      fs.readFileSync(path.join(skillRoot, "scripts/lib/hooks-checks.mjs"), "utf8")
+    ),
+    "0.7.33 LD-1 no redundant L5 mysql-guard push"
+  );
+  const hooksParamsBase = {
+    ladder: "L5",
+    ai_tools: ["cursor", "codex"],
+    mcp: ["mysql"],
+    hooks_family: ["commit-gate-extended", "after-edit", "stop-checklist", "mysql-guard"],
+    domains: ["func", "api"],
+  };
+  {
+    const paramsL5 = { ...hooksParamsBase, agent_config: true };
+    const itemsL5 = expandHooksFamily(
+      paramsL5,
+      resolveAgentConfig(paramsL5),
+      () => "create",
+      skillRoot,
+      new Set(["mysql"])
+    );
+    const tL5 = itemsL5.filter((i) => /mcp-mysql-guard\.js$/.test(i.target)).map((i) => i.target);
+    assert(
+      tL5.length === 1 && tL5[0] === "docs/agent-config/hooks/mcp-mysql-guard.js",
+      `0.7.33 LD-1 L5 SSOT mysql-guard once (got ${tL5.join(",")})`
+    );
+    const paramsL4 = { ...hooksParamsBase, ladder: "L4", agent_config: false };
+    const itemsL4 = expandHooksFamily(
+      paramsL4,
+      resolveAgentConfig(paramsL4),
+      () => "create",
+      skillRoot,
+      new Set(["mysql"])
+    );
+    const tL4 = itemsL4.filter((i) => /mcp-mysql-guard\.js$/.test(i.target)).map((i) => i.target);
+    assert(
+      tL4.length === new Set(tL4).size &&
+        tL4.includes(".codex/hooks/mcp-mysql-guard.js") &&
+        tL4.includes(".cursor/hooks/mcp-mysql-guard.js"),
+      `0.7.33 LD-1 L4+codex unique mysql-guard targets (got ${tL4.join(",")})`
+    );
+  }
+
+  // LD-2: mcp=["mysql"] → mysql-local; invalid mysql- throws; meta persist
+  const hookFamWithGate = ["commit-gate-extended", "mysql-guard"];
+  const phMysqlEngine = buildHookPlaceholders({
+    params: { mcp: ["mysql"], hooks_family: hookFamWithGate, domains: ["api"] },
+    agentConfig: false,
+    existing: {},
+    root: null,
+  });
+  assert(
+    phMysqlEngine.MYSQL_GUARD_SERVERS === "mysql-local",
+    `0.7.33 LD-2 mcp=mysql → mysql-local (got ${phMysqlEngine.MYSQL_GUARD_SERVERS})`
+  );
+  assert(
+    new RegExp("^" + phMysqlEngine.MYSQL_GUARD_SERVERS + "$").test("mysql-local"),
+    "0.7.33 LD-2 mysql-local matches"
+  );
+  let threwInvalid = false;
+  try {
+    buildHookPlaceholders({
+      params: { mysql_guard_servers: "mysql-", hooks_family: hookFamWithGate },
+      agentConfig: false,
+      existing: {},
+      root: null,
+    });
+  } catch (e) {
+    threwInvalid = /MYSQL_GUARD_SERVERS invalid/.test(String(e && e.message ? e.message : e));
+  }
+  assert(threwInvalid, "0.7.33 LD-2 rejects mysql- empty capture");
+  const metaGuardTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-033-guard-"));
+  try {
+    const md = path.join(metaGuardTmp, "docs", "harness-eng");
+    fs.mkdirSync(md, { recursive: true });
+    fs.writeFileSync(path.join(md, "harness-meta.yaml"), "skill_version: \"0.7.33\"\n", "utf8");
+    writeMysqlGuardServers(metaGuardTmp, "mysql-(dev|local)");
+    assert(
+      readMysqlGuardServers(metaGuardTmp) === "mysql-(dev|local)",
+      "0.7.33 LD-2 meta mysql_guard_servers roundtrip"
+    );
+    const phFromMeta = buildHookPlaceholders({
+      params: { hooks_family: hookFamWithGate, domains: ["api"] },
+      agentConfig: false,
+      existing: {},
+      root: metaGuardTmp,
+    });
+    assert(
+      phFromMeta.MYSQL_GUARD_SERVERS === "mysql-(dev|local)",
+      "0.7.33 LD-2 buildHookPlaceholders reads meta"
+    );
+  } finally {
+    fs.rmSync(metaGuardTmp, { recursive: true, force: true });
+  }
+
+  // FS-3: *Job.java with @Scheduled counted; empty inventory merge refuses
+  const fxJobs = path.join(skillRoot, "scripts/fixtures/nested-reactor-jobs");
+  const jobsTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-033-jobs-"));
+  try {
+    const copyDir = (src, dest) => {
+      fs.mkdirSync(dest, { recursive: true });
+      for (const name of fs.readdirSync(src)) {
+        const s = path.join(src, name);
+        const d = path.join(dest, name);
+        if (fs.statSync(s).isDirectory()) copyDir(s, d);
+        else fs.copyFileSync(s, d);
+      }
+    };
+    copyDir(fxJobs, jobsTmp);
+    const jr = runNode([
+      path.join(skillRoot, "scripts/fill-inventory.mjs"),
+      "--domain",
+      "jobs",
+      "--root",
+      jobsTmp,
+    ]);
+    assert(jr.status === 0 || jr.status === 2, "0.7.33 FS-3 inventory-jobs exit ok");
+    const jobsInvPath = path.join(jobsTmp, "docs/jobs/.fill-work/inventory.json");
+    assert(fs.existsSync(jobsInvPath), "0.7.33 FS-3 wrote jobs inventory");
+    const jobsInv = JSON.parse(fs.readFileSync(jobsInvPath, "utf8"));
+    assert(
+      Array.isArray(jobsInv.tasks) && jobsInv.tasks.length >= 1,
+      `0.7.33 FS-3 OrderTimeoutJob → tasks>=1 (got ${jobsInv.tasks?.length})`
+    );
+
+    const emptyInv = path.join(jobsTmp, "docs/jobs/.fill-work/empty-inventory.json");
+    fs.writeFileSync(emptyInv, JSON.stringify({ tasks: [] }, null, 2), "utf8");
+    const emptyTarget = path.join(jobsTmp, "docs/jobs/jobs-empty.md");
+    const mr = runNode([
+      path.join(skillRoot, "scripts/fill-merge.mjs"),
+      "--domain",
+      "jobs",
+      "--inventory",
+      emptyInv,
+      "--work-dir",
+      path.join(jobsTmp, "docs/jobs/.fill-work"),
+      "--target",
+      emptyTarget,
+      "--write",
+      "--skip-acceptance",
+    ]);
+    assert(mr.status !== 0, "0.7.33 FS-3 empty inventory merge nonzero");
+    assert(!fs.existsSync(emptyTarget), "0.7.33 FS-3 empty inventory did not write SSOT");
+  } finally {
+    fs.rmSync(jobsTmp, { recursive: true, force: true });
+  }
+}
+
+// --- 0.7.34 e2e-11 P1: drift/stale · nested maven · JOBS_YML_RE · morph 400 · detect ---
+{
+  // FS-5: inventory_stale helper
+  assert(
+    isInventoryStale({ git_head: "aaa" }, "bbb") === true,
+    "0.7.34 FS-5 mismatch is stale"
+  );
+  assert(
+    isInventoryStale({ git_head: "abc" }, "abc") === false,
+    "0.7.34 FS-5 matching head not stale"
+  );
+  assert(
+    isInventoryStale({ keys: [] }, "abc") === true,
+    "0.7.34 FS-5 missing git_head is stale"
+  );
+
+  // FS-4: redis/jobs anomaly path in fill-score source
+  const scoreSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(
+    /out\.redis\.anomaly\s*=\s*"covered_gt_code"/.test(scoreSrc) &&
+      /out\.jobs\.anomaly\s*=\s*"covered_gt_code"/.test(scoreSrc),
+    "0.7.34 FS-4 redis/jobs covered_gt_code"
+  );
+  assert(/detectRedisKeyDrift/.test(scoreSrc) && /detectJobsTaskDrift/.test(scoreSrc), "0.7.34 FS-4 drift wired");
+  assert(/inventory_stale/.test(scoreSrc), "0.7.34 FS-5 inventory_stale blocker");
+
+  // redis positional @Cacheable
+  const redisSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-redis.mjs"), "utf8");
+  assert(/positional/.test(redisSrc), "0.7.34 Cacheable positional");
+
+  // redis drift: code key not in docs
+  const driftTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-034-drift-"));
+  try {
+    fs.mkdirSync(path.join(driftTmp, "docs", "redis", "keys"), { recursive: true });
+    fs.writeFileSync(
+      path.join(driftTmp, "docs", "redis", "keys", "01-known.md"),
+      "## Key 模式\n\n| `known:key` | — |\n",
+      "utf8"
+    );
+    const rd = detectRedisKeyDrift(driftTmp, {
+      keys: [
+        { pattern: "known:key", redis: true },
+        { pattern: "undocumented:cache", redis: true },
+      ],
+    });
+    assert(!rd.ok && rd.blockers.length, "0.7.34 FS-4 redis key drift fires");
+    const jd = detectJobsTaskDrift(driftTmp, {
+      tasks: [{ task_code: "ghost-job", slug: "ghost-job" }],
+    });
+    assert(!jd.ok && jd.blockers.length, "0.7.34 FS-4 jobs task drift fires");
+  } finally {
+    fs.rmSync(driftTmp, { recursive: true, force: true });
+  }
+
+  // LD-3: nested reactor maven cmds
+  const fxNest = path.join(skillRoot, "scripts/fixtures/nested-reactor-func");
+  const mvn = mavenCmdsForModule(fxNest, "backend/order-service");
+  assert(
+    /mvn -f backend\/pom\.xml -pl order-service -am test/.test(mvn.test),
+    `0.7.34 LD-3 nested reactor test cmd (got ${mvn.test})`
+  );
+  assert(
+    !/mvn -f backend\/order-service\/pom\.xml/.test(mvn.test),
+    "0.7.34 LD-3 not bare module -f"
+  );
+
+  // HK-1: JOBS_YML_RE matches application.yml
+  const phJobs = buildHookPlaceholders({
+    params: {
+      hooks_family: ["commit-gate-extended", "after-edit"],
+      domains: ["jobs"],
+    },
+    agentConfig: false,
+    existing: {},
+    root: null,
+  });
+  const jobsRe = new RegExp(JSON.parse(phJobs.JOBS_YML_RE));
+  assert(jobsRe.test("src/main/resources/application.yml"), "0.7.34 HK-1 application.yml");
+  assert(jobsRe.test("src/main/resources/application-dev.yml"), "0.7.34 HK-1 application-dev.yml");
+
+  // FS-6: long 业务说明 still scores
+  const longBiz =
+    "## 业务说明\n\n" +
+    "用途：" +
+    "甲".repeat(480) +
+    "\n\n## 字段\n\n| a | b |\n";
+  const morph = morphDepthBonus(longBiz, "db");
+  assert(morph.parts?.business === 10, `0.7.34 FS-6 long biz scores (got ${JSON.stringify(morph)})`);
+  assert(
+    !(morph.issues || []).some((i) => /业务说明偏薄/.test(i)),
+    "0.7.34 FS-6 no 偏薄 on long section"
+  );
+
+  // LD-4/LD-5: code S_JOBS + Q_AGENT_CONFIG at L5
+  const fxJobs2 = path.join(skillRoot, "scripts/fixtures/nested-reactor-jobs");
+  const sigJobs = scanSignals(fxJobs2);
+  assert(sigJobs.S_JOBS === true, "0.7.34 LD-4 S_JOBS from @Scheduled");
+  assert(sigJobs.S_CODE_JOBS === true, "0.7.34 LD-4 S_CODE_JOBS");
+  const qAgent = {
+    id: "Q_AGENT_CONFIG",
+    type: "boolean",
+    recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG || ladder >= L5",
+  };
+  assert(
+    pickRecommended(qAgent, { ladder: "L5", signals: [] }) === true,
+    "0.7.34 LD-5 Q_AGENT_CONFIG true at L5"
+  );
+  const qYaml = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(/S_CODE_API/.test(qYaml) && /S_CODE_REDIS/.test(qYaml), "0.7.34 LD-4 Q_CONTRACT S_CODE_*");
+  assert(
+    (qYaml.match(/recommended_when:\s*"S_MULTI_TOOL \|\| S_AGENT_CONFIG \|\| ladder >= L5"/g) || [])
+      .length >= 2,
+    "0.7.34 LD-5 both Q_AGENT_CONFIG recommended_when"
+  );
+}
+
+// --- 0.7.35 e2e-11 P2: HK-2/3/4/5 · FS-7/8/9 · NEW-15 residual ---
+{
+  const renderSrc35 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/status:\s*"unchanged"/.test(renderSrc35), "0.7.35 HK-2 identical → unchanged");
+  assert(
+    /\.codex\/hooks\//.test(renderSrc35) && /docs\/agent-config\/hooks\//.test(renderSrc35),
+    "0.7.35 HK-3 maybeChmod host hooks"
+  );
+  const gi = fs.readFileSync(
+    path.join(skillRoot, "templates/gitignore/harness.gitignore.snippet"),
+    "utf8"
+  );
+  assert(/\.bak-harness-\*/.test(gi), "0.7.35 HK-2 gitignore bak");
+
+  const syncTmpl35 = fs.readFileSync(
+    path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"),
+    "utf8"
+  );
+  assert(/maybeChmodHostHook/.test(syncTmpl35), "0.7.35 HK-3 sync chmod");
+
+  // HK-5 skill_root
+  const metaTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-035-meta-"));
+  try {
+    const md = path.join(metaTmp, "docs", "harness-eng");
+    fs.mkdirSync(md, { recursive: true });
+    fs.writeFileSync(
+      path.join(md, "harness-meta.yaml"),
+      'skill: harness-eng\nskill_version: "0.7.35"\n',
+      "utf8"
+    );
+    writeSkillRoot(metaTmp, skillRoot);
+    assert(readSkillRoot(metaTmp) === path.resolve(skillRoot), "0.7.35 HK-5 write/read skill_root");
+    const rsTmpl = fs.readFileSync(
+      path.join(skillRoot, "templates/scripts/refresh-score.mjs.tmpl"),
+      "utf8"
+    );
+    assert(/skillRootFromMeta/.test(rsTmpl), "0.7.35 HK-5 refresh-score reads meta");
+  } finally {
+    fs.rmSync(metaTmp, { recursive: true, force: true });
+  }
+
+  // HK-4 backfill
+  const findTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-035-bf-"));
+  try {
+    const findings = path.join(findTmp, "findings.json");
+    fs.writeFileSync(
+      findings,
+      JSON.stringify([
+        "docs/api/modules/01-order.md",
+        { path: "docs/db/table/01-orders.md" },
+      ]),
+      "utf8"
+    );
+    const plan = buildBackfillPlan(findings, { root: findTmp });
+    assert(plan.paths.length >= 2, "0.7.35 HK-4 parses findings paths");
+    assert(/WritePlan/.test(plan.markdown), "0.7.35 HK-4 WritePlan header");
+    assert(/docs\/api\/modules\/01-order\.md/.test(plan.markdown), "0.7.35 HK-4 lists SSOT");
+    const bf = runNode([
+      path.join(skillRoot, "scripts/harness.mjs"),
+      "--mode",
+      "backfill",
+      "--root",
+      findTmp,
+      "--findings",
+      findings,
+    ]);
+    assert(bf.status === 0, "0.7.35 HK-4 harness backfill exit 0");
+    assert(/WritePlan/.test(bf.stdout || ""), "0.7.35 HK-4 stdout WritePlan");
+    assert(!fs.existsSync(path.join(findTmp, "docs")), "0.7.35 HK-4 no disk write");
+  } finally {
+    fs.rmSync(findTmp, { recursive: true, force: true });
+  }
+
+  // FS-7 frontend exclusion
+  const scoreSrc35 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/isFrontendFuncDoc/.test(scoreSrc35), "0.7.35 FS-7 isFrontendFuncDoc");
+
+  // FS-8 _change.sql + inventory order
+  const mergeSrc35 = fs.readFileSync(path.join(skillRoot, "scripts/lib/merge-domain.mjs"), "utf8");
+  assert(/_change\.sql/.test(mergeSrc35) && /inventory discovery order/.test(mergeSrc35), "0.7.35 FS-8 merge");
+
+  // FS-9 gate_profile落盘
+  const polTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-035-pol-"));
+  try {
+    const polDir = path.join(polTmp, "docs", "harness-eng");
+    fs.mkdirSync(polDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(polDir, "score-policy.yaml"),
+      "gate_profile: strict\ncoverage_mode: all_domains\ncoverage_targets:\n  api: 0.8\n  func: 0.8\n",
+      "utf8"
+    );
+    const ap = applyGateProfileToPolicyFile(polTmp, "gold");
+    assert(ap.changed, "0.7.35 FS-9 apply gold changed");
+    const pol = fs.readFileSync(path.join(polDir, "score-policy.yaml"), "utf8");
+    assert(/gate_profile:\s*gold/.test(pol), "0.7.35 FS-9 policy is gold");
+    assert(
+      /gate_profile:\s*"\{\{GATE_PROFILE\}\}"/.test(
+        fs.readFileSync(
+          path.join(skillRoot, "templates/docs/harness-eng/score-policy.yaml.tmpl"),
+          "utf8"
+        )
+      ),
+      "0.7.35 FS-9 tmpl GATE_PROFILE"
+    );
+  } finally {
+    fs.rmSync(polTmp, { recursive: true, force: true });
+  }
+
+  // NEW-15 residual tmpl
+  const soft35 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    /HOST_SOFT[\s\S]*process\.stdout\.write\(JSON\.stringify\(payload\)\)/.test(soft35),
+    "0.7.35 NEW-15 soft-gate stdout JSON"
+  );
+  const adapter35 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/codex-adapter.js"),
+    "utf8"
+  );
+  assert(/merged\.agent_message/.test(adapter35), "0.7.35 NEW-15 adapter merges agent_message");
+
 }
 
 // --- 0.5.x suites (lib/selfcheck/checks-0.5.mjs) ---

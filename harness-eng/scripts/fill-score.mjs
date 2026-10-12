@@ -29,8 +29,12 @@ import {
   detectDbFieldDrift,
   detectApiFieldDrift,
   detectFuncMethodDrift,
+  detectRedisKeyDrift,
+  detectJobsTaskDrift,
   hasBusinessBody,
 } from "./lib/field-drift.mjs";
+import { readGitHead, isInventoryStale } from "./lib/git-head.mjs";
+import { spawnSync } from "child_process";
 import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
@@ -515,16 +519,38 @@ function scoreTruthFile(text, domain, policy) {
   };
 }
 
+/**
+ * 0.7.35 FS-7 / G3: frontend func docs live under docs/func/frontend/ or *-frontend*.md
+ * and must not inflate covered vs Maven Service inventory.
+ */
+function isFrontendFuncDoc(filePath) {
+  const rel = String(filePath || "").replace(/\\/g, "/");
+  const base = path.basename(rel);
+  if (/\/docs\/func\/frontend\//i.test(rel) || /\/func\/frontend\//i.test(rel))
+    return true;
+  if (/frontend/i.test(rel.split("/docs/func/")[1] || "") && /\/frontend\//i.test(rel))
+    return true;
+  if (/-frontend/i.test(base) || /^frontend[-_]/i.test(base)) return true;
+  return false;
+}
+
 function domainFiles(root, domain) {
   const base = path.join(root, "docs", domain);
   const sub = truthsSubdir(domain, DOMAIN_REGISTRY);
-  if (domain === "api" || domain === "func") return walkMd(path.join(base, "modules"));
-  if (domain === "db") return walkMd(path.join(base, "table"));
-  if (domain === "redis") return walkMd(path.join(base, "keys"));
-  if (domain === "jobs") return walkMd(path.join(base, sub || "tasks"));
-  // registry-driven fallback
-  if (sub) return walkMd(path.join(base, sub));
-  return [];
+  let files = [];
+  if (domain === "api" || domain === "func") files = walkMd(path.join(base, "modules"));
+  else if (domain === "db") files = walkMd(path.join(base, "table"));
+  else if (domain === "redis") files = walkMd(path.join(base, "keys"));
+  else if (domain === "jobs") files = walkMd(path.join(base, sub || "tasks"));
+  else if (sub) files = walkMd(path.join(base, sub));
+  // also collect docs/func/frontend for morph listing exclusion at coverage only
+  if (domain === "func") {
+    const fe = walkMd(path.join(base, "frontend"));
+    // coverage skips these; morph callers use domainFiles which still may include modules only
+    void fe;
+  }
+  if (domain === "func") files = files.filter((f) => !isFrontendFuncDoc(f));
+  return files;
 }
 
 function filterByModules(files, modules, domain) {
@@ -584,9 +610,14 @@ function countDocumentedRedisKeys(root) {
   return n;
 }
 
-function coverageByDomain(root, apiCoverage) {
+/**
+ * @param {string} root
+ * @param {object|null} apiCoverage
+ * @param {{ db?: object, redis?: object, func?: object, jobs?: object }} [liveInv]
+ */
+function coverageByDomain(root, apiCoverage, liveInv = {}) {
   const out = { api: apiCoverage };
-  const dbInv = loadDomainInventory(root, "db");
+  const dbInv = liveInv.db || loadDomainInventory(root, "db");
   if (dbInv && Array.isArray(dbInv.tables)) {
     const code = dbInv.tables.length;
     const docs = domainFiles(root, "db").length;
@@ -602,22 +633,27 @@ function coverageByDomain(root, apiCoverage) {
       out.db.raw_ratio = Math.round(ratio * 1000) / 1000;
     }
   }
-  const redisInv = loadDomainInventory(root, "redis");
+  const redisInv = liveInv.redis || loadDomainInventory(root, "redis");
   if (redisInv && Array.isArray(redisInv.keys)) {
     const code =
       redisInv.keys.filter((k) => k.redis !== false).length || redisInv.keys.length;
     // 0.2.8+: count documented key patterns (not md file count)
+    // 0.7.34 FS-4: do not Math.min — expose covered_gt_code like api/db/func
     const docs = countDocumentedRedisKeys(root);
-    const ratio = code ? Math.min(docs, code) / code : 0;
+    const ratio = code ? docs / code : 0;
     out.redis = {
       covered: docs,
       code,
-      ratio: Math.round(ratio * 1000) / 1000,
-      percent: Math.round(ratio * 100),
+      ratio: Math.round(Math.min(ratio, 1) * 1000) / 1000,
+      percent: Math.round(Math.min(ratio, 1) * 100),
       unit: "keys",
     };
+    if (code > 0 && docs > code) {
+      out.redis.anomaly = "covered_gt_code";
+      out.redis.raw_ratio = Math.round(ratio * 1000) / 1000;
+    }
   }
-  const funcInv = loadDomainInventory(root, "func");
+  const funcInv = liveInv.func || loadDomainInventory(root, "func");
   if (funcInv && Array.isArray(funcInv.modules)) {
     // 0.7.26 FC-7: coverage by Service, not modules
     const code = funcInv.modules.reduce(
@@ -645,44 +681,53 @@ function coverageByDomain(root, apiCoverage) {
     }
   }
   // 0.3.5: jobs coverage prefers inventory.tasks vs docs
-  const jobsInv = loadDomainInventory(root, "jobs");
+  // 0.7.34: no index self-compare fallback when tasks=[] (avoids G8 false green)
+  const jobsInv = liveInv.jobs || loadDomainInventory(root, "jobs");
   if (jobsInv && Array.isArray(jobsInv.tasks) && jobsInv.tasks.length) {
     const code = jobsInv.tasks.length;
     const docs = domainFiles(root, "jobs").filter(
       (f) => !/README/i.test(path.basename(f))
     ).length;
-    const ratio = code ? Math.min(docs, code) / code : 0;
+    const ratio = code ? docs / code : 0;
     out.jobs = {
       covered: docs,
       code,
-      ratio: Math.round(ratio * 1000) / 1000,
-      percent: Math.round(ratio * 100),
+      ratio: Math.round(Math.min(ratio, 1) * 1000) / 1000,
+      percent: Math.round(Math.min(ratio, 1) * 100),
       unit: "tasks",
       source: "inventory",
     };
-  } else {
-    // fallback: jobs coverage = task md files vs index table rows
-    const jobsIndex = path.join(root, "docs", "jobs", "jobs.md");
-    if (fs.existsSync(jobsIndex)) {
-      const idx = fs.readFileSync(jobsIndex, "utf8");
-      const code = (idx.match(/^\|\s*\d{2}\s*\|/gm) || []).length;
-      const docs = domainFiles(root, "jobs").filter(
-        (f) => !/README/i.test(path.basename(f))
-      ).length;
-      if (code > 0 || docs > 0) {
-        const denom = Math.max(code, docs, 1);
-        const ratio = Math.min(docs, denom) / denom;
-        out.jobs = {
-          covered: docs,
-          code: code || docs,
-          ratio: Math.round(ratio * 1000) / 1000,
-          percent: Math.round(ratio * 100),
-          unit: "tasks",
-        };
-      }
+    if (code > 0 && docs > code) {
+      out.jobs.anomaly = "covered_gt_code";
+      out.jobs.raw_ratio = Math.round(ratio * 1000) / 1000;
     }
   }
   return out;
+}
+
+/**
+ * 0.7.34 FS-4: memory rescan via fill-inventory --no-write (stdout JSON).
+ * @param {string} root
+ * @param {string} domain
+ * @returns {object|null}
+ */
+function liveInventoryScan(root, domain) {
+  const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "fill-inventory.mjs");
+  const r = spawnSync(
+    process.execPath,
+    [script, "--domain", domain, "--root", root, "--no-write"],
+    { encoding: "utf8", cwd: root, maxBuffer: 20 * 1024 * 1024, windowsHide: true }
+  );
+  if (r.status !== 0 && r.status !== 2) return null;
+  const out = String(r.stdout || "");
+  const i = out.indexOf("{");
+  const j = out.lastIndexOf("}");
+  if (i < 0 || j <= i) return null;
+  try {
+    return JSON.parse(out.slice(i, j + 1));
+  } catch {
+    return null;
+  }
 }
 
 /** Nav-only API index (links to -part files, no real paths) — exclude from quality avg. */
@@ -1236,7 +1281,49 @@ function main() {
     domains.map((d) => [d, report.domains[d].score])
   ) };
   report.coverage = coverageFromInventory(inventory, apiDocEndpoints);
-  report.coverage_by_domain = coverageByDomain(root, report.coverage);
+  // 0.7.34 FS-4/G8: live rescan for code-side coverage; FS-5/G5: git_head freshness
+  const currentHead = readGitHead(root);
+  const liveByDomain = {};
+  const staleDomains = [];
+  for (const d of domains) {
+    if (!["api", "func", "db", "redis", "jobs"].includes(d)) continue;
+    const diskInv =
+      d === "api" ? inventory || loadDomainInventory(root, "api") : loadDomainInventory(root, d);
+    if (diskInv && isInventoryStale(diskInv, currentHead)) {
+      staleDomains.push(d);
+    }
+    try {
+      const live = liveInventoryScan(root, d);
+      if (live) {
+        liveByDomain[d] = live;
+        if (d === "api" && live.endpoints) {
+          // prefer live api for coverage numerator path below
+          inventory = inventory || live;
+        }
+      }
+    } catch (e) {
+      progress.log(`live inventory ${d} skip: ${e.message || e}`);
+    }
+  }
+  report.inventory_stale = staleDomains;
+  report.coverage_by_domain = coverageByDomain(root, report.coverage, liveByDomain);
+  // Prefer live api endpoint count when rescanned
+  if (liveByDomain.api?.endpoints && report.coverage) {
+    const liveCode = liveByDomain.api.endpoints.length;
+    const covered = report.coverage.covered;
+    const ratio = liveCode ? covered / liveCode : 0;
+    report.coverage = {
+      ...report.coverage,
+      code: liveCode,
+      ratio: Math.round(Math.min(ratio, 1) * 1000) / 1000,
+      percent: Math.round(Math.min(ratio, 1) * 100),
+    };
+    if (liveCode > 0 && covered > liveCode) {
+      report.coverage.anomaly = "covered_gt_code";
+      report.coverage.raw_ratio = Math.round(ratio * 1000) / 1000;
+    }
+    coverageSource = coverageSource === "file" ? "file+live" : "rescanned";
+  }
   report.coverage_source = coverageSource;
   report.next_shards = nextShardsFromInventory(inventory);
 
@@ -1325,29 +1412,43 @@ function main() {
   report.draft_vs_ssot =
     "SSOT 须过 acceptance；heuristic draft 仅 .fill-work（见 truth-quality.md）";
 
-  // 0.7.25 SG-1: field-level doc↔code drift (strict/gold blocker)
+  // 0.7.25 SG-1 / 0.7.34 FS-4: field-level doc↔code drift (strict/gold blocker)
   const dbDrift = detectDbFieldDrift(root);
   const apiRatio =
     Number.isFinite(Number(scorePolicy.api_field_missing_ratio))
       ? Number(scorePolicy.api_field_missing_ratio)
       : 0.15;
-  const apiDrift = detectApiFieldDrift(root, inventory, { missingRatio: apiRatio });
-  const funcInv = loadDomainInventory(root, "func");
+  const apiDrift = detectApiFieldDrift(root, liveByDomain.api || inventory, {
+    missingRatio: apiRatio,
+  });
+  const funcInv = liveByDomain.func || loadDomainInventory(root, "func");
   const funcDrift = detectFuncMethodDrift(root, funcInv);
+  const redisDrift = detectRedisKeyDrift(root, liveByDomain.redis);
+  const jobsDrift = detectJobsTaskDrift(root, liveByDomain.jobs);
   report.field_drift = {
     db: dbDrift,
     api: apiDrift,
     func: funcDrift,
-    ok: dbDrift.ok && apiDrift.ok && funcDrift.ok,
+    redis: redisDrift,
+    jobs: jobsDrift,
+    ok: dbDrift.ok && apiDrift.ok && funcDrift.ok && redisDrift.ok && jobsDrift.ok,
   };
   const driftBlockers = [
     ...(gateProfile === "strict" || gateProfile === "gold" ? dbDrift.blockers : []),
     ...(gateProfile === "strict" || gateProfile === "gold" ? apiDrift.blockers : []),
     ...(gateProfile === "strict" || gateProfile === "gold" ? funcDrift.blockers : []),
+    ...(gateProfile === "strict" || gateProfile === "gold" ? redisDrift.blockers : []),
+    ...(gateProfile === "strict" || gateProfile === "gold" ? jobsDrift.blockers : []),
   ];
+  const staleBlocker =
+    staleDomains.length > 0 ? `inventory_stale:${staleDomains.join(",")}` : null;
 
   const baseAiOk =
-    skel.ok && coverageReady && semanticOk && (plan.present ? planClosed : false);
+    skel.ok &&
+    coverageReady &&
+    semanticOk &&
+    (plan.present ? planClosed : false) &&
+    !staleBlocker;
   const gateEval = evaluateAiCodingGate(report, scorePolicy, gold);
   const aiCoding = baseAiOk && gateEval.ok && driftBlockers.length === 0;
   const baseBlockers = [
@@ -1355,6 +1456,7 @@ function main() {
     !coverageReady && "coverage_ready",
     missingInventoryDomains.length &&
       `missing_inventory:${missingInventoryDomains.join(",")}`,
+    staleBlocker,
     covEval.gaps?.some((g) => g.anomaly === "covered_gt_code") &&
       "inventory_undercount:covered_gt_code",
     !semanticOk && "semantic_ready",

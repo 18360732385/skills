@@ -208,6 +208,91 @@ export function detectFuncMethodDrift(root, funcInventory) {
   return { ok: blockers.length === 0, gaps, blockers };
 }
 
+/**
+ * 0.7.34 FS-4/G8: redis inventory keys vs documented Key 模式 rows.
+ * Blocker when ≥1 redis_true key pattern is absent from docs (strict/gold).
+ */
+export function detectRedisKeyDrift(root, redisInventory) {
+  const gaps = [];
+  const blockers = [];
+  const inv = redisInventory || loadDomainInventory(root, "redis");
+  if (!inv || !Array.isArray(inv.keys) || !inv.keys.length) {
+    return { ok: true, gaps, blockers };
+  }
+  const codeKeys = [
+    ...new Set(
+      inv.keys
+        .filter((k) => k.redis !== false)
+        .map((k) => String(k.pattern || "").trim())
+        .filter(Boolean)
+    ),
+  ];
+  if (!codeKeys.length) return { ok: true, gaps, blockers };
+
+  const dir = truthsPath(root, "redis", loadDomainRegistry());
+  if (!fs.existsSync(dir)) {
+    // docs missing entirely while code has keys → drift
+    gaps.push({ missing_in_doc: codeKeys.slice(0, 20) });
+    blockers.push(`doc_key_drift:redis:${codeKeys.slice(0, 8).join("+")}`);
+    return { ok: false, gaps, blockers };
+  }
+  const docText = fs
+    .readdirSync(dir)
+    .filter((n) => /\.md$/i.test(n) && !/^README/i.test(n))
+    .map((n) => fs.readFileSync(path.join(dir, n), "utf8"))
+    .join("\n");
+  const docPatterns = new Set();
+  for (const row of docText.match(/^\|\s*`([^`]+)`\s*\|/gm) || []) {
+    const m = row.match(/`([^`]+)`/);
+    if (m) docPatterns.add(m[1]);
+  }
+  // also plain backticks elsewhere
+  for (const m of docText.matchAll(/`([^`]+)`/g)) {
+    if (m[1] && !/\s/.test(m[1])) docPatterns.add(m[1]);
+  }
+  const missing = codeKeys.filter((p) => !docPatterns.has(p) && !docText.includes(p));
+  if (missing.length) {
+    gaps.push({ missing_in_doc: missing.slice(0, 20) });
+    blockers.push(`doc_key_drift:redis:${missing.slice(0, 8).join("+")}`);
+  }
+  return { ok: blockers.length === 0, gaps, blockers };
+}
+
+/**
+ * 0.7.34 FS-4/G8: jobs inventory tasks vs docs/jobs task md / index.
+ */
+export function detectJobsTaskDrift(root, jobsInventory) {
+  const gaps = [];
+  const blockers = [];
+  const inv = jobsInventory || loadDomainInventory(root, "jobs");
+  if (!inv || !Array.isArray(inv.tasks) || !inv.tasks.length) {
+    return { ok: true, gaps, blockers };
+  }
+  const codeTasks = inv.tasks
+    .map((t) => String(t.task_code || t.slug || t.id || "").trim())
+    .filter(Boolean);
+  if (!codeTasks.length) return { ok: true, gaps, blockers };
+
+  const dir = truthsPath(root, "jobs", loadDomainRegistry());
+  if (!fs.existsSync(dir)) {
+    gaps.push({ missing_in_doc: codeTasks.slice(0, 20) });
+    blockers.push(`doc_task_drift:jobs:${codeTasks.slice(0, 8).join("+")}`);
+    return { ok: false, gaps, blockers };
+  }
+  const docText = fs
+    .readdirSync(dir)
+    .filter((n) => /\.md$/i.test(n) && !/^README/i.test(n))
+    .map((n) => fs.readFileSync(path.join(dir, n), "utf8"))
+    .join("\n")
+    .toLowerCase();
+  const missing = codeTasks.filter((t) => !docText.includes(String(t).toLowerCase()));
+  if (missing.length) {
+    gaps.push({ missing_in_doc: missing.slice(0, 20) });
+    blockers.push(`doc_task_drift:jobs:${missing.slice(0, 8).join("+")}`);
+  }
+  return { ok: blockers.length === 0, gaps, blockers };
+}
+
 /** Business section has real body (not heading-only). SG-2 */
 export function hasBusinessBody(md) {
   const m = String(md || "").match(

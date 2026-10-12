@@ -4,6 +4,7 @@
  * inventory:
  *   api: { controller_root: "...", module_roots: { "<rel>": "..." } }
  *   db: { sql_root: "..." }
+ *   func: { modules: ["backend/order-service", ...] }  (0.7.33+)
  */
 import fs from "fs";
 import path from "path";
@@ -43,9 +44,34 @@ function formatYamlString(v) {
   return JSON.stringify(stripWrappingQuotes(v));
 }
 
+function normalizeModuleList(raw) {
+  if (Array.isArray(raw)) {
+    return [
+      ...new Set(
+        raw
+          .map((x) => stripWrappingQuotes(x))
+          .filter(Boolean)
+      ),
+    ];
+  }
+  if (raw == null || raw === "") return [];
+  return [
+    ...new Set(
+      String(raw)
+        .split(",")
+        .map((s) => stripWrappingQuotes(s))
+        .filter(Boolean)
+    ),
+  ];
+}
+
 /**
  * @param {string} root
- * @returns {{ api?: { controller_root?: string, module_roots?: Record<string,string> }, db?: { sql_root?: string } }}
+ * @returns {{
+ *   api?: { controller_root?: string, module_roots?: Record<string,string> },
+ *   db?: { sql_root?: string },
+ *   func?: { modules?: string[] }
+ * }}
  */
 export function readInventoryMeta(root) {
   const found = findHarnessMetaFile(root);
@@ -71,6 +97,10 @@ export function readInventoryMeta(root) {
       out.db = {};
       if (inv.db.sql_root) out.db.sql_root = stripWrappingQuotes(inv.db.sql_root);
     }
+    if (inv.func && typeof inv.func === "object") {
+      const modules = normalizeModuleList(inv.func.modules);
+      if (modules.length) out.func = { modules };
+    }
     return out;
   } catch {
     return {};
@@ -80,10 +110,14 @@ export function readInventoryMeta(root) {
 /**
  * Merge inventory roots into harness-meta.yaml (preserve rest of file as much as possible).
  * @param {string} root
- * @param {{ api?: { controller_root?: string, module_roots?: Record<string,string> }, db?: { sql_root?: string } }} patch
+ * @param {{
+ *   api?: { controller_root?: string, module_roots?: Record<string,string> },
+ *   db?: { sql_root?: string },
+ *   func?: { modules?: string[] | string }
+ * }} patch
  */
 export function writeInventoryMeta(root, patch) {
-  if (!patch || (!patch.api && !patch.db)) return;
+  if (!patch || (!patch.api && !patch.db && !patch.func)) return;
   const found = findHarnessMetaFile(root);
   const dest = found || canonicalHarnessMetaPath(root);
   if (!fs.existsSync(dest.abs)) return;
@@ -106,6 +140,10 @@ export function writeInventoryMeta(root, patch) {
       };
     }
   }
+  const nextFuncModules =
+    patch.func?.modules != null
+      ? normalizeModuleList(patch.func.modules)
+      : existing.func?.modules || [];
   const next = {
     api: nextApi,
     db: {
@@ -119,6 +157,7 @@ export function writeInventoryMeta(root, patch) {
           )
         : {}),
     },
+    func: nextFuncModules.length ? { modules: nextFuncModules } : undefined,
   };
 
   const lines = [];
@@ -141,6 +180,13 @@ export function writeInventoryMeta(root, patch) {
   if (next.db?.sql_root) {
     lines.push("  db:");
     lines.push(`    sql_root: ${formatYamlString(next.db.sql_root)}`);
+  }
+  if (next.func?.modules?.length) {
+    lines.push("  func:");
+    lines.push("    modules:");
+    for (const m of next.func.modules) {
+      lines.push(`      - ${formatYamlString(m)}`);
+    }
   }
   if (lines.length <= 1) return;
 
@@ -184,6 +230,99 @@ export function writeFillMcpProfile(root, profile) {
     raw = raw.replace(/^fill_mcp_profile:\s*.*$/m, line);
   } else {
     raw = raw.replace(/\s*$/, "\n") + line + "\n";
+  }
+  fs.writeFileSync(dest.abs, raw, "utf8");
+}
+
+/**
+ * 0.7.33 LD-2 / G4: read mysql_guard_servers from harness-meta (upgrade/resume).
+ * @param {string} root
+ * @returns {string|null}
+ */
+export function readMysqlGuardServers(root) {
+  const found = findHarnessMetaFile(root);
+  if (!found) return null;
+  try {
+    const meta = parseYaml(fs.readFileSync(found.abs, "utf8")) || {};
+    const v = meta.mysql_guard_servers ?? meta.MYSQL_GUARD_SERVERS;
+    if (v == null || String(v).trim() === "") return null;
+    return String(v).trim().replace(/^\^|\$$/g, "");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 0.7.33 LD-2: persist mysql_guard_servers into harness-meta.yaml.
+ * @param {string} root
+ * @param {string} servers
+ */
+export function writeMysqlGuardServers(root, servers) {
+  if (!servers) return;
+  const found = findHarnessMetaFile(root);
+  const dest = found || canonicalHarnessMetaPath(root);
+  if (!fs.existsSync(dest.abs)) return;
+  let raw = fs.readFileSync(dest.abs, "utf8");
+  const line = `mysql_guard_servers: ${JSON.stringify(String(servers).replace(/^\^|\$$/g, ""))}`;
+  if (/^mysql_guard_servers:\s*/m.test(raw)) {
+    raw = raw.replace(/^mysql_guard_servers:\s*.*$/m, line);
+  } else {
+    raw = raw.replace(/\s*$/, "\n") + line + "\n";
+  }
+  fs.writeFileSync(dest.abs, raw, "utf8");
+}
+
+/**
+ * 0.7.35 HK-5 / G6: read skill_root from harness-meta (refresh-score candidate).
+ * @param {string} root
+ * @returns {string|null}
+ */
+export function readSkillRoot(root) {
+  const found = findHarnessMetaFile(root);
+  if (!found?.abs || !fs.existsSync(found.abs)) return null;
+  try {
+    const raw = fs.readFileSync(found.abs, "utf8");
+    const m = raw.match(/^\s*skill_root:\s*(.+)\s*$/m);
+    if (!m) return null;
+    let v = m[1].trim();
+    // JSON.stringify writes "D:\\path" — must JSON.parse to unescape
+    if (v.startsWith('"') && v.endsWith('"')) {
+      try {
+        v = JSON.parse(v);
+      } catch {
+        v = stripWrappingQuotes(v);
+      }
+    } else {
+      v = stripWrappingQuotes(v);
+    }
+    return v || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 0.7.35 HK-5: persist absolute skill_root into harness-meta.yaml.
+ * @param {string} root target repo
+ * @param {string} skillRoot absolute path to harness-eng skill
+ */
+export function writeSkillRoot(root, skillRoot) {
+  if (!skillRoot) return;
+  const found = findHarnessMetaFile(root);
+  const dest = found || canonicalHarnessMetaPath(root);
+  if (!fs.existsSync(dest.abs)) return;
+  const abs = path.resolve(skillRoot);
+  let raw = fs.readFileSync(dest.abs, "utf8");
+  const line = `skill_root: ${JSON.stringify(abs)}`;
+  if (/^skill_root:\s*/m.test(raw)) {
+    raw = raw.replace(/^skill_root:\s*.*$/m, line);
+  } else {
+    // prefer after skill_version
+    if (/^skill_version:\s*.*$/m.test(raw)) {
+      raw = raw.replace(/^(skill_version:\s*.*)$/m, `$1\n${line}`);
+    } else {
+      raw = raw.replace(/\s*$/, "\n") + line + "\n";
+    }
   }
   fs.writeFileSync(dest.abs, raw, "utf8");
 }

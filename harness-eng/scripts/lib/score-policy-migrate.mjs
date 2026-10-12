@@ -1,9 +1,11 @@
 /**
  * 0.7.0: field-level migrate of legacy morph_floor defaults in score-policy.yaml.
  * Does not wipe other keys. Old fingerprints: strict 60 → 75; gold 90 → 95.
+ * 0.7.35 FS-9: applyGateProfileToPolicyFile for resume/upgrade gate_profile落盘.
  */
 import fs from "fs";
 import path from "path";
+import { reapplyGateProfile } from "./ai-coding-gate.mjs";
 
 /**
  * @param {string} root target repo root
@@ -46,6 +48,71 @@ export function migrateScorePolicyFile(root) {
   out.warnings.push(
     "形态尺度 0.7：score-history 旧点不可比；见 report morph_scale"
   );
+  return out;
+}
+
+/**
+ * 0.7.35 FS-9: rewrite gate_profile (+ gold coverage targets) on disk.
+ * @param {string} root
+ * @param {string} profile strict|gold|legacy
+ * @returns {{ changed: boolean, path: string|null, from: string|null, to: string|null }}
+ */
+export function applyGateProfileToPolicyFile(root, profile) {
+  const p = path.join(root, "docs", "harness-eng", "score-policy.yaml");
+  const out = { changed: false, path: null, from: null, to: null };
+  const next = String(profile || "").trim().toLowerCase();
+  if (!next || !["strict", "gold", "legacy"].includes(next)) return out;
+  if (!fs.existsSync(p)) {
+    out.path = null;
+    return out;
+  }
+  out.path = p;
+  let raw = fs.readFileSync(p, "utf8");
+  const cur = (raw.match(/^\s*gate_profile:\s*(\w+)/m) || [])[1] || "strict";
+  out.from = cur;
+  out.to = next;
+  if (cur === next && next !== "gold") return out;
+
+  // Always rewrite gate_profile line
+  if (/^\s*gate_profile:\s*/m.test(raw)) {
+    raw = raw.replace(/^\s*gate_profile:\s*\w+/m, `gate_profile: ${next}`);
+  } else {
+    raw = `gate_profile: ${next}\n` + raw;
+  }
+
+  if (next === "gold") {
+    // Align coverage_targets to 1.0 for known domains (reapplyGateProfile semantics)
+    const policyStub = {
+      gate_profile: cur,
+      coverage_targets: {},
+      gate: {},
+    };
+    for (const d of ["api", "func", "db", "redis", "jobs"]) {
+      const m = raw.match(new RegExp(`^(\\s*${d}:\\s*)([0-9.]+)`, "m"));
+      if (m) policyStub.coverage_targets[d] = Number(m[2]);
+    }
+    const applied = reapplyGateProfile(policyStub, "gold", {});
+    for (const [d, v] of Object.entries(applied.coverage_targets || {})) {
+      if (v == null) continue;
+      const re = new RegExp(`^(\\s*${d}:\\s*)([0-9.]+)`, "m");
+      if (re.test(raw)) raw = raw.replace(re, `$1${v}`);
+    }
+    if (/^\s*coverage_mode:\s*/m.test(raw)) {
+      raw = raw.replace(/^\s*coverage_mode:\s*\w+/m, "coverage_mode: all_domains");
+    }
+  } else if (next === "strict" && cur === "gold") {
+    // Downgrade: restore common strict 0.8 targets when still at gold 1.0
+    for (const d of ["api", "func", "db", "redis", "jobs"]) {
+      const re = new RegExp(`^(\\s*${d}:\\s*)1(?:\\.0+)?\\s*$`, "m");
+      if (re.test(raw)) raw = raw.replace(re, `$10.8`);
+    }
+  }
+
+  const prev = fs.readFileSync(p, "utf8");
+  if (raw !== prev) {
+    fs.writeFileSync(p, raw, "utf8");
+    out.changed = true;
+  }
   return out;
 }
 

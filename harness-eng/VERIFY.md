@@ -1,10 +1,54 @@
-﻿# harness-eng 验收记录（0.7.32）
+﻿# harness-eng 验收记录（0.7.35）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.32**（e2e P2：LT-6/7/11 · FC-6 · NEW-8/16/17 · ID-6 · 升级提示 · §7#2；其上 0.7.31 e2e P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.35**（e2e-11 P2：bak/chmod/backfill/skill_root · frontend 覆盖 · merge · gold · Codex agent_message；其上 0.7.34 e2e-11 P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.35 增量验收（e2e-11 P2）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.35`；templates / meta / questions / sync tmpl 一致 | 有 |
+| upgrade 内容相同 → 无新 `.bak-harness-*`；gitignore 含 bak 模式 | 有 |
+| `.codex/hooks` 等写盘后 chmod 0755（sync 同） | 有 |
+| meta `skill_root` + refresh-score 非默认路径可 resolve | 有 |
+| `--mode backfill --findings` stdout WritePlan，不写盘 | 有 |
+| frontend func 文档不计 covered_gt_code | 有 |
+| db merge 有 `_change.sql` stub；索引 inventory 序 | 有 |
+| resume `gate_profile=gold` → score-policy 落盘 gold | 有 |
+| Codex soft-gate stdout JSON 含 `agent_message`，stderr 仍有提醒 | 有 |
+| CHANGELOG 索引含 0.7.35 且存在 `_log/harness-eng/0.7.35.md`；upgrade `## 0.7.34 → 0.7.35` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.34 增量验收（e2e-11 P1）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.34`；templates / meta / questions / sync tmpl 一致 | 有 |
+| inventory 缺/旧 `git_head` → `inventory_stale`，`ai_coding_ready=false` | 有 |
+| redis/jobs docs>code → `covered_gt_code`；未文档化 `@Cacheable`/`@Scheduled` → drift | 有 |
+| 嵌套 reactor：`mvn -f backend/pom.xml -pl order-service`，不含裸 `-f backend/order-service/pom.xml` | 有 |
+| `JOBS_YML_RE` 命中 `application.yml` / `application-dev.yml` | 有 |
+| 480 字业务说明仍拿 morph business 分、不报偏薄 | 有 |
+| 仅有 `OrderTimeoutJob` → `S_JOBS=true`；`ladder:L5` → `Q_AGENT_CONFIG` recommended | 有 |
+| CHANGELOG 索引含 0.7.34 且存在 `_log/harness-eng/0.7.34.md`；upgrade `## 0.7.33 → 0.7.34` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.33 增量验收（e2e-11 P0）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.33`；templates / meta / questions / sync tmpl 一致 | 有 |
+| 嵌套 `backend/` reactor：无 `--modules` 也能扫到 services，并写 `inventory.func.modules` | 有 |
+| `refresh` 回放 func `--modules` | 有 |
+| L5+codex+mysql-guard：mysql-guard target 不双写；land 不 `create refused` | 有 |
+| `mcp: ["mysql"]` → `MYSQL_GUARD_SERVERS=mysql-local`；`mysql-` 渲染报错；meta 持久化 | 有 |
+| `*Job.java` + `@Scheduled` → jobs inventory ≥1 | 有 |
+| inventory tasks=[] 时 merge 非零且不写空 SSOT | 有 |
+| CHANGELOG 索引含 0.7.33 且存在 `_log/harness-eng/0.7.33.md`；upgrade `## 0.7.32 → 0.7.33` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.32 增量验收（e2e P2）
 

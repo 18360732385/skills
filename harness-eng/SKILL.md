@@ -41,7 +41,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 
 | 支 | 含模式（内部 ID） | 规格入口 |
 |---|---|---|
-| **施工** | `land` · `resume` · `upgrade` · `seed-truths` | 下文 · [resume.md](modes/resume.md) · [upgrade.md](modes/upgrade.md) · [seed-truths.md](modes/seed-truths.md) |
+| **施工** | `land` · `resume` · `upgrade` · `seed-truths` · `backfill` | 下文 · [resume.md](modes/resume.md) · [upgrade.md](modes/upgrade.md) · [seed-truths.md](modes/seed-truths.md) · [backfill.md](modes/backfill.md) |
 | **流水线** | `pipeline` → Done 后 `pipeline-fill` | [pipeline.md](modes/pipeline.md) → [pipeline-fill.md](modes/pipeline-fill.md) |
 | **审计 / 自证** | `audit` · `session-live` | [audit-report.md](modes/audit-report.md) · [ladder.md](modes/ladder.md) · [session-live.md](modes/session-live.md) |
 | **填充** | `fill-score` / `fill-morph` / `fill-gate` · `fill-plan` · `fill-truths-agents` · `fill-truths` · `fill-mcp` | [fill/README.md](fill/README.md) · [fill-score.md](fill/fill-score.md) |
@@ -105,5 +105,5 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 读侧路由 SSOT 在 [AGENT-INDEX.md](AGENT-INDEX.md)（必读≤8 + 按支按需表）。高频指针：写盘/预授权 → [write-plan.md](modes/write-plan.md)；**打分 / score-policy / 覆盖裁决** → [fill-score.md](fill/fill-score.md)；AI 工具面 / 多宿主 → [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md)。
 
 旁路脚本：`scripts/fill-calibrate-live.mjs`（live 校准）· `scripts/fill-report-html.mjs`（HTML 报告，score 后【推荐】），`--help` 自查。  
-写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton`；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。  
+写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton|backfill`；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。`backfill` 只出 WritePlan、不写盘（[backfill.md](modes/backfill.md)）。  
 版本里程碑查 [CHANGELOG.md](CHANGELOG.md)，本页不铺版本行。

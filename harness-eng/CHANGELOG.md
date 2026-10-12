@@ -1,11 +1,14 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.32**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。  
+**列车**：当前 **0.7.35**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（一版本一文件）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/)。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.7.35](../_log/harness-eng/0.7.35.md) | 2026-10-12 | e2e-11 P2：bak/chmod/backfill/skill_root · frontend 覆盖 · merge · gold · Codex agent_message |
+| [0.7.34](../_log/harness-eng/0.7.34.md) | 2026-10-10 | e2e-11 P1：inventory 新鲜度 · 嵌套 Maven · JOBS_YML_RE · morph · detect |
+| [0.7.33](../_log/harness-eng/0.7.33.md) | 2026-10-10 | e2e-11 P0：func modules · mysql-guard land/正则 · jobs @Scheduled |
 | [0.7.32](../_log/harness-eng/0.7.32.md) | 2026-09-28 | e2e P2：冷启动文案 · 空 inventory · Codex matcher · upgrade 备份 |
 | [0.7.31](../_log/harness-eng/0.7.31.md) | 2026-09-28 | e2e P1：假 ready · --no-write · DDL · DTO 漂移 · resume · bareRe · update-index |
 | [0.7.30](../_log/harness-eng/0.7.30.md) | 2026-09-28 | e2e P0 热修：meta 引号 · 假 gold · 预填跨节 · score root · Codex soft-gate |
