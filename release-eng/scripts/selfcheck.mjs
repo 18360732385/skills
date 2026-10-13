@@ -181,8 +181,12 @@ assert(
 );
 
 const logRoot = path.resolve(skillRoot, "..", "_log", "release-eng");
+function logFile(ver) {
+  const m = String(ver).match(/^(\d+\.\d+)\./);
+  return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
+}
 function logExists(ver) {
-  return fs.existsSync(path.join(logRoot, `${ver}.md`));
+  return fs.existsSync(logFile(ver));
 }
 const changelogIndex = read("CHANGELOG.md");
 assert(changelogIndex != null, "CHANGELOG.md exists");

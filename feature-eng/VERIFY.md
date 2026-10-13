@@ -18,7 +18,7 @@
 | `_meta/manifest.yaml` 为权威 `0.2.22`；入口文档 + 仓根 README 钉头一致 | 有 |
 | `node scripts/sync-skill-version.mjs --check` exit 0 | 有 |
 | selfcheck `PIN` 读自 manifest | 有 |
-| CHANGELOG 索引含 0.2.22 / 0.2.21 且存在 `_log/feature-eng/0.2.22.md` · `0.2.21.md` | 有 |
+| CHANGELOG 索引含 0.2.22 / 0.2.21 且存在 `_log/feature-eng/0.2/0.2.22.md` · `0.2/0.2.21.md` | 有 |
 | AGENT-INDEX 记载发版四步 | 有 |
 
 ## 0.2.21 增量验收

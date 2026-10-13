@@ -378,24 +378,38 @@ assert(
   "close.md has close_pitfalls resolution order"
 );
 
-// --- CHANGELOG index + _log/feature-eng/<ver>.md ---
+// --- CHANGELOG index + _log/feature-eng/<major.minor>/<ver>.md ---
 const logRoot = path.resolve(skillRoot, "..", "_log", "feature-eng");
+function logFile(ver) {
+  const m = String(ver).match(/^(\d+\.\d+)\./);
+  return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
+}
 function logExists(ver) {
-  return fs.existsSync(path.join(logRoot, `${ver}.md`));
+  return fs.existsSync(logFile(ver));
 }
 function readLog(ver) {
-  const p = path.join(logRoot, `${ver}.md`);
+  const p = logFile(ver);
   if (!fs.existsSync(p)) return null;
   return fs.readFileSync(p, "utf8");
 }
+function listVersionLogFiles(root) {
+  if (!fs.existsSync(root)) return [];
+  const out = [];
+  for (const ent of fs.readdirSync(root, { withFileTypes: true })) {
+    if (ent.isDirectory() && /^\d+\.\d+$/.test(ent.name)) {
+      for (const f of fs.readdirSync(path.join(root, ent.name))) {
+        if (f.endsWith(".md") && /^\d+\.\d+\.\d/.test(f)) out.push(path.join(root, ent.name, f));
+      }
+    } else if (ent.isFile() && ent.name.endsWith(".md") && /^\d+\.\d+\.\d/.test(ent.name)) {
+      out.push(path.join(root, ent.name));
+    }
+  }
+  return out;
+}
 const changelogIndex = read("CHANGELOG.md");
-const changelog = fs.existsSync(logRoot)
-  ? fs
-      .readdirSync(logRoot)
-      .filter((f) => f.endsWith(".md"))
-      .map((f) => fs.readFileSync(path.join(logRoot, f), "utf8"))
-      .join("\n")
-  : "";
+const changelog = listVersionLogFiles(logRoot)
+  .map((p) => fs.readFileSync(p, "utf8"))
+  .join("\n");
 assert(changelogIndex != null, "CHANGELOG.md exists");
 assert(
   /_log\/feature-eng\//.test(changelogIndex || ""),
