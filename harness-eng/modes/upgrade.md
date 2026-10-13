@@ -5,10 +5,12 @@
 1. 本轮 WritePlan 所列升阶缺口已 `create` / `skip` / `merge`（`on_exists=skip`）
 2. `docs/harness-eng/harness-meta.yaml` 的 `ladder` 已升到目标阶，`last_mode=upgrade`，`skill_version` 与 manifest 一致（若仅有遗留 `.cursor/` meta：先迁到新路径再写）
 3. 目标阶 [ladder.md](ladder.md) 必备项勾选通过；分级移交 TODO 已打印
-4. **升版后必跑 acceptance 摘要**：`node scripts/acceptance-check.mjs --root <TARGET> [--gold]`（或 `fill-plan --residual [--gold]`）  
-   - 打印 blockers / warnings 计数；**blockers>0 → 移交 TODO「acceptance 升严差分」**，勿假装开干仍 YES  
-   - 建议紧接 `fill-score`；若升版前开干 YES、升版后 NO，在移交写明差分原因  
+4. **升版后必跑升严差分 + acceptance 摘要**  
+   - `harness --mode upgrade` 成功收尾写 `docs/harness-eng/upgrade-diff.json`（stderr 摘要）；对照升前 `score-latest.json` 的 blockers  
+   - **升严不自动改用户文档**（`on_exists=skip`）；差分只移交，勿假装开干仍 YES  
+   - 仍建议：`node scripts/acceptance-check.mjs --root <TARGET> [--gold]`（或 `fill-plan --residual [--gold]`）  
    - 仅 warnings 且批次已关：走 `fill-plan --residual` 清残项
+   - 旧仓若仍有 `fill-score-ready.mjs` / `cold-bootstrap*.mjs`：upgrade/refresh 默认 warn；`--retire-wrappers` 移到 `scripts/agent-kb/_obsolete/`。`refresh-score.mjs` 仍是标准入口，不自动删
 
 当前阶梯已齐、只要再升阶时使用。默认 **完整阶 +1**；用户书面「升到 Ln」可一次覆盖中间阶缺口。
 
@@ -56,6 +58,30 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
+
+## 0.7.39 → 0.7.40 迁移要点
+
+1. **meta**：`skill_version` → `0.7.40`
+2. **last_mode 空写**：yaml-keys merge 结果与原文相同则不写盘（二次同 mode upgrade 零内容 diff）
+3. **db.md**：upgrade 若缺「维护约定」则 merge 追加该节，不再每次只提醒
+4. **MCP example**：upgrade 对照 example / live / `fill_mcp_profile` 打差分，不改真密
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.40`）后再 sync
+
+## 0.7.38 → 0.7.39 迁移要点
+
+1. **meta**：`skill_version` → `0.7.39`
+2. **obsolete wrappers**：upgrade/refresh 对 `fill-score-ready` / `cold-bootstrap*` 默认 warn；`--retire-wrappers` 移 `_obsolete/`；不删 `refresh-score.mjs`
+3. **fill-score**：无 `--output` 默认写 `score-latest.json`；`--no-write` 不落盘（upgrade-diff 用此避免覆盖）
+4. **skill_root**：仓内写相对路径；解析优先 `HARNESS_ENG_ROOT`；refresh-score 相对路径按仓根 resolve
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.39`）后再 sync
+
+## 0.7.37 → 0.7.38 迁移要点
+
+1. **meta**：`skill_version` → `0.7.38`
+2. **冷 clone API memory**：`scanApiInventoryMemory` 保留 `git_head`；live 扫描成功且 stamp 匹配则不再记该域 `inventory_stale`
+3. **db field drift**：`detectDbFieldDrift` 优先 live inventory（改 migration 不 refresh 也会出 `doc_field_drift`）
+4. **upgrade 升严差分**：成功收尾写 `docs/harness-eng/upgrade-diff.json`（stderr 摘要）；**不自动改用户文档**
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.38`）后再 sync
 
 ## 0.7.36 → 0.7.37 迁移要点
 

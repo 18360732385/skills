@@ -5,6 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { findHarnessMetaFile } from "./harness-meta.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_SKILL_ROOT = path.resolve(__dirname, "..");
@@ -145,6 +146,117 @@ export function warnManualReplaceGaps(targetRoot, log = console) {
     );
   }
   return hints;
+}
+
+const MAINT_HEAD = "## 维护约定（SSOT）";
+
+/**
+ * 0.7.40: append db.md 维护约定 if missing. Does not rewrite the user index.
+ * @returns {{ appended: boolean, path?: string }}
+ */
+export function ensureDbMdMaintenance(root, skillRoot = DEFAULT_SKILL_ROOT) {
+  const dbMd = path.join(path.resolve(root), "docs", "db", "db.md");
+  if (!fs.existsSync(dbMd)) return { appended: false };
+  const cur = fs.readFileSync(dbMd, "utf8");
+  if (/维护约定/.test(cur)) return { appended: false, path: dbMd };
+  const tmpl = path.join(skillRoot, "templates", "docs", "db", "db.md.tmpl");
+  let block = "";
+  if (fs.existsSync(tmpl)) {
+    const raw = fs.readFileSync(tmpl, "utf8");
+    const m = raw.match(/##\s*维护约定[\s\S]*?(?=\n##\s+表文档|\n##\s+变更记录|$)/);
+    block = m ? m[0].trim() : "";
+  }
+  if (!block) {
+    block = `${MAINT_HEAD}\n\n### 迁移命名\n\n- 默认（Flyway 标准）：\`V{数字}__{snake}.sql\`\n- 只追加新版本；**禁止**修改已发布脚本\n`;
+  }
+  block = block.replace(/\{\{[^}]+\}\}/g, "none");
+  const next = cur.replace(/\s*$/, "") + "\n\n" + block + "\n";
+  fs.writeFileSync(dbMd, next, "utf8");
+  console.error(`harness: 已补齐 docs/db/db.md「维护约定」（merge 追加，未改索引正文）`);
+  return { appended: true, path: dbMd };
+}
+
+function readMcpServerKeys(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) return [];
+  try {
+    const j = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    const servers = j?.mcpServers && typeof j.mcpServers === "object" ? j.mcpServers : {};
+    return Object.keys(servers).sort();
+  } catch {
+    return [];
+  }
+}
+
+function envTokensFromKeys(keys) {
+  const tokens = new Set();
+  for (const k of keys) {
+    const n = String(k).toLowerCase();
+    for (const env of ["test", "dev", "local"]) {
+      if (n.includes(env)) tokens.add(env);
+    }
+  }
+  return tokens;
+}
+
+function readFillMcpProfile(root) {
+  const found = findHarnessMetaFile(root);
+  if (!found?.abs || !fs.existsSync(found.abs)) return null;
+  try {
+    const raw = fs.readFileSync(found.abs, "utf8");
+    const m = raw.match(/fill_mcp_profile:\s*["']?([A-Za-z0-9_-]+)["']?/);
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 0.7.40: warn example vs fill_mcp_profile vs live server names. Never rewrite secrets.
+ * @returns {{ warned: boolean, example: string[], live: string[], profile: string|null }}
+ */
+export function warnMcpExampleProfile(root, log = console) {
+  const abs = path.resolve(root);
+  const exampleRels = [
+    ".cursor/mcp.json.example",
+    ".mcp.json.example",
+    ".trae/mcp.json.example",
+  ];
+  const liveRels = [".cursor/mcp.json", ".mcp.json", ".trae/mcp.json"];
+  const example = [];
+  const live = [];
+  for (const rel of exampleRels) {
+    for (const k of readMcpServerKeys(path.join(abs, rel))) {
+      if (!example.includes(k)) example.push(k);
+    }
+  }
+  for (const rel of liveRels) {
+    for (const k of readMcpServerKeys(path.join(abs, rel))) {
+      if (!live.includes(k)) live.push(k);
+    }
+  }
+  const profile = readFillMcpProfile(abs);
+  const exTok = envTokensFromKeys(example);
+  const liveTok = envTokensFromKeys(live);
+  let mismatch = false;
+  if (profile && exTok.size && !exTok.has(String(profile).toLowerCase())) mismatch = true;
+  if (profile && liveTok.size && !liveTok.has(String(profile).toLowerCase())) mismatch = true;
+  if (exTok.size && liveTok.size && [...exTok].every((t) => !liveTok.has(t))) mismatch = true;
+  if (!example.length) {
+    return { warned: false, example, live, profile };
+  }
+  if (!mismatch && !profile) {
+    return { warned: false, example, live, profile };
+  }
+  if (!mismatch) return { warned: false, example, live, profile };
+  log.error(
+    [
+      "harness: MCP example 与 live / fill_mcp_profile 不一致（不改真密）：",
+      `  example: ${example.join(", ") || "(none)"}`,
+      `  live: ${live.join(", ") || "(none)"}`,
+      `  fill_mcp_profile: ${profile || "(unset)"}`,
+    ].join("\n")
+  );
+  return { warned: true, example, live, profile };
 }
 
 /**

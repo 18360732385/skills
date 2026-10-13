@@ -53,10 +53,15 @@ function invColumns(table) {
 }
 
 /**
+ * @param {string} root
+ * @param {object|null} [dbInventory] live inventory preferred (0.7.38 G-up-db-drift-needs-inv)
  * @returns {{ ok: boolean, gaps: { table: string, missing_in_doc: string[], file?: string }[], blockers: string[] }}
  */
-export function detectDbFieldDrift(root) {
-  const inv = loadDomainInventory(root, "db");
+export function detectDbFieldDrift(root, dbInventory) {
+  const inv =
+    dbInventory && typeof dbInventory === "object"
+      ? dbInventory
+      : loadDomainInventory(root, "db");
   const gaps = [];
   const blockers = [];
   // 0.7.29 NEW-8: inventory present with tables:[] is not ready (empty_inventory)

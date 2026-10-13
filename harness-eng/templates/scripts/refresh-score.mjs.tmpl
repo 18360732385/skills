@@ -53,7 +53,7 @@ function skillRootFromMeta(repoRoot) {
       } else if (v.startsWith("'") && v.endsWith("'")) {
         v = v.slice(1, -1);
       }
-      if (v) return path.resolve(v);
+      if (v) return path.resolve(repoRoot, v);
     } catch {
       /* ignore */
     }

@@ -623,7 +623,7 @@ export function scanApiInventoryMemory(root, controllerRootArg = null) {
   );
   if (!r || r.ok === false) return null;
   if (!Array.isArray(r.endpoints) || !r.endpoints.length) return null;
-  return {
+  const out = {
     ok: true,
     root: ".",
     module: r.module || null,
@@ -632,6 +632,10 @@ export function scanApiInventoryMemory(root, controllerRootArg = null) {
     shards: r.shards || [],
     sources: ["<memory-rescan>"],
   };
+  // 0.7.38 G-up-cold-mem-githead: keep stamp (scanOneModule stamps then this used to drop it)
+  if (r.git_head) out.git_head = r.git_head;
+  else stampInventoryGitHead(out, root);
+  return out;
 }
 
 export function main(argv = process.argv) {

@@ -115,6 +115,7 @@ function parseArgs(argv) {
     writeProgress: false,
     output: null,
     json: false,
+    noWrite: false,
     focus: "full", // 0.3.1: morph | gate | full — 只裁剪中文摘要
     domains: [], // 0.3.4: CLI override; empty → meta / disk / core
     migratePolicy: false,
@@ -154,6 +155,7 @@ function parseArgs(argv) {
     else if (a === "--quiet") out.quiet = true;
     else if (a === "--write-progress") out.writeProgress = true;
     else if (a === "--output") out.output = argv[++i];
+    else if (a === "--no-write") out.noWrite = true;
     else if (a === "--json") out.json = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else if (a === "--focus") {
@@ -175,6 +177,7 @@ function printHelp() {
 Options:
   --root <path>           Target repo root (required)
   --output <path>         Write score JSON (relative paths resolve against --root)
+  --no-write              Do not write score-latest / --output
   --json                  Print full JSON to stdout (also when --output is set)
   --inventory <path>      API inventory JSON (else docs/api/.fill-work or memory rescan)
   --domains a,b,c         Domain list override
@@ -1303,6 +1306,11 @@ function main() {
           // prefer live api for coverage numerator path below
           inventory = inventory || live;
         }
+        // 0.7.38: live scan at current HEAD clears stale for that domain
+        if (!isInventoryStale(live, currentHead)) {
+          const i = staleDomains.indexOf(d);
+          if (i >= 0) staleDomains.splice(i, 1);
+        }
       }
     } catch (e) {
       progress.log(`live inventory ${d} skip: ${e.message || e}`);
@@ -1427,7 +1435,10 @@ function main() {
     "SSOT 须过 acceptance；heuristic draft 仅 .fill-work（见 truth-quality.md）";
 
   // 0.7.25 SG-1 / 0.7.34 FS-4: field-level doc↔code drift (strict/gold blocker)
-  const dbDrift = detectDbFieldDrift(root);
+  const dbDrift = detectDbFieldDrift(
+    root,
+    liveByDomain.db || loadDomainInventory(root, "db")
+  );
   const apiRatio =
     Number.isFinite(Number(scorePolicy.api_field_missing_ratio))
       ? Number(scorePolicy.api_field_missing_ratio)
@@ -1602,10 +1613,14 @@ function main() {
 
   // 0.2.19 / 0.7.18: --output 相对路径相对 --root（避免 cwd=skill 目录写进技能仓）
   // 0.7.24: --json 时无论是否 --output 都向 stdout 打 JSON（refresh 依赖 stdout 解析）
-  if (args.output) {
-    const outAbs = path.isAbsolute(args.output)
-      ? path.resolve(args.output)
-      : path.resolve(root, args.output);
+  // 0.7.39: 无 --output 且无 --no-write → 默认写 docs/harness-eng/score-latest.json
+  if (!args.noWrite) {
+    const dest =
+      args.output || path.join("docs", "harness-eng", "score-latest.json");
+    const outAbs =
+      args.output && path.isAbsolute(args.output)
+        ? path.resolve(args.output)
+        : path.resolve(root, dest);
     fs.mkdirSync(path.dirname(outAbs), { recursive: true });
     fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
     console.error(`Wrote ${outAbs}`);

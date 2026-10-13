@@ -34,6 +34,8 @@ import {
   formatFreshnessMessage,
   runFreshnessCheck,
   warnManualReplaceGaps,
+  ensureDbMdMaintenance,
+  warnMcpExampleProfile,
 } from "./lib/sync-freshness.mjs";
 import {
   migrateScorePolicyFile,
@@ -42,6 +44,11 @@ import {
 import { writeSkillRoot } from "./lib/inventory-meta.mjs";
 import { runRefresh } from "./lib/refresh.mjs";
 import { buildBackfillPlan } from "./lib/backfill-plan.mjs";
+import { emitUpgradeStrictnessDiff } from "./lib/upgrade-diff.mjs";
+import {
+  warnObsoleteWrappers,
+  retireObsoleteWrappers,
+} from "./lib/obsolete-wrappers.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
@@ -54,6 +61,16 @@ const MODES = [
   "refresh",
   "backfill",
 ];
+
+/** 0.7.39: warn (or retire) obsolete inventory wrappers. */
+function maybeHandleObsoleteWrappers(root, retire) {
+  try {
+    if (retire) retireObsoleteWrappers(root);
+    else warnObsoleteWrappers(root);
+  } catch (e) {
+    console.error(`harness: obsolete-wrappers skipped: ${e.message}`);
+  }
+}
 
 /** 0.7.35 HK-5: stamp skill_root into harness-meta for refresh-score. */
 function maybeWriteSkillRoot(root, skillRoot, mode, dryRun) {
@@ -133,6 +150,7 @@ function parseArgs(argv) {
     help: false,
     checkFreshness: false,
     findings: null,
+    retireWrappers: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -146,6 +164,7 @@ function parseArgs(argv) {
     else if (a === "--no-sync") out.noSync = true;
     else if (a === "--no-write") out.noWrite = true;
     else if (a === "--check-freshness") out.checkFreshness = true;
+    else if (a === "--retire-wrappers") out.retireWrappers = true;
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -157,7 +176,7 @@ function printHelp() {
   node scripts/harness.mjs --root <TARGET> --params <params.json>
       [--mode land|resume|upgrade|pipeline-skeleton]
       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
-  node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write]
+  node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write] [--retire-wrappers]
   node scripts/harness.mjs --mode backfill --root <TARGET> --findings <file|dir>
   node scripts/harness.mjs --check-freshness --root <TARGET>
 
@@ -172,6 +191,8 @@ Canonical Agent write entry (0.6.0+).
   backfill: 读探针 findings → stdout WritePlan（不写盘）；见 modes/backfill.md。
   --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与目标仓
     scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
+  --retire-wrappers: upgrade/refresh 将 fill-score-ready / cold-bootstrap 移到
+    scripts/agent-kb/_obsolete/（默认只 warn；不删 refresh-score.mjs）。
 `);
 }
 
@@ -360,6 +381,7 @@ export function main(argv = process.argv) {
     if (report.hints?.length) {
       for (const h of report.hints) console.error(`harness refresh: ${h}`);
     }
+    if (!args.dryRun) maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
     process.exit(exitCode);
   }
   if (modeEarly === "backfill") {
@@ -416,7 +438,13 @@ export function main(argv = process.argv) {
       maybeApplyGateProfile(args.root, params, mode, args.dryRun);
       maybeWriteSkillRoot(args.root, skillRoot, mode, args.dryRun);
       if (!args.dryRun) tipGitHooks(args.root, mode);
-      if (mode === "upgrade" && !args.dryRun) warnManualReplaceGaps(args.root);
+      if (mode === "upgrade" && !args.dryRun) {
+        ensureDbMdMaintenance(args.root);
+        warnManualReplaceGaps(args.root);
+        warnMcpExampleProfile(args.root);
+        maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
+        emitUpgradeStrictnessDiff(args.root);
+      }
     }
     process.exit(st);
   }
@@ -461,7 +489,13 @@ export function main(argv = process.argv) {
   const syncStatus = forward(synced, { stdoutToStderr: true });
   if (syncStatus === 0) {
     tipGitHooks(args.root, mode);
-    if (mode === "upgrade") warnManualReplaceGaps(args.root);
+    if (mode === "upgrade") {
+      ensureDbMdMaintenance(args.root);
+      warnManualReplaceGaps(args.root);
+      warnMcpExampleProfile(args.root);
+      maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
+      emitUpgradeStrictnessDiff(args.root);
+    }
   }
   process.exit(syncStatus);
 }

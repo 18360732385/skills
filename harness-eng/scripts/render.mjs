@@ -25,6 +25,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isCliMain } from "./lib/cli-main.mjs";
 import { parse as parseYaml, stringify as stringifyYaml } from "./lib/yaml.mjs";
 import { expandDomainPackEntries } from "./lib/domains.mjs";
 import {
@@ -693,7 +694,8 @@ function splitYamlTopLevelBlocks(text) {
  * 0.7.26 ID-6: merge managed keys while preserving nested blocks (inventory) and mid-file comments.
  * 0.7.32 ID-6: if managed scalar value unchanged, keep original block text (quotes/style).
  */
-function mergeYamlMaps(existingText, incomingText) {
+/** Exported for selfcheck / idempotent yaml-keys tests (0.7.40). */
+export function mergeYamlMaps(existingText, incomingText) {
   const exist = parseSimpleYamlMap(existingText);
   const incoming = parseSimpleYamlMap(incomingText);
   const split = splitYamlTopLevelBlocks(existingText);
@@ -716,6 +718,7 @@ function mergeYamlMaps(existingText, incomingText) {
       valuesEqual(exist.map[k], v)
     ) {
       // value unchanged — keep original block (quotes / spacing)
+      // last_mode equal to incoming mode: do not rewrite the key (same-mode upgrade)
       if (!order.includes(k)) order.push(k);
       continue;
     }
@@ -1681,6 +1684,11 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       log[log.length - 1].unresolvedPlaceholders = unresolvedMerged;
       return;
     }
+    // 0.7.40: identical merge → no empty write (second upgrade last_mode churn)
+    if (merged === cur) {
+      log[log.length - 1].status = "noop";
+      return;
+    }
     writeRenderedFile(abs, merged, targetRel);
     return;
   }
@@ -1841,9 +1849,11 @@ function main() {
   if (!ok && !args.dryRun) process.exitCode = 1;
 }
 
-try {
-  main();
-} catch (e) {
-  console.error(String(e && e.stack ? e.stack : e));
-  process.exit(1);
+if (isCliMain(import.meta.url)) {
+  try {
+    main();
+  } catch (e) {
+    console.error(String(e && e.stack ? e.stack : e));
+    process.exit(1);
+  }
 }

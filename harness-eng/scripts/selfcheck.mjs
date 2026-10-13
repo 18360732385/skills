@@ -27,6 +27,7 @@ import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
+import { createHash } from "crypto";
 import { buildReportUi } from "./lib/report-ui.mjs";
 import { buildHostSurface, formatHostSurfaceLine } from "./lib/host-surface.mjs";
 import {
@@ -70,7 +71,11 @@ import {
   detectRedisKeyDrift,
   detectJobsTaskDrift,
   detectApiFieldDrift,
+  detectDbFieldDrift,
 } from "./lib/field-drift.mjs";
+import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
+import { readGitHead } from "./lib/git-head.mjs";
+import { diffBlockers } from "./lib/upgrade-diff.mjs";
 import { splitTableRows } from "./lib/doc-density.mjs";
 import {
   replaceCreateTableBlock,
@@ -90,11 +95,22 @@ import {
   readMysqlGuardServers,
   writeSkillRoot,
   readSkillRoot,
+  resolveSkillRoot,
 } from "./lib/inventory-meta.mjs";
+import {
+  findObsoleteWrappers,
+  retireObsoleteWrappers,
+} from "./lib/obsolete-wrappers.mjs";
 import { applyGateProfileToPolicyFile } from "./lib/score-policy-migrate.mjs";
 import { buildBackfillPlan } from "./lib/backfill-plan.mjs";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
+import { mergeYamlMaps } from "./render.mjs";
+import {
+  ensureDbMdMaintenance,
+  warnMcpExampleProfile,
+  warnManualReplaceGaps,
+} from "./lib/sync-freshness.mjs";
 import {
   DOC_MOVES,
   ROOT_STUBS,
@@ -2981,6 +2997,18 @@ allow({ agent_message: "[api] probe" });
     /0\.7\.36 → 0\.7\.37/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
     "0.7.37 upgrade.md migration section"
   );
+  assert(
+    /0\.7\.37 → 0\.7\.38/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.38 upgrade.md migration section"
+  );
+  assert(
+    /0\.7\.38 → 0\.7\.39/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.39 upgrade.md migration section"
+  );
+  assert(
+    /0\.7\.39 → 0\.7\.40/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.40 upgrade.md migration section"
+  );
 }
 
 // --- 0.7.33 e2e-11 P0: FS-1/FS-2 func modules · LD-1/LD-2 mysql-guard · FS-3 jobs ---
@@ -3708,6 +3736,301 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   } finally {
     fs.rmSync(funcTmp37, { recursive: true, force: true });
   }
+}
+
+// --- 0.7.38 e2e-14 P0: cold memory git_head · db live drift · upgrade-diff ---
+{
+  const memTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-038-mem-"));
+  try {
+    const javaDir = path.join(memTmp, "src", "main", "java", "com", "x");
+    fs.mkdirSync(javaDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(javaDir, "DemoController.java"),
+      [
+        "package com.x;",
+        "import org.springframework.web.bind.annotation.*;",
+        "@RestController",
+        "public class DemoController {",
+        "  @GetMapping(\"/api/demo\")",
+        "  public String demo() { return \"ok\"; }",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const git = (args) =>
+      spawnSync("git", args, { cwd: memTmp, encoding: "utf8", windowsHide: true });
+    assert(git(["init"]).status === 0, "0.7.38 mem fixture git init");
+    git(["add", "-A"]);
+    const commit = git(["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "t"]);
+    assert(commit.status === 0, `0.7.38 mem fixture git commit: ${commit.stderr}`);
+    const mem = scanApiInventoryMemory(memTmp);
+    const head = readGitHead(memTmp);
+    assert(mem && mem.git_head, `0.7.38 scanApiInventoryMemory stamps git_head (got ${JSON.stringify(mem && mem.git_head)})`);
+    assert(head && mem.git_head === head, "0.7.38 memory git_head matches HEAD");
+    assert(isInventoryStale(mem, head) === false, "0.7.38 memory inventory not stale vs HEAD");
+  } finally {
+    fs.rmSync(memTmp, { recursive: true, force: true });
+  }
+
+  const driftTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-038-db-"));
+  try {
+    const tableDir = path.join(driftTmp, "docs", "db", "table");
+    fs.mkdirSync(tableDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(tableDir, "01-t_foo.md"),
+      [
+        "表名：`t_foo`",
+        "",
+        "## 字段",
+        "",
+        "| 字段名 | 类型 |",
+        "|---|---|",
+        "| id | bigint |",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const empty = detectDbFieldDrift(driftTmp);
+    assert(empty.ok === true, "0.7.38 detectDbFieldDrift no inv → ok");
+    const live = {
+      tables: [
+        {
+          name: "t_foo",
+          columns: [{ name: "id" }, { name: "new_col" }],
+        },
+      ],
+    };
+    const disk = {
+      tables: [{ name: "t_foo", columns: [{ name: "id" }] }],
+    };
+    const liveDrift = detectDbFieldDrift(driftTmp, live);
+    assert(
+      !liveDrift.ok && liveDrift.blockers.some((b) => /doc_field_drift:t_foo:new_col/.test(b)),
+      `0.7.38 live db drift (got ${JSON.stringify(liveDrift.blockers)})`
+    );
+    const diskOnly = detectDbFieldDrift(driftTmp, disk);
+    assert(
+      diskOnly.ok,
+      "0.7.38 disk inv without new_col must not invent live columns"
+    );
+  } finally {
+    fs.rmSync(driftTmp, { recursive: true, force: true });
+  }
+
+  const d = diffBlockers(["a", "b"], ["b", "c"]);
+  assert(
+    d.added.join(",") === "c" && d.removed.join(",") === "a" && d.unchanged.join(",") === "b",
+    `0.7.38 diffBlockers (got ${JSON.stringify(d)})`
+  );
+  const harnessSrc38 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(
+    /emitUpgradeStrictnessDiff/.test(harnessSrc38) &&
+      /upgrade-diff/.test(harnessSrc38),
+    "0.7.38 harness wires upgrade-diff"
+  );
+  const upMd38 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(
+    /upgrade-diff\.json/.test(upMd38) && /不自动改用户文档/.test(upMd38),
+    "0.7.38 upgrade.md documents upgrade-diff"
+  );
+}
+
+// --- 0.7.39 e2e-14 P1: wrappers · score-latest default · portable skill_root ---
+{
+  const wrapTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-039-wrap-"));
+  try {
+    const kb = path.join(wrapTmp, "scripts", "agent-kb");
+    fs.mkdirSync(kb, { recursive: true });
+    fs.writeFileSync(path.join(kb, "fill-score-ready.mjs"), "export {}\n", "utf8");
+    fs.writeFileSync(path.join(kb, "cold-bootstrap-inventory.mjs"), "export {}\n", "utf8");
+    fs.writeFileSync(
+      path.join(kb, "refresh-score.mjs"),
+      "/* inventory_stale fill-score-ready --inventory */\n",
+      "utf8"
+    );
+    const found = findObsoleteWrappers(wrapTmp);
+    assert(
+      found.retire.includes("scripts/agent-kb/fill-score-ready.mjs") &&
+        found.retire.includes("scripts/agent-kb/cold-bootstrap-inventory.mjs"),
+      `0.7.39 findObsoleteWrappers retire (got ${JSON.stringify(found)})`
+    );
+    assert(found.refreshStale.includes("scripts/agent-kb/refresh-score.mjs"), "0.7.39 stale refresh-score flagged");
+    const { moved } = retireObsoleteWrappers(wrapTmp);
+    assert(moved.length === 2, `0.7.39 retire moved 2 (got ${JSON.stringify(moved)})`);
+    assert(
+      !fs.existsSync(path.join(kb, "fill-score-ready.mjs")) &&
+        fs.existsSync(path.join(kb, "_obsolete", "fill-score-ready.mjs")) &&
+        fs.existsSync(path.join(kb, "refresh-score.mjs")),
+      "0.7.39 retire moves wrappers, keeps refresh-score"
+    );
+  } finally {
+    fs.rmSync(wrapTmp, { recursive: true, force: true });
+  }
+
+  const scoreSrc39 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/score-latest\.json/.test(scoreSrc39) && /noWrite|--no-write/.test(scoreSrc39), "0.7.39 fill-score default score-latest / --no-write");
+  const upDiff39 = fs.readFileSync(path.join(skillRoot, "scripts/lib/upgrade-diff.mjs"), "utf8");
+  assert(/--no-write/.test(upDiff39), "0.7.39 upgrade-diff fill-score --no-write");
+  const harnessSrc39 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(
+    /retire-wrappers|retireWrappers/.test(harnessSrc39) && /warnObsoleteWrappers/.test(harnessSrc39),
+    "0.7.39 harness wires obsolete-wrappers"
+  );
+
+  const scoreTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-039-score-"));
+  try {
+    fs.mkdirSync(path.join(scoreTmp, "docs", "harness-eng"), { recursive: true });
+    const runScore = (extra) =>
+      spawnSync(
+        process.execPath,
+        [path.join(skillRoot, "scripts/fill-score.mjs"), "--root", scoreTmp, "--json", ...extra],
+        { encoding: "utf8", cwd: skillRoot, windowsHide: true, maxBuffer: 20 * 1024 * 1024 }
+      );
+    const latest = path.join(scoreTmp, "docs", "harness-eng", "score-latest.json");
+    const r0 = runScore(["--no-write"]);
+    assert(!fs.existsSync(latest), `0.7.39 --no-write skips score-latest (status=${r0.status})`);
+    const r1 = runScore([]);
+    assert(fs.existsSync(latest), `0.7.39 default writes score-latest (status=${r1.status} stderr=${String(r1.stderr || "").slice(0, 200)})`);
+  } finally {
+    fs.rmSync(scoreTmp, { recursive: true, force: true });
+  }
+
+  const relTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-039-rel-"));
+  try {
+    const nested = path.join(relTmp, "vendor", "harness-eng", "scripts");
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(nested, "harness.mjs"), "// nested skill\n", "utf8");
+    const md = path.join(relTmp, "docs", "harness-eng");
+    fs.mkdirSync(md, { recursive: true });
+    fs.writeFileSync(path.join(md, "harness-meta.yaml"), 'skill: harness-eng\nskill_version: "0.7.39"\n', "utf8");
+    writeSkillRoot(relTmp, path.join(relTmp, "vendor", "harness-eng"));
+    assert(readSkillRoot(relTmp) === "vendor/harness-eng", `0.7.39 write relative skill_root (got ${readSkillRoot(relTmp)})`);
+    assert(
+      resolveSkillRoot(relTmp) === path.resolve(relTmp, "vendor/harness-eng"),
+      "0.7.39 resolveSkillRoot relative"
+    );
+    const envDir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-039-env-"));
+    fs.mkdirSync(path.join(envDir, "scripts"), { recursive: true });
+    fs.writeFileSync(path.join(envDir, "scripts", "harness.mjs"), "// env skill\n", "utf8");
+    const prev = process.env.HARNESS_ENG_ROOT;
+    process.env.HARNESS_ENG_ROOT = envDir;
+    try {
+      assert(resolveSkillRoot(relTmp) === path.resolve(envDir), "0.7.39 resolveSkillRoot prefers HARNESS_ENG_ROOT");
+    } finally {
+      if (prev == null) delete process.env.HARNESS_ENG_ROOT;
+      else process.env.HARNESS_ENG_ROOT = prev;
+      fs.rmSync(envDir, { recursive: true, force: true });
+    }
+  } finally {
+    fs.rmSync(relTmp, { recursive: true, force: true });
+  }
+
+  const rsTmpl39 = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/refresh-score.mjs.tmpl"),
+    "utf8"
+  );
+  assert(/path\.resolve\(repoRoot,\s*v\)/.test(rsTmpl39), "0.7.39 refresh-score resolves meta vs repoRoot");
+}
+
+// --- 0.7.40 e2e-14 P2: last_mode noop · db.md 维护约定 · MCP example warn · multi-batch hash ---
+{
+  const renderSrc40 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/merged === cur/.test(renderSrc40) && /status = "noop"/.test(renderSrc40), "0.7.40 render yaml-keys noop");
+
+  const baseMeta = [
+    "skill: harness-eng",
+    'skill_version: "0.7.40"',
+    "last_mode: land",
+    "ladder: L2",
+    "",
+  ].join("\n");
+  const incomingUp = [
+    "skill: harness-eng",
+    'skill_version: "0.7.40"',
+    "last_mode: upgrade",
+    "ladder: L2",
+    "",
+  ].join("\n");
+  const once = mergeYamlMaps(baseMeta, incomingUp);
+  const twice = mergeYamlMaps(once, incomingUp);
+  assert(once === twice, "0.7.40 mergeYamlMaps second upgrade identical");
+  assert(/last_mode:\s*upgrade/.test(once), "0.7.40 first merge updates last_mode");
+
+  const incomingRe = incomingUp.replace("last_mode: upgrade", "last_mode: resume");
+  let meta = baseMeta;
+  const hash = (s) => createHash("sha256").update(s).digest("hex");
+  const scoreTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-040-rf-"));
+  try {
+    fs.mkdirSync(path.join(scoreTmp, "docs", "harness-eng"), { recursive: true });
+    const rf = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/fill-score.mjs"), "--root", scoreTmp, "--json", "--no-write"],
+      { encoding: "utf8", cwd: skillRoot, windowsHide: true, maxBuffer: 20 * 1024 * 1024 }
+    );
+    assert(rf.status === 0, `0.7.40 refresh-semantics fill-score --no-write (status=${rf.status})`);
+    meta = mergeYamlMaps(meta, incomingRe);
+    meta = mergeYamlMaps(meta, incomingUp);
+    const h1 = hash(meta);
+    const rf2 = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/fill-score.mjs"), "--root", scoreTmp, "--json", "--no-write"],
+      { encoding: "utf8", cwd: skillRoot, windowsHide: true, maxBuffer: 20 * 1024 * 1024 }
+    );
+    assert(rf2.status === 0, "0.7.40 second fill-score --no-write");
+    meta = mergeYamlMaps(meta, incomingRe);
+    meta = mergeYamlMaps(meta, incomingUp);
+    assert(hash(meta) === h1, "0.7.40 interleaved rf→re→up ×2 meta hash stable");
+  } finally {
+    fs.rmSync(scoreTmp, { recursive: true, force: true });
+  }
+
+  const dbTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-040-db-"));
+  try {
+    const dbMd = path.join(dbTmp, "docs", "db", "db.md");
+    fs.mkdirSync(path.dirname(dbMd), { recursive: true });
+    fs.writeFileSync(dbMd, "# 索引\n\n用户索引勿动\n", "utf8");
+    const r1 = ensureDbMdMaintenance(dbTmp, skillRoot);
+    assert(r1.appended && /维护约定/.test(fs.readFileSync(dbMd, "utf8")), "0.7.40 append db.md 维护约定");
+    assert(/用户索引勿动/.test(fs.readFileSync(dbMd, "utf8")), "0.7.40 db.md keeps user index");
+    const r2 = ensureDbMdMaintenance(dbTmp, skillRoot);
+    assert(!r2.appended, "0.7.40 db.md append idempotent");
+    const hints = warnManualReplaceGaps(dbTmp, { error() {} });
+    assert(!hints.some((h) => /维护约定/.test(h)), "0.7.40 warnManualReplaceGaps silent after append");
+  } finally {
+    fs.rmSync(dbTmp, { recursive: true, force: true });
+  }
+
+  const mcpTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-040-mcp-"));
+  try {
+    fs.mkdirSync(path.join(mcpTmp, ".cursor"), { recursive: true });
+    fs.mkdirSync(path.join(mcpTmp, "docs", "harness-eng"), { recursive: true });
+    fs.writeFileSync(
+      path.join(mcpTmp, ".cursor", "mcp.json.example"),
+      JSON.stringify({ mcpServers: { "mysql-test-example": { command: "npx" } } }),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(mcpTmp, ".cursor", "mcp.json"),
+      JSON.stringify({ mcpServers: { "mysql-dev": { command: "npx" } } }),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(mcpTmp, "docs", "harness-eng", "harness-meta.yaml"),
+      "fill_mcp_profile: test\n",
+      "utf8"
+    );
+    const w = warnMcpExampleProfile(mcpTmp, { error() {} });
+    assert(w.warned, `0.7.40 MCP example vs live warn (got ${JSON.stringify(w)})`);
+  } finally {
+    fs.rmSync(mcpTmp, { recursive: true, force: true });
+  }
+
+  const harnessSrc40 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(
+    /ensureDbMdMaintenance/.test(harnessSrc40) && /warnMcpExampleProfile/.test(harnessSrc40),
+    "0.7.40 harness wires db.md + mcp warn"
+  );
 }
 
 console.log(`ok: ${ok.length}`);

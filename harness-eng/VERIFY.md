@@ -1,10 +1,44 @@
-﻿# harness-eng 验收记录（0.7.37）
+﻿# harness-eng 验收记录（0.7.40）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.37**（e2e-13：bold-colon path · 根 Maven 预填 · 冷 clone live · func 收窄；其上 0.7.36 e2e-12 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.40**（e2e-14 P2：last_mode 空写 · db.md 维护约定 · MCP example 差分；其上 0.7.39 P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.40 增量验收（e2e-14 P2）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.40`；templates / meta / questions / sync tmpl 一致 | 有 |
+| yaml-keys merge 相同则 noop 不写盘；二次 upgrade `last_mode` 不空写 | 有 |
+| upgrade 补齐 `db.md`「维护约定」；不改用户索引 | 有 |
+| MCP example vs live / `fill_mcp_profile` 只提示不改密 | 有 |
+| selfcheck `rf→re→up` ×2 meta hash 稳定 | 有 |
+| CHANGELOG 索引含 0.7.40 且存在 `_log/harness-eng/0.7.40.md`；upgrade `## 0.7.39 → 0.7.40` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.39 增量验收（e2e-14 P1）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.39`；templates / meta / questions / sync tmpl 一致 | 有 |
+| obsolete wrappers 检测+`--retire-wrappers`；不删 `refresh-score.mjs` | 有 |
+| fill-score 默认写 `score-latest.json`；`--no-write` 不写；upgrade-diff 带 `--no-write` | 有 |
+| 仓内 `skill_root` 相对；`HARNESS_ENG_ROOT` 优先；refresh-score 按仓根 resolve | 有 |
+| CHANGELOG 索引含 0.7.39 且存在 `_log/harness-eng/0.7.39.md`；upgrade `## 0.7.38 → 0.7.39` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.38 增量验收（e2e-14 P0）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.38`；templates / meta / questions / sync tmpl 一致 | 有 |
+| `scanApiInventoryMemory` 带 `git_head`；与 HEAD 比不 stale | 有 |
+| `detectDbFieldDrift` 优先 live inv；磁盘旧 inv 不挡住新列 drift | 有 |
+| upgrade 收尾 `upgrade-diff.json`；升严不自动改用户文档 | 有 |
+| CHANGELOG 索引含 0.7.38 且存在 `_log/harness-eng/0.7.38.md`；upgrade `## 0.7.37 → 0.7.38` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.37 增量验收（e2e-13）
 

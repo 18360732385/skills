@@ -301,8 +301,34 @@ export function readSkillRoot(root) {
   }
 }
 
+function isSkillDir(dir) {
+  return dir && fs.existsSync(path.join(dir, "scripts", "harness.mjs"));
+}
+
 /**
- * 0.7.35 HK-5: persist absolute skill_root into harness-meta.yaml.
+ * Resolve portable skill root: HARNESS_ENG_ROOT → meta skill_root (rel vs repo) → abs if exists.
+ * @param {string} root
+ * @returns {string|null} absolute path or null
+ */
+export function resolveSkillRoot(root) {
+  const absRoot = path.resolve(root);
+  const env = process.env.HARNESS_ENG_ROOT;
+  if (env) {
+    const e = path.resolve(env);
+    if (isSkillDir(e)) return e;
+  }
+  const raw = readSkillRoot(absRoot);
+  if (raw) {
+    const candidate = path.isAbsolute(raw)
+      ? path.resolve(raw)
+      : path.resolve(absRoot, raw);
+    if (isSkillDir(candidate)) return candidate;
+  }
+  return null;
+}
+
+/**
+ * 0.7.35 HK-5 / 0.7.39: persist skill_root (relative when skill lives inside the repo).
  * @param {string} root target repo
  * @param {string} skillRoot absolute path to harness-eng skill
  */
@@ -311,9 +337,15 @@ export function writeSkillRoot(root, skillRoot) {
   const found = findHarnessMetaFile(root);
   const dest = found || canonicalHarnessMetaPath(root);
   if (!fs.existsSync(dest.abs)) return;
+  const absRoot = path.resolve(root);
   const abs = path.resolve(skillRoot);
+  let stored = abs;
+  const rel = path.relative(absRoot, abs).replace(/\\/g, "/");
+  if (rel && !rel.startsWith("..") && !path.isAbsolute(rel)) {
+    stored = rel;
+  }
   let raw = fs.readFileSync(dest.abs, "utf8");
-  const line = `skill_root: ${JSON.stringify(abs)}`;
+  const line = `skill_root: ${JSON.stringify(stored)}`;
   if (/^skill_root:\s*/m.test(raw)) {
     raw = raw.replace(/^skill_root:\s*.*$/m, line);
   } else {

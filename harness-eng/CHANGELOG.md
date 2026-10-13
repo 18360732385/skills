@@ -1,11 +1,14 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.37**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.7.40**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（一版本一文件）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/)。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.7.40](../_log/harness-eng/0.7.40.md) | 2026-10-13 | e2e-14 P2：last_mode 空写 · db.md 维护约定 · MCP example 差分 · 多批 hash |
+| [0.7.39](../_log/harness-eng/0.7.39.md) | 2026-10-13 | e2e-14 P1：obsolete wrappers · score-latest 默认写 · skill_root 可移植 |
+| [0.7.38](../_log/harness-eng/0.7.38.md) | 2026-10-13 | e2e-14 P0：冷 memory git_head · db live drift · upgrade 升严差分 |
 | [0.7.37](../_log/harness-eng/0.7.37.md) | 2026-10-12 | e2e-13：bold-colon path · 根 Maven 预填 · 冷 clone live · func 收窄 |
 | [0.7.36](../_log/harness-eng/0.7.36.md) | 2026-10-12 | e2e-12 P0/P1：merge git_head · live sql_root · G8-like drift · mysql-guard · module-leak · LD-3 |
 | [0.7.35](../_log/harness-eng/0.7.35.md) | 2026-10-12 | e2e-11 P2：bak/chmod/backfill/skill_root · frontend 覆盖 · merge · gold · Codex agent_message |
