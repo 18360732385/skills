@@ -1,14 +1,17 @@
 /**
  * 0.7.38 G-up-ready-regress: machine-readable upgrade strictness diff.
+ * 0.7.41: skill_version from manifest SSOT; doc_todos handoff (no auto doc rewrite).
  * Does not rewrite user truth docs. fill-score is --json only (no --output).
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
+import { readSkillVersion } from "./skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
+const SKILL_ROOT = path.resolve(__dirname, "../..");
 const SCORE_REL = path.join("docs", "harness-eng", "score-latest.json");
 const DIFF_REL = path.join("docs", "harness-eng", "upgrade-diff.json");
 
@@ -40,6 +43,50 @@ export function collectScoreBlockers(report) {
     if (x != null && String(x).trim()) out.add(String(x));
   }
   return [...out].sort();
+}
+
+/**
+ * Map newly added blockers to human-readable doc migration TODOs (handoff only).
+ * @param {string[]|null|undefined} addedBlockers
+ * @returns {string[]}
+ */
+export function buildDocTodos(addedBlockers) {
+  const added = (addedBlockers || []).map(String);
+  if (!added.length) return [];
+  const todos = [];
+  const seen = new Set();
+  const push = (s) => {
+    if (!seen.has(s)) {
+      seen.add(s);
+      todos.push(s);
+    }
+  };
+  let unknown = false;
+  for (const b of added) {
+    if (
+      b === "coverage_ready" ||
+      b.includes("covered_gt") ||
+      b.startsWith("inventory_undercount")
+    ) {
+      push(
+        "coverage / covered_gt：对照 fill-score 分域 coverage_gaps，补齐 docs/{api,func,db,redis,jobs} 覆盖或收窄 inventory；勿靠假绿"
+      );
+    } else if (b.includes("doc_task_drift") || b.includes("doc_schedule_drift")) {
+      push("jobs：对齐 docs/jobs/ 与源码 @Scheduled task id / cron（doc_task_drift / doc_schedule_drift）");
+    } else if (b.includes("doc_path_drift")) {
+      push("api：对齐 docs/api 接口路径与 Controller（doc_path_drift）");
+    } else if (b.includes("doc_field_drift")) {
+      push("db/api：对齐字段文档与 live inventory / DTO（doc_field_drift）");
+    } else {
+      unknown = true;
+    }
+  }
+  if (unknown) {
+    push(
+      `对照 docs/harness-eng/upgrade-diff.json 的 added blockers，手改真相文档后重跑 fill-score：${added.join(" · ")}`
+    );
+  }
+  return todos;
 }
 
 function loadScoreLatest(root) {
@@ -74,12 +121,14 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
   const before = collectScoreBlockers(beforeReport);
   const payload = {
     ok: true,
-    skill_version: "0.7.38",
+    skill_version: readSkillVersion(SKILL_ROOT),
     before,
     after: [],
     added: [],
     removed: [],
     unchanged: [],
+    doc_todos: [],
+    ready_regressed: false,
     had_score_latest: !!beforeReport,
     score_error: null,
     ready_before: beforeReport?.ai_coding_ready?.ok ?? null,
@@ -113,6 +162,15 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     payload.unchanged = d.unchanged;
   }
 
+  payload.ready_regressed =
+    payload.ready_before === true && payload.ready_after === false;
+  payload.doc_todos = buildDocTodos(payload.added);
+  if (payload.ready_regressed && !payload.doc_todos.length) {
+    payload.doc_todos = [
+      "ready YES→NO：对照 upgrade-diff.json before/after blockers，手改真相文档后重跑 fill-score（升严不自动改文档）",
+    ];
+  }
+
   try {
     const outAbs = path.join(absRoot, DIFF_REL);
     fs.mkdirSync(path.dirname(outAbs), { recursive: true });
@@ -125,14 +183,19 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
 
   const line = [
     `harness: upgrade 升严差分 added=${payload.added.length} removed=${payload.removed.length}` +
-      (payload.score_error ? ` score_error` : ""),
+      (payload.score_error ? ` score_error` : "") +
+      (payload.ready_regressed ? ` ready_regressed` : ""),
     `  ready ${payload.ready_before === true ? "YES" : payload.ready_before === false ? "NO" : "?"} → ${
       payload.ready_after === true ? "YES" : payload.ready_after === false ? "NO" : "?"
     }`,
     payload.added.length ? `  added: ${payload.added.join(" · ")}` : "  added: (none)",
     `  落盘 ${DIFF_REL}（不自动改用户文档）`,
-  ].join("\n");
-  console.error(line);
+  ];
+  if (payload.ready_regressed || payload.added.length) {
+    line.push("  文档迁移 TODO（手改；升严不自动改用户文档）：");
+    for (const t of payload.doc_todos) line.push(`    - ${t}`);
+  }
+  console.error(line.join("\n"));
   console.error(JSON.stringify(payload));
   return payload;
 }

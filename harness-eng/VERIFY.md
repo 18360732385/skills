@@ -1,10 +1,42 @@
-﻿# harness-eng 验收记录（0.7.40）
+# harness-eng 验收记录（0.7.43）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.40**（e2e-14 P2：last_mode 空写 · db.md 维护约定 · MCP example 差分；其上 0.7.39 P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.43**（e2e-15 P2：last_mode×3 · wrappers 告警 · 多批异序；其上 0.7.42 P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.43 增量验收（e2e-15 P2）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.43`；templates / meta / questions / sync tmpl 一致 | 有 |
+| upgrade×3 meta 字节稳定；文档写明跨 mode `last_mode` CI 可忽略 | 有 |
+| obsolete wrappers stderr 含 **【旧仓升级】**；refresh-score 标准入口勿删 | 有 |
+| selfcheck `(score→re→up)×2` 排除 last_mode 后 hash 稳定 | 有 |
+| CHANGELOG 索引含 0.7.43 且存在 `_log/harness-eng/0.7/0.7.43.md`；upgrade `## 0.7.42 → 0.7.43` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.42 增量验收（e2e-15 P1）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.42`；templates / meta / questions / sync tmpl 一致 | 有 |
+| 仓外 `skill_root` → `env:HARNESS_ENG_ROOT`；值未变跳过写盘；`HARNESS_ENG_ROOT` 可 resolve | 有 |
+| `normalizeDdlForCompare` 忽略 int/varchar 宽度；列集合差仍可区分 | 有 |
+| refresh-score tmpl 跳过 env 哨兵 | 有 |
+| CHANGELOG 索引含 0.7.42 且存在 `_log/harness-eng/0.7/0.7.42.md`；upgrade `## 0.7.41 → 0.7.42` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.41 增量验收（e2e-15 P0）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.41`；templates / meta / questions / sync tmpl 一致 | 有 |
+| `upgrade-diff.json` 的 `skill_version` === manifest（无硬编码 0.7.38） | 有 |
+| 升严 `doc_todos` / `ready_regressed`；stderr 打印移交；不自动改用户文档 | 有 |
+| CHANGELOG 索引含 0.7.41 且存在 `_log/harness-eng/0.7/0.7.41.md`；upgrade `## 0.7.40 → 0.7.41` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.40 增量验收（e2e-14 P2）
 
@@ -15,7 +47,7 @@
 | upgrade 补齐 `db.md`「维护约定」；不改用户索引 | 有 |
 | MCP example vs live / `fill_mcp_profile` 只提示不改密 | 有 |
 | selfcheck `rf→re→up` ×2 meta hash 稳定 | 有 |
-| CHANGELOG 索引含 0.7.40 且存在 `_log/harness-eng/0.7.40.md`；upgrade `## 0.7.39 → 0.7.40` | 有 |
+| CHANGELOG 索引含 0.7.40 且存在 `_log/harness-eng/0.7/0.7.40.md`；upgrade `## 0.7.39 → 0.7.40` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.39 增量验收（e2e-14 P1）
@@ -26,7 +58,7 @@
 | obsolete wrappers 检测+`--retire-wrappers`；不删 `refresh-score.mjs` | 有 |
 | fill-score 默认写 `score-latest.json`；`--no-write` 不写；upgrade-diff 带 `--no-write` | 有 |
 | 仓内 `skill_root` 相对；`HARNESS_ENG_ROOT` 优先；refresh-score 按仓根 resolve | 有 |
-| CHANGELOG 索引含 0.7.39 且存在 `_log/harness-eng/0.7.39.md`；upgrade `## 0.7.38 → 0.7.39` | 有 |
+| CHANGELOG 索引含 0.7.39 且存在 `_log/harness-eng/0.7/0.7.39.md`；upgrade `## 0.7.38 → 0.7.39` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.38 增量验收（e2e-14 P0）
@@ -37,7 +69,7 @@
 | `scanApiInventoryMemory` 带 `git_head`；与 HEAD 比不 stale | 有 |
 | `detectDbFieldDrift` 优先 live inv；磁盘旧 inv 不挡住新列 drift | 有 |
 | upgrade 收尾 `upgrade-diff.json`；升严不自动改用户文档 | 有 |
-| CHANGELOG 索引含 0.7.38 且存在 `_log/harness-eng/0.7.38.md`；upgrade `## 0.7.37 → 0.7.38` | 有 |
+| CHANGELOG 索引含 0.7.38 且存在 `_log/harness-eng/0.7/0.7.38.md`；upgrade `## 0.7.37 → 0.7.38` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.37 增量验收（e2e-13）
@@ -49,7 +81,7 @@
 | 根 Commands 预填：`-f backend/pom.xml -pl … -am`；无 Boot 无 `spring-boot:run` | 有 |
 | live 扫描成功 → 不记 `missing_inventory`；冷 clone 建议 refresh | 有 |
 | func inventory 排除 entity/mapper；soft-gate hook 收窄 `Service.java` | 有 |
-| CHANGELOG 索引含 0.7.37 且存在 `_log/harness-eng/0.7.37.md`；upgrade `## 0.7.36 → 0.7.37` | 有 |
+| CHANGELOG 索引含 0.7.37 且存在 `_log/harness-eng/0.7/0.7.37.md`；upgrade `## 0.7.36 → 0.7.37` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.36 增量验收（e2e-12 P0/P1）
@@ -62,7 +94,7 @@
 | api `doc_path_drift`；jobs `doc_schedule_drift`；redis Cache/KEY → redis_true | 有 |
 | mysql-guard `mcp=mysql` → local\|dev；api `--modules` 禁止仓根 controller 回退 | 有 |
 | 裸模块名 LD-3 → `-f backend/pom.xml -pl …` | 有 |
-| CHANGELOG 索引含 0.7.36 且存在 `_log/harness-eng/0.7.36.md`；upgrade `## 0.7.35 → 0.7.36` | 有 |
+| CHANGELOG 索引含 0.7.36 且存在 `_log/harness-eng/0.7/0.7.36.md`；upgrade `## 0.7.35 → 0.7.36` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.35 增量验收（e2e-11 P2）
@@ -78,7 +110,7 @@
 | db merge 有 `_change.sql` stub；索引 inventory 序 | 有 |
 | resume `gate_profile=gold` → score-policy 落盘 gold | 有 |
 | Codex soft-gate stdout JSON 含 `agent_message`，stderr 仍有提醒 | 有 |
-| CHANGELOG 索引含 0.7.35 且存在 `_log/harness-eng/0.7.35.md`；upgrade `## 0.7.34 → 0.7.35` | 有 |
+| CHANGELOG 索引含 0.7.35 且存在 `_log/harness-eng/0.7/0.7.35.md`；upgrade `## 0.7.34 → 0.7.35` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.34 增量验收（e2e-11 P1）
@@ -92,7 +124,7 @@
 | `JOBS_YML_RE` 命中 `application.yml` / `application-dev.yml` | 有 |
 | 480 字业务说明仍拿 morph business 分、不报偏薄 | 有 |
 | 仅有 `OrderTimeoutJob` → `S_JOBS=true`；`ladder:L5` → `Q_AGENT_CONFIG` recommended | 有 |
-| CHANGELOG 索引含 0.7.34 且存在 `_log/harness-eng/0.7.34.md`；upgrade `## 0.7.33 → 0.7.34` | 有 |
+| CHANGELOG 索引含 0.7.34 且存在 `_log/harness-eng/0.7/0.7.34.md`；upgrade `## 0.7.33 → 0.7.34` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.33 增量验收（e2e-11 P0）
@@ -106,7 +138,7 @@
 | `mcp: ["mysql"]` → `MYSQL_GUARD_SERVERS=mysql-local`；`mysql-` 渲染报错；meta 持久化 | 有 |
 | `*Job.java` + `@Scheduled` → jobs inventory ≥1 | 有 |
 | inventory tasks=[] 时 merge 非零且不写空 SSOT | 有 |
-| CHANGELOG 索引含 0.7.33 且存在 `_log/harness-eng/0.7.33.md`；upgrade `## 0.7.32 → 0.7.33` | 有 |
+| CHANGELOG 索引含 0.7.33 且存在 `_log/harness-eng/0.7/0.7.33.md`；upgrade `## 0.7.32 → 0.7.33` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.32 增量验收（e2e P2）
@@ -124,7 +156,7 @@
 | upgrade fix-hook replace 有 `.bak-harness-*`；freshness 可提示手工 replace | 有 |
 | api `--module` 过滤 endpoints 再算 missing | 有 |
 | §7 #4/#9 工具侧：见 0.7.31 FC-9 / SG-1（本版不回归） | 有 |
-| CHANGELOG 索引含 0.7.32 且存在 `_log/harness-eng/0.7.32.md`；upgrade `## 0.7.31 → 0.7.32` | 有 |
+| CHANGELOG 索引含 0.7.32 且存在 `_log/harness-eng/0.7/0.7.32.md`；upgrade `## 0.7.31 → 0.7.32` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.31 增量验收（e2e P1）

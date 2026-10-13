@@ -1758,12 +1758,12 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const changelog0510 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   const logRoot05 = path.resolve(skillRoot, "../_log/harness-eng");
-  assert(fs.existsSync(path.join(logRoot05, "0.5.10.md")), "_log has 0.5.10");
+  assert(fs.existsSync(path.join(logRoot05, "0.5", "0.5.10.md")), "_log has 0.5.10");
   assert(
     /_log\/harness-eng\//.test(changelog0510) && changelog0510.includes("0.5.10.md"),
     "hot CHANGELOG points to _log and 0.5.10"
   );
-  assert(fs.existsSync(path.join(logRoot05, "0.4.0.md")), "_log has 0.4.0");
+  assert(fs.existsSync(path.join(logRoot05, "0.4", "0.4.0.md")), "_log has 0.4.0");
   assert(!/^## 0\.5\.10/m.test(changelog0510), "hot CHANGELOG no 0.5.10 ## section");
   assert(!/^## 0\.4\.0/m.test(changelog0510), "main CHANGELOG dropped 0.4.0 ## body");
 

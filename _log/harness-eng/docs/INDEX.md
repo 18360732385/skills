@@ -15,4 +15,4 @@
 | `fill-truths-auto.md` / `.mjs` | 已降级的自动填充（对话不推荐） |
 | `superpowers-codex-0.6.9/` | Codex 0.6.9 全量支持设计稿 / plan / ledger |
 
-版本变更明细：[`../`](../)（一版本一文件）。热路径指针：`harness-eng/archive/README.md` · `harness-eng/CHANGELOG.md`。
+版本变更明细：[`../`](../)（按 `major.minor` 分目录，一版本一文件）。热路径指针：`harness-eng/archive/README.md` · `harness-eng/CHANGELOG.md`。

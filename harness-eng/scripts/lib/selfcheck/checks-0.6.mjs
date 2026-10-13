@@ -28,18 +28,32 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const EXPECTED = readSkillVersion(skillRoot);
   const VER_RE = escapeSemverRe(EXPECTED);
   const logRoot = path.resolve(skillRoot, "../_log/harness-eng");
-  const logExists = (ver) => fs.existsSync(path.join(logRoot, `${ver}.md`));
+  const logFile = (ver) => {
+    const m = String(ver).match(/^(\d+\.\d+)\./);
+    return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
+  };
+  const logExists = (ver) => fs.existsSync(logFile(ver));
   const readLog = (ver) => {
-    const lp = path.join(logRoot, `${ver}.md`);
+    const lp = logFile(ver);
     return fs.existsSync(lp) ? fs.readFileSync(lp, "utf8") : "";
   };
-  const changelogLogs = fs.existsSync(logRoot)
-    ? fs
-        .readdirSync(logRoot)
-        .filter((f) => /^\d+\.\d+\.\d/.test(f) && f.endsWith(".md"))
-        .map((f) => fs.readFileSync(path.join(logRoot, f), "utf8"))
-        .join("\n")
-    : "";
+  const listVersionLogFiles = (root) => {
+    if (!fs.existsSync(root)) return [];
+    const out = [];
+    for (const ent of fs.readdirSync(root, { withFileTypes: true })) {
+      if (ent.isDirectory() && /^\d+\.\d+$/.test(ent.name)) {
+        for (const f of fs.readdirSync(path.join(root, ent.name))) {
+          if (/^\d+\.\d+\.\d/.test(f) && f.endsWith(".md")) out.push(path.join(root, ent.name, f));
+        }
+      } else if (ent.isFile() && /^\d+\.\d+\.\d/.test(ent.name) && ent.name.endsWith(".md")) {
+        out.push(path.join(root, ent.name));
+      }
+    }
+    return out;
+  };
+  const changelogLogs = listVersionLogFiles(logRoot)
+    .map((p) => fs.readFileSync(p, "utf8"))
+    .join("\n");
   // Re-load hot docs so this suite does not depend on outer-scope consts from selfcheck.mjs
   const readme = fs.readFileSync(path.join(skillRoot, "README.md"), "utf8");
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");

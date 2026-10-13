@@ -53,7 +53,9 @@ function skillRootFromMeta(repoRoot) {
       } else if (v.startsWith("'") && v.endsWith("'")) {
         v = v.slice(1, -1);
       }
-      if (v) return path.resolve(repoRoot, v);
+      // 0.7.42: portable sentinel — rely on HARNESS_ENG_ROOT / home candidates
+      if (!v || v === "env:HARNESS_ENG_ROOT") continue;
+      return path.resolve(repoRoot, v);
     } catch {
       /* ignore */
     }

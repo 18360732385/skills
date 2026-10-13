@@ -75,7 +75,11 @@ import {
 } from "./lib/field-drift.mjs";
 import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
 import { readGitHead } from "./lib/git-head.mjs";
-import { diffBlockers } from "./lib/upgrade-diff.mjs";
+import {
+  diffBlockers,
+  buildDocTodos,
+  emitUpgradeStrictnessDiff,
+} from "./lib/upgrade-diff.mjs";
 import { splitTableRows } from "./lib/doc-density.mjs";
 import {
   replaceCreateTableBlock,
@@ -96,10 +100,12 @@ import {
   writeSkillRoot,
   readSkillRoot,
   resolveSkillRoot,
+  SKILL_ROOT_ENV_SENTINEL,
 } from "./lib/inventory-meta.mjs";
 import {
   findObsoleteWrappers,
   retireObsoleteWrappers,
+  warnObsoleteWrappers,
 } from "./lib/obsolete-wrappers.mjs";
 import { applyGateProfileToPolicyFile } from "./lib/score-policy-migrate.mjs";
 import { buildBackfillPlan } from "./lib/backfill-plan.mjs";
@@ -300,21 +306,35 @@ assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile
   assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
 }
 const logRoot = path.resolve(skillRoot, "../_log/harness-eng");
+function logFile(ver) {
+  const m = String(ver).match(/^(\d+\.\d+)\./);
+  return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
+}
 function logExists(ver) {
-  return fs.existsSync(path.join(logRoot, `${ver}.md`));
+  return fs.existsSync(logFile(ver));
 }
 function readLog(ver) {
-  const p = path.join(logRoot, `${ver}.md`);
+  const p = logFile(ver);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
 }
+function listVersionLogFiles(root) {
+  if (!fs.existsSync(root)) return [];
+  const out = [];
+  for (const ent of fs.readdirSync(root, { withFileTypes: true })) {
+    if (ent.isDirectory() && /^\d+\.\d+$/.test(ent.name)) {
+      for (const f of fs.readdirSync(path.join(root, ent.name))) {
+        if (/^\d+\.\d+\.\d/.test(f) && f.endsWith(".md")) out.push(path.join(root, ent.name, f));
+      }
+    } else if (ent.isFile() && /^\d+\.\d+\.\d/.test(ent.name) && ent.name.endsWith(".md")) {
+      out.push(path.join(root, ent.name));
+    }
+  }
+  return out;
+}
 const changelogIndex = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
-const changelog = fs.existsSync(logRoot)
-  ? fs
-      .readdirSync(logRoot)
-      .filter((f) => /^\d+\.\d+\.\d/.test(f) && f.endsWith(".md"))
-      .map((f) => fs.readFileSync(path.join(logRoot, f), "utf8"))
-      .join("\n")
-  : "";
+const changelog = listVersionLogFiles(logRoot)
+  .map((p) => fs.readFileSync(p, "utf8"))
+  .join("\n");
 assert(/_log\/harness-eng\//.test(changelogIndex), "CHANGELOG points to _log/harness-eng/");
 for (const ver of ["0.5.2","0.5.3","0.5.4","0.5.5","0.5.6","0.5.7","0.5.8","0.5.9","0.5.10"]) {
   assert(logExists(ver), `_log has ${ver}`);
@@ -3385,7 +3405,11 @@ allow({ agent_message: "[api] probe" });
       "utf8"
     );
     writeSkillRoot(metaTmp, skillRoot);
-    assert(readSkillRoot(metaTmp) === path.resolve(skillRoot), "0.7.35 HK-5 write/read skill_root");
+    // 0.7.42: out-of-repo skill → env sentinel (was abs path in 0.7.35)
+    assert(
+      readSkillRoot(metaTmp) === SKILL_ROOT_ENV_SENTINEL,
+      "0.7.35 HK-5 write/read skill_root (portable sentinel)"
+    );
     const rsTmpl = fs.readFileSync(
       path.join(skillRoot, "templates/scripts/refresh-score.mjs.tmpl"),
       "utf8"
@@ -4031,6 +4055,185 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     /ensureDbMdMaintenance/.test(harnessSrc40) && /warnMcpExampleProfile/.test(harnessSrc40),
     "0.7.40 harness wires db.md + mcp warn"
   );
+}
+
+// --- 0.7.41 e2e-15 P0: upgrade-diff skill_version SSOT · doc_todos handoff ---
+{
+  const upDiff41 = fs.readFileSync(path.join(skillRoot, "scripts/lib/upgrade-diff.mjs"), "utf8");
+  assert(/readSkillVersion/.test(upDiff41), "0.7.41 upgrade-diff uses readSkillVersion");
+  assert(
+    !/skill_version:\s*"0\.7\.38"/.test(upDiff41),
+    "0.7.41 upgrade-diff no hardcoded skill_version 0.7.38"
+  );
+  assert(/buildDocTodos/.test(upDiff41) && /doc_todos/.test(upDiff41), "0.7.41 upgrade-diff doc_todos");
+
+  const todos = buildDocTodos([
+    "coverage_ready",
+    "inventory_undercount:covered_gt_code",
+    "doc_task_drift:foo",
+    "doc_path_drift:/x",
+    "doc_field_drift:orders:priority",
+    "weird_new_blocker",
+  ]);
+  assert(todos.length >= 3, `0.7.41 buildDocTodos non-empty (got ${todos.length})`);
+  assert(todos.some((t) => /coverage|covered_gt/.test(t)), "0.7.41 buildDocTodos coverage hint");
+  assert(todos.some((t) => /jobs|doc_task/.test(t)), "0.7.41 buildDocTodos jobs hint");
+  assert(todos.some((t) => /weird_new_blocker/.test(t)), "0.7.41 buildDocTodos unknown fallback");
+
+  const dryTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-041-updiff-"));
+  try {
+    fs.mkdirSync(path.join(dryTmp, "docs", "harness-eng"), { recursive: true });
+    const dry = emitUpgradeStrictnessDiff(dryTmp, { dryRun: true });
+    assert(dry.skill_version === EXPECTED, `0.7.41 dry-run skill_version === ${EXPECTED} (got ${dry.skill_version})`);
+  } finally {
+    fs.rmSync(dryTmp, { recursive: true, force: true });
+  }
+
+  const upMd41 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(
+    /## 0\.7\.40 → 0\.7\.41/.test(upMd41) && /doc_todos/.test(upMd41),
+    "0.7.41 upgrade.md migration section"
+  );
+  assert(logExists("0.7.41"), "0.7.41 _log note exists");
+}
+
+// --- 0.7.42 e2e-15 P1: portable skill_root sentinel · DDL type-width normalize ---
+{
+  const absTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-042-abs-"));
+  try {
+    const md = path.join(absTmp, "docs", "harness-eng");
+    fs.mkdirSync(md, { recursive: true });
+    const metaPath = path.join(md, "harness-meta.yaml");
+    fs.writeFileSync(metaPath, 'skill: harness-eng\nskill_version: "0.7.42"\n', "utf8");
+    writeSkillRoot(absTmp, skillRoot);
+    assert(
+      readSkillRoot(absTmp) === SKILL_ROOT_ENV_SENTINEL,
+      `0.7.42 out-of-repo skill_root sentinel (got ${readSkillRoot(absTmp)})`
+    );
+    const before = fs.readFileSync(metaPath, "utf8");
+    const mtime1 = fs.statSync(metaPath).mtimeMs;
+    writeSkillRoot(absTmp, skillRoot);
+    assert(fs.readFileSync(metaPath, "utf8") === before, "0.7.42 writeSkillRoot noop when unchanged");
+    assert(fs.statSync(metaPath).mtimeMs === mtime1, "0.7.42 writeSkillRoot skips disk when unchanged");
+
+    const prev = process.env.HARNESS_ENG_ROOT;
+    delete process.env.HARNESS_ENG_ROOT;
+    try {
+      assert(resolveSkillRoot(absTmp) == null, "0.7.42 sentinel alone → resolve null");
+      process.env.HARNESS_ENG_ROOT = skillRoot;
+      assert(
+        resolveSkillRoot(absTmp) === path.resolve(skillRoot),
+        "0.7.42 resolveSkillRoot via HARNESS_ENG_ROOT"
+      );
+    } finally {
+      if (prev == null) delete process.env.HARNESS_ENG_ROOT;
+      else process.env.HARNESS_ENG_ROOT = prev;
+    }
+  } finally {
+    fs.rmSync(absTmp, { recursive: true, force: true });
+  }
+
+  assert(
+    normalizeDdlForCompare("CREATE TABLE t(id int(11), name varchar(64))") ===
+      normalizeDdlForCompare("CREATE TABLE t(id int, name varchar(255))"),
+    "0.7.42 normalize strips int/varchar widths"
+  );
+  assert(
+    normalizeDdlForCompare("CREATE TABLE t(id int, name varchar(64))") !==
+      normalizeDdlForCompare("CREATE TABLE t(id int, other varchar(64))"),
+    "0.7.42 normalize still detects column rename"
+  );
+
+  const rsTmpl42 = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/refresh-score.mjs.tmpl"),
+    "utf8"
+  );
+  assert(/env:HARNESS_ENG_ROOT/.test(rsTmpl42), "0.7.42 refresh-score skips env sentinel");
+
+  const upMd42 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 0\.7\.41 → 0\.7\.42/.test(upMd42), "0.7.42 upgrade.md migration section");
+  assert(logExists("0.7.42"), "0.7.42 _log note exists");
+}
+
+// --- 0.7.43 e2e-15 P2: last_mode×3 · wrappers warn · multi-batch score→re→up ---
+{
+  const wrapSrc43 = fs.readFileSync(path.join(skillRoot, "scripts/lib/obsolete-wrappers.mjs"), "utf8");
+  assert(/【旧仓升级】/.test(wrapSrc43), "0.7.43 obsolete-wrappers 【旧仓升级】 warn");
+  assert(/标准入口仍是 refresh-score/.test(wrapSrc43) || /是标准入口，勿删/.test(wrapSrc43), "0.7.43 refresh-score standard entry");
+
+  const wrapTmp43 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-043-wrap-"));
+  try {
+    const kb = path.join(wrapTmp43, "scripts", "agent-kb");
+    fs.mkdirSync(kb, { recursive: true });
+    fs.writeFileSync(path.join(kb, "fill-score-ready.mjs"), "export {}\n", "utf8");
+    const errs = [];
+    const prevErr = console.error;
+    console.error = (...a) => errs.push(a.join(" "));
+    try {
+      warnObsoleteWrappers(wrapTmp43);
+    } finally {
+      console.error = prevErr;
+    }
+    assert(errs.some((e) => /【旧仓升级】/.test(e)), `0.7.43 warn stderr 【旧仓升级】 (got ${JSON.stringify(errs)})`);
+  } finally {
+    fs.rmSync(wrapTmp43, { recursive: true, force: true });
+  }
+
+  const baseMeta43 = [
+    "skill: harness-eng",
+    'skill_version: "0.7.43"',
+    "last_mode: land",
+    "ladder: L2",
+    "",
+  ].join("\n");
+  const incomingUp43 = [
+    "skill: harness-eng",
+    'skill_version: "0.7.43"',
+    "last_mode: upgrade",
+    "ladder: L2",
+    "",
+  ].join("\n");
+  const once43 = mergeYamlMaps(baseMeta43, incomingUp43);
+  let thrice43 = once43;
+  thrice43 = mergeYamlMaps(thrice43, incomingUp43);
+  thrice43 = mergeYamlMaps(thrice43, incomingUp43);
+  assert(once43 === thrice43, "0.7.43 upgrade×3 meta byte-identical");
+
+  const stripLastMode = (s) =>
+    String(s || "")
+      .split(/\r?\n/)
+      .filter((ln) => !/^\s*last_mode\s*:/.test(ln))
+      .join("\n");
+  const hash43 = (s) => createHash("sha256").update(s).digest("hex");
+  const incomingRe43 = incomingUp43.replace("last_mode: upgrade", "last_mode: resume");
+  const batchTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-043-batch-"));
+  try {
+    fs.mkdirSync(path.join(batchTmp, "docs", "harness-eng"), { recursive: true });
+    const runBatch = (metaIn) => {
+      let meta = metaIn;
+      const rf = spawnSync(
+        process.execPath,
+        [path.join(skillRoot, "scripts/fill-score.mjs"), "--root", batchTmp, "--json", "--no-write"],
+        { encoding: "utf8", cwd: skillRoot, windowsHide: true, maxBuffer: 20 * 1024 * 1024 }
+      );
+      assert(rf.status === 0, `0.7.43 score --no-write (status=${rf.status})`);
+      meta = mergeYamlMaps(meta, incomingRe43);
+      meta = mergeYamlMaps(meta, incomingUp43);
+      return meta;
+    };
+    const m1 = runBatch(baseMeta43);
+    const h1 = hash43(stripLastMode(m1));
+    const m2 = runBatch(m1);
+    assert(hash43(stripLastMode(m2)) === h1, "0.7.43 (score→re→up)×2 strip-last_mode hash stable");
+    assert(/last_mode:\s*upgrade/.test(m2), "0.7.43 batch ends with last_mode upgrade");
+  } finally {
+    fs.rmSync(batchTmp, { recursive: true, force: true });
+  }
+
+  const upMd43 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 0\.7\.42 → 0\.7\.43/.test(upMd43), "0.7.43 upgrade.md migration section");
+  assert(/【旧仓升级】/.test(upMd43) && /CI 可忽略/.test(upMd43), "0.7.43 upgrade.md last_mode + wrappers notes");
+  assert(logExists("0.7.43"), "0.7.43 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

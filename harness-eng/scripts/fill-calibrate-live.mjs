@@ -115,7 +115,7 @@ function extractCreateSqlFence(md) {
   return m ? m[1].trim() : null;
 }
 
-/** Normalize SHOW CREATE DDL for compare (strip ENGINE/COMMENT/AUTO_INCREMENT noise; keep structure). */
+/** Normalize SHOW CREATE DDL for compare (strip ENGINE/COMMENT/AUTO_INCREMENT/type-width noise; keep structure). */
 export function normalizeDdlForCompare(ddl) {
   return String(ddl || "")
     .replace(/`/g, "")
@@ -126,6 +126,12 @@ export function normalizeDdlForCompare(ddl) {
     .replace(/\s*COLLATE\s*=\s*[\w]+/gi, "")
     .replace(/\s*COMMENT\s*=\s*'[^']*'/gi, "")
     .replace(/\s*COMMENT\s+'[^']*'/gi, "")
+    // 0.7.42 G-low-calibrate-ddl-style: int(11)/varchar(n) display widths
+    .replace(
+      /\b(tinyint|smallint|mediumint|int|integer|bigint)\s*\(\s*\d+\s*\)/gi,
+      "$1"
+    )
+    .replace(/\b(varchar|char|varbinary|binary)\s*\(\s*\d+\s*\)/gi, "$1")
     .replace(/,\s*\)/g, ")")
     .trim()
     .toLowerCase();

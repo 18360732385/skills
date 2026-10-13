@@ -272,6 +272,9 @@ export function writeMysqlGuardServers(root, servers) {
   fs.writeFileSync(dest.abs, raw, "utf8");
 }
 
+/** 0.7.42: portable marker when skill lives outside the target repo (no abs path in meta). */
+export const SKILL_ROOT_ENV_SENTINEL = "env:HARNESS_ENG_ROOT";
+
 /**
  * 0.7.35 HK-5 / G6: read skill_root from harness-meta (refresh-score candidate).
  * @param {string} root
@@ -307,6 +310,7 @@ function isSkillDir(dir) {
 
 /**
  * Resolve portable skill root: HARNESS_ENG_ROOT → meta skill_root (rel vs repo) → abs if exists.
+ * meta `env:HARNESS_ENG_ROOT` is ignored (rely on env).
  * @param {string} root
  * @returns {string|null} absolute path or null
  */
@@ -318,7 +322,7 @@ export function resolveSkillRoot(root) {
     if (isSkillDir(e)) return e;
   }
   const raw = readSkillRoot(absRoot);
-  if (raw) {
+  if (raw && raw !== SKILL_ROOT_ENV_SENTINEL) {
     const candidate = path.isAbsolute(raw)
       ? path.resolve(raw)
       : path.resolve(absRoot, raw);
@@ -328,7 +332,7 @@ export function resolveSkillRoot(root) {
 }
 
 /**
- * 0.7.35 HK-5 / 0.7.39: persist skill_root (relative when skill lives inside the repo).
+ * 0.7.35 HK-5 / 0.7.39 / 0.7.42: persist skill_root (relative in-repo; env sentinel outside).
  * @param {string} root target repo
  * @param {string} skillRoot absolute path to harness-eng skill
  */
@@ -339,11 +343,13 @@ export function writeSkillRoot(root, skillRoot) {
   if (!fs.existsSync(dest.abs)) return;
   const absRoot = path.resolve(root);
   const abs = path.resolve(skillRoot);
-  let stored = abs;
+  let stored = SKILL_ROOT_ENV_SENTINEL;
   const rel = path.relative(absRoot, abs).replace(/\\/g, "/");
   if (rel && !rel.startsWith("..") && !path.isAbsolute(rel)) {
     stored = rel;
   }
+  const prev = readSkillRoot(absRoot);
+  if (prev === stored) return;
   let raw = fs.readFileSync(dest.abs, "utf8");
   const line = `skill_root: ${JSON.stringify(stored)}`;
   if (/^skill_root:\s*/m.test(raw)) {

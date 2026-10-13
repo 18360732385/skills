@@ -10,7 +10,7 @@
    - **升严不自动改用户文档**（`on_exists=skip`）；差分只移交，勿假装开干仍 YES  
    - 仍建议：`node scripts/acceptance-check.mjs --root <TARGET> [--gold]`（或 `fill-plan --residual [--gold]`）  
    - 仅 warnings 且批次已关：走 `fill-plan --residual` 清残项
-   - 旧仓若仍有 `fill-score-ready.mjs` / `cold-bootstrap*.mjs`：upgrade/refresh 默认 warn；`--retire-wrappers` 移到 `scripts/agent-kb/_obsolete/`。`refresh-score.mjs` 仍是标准入口，不自动删
+   - 旧仓若仍有 `fill-score-ready.mjs` / `cold-bootstrap*.mjs`：upgrade/refresh stderr 会打 **【旧仓升级】** warn（必看）；`--retire-wrappers` 移到 `scripts/agent-kb/_obsolete/`。**`refresh-score.mjs` 是标准入口，不自动删**
 
 当前阶梯已齐、只要再升阶时使用。默认 **完整阶 +1**；用户书面「升到 Ln」可一次覆盖中间阶缺口。
 
@@ -58,6 +58,28 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
+
+## 0.7.42 → 0.7.43 迁移要点
+
+1. **meta**：`skill_version` → `0.7.43`
+2. **last_mode**：二次同 mode upgrade meta 零内容 diff；resume↔upgrade 会改 `last_mode`（CI 可忽略该行）
+3. **obsolete wrappers**：含 `fill-score-ready` / `cold-bootstrap*` 的旧仓 upgrade stderr 打 **【旧仓升级】**；`refresh-score.mjs` 标准入口不自动删
+4. **多批**：`(score → resume → upgrade)×2` 排除 `last_mode` 后内容 hash 稳定
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.43`）后再 sync
+
+## 0.7.41 → 0.7.42 迁移要点
+
+1. **meta**：`skill_version` → `0.7.42`
+2. **skill_root**：仓外 skill 写 `env:HARNESS_ENG_ROOT`（不再写本机绝对路径）；解析优先 `HARNESS_ENG_ROOT`；值未变跳过写盘
+3. **calibrate**：`normalizeDdlForCompare` 忽略 `int(11)` / `varchar(n)` 等类型宽度风格差
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.42`）后再 sync
+
+## 0.7.40 → 0.7.41 迁移要点
+
+1. **meta**：`skill_version` → `0.7.41`
+2. **upgrade-diff**：`skill_version` 读 manifest SSOT（不再钉死 0.7.38）
+3. **升严移交**：`upgrade-diff.json` 含 `doc_todos` / `ready_regressed`；stderr 打印文档迁移 TODO；**仍不自动改用户文档**
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.41`）后再 sync
 
 ## 0.7.39 → 0.7.40 迁移要点
 

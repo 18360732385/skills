@@ -59,12 +59,12 @@ export function warnObsoleteWrappers(root) {
   const found = findObsoleteWrappers(root);
   if (found.retire.length) {
     console.error(
-      `harness: 发现已过时绕过脚本（upgrade 不自动删除；--retire-wrappers 可移到 ${OBSOLETE_DIR.replace(/\\/g, "/")}）：${found.retire.join("；")}`
+      `harness: 【旧仓升级】发现已过时绕过脚本（不会自动删除；标准入口仍是 refresh-score.mjs；--retire-wrappers 可移到 ${OBSOLETE_DIR.replace(/\\/g, "/")}）：${found.retire.join("；")}`
     );
   }
   if (found.refreshStale.length) {
     console.error(
-      `harness: ${found.refreshStale.join("；")} 含旧绕过指纹（--inventory / fill-score-ready / inventory_stale）。refresh-score.mjs 仍是标准入口，建议对照 skill tmpl 重渲`
+      `harness: 【旧仓升级】${found.refreshStale.join("；")} 含旧绕过指纹（--inventory / fill-score-ready / inventory_stale）。refresh-score.mjs 是标准入口，勿删；建议对照 skill tmpl 重渲`
     );
   }
   return found;
