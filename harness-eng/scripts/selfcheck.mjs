@@ -436,11 +436,12 @@ assert(/description:\s*>-/.test(skill), "SKILL has model-facing description");
 assert(!/fill-inventory-api\.mjs/.test(skill), "SKILL has no script inventory wall");
 assert(!(/`按计划执行`/.test(skill) && /`LGTM`/.test(skill)), "SKILL does not restate full gate word list");
 const skillDesc = skill.match(/^---[\s\S]*?^---/m)?.[0] || "";
-assert(/Use when the user names harness-eng/.test(skillDesc), "description starts with Use when (SDO triggers)");
+assert(/用户点名 harness-eng/.test(skillDesc), "description starts with 用户点名 (SDO triggers)");
 assert(!/生成\/补齐/.test(skillDesc), "description has no workflow product list");
 assert(!/施工仪式/.test(skillDesc), "description is triggers-only (no 施工仪式 summary)");
 assert(!/scaffold/i.test(skillDesc), "description has no scaffold synonym");
 assert(!/落地\/scaffold/.test(skillDesc), "description has no 落地/scaffold pair");
+assert(/仅作触发/.test(skillDesc), "description states triggers-only in Chinese");
 assert(/## 流程/.test(skill), "SKILL has 流程 section");
 assert(!/## 必读纪律/.test(skill), "SKILL dropped 必读纪律 (merged)");
 assert(/## land[\s\S]*?### Done[\s\S]*?### 步骤/.test(skill), "land has Done then 步骤");
@@ -579,6 +580,13 @@ assert(
 );
 assert(/公开 CLI|harness\.mjs/.test(handbookMd), "使用手册.md documents public CLI");
 assert(/使用手册\.html/.test(handbookMd), "使用手册.md links HTML edition");
+assert(!/当前文档按 \*\*\d+\.\d+\.\d+\*\*/.test(handbookMd), "使用手册.md Q12 no hard version pin");
+assert(!/（当前 <strong>\d+\.\d+\.\d+<\/strong>）/.test(handbookHtml), "使用手册.html Q12 no hard version pin");
+assert(/文首版本钉/.test(handbookMd) && /文首版本钉/.test(handbookHtml), "handbook Q12 MD↔HTML 文首版本钉");
+assert(/双维护/.test(handbookMd) && /双维护/.test(handbookHtml), "handbook MD↔HTML dual-maintain wording");
+assert(!/两边 `version` 当前 \*\*\d+\.\d+\.\d+\*\*/.test(readme), "README no hard dual-manifest version pin");
+assert(/维护者验收/.test(readme), "README VERIFY audience label");
+assert(/落地后常见产物/.test(quickstartMd), "QUICKSTART has artifacts section");
 const handbookSummary = fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8");
 for (const [label, text] of [
   ["使用手册.md", handbookMd],

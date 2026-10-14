@@ -4,13 +4,13 @@
 
 **当前版本：0.7.46**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
-**0.7.28**：e2e P1（upgrade hooks 自动 replace · inventory module_roots · covered_gt_code 阻断 · gold warnings null 语义 · doc-density · HS-4 docsGuard · 缺 inventory 不假绿）。**0.7.27**：e2e P0 热修（NEW-1 阻断崩溃 · L5 Codex 门禁真接线 · when_* 接通 · HS-3 斜杠 · SG-7 CJK · fill-score 绝对 root）。更早列车见 [CHANGELOG.md](CHANGELOG.md)。  
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
-**使用手册（人读）**：[guide/使用手册.html](guide/使用手册.html) · [guide/使用手册.md](guide/使用手册.md) · [guide/使用手册-摘要.md](guide/使用手册-摘要.md)
-**拓扑**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主
+**使用手册（人读）**：[guide/使用手册.html](guide/使用手册.html) · [guide/使用手册.md](guide/使用手册.md) · [guide/使用手册-摘要.md](guide/使用手册-摘要.md)  
+**拓扑**：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主  
+**维护者验收**：[VERIFY.md](VERIFY.md)（非上手教程）
 
-历史（0.6.0 文档拓扑 / Codex 曾冻结 P2 等）见 [CHANGELOG.md](CHANGELOG.md)；勿当现行矩阵。
+历史与列车明细见 [CHANGELOG.md](CHANGELOG.md)；勿当现行矩阵。
 
 ## Git 门禁（HS-8）
 
@@ -46,28 +46,16 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 
 新开 Agent 会话后生效。
 
-## 模式
+## 模式（对 Agent 说）
 
-| 中文 | 模式 | 用途 |
+| 对 Agent 说 | 支 | 结果 |
 |---|---|---|
-| 落地 | `land` | 探测 → 推荐包 → 提问 → WritePlan → 确认后 `harness.mjs` |
-| 续跑 | `resume` | 半成品差分补齐；`on_exists=skip` |
-| 流水线 | `pipeline` | 骨架战役 → 填充战役（过 **填充 MCP 闸**） |
-| 审计 | `audit` | 只读对照阶梯缺口 |
-| 升阶 | `upgrade` | 默认 +1；书面可到指定阶（[upgrade.md](modes/upgrade.md)） |
-| 补空壳真相 | `seed-truths` | 索引行 + `01-*.md` 空壳 |
-| 完整度打分 | `fill-score` | `scripts/fill-score.mjs` + score-policy 裁决（双轴） |
-| 形态诊断 | `fill-morph` | 同上 `--focus morph`；看诊断台 |
-| 开干闸 | `fill-gate` | 同上 `--focus gate`；看决策台 |
-| 填充计划 | `fill-plan` | 批次 / 金标 |
-| 多 Agent 精填 | `fill-truths-agents` | 按 Plan 精填【推荐】 |
-| 自动填充 | `fill-truths-auto` | 仅脚本、对话不推荐（[archive](archive/fill-truths-auto/INDEX.md)） |
-| 契约填充 | `fill-truths` | 见 [fill/fill.md](fill/fill.md) |
-| MCP 装配 | `fill-mcp` | 本仓配置 → 多环境 mcp 矩阵 |
-| live 校准 | `fill-calibrate-live` | MCP 不可用时直连 |
-| HTML 报告 | `fill-report-html` | score → Dashboard（页脚：`skill_version` + `report_schema`；报告壳 ≠ skill） |
+| **流水线** / pipeline | 流水线 | 大仓首次：骨架 → MCP 闸 → 填充 → score |
+| **落地** / **续跑** / **升阶** | 施工 | 装或补骨架（半成品用续跑） |
+| **审计** / **会话自证** | 审计 / 自证 | 对照缺口；默认不写盘 |
+| **填充** / **打分** / fill-plan | 填充 | MCP 过闸后精填与打分 |
 
-不确定选项时回复：**全部推荐**（协议 [recommended-profile.md](modes/recommended-profile.md)；写盘仍过 [write-plan.md](modes/write-plan.md)）。
+完整模式 ID 与细节见 [QUICKSTART.md](QUICKSTART.md) · [SKILL.md](SKILL.md)。不确定选项时回复：**全部推荐**（协议 [recommended-profile.md](modes/recommended-profile.md)；写盘仍过 [write-plan.md](modes/write-plan.md)）。
 
 ## 纪律
 
@@ -89,4 +77,4 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 ## 版本
 
-技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 当前 **0.7.18**，须一致）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。
+技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 须一致，以 manifest 为准）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。

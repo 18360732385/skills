@@ -98,12 +98,37 @@ function syncDocHeaders(text, from, to, kind) {
   return out;
 }
 
+/**
+ * Sync/normalize body version pins that historically drifted past header sync.
+ * Any semver in these phrases → SSOT `version` (so --check catches stale pins).
+ */
+function syncBodyVersionPins(text, version, kind) {
+  let out = text;
+  if (kind === "readme") {
+    out = out.replace(
+      /两边 `version` 当前 \*\*\d+\.\d+\.\d+\*\*/g,
+      `两边 \`version\` 当前 **${version}**`
+    );
+  } else if (kind === "handbook") {
+    out = out.replace(
+      /当前文档按 \*\*\d+\.\d+\.\d+\*\*/g,
+      `当前文档按 **${version}**`
+    );
+  } else if (kind === "handbook-html") {
+    out = out.replace(
+      /（当前 <strong>\d+\.\d+\.\d+<\/strong>）/g,
+      `（当前 <strong>${version}</strong>）`
+    );
+  }
+  return out;
+}
+
 function planUpdates(skillRoot, version) {
   const prev = readTemplatesManifestVersion(skillRoot) || version;
   /** @type {{ rel: string, next: string }[]} */
   const updates = [];
 
-  function queue(rel, transform) {
+  function touch(rel, transform) {
     const abs = path.join(skillRoot, rel);
     if (!fs.existsSync(abs)) {
       throw new Error(`sync target missing: ${rel}`);
@@ -113,13 +138,13 @@ function planUpdates(skillRoot, version) {
     if (next !== cur) updates.push({ rel, next });
   }
 
-  queue("templates/_meta/manifest.yaml", (t) =>
+  touch("templates/_meta/manifest.yaml", (t) =>
     t.replace(/^version:\s*"[^"]*"/m, `version: "${version}"`)
   );
-  queue("templates/meta/harness-meta.yaml.tmpl", (t) =>
+  touch("templates/meta/harness-meta.yaml.tmpl", (t) =>
     t.replace(/^skill_version:\s*"[^"]*"/m, `skill_version: "${version}"`)
   );
-  queue("questions.yaml", (t) =>
+  touch("questions.yaml", (t) =>
     t.replace(/^version:\s*"[^"]*"/m, `version: "${version}"`)
   );
 
@@ -129,18 +154,26 @@ function planUpdates(skillRoot, version) {
     "scripts/fixtures/l5-sync-golden/scripts/agent-config/sync.mjs",
   ];
   for (const rel of syncRelPaths) {
-    queue(rel, (t) => syncSyncMarkers(t, version));
+    touch(rel, (t) => syncSyncMarkers(t, version));
   }
 
-  queue("README.md", (t) => syncDocHeaders(t, prev, version, "readme"));
-  queue("QUICKSTART.md", (t) => syncDocHeaders(t, prev, version, "quickstart"));
-  queue("VERIFY.md", (t) => syncDocHeaders(t, prev, version, "verify"));
-  queue("guide/使用手册.md", (t) => syncDocHeaders(t, prev, version, "handbook"));
-  queue("guide/使用手册-摘要.md", (t) =>
+  touch("README.md", (t) =>
+    syncBodyVersionPins(syncDocHeaders(t, prev, version, "readme"), version, "readme")
+  );
+  touch("QUICKSTART.md", (t) => syncDocHeaders(t, prev, version, "quickstart"));
+  touch("VERIFY.md", (t) => syncDocHeaders(t, prev, version, "verify"));
+  touch("guide/使用手册.md", (t) =>
+    syncBodyVersionPins(syncDocHeaders(t, prev, version, "handbook"), version, "handbook")
+  );
+  touch("guide/使用手册-摘要.md", (t) =>
     syncDocHeaders(t, prev, version, "handbook")
   );
-  queue("guide/使用手册.html", (t) =>
-    syncDocHeaders(t, prev, version, "handbook-html")
+  touch("guide/使用手册.html", (t) =>
+    syncBodyVersionPins(
+      syncDocHeaders(t, prev, version, "handbook-html"),
+      version,
+      "handbook-html"
+    )
   );
 
   return { version, prev, updates };

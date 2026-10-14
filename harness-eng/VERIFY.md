@@ -1,6 +1,6 @@
 # harness-eng 验收记录（0.7.46）
 
-> 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
+> **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 

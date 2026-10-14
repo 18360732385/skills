@@ -58,6 +58,22 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 5. Plan 未关或金标低 → 继续 agents；早停看 Plan 关闭 + ai_coding_ready
 ```
 
+## 落地后常见产物（L4 视角）
+
+确认 WritePlan 后，业务目标仓常见会出现：
+
+| 路径 | 用途 |
+|---|---|
+| `AGENTS.md` | 根协作入口（命令 / Never do / 文档优先级） |
+| `.cursor/rules/` | path-scoped 规则（及等价宿主入口） |
+| `docs/{func,api,db,redis,jobs}/` | 契约真相（按域启用） |
+| `docs/agent-kb/` | 知识回流骨架 |
+| `docs/harness-eng/harness-meta.yaml` | 施工元数据（`skill_version` / ladder） |
+| `docs/harness-eng/report-latest.html` | 五台仪表盘（看 `ai_coding_ready`） |
+| hooks / MCP example | 门禁与工具装配（真密走 local，勿提交） |
+
+装 skill ≠ 业务仓已落地；L5 另有 `docs/agent-config/` + `sync.mjs`。细阶见 [ladder.md](modes/ladder.md)。
+
 ## 本地脚本（可选）
 
 在 **harness-eng 技能目录**执行（`--root` 指向业务目标仓）：

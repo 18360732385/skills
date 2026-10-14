@@ -1,12 +1,11 @@
 ---
 name: harness-eng
 description: >-
-  Use when the user names harness-eng, or says 落地 / land, 续跑 / resume,
-  升阶 / upgrade, 流水线 / pipeline, 审计 / audit, 填充 / fill, 打分 / score,
-  形态 / morph, 贴顶 / 覆盖 / gate, 会话自证 / session-live, 开干,
-  or asks for Agent Harness engineering on a target repo;
-  also when Cron / Scheduler / jobs 契约 work is requested.
-  Description is triggers only — read SKILL.md body before acting.
+  用户点名 harness-eng，或说落地/land、续跑/resume、升阶/upgrade、流水线/pipeline、
+  审计/audit、填充/fill、打分/score、形态/morph、贴顶/覆盖/gate、会话自证/session-live、开干，
+  或要对目标仓做 Agent Harness 工程化时使用；
+  也在涉及 Cron/Scheduler/jobs 契约工作时使用。
+  本 description 仅作触发——行动前先读 SKILL.md 正文。
 ---
 
 # harness-eng
