@@ -80,11 +80,14 @@ import {
   buildDocTodos,
   emitUpgradeStrictnessDiff,
   resolveMigrateDocsMode,
+  resolveCoverageMode,
 } from "./lib/upgrade-diff.mjs";
 import {
   planMigrateDocs,
   applyMigrateDocs,
   runMigrateDocs,
+  planCoverageAppend,
+  normalizeCoverageMode,
 } from "./lib/migrate-docs.mjs";
 import {
   stripYamlKeys,
@@ -4580,6 +4583,172 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     "0.7.46 VERIFY 0.7.41 row notes historical"
   );
   assert(logExists("0.7.46"), "0.7.46 _log note exists");
+}
+
+// --- 0.7.47 e2e-19: coverage append-only · longjump / cold fixtures ---
+{
+  assert(normalizeCoverageMode(undefined) === "off", "0.7.47 coverageMode default off");
+  assert(normalizeCoverageMode("append") === "append", "0.7.47 coverageMode append");
+  assert(normalizeCoverageMode("dry-run") === "dry-run", "0.7.47 coverageMode dry-run");
+  assert(resolveCoverageMode({}) === "off", "0.7.47 resolveCoverageMode default off");
+  assert(
+    resolveCoverageMode({ dryRun: true }) === "off",
+    "0.7.47 dry-run without coverage flag stays off"
+  );
+
+  const harnessSrc47 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(
+    /migrateCoverage:\s*"off"/.test(harnessSrc47) && /--migrate-coverage/.test(harnessSrc47),
+    "0.7.47 harness defaults --migrate-coverage off"
+  );
+
+  const offRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-off-"));
+  try {
+    const inv = { api: { endpoints: [{ method: "GET", path: "/api/demo", http: "GET" }] } };
+    const off = runMigrateDocs(offRoot, {
+      mode: "off",
+      coverageMode: "off",
+      blockers: ["coverage_ready"],
+      inventories: inv,
+    });
+    assert(
+      (off.coverage_ops || []).length === 0 &&
+        (off.coverage_skipped || []).some((s) => /migrate-coverage off/.test(s.reason)),
+      "0.7.47 coverage_ready skipped when coverageMode=off"
+    );
+    assert(
+      !fs.existsSync(path.join(offRoot, "docs", "api", "modules")),
+      "0.7.47 default off does not create api page"
+    );
+  } finally {
+    fs.rmSync(offRoot, { recursive: true, force: true });
+  }
+
+  const pageRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-page-"));
+  try {
+    const inv = { api: { endpoints: [{ method: "GET", path: "/api/demo", http: "GET" }] } };
+    const planned = planCoverageAppend({
+      blockers: ["coverage_ready"],
+      inventories: inv,
+      docsRoot: pageRoot,
+    });
+    assert(
+      planned.ops.length === 1 && planned.ops[0].kind === "coverage_append_page",
+      `0.7.47 missing api page → one coverage_append_page (got ${JSON.stringify(planned.ops.map((o) => o.kind))})`
+    );
+    assert(
+      /TODO\(harness-eng\) migrate-coverage/.test(planned.ops[0].content || ""),
+      "0.7.47 coverage skeleton tagged migrate-coverage"
+    );
+    const applied = runMigrateDocs(pageRoot, {
+      mode: "off",
+      coverageMode: "append",
+      blockers: ["coverage_ready"],
+      inventories: inv,
+    });
+    assert(
+      (applied.coverage_applied || []).some((a) => a.action === "created"),
+      "0.7.47 append writes missing page"
+    );
+    const pages = fs.readdirSync(path.join(pageRoot, "docs", "api", "modules")).filter((n) => n.endsWith(".md"));
+    assert(pages.length === 1, "0.7.47 exactly one api coverage page");
+  } finally {
+    fs.rmSync(pageRoot, { recursive: true, force: true });
+  }
+
+  const gtRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-gt-"));
+  try {
+    const apiDir = path.join(gtRoot, "docs", "api", "modules");
+    fs.mkdirSync(apiDir, { recursive: true });
+    const keep = path.join(apiDir, "01-keep.md");
+    fs.writeFileSync(keep, "## 1. keep\n\n**接口地址：** /api/keep\n这是业务说明，不要删。\n", "utf8");
+    const mtime1 = fs.statSync(keep).mtimeMs;
+    const gt = planCoverageAppend({
+      blockers: ["inventory_undercount:covered_gt_code"],
+      inventories: { api: { endpoints: [{ method: "GET", path: "/api/extra", http: "GET" }] } },
+      docsRoot: gtRoot,
+    });
+    assert(gt.ops.length === 0, "0.7.47 covered_gt produces zero ops");
+    assert(gt.skipped.length >= 1, "0.7.47 covered_gt skipped");
+    assert(
+      !gt.ops.some((o) => /delete|trim|unlink/i.test(o.kind)),
+      "0.7.47 covered_gt never produces delete ops"
+    );
+    const both = planCoverageAppend({
+      blockers: ["coverage_ready", "inventory_undercount:covered_gt_code"],
+      inventories: { api: { endpoints: [{ method: "GET", path: "/api/extra", http: "GET" }] } },
+      docsRoot: gtRoot,
+    });
+    assert(
+      !both.ops.some((o) => /delete|trim|unlink/i.test(String(o.kind))),
+      "0.7.47 coverage plan has no delete kind"
+    );
+    assert(
+      both.skipped.some((s) => /user content present/.test(s.reason)),
+      "0.7.47 user content present skips append"
+    );
+    assert(
+      both.skipped.some((s) => /never delete/.test(s.reason)),
+      "0.7.47 covered_gt still skipped beside coverage_ready"
+    );
+    applyMigrateDocs(gtRoot, { ops: both.ops, skipped: both.skipped }, { dryRun: false });
+    assert(fs.existsSync(keep), "0.7.47 covered_gt must not delete docs");
+    assert(fs.statSync(keep).mtimeMs === mtime1, "0.7.47 user doc not rewritten");
+  } finally {
+    fs.rmSync(gtRoot, { recursive: true, force: true });
+  }
+
+  const dryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-dry-"));
+  try {
+    const inv = { api: { endpoints: [{ method: "GET", path: "/api/demo", http: "GET" }] } };
+    const dry = runMigrateDocs(dryRoot, {
+      mode: "dry-run",
+      coverageMode: "dry-run",
+      blockers: ["coverage_ready"],
+      inventories: inv,
+    });
+    assert((dry.coverage_ops || []).length >= 1, "0.7.47 dry-run lists coverage_ops");
+    const reportPath = path.join(dryRoot, "docs", "harness-eng", "migrate-docs-report.json");
+    assert(fs.existsSync(reportPath), "0.7.47 dry-run writes migrate-docs-report.json");
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    assert(
+      Array.isArray(report.coverage_ops) && report.coverage_ops.length >= 1,
+      "0.7.47 report.coverage_ops"
+    );
+    assert(
+      Array.isArray(report.coverage_skipped),
+      "0.7.47 report.coverage_skipped"
+    );
+    const dryMods = path.join(dryRoot, "docs", "api", "modules");
+    const dryMds = fs.existsSync(dryMods)
+      ? fs.readdirSync(dryMods).filter((n) => n.endsWith(".md"))
+      : [];
+    assert(dryMds.length === 0, "0.7.47 dry-run does not write api page");
+  } finally {
+    fs.rmSync(dryRoot, { recursive: true, force: true });
+  }
+
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-stub-"));
+  try {
+    const stubDir = path.join(stubRoot, "docs", "api", "modules");
+    fs.mkdirSync(stubDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(stubDir, "01-stub.md"),
+      "# stub\n\nTODO(harness-eng)\n",
+      "utf8"
+    );
+    const stubPlan = planCoverageAppend({
+      blockers: ["coverage_ready"],
+      inventories: { api: { endpoints: [{ method: "POST", path: "/api/stub", http: "POST" }] } },
+      docsRoot: stubRoot,
+    });
+    assert(
+      stubPlan.ops.length === 1 && stubPlan.ops[0].kind === "coverage_append_section",
+      `0.7.47 stub → coverage_append_section (got ${JSON.stringify(stubPlan.ops.map((o) => o.kind))})`
+    );
+  } finally {
+    fs.rmSync(stubRoot, { recursive: true, force: true });
+  }
 }
 
 console.log(`ok: ${ok.length}`);
