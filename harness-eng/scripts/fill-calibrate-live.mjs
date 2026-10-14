@@ -115,7 +115,7 @@ function extractCreateSqlFence(md) {
   return m ? m[1].trim() : null;
 }
 
-/** Normalize SHOW CREATE DDL for compare (strip ENGINE/COMMENT/AUTO_INCREMENT/type-width noise; keep structure). */
+/** Normalize SHOW CREATE DDL for compare (strip ENGINE/COMMENT/AUTO_INCREMENT/type-width/charset noise; keep structure). */
 export function normalizeDdlForCompare(ddl) {
   return String(ddl || "")
     .replace(/`/g, "")
@@ -123,7 +123,9 @@ export function normalizeDdlForCompare(ddl) {
     .replace(/\s*ENGINE\s*=\s*\w+/gi, "")
     .replace(/\s*AUTO_INCREMENT\s*=\s*\d+/gi, "")
     .replace(/\s*DEFAULT\s+CHARSET\s*=\s*\w+/gi, "")
-    .replace(/\s*COLLATE\s*=\s*[\w]+/gi, "")
+    .replace(/\s*CHARSET\s*=\s*\w+/gi, "")
+    .replace(/\s*CHARACTER\s+SET\s*=?\s*\w+/gi, "")
+    .replace(/\s*COLLATE\s*=?\s*[\w]+/gi, "")
     .replace(/\s*COMMENT\s*=\s*'[^']*'/gi, "")
     .replace(/\s*COMMENT\s+'[^']*'/gi, "")
     // 0.7.42 G-low-calibrate-ddl-style: int(11)/varchar(n) display widths
@@ -132,9 +134,55 @@ export function normalizeDdlForCompare(ddl) {
       "$1"
     )
     .replace(/\b(varchar|char|varbinary|binary)\s*\(\s*\d+\s*\)/gi, "$1")
+    // 0.7.45: unsigned / zerofill are display/style for structure fingerprint siblings
+    .replace(/\bunsigned\b/gi, "")
+    .replace(/\bzerofill\b/gi, "")
     .replace(/,\s*\)/g, ")")
+    .replace(/\s+\)/g, ")")
+    .replace(/\(\s+/g, "(")
+    .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+}
+
+/**
+ * 0.7.45: structural fingerprint — column name + type family only.
+ * Style-only diffs (charset/width/unsigned) share the same fingerprint.
+ * @param {string} ddl
+ * @returns {string}
+ */
+export function structuralDdlFingerprint(ddl) {
+  const norm = normalizeDdlForCompare(ddl);
+  const cols = [];
+  // crude column list inside first (...) of CREATE TABLE
+  const m = norm.match(/create\s+table\s+\w+\s*\((.*)\)\s*$/i);
+  const body = m ? m[1] : norm;
+  for (const part of body.split(",")) {
+    const p = part.trim();
+    if (!p) continue;
+    if (/^(primary|unique|key|index|constraint|foreign)\b/i.test(p)) continue;
+    const cm = p.match(/^(\w+)\s+([a-z]+)/i);
+    if (!cm) continue;
+    const name = cm[1].toLowerCase();
+    let typ = cm[2].toLowerCase();
+    if (typ === "integer") typ = "int";
+    cols.push(`${name}:${typ}`);
+  }
+  return cols.sort().join("|");
+}
+
+/**
+ * Classify DDL pair: structural change vs style-only noise.
+ * @returns {'equal'|'style'|'structural'}
+ */
+export function classifyDdlDiff(prevDdl, liveDdl) {
+  const a = normalizeDdlForCompare(prevDdl);
+  const b = normalizeDdlForCompare(liveDdl);
+  if (a === b) return "equal";
+  const fa = structuralDdlFingerprint(prevDdl);
+  const fb = structuralDdlFingerprint(liveDdl);
+  if (fa && fb && fa === fb) return "style";
+  return "structural";
 }
 
 /** Short unified-ish diff for stderr (cap lines). */
@@ -454,12 +502,23 @@ async function main() {
         let existing = null;
         if (fs.existsSync(docPath)) existing = fs.readFileSync(docPath, "utf8");
         const prevDdl = existing ? extractCreateSqlFence(existing) : null;
-        const changed =
-          !prevDdl ||
-          normalizeDdlForCompare(prevDdl) !== normalizeDdlForCompare(liveDdl);
+        const kind = !prevDdl
+          ? "structural"
+          : classifyDdlDiff(prevDdl, liveDdl);
         if (!args.writeDdl) {
-          // default / --dry-run: compare only — emit readable diff (FC-1)
-          if (changed) {
+          // default / --dry-run: compare only — structural → db_diff/exit2; style → warn only (0.7.45)
+          if (kind === "equal") {
+            stats.db_unchanged = (stats.db_unchanged || 0) + 1;
+          } else if (kind === "style") {
+            stats.db_style_warn = (stats.db_style_warn || 0) + 1;
+            const snippet = formatDdlDiff(prevDdl || "(missing)", liveDdl);
+            stats.style_diffs = stats.style_diffs || [];
+            stats.style_diffs.push({ file: meta.file, table: name, diff: snippet });
+            console.error(
+              `[calibrate] style-warn ${meta.file}: DDL style-only (charset/width/unsigned); not counted as db_diff`
+            );
+            if (snippet) console.error(snippet);
+          } else {
             stats.db_diff = (stats.db_diff || 0) + 1;
             const snippet = formatDdlDiff(prevDdl || "(missing)", liveDdl);
             stats.diffs.push({ file: meta.file, table: name, diff: snippet });
@@ -467,8 +526,6 @@ async function main() {
               `[calibrate] diff ${meta.file}: DDL ${prevDdl ? "changed" : "missing in doc"}`
             );
             if (snippet) console.error(snippet);
-          } else {
-            stats.db_unchanged = (stats.db_unchanged || 0) + 1;
           }
         } else if (existing) {
           const patched = replaceCreateTableBlock(existing, liveDdl);
@@ -664,11 +721,16 @@ async function main() {
     );
     process.exitCode = 2;
   } else if (!args.writeDdl && (stats.db_diff || 0) > 0) {
-    // 0.7.31 FC-1: compare-only with real DDL drift → exit 2
+    // 0.7.31 FC-1: compare-only with structural DDL drift → exit 2
     console.error(
       `fill-calibrate-live: db_diff=${stats.db_diff} (DDL changed vs docs; use --write-ddl to apply)`
     );
     process.exitCode = 2;
+  } else if (!args.writeDdl && (stats.db_style_warn || 0) > 0) {
+    // 0.7.45: style-only noise → warning, exit 0
+    console.error(
+      `fill-calibrate-live: db_style_warn=${stats.db_style_warn} (charset/width/unsigned style only; not exit 2)`
+    );
   }
 }
 

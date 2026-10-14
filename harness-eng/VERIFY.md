@@ -1,10 +1,48 @@
-# harness-eng 验收记录（0.7.43）
+# harness-eng 验收记录（0.7.46）
 
 > 静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。
 
 ## 版本
 
-当前 **0.7.43**（e2e-15 P2：last_mode×3 · wrappers 告警 · 多批异序；其上 0.7.42 P1 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.46**（e2e-18 P3：文档/口径澄清；其上 0.7.45 P2 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.46 增量验收（e2e-18 P3）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.46`；templates / meta / questions / sync tmpl 一致 | 有 |
+| upgrade 文首「旗标消歧」含 migrate-docs / migrate-policy / check-meta-stable | 有 |
+| 0.7.41 节标注历史口径 +「0.7.44+」；VERIFY 0.7.41 行含历史注 | 有 |
+| glossary：migrate-docs / migrate-policy / last_mode accepted residual | 有 |
+| AGENT-INDEX + QUICKSTART 含升严 CLI 与消歧 | 有 |
+| fill-score `--migrate-policy` 旁注 ≠ migrate-docs | 有 |
+| CHANGELOG 索引含 0.7.46 且存在 `_log/harness-eng/0.7/0.7.46.md`；upgrade `## 0.7.45 → 0.7.46` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.45 增量验收（e2e-17 P2）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.45`；templates / meta / questions / sync tmpl 一致 | 有 |
+| `meta-stable.mjs` strip `last_mode`；`--check-meta-stable --baseline` 仅 mode 差 exit 0 | 有 |
+| wrappers warn 含可复制 retire 命令；`HARNESS_RETIRE_WRAPPERS=1` 可退役；勿删 refresh-score | 有 |
+| `classifyDdlDiff`：宽度+charset 风格 → style；列增删 → structural | 有 |
+| calibrate 纯风格不因 `db_diff` exit2（`db_style_warn`） | 有 |
+| CHANGELOG 索引含 0.7.45 且存在 `_log/harness-eng/0.7/0.7.45.md`；upgrade `## 0.7.44 → 0.7.45` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.7.44 增量验收（e2e-16 P1）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.7.44`；templates / meta / questions / sync tmpl 一致 | 有 |
+| upgrade 默认 migrate-docs=auto；path/field/schedule 漂移可结构化消 | 有 |
+| `--no-migrate-docs` 不改真相文档，仍出 `doc_todos` | 有 |
+| `covered_gt` / coverage 类 blocker 不删用户文档 | 有 |
+| `migrate-docs-report.json` 落盘；upgrade-diff 含 `migrate_docs` | 有 |
+| `--migrate-policy` ≠ `--migrate-docs`（文档区分） | 有 |
+| CHANGELOG 索引含 0.7.44 且存在 `_log/harness-eng/0.7/0.7.44.md`；upgrade `## 0.7.43 → 0.7.44` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.7.43 增量验收（e2e-15 P2）
 
@@ -34,7 +72,7 @@
 |---|---|
 | `_meta/manifest.yaml` 为权威 `0.7.41`；templates / meta / questions / sync tmpl 一致 | 有 |
 | `upgrade-diff.json` 的 `skill_version` === manifest（无硬编码 0.7.38） | 有 |
-| 升严 `doc_todos` / `ready_regressed`；stderr 打印移交；不自动改用户文档 | 有 |
+| 升严 `doc_todos` / `ready_regressed`；stderr 打印移交；不自动改用户文档（**历史**；现默认见 0.7.44 migrate-docs / 0.7.45 meta-stable） | 有 |
 | CHANGELOG 索引含 0.7.41 且存在 `_log/harness-eng/0.7/0.7.41.md`；upgrade `## 0.7.40 → 0.7.41` | 有 |
 | `node scripts/selfcheck.mjs` exit 0 | 有 |
 

@@ -1,11 +1,14 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.43**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
-版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（按 `major.minor` 分目录，一版本一文件，如 `0.7/0.7.43.md`）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/)。
+**列车**：当前 **0.7.46**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（按 `major.minor` 分目录，一版本一文件，如 `0.7/0.7.46.md`）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/)。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.7.46](../_log/harness-eng/0.7/0.7.46.md) | 2026-10-14 | e2e-18 P3：旗标消歧 · 0.7.41 历史标注 · last_mode accepted residual |
+| [0.7.45](../_log/harness-eng/0.7/0.7.45.md) | 2026-10-14 | e2e-17 P2：meta-stable CI · wrappers 可复制 retire · calibrate 风格 warn |
+| [0.7.44](../_log/harness-eng/0.7/0.7.44.md) | 2026-10-14 | e2e-16 P1：upgrade 默认 migrate-docs · --no-migrate-docs 退出 |
 | [0.7.43](../_log/harness-eng/0.7/0.7.43.md) | 2026-10-13 | e2e-15 P2：last_mode×3 · wrappers【旧仓升级】 · 多批异序 selfcheck |
 | [0.7.42](../_log/harness-eng/0.7/0.7.42.md) | 2026-10-13 | e2e-15 P1：skill_root env 哨兵 · calibrate DDL 类型宽度 normalize |
 | [0.7.41](../_log/harness-eng/0.7/0.7.41.md) | 2026-10-13 | e2e-15 P0：upgrade-diff skill_version SSOT · 升严 doc_todos 移交 |

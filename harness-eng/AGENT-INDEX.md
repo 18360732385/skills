@@ -25,7 +25,7 @@
 | 何时 | Read |
 |---|---|
 | 续跑工程化 | [modes/resume.md](modes/resume.md)（≠ feature 续跑主题） |
-| 升阶 | [modes/upgrade.md](modes/upgrade.md) |
+| 升阶 / 升严 | [modes/upgrade.md](modes/upgrade.md)（旗标消歧：`--migrate-docs` ≠ `--migrate-policy`；CI `--check-meta-stable`；wrappers `--retire-wrappers`） |
 | 补空壳真相 | [modes/seed-truths.md](modes/seed-truths.md) |
 
 ### 流水线
@@ -67,4 +67,5 @@
 
 确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton]`。  
 非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，生成物由目标仓 `node scripts/agent-config/sync.mjs` 发出。  
-**升级 L5**：刷新 `scripts/agent-config/sync.mjs`；`node scripts/harness.mjs --check-freshness --root <TARGET>`。
+**升级 L5**：刷新 `scripts/agent-config/sync.mjs`；`node scripts/harness.mjs --check-freshness --root <TARGET>`。  
+**升严常用**：`harness --mode upgrade`（默认 migrate-docs）· `--check-meta-stable --baseline <meta>`（忽略 last_mode）· `--retire-wrappers` / `HARNESS_RETIRE_WRAPPERS=1`。

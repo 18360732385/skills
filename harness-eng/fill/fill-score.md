@@ -74,7 +74,8 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 - **legacy**：语义保持 `generic≤5 && unbound≤3 && tc≥50`。  
 显式 `gate_profile: legacy` 可回退宽松语义。缺 fill-plan → `ai_coding_ready=false`。新仓【推荐】仍 strict。
 
-**形态上限**：`domain_caps`（各域 **100**）/ `formula_ceiling≈100`；抬 caps 不会使 `ai_coding_ready` 变 true。存量仓 `morph_floor: 60|90` 由 resume/upgrade 或 `fill-score --migrate-policy` 字段级迁到 75/95。
+**形态上限**：`domain_caps`（各域 **100**）/ `formula_ceiling≈100`；抬 caps 不会使 `ai_coding_ready` 变 true。存量仓 `morph_floor: 60|90` 由 resume/upgrade 或 `fill-score --migrate-policy` 字段级迁到 75/95。  
+注意：`--migrate-policy` 只改 `score-policy.yaml` 字段，**≠** `harness --migrate-docs`（真相文档结构化迁移；见 [upgrade.md](../modes/upgrade.md) 旗标消歧）。
 
 正写摘要三词：**开干** / **覆盖** / **形态**（见 [glossary.md](../glossary.md)）。提问见 `Q_GATE_PROFILE`。
 
@@ -135,7 +136,7 @@ JSON 含 `coverage_ready.gaps` 与 `score_policy`。`gold_ratio` 为大仓金标
 ```bash
 node scripts/fill-score.mjs --root <TARGET_ROOT> --modules sms-entrance,sms-safe
 node scripts/fill-score.mjs --root <TARGET_ROOT> --inventory <inv.json> --ready-coverage 0.8
-node scripts/fill-score.mjs --root <TARGET_ROOT> --migrate-policy   # 字段级迁旧 morph_floor
+node scripts/fill-score.mjs --root <TARGET_ROOT> --migrate-policy   # score-policy 字段；≠ harness --migrate-docs
 node scripts/fill-score.mjs --root <TARGET_ROOT> --compare prev.json
 node scripts/fill-score.mjs --root <TARGET_ROOT> --summary-only
 node scripts/fill-score.mjs --root <TARGET_ROOT> --verbose

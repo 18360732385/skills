@@ -9,6 +9,7 @@
  *   node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write]
  *   node scripts/harness.mjs --mode backfill --root <TARGET> --findings <path>
  *   node scripts/harness.mjs --check-freshness --root <TARGET>
+ *   node scripts/harness.mjs --check-meta-stable --root <TARGET> [--baseline <file>]
  *
  * Reads harness-meta (docs/harness-eng/ then .cursor/ fallback).
  * If agent_config true (params or meta or ladder L5):
@@ -49,6 +50,7 @@ import {
   warnObsoleteWrappers,
   retireObsoleteWrappers,
 } from "./lib/obsolete-wrappers.mjs";
+import { runMetaStableCheck } from "./lib/meta-stable.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
@@ -62,10 +64,18 @@ const MODES = [
   "backfill",
 ];
 
-/** 0.7.39: warn (or retire) obsolete inventory wrappers. */
+/** 0.7.39 / 0.7.45: warn (or retire) obsolete inventory wrappers. */
+function envRetireWrappers() {
+  const v = String(process.env.HARNESS_RETIRE_WRAPPERS || "")
+    .trim()
+    .toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
 function maybeHandleObsoleteWrappers(root, retire) {
   try {
-    if (retire) retireObsoleteWrappers(root);
+    const doRetire = !!retire || envRetireWrappers();
+    if (doRetire) retireObsoleteWrappers(root);
     else warnObsoleteWrappers(root);
   } catch (e) {
     console.error(`harness: obsolete-wrappers skipped: ${e.message}`);
@@ -149,8 +159,12 @@ function parseArgs(argv) {
     noWrite: false,
     help: false,
     checkFreshness: false,
+    checkMetaStable: false,
+    baseline: null,
     findings: null,
     retireWrappers: false,
+    /** @type {'auto'|'off'|'dry-run'} upgrade 默认 auto */
+    migrateDocs: "auto",
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -164,8 +178,22 @@ function parseArgs(argv) {
     else if (a === "--no-sync") out.noSync = true;
     else if (a === "--no-write") out.noWrite = true;
     else if (a === "--check-freshness") out.checkFreshness = true;
+    else if (a === "--check-meta-stable") out.checkMetaStable = true;
+    else if (a === "--baseline") out.baseline = argv[++i];
     else if (a === "--retire-wrappers") out.retireWrappers = true;
-    else if (a === "--help" || a === "-h") out.help = true;
+    else if (a === "--no-migrate-docs") out.migrateDocs = "off";
+    else if (a === "--migrate-docs" || a.startsWith("--migrate-docs=")) {
+      let v = "auto";
+      if (a.startsWith("--migrate-docs=")) {
+        v = a.slice("--migrate-docs=".length) || "auto";
+      } else if (argv[i + 1] && !String(argv[i + 1]).startsWith("-")) {
+        v = argv[++i];
+      }
+      if (v === "auto" || v === "true" || v === "on") out.migrateDocs = "auto";
+      else if (v === "dry-run" || v === "dryrun") out.migrateDocs = "dry-run";
+      else if (v === "off" || v === "false" || v === "no") out.migrateDocs = "off";
+      else throw new Error(`Unknown --migrate-docs value: ${v} (use auto|dry-run|off)`);
+    } else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
   return out;
@@ -179,6 +207,7 @@ function printHelp() {
   node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write] [--retire-wrappers]
   node scripts/harness.mjs --mode backfill --root <TARGET> --findings <file|dir>
   node scripts/harness.mjs --check-freshness --root <TARGET>
+  node scripts/harness.mjs --check-meta-stable --root <TARGET> [--baseline <file>]
 
 Canonical Agent write entry (0.6.0+).
   non-L5: delegates to render.mjs (same --root/--params/--dry-run/--manifest/--backup)
@@ -191,8 +220,15 @@ Canonical Agent write entry (0.6.0+).
   backfill: 读探针 findings → stdout WritePlan（不写盘）；见 modes/backfill.md。
   --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与目标仓
     scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
+  --check-meta-stable: harness-meta 内容 hash（默认忽略 last_mode）；可选 --baseline 比对。
+    仅 last_mode 差 → exit 0；其它内容差 → exit 1。供 CI 跨 mode 稳态检查。
   --retire-wrappers: upgrade/refresh 将 fill-score-ready / cold-bootstrap 移到
     scripts/agent-kb/_obsolete/（默认只 warn；不删 refresh-score.mjs）。
+    环境变量 HARNESS_RETIRE_WRAPPERS=1 等价开启。
+  --migrate-docs[=auto|dry-run|off]: upgrade 升严后结构化迁移真相文档（默认 auto）。
+    对齐 path/field/task/schedule/key；coverage/covered_gt 只移交不删文档。
+    --no-migrate-docs 等同 off（仅 doc_todos 移交）。
+    注意：--migrate-policy 是 score-policy 字段迁移，与本旗无关。
 `);
 }
 
@@ -365,6 +401,32 @@ export function main(argv = process.argv) {
   if (args.checkFreshness && args.root && !args.params) {
     process.exit(runFreshnessCheck(args.root, skillRoot));
   }
+  if (args.checkMetaStable) {
+    if (!args.root) {
+      printHelp();
+      process.exit(1);
+    }
+    const { status, report } = runMetaStableCheck(args.root, {
+      baseline: args.baseline,
+    });
+    console.log(JSON.stringify(report, null, 2));
+    if (report.equal === true) {
+      console.error(
+        `harness: meta-stable OK（忽略 ${((report.ignoreKeys || []).join(",") || "last_mode")}；hash=${report.hash}）`
+      );
+    } else if (report.equal === false) {
+      console.error(
+        `harness: meta-stable FAIL — 内容差超出忽略键（${(report.ignoreKeys || []).join(",") || "last_mode"}）`
+      );
+    } else if (report.hash) {
+      console.error(
+        `harness: meta-stable hash=${report.hash}（忽略 ${(report.ignoreKeys || []).join(",") || "last_mode"}；加 --baseline 比对）`
+      );
+    } else {
+      console.error(`harness: meta-stable FAIL — ${report.reason || "unknown"}`);
+    }
+    process.exit(status);
+  }
 
   const modeEarly = String(args.mode || "land").toLowerCase();
   if (modeEarly === "refresh") {
@@ -443,7 +505,7 @@ export function main(argv = process.argv) {
         warnManualReplaceGaps(args.root);
         warnMcpExampleProfile(args.root);
         maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
-        emitUpgradeStrictnessDiff(args.root);
+        emitUpgradeStrictnessDiff(args.root, { migrateDocs: args.migrateDocs });
       }
     }
     process.exit(st);
@@ -494,7 +556,7 @@ export function main(argv = process.argv) {
       warnManualReplaceGaps(args.root);
       warnMcpExampleProfile(args.root);
       maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
-      emitUpgradeStrictnessDiff(args.root);
+      emitUpgradeStrictnessDiff(args.root, { migrateDocs: args.migrateDocs });
     }
   }
   process.exit(syncStatus);

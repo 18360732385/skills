@@ -57,9 +57,17 @@ export function findObsoleteWrappers(root) {
  */
 export function warnObsoleteWrappers(root) {
   const found = findObsoleteWrappers(root);
+  const absRoot = path.resolve(root);
+  const rootDisp = absRoot.replace(/\\/g, "/");
   if (found.retire.length) {
     console.error(
       `harness: 【旧仓升级】发现已过时绕过脚本（不会自动删除；标准入口仍是 refresh-score.mjs；--retire-wrappers 可移到 ${OBSOLETE_DIR.replace(/\\/g, "/")}）：${found.retire.join("；")}`
+    );
+    console.error(
+      `harness: 【旧仓升级】退役命令（可复制）：node scripts/harness.mjs --mode upgrade --root ${rootDisp} --retire-wrappers`
+    );
+    console.error(
+      `harness: 【旧仓升级】或设环境变量 HARNESS_RETIRE_WRAPPERS=1；勿删 scripts/agent-kb/refresh-score.mjs（标准入口）`
     );
   }
   if (found.refreshStale.length) {

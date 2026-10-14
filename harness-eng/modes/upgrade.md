@@ -1,5 +1,13 @@
 # upgrade（升阶）
 
+## 旗标消歧（勿混用）
+
+| 旗标 / CLI | 作用对象 | 说明 |
+|---|---|---|
+| `--migrate-docs[=auto\|dry-run\|off]` | 真相文档 `docs/{api,func,db,redis,jobs}` | upgrade 升严后**默认 auto**；`--no-migrate-docs` 仅 `doc_todos` 移交 |
+| `fill-score --migrate-policy` | `score-policy.yaml` 字段（如 `morph_floor`） | **≠** `--migrate-docs`；不写真相文档 |
+| `--check-meta-stable [--baseline]` | `harness-meta.yaml` | CI 稳态；默认忽略 `last_mode`（跨 mode **accepted residual**） |
+
 ## Done
 
 1. 本轮 WritePlan 所列升阶缺口已 `create` / `skip` / `merge`（`on_exists=skip`）
@@ -7,10 +15,12 @@
 3. 目标阶 [ladder.md](ladder.md) 必备项勾选通过；分级移交 TODO 已打印
 4. **升版后必跑升严差分 + acceptance 摘要**  
    - `harness --mode upgrade` 成功收尾写 `docs/harness-eng/upgrade-diff.json`（stderr 摘要）；对照升前 `score-latest.json` 的 blockers  
-   - **升严不自动改用户文档**（`on_exists=skip`）；差分只移交，勿假装开干仍 YES  
+   - **默认自动结构化 migrate-docs**（path / field / task / schedule / key）；报告见 `migrate-docs-report.json`；`--no-migrate-docs` 退回仅 `doc_todos` 移交；`--migrate-docs=dry-run` 只预览  
+   - `coverage` / `covered_gt` **仍不灌水、不删用户文档**；残留 TODO 见 stderr  
    - 仍建议：`node scripts/acceptance-check.mjs --root <TARGET> [--gold]`（或 `fill-plan --residual [--gold]`）  
    - 仅 warnings 且批次已关：走 `fill-plan --residual` 清残项
-   - 旧仓若仍有 `fill-score-ready.mjs` / `cold-bootstrap*.mjs`：upgrade/refresh stderr 会打 **【旧仓升级】** warn（必看）；`--retire-wrappers` 移到 `scripts/agent-kb/_obsolete/`。**`refresh-score.mjs` 是标准入口，不自动删**
+   - 旧仓若仍有 `fill-score-ready.mjs` / `cold-bootstrap*.mjs`：upgrade/refresh stderr 会打 **【旧仓升级】** warn（必看，含可复制退役命令）；`--retire-wrappers` 或 `HARNESS_RETIRE_WRAPPERS=1` 移到 `scripts/agent-kb/_obsolete/`。**`refresh-score.mjs` 是标准入口，勿删**
+   - CI 跨 mode meta：`harness --check-meta-stable --root <TARGET> [--baseline <meta.yaml>]`（默认忽略 `last_mode`；**accepted residual**）
 
 当前阶梯已齐、只要再升阶时使用。默认 **完整阶 +1**；用户书面「升到 Ln」可一次覆盖中间阶缺口。
 
@@ -59,6 +69,30 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.45 → 0.7.46 迁移要点
+
+1. **meta**：`skill_version` → `0.7.46`
+2. **口径**：文首「旗标消歧」表；`last_mode` 跨 mode 为 **accepted residual**（CI `--check-meta-stable`）
+3. **历史**：0.7.41「不自动改用户文档」标注为当时行为；当前默认见 0.7.44 migrate-docs
+4. **热路径**：AGENT-INDEX / glossary / QUICKSTART / fill-score 交叉引用
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.46`）后再 sync
+
+## 0.7.44 → 0.7.45 迁移要点
+
+1. **meta**：`skill_version` → `0.7.45`
+2. **last_mode CI**：`harness --check-meta-stable --root <T> [--baseline <file>]` 默认忽略 `last_mode`；共享 `scripts/lib/meta-stable.mjs`
+3. **wrappers UX**：【旧仓升级】stderr 含可复制 `--retire-wrappers` 命令；`HARNESS_RETIRE_WRAPPERS=1` 等价；**勿删** `scripts/agent-kb/refresh-score.mjs`
+4. **calibrate**：纯 charset/width/unsigned 风格差 → `db_style_warn`（不 exit2）；列集合/类型族差仍 exit2
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.45`）后再 sync
+
+## 0.7.43 → 0.7.44 迁移要点
+
+1. **meta**：`skill_version` → `0.7.44`
+2. **migrate-docs（默认 AUTO）**：upgrade 升严后自动对齐 path / field / task / schedule / key；落盘 `migrate-docs-report.json`；迁移后重跑 fill-score
+3. **退出**：`--no-migrate-docs` 或 `--migrate-docs=off` → 仅 `doc_todos` 移交（0.7.41 行为）；`--migrate-docs=dry-run` 只预览
+4. **边界**：不覆写业务说明；`coverage` / `covered_gt` 不自动灌水/删文档；`--migrate-policy`（score-policy 字段）≠ `--migrate-docs`（真相文档）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.44`）后再 sync
+
 ## 0.7.42 → 0.7.43 迁移要点
 
 1. **meta**：`skill_version` → `0.7.43`
@@ -78,7 +112,7 @@
 
 1. **meta**：`skill_version` → `0.7.41`
 2. **upgrade-diff**：`skill_version` 读 manifest SSOT（不再钉死 0.7.38）
-3. **升严移交**：`upgrade-diff.json` 含 `doc_todos` / `ready_regressed`；stderr 打印文档迁移 TODO；**仍不自动改用户文档**
+3. **升严移交（当时行为）**：`upgrade-diff.json` 含 `doc_todos` / `ready_regressed`；stderr 打印文档迁移 TODO；当时**不**自动改用户文档。**0.7.44+ 默认 `migrate-docs=auto`；本条为历史口径，现行为见上文旗标消歧与 0.7.43→0.7.44**
 4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.41`）后再 sync
 
 ## 0.7.39 → 0.7.40 迁移要点

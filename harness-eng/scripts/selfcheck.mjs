@@ -79,13 +79,27 @@ import {
   diffBlockers,
   buildDocTodos,
   emitUpgradeStrictnessDiff,
+  resolveMigrateDocsMode,
 } from "./lib/upgrade-diff.mjs";
+import {
+  planMigrateDocs,
+  applyMigrateDocs,
+  runMigrateDocs,
+} from "./lib/migrate-docs.mjs";
+import {
+  stripYamlKeys,
+  compareHarnessMetaStable,
+  hashHarnessMetaText,
+  runMetaStableCheck,
+} from "./lib/meta-stable.mjs";
 import { splitTableRows } from "./lib/doc-density.mjs";
 import {
   replaceCreateTableBlock,
   formatDdlDiff,
   extractShowCreateDdl,
   normalizeDdlForCompare,
+  classifyDdlDiff,
+  structuralDdlFingerprint,
 } from "./fill-calibrate-live.mjs";
 import { updateDomainIndex, extractInventoryEvidence } from "./lib/merge-domain.mjs";
 import { applyCommandsPrefill, collectCommandPrefill } from "./lib/prefill-commands.mjs";
@@ -4199,12 +4213,6 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   thrice43 = mergeYamlMaps(thrice43, incomingUp43);
   assert(once43 === thrice43, "0.7.43 upgrade×3 meta byte-identical");
 
-  const stripLastMode = (s) =>
-    String(s || "")
-      .split(/\r?\n/)
-      .filter((ln) => !/^\s*last_mode\s*:/.test(ln))
-      .join("\n");
-  const hash43 = (s) => createHash("sha256").update(s).digest("hex");
   const incomingRe43 = incomingUp43.replace("last_mode: upgrade", "last_mode: resume");
   const batchTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-043-batch-"));
   try {
@@ -4222,9 +4230,13 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
       return meta;
     };
     const m1 = runBatch(baseMeta43);
-    const h1 = hash43(stripLastMode(m1));
+    const h1 = hashHarnessMetaText(m1);
     const m2 = runBatch(m1);
-    assert(hash43(stripLastMode(m2)) === h1, "0.7.43 (score→re→up)×2 strip-last_mode hash stable");
+    assert(
+      compareHarnessMetaStable(m1, m2).equal,
+      "0.7.43 (score→re→up)×2 strip-last_mode hash stable"
+    );
+    assert(hashHarnessMetaText(m2) === h1, "0.7.43 meta-stable hash helper matches");
     assert(/last_mode:\s*upgrade/.test(m2), "0.7.43 batch ends with last_mode upgrade");
   } finally {
     fs.rmSync(batchTmp, { recursive: true, force: true });
@@ -4234,6 +4246,332 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   assert(/## 0\.7\.42 → 0\.7\.43/.test(upMd43), "0.7.43 upgrade.md migration section");
   assert(/【旧仓升级】/.test(upMd43) && /CI 可忽略/.test(upMd43), "0.7.43 upgrade.md last_mode + wrappers notes");
   assert(logExists("0.7.43"), "0.7.43 _log note exists");
+}
+
+// --- 0.7.44 e2e-16 P1: default migrate-docs · structural patches · opt-out ---
+{
+  assert(resolveMigrateDocsMode({}) === "auto", "0.7.44 default migrateDocs mode auto");
+  assert(resolveMigrateDocsMode({ migrateDocs: "off" }) === "off", "0.7.44 migrateDocs off");
+  assert(resolveMigrateDocsMode({ migrateDocs: "dry-run" }) === "dry-run", "0.7.44 migrateDocs dry-run");
+
+  const harnessSrc44 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(
+    /--no-migrate-docs/.test(harnessSrc44) && /migrateDocs/.test(harnessSrc44),
+    "0.7.44 harness wires --no-migrate-docs"
+  );
+  assert(/--migrate-docs/.test(harnessSrc44), "0.7.44 harness help migrate-docs");
+
+  // api path rewrite
+  const pathMig = fs.mkdtempSync(path.join(os.tmpdir(), "harness-044-path-"));
+  try {
+    fs.mkdirSync(path.join(pathMig, "docs", "api", "modules"), { recursive: true });
+    fs.writeFileSync(
+      path.join(pathMig, "docs", "api", "modules", "01-demo.md"),
+      "## 1. list\n\n**接口地址：** /api/old\n**请求方式：** GET\n",
+      "utf8"
+    );
+    const inv = { endpoints: [{ method: "GET", path: "/api/renamed", http: "GET", requestFields: [] }] };
+    const before = detectApiFieldDrift(pathMig, inv);
+    assert(
+      !before.ok && before.blockers.some((b) => /doc_path_drift/.test(b)),
+      `0.7.44 pre-migrate path drift (got ${JSON.stringify(before.blockers)})`
+    );
+    const plan = planMigrateDocs(pathMig, {
+      blockers: before.blockers,
+      inventories: { api: inv },
+    });
+    assert(plan.ops.some((o) => o.kind === "api_rewrite_path"), "0.7.44 plan api_rewrite_path");
+    const applied = applyMigrateDocs(pathMig, plan, { dryRun: false });
+    assert(applied.applied.length >= 1, "0.7.44 apply path migrate");
+    const after = detectApiFieldDrift(pathMig, inv);
+    assert(
+      !after.blockers.some((b) => /doc_path_drift/.test(b)),
+      `0.7.44 post-migrate no path drift (got ${JSON.stringify(after.blockers)})`
+    );
+  } finally {
+    fs.rmSync(pathMig, { recursive: true, force: true });
+  }
+
+  // db field append
+  const dbMig = fs.mkdtempSync(path.join(os.tmpdir(), "harness-044-db-"));
+  try {
+    const tableDir = path.join(dbMig, "docs", "db", "table");
+    fs.mkdirSync(tableDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(tableDir, "01-t_foo.md"),
+      ["表名：`t_foo`", "", "## 字段", "", "| 字段名 | 类型 |", "|---|---|", "| id | bigint |", ""].join("\n"),
+      "utf8"
+    );
+    const live = { tables: [{ name: "t_foo", columns: [{ name: "id" }, { name: "new_col" }] }] };
+    const d0 = detectDbFieldDrift(dbMig, live);
+    assert(d0.blockers.some((b) => /new_col/.test(b)), "0.7.44 pre-migrate db field drift");
+    const r = runMigrateDocs(dbMig, {
+      mode: "auto",
+      blockers: d0.blockers,
+      inventories: { db: live },
+    });
+    assert(r.applied.some((a) => a.kind === "db_append_fields"), "0.7.44 db_append_fields applied");
+    const d1 = detectDbFieldDrift(dbMig, live);
+    assert(d1.ok, `0.7.44 post-migrate db drift cleared (got ${JSON.stringify(d1.blockers)})`);
+  } finally {
+    fs.rmSync(dbMig, { recursive: true, force: true });
+  }
+
+  // jobs schedule append
+  const jobMig = fs.mkdtempSync(path.join(os.tmpdir(), "harness-044-job-"));
+  try {
+    fs.mkdirSync(path.join(jobMig, "docs", "jobs", "tasks"), { recursive: true });
+    fs.writeFileSync(
+      path.join(jobMig, "docs", "jobs", "tasks", "01-close.md"),
+      "# close-stale\n\ntask_code: close-stale-resolved\ncron: 0 0 * * *\n",
+      "utf8"
+    );
+    const jinv = {
+      tasks: [
+        {
+          task_code: "close-stale-resolved",
+          scheduler: { method: "run", fixedRate: "86400000" },
+        },
+      ],
+    };
+    const s0 = detectJobsTaskDrift(jobMig, jinv);
+    assert(s0.blockers.some((b) => /doc_schedule_drift/.test(b)), "0.7.44 pre-migrate schedule drift");
+    runMigrateDocs(jobMig, { mode: "auto", blockers: s0.blockers, inventories: { jobs: jinv } });
+    const s1 = detectJobsTaskDrift(jobMig, jinv);
+    assert(
+      !s1.blockers.some((b) => /doc_schedule_drift/.test(b)),
+      `0.7.44 post-migrate schedule cleared (got ${JSON.stringify(s1.blockers)})`
+    );
+  } finally {
+    fs.rmSync(jobMig, { recursive: true, force: true });
+  }
+
+  // covered_gt never deletes docs
+  const covMig = fs.mkdtempSync(path.join(os.tmpdir(), "harness-044-cov-"));
+  try {
+    const apiDir = path.join(covMig, "docs", "api", "modules");
+    fs.mkdirSync(apiDir, { recursive: true });
+    const keep = path.join(apiDir, "01-keep.md");
+    fs.writeFileSync(keep, "## 1. keep\n\n**接口地址：** /api/keep\n", "utf8");
+    const mtime1 = fs.statSync(keep).mtimeMs;
+    const plan = planMigrateDocs(covMig, {
+      blockers: ["coverage_ready", "inventory_undercount:covered_gt_code"],
+      inventories: { api: { endpoints: [] } },
+    });
+    assert(plan.ops.length === 0, "0.7.44 coverage blockers produce no structural ops");
+    assert(plan.skipped.length >= 1, "0.7.44 coverage skipped handoff");
+    applyMigrateDocs(covMig, plan, { dryRun: false });
+    assert(fs.existsSync(keep), "0.7.44 covered_gt must not delete docs");
+    assert(fs.statSync(keep).mtimeMs === mtime1, "0.7.44 covered_gt must not rewrite docs");
+  } finally {
+    fs.rmSync(covMig, { recursive: true, force: true });
+  }
+
+  const upMd44 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 0\.7\.43 → 0\.7\.44/.test(upMd44), "0.7.44 upgrade.md migration section");
+  assert(/migrate-docs|migrate_docs|--no-migrate-docs/.test(upMd44), "0.7.44 upgrade.md migrate-docs notes");
+  assert(/migrate-policy/.test(upMd44) && /真相文档/.test(upMd44), "0.7.44 distinguishes migrate-policy vs migrate-docs");
+  assert(logExists("0.7.44"), "0.7.44 _log note exists");
+  const verify44 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/## 0\.7\.44 增量验收/.test(verify44), "0.7.44 VERIFY section");
+}
+
+// --- 0.7.45 e2e-17 P2: meta-stable CI · wrappers UX · calibrate style warn ---
+{
+  const resumeMeta = [
+    "skill: harness-eng",
+    `skill_version: "${EXPECTED}"`,
+    "last_mode: resume",
+    "ladder: L2",
+    "",
+  ].join("\n");
+  const upgradeMeta = resumeMeta.replace("last_mode: resume", "last_mode: upgrade");
+  assert(
+    compareHarnessMetaStable(resumeMeta, upgradeMeta).equal,
+    "0.7.45 resume↔upgrade only last_mode → stable equal"
+  );
+  assert(
+    stripYamlKeys(resumeMeta).includes("ladder") && !/last_mode/.test(stripYamlKeys(resumeMeta)),
+    "0.7.45 stripYamlKeys drops last_mode"
+  );
+
+  const metaCliTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-045-meta-"));
+  try {
+    const md = path.join(metaCliTmp, "docs", "harness-eng");
+    fs.mkdirSync(md, { recursive: true });
+    const metaPath = path.join(md, "harness-meta.yaml");
+    fs.writeFileSync(metaPath, upgradeMeta, "utf8");
+    const basePath = path.join(metaCliTmp, "baseline.yaml");
+    fs.writeFileSync(basePath, resumeMeta, "utf8");
+    const chk = runMetaStableCheck(metaCliTmp, { baseline: basePath });
+    assert(chk.status === 0 && chk.report.equal === true, "0.7.45 runMetaStableCheck baseline OK");
+    const cli = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/harness.mjs"),
+        "--check-meta-stable",
+        "--root",
+        metaCliTmp,
+        "--baseline",
+        basePath,
+      ],
+      { encoding: "utf8", windowsHide: true }
+    );
+    assert(cli.status === 0, `0.7.45 harness --check-meta-stable exit 0 (got ${cli.status})`);
+    const broken = resumeMeta.replace("ladder: L2", "ladder: L3");
+    fs.writeFileSync(basePath, broken, "utf8");
+    const chkFail = runMetaStableCheck(metaCliTmp, { baseline: basePath });
+    assert(chkFail.status === 1, "0.7.45 meta-stable fails on ladder drift");
+  } finally {
+    fs.rmSync(metaCliTmp, { recursive: true, force: true });
+  }
+
+  const wrapTmp45 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-045-wrap-"));
+  try {
+    const kb = path.join(wrapTmp45, "scripts", "agent-kb");
+    fs.mkdirSync(kb, { recursive: true });
+    fs.writeFileSync(path.join(kb, "fill-score-ready.mjs"), "export {}\n", "utf8");
+    fs.writeFileSync(path.join(kb, "refresh-score.mjs"), "export {}\n", "utf8");
+    const errs = [];
+    const prevErr = console.error;
+    console.error = (...a) => errs.push(a.join(" "));
+    try {
+      warnObsoleteWrappers(wrapTmp45);
+    } finally {
+      console.error = prevErr;
+    }
+    assert(
+      errs.some((e) => /退役命令（可复制）/.test(e) && /--retire-wrappers/.test(e)),
+      `0.7.45 wrappers warn copyable retire cmd (got ${JSON.stringify(errs)})`
+    );
+    assert(errs.some((e) => /HARNESS_RETIRE_WRAPPERS/.test(e)), "0.7.45 wrappers warn mentions env");
+    const prevEnv = process.env.HARNESS_RETIRE_WRAPPERS;
+    process.env.HARNESS_RETIRE_WRAPPERS = "1";
+    try {
+      // harness helper path: retire via env when calling maybe through retireObsoleteWrappers directly
+      const moved = retireObsoleteWrappers(wrapTmp45);
+      assert(moved.moved.length >= 1, "0.7.45 retire wrappers moves files");
+      assert(
+        fs.existsSync(path.join(kb, "refresh-score.mjs")),
+        "0.7.45 refresh-score never retired"
+      );
+      assert(
+        !fs.existsSync(path.join(kb, "fill-score-ready.mjs")),
+        "0.7.45 fill-score-ready retired"
+      );
+    } finally {
+      if (prevEnv == null) delete process.env.HARNESS_RETIRE_WRAPPERS;
+      else process.env.HARNESS_RETIRE_WRAPPERS = prevEnv;
+    }
+  } finally {
+    fs.rmSync(wrapTmp45, { recursive: true, force: true });
+  }
+
+  // also assert harness wires env retire
+  const harnessSrc45 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(
+    /HARNESS_RETIRE_WRAPPERS/.test(harnessSrc45) && /check-meta-stable|checkMetaStable/.test(harnessSrc45),
+    "0.7.45 harness wires env retire + check-meta-stable"
+  );
+
+  assert(
+    classifyDdlDiff(
+      "CREATE TABLE t(id int(11) unsigned) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+      "CREATE TABLE t(id int) CHARACTER SET utf8"
+    ) === "equal" ||
+      classifyDdlDiff(
+        "CREATE TABLE t(id int(11) unsigned) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+        "CREATE TABLE t(id int) CHARACTER SET utf8"
+      ) === "style",
+    "0.7.45 width+charset(+unsigned) is equal or style"
+  );
+  // After normalize, unsigned stripped and widths stripped — should be equal
+  assert(
+    normalizeDdlForCompare(
+      "CREATE TABLE t(id int(11) unsigned) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    ) === normalizeDdlForCompare("CREATE TABLE t(id int) CHARACTER SET utf8"),
+    "0.7.45 normalize strips charset/unsigned/width"
+  );
+  assert(
+    classifyDdlDiff(
+      "CREATE TABLE t(id int, name varchar(64))",
+      "CREATE TABLE t(id int, name varchar(255) CHARACTER SET utf8mb4)"
+    ) === "equal" ||
+      classifyDdlDiff(
+        "CREATE TABLE t(id int, name varchar(64))",
+        "CREATE TABLE t(id int, name varchar(255) CHARACTER SET utf8mb4)"
+      ) === "style",
+    "0.7.45 varchar width+charset not structural"
+  );
+  assert(
+    classifyDdlDiff(
+      "CREATE TABLE t(id int, name varchar(64))",
+      "CREATE TABLE t(id int, other varchar(64))"
+    ) === "structural",
+    "0.7.45 column rename is structural"
+  );
+  assert(
+    structuralDdlFingerprint("CREATE TABLE t(id int, name varchar(64))") ===
+      structuralDdlFingerprint("CREATE TABLE t(id int(11), name varchar(255))"),
+    "0.7.45 structural fingerprint ignores widths"
+  );
+
+  const upMd45 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 0\.7\.44 → 0\.7\.45/.test(upMd45), "0.7.45 upgrade.md migration section");
+  assert(/check-meta-stable/.test(upMd45), "0.7.45 upgrade.md meta-stable");
+  assert(/HARNESS_RETIRE_WRAPPERS|refresh-score/.test(upMd45), "0.7.45 upgrade.md wrappers UX");
+  assert(logExists("0.7.45"), "0.7.45 _log note exists");
+  const verify45 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/## 0\.7\.45 增量验收/.test(verify45), "0.7.45 VERIFY section");
+}
+
+// --- 0.7.46 e2e-18 P3: docs DX · flag disambiguation · historical handoff note ---
+{
+  const upMd46 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 旗标消歧/.test(upMd46), "0.7.46 upgrade.md 旗标消歧 section");
+  assert(
+    /migrate-docs/.test(upMd46) && /migrate-policy/.test(upMd46) && /check-meta-stable/.test(upMd46),
+    "0.7.46 upgrade disambiguates three flags"
+  );
+  assert(
+    /## 0\.7\.40 → 0\.7\.41/.test(upMd46) &&
+      /0\.7\.44\+/.test(upMd46) &&
+      /历史口径|当时行为/.test(upMd46),
+    "0.7.46 upgrade 0.7.41 section marks historical handoff"
+  );
+  assert(/accepted residual/.test(upMd46), "0.7.46 upgrade marks last_mode accepted residual");
+  assert(/## 0\.7\.45 → 0\.7\.46/.test(upMd46), "0.7.46 upgrade.md migration section");
+
+  const gloss46 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
+  assert(/migrate-docs/.test(gloss46) && /migrate-policy/.test(gloss46), "0.7.46 glossary migrate flags");
+  assert(/accepted residual/.test(gloss46) && /last_mode/.test(gloss46), "0.7.46 glossary last_mode residual");
+  assert(/check-meta-stable/.test(gloss46), "0.7.46 glossary check-meta-stable");
+
+  const idx46 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(
+    /migrate-docs/.test(idx46) && /migrate-policy|check-meta-stable/.test(idx46),
+    "0.7.46 AGENT-INDEX upgrade flags"
+  );
+
+  const qs46 = fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8");
+  assert(
+    /check-meta-stable/.test(qs46) && /migrate-docs/.test(qs46) && /migrate-policy/.test(qs46),
+    "0.7.46 QUICKSTART CLI disambiguation"
+  );
+
+  const fillScore46 = fs.readFileSync(path.join(skillRoot, "fill/fill-score.md"), "utf8");
+  assert(
+    /migrate-policy/.test(fillScore46) && /migrate-docs/.test(fillScore46),
+    "0.7.46 fill-score cross-links migrate-docs"
+  );
+
+  const verify46 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(/## 0\.7\.46 增量验收/.test(verify46), "0.7.46 VERIFY section");
+  assert(
+    /## 0\.7\.41 增量验收[\s\S]*?历史/.test(verify46),
+    "0.7.46 VERIFY 0.7.41 row notes historical"
+  );
+  assert(logExists("0.7.46"), "0.7.46 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

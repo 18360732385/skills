@@ -1,13 +1,15 @@
 /**
  * 0.7.38 G-up-ready-regress: machine-readable upgrade strictness diff.
- * 0.7.41: skill_version from manifest SSOT; doc_todos handoff (no auto doc rewrite).
- * Does not rewrite user truth docs. fill-score is --json only (no --output).
+ * 0.7.41: skill_version from manifest SSOT; doc_todos handoff.
+ * 0.7.44: default structured migrate-docs (AUTO); --no-migrate-docs keeps handoff-only.
+ * fill-score is --json only (no --output).
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { readSkillVersion } from "./skill-version.mjs";
+import { runMigrateDocs } from "./migrate-docs.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
@@ -77,6 +79,8 @@ export function buildDocTodos(addedBlockers) {
       push("api：对齐 docs/api 接口路径与 Controller（doc_path_drift）");
     } else if (b.includes("doc_field_drift")) {
       push("db/api：对齐字段文档与 live inventory / DTO（doc_field_drift）");
+    } else if (b.includes("doc_key_drift")) {
+      push("redis：对齐 docs/redis/keys 与 inventory Key 模式（doc_key_drift）");
     } else {
       unknown = true;
     }
@@ -110,13 +114,41 @@ function parseFillScoreJson(stdout) {
   }
 }
 
+function runFillScoreJson(absRoot) {
+  const script = path.join(SKILL_SCRIPTS, "fill-score.mjs");
+  const r = spawnSync(process.execPath, [script, "--root", absRoot, "--json", "--no-write"], {
+    encoding: "utf8",
+    cwd: absRoot,
+    maxBuffer: 20 * 1024 * 1024,
+    windowsHide: true,
+  });
+  return {
+    report: parseFillScoreJson(r.stdout),
+    stderr: String(r.stderr || r.stdout || ""),
+  };
+}
+
+/**
+ * Normalize migrateDocs mode from opts.
+ * @param {{ dryRun?: boolean, migrateDocs?: string|boolean }} opts
+ * @returns {'auto'|'off'|'dry-run'}
+ */
+export function resolveMigrateDocsMode(opts = {}) {
+  if (opts.dryRun) return "dry-run";
+  const m = opts.migrateDocs;
+  if (m === false || m === "off" || m === "false" || m === "no") return "off";
+  if (m === "dry-run" || m === "dryrun") return "dry-run";
+  return "auto";
+}
+
 /**
  * @param {string} root
- * @param {{ dryRun?: boolean }} [opts]
+ * @param {{ dryRun?: boolean, migrateDocs?: string|boolean }} [opts]
  * @returns {object}
  */
 export function emitUpgradeStrictnessDiff(root, opts = {}) {
   const absRoot = path.resolve(root);
+  const migrateMode = resolveMigrateDocsMode(opts);
   const beforeReport = loadScoreLatest(absRoot);
   const before = collectScoreBlockers(beforeReport);
   const payload = {
@@ -133,29 +165,30 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     score_error: null,
     ready_before: beforeReport?.ai_coding_ready?.ok ?? null,
     ready_after: null,
-    note: "升严不自动改用户文档；对照 docs/harness-eng/upgrade-diff.json",
+    migrate_docs: { mode: migrateMode, applied: [], skipped: [] },
+    note:
+      migrateMode === "off"
+        ? "升严不自动改用户文档（--no-migrate-docs）；对照 docs/harness-eng/upgrade-diff.json"
+        : migrateMode === "dry-run"
+          ? "升严 migrate-docs=dry-run：只预览结构化补丁，不写真相文档"
+          : "升严默认自动结构化迁移真相文档（path/field/task/schedule/key）；coverage 仍移交；--no-migrate-docs 可退出",
   };
 
-  if (opts.dryRun) {
+  // Backward-compat: opts.dryRun (no migrateDocs) skips fill-score entirely (selfcheck / harness).
+  // Explicit migrateDocs='dry-run' still scores and plans patches without writing docs.
+  if (opts.dryRun && opts.migrateDocs == null) {
     payload.ok = true;
     payload.note = "dry-run: skipped fill-score";
     return payload;
   }
 
-  const script = path.join(SKILL_SCRIPTS, "fill-score.mjs");
-  const r = spawnSync(process.execPath, [script, "--root", absRoot, "--json", "--no-write"], {
-    encoding: "utf8",
-    cwd: absRoot,
-    maxBuffer: 20 * 1024 * 1024,
-    windowsHide: true,
-  });
-  const afterReport = parseFillScoreJson(r.stdout);
-  if (!afterReport) {
+  const first = runFillScoreJson(absRoot);
+  if (!first.report) {
     payload.ok = false;
-    payload.score_error = String(r.stderr || r.stdout || "fill-score produced no JSON").slice(0, 800);
+    payload.score_error = first.stderr.slice(0, 800) || "fill-score produced no JSON";
   } else {
-    payload.after = collectScoreBlockers(afterReport);
-    payload.ready_after = afterReport.ai_coding_ready?.ok ?? null;
+    payload.after = collectScoreBlockers(first.report);
+    payload.ready_after = first.report.ai_coding_ready?.ok ?? null;
     const d = diffBlockers(before, payload.after);
     payload.added = d.added;
     payload.removed = d.removed;
@@ -164,10 +197,51 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
 
   payload.ready_regressed =
     payload.ready_before === true && payload.ready_after === false;
+
+  const shouldMigrate =
+    migrateMode !== "off" &&
+    (payload.ready_regressed || payload.added.length > 0 || payload.after.length > 0);
+
+  if (shouldMigrate) {
+    const migrateBlockers =
+      payload.added.length > 0 ? payload.added : payload.after;
+    const mig = runMigrateDocs(absRoot, {
+      mode: migrateMode,
+      blockers: migrateBlockers,
+    });
+    payload.migrate_docs = {
+      mode: migrateMode,
+      applied: mig.applied || [],
+      skipped: mig.skipped || [],
+      errors: mig.errors || [],
+      ops: mig.plan?.ops?.length ?? 0,
+    };
+
+    if (migrateMode === "auto" && (mig.applied || []).some((a) => a.action !== "noop")) {
+      const second = runFillScoreJson(absRoot);
+      if (second.report) {
+        payload.after = collectScoreBlockers(second.report);
+        payload.ready_after = second.report.ai_coding_ready?.ok ?? null;
+        const d2 = diffBlockers(before, payload.after);
+        payload.added = d2.added;
+        payload.removed = d2.removed;
+        payload.unchanged = d2.unchanged;
+        payload.ready_regressed =
+          payload.ready_before === true && payload.ready_after === false;
+      } else {
+        payload.score_error =
+          payload.score_error ||
+          `post-migrate fill-score: ${second.stderr.slice(0, 400)}`;
+      }
+    }
+  }
+
   payload.doc_todos = buildDocTodos(payload.added);
   if (payload.ready_regressed && !payload.doc_todos.length) {
     payload.doc_todos = [
-      "ready YES→NO：对照 upgrade-diff.json before/after blockers，手改真相文档后重跑 fill-score（升严不自动改文档）",
+      migrateMode === "off"
+        ? "ready YES→NO：对照 upgrade-diff.json before/after blockers，手改真相文档后重跑 fill-score（--no-migrate-docs）"
+        : "ready YES→NO：结构化 migrate-docs 未能消尽 blockers；对照 upgrade-diff.json / migrate-docs-report.json 手改残留后重跑 fill-score",
     ];
   }
 
@@ -181,18 +255,31 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     payload.score_error = payload.score_error || `write upgrade-diff: ${e.message}`;
   }
 
+  const migApplied = (payload.migrate_docs.applied || []).filter(
+    (a) => a.action && a.action !== "noop"
+  ).length;
   const line = [
     `harness: upgrade 升严差分 added=${payload.added.length} removed=${payload.removed.length}` +
       (payload.score_error ? ` score_error` : "") +
-      (payload.ready_regressed ? ` ready_regressed` : ""),
+      (payload.ready_regressed ? ` ready_regressed` : "") +
+      (migrateMode !== "off" ? ` migrate_docs=${migrateMode} applied=${migApplied}` : " migrate_docs=off"),
     `  ready ${payload.ready_before === true ? "YES" : payload.ready_before === false ? "NO" : "?"} → ${
       payload.ready_after === true ? "YES" : payload.ready_after === false ? "NO" : "?"
     }`,
     payload.added.length ? `  added: ${payload.added.join(" · ")}` : "  added: (none)",
-    `  落盘 ${DIFF_REL}（不自动改用户文档）`,
+    `  落盘 ${DIFF_REL}` +
+      (migrateMode === "auto"
+        ? "（默认已尝试结构化 migrate-docs）"
+        : migrateMode === "dry-run"
+          ? "（migrate-docs dry-run，未写真相文档）"
+          : "（--no-migrate-docs，不自动改用户文档）"),
   ];
   if (payload.ready_regressed || payload.added.length) {
-    line.push("  文档迁移 TODO（手改；升严不自动改用户文档）：");
+    line.push(
+      migrateMode === "off"
+        ? "  文档迁移 TODO（手改）："
+        : "  残留文档迁移 TODO（migrate-docs 未消尽 / coverage 类）："
+    );
     for (const t of payload.doc_todos) line.push(`    - ${t}`);
   }
   console.error(line.join("\n"));
