@@ -665,6 +665,7 @@ for (const id of ["db", "redis", "func"]) {
     skillRoot,
     "--json",
     "--quiet",
+    "--no-write",
   ]);
   // May fail on non-harness dir, but should at least produce JSON or error
   assert(r.status !== null, "fill-score --json runs");
@@ -4748,6 +4749,143 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     );
   } finally {
     fs.rmSync(stubRoot, { recursive: true, force: true });
+  }
+
+  const upMd47 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 0\.7\.46 → 0\.7\.47/.test(upMd47), "0.7.47 upgrade.md migration section");
+  assert(/--migrate-coverage/.test(upMd47), "0.7.47 upgrade.md migrate-coverage row");
+  const gloss47 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
+  assert(/migrate-coverage/.test(gloss47) && /默认 off/.test(gloss47), "0.7.47 glossary migrate-coverage");
+  assert(
+    /migrate-coverage/.test(fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8")),
+    "0.7.47 AGENT-INDEX migrate-coverage"
+  );
+  assert(
+    /migrate-coverage/.test(fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8")),
+    "0.7.47 QUICKSTART migrate-coverage"
+  );
+  assert(
+    /migrate-coverage/.test(fs.readFileSync(path.join(skillRoot, "fill/fill-score.md"), "utf8")),
+    "0.7.47 fill-score cross-links migrate-coverage"
+  );
+  assert(logExists("0.7.47"), "0.7.47 _log note exists");
+
+  function hasFillWork(root) {
+    const docs = path.join(root, "docs");
+    if (!fs.existsSync(docs)) return false;
+    const stack = [docs];
+    while (stack.length) {
+      const d = stack.pop();
+      for (const n of fs.readdirSync(d)) {
+        const p = path.join(d, n);
+        if (n === ".fill-work") return true;
+        let st;
+        try {
+          st = fs.statSync(p);
+        } catch {
+          continue;
+        }
+        if (st.isDirectory()) stack.push(p);
+      }
+    }
+    return false;
+  }
+
+  const longSrc = path.join(skillRoot, "scripts/fixtures/e2e-19-longjump");
+  const longTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-long-"));
+  const longParams = path.join(os.tmpdir(), `harness-047-long-params-${process.pid}.json`);
+  try {
+    fs.cpSync(longSrc, longTmp, { recursive: true });
+    fs.writeFileSync(
+      longParams,
+      JSON.stringify({
+        on_exists: "skip",
+        placeholders: {},
+        files: [
+          {
+            id: "noop",
+            target: "docs/harness-eng/harness-meta.yaml",
+            action: "skip",
+          },
+        ],
+      }),
+      "utf8"
+    );
+    const up = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/harness.mjs"),
+        "--mode",
+        "upgrade",
+        "--root",
+        longTmp,
+        "--params",
+        longParams,
+        "--migrate-docs=auto",
+      ],
+      { encoding: "utf8", maxBuffer: 20 * 1024 * 1024, windowsHide: true }
+    );
+    assert(
+      up.status === 0,
+      `0.7.47 longjump migrate-docs upgrade exit 0 (got ${up.status}): ${(up.stderr || "").slice(-500)}`
+    );
+    const migReportPath = path.join(longTmp, "docs", "harness-eng", "migrate-docs-report.json");
+    const diffPath = path.join(longTmp, "docs", "harness-eng", "upgrade-diff.json");
+    assert(fs.existsSync(migReportPath), "0.7.47 longjump migrate-docs-report.json");
+    assert(fs.existsSync(diffPath), "0.7.47 longjump upgrade-diff.json");
+    const migReport = JSON.parse(fs.readFileSync(migReportPath, "utf8"));
+    const opsN = (migReport.ops || migReport.plan?.ops || []).length;
+    assert(opsN >= 1, `0.7.47 longjump migrate-docs ops >= 1 (got ${opsN})`);
+    const diff = JSON.parse(fs.readFileSync(diffPath, "utf8"));
+    assert(
+      diff.skill_version === EXPECTED,
+      `0.7.47 longjump skill_version === manifest (got ${diff.skill_version})`
+    );
+    assert(
+      !diff.migrate_coverage || diff.migrate_coverage.mode === "off",
+      "0.7.47 longjump default migrate-coverage off"
+    );
+    const demo = fs.readFileSync(path.join(longTmp, "docs", "api", "modules", "01-demo.md"), "utf8");
+    assert(/\/api\/renamed/.test(demo), "0.7.47 longjump rewrote drifted api path");
+  } finally {
+    fs.rmSync(longTmp, { recursive: true, force: true });
+    fs.rmSync(longParams, { force: true });
+  }
+
+  const coldSrc = path.join(skillRoot, "scripts/fixtures/e2e-19-cold");
+  const coldTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cold-"));
+  try {
+    fs.cpSync(coldSrc, coldTmp, { recursive: true });
+    assert(!hasFillWork(coldTmp), "0.7.47 cold fixture has no fill-work");
+    const git = (args) =>
+      spawnSync("git", args, { cwd: coldTmp, encoding: "utf8", windowsHide: true });
+    assert(git(["init"]).status === 0, "0.7.47 cold git init");
+    git(["add", "-A"]);
+    const commit = git(["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "cold"]);
+    assert(commit.status === 0, `0.7.47 cold git commit: ${commit.stderr}`);
+    const mem = scanApiInventoryMemory(coldTmp);
+    const head = readGitHead(coldTmp);
+    assert(mem && mem.git_head && mem.git_head === head, "0.7.47 cold memory inventory git_head");
+    assert((mem.endpoints || []).length >= 1, "0.7.47 cold memory inventory has endpoints");
+    const scored = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/fill-score.mjs"), "--root", coldTmp, "--json"],
+      { encoding: "utf8", maxBuffer: 20 * 1024 * 1024, windowsHide: true }
+    );
+    assert(scored.status === 0 || scored.status === 2, `0.7.47 cold fill-score exit (got ${scored.status}) ${(scored.stderr || "").slice(-300)}`);
+    const raw = String(scored.stdout || "");
+    const i = raw.indexOf("{");
+    const j = raw.lastIndexOf("}");
+    const report = JSON.parse(raw.slice(i, j + 1));
+    const stale = report.inventory_stale || [];
+    const ready = report.ready?.ok === true || report.ai_coding_ready?.ok === true;
+    assert(
+      ready || !stale.includes("api"),
+      `0.7.47 cold stock ready or inventory_stale excludes api (stale=${JSON.stringify(stale)} ready=${ready})`
+    );
+    assert(!hasFillWork(coldTmp), "0.7.47 cold stock fill-score does not create fill-work");
+  } finally {
+    fs.rmSync(coldTmp, { recursive: true, force: true });
   }
 }
 

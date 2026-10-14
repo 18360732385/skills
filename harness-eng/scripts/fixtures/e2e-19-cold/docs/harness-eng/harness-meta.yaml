@@ -1,0 +1,7 @@
+# e2e-19 cold：无 .fill-work；stock fill-score 靠 memory rescan + git_head
+skill: harness-eng
+skill_version: "0.7.32"
+last_mode: land
+ladder: L2
+domains:
+  - api

@@ -1,0 +1,7 @@
+# e2e-19 longjump：旧 pin 0.7.32。ladder L4 = 契约满阶（非 L5，避免 upgrade 改走 agent-config sync）
+skill: harness-eng
+skill_version: "0.7.32"
+last_mode: land
+ladder: L4
+domains:
+  - api
