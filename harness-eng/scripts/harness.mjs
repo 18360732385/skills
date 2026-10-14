@@ -165,6 +165,8 @@ function parseArgs(argv) {
     retireWrappers: false,
     /** @type {'auto'|'off'|'dry-run'} upgrade 默认 auto */
     migrateDocs: "auto",
+    /** @type {'off'|'append'|'dry-run'} 默认 off；与 migrate-docs 正交 */
+    migrateCoverage: "off",
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -193,6 +195,17 @@ function parseArgs(argv) {
       else if (v === "dry-run" || v === "dryrun") out.migrateDocs = "dry-run";
       else if (v === "off" || v === "false" || v === "no") out.migrateDocs = "off";
       else throw new Error(`Unknown --migrate-docs value: ${v} (use auto|dry-run|off)`);
+    } else if (a === "--migrate-coverage" || a.startsWith("--migrate-coverage=")) {
+      let v = "append";
+      if (a.startsWith("--migrate-coverage=")) {
+        v = a.slice("--migrate-coverage=".length) || "append";
+      } else if (argv[i + 1] && !String(argv[i + 1]).startsWith("-")) {
+        v = argv[++i];
+      }
+      if (v === "append" || v === "on" || v === "true") out.migrateCoverage = "append";
+      else if (v === "dry-run" || v === "dryrun") out.migrateCoverage = "dry-run";
+      else if (v === "off" || v === "false" || v === "no") out.migrateCoverage = "off";
+      else throw new Error(`Unknown --migrate-coverage value: ${v} (use off|append|dry-run)`);
     } else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -226,9 +239,11 @@ Canonical Agent write entry (0.6.0+).
     scripts/agent-kb/_obsolete/（默认只 warn；不删 refresh-score.mjs）。
     环境变量 HARNESS_RETIRE_WRAPPERS=1 等价开启。
   --migrate-docs[=auto|dry-run|off]: upgrade 升严后结构化迁移真相文档（默认 auto）。
-    对齐 path/field/task/schedule/key；coverage/covered_gt 只移交不删文档。
+    对齐 path/field/task/schedule/key；coverage/covered_gt 默认只移交不删文档。
     --no-migrate-docs 等同 off（仅 doc_todos 移交）。
     注意：--migrate-policy 是 score-policy 字段迁移，与本旗无关。
+  --migrate-coverage[=off|append|dry-run]: 覆盖类 blocker 的缺页/缺节 append（默认 off）。
+    append 只补缺失页或占位节；covered_gt 仍移交，永不删文档。≠ --migrate-docs。
 `);
 }
 
@@ -505,7 +520,10 @@ export function main(argv = process.argv) {
         warnManualReplaceGaps(args.root);
         warnMcpExampleProfile(args.root);
         maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
-        emitUpgradeStrictnessDiff(args.root, { migrateDocs: args.migrateDocs });
+        emitUpgradeStrictnessDiff(args.root, {
+          migrateDocs: args.migrateDocs,
+          coverageMode: args.migrateCoverage,
+        });
       }
     }
     process.exit(st);
@@ -556,7 +574,10 @@ export function main(argv = process.argv) {
       warnManualReplaceGaps(args.root);
       warnMcpExampleProfile(args.root);
       maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
-      emitUpgradeStrictnessDiff(args.root, { migrateDocs: args.migrateDocs });
+      emitUpgradeStrictnessDiff(args.root, {
+        migrateDocs: args.migrateDocs,
+        coverageMode: args.migrateCoverage,
+      });
     }
   }
   process.exit(syncStatus);

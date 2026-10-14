@@ -29,8 +29,9 @@
 | **审计** | `audit` | 只读对照缺口，默认不写盘 |
 | **会话自证** | `session-live` | 当前宿主核验 MCP/hooks/rules/githooks + **human_gates**（检查表 **1.2**）；多宿主 `--emit-playbook` / `--merge-matrix`；见 [session-live.md](modes/session-live.md) |
 | **升阶** | `upgrade` | 当前完整阶再 +1（书面可到指定阶）；规格 [upgrade.md](modes/upgrade.md) |
-| **migrate-docs** | `harness --migrate-docs` | upgrade 升严后**结构化迁移真相文档**（默认 auto；`--no-migrate-docs` 仅移交）。**≠** `--migrate-policy` |
-| **migrate-policy** | `fill-score --migrate-policy` | 仅字段级迁移 `score-policy.yaml`（如 `morph_floor`）。**≠** `--migrate-docs` |
+| **migrate-docs** | `harness --migrate-docs` | upgrade 升严后**结构化迁移真相文档**（默认 auto；`--no-migrate-docs` 仅移交）。**≠** `--migrate-policy`；**≠** `--migrate-coverage` |
+| **migrate-coverage** | `harness --migrate-coverage` | 覆盖类 blocker 的缺页/缺节 append。**默认 off**；`append` 不删文档；`covered_gt` 仍移交。与 `migrate-docs` 正交 |
+| **migrate-policy** | `fill-score --migrate-policy` | 仅字段级迁移 `score-policy.yaml`（如 `morph_floor`）。**≠** `--migrate-docs`；**≠** `--migrate-coverage` |
 | **last_mode** | meta 字段 | resume↔upgrade 会改行；**accepted residual**——CI 用 `harness --check-meta-stable`（默认忽略该键），勿当内容漂移 H |
 | **补空壳真相** | `seed-truths` | 索引表加导航行 + `01-*.md` 空壳（**无**字段级契约） |
 | **填充计划** | `fill-plan` | 目标/批次/Done；进度 SSOT（`docs/harness-eng/fill-plan.yaml`） |

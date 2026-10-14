@@ -3,6 +3,8 @@
  * Default AUTO on upgrade; opt-out via --no-migrate-docs.
  * Safe scope: path / field / task / schedule / key append-or-align.
  * Never auto-deletes user docs; coverage / covered_gt → skipped handoff only.
+ * 0.7.47: optional --migrate-coverage=append|dry-run (default off) may append
+ * missing pages/sections only. covered_gt never produces a delete op.
  */
 import fs from "fs";
 import path from "path";
@@ -583,6 +585,7 @@ export function applyMigrateDocs(root, plan, opts = {}) {
   const report = {
     ok: errors.length === 0,
     dry_run: dryRun,
+    ops: plan?.ops || [],
     applied,
     skipped: plan?.skipped || [],
     errors,
@@ -603,27 +606,599 @@ export function applyMigrateDocs(root, plan, opts = {}) {
   return report;
 }
 
+const SKELETON_LINE =
+  /^(?:#+\s|>>?\s|\|)|TODO\(harness-eng\)|quality:\s*heuristic|自动骨架|请人工补|真相文档|SSOT|索引见|表名：|task_code:|\*\*接口地址|\*\*请求方式|^```|^-\s*`/;
+
+/**
+ * Placeholder / TODO(harness-eng) only — safe to append a coverage section.
+ * Non-empty business prose → not a placeholder.
+ * Rules:
+ * 1. Append only when the target md is missing or body is placeholder / TODO(harness-eng).
+ * 2. Existing non-empty business text → skip reason "user content present".
+ * 3. Skeleton titles carry TODO(harness-eng) migrate-coverage. Never delete docs.
+ * @param {string} text
+ */
+export function isCoveragePlaceholder(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return true;
+  if (!/TODO\(harness-eng\)/i.test(raw)) {
+    const stripped = raw
+      .replace(/^#+\s+[^\n]*$/gm, "")
+      .replace(/^\s*[-|`\s]+$/gm, "")
+      .trim();
+    return stripped.length === 0;
+  }
+  for (const line of raw.split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t) continue;
+    if (SKELETON_LINE.test(t)) continue;
+    if (/^[-*]\s+`[^`]+`$/.test(t)) continue;
+    return false;
+  }
+  return true;
+}
+
+/**
+ * @param {string|boolean|null|undefined} v
+ * @returns {'off'|'append'|'dry-run'}
+ */
+export function normalizeCoverageMode(v) {
+  if (v == null || v === false || v === "off" || v === "false" || v === "no" || v === "")
+    return "off";
+  if (v === "dry-run" || v === "dryrun" || v === "dry_run") return "dry-run";
+  if (v === "append" || v === "on" || v === true || v === "true") return "append";
+  throw new Error(`Unknown migrate-coverage value: ${v} (use off|append|dry-run)`);
+}
+
+function coverageBlockersOf(blockers) {
+  return (blockers || []).map(String).filter((b) => /coverage_ready|covered_gt/.test(b));
+}
+
+function endpointRows(endpoints) {
+  return (endpoints || [])
+    .map((ep) => ({
+      method: String(ep.method || ep.http || ep.httpMethod || "GET").toUpperCase(),
+      path: String(ep.path || ep.url || "").trim(),
+    }))
+    .filter((e) => e.path);
+}
+
+function shellCoverageApiPage(endpoints) {
+  const sections = endpointRows(endpoints)
+    .map((ep, i) => {
+      const p = ep.path.startsWith("/") ? ep.path : `/${ep.path}`;
+      return `## ${i + 1}. ${p}
+
+> TODO(harness-eng) migrate-coverage
+
+**接口地址：** ${p}
+**请求方式：** ${ep.method}
+
+### 请求参数
+
+| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |
+|---|---|---|---|---|---|---|
+| — | — | 否 | TODO(harness-eng) migrate-coverage | — | — | 未知 |
+`;
+    })
+    .join("\n");
+  return `# API 覆盖
+
+> quality: heuristic — TODO(harness-eng) migrate-coverage
+> 自动骨架，请人工补业务说明。
+
+${sections}`;
+}
+
+function shellCoverageApiSection(endpoints, startIdx) {
+  return endpointRows(endpoints)
+    .map((ep, i) => {
+      const p = ep.path.startsWith("/") ? ep.path : `/${ep.path}`;
+      return `## ${startIdx + i}. ${p}
+
+> TODO(harness-eng) migrate-coverage
+
+**接口地址：** ${p}
+**请求方式：** ${ep.method}
+
+### 请求参数
+
+| 参数名 | 类型 | 必填 | 说明 | 枚举 | 备注 | 示例值 |
+|---|---|---|---|---|---|---|
+| — | — | 否 | TODO(harness-eng) migrate-coverage | — | — | 未知 |
+`;
+    })
+    .join("\n");
+}
+
+function shellCoverageDb(table, columns) {
+  const cols = (columns || []).map((c) => (typeof c === "string" ? { name: c } : c));
+  const rows = cols.length
+    ? cols
+        .map(
+          (c) =>
+            `| ${c.name} | ${c.type || c.typ || "—"} | — | — | TODO(harness-eng) migrate-coverage |`
+        )
+        .join("\n")
+    : "| id | — | — | — | TODO(harness-eng) migrate-coverage |";
+  return `# 表 \`${table}\`
+
+> quality: heuristic — TODO(harness-eng) migrate-coverage
+
+表名：\`${table}\`
+
+## 字段
+
+| 字段名 | 类型 | 非空 | 默认值 | 说明 |
+|---|---|---|---|---|
+${rows}
+`;
+}
+
+function shellCoverageJob(taskCode) {
+  return `# ${taskCode}
+
+> quality: heuristic — TODO(harness-eng) migrate-coverage
+
+task_code: ${taskCode}
+
+## 调度
+
+- TODO(harness-eng) migrate-coverage
+`;
+}
+
+function shellCoverageRedis(patterns) {
+  const rows = (patterns || [])
+    .map(
+      (p) =>
+        `| \`${p}\` | — | — | TODO(harness-eng) migrate-coverage |`
+    )
+    .join("\n");
+  return `# Redis Key
+
+> quality: heuristic — TODO(harness-eng) migrate-coverage
+
+## Key 模式
+
+| 模式 | 示例 | 数据结构 | 说明 |
+|---|---|---|---|
+${rows || "| `TODO` | — | — | TODO(harness-eng) migrate-coverage |"}
+`;
+}
+
+function shellCoverageFunc(services) {
+  const sections = (services || [])
+    .map(
+      (name, i) => `## ${i + 1}. ${name}
+
+> TODO(harness-eng) migrate-coverage
+
+Service：\`${name}\`
+`
+    )
+    .join("\n");
+  return `# Service 覆盖
+
+> quality: heuristic — TODO(harness-eng) migrate-coverage
+
+${sections}`;
+}
+
+function readText(abs) {
+  try {
+    return fs.readFileSync(abs, "utf8");
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Append-only coverage plan. Never emits a delete op.
+ * covered_gt is always skipped (handoff). coverage_ready may add a missing
+ * page or a section on a placeholder / TODO(harness-eng) stub.
+ * @param {{ blockers?: string[], inventories?: object, docsRoot?: string }} opts
+ * @returns {{ ops: object[], skipped: object[] }}
+ */
+export function planCoverageAppend(opts = {}) {
+  const blockers = (opts.blockers || []).map(String);
+  const ops = [];
+  const skipped = [];
+  const docsRoot = opts.docsRoot ? path.resolve(opts.docsRoot) : null;
+  let sawReady = false;
+  for (const b of blockers) {
+    if (!/coverage_ready|covered_gt/.test(b)) continue;
+    // covered_gt: never delete — always skipped with reason
+    if (b.includes("covered_gt")) {
+      skipped.push({
+        blocker: b,
+        reason: "covered_gt — handoff only, never delete/trim docs",
+      });
+      continue;
+    }
+    if (/coverage_ready/.test(b)) sawReady = true;
+  }
+  if (!sawReady || !docsRoot) {
+    return { ops, skipped };
+  }
+
+  const reg = loadDomainRegistry();
+  const inventories = {
+    api: opts.inventories?.api ?? loadDomainInventory(docsRoot, "api"),
+    func: opts.inventories?.func ?? loadDomainInventory(docsRoot, "func"),
+    db: opts.inventories?.db ?? loadDomainInventory(docsRoot, "db"),
+    redis: opts.inventories?.redis ?? loadDomainInventory(docsRoot, "redis"),
+    jobs: opts.inventories?.jobs ?? loadDomainInventory(docsRoot, "jobs"),
+  };
+
+  // api: one page when modules md is missing; section when only a stub exists
+  const apiEps = endpointRows(inventories.api?.endpoints || []);
+  if (apiEps.length) {
+    const dir = truthsPath(docsRoot, "api", reg);
+    const files = listMdFiles(dir);
+    const allText = files.map((f) => readText(f)).join("\n");
+    const missing = apiEps.filter((ep) => !allText.includes(ep.path));
+    if (!missing.length) {
+      /* already represented */
+    } else if (files.some((f) => !isCoveragePlaceholder(readText(f)))) {
+      skipped.push({
+        blocker: "coverage_ready",
+        domain: "api",
+        reason: "user content present",
+      });
+    } else if (!files.length) {
+      const dest = nextIndexedName(dir, "migrate-coverage");
+      ops.push({
+        kind: "coverage_append_page",
+        blocker: "coverage_ready",
+        domain: "api",
+        file: rel(docsRoot, dest),
+        content: shellCoverageApiPage(missing),
+      });
+    } else {
+      const startIdx = (readText(files[0]).match(/^##\s+\d+\./gm) || []).length + 1;
+      ops.push({
+        kind: "coverage_append_section",
+        blocker: "coverage_ready",
+        domain: "api",
+        file: rel(docsRoot, files[0]),
+        content: shellCoverageApiSection(missing, startIdx),
+      });
+    }
+  }
+
+  const dbTables = inventories.db?.tables || [];
+  if (dbTables.length) {
+    const dir = truthsPath(docsRoot, "db", reg);
+    const files = listMdFiles(dir);
+    for (const t of dbTables) {
+      const name = String(t.name || "").trim();
+      if (!name) continue;
+      const hit = files.find((f) => {
+        const base = path.basename(f).toLowerCase();
+        const text = readText(f).toLowerCase();
+        return base.includes(name.toLowerCase()) || text.includes(name.toLowerCase());
+      });
+      if (!hit) {
+        const dest = nextIndexedName(dir, name);
+        ops.push({
+          kind: "coverage_append_page",
+          blocker: "coverage_ready",
+          domain: "db",
+          file: rel(docsRoot, dest),
+          table: name,
+          content: shellCoverageDb(name, t.columns),
+        });
+      } else if (isCoveragePlaceholder(readText(hit))) {
+        ops.push({
+          kind: "coverage_append_section",
+          blocker: "coverage_ready",
+          domain: "db",
+          file: rel(docsRoot, hit),
+          table: name,
+          content: `\n## 字段\n\n| 字段名 | 类型 | 非空 | 默认值 | 说明 |\n|---|---|---|---|---|\n| id | — | — | — | TODO(harness-eng) migrate-coverage |\n`,
+        });
+      } else {
+        skipped.push({
+          blocker: "coverage_ready",
+          domain: "db",
+          table: name,
+          reason: "user content present",
+        });
+      }
+    }
+  }
+
+  const tasks = inventories.jobs?.tasks || [];
+  if (tasks.length) {
+    const dir = truthsPath(docsRoot, "jobs", reg);
+    const files = listMdFiles(dir);
+    for (const task of tasks) {
+      const code = String(task.task_code || task.id || task.name || "").trim();
+      if (!code) continue;
+      const hit = files.find((f) => readText(f).includes(code) || path.basename(f).includes(code));
+      if (!hit) {
+        const dest = nextIndexedName(dir, code);
+        ops.push({
+          kind: "coverage_append_page",
+          blocker: "coverage_ready",
+          domain: "jobs",
+          file: rel(docsRoot, dest),
+          task_code: code,
+          content: shellCoverageJob(code),
+        });
+      } else if (!isCoveragePlaceholder(readText(hit))) {
+        skipped.push({
+          blocker: "coverage_ready",
+          domain: "jobs",
+          task_code: code,
+          reason: "user content present",
+        });
+      }
+    }
+  }
+
+  const redisPatterns = [
+    ...new Set(
+      (inventories.redis?.keys || [])
+        .filter((k) => k && k.redis !== false)
+        .map((k) => String(k.pattern || "").trim())
+        .filter(Boolean)
+    ),
+  ];
+  if (redisPatterns.length) {
+    const dir = truthsPath(docsRoot, "redis", reg);
+    const files = listMdFiles(dir);
+    const allText = files.map((f) => readText(f)).join("\n");
+    const missing = redisPatterns.filter((p) => !allText.includes(p));
+    if (missing.length) {
+      if (files.some((f) => !isCoveragePlaceholder(readText(f)))) {
+        skipped.push({
+          blocker: "coverage_ready",
+          domain: "redis",
+          reason: "user content present",
+        });
+      } else if (!files.length) {
+        const dest = nextIndexedName(dir, "migrate-coverage");
+        ops.push({
+          kind: "coverage_append_page",
+          blocker: "coverage_ready",
+          domain: "redis",
+          file: rel(docsRoot, dest),
+          content: shellCoverageRedis(missing),
+        });
+      } else {
+        const rows = missing
+          .map((p) => `| \`${p}\` | — | — | TODO(harness-eng) migrate-coverage |`)
+          .join("\n");
+        ops.push({
+          kind: "coverage_append_section",
+          blocker: "coverage_ready",
+          domain: "redis",
+          file: rel(docsRoot, files[0]),
+          content: `\n${rows}\n`,
+        });
+      }
+    }
+  }
+
+  const services = [];
+  for (const mod of inventories.func?.modules || []) {
+    for (const svc of mod.services || []) {
+      const name = svc.class || svc.name || svc.service;
+      if (name) services.push(String(name));
+    }
+  }
+  if (services.length) {
+    const dir = truthsPath(docsRoot, "func", reg);
+    const files = listMdFiles(dir);
+    const allText = files.map((f) => readText(f)).join("\n");
+    const missing = services.filter((n) => !allText.includes(n));
+    if (missing.length) {
+      if (files.some((f) => !isCoveragePlaceholder(readText(f)))) {
+        skipped.push({
+          blocker: "coverage_ready",
+          domain: "func",
+          reason: "user content present",
+        });
+      } else if (!files.length) {
+        const dest = nextIndexedName(dir, "migrate-coverage");
+        ops.push({
+          kind: "coverage_append_page",
+          blocker: "coverage_ready",
+          domain: "func",
+          file: rel(docsRoot, dest),
+          content: shellCoverageFunc(missing),
+        });
+      } else {
+        const startIdx = (readText(files[0]).match(/^##\s+\d+\./gm) || []).length + 1;
+        const block = missing
+          .map(
+            (name, i) => `## ${startIdx + i}. ${name}
+
+> TODO(harness-eng) migrate-coverage
+
+Service：\`${name}\`
+`
+          )
+          .join("\n");
+        ops.push({
+          kind: "coverage_append_section",
+          blocker: "coverage_ready",
+          domain: "func",
+          file: rel(docsRoot, files[0]),
+          content: block,
+        });
+      }
+    }
+  }
+
+  if (!ops.length && !skipped.some((s) => s.reason === "user content present")) {
+    skipped.push({
+      blocker: "coverage_ready",
+      reason: "no missing page/section",
+    });
+  }
+  return { ops, skipped };
+}
+
+/**
+ * Apply coverage append ops. Refuses any delete kind. Does not rewrite user prose.
+ * @param {string} root
+ * @param {{ ops?: object[], skipped?: object[] }} plan
+ * @param {{ dryRun?: boolean }} [opts]
+ */
+export function applyCoverageAppend(root, plan, opts = {}) {
+  const absRoot = path.resolve(root);
+  const dryRun = !!opts.dryRun;
+  const applied = [];
+  const errors = [];
+  const skipped = [...(plan?.skipped || [])];
+  for (const op of plan?.ops || []) {
+    const kind = String(op?.kind || "");
+    if (/delete|trim|unlink|overwrite/i.test(kind)) {
+      skipped.push({ ...op, reason: "covered_gt — handoff only, never delete/trim docs" });
+      continue;
+    }
+    if (kind !== "coverage_append_page" && kind !== "coverage_append_section") {
+      errors.push({ op, error: `unknown coverage kind ${kind}` });
+      continue;
+    }
+    const relFile = op.file;
+    if (!relFile || typeof op.content !== "string") {
+      errors.push({ op, error: "coverage op missing file/content" });
+      continue;
+    }
+    const abs = path.join(absRoot, relFile);
+    const exists = fs.existsSync(abs);
+    const cur = exists ? readText(abs) : "";
+    if (exists && !isCoveragePlaceholder(cur)) {
+      skipped.push({ ...op, reason: "user content present" });
+      continue;
+    }
+    const fragment = String(op.content);
+    if (exists && cur.includes(fragment.trim().slice(0, 80))) {
+      applied.push({ ...op, content: undefined, action: "noop" });
+      continue;
+    }
+    if (!dryRun) {
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      const next = exists ? cur.replace(/\s*$/, "\n") + "\n" + fragment : fragment;
+      fs.writeFileSync(abs, next, "utf8");
+    }
+    applied.push({
+      ...op,
+      content: undefined,
+      action: dryRun ? "dry-run" : exists ? "appended" : "created",
+    });
+  }
+  return { applied, skipped, errors };
+}
+
+function writeCoverageReport(absRoot, report) {
+  const outAbs = path.join(absRoot, MIGRATE_REPORT_REL);
+  let disk = {};
+  if (fs.existsSync(outAbs)) {
+    try {
+      disk = JSON.parse(fs.readFileSync(outAbs, "utf8"));
+    } catch {
+      disk = {};
+    }
+  }
+  const next = {
+    ...disk,
+    ok: report.ok !== false && disk.ok !== false,
+    dry_run: report.dry_run === true || disk.dry_run === true,
+    ops: report.ops || disk.ops || report.plan?.ops || [],
+    applied: report.applied || disk.applied || [],
+    skipped: report.skipped || disk.skipped || [],
+    errors: [...(disk.errors || []), ...(report.errors || [])],
+    coverage_mode: report.coverage_mode,
+    coverage_ops: report.coverage_ops || [],
+    coverage_skipped: report.coverage_skipped || [],
+    coverage_applied: (report.coverage_applied || []).map((a) => {
+      const { content, ...rest } = a;
+      void content;
+      return rest;
+    }),
+    out_path: MIGRATE_REPORT_REL,
+  };
+  fs.mkdirSync(path.dirname(outAbs), { recursive: true });
+  fs.writeFileSync(outAbs, JSON.stringify(next, null, 2), "utf8");
+}
+
 /**
  * Plan + apply in one shot.
+ * coverageMode defaults off and does not write coverage pages (0.7.44–46).
  * @param {string} root
- * @param {{ mode?: 'auto'|'off'|'dry-run', blockers?: string[], inventories?: object }} [opts]
+ * @param {{ mode?: 'auto'|'off'|'dry-run', coverageMode?: 'off'|'append'|'dry-run', blockers?: string[], inventories?: object }} [opts]
  */
 export function runMigrateDocs(root, opts = {}) {
   const mode = opts.mode || "auto";
+  const coverageMode = normalizeCoverageMode(opts.coverageMode);
+  const absRoot = path.resolve(root);
+  let report;
   if (mode === "off") {
-    return {
+    report = {
       ok: true,
       mode,
       applied: [],
       skipped: [{ reason: "migrate-docs off" }],
       errors: [],
+      ops: [],
       plan: { ops: [], skipped: [] },
     };
+  } else {
+    const plan = planMigrateDocs(absRoot, {
+      blockers: opts.blockers,
+      inventories: opts.inventories,
+    });
+    report = applyMigrateDocs(absRoot, plan, { dryRun: mode === "dry-run" });
+    report = { ...report, mode, plan };
   }
-  const plan = planMigrateDocs(root, {
-    blockers: opts.blockers,
-    inventories: opts.inventories,
-  });
-  const report = applyMigrateDocs(root, plan, { dryRun: mode === "dry-run" });
-  return { ...report, mode, plan };
+
+  let covPlan;
+  let appliedCov = [];
+  if (coverageMode === "off") {
+    covPlan = {
+      ops: [],
+      skipped: coverageBlockersOf(opts.blockers).map((b) => ({
+        blocker: b,
+        reason: "migrate-coverage off",
+      })),
+    };
+  } else {
+    covPlan = planCoverageAppend({
+      blockers: opts.blockers,
+      inventories: opts.inventories,
+      docsRoot: absRoot,
+    });
+    const applied = applyCoverageAppend(absRoot, covPlan, {
+      dryRun: coverageMode === "dry-run",
+    });
+    appliedCov = applied.applied || [];
+    if (applied.skipped?.length) {
+      covPlan = { ...covPlan, skipped: applied.skipped };
+    }
+    if (applied.errors?.length) {
+      report.ok = false;
+      report.errors = [...(report.errors || []), ...applied.errors];
+    }
+  }
+  report.coverage_mode = coverageMode;
+  report.coverage_ops = covPlan.ops || [];
+  report.coverage_skipped = covPlan.skipped || [];
+  report.coverage_applied = appliedCov;
+  if (coverageMode !== "off") {
+    try {
+      writeCoverageReport(absRoot, report);
+    } catch (e) {
+      report.ok = false;
+      report.errors = [
+        ...(report.errors || []),
+        { error: `write coverage report: ${e.message}` },
+      ];
+    }
+  }
+  return report;
 }

@@ -2,6 +2,7 @@
  * 0.7.38 G-up-ready-regress: machine-readable upgrade strictness diff.
  * 0.7.41: skill_version from manifest SSOT; doc_todos handoff.
  * 0.7.44: default structured migrate-docs (AUTO); --no-migrate-docs keeps handoff-only.
+ * 0.7.47: --migrate-coverage default off; append|dry-run is opt-in and never deletes docs.
  * fill-score is --json only (no --output).
  */
 import fs from "fs";
@@ -9,7 +10,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { readSkillVersion } from "./skill-version.mjs";
-import { runMigrateDocs } from "./migrate-docs.mjs";
+import { normalizeCoverageMode, runMigrateDocs } from "./migrate-docs.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
@@ -142,13 +143,32 @@ export function resolveMigrateDocsMode(opts = {}) {
 }
 
 /**
+ * coverage append is opt-in. Default off (0.7.44–46 handoff).
+ * harness --dry-run without an explicit coverage mode stays off.
+ * @param {{ dryRun?: boolean, coverageMode?: string|boolean, migrateCoverage?: string|boolean }} [opts]
+ * @returns {'off'|'append'|'dry-run'}
+ */
+export function resolveCoverageMode(opts = {}) {
+  if (opts.dryRun && opts.coverageMode == null && opts.migrateCoverage == null) return "off";
+  const mode = normalizeCoverageMode(opts.coverageMode ?? opts.migrateCoverage);
+  if (opts.dryRun && mode === "append") return "dry-run";
+  return mode;
+}
+
+/**
  * @param {string} root
  * @param {{ dryRun?: boolean, migrateDocs?: string|boolean }} [opts]
  * @returns {object}
  */
+function isCoverageBlocker(b) {
+  const s = String(b || "");
+  return s === "coverage_ready" || s.includes("coverage_ready") || s.includes("covered_gt");
+}
+
 export function emitUpgradeStrictnessDiff(root, opts = {}) {
   const absRoot = path.resolve(root);
   const migrateMode = resolveMigrateDocsMode(opts);
+  const coverageMode = resolveCoverageMode(opts);
   const beforeReport = loadScoreLatest(absRoot);
   const before = collectScoreBlockers(beforeReport);
   const payload = {
@@ -166,13 +186,19 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     ready_before: beforeReport?.ai_coding_ready?.ok ?? null,
     ready_after: null,
     migrate_docs: { mode: migrateMode, applied: [], skipped: [] },
+    migrate_coverage: { mode: coverageMode, ops: [], skipped: [], applied: [] },
     note:
       migrateMode === "off"
         ? "升严不自动改用户文档（--no-migrate-docs）；对照 docs/harness-eng/upgrade-diff.json"
         : migrateMode === "dry-run"
           ? "升严 migrate-docs=dry-run：只预览结构化补丁，不写真相文档"
-          : "升严默认自动结构化迁移真相文档（path/field/task/schedule/key）；coverage 仍移交；--no-migrate-docs 可退出",
+          : "升严默认自动结构化迁移真相文档（path/field/task/schedule/key）；coverage 默认仍移交（--migrate-coverage 默认 off）；--no-migrate-docs 可退出",
   };
+  if (coverageMode === "append") {
+    payload.note += "；--migrate-coverage=append 只补缺页/缺节，covered_gt 不删文档";
+  } else if (coverageMode === "dry-run") {
+    payload.note += "；--migrate-coverage=dry-run 只写入 coverage_ops / coverage_skipped";
+  }
 
   // Backward-compat: opts.dryRun (no migrateDocs) skips fill-score entirely (selfcheck / harness).
   // Explicit migrateDocs='dry-run' still scores and plans patches without writing docs.
@@ -201,23 +227,42 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
   const shouldMigrate =
     migrateMode !== "off" &&
     (payload.ready_regressed || payload.added.length > 0 || payload.after.length > 0);
+  const covHit =
+    coverageMode !== "off" &&
+    [...payload.added, ...payload.after].some(isCoverageBlocker);
 
-  if (shouldMigrate) {
+  if (shouldMigrate || covHit) {
     const migrateBlockers =
       payload.added.length > 0 ? payload.added : payload.after;
     const mig = runMigrateDocs(absRoot, {
-      mode: migrateMode,
+      mode: shouldMigrate ? migrateMode : "off",
+      coverageMode,
       blockers: migrateBlockers,
     });
-    payload.migrate_docs = {
-      mode: migrateMode,
-      applied: mig.applied || [],
-      skipped: mig.skipped || [],
-      errors: mig.errors || [],
-      ops: mig.plan?.ops?.length ?? 0,
+    if (shouldMigrate) {
+      payload.migrate_docs = {
+        mode: migrateMode,
+        applied: mig.applied || [],
+        skipped: mig.skipped || [],
+        errors: mig.errors || [],
+        ops: mig.plan?.ops?.length ?? mig.ops?.length ?? 0,
+      };
+    }
+    payload.migrate_coverage = {
+      mode: coverageMode,
+      ops: mig.coverage_ops || [],
+      skipped: mig.coverage_skipped || [],
+      applied: mig.coverage_applied || [],
     };
 
-    if (migrateMode === "auto" && (mig.applied || []).some((a) => a.action !== "noop")) {
+    const structuralWrote =
+      shouldMigrate &&
+      migrateMode === "auto" &&
+      (mig.applied || []).some((a) => a.action && a.action !== "noop");
+    const coverageWrote = (mig.coverage_applied || []).some(
+      (a) => a.action === "created" || a.action === "appended"
+    );
+    if (structuralWrote || coverageWrote) {
       const second = runFillScoreJson(absRoot);
       if (second.report) {
         payload.after = collectScoreBlockers(second.report);
@@ -262,7 +307,10 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     `harness: upgrade 升严差分 added=${payload.added.length} removed=${payload.removed.length}` +
       (payload.score_error ? ` score_error` : "") +
       (payload.ready_regressed ? ` ready_regressed` : "") +
-      (migrateMode !== "off" ? ` migrate_docs=${migrateMode} applied=${migApplied}` : " migrate_docs=off"),
+      (migrateMode !== "off" ? ` migrate_docs=${migrateMode} applied=${migApplied}` : " migrate_docs=off") +
+      (coverageMode !== "off"
+        ? ` migrate_coverage=${coverageMode} ops=${(payload.migrate_coverage.ops || []).length}`
+        : " migrate_coverage=off"),
     `  ready ${payload.ready_before === true ? "YES" : payload.ready_before === false ? "NO" : "?"} → ${
       payload.ready_after === true ? "YES" : payload.ready_after === false ? "NO" : "?"
     }`,

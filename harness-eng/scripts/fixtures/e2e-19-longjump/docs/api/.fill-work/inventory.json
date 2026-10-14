@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "endpoints": [
+    {
+      "method": "GET",
+      "http": "GET",
+      "path": "/api/renamed",
+      "requestFields": []
+    }
+  ]
+}

@@ -1,10 +1,22 @@
-# harness-eng 验收记录（0.7.46）
+# harness-eng 验收记录（0.7.47）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.46**（e2e-18 P3：文档/口径澄清；其上 0.7.45 P2 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.47**（e2e-19：coverage append · 长跳/冷 clone 夹具；其上 0.7.46 P3 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.47 增量验收（e2e-19）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.47` | 有 |
+| `--migrate-coverage` 默认 **off**；`append` 只补缺页/缺节；`covered_gt` 无 delete op | 有 |
+| upgrade 文首消歧含 `--migrate-coverage`；`## 0.7.46 → 0.7.47` | 有 |
+| selfcheck 夹具 `e2e-19-longjump` / `e2e-19-cold` PASS；实仓 A/H 无金仓则 `_log/.../e2e-19-verify.md` 写明 SKIP | 有 |
+| 跨 mode `last_mode` 仍为 accepted residual；宿主 Trae/Codex/CodeBuddy **不改代码**（人验日期保鲜 2026-10-14） | 有 |
+| CHANGELOG 索引含 0.7.47 且存在 `_log/harness-eng/0.7/0.7.47.md` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.46 增量验收（e2e-18 P3）
 

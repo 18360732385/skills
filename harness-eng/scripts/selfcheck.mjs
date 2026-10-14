@@ -80,11 +80,14 @@ import {
   buildDocTodos,
   emitUpgradeStrictnessDiff,
   resolveMigrateDocsMode,
+  resolveCoverageMode,
 } from "./lib/upgrade-diff.mjs";
 import {
   planMigrateDocs,
   applyMigrateDocs,
   runMigrateDocs,
+  planCoverageAppend,
+  normalizeCoverageMode,
 } from "./lib/migrate-docs.mjs";
 import {
   stripYamlKeys,
@@ -662,6 +665,7 @@ for (const id of ["db", "redis", "func"]) {
     skillRoot,
     "--json",
     "--quiet",
+    "--no-write",
   ]);
   // May fail on non-harness dir, but should at least produce JSON or error
   assert(r.status !== null, "fill-score --json runs");
@@ -4580,6 +4584,317 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     "0.7.46 VERIFY 0.7.41 row notes historical"
   );
   assert(logExists("0.7.46"), "0.7.46 _log note exists");
+}
+
+// --- 0.7.47 e2e-19: coverage append-only · longjump / cold fixtures ---
+{
+  assert(normalizeCoverageMode(undefined) === "off", "0.7.47 coverageMode default off");
+  assert(normalizeCoverageMode("append") === "append", "0.7.47 coverageMode append");
+  assert(normalizeCoverageMode("dry-run") === "dry-run", "0.7.47 coverageMode dry-run");
+  assert(resolveCoverageMode({}) === "off", "0.7.47 resolveCoverageMode default off");
+  assert(
+    resolveCoverageMode({ dryRun: true }) === "off",
+    "0.7.47 dry-run without coverage flag stays off"
+  );
+
+  const harnessSrc47 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(
+    /migrateCoverage:\s*"off"/.test(harnessSrc47) && /--migrate-coverage/.test(harnessSrc47),
+    "0.7.47 harness defaults --migrate-coverage off"
+  );
+
+  const offRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-off-"));
+  try {
+    const inv = { api: { endpoints: [{ method: "GET", path: "/api/demo", http: "GET" }] } };
+    const off = runMigrateDocs(offRoot, {
+      mode: "off",
+      coverageMode: "off",
+      blockers: ["coverage_ready"],
+      inventories: inv,
+    });
+    assert(
+      (off.coverage_ops || []).length === 0 &&
+        (off.coverage_skipped || []).some((s) => /migrate-coverage off/.test(s.reason)),
+      "0.7.47 coverage_ready skipped when coverageMode=off"
+    );
+    assert(
+      !fs.existsSync(path.join(offRoot, "docs", "api", "modules")),
+      "0.7.47 default off does not create api page"
+    );
+  } finally {
+    fs.rmSync(offRoot, { recursive: true, force: true });
+  }
+
+  const pageRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-page-"));
+  try {
+    const inv = { api: { endpoints: [{ method: "GET", path: "/api/demo", http: "GET" }] } };
+    const planned = planCoverageAppend({
+      blockers: ["coverage_ready"],
+      inventories: inv,
+      docsRoot: pageRoot,
+    });
+    assert(
+      planned.ops.length === 1 && planned.ops[0].kind === "coverage_append_page",
+      `0.7.47 missing api page → one coverage_append_page (got ${JSON.stringify(planned.ops.map((o) => o.kind))})`
+    );
+    assert(
+      /TODO\(harness-eng\) migrate-coverage/.test(planned.ops[0].content || ""),
+      "0.7.47 coverage skeleton tagged migrate-coverage"
+    );
+    const applied = runMigrateDocs(pageRoot, {
+      mode: "off",
+      coverageMode: "append",
+      blockers: ["coverage_ready"],
+      inventories: inv,
+    });
+    assert(
+      (applied.coverage_applied || []).some((a) => a.action === "created"),
+      "0.7.47 append writes missing page"
+    );
+    const pages = fs.readdirSync(path.join(pageRoot, "docs", "api", "modules")).filter((n) => n.endsWith(".md"));
+    assert(pages.length === 1, "0.7.47 exactly one api coverage page");
+  } finally {
+    fs.rmSync(pageRoot, { recursive: true, force: true });
+  }
+
+  const gtRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-gt-"));
+  try {
+    const apiDir = path.join(gtRoot, "docs", "api", "modules");
+    fs.mkdirSync(apiDir, { recursive: true });
+    const keep = path.join(apiDir, "01-keep.md");
+    fs.writeFileSync(keep, "## 1. keep\n\n**接口地址：** /api/keep\n这是业务说明，不要删。\n", "utf8");
+    const mtime1 = fs.statSync(keep).mtimeMs;
+    const gt = planCoverageAppend({
+      blockers: ["inventory_undercount:covered_gt_code"],
+      inventories: { api: { endpoints: [{ method: "GET", path: "/api/extra", http: "GET" }] } },
+      docsRoot: gtRoot,
+    });
+    assert(gt.ops.length === 0, "0.7.47 covered_gt produces zero ops");
+    assert(gt.skipped.length >= 1, "0.7.47 covered_gt skipped");
+    assert(
+      !gt.ops.some((o) => /delete|trim|unlink/i.test(o.kind)),
+      "0.7.47 covered_gt never produces delete ops"
+    );
+    const both = planCoverageAppend({
+      blockers: ["coverage_ready", "inventory_undercount:covered_gt_code"],
+      inventories: { api: { endpoints: [{ method: "GET", path: "/api/extra", http: "GET" }] } },
+      docsRoot: gtRoot,
+    });
+    assert(
+      !both.ops.some((o) => /delete|trim|unlink/i.test(String(o.kind))),
+      "0.7.47 coverage plan has no delete kind"
+    );
+    assert(
+      both.skipped.some((s) => /user content present/.test(s.reason)),
+      "0.7.47 user content present skips append"
+    );
+    assert(
+      both.skipped.some((s) => /never delete/.test(s.reason)),
+      "0.7.47 covered_gt still skipped beside coverage_ready"
+    );
+    applyMigrateDocs(gtRoot, { ops: both.ops, skipped: both.skipped }, { dryRun: false });
+    assert(fs.existsSync(keep), "0.7.47 covered_gt must not delete docs");
+    assert(fs.statSync(keep).mtimeMs === mtime1, "0.7.47 user doc not rewritten");
+  } finally {
+    fs.rmSync(gtRoot, { recursive: true, force: true });
+  }
+
+  const dryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-dry-"));
+  try {
+    const inv = { api: { endpoints: [{ method: "GET", path: "/api/demo", http: "GET" }] } };
+    const dry = runMigrateDocs(dryRoot, {
+      mode: "dry-run",
+      coverageMode: "dry-run",
+      blockers: ["coverage_ready"],
+      inventories: inv,
+    });
+    assert((dry.coverage_ops || []).length >= 1, "0.7.47 dry-run lists coverage_ops");
+    const reportPath = path.join(dryRoot, "docs", "harness-eng", "migrate-docs-report.json");
+    assert(fs.existsSync(reportPath), "0.7.47 dry-run writes migrate-docs-report.json");
+    const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+    assert(
+      Array.isArray(report.coverage_ops) && report.coverage_ops.length >= 1,
+      "0.7.47 report.coverage_ops"
+    );
+    assert(
+      Array.isArray(report.coverage_skipped),
+      "0.7.47 report.coverage_skipped"
+    );
+    const dryMods = path.join(dryRoot, "docs", "api", "modules");
+    const dryMds = fs.existsSync(dryMods)
+      ? fs.readdirSync(dryMods).filter((n) => n.endsWith(".md"))
+      : [];
+    assert(dryMds.length === 0, "0.7.47 dry-run does not write api page");
+  } finally {
+    fs.rmSync(dryRoot, { recursive: true, force: true });
+  }
+
+  const stubRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cov-stub-"));
+  try {
+    const stubDir = path.join(stubRoot, "docs", "api", "modules");
+    fs.mkdirSync(stubDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(stubDir, "01-stub.md"),
+      "# stub\n\nTODO(harness-eng)\n",
+      "utf8"
+    );
+    const stubPlan = planCoverageAppend({
+      blockers: ["coverage_ready"],
+      inventories: { api: { endpoints: [{ method: "POST", path: "/api/stub", http: "POST" }] } },
+      docsRoot: stubRoot,
+    });
+    assert(
+      stubPlan.ops.length === 1 && stubPlan.ops[0].kind === "coverage_append_section",
+      `0.7.47 stub → coverage_append_section (got ${JSON.stringify(stubPlan.ops.map((o) => o.kind))})`
+    );
+  } finally {
+    fs.rmSync(stubRoot, { recursive: true, force: true });
+  }
+
+  const upMd47 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 0\.7\.46 → 0\.7\.47/.test(upMd47), "0.7.47 upgrade.md migration section");
+  assert(/--migrate-coverage/.test(upMd47), "0.7.47 upgrade.md migrate-coverage row");
+  const gloss47 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
+  assert(/migrate-coverage/.test(gloss47) && /默认 off/.test(gloss47), "0.7.47 glossary migrate-coverage");
+  assert(
+    /migrate-coverage/.test(fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8")),
+    "0.7.47 AGENT-INDEX migrate-coverage"
+  );
+  assert(
+    /migrate-coverage/.test(fs.readFileSync(path.join(skillRoot, "QUICKSTART.md"), "utf8")),
+    "0.7.47 QUICKSTART migrate-coverage"
+  );
+  assert(
+    /migrate-coverage/.test(fs.readFileSync(path.join(skillRoot, "fill/fill-score.md"), "utf8")),
+    "0.7.47 fill-score cross-links migrate-coverage"
+  );
+  assert(logExists("0.7.47"), "0.7.47 _log note exists");
+  assert(
+    /## 0\.7\.47 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.7.47 VERIFY section"
+  );
+  assert(
+    fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/e2e-19-verify.md")),
+    "0.7.47 e2e-19-verify record exists"
+  );
+
+  function hasFillWork(root) {
+    const docs = path.join(root, "docs");
+    if (!fs.existsSync(docs)) return false;
+    const stack = [docs];
+    while (stack.length) {
+      const d = stack.pop();
+      for (const n of fs.readdirSync(d)) {
+        const p = path.join(d, n);
+        if (n === ".fill-work") return true;
+        let st;
+        try {
+          st = fs.statSync(p);
+        } catch {
+          continue;
+        }
+        if (st.isDirectory()) stack.push(p);
+      }
+    }
+    return false;
+  }
+
+  const longSrc = path.join(skillRoot, "scripts/fixtures/e2e-19-longjump");
+  const longTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-long-"));
+  const longParams = path.join(os.tmpdir(), `harness-047-long-params-${process.pid}.json`);
+  try {
+    fs.cpSync(longSrc, longTmp, { recursive: true });
+    fs.writeFileSync(
+      longParams,
+      JSON.stringify({
+        on_exists: "skip",
+        placeholders: {},
+        files: [
+          {
+            id: "noop",
+            target: "docs/harness-eng/harness-meta.yaml",
+            action: "skip",
+          },
+        ],
+      }),
+      "utf8"
+    );
+    const up = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/harness.mjs"),
+        "--mode",
+        "upgrade",
+        "--root",
+        longTmp,
+        "--params",
+        longParams,
+        "--migrate-docs=auto",
+      ],
+      { encoding: "utf8", maxBuffer: 20 * 1024 * 1024, windowsHide: true }
+    );
+    assert(
+      up.status === 0,
+      `0.7.47 longjump migrate-docs upgrade exit 0 (got ${up.status}): ${(up.stderr || "").slice(-500)}`
+    );
+    const migReportPath = path.join(longTmp, "docs", "harness-eng", "migrate-docs-report.json");
+    const diffPath = path.join(longTmp, "docs", "harness-eng", "upgrade-diff.json");
+    assert(fs.existsSync(migReportPath), "0.7.47 longjump migrate-docs-report.json");
+    assert(fs.existsSync(diffPath), "0.7.47 longjump upgrade-diff.json");
+    const migReport = JSON.parse(fs.readFileSync(migReportPath, "utf8"));
+    const opsN = (migReport.ops || migReport.plan?.ops || []).length;
+    assert(opsN >= 1, `0.7.47 longjump migrate-docs ops >= 1 (got ${opsN})`);
+    const diff = JSON.parse(fs.readFileSync(diffPath, "utf8"));
+    assert(
+      diff.skill_version === EXPECTED,
+      `0.7.47 longjump skill_version === manifest (got ${diff.skill_version})`
+    );
+    assert(
+      !diff.migrate_coverage || diff.migrate_coverage.mode === "off",
+      "0.7.47 longjump default migrate-coverage off"
+    );
+    const demo = fs.readFileSync(path.join(longTmp, "docs", "api", "modules", "01-demo.md"), "utf8");
+    assert(/\/api\/renamed/.test(demo), "0.7.47 longjump rewrote drifted api path");
+  } finally {
+    fs.rmSync(longTmp, { recursive: true, force: true });
+    fs.rmSync(longParams, { force: true });
+  }
+
+  const coldSrc = path.join(skillRoot, "scripts/fixtures/e2e-19-cold");
+  const coldTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-047-cold-"));
+  try {
+    fs.cpSync(coldSrc, coldTmp, { recursive: true });
+    assert(!hasFillWork(coldTmp), "0.7.47 cold fixture has no fill-work");
+    const git = (args) =>
+      spawnSync("git", args, { cwd: coldTmp, encoding: "utf8", windowsHide: true });
+    assert(git(["init"]).status === 0, "0.7.47 cold git init");
+    git(["add", "-A"]);
+    const commit = git(["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-m", "cold"]);
+    assert(commit.status === 0, `0.7.47 cold git commit: ${commit.stderr}`);
+    const mem = scanApiInventoryMemory(coldTmp);
+    const head = readGitHead(coldTmp);
+    assert(mem && mem.git_head && mem.git_head === head, "0.7.47 cold memory inventory git_head");
+    assert((mem.endpoints || []).length >= 1, "0.7.47 cold memory inventory has endpoints");
+    const scored = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/fill-score.mjs"), "--root", coldTmp, "--json"],
+      { encoding: "utf8", maxBuffer: 20 * 1024 * 1024, windowsHide: true }
+    );
+    assert(scored.status === 0 || scored.status === 2, `0.7.47 cold fill-score exit (got ${scored.status}) ${(scored.stderr || "").slice(-300)}`);
+    const raw = String(scored.stdout || "");
+    const i = raw.indexOf("{");
+    const j = raw.lastIndexOf("}");
+    const report = JSON.parse(raw.slice(i, j + 1));
+    const stale = report.inventory_stale || [];
+    const ready = report.ready?.ok === true || report.ai_coding_ready?.ok === true;
+    assert(
+      ready || !stale.includes("api"),
+      `0.7.47 cold stock ready or inventory_stale excludes api (stale=${JSON.stringify(stale)} ready=${ready})`
+    );
+    assert(!hasFillWork(coldTmp), "0.7.47 cold stock fill-score does not create fill-work");
+  } finally {
+    fs.rmSync(coldTmp, { recursive: true, force: true });
+  }
 }
 
 console.log(`ok: ${ok.length}`);
