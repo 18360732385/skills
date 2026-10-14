@@ -17,7 +17,7 @@
 
 | # | 场景 | 结果 | 证据 |
 |---|---|---|---|
-| A | 长跳 0.7.32→tip | SKIP 实仓；**PASS 夹具** | `scripts/fixtures/e2e-19-longjump`（meta `skill_version: 0.7.32`，ladder **L4** 契约满阶、非 L5，避免 upgrade 走 agent-config sync）。复制到 tmp 后 `harness.mjs --mode upgrade --root <tmp> --migrate-docs=auto` **exit 0**。`migrate-docs-report.json` **ops=1**（`api_rewrite_path`，`/api/old` → `/api/renamed`）。`upgrade-diff.json` `skill_version` 等于当时 manifest（**0.7.46**）。`migrate_coverage.mode=off`。真相文档已写成 `/api/renamed` |
+| A | 长跳 0.7.32→tip | SKIP 实仓；**PASS 夹具** | `scripts/fixtures/e2e-19-longjump`（meta `skill_version: 0.7.32`，ladder **L4** 契约满阶、非 L5，避免 upgrade 走 agent-config sync）。复制到 tmp 后 `harness.mjs --mode upgrade --root <tmp> --migrate-docs=auto` **exit 0**。`migrate-docs-report.json` **ops=1**（`api_rewrite_path`，`/api/old` → `/api/renamed`）。`upgrade-diff.json` `skill_version` 等于 manifest（pin 后 **0.7.47**；pin 前同断言为 0.7.46）。`migrate_coverage.mode=off`。真相文档已写成 `/api/renamed` |
 | B | coverage `covered_gt` | **PASS** | `planCoverageAppend` 仅 `covered_gt` → **ops=0** 且 skipped；无 `delete` kind。已有业务说明 → `user content present`，mtime 不变 |
 | H | 冷 clone 无 fill-work | SKIP 实仓；**PASS 夹具** | `scripts/fixtures/e2e-19-cold` 无 `.fill-work`。tmp 内 `git commit` 后 `scanApiInventoryMemory` 的 `git_head === HEAD` 且 endpoints≥1。stock `fill-score.mjs --json`：**inventory_stale=[]（不含 api）**；未创建 `.fill-work`。`ai_coding_ready` 仍 false（夹具无骨架/覆盖，不把整仓开干当本场景门禁；与 0.7.40+「冷仓不因 api memory git_head 强制 refresh」一致） |
 | L | selfcheck | **PASS** | 断言 ID：`0.7.47 longjump migrate-docs` · `0.7.47 cold stock ready`（见 selfcheck 0.7.47 块） |

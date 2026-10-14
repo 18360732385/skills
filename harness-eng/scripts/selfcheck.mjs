@@ -4769,6 +4769,14 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     "0.7.47 fill-score cross-links migrate-coverage"
   );
   assert(logExists("0.7.47"), "0.7.47 _log note exists");
+  assert(
+    /## 0\.7\.47 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.7.47 VERIFY section"
+  );
+  assert(
+    fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/e2e-19-verify.md")),
+    "0.7.47 e2e-19-verify record exists"
+  );
 
   function hasFillWork(root) {
     const docs = path.join(root, "docs");
