@@ -88,6 +88,7 @@ node scripts/harness.mjs --root <TARGET> --params <params.json> --mode upgrade
 node scripts/harness.mjs --check-meta-stable --root <TARGET> [--baseline <meta.yaml>]
 node scripts/harness.mjs --mode upgrade --root <TARGET> --params <params.json> --retire-wrappers
 # 注意：fill-score --migrate-policy（score-policy）≠ harness --migrate-docs（真相文档）
+# migrate-coverage 默认 off，与 migrate-docs 正交；append 只补缺页/缺节
 ```
 
 fill 家族 CLI（inventory / merge / plan / score / report）见 [fill/README.md](fill/README.md)。

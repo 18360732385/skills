@@ -7,6 +7,7 @@
 | `--migrate-docs[=auto\|dry-run\|off]` | 真相文档 `docs/{api,func,db,redis,jobs}` | upgrade 升严后**默认 auto**；`--no-migrate-docs` 仅 `doc_todos` 移交 |
 | `fill-score --migrate-policy` | `score-policy.yaml` 字段（如 `morph_floor`） | **≠** `--migrate-docs`；不写真相文档 |
 | `--check-meta-stable [--baseline]` | `harness-meta.yaml` | CI 稳态；默认忽略 `last_mode`（跨 mode **accepted residual**） |
+| `--migrate-coverage[=off\|append\|dry-run]` | 覆盖类 blocker（`coverage_ready` / `covered_gt`） | **默认 off**；`append` 只补缺页/缺节；`covered_gt` 仍移交、不删文档；**≠** `--migrate-docs` |
 
 ## Done
 
@@ -16,7 +17,7 @@
 4. **升版后必跑升严差分 + acceptance 摘要**  
    - `harness --mode upgrade` 成功收尾写 `docs/harness-eng/upgrade-diff.json`（stderr 摘要）；对照升前 `score-latest.json` 的 blockers  
    - **默认自动结构化 migrate-docs**（path / field / task / schedule / key）；报告见 `migrate-docs-report.json`；`--no-migrate-docs` 退回仅 `doc_todos` 移交；`--migrate-docs=dry-run` 只预览  
-   - `coverage` / `covered_gt` **仍不灌水、不删用户文档**；残留 TODO 见 stderr  
+   - `coverage` / `covered_gt` **默认不自动改文档**（`--migrate-coverage` 默认 **off**）。可选 `append` 只补缺页/缺节；`covered_gt` 仍移交、**不删**用户文档。残留 TODO 见 stderr  
    - 仍建议：`node scripts/acceptance-check.mjs --root <TARGET> [--gold]`（或 `fill-plan --residual [--gold]`）  
    - 仅 warnings 且批次已关：走 `fill-plan --residual` 清残项
    - 旧仓若仍有 `fill-score-ready.mjs` / `cold-bootstrap*.mjs`：upgrade/refresh stderr 会打 **【旧仓升级】** warn（必看，含可复制退役命令）；`--retire-wrappers` 或 `HARNESS_RETIRE_WRAPPERS=1` 移到 `scripts/agent-kb/_obsolete/`。**`refresh-score.mjs` 是标准入口，勿删**
@@ -68,6 +69,14 @@
 
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
+
+## 0.7.46 → 0.7.47 迁移要点
+
+1. **meta**：`skill_version` → `0.7.47`
+2. **migrate-coverage（默认 off）**：`--migrate-coverage=append|dry-run` 只补 `docs/{api,func,db,redis,jobs}` 缺页/缺节；`covered_gt` 仍移交，禁止删文档灌水。与 `--migrate-docs`（path/field/task/schedule/key）正交
+3. **验证**：selfcheck 夹具覆盖长跳（`e2e-19-longjump`）与冷 clone（`e2e-19-cold`）；实仓记录见 `_log/harness-eng/docs/e2e-19-verify.md`
+4. **残留**：跨 mode `last_mode` 仍是 **accepted residual**（`--check-meta-stable`）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.47`）后再 sync
 
 ## 0.7.45 → 0.7.46 迁移要点
 

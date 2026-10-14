@@ -75,7 +75,7 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 显式 `gate_profile: legacy` 可回退宽松语义。缺 fill-plan → `ai_coding_ready=false`。新仓【推荐】仍 strict。
 
 **形态上限**：`domain_caps`（各域 **100**）/ `formula_ceiling≈100`；抬 caps 不会使 `ai_coding_ready` 变 true。存量仓 `morph_floor: 60|90` 由 resume/upgrade 或 `fill-score --migrate-policy` 字段级迁到 75/95。  
-注意：`--migrate-policy` 只改 `score-policy.yaml` 字段，**≠** `harness --migrate-docs`（真相文档结构化迁移；见 [upgrade.md](../modes/upgrade.md) 旗标消歧）。
+注意：`--migrate-policy` 只改 `score-policy.yaml` 字段，**≠** `harness --migrate-docs`（真相文档结构化迁移；见 [upgrade.md](../modes/upgrade.md) 旗标消歧）。`harness --migrate-coverage` 默认 **off**，与 `migrate-docs` 正交，只在显式 `append` 时补覆盖缺页/缺节。
 
 正写摘要三词：**开干** / **覆盖** / **形态**（见 [glossary.md](../glossary.md)）。提问见 `Q_GATE_PROFILE`。
 
