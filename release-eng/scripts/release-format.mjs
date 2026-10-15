@@ -110,7 +110,7 @@ function escapeRe(s) {
 /**
  * 上线内容摘要行：1～5 项，**分支级聚合**（不再简单截取最近 5 条提交）。
  * 先按合并来源逐分支一句话（按出现次数降序），再用直推（非 Merge）提交短句补足；
- * recentFirst=true（首次发版）：直推提交取最近若干条，避免"Initial commit"等最旧提交占位。
+ * recentFirst=true（首次发版，或无 mergeSources）：直推取最近若干条，避免"Initial commit"等最旧提交占位。
  */
 export function buildReleaseSummaryLines(
   commits,
@@ -462,4 +462,173 @@ export function bundleLinkCell(bundlePath) {
   if (!rel || rel === "无") return "无";
   const name = rel.split("/").pop() || rel;
   return `[${name}](./${rel})`;
+}
+
+/** 从 origin web URL 识别宿主：gitlab | github | other */
+export function detectRemoteHost(webUrl) {
+  const u = String(webUrl || "").toLowerCase();
+  if (!u) return "other";
+  if (/github\.com/.test(u)) return "github";
+  if (/gitlab\.com|gitlab\./.test(u) || /\/gitlab\b/.test(u)) return "gitlab";
+  // 自建常走 GitLab 路径约定；无明确 GitHub 时若含 git@ 已转 web 仍归 other
+  return "other";
+}
+
+/**
+ * 按宿主拼 commits/compare 浏览链接。
+ * @param {{ web: string, host?: string, firstRelease?: boolean, base?: string, head?: string }} opts
+ */
+export function buildRemoteBrowseUrl({ web, host, firstRelease, base, head }) {
+  if (!web) return null;
+  const hHost = host || detectRemoteHost(web);
+  const h = String(head || "").replace(/^origin\//, "");
+  const b = String(base || "").replace(/^origin\//, "");
+  if (hHost === "github") {
+    if (firstRelease) return `${web}/commits/${encodeURIComponent(h)}`;
+    return `${web}/compare/${encodeURIComponent(b)}...${encodeURIComponent(h)}`;
+  }
+  if (hHost === "gitlab") {
+    if (firstRelease) return `${web}/-/commits/${encodeURIComponent(h)}`;
+    return `${web}/-/compare/${encodeURIComponent(b)}...${encodeURIComponent(h)}`;
+  }
+  // other：回退仓库根（避免错误 /- 路径）
+  return web;
+}
+
+/** 定版「完整记录」提示行；host 缺省时从 url 推断 */
+export function remoteHintLine(url, host) {
+  const h = host || detectRemoteHost(url);
+  const label =
+    h === "github" ? "GitHub" : h === "gitlab" ? "GitLab" : "远端仓库";
+  if (!url) {
+    return `> 完整记录请登录 ${label} 查看（未能从 origin 推导链接；请打开仓库 Commits / Compare 页）。`;
+  }
+  return `> 完整记录请登录 ${label} 查看：${url}`;
+}
+
+/**
+ * upsert docs/releases/releases.md「进行中」表行。
+ * @returns {{ text: string, row: string, updated: boolean }}
+ */
+export function upsertReleasesIndexRow(
+  indexText,
+  { date, identity, branchPair, status, noteRel, owner }
+) {
+  const row = `| ${date || "—"} | ${identity} | ${branchPair || "—"} | ${status || "已定版"} | ${noteRel || "—"} | ${owner || "—"} |`;
+  const text = String(indexText || "");
+  const lines = text.split(/\r?\n/);
+  let sectionStart = -1;
+  let tableHeader = -1;
+  let tableSep = -1;
+  let sectionEnd = lines.length;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s*进行中/.test(lines[i].trim())) {
+      sectionStart = i;
+      break;
+    }
+  }
+  if (sectionStart < 0) {
+    const block = [
+      "",
+      "## 进行中",
+      "",
+      "| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |",
+      "|---|---|---|---|---|---|",
+      row,
+      "",
+    ].join("\n");
+    return { text: `${text.trimEnd()}\n${block}\n`, row, updated: true };
+  }
+
+  for (let i = sectionStart + 1; i < lines.length; i++) {
+    if (/^##\s+/.test(lines[i].trim())) {
+      sectionEnd = i;
+      break;
+    }
+    if (tableHeader < 0 && /^\|\s*日期\s*\|/.test(lines[i])) {
+      tableHeader = i;
+      if (i + 1 < lines.length && /^\|[\s-|]+$/.test(lines[i + 1].trim())) {
+        tableSep = i + 1;
+      }
+    }
+  }
+
+  if (tableHeader < 0) {
+    const insert = [
+      "| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |",
+      "|---|---|---|---|---|---|",
+      row,
+      "",
+    ];
+    lines.splice(sectionStart + 1, 0, "", ...insert);
+    return { text: lines.join("\n"), row, updated: true };
+  }
+
+  const bodyStart = (tableSep >= 0 ? tableSep : tableHeader) + 1;
+  const body = [];
+  let found = false;
+  for (let i = bodyStart; i < sectionEnd; i++) {
+    const line = lines[i];
+    if (!/^\|/.test(line.trim())) {
+      if (line.trim() === "") continue;
+      break;
+    }
+    if (/（暂无）/.test(line)) continue;
+    const cells = line.split("|").map((c) => c.trim());
+    // | date | identity | ...
+    const idCell = cells[2] || "";
+    if (idCell === identity) {
+      body.push(row);
+      found = true;
+    } else {
+      body.push(line);
+    }
+  }
+  if (!found) body.push(row);
+
+  const before = lines.slice(0, bodyStart);
+  const after = lines.slice(sectionEnd);
+  // 保留表头与分隔行之间到 bodyStart 已在 before；拼 body + 空行 + 后续节
+  const mid = [...body, ""];
+  return { text: [...before, ...mid, ...after].join("\n"), row, updated: true };
+}
+
+/**
+ * 首次发版 inventory 空层可观测：补 prod/nacos/SyncTaskCode 计数与 layerEmpty。
+ * 不改变 layered 收录策略，仅 enrich 已有 inventory + 产出 warnings。
+ */
+export function enrichFirstReleaseLayerObservability(
+  inventory,
+  { configKeys = [], jobKeys = [], taskCodes = [] } = {}
+) {
+  const keys = Array.isArray(configKeys) ? configKeys : [];
+  const jobs = Array.isArray(jobKeys) ? jobKeys : [];
+  const codes = Array.isArray(taskCodes) ? taskCodes : [];
+  const prodConfigKeyCount = keys.filter((k) => k?.source === "application-prod").length;
+  const nacosOverlayKeyCount = keys.filter((k) => k?.source === "nacos-overlay").length;
+  const syncTaskCodeCount = codes.length;
+  const layerEmpty = [];
+  if (prodConfigKeyCount + nacosOverlayKeyCount === 0) layerEmpty.push("config");
+  if (syncTaskCodeCount === 0 && jobs.length === 0) layerEmpty.push("jobs");
+
+  const base = inventory && typeof inventory === "object" ? { ...inventory } : {};
+  const enriched = {
+    ...base,
+    prodConfigKeyCount,
+    nacosOverlayKeyCount,
+    syncTaskCodeCount,
+    layerEmpty,
+  };
+
+  const warnings = [];
+  if (layerEmpty.includes("config")) {
+    warnings.push(
+      "prod 层 0 键（未找到 application-prod.yml / nacos overlay 键）"
+    );
+  }
+  if (layerEmpty.includes("jobs")) {
+    warnings.push("SyncTaskCode 枚举 0（且无 jobs 键）");
+  }
+  return { inventory: enriched, warnings };
 }

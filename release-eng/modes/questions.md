@@ -26,11 +26,12 @@
 
 ## 自适应（有候选或首次 inventory 才深问；否则该章记「无」）
 
-目标 **profile 一律 `prod`**。
+目标 **profile 一律 `prod`**。  
+若首次 `inventory.layerEmpty` 非空：题面须明示空层及原因（如 prod 键=0 / SyncTaskCode=0），**勿**静默当成「无配置/无任务变更」。
 
 4. SQL / migration：增量优先用 freeze **`draft.sql`**（双源去重后；`priorOnly` 须人工确认）；**首次发版**用分层 draft + `inventory.migrationRange` 确认起迁。`draftSuppressed` 默认不落单。`aiSuggestSuppress` 项【推荐】默认不勾「已确认」。目标 profile=`prod`  
-5. 配置项：优先 **`draft.config`**（含 **说明** / `confidence`）；「待补」须补全。目标 profile=`prod`；**允许密文值**；`aiNoise` 命中项默认不勾  
-6. 定时任务：优先 **`draft.jobs`** / `jobsHits`；目标 profile=`prod`；同上尊重 AI 默认勾选  
+5. 配置项：优先 **`draft.config`**（含 **说明** / `confidence`）；「待补」须补全。目标 profile=`prod`；**允许密文值**；`aiNoise` 命中项默认不勾；`layerEmpty` 含 `config` 时明示空层  
+6. 定时任务：优先 **`draft.jobs`** / `jobsHits`；目标 profile=`prod`；同上尊重 AI 默认勾选；`layerEmpty` 含 `jobs` 时明示空层  
 7. 第三方与外部依赖  
 8. 上线步骤与回滚  
 9. 风险与验收  

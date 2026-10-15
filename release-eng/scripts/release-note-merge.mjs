@@ -34,6 +34,9 @@ import {
   COMMIT_DISPLAY_TAIL,
   H2,
   H3_GIT,
+  remoteHintLine,
+  detectRemoteHost,
+  upsertReleasesIndexRow,
 } from "./release-format.mjs";
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
 
@@ -57,6 +60,7 @@ function parseArgs(argv) {
     status: "已定版",
     dryRun: false,
     bundleFiles: true,
+    updateIndex: true,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -78,6 +82,8 @@ function parseArgs(argv) {
     else if (a === "--dry-run") out.dryRun = true;
     else if (a === "--no-bundle-files") out.bundleFiles = false;
     else if (a === "--bundle-files") out.bundleFiles = true;
+    else if (a === "--no-update-index") out.updateIndex = false;
+    else if (a === "--update-index") out.updateIndex = true;
     else if (a === "--help" || a === "-h") out.help = true;
   }
   if (out.base && ["none", "无", "-", "null"].includes(String(out.base).toLowerCase())) {
@@ -135,14 +141,15 @@ function displayRows(payload) {
 
 function buildGitSection(freeze) {
   const lines = [];
-  const url = freeze.gitlabUrl || "<gitlabUrl>";
+  const url = freeze.gitlabUrl || "";
+  const host = freeze.remoteHost || detectRemoteHost(url);
   const tz = freeze.timezone || "Asia/Shanghai";
   lines.push(`## ${H2.git}`);
   lines.push("");
   lines.push(
     `> 提交列表遵循 \`截断5\`（≤5 全量；>5 前 3 + \`…\` + 后 2；hash 取前 8 位）。合并来源按分支去重全量（\`origin/\` 前缀归一；来源分支功能为一句话中文总结）。时区：${tz}`
   );
-  lines.push(`> 完整记录：${url}`);
+  lines.push(remoteHintLine(url || null, host));
   lines.push("");
   lines.push("<!-- auto:git:start -->");
   lines.push("");
@@ -163,7 +170,7 @@ function buildGitSection(freeze) {
   }
   if (commitView.truncated) {
     lines.push("");
-    lines.push(`> 完整记录请登录 GitLab 查看：${url}`);
+    lines.push(remoteHintLine(url || null, host));
   }
   lines.push("");
   lines.push(`### ${H3_GIT.merges}`);
@@ -295,8 +302,34 @@ function buildJobsSection(freeze) {
 function buildSummaryInner(freeze) {
   const lines = freeze.releaseSummaryLines?.length
     ? freeze.releaseSummaryLines.slice(0, 5)
-    : buildReleaseSummaryLines(freeze.commits || [], { mergeSources: freeze.mergeSources });
+    : buildReleaseSummaryLines(freeze.commits || [], {
+        mergeSources: freeze.mergeSources,
+        recentFirst:
+          freeze.firstRelease || !(freeze.mergeSources && freeze.mergeSources.length),
+      });
   return releaseSummaryMarkdown(lines);
+}
+
+/** 解析发版日期 YYYY-MM-DD（上海日历日） */
+function indexDateOf(meta) {
+  if (meta.releaseDate && /^\d{4}-\d{2}-\d{2}/.test(meta.releaseDate)) {
+    return String(meta.releaseDate).slice(0, 10);
+  }
+  const now = nowChinaTime(); // e.g. 2026-10-15 16:00:00 +08:00
+  const m = String(now).match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : "—";
+}
+
+function planIndexUpsert(args, meta, relNote) {
+  const branchPair = `${meta.releaseBranch || "release"} → ${meta.baseline || "main"}`;
+  return {
+    date: indexDateOf(meta),
+    identity: meta.identity,
+    branchPair,
+    status: meta.status || "已定版",
+    noteRel: relNote || `notes/${meta.identity}/${meta.identity}.md`,
+    owner: meta.owner || "—",
+  };
 }
 
 /** 确保元信息章内含 auto:summary 标记；剥离旧「## …上线内容摘要」独立章 */
@@ -960,7 +993,8 @@ function main() {
   node release-note-merge.mjs --root <REPO> --note <path> --freeze-json <file> [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --base <ref> --head <ref> [--prior auto] [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
-Options: --identity --release-branch --baseline --release-date --owner --status --no-bundle-files
+Options: --identity --release-branch --baseline --release-date --owner --status --no-bundle-files --no-update-index
+默认回写 docs/releases/releases.md 进行中表（--no-update-index 关闭）
 Note path: docs/releases/notes/{identity}/{identity}.md（目录包；扁平 .md 会规范化）
 identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 release-V260827；发版日期经 --release-date 传入`);
     process.exit(0);
@@ -1013,9 +1047,19 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
   if (svcReplaced != null) text = svcReplaced;
 
   let bundleResult = { copied: [], warnings: [] };
+  const indexPath = path.join(args.root, "docs", "releases", "releases.md");
+  const indexPlan = args.updateIndex
+    ? planIndexUpsert(args, meta, bundle.relNote)
+    : null;
+
   if (args.dryRun) {
     const planCopied = args.bundleFiles ? planBundleFiles(freeze) : [];
     text = applyBundleSection(text, planCopied);
+    let indexRow = null;
+    if (indexPlan) {
+      const cur = readText(indexPath) || "";
+      indexRow = upsertReleasesIndexRow(cur, indexPlan).row;
+    }
     console.log(
       JSON.stringify(
         {
@@ -1035,6 +1079,8 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
           todoPlaceholders: freeze.todoPlaceholders?.length || 0,
           jobsConfigGaps: freeze.jobsConfigGaps?.length || 0,
           indexDrift: freeze.indexDrift?.length || 0,
+          indexUpdated: Boolean(indexPlan),
+          indexRow,
           bytes: Buffer.byteLength(text, "utf8"),
         },
         null,
@@ -1058,6 +1104,21 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
 
   fs.mkdirSync(path.dirname(notePath), { recursive: true });
   fs.writeFileSync(notePath, text, "utf8");
+
+  let indexUpdated = false;
+  let indexRow = null;
+  if (indexPlan) {
+    const cur = readText(indexPath);
+    if (cur == null) {
+      bundleResult.warnings.push("缺少 docs/releases/releases.md，跳过索引回写");
+    } else {
+      const up = upsertReleasesIndexRow(cur, indexPlan);
+      fs.writeFileSync(indexPath, up.text, "utf8");
+      indexUpdated = true;
+      indexRow = up.row;
+    }
+  }
+
   console.log(
     JSON.stringify(
       {
@@ -1077,6 +1138,8 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
         todoPlaceholders: freeze.todoPlaceholders?.length || 0,
         jobsConfigGaps: freeze.jobsConfigGaps?.length || 0,
         indexDrift: freeze.indexDrift?.length || 0,
+        indexUpdated,
+        indexRow,
       },
       null,
       2

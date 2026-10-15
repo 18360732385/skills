@@ -2,7 +2,7 @@
 
 前置：[gates-common.md](gates-common.md) 出口为 git-gates **Done（通过）**（【推荐】已跑 `scripts/release-push-gate.mjs`）。
 
-Leading：`截断5` · `mergeSources` · `SQL序` · `键级diff` · `首次发版-layered` · `jobs交叉` · `配置说明` · `draft` · `双源去重` · `prior-since` · `变更对象` · `artifacts.json` · `confidence` · `双轨研判` · GitLab 全量链接 · `Asia/Shanghai` · `来源分支功能` · `上线内容摘要` · `逾期未归档`。
+Leading：`截断5` · `mergeSources` · `SQL序` · `键级diff` · `首次发版-layered` · `jobs交叉` · `配置说明` · `draft` · `双源去重` · `prior-since` · `变更对象` · `artifacts.json` · `confidence` · `双轨研判` · 远端浏览链接（按 origin 宿主） · `Asia/Shanghai` · `来源分支功能` · `上线内容摘要` · `逾期未归档`。
 
 ## 步骤（【推荐】脚本）
 
@@ -30,6 +30,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-rele
 | **`首次发版`** | head 全历史 + 树全量统计 | **`首次发版-layered`**：SQL=全 migration；配置=`application-prod.yml` 全键；任务=`SyncTaskCode`；其余 path → `layerSuppressed` |
 
 脚本产出：Git 二表（提交列表 + 合并来源）、`releaseSummaryLines`、`candidates`、`changeObjects`、`configKeys`/`jobKeys`/`taskCodes`、`draft`/`draftSuppressed`、`priorRelease`/`priorReleases`、`baselinePresence`、`overdueNotes`、`aiTrack`（stub）、`inventory`（首次）、`gitlabUrl`、`mergeSources`、`timezone=Asia/Shanghai`、`todoPlaceholders`（TODO 占位）、`jobsConfigGaps`（jobs↔config 交叉）、`indexDrift`（索引↔磁盘对账）。  
+首次 `inventory` 另含空层可观测：`prodConfigKeyCount`、`nacosOverlayKeyCount`、`syncTaskCodeCount`、`layerEmpty`（如 `["config"]`/`["jobs"]`）；层为空时 `warnings` 明示「prod 层 0 键」「SyncTaskCode 枚举 0」，**不**改变 layered 收录策略。  
 存在 **逾期硬闸**（`notes/` 已定版且发版日期已过）时 exit 1。
 
 ## `confidence`（分级）
@@ -102,7 +103,7 @@ audit【推荐】：`--format audit-json`。一屏摘要：`--format summary`。
 | > 5 | 前 3 行 + 一行 `…`（省略 N 条）+ 后 2 行 |
 
 **hash 列展示前 8 位**（截断自 `git %H`，如 `0afa1ab7`）。  
-省略行下方：`完整记录请登录 GitLab 查看：<gitlabUrl>`。  
+省略行下方：`完整记录请登录 GitLab|GitHub|远端仓库 查看：<url>`（按 `remoteHost` / origin）。  
 JSON 可保留全量 hash；写入发版单用 `commitsDisplay` 或 md。
 
 ## `mergeSources`（合并来源去重全量）
@@ -133,7 +134,7 @@ sql 候选按 migration **版本号数字升序**。
 1. `git log` / `git diff --name-only` / `git shortlog`  
 2. SQL：只收 `db/migration/V*__*.sql`，按 `SQL序`  
 3. 配置/任务：对变更 yml 做键级对比（或注明「仅路径、待人工拆键」）  
-4. 展示 `截断5`（前3后2 + hash 前 8 位）+ `mergeSources` 全量（来源去 `origin/`）+ GitLab compare  
+4. 展示 `截断5`（前3后2 + hash 前 8 位）+ `mergeSources` 全量（来源去 `origin/`）+ 远端 compare/commits 链接  
 
 ### `首次发版`
 
@@ -143,7 +144,7 @@ sql 候选按 migration **版本号数字升序**。
 
 ## Done
 
-- [ ] Git 二表可写入发版单「Git 定版」（提交已 `截断5` 前3后2 + hash 前 8 位；合并来源含来源分支功能一句话中文 + GitLab 提示；时区 Asia/Shanghai）  
+- [ ] Git 二表可写入发版单「Git 定版」（提交已 `截断5` 前3后2 + hash 前 8 位；合并来源含来源分支功能一句话中文 + 远端宿主提示；时区 Asia/Shanghai）  
 - [ ] `releaseSummaryLines`（≤5，分支级聚合）可供元信息内上线内容摘要  
 - [ ] 增量：`candidates` 能回指路径；sql 已 `SQL序`；带 `confidence`；`draft`/`draftSuppressed`/`priorRelease` 可读  
 - [ ] 配置键尽量带 `description`（落单时写入 yml 键上一行 `#` 注释）；任务键尽量挂 `docs/jobs`；prior 命中项已标记 `alreadyReleased`  

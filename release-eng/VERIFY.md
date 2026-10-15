@@ -1,20 +1,43 @@
-# release-eng 验收记录（0.3.21-dev）
+# release-eng 验收记录（0.3.23）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.21-dev**（纪律 bulletproof；其上 0.3.20-dev 版本单点维护 · 0.3.19-dev 薄入口 / modes/）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+当前 **0.3.23**（P3：D3/D4/D5；起本版正式号不加 `-dev`）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
 
-本版**不**改脚本行为契约；补 Agent 纪律防绕过（相对 0.3.20-dev）。
+## 0.3.23 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0（PASS 171/171） | 烟测 |
+| manifest / 文档钉头 **0.3.23**；`sync-skill-version --check` | 有 |
+| D3：`mergeSources=[]` 时 summary recentFirst（非最旧 Initial） | 有（selfcheck） |
+| D4：GitHub/GitLab browse URL + 宿主文案 | 有（selfcheck） |
+| D5：`upsertReleasesIndexRow` 写入进行中表并清占位 | 有（selfcheck） |
+| note-merge 默认回写索引；`--no-update-index` 可关 | 有 |
+| 仍标明非 harness land | 有 |
+
+## 0.3.22-dev 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0（PASS 153/153） | 烟测（历史） |
+| manifest / 文档钉头 **0.3.22-dev**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.23） |
+| push-gate：仅本地支、无 `origin/<b>` → exit 2 / `pass=false` / `neverPushed` | 有（selfcheck 临时仓） |
+| push-gate：origin 与本地同 tip → exit 0；本地超前 → exit 2 `unpushed>0` | 有（selfcheck） |
+| git-gates：缺 origin = 未通过（废除 local fallback pass） | 有 |
+| `enrichFirstReleaseLayerObservability`：空层 → `layerEmpty` + warnings | 有（selfcheck） |
+| freeze inventory / questions：空层可观测字段与题面要求 | 有 |
+| 仍标明非 harness land | 有 |
 
 ## 0.3.21-dev 增量验收
 
 | 检查 | 结果 |
 |---|---|
-| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| manifest / 文档钉头 **0.3.21-dev**；`sync-skill-version --check` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 烟测（历史） |
+| manifest / 文档钉头 **0.3.21-dev**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.23） |
 | SKILL：Red Flags + 借口表 + When NOT；description 为触发/症状（非流程摘要） | 有 |
 | gates-common：口述回显首问；逾期无口头豁免 | 有 |
 | git-gates：中止禁止评审落盘 | 有 |
@@ -27,7 +50,7 @@
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| `_meta/manifest.yaml` 为权威 `0.3.20-dev`（历史钉；现行见 0.3.21-dev）；当时 SKILL / AGENT-INDEX / README / VERIFY + 仓根 README 钉头一致 | 有 |
+| `_meta/manifest.yaml` 为权威 `0.3.20-dev`（历史钉；现行见 0.3.23）；当时 SKILL / AGENT-INDEX / README / VERIFY + 仓根 README 钉头一致 | 有 |
 | `node scripts/sync-skill-version.mjs --check` exit 0 | 有 |
 | selfcheck `PIN` 读自 manifest | 有 |
 | CHANGELOG 索引含 0.3.20-dev / 0.3.19-dev 且存在 `_log/release-eng/` 对应文件 | 有 |
@@ -39,7 +62,7 @@
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.3.19-dev** | 有（历史钉；现行见 0.3.21-dev） |
+| manifest / CHANGELOG / README / SKILL / AGENT-INDEX / VERIFY 钉 **0.3.19-dev** | 有（历史钉；现行见 0.3.23） |
 | CHANGELOG 索引含 0.3.19-dev / 0.3.18-dev 且存在对应 `_log/release-eng/` 文件 | 有 |
 | 模式 md 位于 `modes/`（prepare/resume/audit/seal/freeze/write-plan/gates-*/questions/ai-track/bootstrap/recommended/idempotency） | 有 |
 | [modes/README.md](modes/README.md) 索引表存在 | 有 |

@@ -26,7 +26,7 @@
 - 发版单路径：`notes/<slug>/<slug>.md`（同名目录包；`<slug>` = 发版分支名归一化：去 `origin/`、`/` → `-`；含本版新增 `sql/`/`config/` 附属拷贝与任务汇总 `jobs/README.md`（不含 candidates））  
 - **`首次发版`**：基线可为 **`无`**；定版内容取自发版分支全量（提交历史 + 树路径），push-gate 只验发版分支未推送  
 - 定版前：`git fetch`；本地相对 `origin/<分支>` **有未推送提交则 push-gate 失败并中止定版**  
-- Git 提交列表：`截断5`（前 3 后 2，hash 前 8 位）；合并来源按分支去重全量（`origin/` 归一；来源分支功能一句话中文）；时间 Asia/Shanghai；完整记录给 GitLab 链接。SQL / 配置 / 定时任务目标 profile = **`prod`**；yml 配置按 YAML（注释在键上一行 `#`）；包内附属为相对 md 链接  
+- Git 提交列表：`截断5`（前 3 后 2，hash 前 8 位）；合并来源按分支去重全量（`origin/` 归一；来源分支功能一句话中文）；时间 Asia/Shanghai；完整记录链接按 origin 宿主（GitLab / GitHub）。SQL / 配置 / 定时任务目标 profile = **`prod`**；yml 配置按 YAML（注释在键上一行 `#`）；包内附属为相对 md 链接  
 
 ## 密文
 

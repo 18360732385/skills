@@ -1501,7 +1501,14 @@ export function toAuditFreezeSummary(data) {
     jobsConfigGaps: data.jobsConfigGaps?.length || 0,
     indexDrift: data.indexDrift?.length || 0,
     inventory: data.inventory
-      ? { migrationRange: data.inventory.migrationRange, migrationCount: data.inventory.migrationCount }
+      ? {
+          migrationRange: data.inventory.migrationRange,
+          migrationCount: data.inventory.migrationCount,
+          prodConfigKeyCount: data.inventory.prodConfigKeyCount,
+          nacosOverlayKeyCount: data.inventory.nacosOverlayKeyCount,
+          syncTaskCodeCount: data.inventory.syncTaskCodeCount,
+          layerEmpty: data.inventory.layerEmpty,
+        }
       : null,
     warnings: data.warnings || [],
   };

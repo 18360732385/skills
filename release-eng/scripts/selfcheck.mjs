@@ -4,11 +4,13 @@
  * 覆盖：manifest · modes/ 模式文件 · 关键脚本 · fixtures 种子 ·
  * AGENT-INDEX / QUICKSTART / VERIFY · 钉号链 ·
  * identityFromBranch · 截断5 · shortCommitHash · artifacts.json 形 ·
- * seal-check --help · release.mjs --help/modes · sync-skill-version --check。
+ * seal-check --help · release.mjs --help/modes · sync-skill-version --check ·
+ * push-gate 临时仓（never-pushed / in-sync / unpushed>0）· layerEmpty 可观测。
  *
  * 非 harness land：不对齐 harness 自动 land 流水线。
  */
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { spawnSync } from "child_process";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -251,11 +253,157 @@ const {
   COMMIT_DISPLAY_TAIL,
   COMMIT_HASH_DISPLAY_LEN,
   TZ_CHINA,
+  enrichFirstReleaseLayerObservability,
+  buildReleaseSummaryLines,
+  detectRemoteHost,
+  buildRemoteBrowseUrl,
+  remoteHintLine,
+  upsertReleasesIndexRow,
 } = format;
 
 assert(typeof identityFromBranch === "function", "export identityFromBranch");
 assert(typeof shortCommitHash === "function", "export shortCommitHash");
 assert(typeof normalizeSourceBranch === "function", "export normalizeSourceBranch");
+assert(
+  typeof enrichFirstReleaseLayerObservability === "function",
+  "export enrichFirstReleaseLayerObservability"
+);
+assert(typeof buildReleaseSummaryLines === "function", "export buildReleaseSummaryLines");
+assert(typeof detectRemoteHost === "function", "export detectRemoteHost");
+assert(typeof buildRemoteBrowseUrl === "function", "export buildRemoteBrowseUrl");
+assert(typeof remoteHintLine === "function", "export remoteHintLine");
+assert(typeof upsertReleasesIndexRow === "function", "export upsertReleasesIndexRow");
+
+// D3：无 mergeSources + recentFirst → 取最近业务句
+{
+  const commits = [
+    { hash: "a1", author: "u", date: "2026-10-15", subject: "feat: ship inventory API" },
+    { hash: "a0", author: "u", date: "2026-01-01", subject: "Initial commit" },
+  ];
+  const recent = buildReleaseSummaryLines(commits, {
+    recentFirst: true,
+    mergeSources: [],
+  });
+  assert(/inventory/i.test(recent[0] || ""), "D3 recentFirst prefers recent commit phrase");
+  assert(!/^Initial\b/i.test(recent[0] || ""), "D3 recentFirst not Initial commit first");
+  const oldest = buildReleaseSummaryLines(commits, {
+    recentFirst: false,
+    mergeSources: [],
+  });
+  assert(/^Initial\b/i.test(oldest[0] || ""), "D3 recentFirst=false surfaces oldest first");
+}
+
+// D4：宿主检测与 browse URL
+{
+  assert(detectRemoteHost("https://github.com/org/repo") === "github", "D4 detect github");
+  assert(detectRemoteHost("https://gitlab.com/org/repo") === "gitlab", "D4 detect gitlab");
+  const gh = buildRemoteBrowseUrl({
+    web: "https://github.com/org/repo",
+    host: "github",
+    firstRelease: false,
+    base: "main",
+    head: "release/V1",
+  });
+  assert(
+    gh === "https://github.com/org/repo/compare/main...release%2FV1",
+    "D4 GitHub compare path"
+  );
+  const gl = buildRemoteBrowseUrl({
+    web: "https://gitlab.com/org/repo",
+    host: "gitlab",
+    firstRelease: true,
+    head: "release/V1",
+  });
+  assert(
+    gl === "https://gitlab.com/org/repo/-/commits/release%2FV1",
+    "D4 GitLab commits path"
+  );
+  assert(
+    /GitHub/.test(remoteHintLine(gh, "github")),
+    "D4 hint says GitHub"
+  );
+  assert(
+    /GitLab/.test(remoteHintLine(gl, "gitlab")),
+    "D4 hint says GitLab"
+  );
+}
+
+// D5：releases.md 进行中表 upsert
+{
+  const skeleton = `# idx
+
+## 进行中
+
+| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |
+|---|---|---|---|---|---|
+| — | （暂无） | — | — | — | — |
+
+## 其它
+`;
+  const up = upsertReleasesIndexRow(skeleton, {
+    date: "2026-10-22",
+    identity: "release-V251016",
+    branchPair: "release/V251016 → main",
+    status: "已定版",
+    noteRel: "notes/release-V251016/release-V251016.md",
+    owner: "alice",
+  });
+  assert(up.updated, "D5 upsert updated");
+  assert(/release-V251016/.test(up.text), "D5 upsert inserts identity");
+  assert(!/（暂无）/.test(up.text), "D5 upsert removes placeholder");
+  const up2 = upsertReleasesIndexRow(up.text, {
+    date: "2026-10-23",
+    identity: "release-V251016",
+    branchPair: "release/V251016 → main",
+    status: "已定版",
+    noteRel: "notes/release-V251016/release-V251016.md",
+    owner: "bob",
+  });
+  const idHits = (up2.text.match(/release-V251016/g) || []).length;
+  assert(idHits >= 1 && /bob/.test(up2.text), "D5 upsert same identity updates row");
+}
+
+// D2：首次 inventory 空层可观测
+{
+  const empty = enrichFirstReleaseLayerObservability(
+    { policy: "first-release-layered", migrationCount: 0 },
+    { configKeys: [], jobKeys: [], taskCodes: [] }
+  );
+  assert(
+    empty.inventory.prodConfigKeyCount === 0 &&
+      empty.inventory.nacosOverlayKeyCount === 0 &&
+      empty.inventory.syncTaskCodeCount === 0,
+    "layerObs empty counts are 0"
+  );
+  assert(
+    JSON.stringify(empty.inventory.layerEmpty) === JSON.stringify(["config", "jobs"]),
+    "layerObs empty → layerEmpty config+jobs"
+  );
+  assert(
+    empty.warnings.some((w) => /prod 层 0 键/.test(w)) &&
+      empty.warnings.some((w) => /SyncTaskCode 枚举 0/.test(w)),
+    "layerObs empty → warnings"
+  );
+  const filled = enrichFirstReleaseLayerObservability(
+    { policy: "first-release-layered" },
+    {
+      configKeys: [
+        { key: "a", source: "application-prod" },
+        { key: "b", source: "nacos-overlay" },
+      ],
+      jobKeys: [],
+      taskCodes: ["sms:sync"],
+    }
+  );
+  assert(
+    filled.inventory.prodConfigKeyCount === 1 &&
+      filled.inventory.nacosOverlayKeyCount === 1 &&
+      filled.inventory.syncTaskCodeCount === 1 &&
+      filled.inventory.layerEmpty.length === 0 &&
+      filled.warnings.length === 0,
+    "layerObs filled → no layerEmpty"
+  );
+}
 
 assert(
   identityFromBranch("origin/release/V260827") === "release-V260827",
@@ -380,6 +528,102 @@ assert(
 );
 const pushHelp = spawnHelp("scripts/release-push-gate.mjs");
 assert(pushHelp.status === 0, "push-gate --help exit 0");
+
+// --- D1：push-gate 临时仓烟测（--no-fetch；用 update-ref 模拟 origin，无网络） ---
+function gitIn(cwd, args) {
+  return spawnSync("git", ["-C", cwd, ...args], {
+    encoding: "utf8",
+    env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
+  });
+}
+function runPushGate(root, extraArgs) {
+  const bin = path.join(skillRoot, "scripts/release-push-gate.mjs");
+  return spawnSync(
+    process.execPath,
+    [bin, "--root", root, "--no-fetch", ...extraArgs],
+    { encoding: "utf8", maxBuffer: 2 * 1024 * 1024 }
+  );
+}
+function parseGateJson(r) {
+  try {
+    return JSON.parse(r.stdout || "{}");
+  } catch {
+    return {};
+  }
+}
+{
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "release-eng-push-gate-"));
+  try {
+    gitIn(work, ["init"]);
+    gitIn(work, ["config", "user.email", "selfcheck@test"]);
+    gitIn(work, ["config", "user.name", "selfcheck"]);
+    gitIn(work, ["config", "commit.gpgsign", "false"]);
+    fs.writeFileSync(path.join(work, "README.md"), "v1\n");
+    gitIn(work, ["add", "README.md"]);
+    gitIn(work, ["commit", "-m", "init"]);
+    gitIn(work, ["checkout", "-b", "release/never-push"]);
+    fs.writeFileSync(path.join(work, "README.md"), "v2-local-only\n");
+    gitIn(work, ["add", "README.md"]);
+    gitIn(work, ["commit", "-m", "local only"]);
+
+    // 场景1：仅本地发版支、无 origin/<b> → fail
+    const never = runPushGate(work, [
+      "--release",
+      "release/never-push",
+      "--baseline",
+      "none",
+    ]);
+    const neverJson = parseGateJson(never);
+    assert(never.status === 2, "push-gate never-pushed exit 2");
+    assert(neverJson.pass === false, "push-gate never-pushed pass=false");
+    assert(
+      neverJson.release?.neverPushed === true ||
+        (neverJson.warnings || []).some((w) => /never pushed/.test(w)),
+      "push-gate never-pushed flag/warning"
+    );
+
+    // 场景2：模拟已 push（origin 与本地同 tip）→ pass
+    const tip = (gitIn(work, ["rev-parse", "HEAD"]).stdout || "").trim();
+    gitIn(work, ["update-ref", "refs/remotes/origin/release/never-push", tip]);
+    const synced = runPushGate(work, [
+      "--release",
+      "release/never-push",
+      "--baseline",
+      "none",
+    ]);
+    const syncedJson = parseGateJson(synced);
+    assert(synced.status === 0, "push-gate in-sync exit 0");
+    assert(syncedJson.pass === true, "push-gate in-sync pass=true");
+    assert(
+      String(syncedJson.headRef || "").startsWith("origin/"),
+      "push-gate in-sync headRef is origin/…"
+    );
+
+    // 场景3：本地超前 origin（C1b）→ fail unpushed>0
+    fs.writeFileSync(path.join(work, "README.md"), "v3-ahead\n");
+    gitIn(work, ["add", "README.md"]);
+    gitIn(work, ["commit", "-m", "ahead of origin"]);
+    const ahead = runPushGate(work, [
+      "--release",
+      "release/never-push",
+      "--baseline",
+      "none",
+    ]);
+    const aheadJson = parseGateJson(ahead);
+    assert(ahead.status === 2, "push-gate unpushed>0 exit 2");
+    assert(aheadJson.pass === false, "push-gate unpushed>0 pass=false");
+    assert(
+      Number(aheadJson.release?.unpushed || 0) > 0,
+      "push-gate unpushed>0 count"
+    );
+  } finally {
+    try {
+      fs.rmSync(work, { recursive: true, force: true });
+    } catch {
+      /* ignore cleanup */
+    }
+  }
+}
 
 // --- release.mjs thin CLI (0.3.19-dev) ---
 assert(exists("scripts/release.mjs"), "release.mjs exists");

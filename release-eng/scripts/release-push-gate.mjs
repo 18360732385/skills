@@ -58,25 +58,35 @@ function refExists(root, ref) {
 
 function resolvePair(root, name) {
   const origin = `origin/${name}`;
-  const warnings = [];
-  let ref;
-  if (refExists(root, origin)) {
-    ref = origin;
-  } else if (refExists(root, name)) {
-    ref = name;
-    warnings.push(`missing ${origin}; fallback local ${name}`);
-  } else {
+  const hasOrigin = refExists(root, origin);
+  const hasLocal = refExists(root, name);
+
+  // 缺 origin = 从未推送 → 失败（不可再 fallback 本地仍 pass）
+  if (!hasOrigin) {
+    if (hasLocal) {
+      return {
+        ref: null,
+        localRef: name,
+        warnings: [`missing ${origin}; never pushed`],
+        unpushed: -1,
+        unpushedCommits: [],
+        neverPushed: true,
+      };
+    }
     return {
       ref: null,
       warnings: [`neither ${origin} nor ${name} exists`],
       unpushed: 0,
       unpushedCommits: [],
+      neverPushed: false,
     };
   }
 
+  const ref = origin;
+  const warnings = [];
   let unpushed = 0;
   let unpushedCommits = [];
-  if (refExists(root, origin) && refExists(root, name)) {
+  if (hasLocal) {
     const count = git(root, ["rev-list", "--count", `${origin}..${name}`]);
     unpushed = count.ok ? Number(count.stdout || "0") : 0;
     if (unpushed > 0) {
@@ -96,7 +106,13 @@ function resolvePair(root, name) {
       }
     }
   }
-  return { ref, warnings, unpushed, unpushedCommits };
+  return {
+    ref,
+    warnings,
+    unpushed,
+    unpushedCommits,
+    neverPushed: false,
+  };
 }
 
 function collectBehind(root, name, side) {
@@ -147,6 +163,7 @@ skill_version: see ../_meta/manifest.yaml`);
     warnings: [],
     unpushed: 0,
     unpushedCommits: [],
+    neverPushed: false,
   };
   let pass;
   let baseRef = null;
@@ -192,10 +209,14 @@ skill_version: see ../_meta/manifest.yaml`);
     release: {
       unpushed: release.unpushed,
       commits: release.unpushedCommits,
+      neverPushed: !!release.neverPushed,
+      localRef: release.localRef || null,
     },
     baseline: {
       unpushed: baseline.unpushed,
       commits: baseline.unpushedCommits,
+      neverPushed: !!baseline.neverPushed,
+      localRef: baseline.localRef || null,
     },
     warnings,
     hints: {

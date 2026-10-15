@@ -38,6 +38,10 @@ import {
   COMMIT_DISPLAY_HEAD,
   COMMIT_DISPLAY_TAIL,
   H3_GIT,
+  enrichFirstReleaseLayerObservability,
+  detectRemoteHost,
+  buildRemoteBrowseUrl,
+  remoteHintLine,
 } from "./release-format.mjs";
 
 function isNoneBase(v) {
@@ -115,10 +119,18 @@ function originWebUrl(root) {
 function buildGitlabUrl(root, { firstRelease, base, head }) {
   const web = originWebUrl(root);
   if (!web) return null;
-  const h = stripOrigin(head);
-  if (firstRelease) return `${web}/-/commits/${encodeURIComponent(h)}`;
-  const b = stripOrigin(base);
-  return `${web}/-/compare/${encodeURIComponent(b)}...${encodeURIComponent(h)}`;
+  return buildRemoteBrowseUrl({
+    web,
+    host: detectRemoteHost(web),
+    firstRelease,
+    base: stripOrigin(base),
+    head: stripOrigin(head),
+  });
+}
+
+function remoteHostOf(root) {
+  const web = originWebUrl(root);
+  return web ? detectRemoteHost(web) : "other";
 }
 
 function guessSourceBranch(subject) {
@@ -371,11 +383,8 @@ function mergeSourceMdRow(m) {
   return `| ${String(m.source || "无/未识别").replace(/\|/g, "\\|")} | ${m.count} | ${String(summary).replace(/\|/g, "\\|")} |`;
 }
 
-function gitlabHint(gitlabUrl) {
-  if (!gitlabUrl) {
-    return "> 完整记录请登录 GitLab 查看（未能从 origin 推导链接；请打开仓库 Commits / Compare 页）。";
-  }
-  return `> 完整记录请登录 GitLab 查看：${gitlabUrl}`;
+function gitlabHint(gitlabUrl, host) {
+  return remoteHintLine(gitlabUrl, host);
 }
 
 function candidateKeySummary(c) {
@@ -401,7 +410,7 @@ function toMd(data) {
   else for (const c of commitsView.rows) lines.push(commitMdRow(c));
   if (commitsView.truncated) {
     lines.push("");
-    lines.push(gitlabHint(data.gitlabUrl));
+    lines.push(gitlabHint(data.gitlabUrl, data.remoteHost));
   }
   lines.push("");
   lines.push(`## ${H3_GIT.merges}`);
@@ -415,7 +424,11 @@ function toMd(data) {
   lines.push(
     releaseSummaryMarkdown(
       data.releaseSummaryLines ||
-        buildReleaseSummaryLines(data.commits, { mergeSources: data.mergeSources })
+        buildReleaseSummaryLines(data.commits, {
+          mergeSources: data.mergeSources,
+          recentFirst:
+            data.firstRelease || !(data.mergeSources && data.mergeSources.length),
+        })
     )
   );
   lines.push(`> 时区：${TZ_CHINA}`);
@@ -495,7 +508,13 @@ function toMd(data) {
 
   if (data.gitlabUrl) {
     lines.push("");
-    lines.push(`## GitLab`);
+    const hostLabel =
+      data.remoteHost === "github"
+        ? "GitHub"
+        : data.remoteHost === "gitlab"
+          ? "GitLab"
+          : "Remote";
+    lines.push(`## ${hostLabel}`);
     lines.push(data.gitlabUrl);
   }
   return lines.join("\n");
@@ -922,7 +941,7 @@ function main() {
     }));
   const mergeSources = buildMergeSources(merges);
   const releaseSummaryLines = buildReleaseSummaryLines(commits, {
-    recentFirst: firstRelease,
+    recentFirst: firstRelease || !(mergeSources && mergeSources.length),
     mergeSources,
   });
 
@@ -969,9 +988,16 @@ function main() {
     configKeys = layered.configKeys;
     jobKeys = layered.jobKeys;
     taskCodes = layered.taskCodes;
+    const layerObs = enrichFirstReleaseLayerObservability(inventory, {
+      configKeys,
+      jobKeys,
+      taskCodes,
+    });
+    inventory = layerObs.inventory;
     warnings.push(
-      `首次发版分层: commits=${commits.length} files=${files.length}; draft←migration+application-prod+SyncTaskCode；其余 layerSuppressed；inventory.migrationRange=${inventory.migrationRange}`
+      `首次发版分层: commits=${commits.length} files=${files.length}; draft←migration+application-prod+SyncTaskCode；其余 layerSuppressed；inventory.migrationRange=${inventory.migrationRange}; prodKeys=${inventory.prodConfigKeyCount}+nacos=${inventory.nacosOverlayKeyCount}; syncTaskCodes=${inventory.syncTaskCodeCount}; layerEmpty=${JSON.stringify(inventory.layerEmpty)}`
     );
+    warnings.push(...layerObs.warnings);
   } else {
     const built = buildIncrementalCandidates(args.root, args.base, head, files);
     candidates = built.candidates;
@@ -984,6 +1010,7 @@ function main() {
     ? { sqlScripts: [], configKeys: [], jobIds: [] }
     : computeBaselinePresence(args.root, args.base, { candidates, configKeys, jobKeys, taskCodes });
 
+  const remoteHost = remoteHostOf(args.root);
   const gitlabUrl = buildGitlabUrl(args.root, {
     firstRelease,
     base: args.base,
@@ -991,7 +1018,7 @@ function main() {
   });
 
   if (!gitlabUrl) {
-    warnings.push("未能从 origin 推导 GitLab URL");
+    warnings.push("未能从 origin 推导远端浏览 URL");
   }
 
   const dataRaw = {
@@ -1003,6 +1030,7 @@ function main() {
     head,
     range,
     gitlabUrl,
+    remoteHost,
     commits,
     merges,
     mergeSources,

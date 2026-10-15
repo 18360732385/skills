@@ -1,10 +1,12 @@
 # release-eng CHANGELOG
 
 版本策略：对外权威号**只认** [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`。自 `0.3.x` 起补丁序递增（勿跳升次版本号 unless 明确要求）。  
-版本明细见 [`../_log/release-eng/`](../_log/release-eng/)（按 `major.minor` 分目录，一版本一文件，如 `0.3/0.3.21-dev.md`）。本表为索引。
+版本明细见 [`../_log/release-eng/`](../_log/release-eng/)（按 `major.minor` 分目录，一版本一文件，如 `0.3/0.3.23.md`）。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.3.23](../_log/release-eng/0.3/0.3.23.md) | 2026-10-15 | P3：D3 recentFirst；D4 远端宿主；D5 索引回写（起本版无 -dev） |
+| [0.3.22-dev](../_log/release-eng/0.3/0.3.22-dev.md) | 2026-10-15 | D1 never-pushed fail；D2 首次 inventory 空层可观测 |
 | [0.3.21-dev](../_log/release-eng/0.3/0.3.21-dev.md) | 2026-09-29 | 纪律 bulletproof（Red Flags / 借口表；RED→GREEN 4/4） |
 | [0.3.20-dev](../_log/release-eng/0.3/0.3.20-dev.md) | 2026-09-28 | 版本单点维护：manifest SSOT + sync-skill-version |
 | [0.3.19-dev](../_log/release-eng/0.3/0.3.19-dev.md) | 2026-09-19 | 统一薄入口 release.mjs + 模式 md 迁入 modes/ |
