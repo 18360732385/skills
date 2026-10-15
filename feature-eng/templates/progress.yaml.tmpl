@@ -27,7 +27,8 @@ path: null
 # unattended：集中降级 invoke→inline、review→inline、handoff→auto；硬闸用 user_task_<id>
 run_mode: guided
 
-# strict | inline（调起策略；见 binding.md；可跟 defaults.invoke）
+# strict | inline（调起策略；见 flow.md；可跟 defaults.invoke）
+# 默认 strict；宿主无 Task / CloudAgent·executor 则降级 inline（须显式写回链，见 start.md O5b）
 invoke: strict
 
 # auto | confirm（过闸后是否立即调起下一 skill；见 advance.md）
@@ -66,6 +67,8 @@ artifacts:
   testcases: null    # …/测试用例.md（仅 F）
   test_report: null  # …/测试报告.md（仅 F）
   qa_report: null    # 外部 QA 报告路径（可选）
+  implement: null    # 实现交付说明或 diff 摘要路径（可选）
+  pr_url: null       # PR/MR URL（可选；close ARCHIVE「提交」列可同源）
 
 # 来自 plan 的任务拆分；depends_on 为任务 id 列表
 tasks: []
@@ -80,6 +83,7 @@ gates:
   shared_understanding: null   # 用户显式确认可进设计
   design_confirmed: null       # B: 短设计 yes；F: 整体或每段 yes；express: 可与上一闸同一次总 yes
   go: null
+  proto_confirmed: null        # 仅 proto=entered：用户原型确认 ISO；skipped* 保持 null
   pre_impl: null
   gate: null
   verify: null

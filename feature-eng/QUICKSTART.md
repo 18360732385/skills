@@ -1,6 +1,6 @@
 # feature-eng 一页纸
 
-**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.22**。
+**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.25**。
 
 **可选接力**：需要工程化仓时先完成工程化（常见实现别名：`harness-eng`）→ **新会话**再点名本 skill；同会话勿并行。本 skill 可独立使用（无工程化 meta 亦可）。有工程化 meta 时 `start` 会软提示 `ai_coding_ready`（可忽略继续）；详见 [SKILL.md](SKILL.md)「可选接力（工程化仓）」。
 
@@ -32,7 +32,7 @@ init（首次绑 11 环；可选推荐包 / minimal）
 2. **progress / 回链 仅控制器写**——厨师只回报产物路径列表。
 3. **自动调起 ≠ 替用户 yes 硬闸**。
 
-**证据条**：写 `gates.*` 前须合法 `authorized_by`（禁 fixture/auto 占位）+ 适用环 `审核-<stage>.md` 且 **`result: pass`**（proxy 不豁免；proxy 须「仪式与降级」非空）。
+**证据条**：写 `gates.*` 前须合法 `authorized_by`（禁 fixture/auto 占位）+ 适用环 `审核-<stage>.md` 且 **`result: pass`**（proxy 不豁免；proxy 须「仪式与降级」非空）。`proto=entered` 须 ISO `gates.proto_confirmed`。可选产物指针：`artifacts.implement` / `artifacts.pr_url`。
 
 详情：[SKILL.md](SKILL.md) · [flow.md](modes/specs/flow.md) · [gates.md](modes/specs/gates.md)
 
@@ -43,10 +43,23 @@ init（首次绑 11 环；可选推荐包 / minimal）
 1. **绑定文件在**：目标仓 `docs/runs/stage-bindings.yaml`（或先 `init`；可回退技能包 `config/`）；关键环非 null（F：`spec`/`plan`/`testdesign`/`implement`/`verify` 等）——否则 proxy。
 2. **过程态**：`docs/runs/active/<slug>/{progress.yaml,回链.md}`；`chef_mode: controller_proxy` 已写入回链「仪式与降级」。
 3. **硬闸授权**：用真实 `user_task_<id>` 或 `user_chat`——**禁止伪造聊天笔录与 fixture/auto 占位**。批跑用 `run_mode: unattended` + `user_task_<id>`。
-4. **环间**：控制器戴厨师帽按 [gates.md](modes/specs/gates.md) L1 落盘领域产物；仍走 advance L1/L2；`review_policy` 无 Task 则显式降为 `inline`。
-5. **收口**：按 [close.md](modes/close.md) 双归档 L1 检查单（runs + superpowers/archive）。
+4. **环间**：控制器戴厨师帽按 [gates.md](modes/specs/gates.md) L1 落盘领域产物；仍走 advance L1/L2；`review_policy` 无 Task 则显式降为 `inline`；`invoke` 无 Task / CloudAgent·executor 则显式降为 `inline`（O5b，禁止静默）。
+5. **收口**：按 [close.md](modes/close.md) 双归档 L1 检查单（runs + superpowers/archive）。本地无 PR 业务树时契约可认 PR 分支（`契约同步: pr_branch`）；merge 后再 refresh。pitfalls「→ Pn」warn 属目标仓卫生。
 
 边界仍有效：proxy 是**显式降级**，不是默认；能装厨师时优先 `bound`。
+
+## Gate 无 CI 时的可接受证据
+
+环 9 机械轨按下表优先序取至少一项（详情与禁止项见 [gates.md](modes/specs/gates.md) Part A「gate」）：
+
+| 序 | 可接受证据 |
+|---|---|
+| A | 本地 hooks / lint / smoke：命令 + exit 0 |
+| B | `env_notes.verify_commands[]` 每条 exit 0（若有） |
+| C | PR Checks / CI 链接且结论可指认 |
+| D | **无 CI**：用户接受本地自证 → `mech_track: local_self_attest` + 命令清单 |
+
+**禁止**仅写「测试已跑过」而无命令/退出码/路径/Checks。
 
 ## 绿地前端（O10：非空目录脚手架）
 

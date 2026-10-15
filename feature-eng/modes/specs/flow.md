@@ -54,7 +54,7 @@ docs/superpowers/           # Spec/Plan 语料 + README/ARCHIVE（不变）
 | 3 | 定稿 | `domain` | 绑定 skill | **仅** `domain=entered` | ADR；`术语增量.md` | `docs/adr/`；runs |
 | 4 | 规格 | `spec` | 绑定 skill | **仅 F**（domain 跳过或完成后） | Spec 设计 md | `docs/superpowers/specs/` |
 | 5 | 计划 | `plan` | 绑定 skill | F 必；B 可选 checklist | 实施计划 | `docs/superpowers/plans/` |
-| 5→6 | 原型桥 | `proto-bridge` | **仅控制器** | 5 刚结束 | `progress.proto=*` | runs |
+| 5→6 | 原型桥 | `proto-bridge` | **仅控制器** | `gates.go` 刚过（B 无 plan 时：Go 等价三问后立即进桥，禁止空等「环 5 结束」） | `progress.proto=*` | runs |
 | 6 | 原型 | `proto` | 绑定 skill | 自判需 UI **且**用户同意 | 原型 + 交互说明 | `docs/ui-prototypes/<slug>/` 或 runs |
 | 7 | 测试设计 | `testdesign` | 绑定 skill | **仅 F** | `测试用例.md` | runs active |
 | 7b | 实现前闸 | `pre-impl` | 控制器 | B/F | `stage=implement` | runs |
@@ -88,6 +88,8 @@ docs/superpowers/           # Spec/Plan 语料 + README/ARCHIVE（不变）
 
 F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **spec**。
 
+**B 无独立 plan**：短设计确认后走「Go 等价三问」→ 写 `gates.go` → **立即**进 proto-bridge（见 [bridges.md](bridges.md)）；禁止空等「环 5 结束」。
+
 ## progress.yaml 字段
 
 字段 SSOT 为 [`templates/progress.yaml.tmpl`](../../templates/progress.yaml.tmpl)；本页不复述。L1/L2 见 [gates.md](gates.md)；调起与交接见下文 Part B / [advance.md](../advance.md)；express 边界见 [start.md](../start.md)。
@@ -119,7 +121,7 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 
 | 值 | 行为 |
 |---|---|
-| **`strict`** | **控制器主动**开 Task/子代理调起绑定 skill；父会话贴指针后停在调度，等子 skill 结束再进步骤 5。**仅当宿主无法开子代理**时，才退回「请用户新会话点名 + 复制指针卡片」。`run_mode=unattended` 时须已降为 `inline`，禁止卡在「请开新会话」。 |
+| **`strict`** | **控制器主动**开 Task/子代理调起绑定 skill；父会话贴指针后停在调度，等子 skill 结束再进步骤 5。若宿主 **无 Task/子代理**，或当前为 **CloudAgent / executor / 单会话编排**：按 [start.md](../start.md) **O5b** 先降为 `inline` 并记回链——**禁止**静默保持 `strict` 却同会话戴帽。仅当用户**显式要求**且宿主确无 Task、又拒绝降级时，才退回「请用户新会话点名 + 复制指针卡片」。`run_mode=unattended` 时须已降为 `inline`，禁止卡在「请开新会话」。 |
 | **`inline`** | **控制器主动**在同会话执行：贴指针卡片 → 明示「本段戴厨师帽」→ 只写领域产物 → 结束回报路径列表 → **仍由 advance 写 progress/links** |
 
 两种策略下控制器都**不**代写领域正文（`chef_mode=controller_proxy` 的显式兼代除外）。用户不是默认路由器；`inline` 不是「调度员进厨房写业务」的许可证。写盘权责见 [SKILL.md](../../SKILL.md)。
@@ -160,16 +162,19 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 【feature-eng 指针】
 - slug / runs: docs/runs/active/<slug>/
 - path / stage / run_mode / invoke / handoff_policy: …
+- invoke_effective: strict | inline（+ 降级原因若有；见 O5b）
 - 绑定 skill: <name>
 - 上一环产物: <paths>
 - 上一环 L2 结论: …/审核-<prev>.md（若有）
 - 本环产物期望: 见 [gates.md](gates.md) Part A「<stage>」勾选（L1）
 - 本环语义期望: 见 [gates.md](gates.md) Part B「离开 <stage>」
-- 截断/回退: <design|spec 截断或 implement 回退要点>
+- 截断/回退:
+  - design|spec：**必须**从 [config/truncate-contracts.yaml](../../config/truncate-contracts.yaml) 粘贴本环 `forbid:` 原文列表（禁止只写「截断要点」）
+  - implement：回退要点（SDD / executing-plans）
 - 厨师结束请回报: 产物路径列表（勿改 progress.yaml / 回链.md）
 ```
 
-`strict` 且无 Task 时提示用户复制本卡片到新会话；其余情况由控制器主动调起。
+按 `progress.invoke`（经 O5b 后的有效值）调起：`inline` / 已降级 → 同会话戴帽；`strict` 且用户显式拒绝降级、宿主确无 Task → 提示复制本卡片到新会话；其余由控制器主动 Task。
 
 ## lookup（每个需子 skill 的环节通用）
 
@@ -182,7 +187,7 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 | A | 解析序下绑定文件存在且含 `stages.<环节>` 键（优先 `docs/runs/stage-bindings.yaml`） | 「绑定配置缺失或无此环节键，请运行 feature-eng init 或检查 `docs/runs/stage-bindings.yaml`」 |
 | B | `stages.<环节>.skill` 非 `null`、非空 | 「该环节未绑定 skill，请运行 feature-eng init 或 rebind」 |
 | C | 绑定 skill **当前宿主可调起**（已安装 / 可点名） | 「绑定 skill `<name>` 当前不可调起（未安装或宿主无法点名）。请安装（须用户同意）或 rebind；推荐包见 `config/stage-bindings.example.yaml`」 |
-| D | 若本环为 `design`/`spec` 且与同 skill 多环：已读截断契约并写入指针卡片 | 「缺少 design/spec 截断指令：见 [config/truncate-contracts.yaml](../../config/truncate-contracts.yaml) 与下节『同 skill 多环』」 |
+| D | 若本环为 `design`/`spec` 且与同 skill 多环：已读截断契约，且指针卡片已**粘贴**该环 `forbid:` 原文列表 | 「缺少 design/spec 截断指令或指针卡片未粘贴 forbid 列表：见 [config/truncate-contracts.yaml](../../config/truncate-contracts.yaml) 与下节『同 skill 多环』」 |
 | E | 若本环为 `implement`：已完成回退询问（SDD / executing-plans） | 「implement 未确认执行 skill：见下节『implement 回退』」 |
 
 预检通过后再进入调起步骤。`start` / `advance` 调下一环前同样适用本表。
@@ -191,10 +196,10 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 1. 读 stage-bindings.yaml 中 stages.<环节>.skill（跑上表 A–E）
 2. A/B 失败 → 阻断（上表文案）
 3. C 失败 → 阻断；协助安装（须用户同意）或提示 rebind；可提示推荐包替代名
-4. 控制器主动调起（按 progress.invoke）：
-   - 输出指针卡片（上节）
-   - inline → 同会话戴厨师帽执行
-   - strict → 主动 Task；仅无 Task 时退回用户新会话点名
+4. 控制器主动调起（按 progress.invoke，经 O5b 后的有效值）：
+   - 输出指针卡片（上节，含 invoke_effective）
+   - inline（含 O5b 降级）→ 同会话戴厨师帽执行
+   - strict → 主动 Task；仅用户显式拒绝降级且宿主确无 Task 时退回用户新会话点名
    另附：本环截断/回退指令（见下节「同 skill 多环」与「implement 回退」；机读 [config/truncate-contracts.yaml](../../config/truncate-contracts.yaml)）
    若 stages.<环节> 含 input_contract：把必传字段一并写入指针卡片
 5. 子 skill 结束后：收取「产物路径列表」→ 进入 [advance.md](../advance.md)
@@ -208,6 +213,8 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 `design` 与 `spec` 推荐都绑 `brainstorming`（Superpowers 无独立 writing-specs）。调起时**必须**附加截断指令，避免一口气写到 plan。
 
 **机读契约（SSOT）**：[config/truncate-contracts.yaml](../../config/truncate-contracts.yaml)（`stages.design` / `stages.spec` 的 allow/forbid；lookup 预检 D 项）。**勿在本页维护第二份 allow/forbid 表**——改契约只改 yaml。
+
+**强制粘贴 forbid**：design/spec 指针卡片须把该环 `forbid:` 原文列表粘贴进「截断/回退」；仅写「截断要点 / 勿写 Spec」等摘要 **不算过** 预检 D。
 
 域定稿（ADR / `术语增量.md`）仅在 `domain=entered` 时走 `domain` 绑定，不由 brainstorming 代做；默认经 [bridges.md](bridges.md) 跳过。禁止写仓库根 `CONTEXT.md`。
 

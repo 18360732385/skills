@@ -24,6 +24,8 @@ artifacts:
   testcases: null
   test_report: null
   qa_report: null
+  implement: null
+  pr_url: null
 
 tasks: []
 
@@ -32,6 +34,7 @@ gates:
   shared_understanding: null
   design_confirmed: null
   go: null
+  proto_confirmed: null
   pre_impl: null
   gate: null
   verify: null

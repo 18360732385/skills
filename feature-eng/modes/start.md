@@ -57,6 +57,8 @@
      4. 硬闸 `authorized_by` **必须**为真实 `user_task_<id>`（任务码）或显式 `policy_exception`；**禁止**伪造 `user_chat` 笔录
      5. 回链「仪式与降级」写明上述降级清单；`progress.run_mode: unattended`
    - **review_policy 宿主探测（O5）**：若用户选/默认 `subagent`（且非 unattended 已降），但宿主 **无 Task/子代理能力** → **自动降级**为 `inline`，并在 `回链.md`「仪式与降级」与门禁备注写明「review_policy: subagent→inline（宿主无 Task）」——**禁止静默改值**。
+   - **L2 同会话摩擦（F-07 / O5 扩展）**：即使宿主**有** Task，若实际用同会话审核帽（含 CloudAgent / executor 编排）→ 须将 `progress.review_policy` 降为 `inline` 并记回链，**或**回链写 `review_effective: inline（同会话审核帽）`——禁止进度仍写 `subagent` 却无备注。**不**强制开 Task；强制的是可审计降级/有效值。
+   - **invoke 宿主探测（O5b）**：若用户选/默认 `invoke: strict`（且非 unattended 已降），但满足任一：① 宿主 **无 Task/子代理能力**；② 当前会话为 **CloudAgent / executor / 单会话编排控制器**（无法把厨师环真正开到独立 Task）→ **自动降级**为 `inline`，写 `progress.invoke: inline`，并在 `回链.md`「仪式与降级」写明「invoke: strict→inline（宿主无 Task | CloudAgent/executor）」——**禁止静默**保持 `strict` 却同会话戴帽。
    - **`close_pitfalls`（有 lint 脚本时收紧）**：
      - 探测目标仓是否存在 `scripts/agent-kb/lint-pitfalls.mjs`（或团队文档注明的等价路径）。
      - 用户本轮**显式**指定 `off|optional|on` → 以用户为准，写入 `progress.close_pitfalls`。
@@ -64,8 +66,8 @@
 7. **建过程态**：
    - 确保 `docs/runs/active/`（及可选 `docs/runs/README.md`，可用 `templates/runs-README.md.tmpl`）
    - 创建 `docs/runs/active/<slug>/`
-   - 写 `progress.yaml`（自 `templates/progress.yaml.tmpl`；含 `schema: topic-run/1`；写入已探测的 `chef_mode` / 可能降级后的 `review_policy` / 可选 `close_pitfalls` / `sibling_repos` / `layout`·`packages`·`docs_root`）。旧主题缺 `schema` 仍合法。
-   - 写 `回链.md`（自 `templates/回链.md.tmpl`；同步 chef_mode / review_policy 降级备注 / eng_probe / close_pitfalls 收紧备注 / 跨仓表 / 同仓布局）
+   - 写 `progress.yaml`（自 `templates/progress.yaml.tmpl`；含 `schema: topic-run/1`；写入已探测的 `chef_mode` / 可能降级后的 `invoke` 与 `review_policy` / 可选 `close_pitfalls` / `sibling_repos` / `layout`·`packages`·`docs_root`）。旧主题缺 `schema` 仍合法。
+   - 写 `回链.md`（自 `templates/回链.md.tmpl`；同步 chef_mode / invoke 与 review_policy 降级备注 / eng_probe / close_pitfalls 收紧备注 / 跨仓表 / 同仓布局）
    - 可选：在 `docs/runs/README.md` 进行中表插入一行
 8. **登记索引**（仅 F，或用户要求登记时）：`docs/superpowers/README.md` 进行中表按日期倒序插入主题行（Spec/Plan 列先 `—`，环 4/5 产出后回写）。无 README 则跳过并说明。
 9. **进入下一环**：**控制器主动**按 [flow.md](specs/flow.md) lookup 调起首个执行环。若 `chef_mode=controller_proxy`，本环由控制器戴厨师帽产出领域产物，仍经 advance 写盘。若 `handoff_policy=confirm`，先短确认卡片再调起。用户声称本环完成 → [advance.md](advance.md)。
@@ -78,7 +80,7 @@
 ## `express` 硬边界
 
 **不跳过**：分诊确认、计划 Go 闸、Pre-Impl、Verify（F）、Close。  
-**可压缩**：grill+design 同轮；共享理解闸 + 设计确认闸可用**一次总 yes**。  
+**可压缩**：grill+design 同轮；共享理解闸 + 设计确认闸可用**一次总 yes**（两闸可写**相同 ISO**；硬闸授权表两行同戳**可接受**，见 F-10）。  
 **仍分环**：spec 与 plan；design 后仍跑 **domain-bridge**；proto 桥规则不变。  
 **编排**：默认 `handoff_policy=auto`。
 
@@ -95,7 +97,8 @@
 - 控制器只建目录与模板文件；澄清/设计正文由子 skill 产出（`chef_mode=bound`）。`controller_proxy` 时须已警告用户，兼代产出仍经 advance 写 progress/回链。
 - 换绑走 rebind；implement 回退询问见 [flow.md](specs/flow.md)。
 - 仪式字段写入后本主题沿用；中途改须用户显式确认并只改 progress。
-- `review_policy` 因宿主能力降级必须落盘备注，禁止静默。
+- `review_policy` 因宿主能力 / 同会话审核帽降级必须落盘备注（或 `review_effective`），禁止静默。
+- `invoke` 因宿主能力 / CloudAgent·executor 降级必须落盘备注，禁止静默。
 - empty-ish 仓不得假装已有业务骨架；须先本地脚手架（见步骤 1）。
 - 用户已提跨仓配对却未填 `sibling_repos` → 不得宣称 start/grill 完成。
 - `layout=monorepo` 且 sibling_repos 指向 `packages[].path` 同仓路径 → 不得宣称 start 完成（改用 packages）。

@@ -18,7 +18,8 @@
 
 1. **契约同步（内建）**  
    若仓内存在 `docs/func` / `docs/api` / `docs/db` / `docs/redis` / `docs/jobs`（或团队等价契约目录）：逐项确认本主题变更已同步；未同步 → 列缺项，先补。  
-   若无此类目录：记「本仓无契约文档树」并跳过，不阻断。
+   若无此类目录：记「本仓无契约文档树」并跳过，不阻断。  
+   **无本地 PR 业务树（F-08）**：实现在 PR / CloudAgent 分支、本地工作区未含本主题业务变更时——以 **PR 分支 / 远程 diff** 可指认为准；回链记 `契约同步: pr_branch`；**不得**因本地缺业务文件阻断 close。
 
 1b. **工程化快照刷新（可选）**  
    调用序（钉死）：
@@ -31,6 +32,7 @@
    - exit **0**：回链只写 `eng_snapshot: refreshed`（可附 score 路径）。  
    - exit **2**：列出 blockers；用户接受残留 → 只写 `eng_snapshot: stale` + blockers 摘要；不接受则停。  
    - exit **1** / 命令不可用：只写 `eng_snapshot: stale`（reason=refresh_failed|unavailable），不阻断 close（独立模式）。  
+   - **PR 未合入（F-08）**：可跳过本步或标 `eng_snapshot: stale`（reason=pr_open）；**merge 后再** `refresh-score`。  
    - 读侧：新键优先；旧主题仅有 `harness_snapshot` 仍有效。
 
 2. **superpowers 收口（内建最小集）**  
@@ -60,6 +62,7 @@
      | **`on`** | **要求**存在 lint 脚本且通过；无脚本或失败 → 阻断 close（用户可显式降为 optional/off 写入 progress 后重试） |
    - 有 `delivery-checklist.md` 时以清单 §4 为准（lint 严格度跟仓库清单 / rule 19）。
    - 无 pitfalls 台账：三问仍要口头/写入 runs 小结，并注明「本仓无 L2 pitfalls」；`on` 时仍须有脚本（否则阻断）
+   - **卫生归仓（F-09）**：`lint-pitfalls` 报 Never do 缺「→ Pn」属**目标仓** `pitfalls.md` 卫生，**不是** feature-eng 缺陷；close 可记 warn，不要求改本 skill。
 
 4. **runs 收尾与归档**  
    - `progress.yaml`：`stage=done` + updated_at；`回链.md` 补齐最终产物指针（含 `eng_snapshot`；读侧兼容旧 `harness_snapshot` 若适用）  

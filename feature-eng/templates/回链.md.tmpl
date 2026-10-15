@@ -30,7 +30,8 @@
 
 ## 仪式与降级
 - chef_mode：`bound | controller_proxy` — —
-- review_policy：`subagent | inline` — —（若 start 因无 Task 降级，写明「已降级 + 原因」）
+- invoke：`strict | inline` — —（若 start 因无 Task / CloudAgent·executor 降级，写明「strict→inline + 原因」；见 O5b）
+- review_policy：`subagent | inline` — —（若 start 因无 Task 降级，写明「已降级 + 原因」；同会话审核帽可另写 `review_effective: inline`）
 - eng_probe：—（有 meta 时：`meta=有 · ai_coding_ready=YES|NO|未知`；无 meta 不写；读侧兼容旧 `harness_probe`）
 - close_pitfalls：`off | optional | on` — —（有 lint-pitfalls 且未显式指定时 start 写 `on`）
 
@@ -46,6 +47,7 @@
 | shared_understanding | — | — | — |
 | design_confirmed | — | — | — |
 | go | — | — | — |
+| proto_confirmed | — | — | —（仅 proto=entered 时填 ISO + authorized_by） |
 | pre_impl | — | — | — |
 | gate | — | — | — |
 | verify | — | — | — |

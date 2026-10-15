@@ -4,6 +4,9 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.2.25](../_log/feature-eng/0.2/0.2.25.md) | 2026-10-15 | P2：review_effective · close pr_branch · pitfalls 归仓 · express 同戳 |
+| [0.2.24](../_log/feature-eng/0.2/0.2.24.md) | 2026-10-15 | P1：forbid 粘贴 · proto_confirmed · B Go→桥 · artifacts.implement/pr_url |
+| [0.2.23-dev](../_log/feature-eng/0.2/0.2.23-dev.md) | 2026-10-15 | P0：O5b invoke 降级 + Gate 无 CI 机械轨证据枚举 |
 | [0.2.22](../_log/feature-eng/0.2/0.2.22.md) | 2026-09-28 | 版本单点维护：manifest SSOT + sync-skill-version |
 | [0.2.21](../_log/feature-eng/0.2/0.2.21.md) | 2026-09-28 | P3 schema + P4 字段；正式钉（无 -dev） |
 | [0.2.20-dev](../_log/feature-eng/0.2/0.2.20-dev.md) | 2026-09-28 | P0/P1/P2 解耦：能力探测 + 中性 refresh |

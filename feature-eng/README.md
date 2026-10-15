@@ -6,6 +6,9 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
+0.2.25 要点：P2——`review_effective`；close `pr_branch`；pitfalls 归仓；express 同戳可接受。叠在 0.2.24 之上。
+0.2.24 要点：P1——design/spec 强制粘贴 forbid；`gates.proto_confirmed`；B 无 plan→Go→proto-bridge；`artifacts.implement`/`pr_url`。叠在 0.2.23-dev 之上。
+0.2.23-dev 要点：P0 O5b invoke 宿主探测（CloudAgent/无 Task → inline）+ Gate 无 CI 机械轨证据枚举（`mech_track: local_self_attest`）。叠在 0.2.22 之上。
 0.2.22 要点：版本单点维护——`_meta/manifest.yaml` SSOT；`sync-skill-version.mjs` 同步文档钉头；selfcheck 读 PIN。叠在 0.2.21 之上。
 0.2.21 要点（正式号，无 `-dev`）：P3 `schema: topic-run/1`；P4 字段 `eng_probe` / `eng_snapshot` / `eng_land`；close 只写 `eng_snapshot`。叠在 0.2.20-dev 之上。
 0.2.20-dev 要点：P0/P1/P2 解耦——能力探测；close 优先 `refresh-score`；禁 sync 路径化。叠在 0.2.18-dev 之上。

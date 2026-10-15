@@ -94,7 +94,7 @@
 
 - [ ] 可打开的原型或线框（目录/文件路径非空）→ `artifacts.proto`（advance）
 - [ ] 主路径交互说明（同目录文档或 `回链.md` 指针）非空
-- [ ] 用户「原型确认」已记录（advance 写入 progress / `回链.md` / 或确认原型目录标记）
+- [ ] 用户「原型确认」→ advance 写 `gates.proto_confirmed`（ISO）+ 回链硬闸授权行（无独立 `审核-proto.md`）
 
 ### 轻量降级（O12：`proto.skill` null 或 `chef_mode=controller_proxy`）
 
@@ -102,7 +102,7 @@
 - [ ] 含 **交互草图**（ASCII/Mermaid/文字线框均可）
 - [ ] 含 **主路径 ≥3 步**
 - [ ] 含关键状态机/状态枚举可指认
-- [ ] 用户确认已记录；**不要求**可点击 HTML（见下文 Part C O12）
+- [ ] 用户确认 → 同上写 `gates.proto_confirmed`；**不要求**可点击 HTML（见下文 Part C O12）
 
 控制器不规定视觉工具。
 
@@ -140,6 +140,7 @@
 
 - [ ] 本主题相关业务代码已落盘（可指认路径；commit 非必须）
 - [ ] 单测已存在，或用户显式接受「本环无单测」→ advance 记入 `回链.md` / progress
+- [ ] 可选：`artifacts.implement`（交付说明/diff 摘要路径）、`artifacts.pr_url`（PR/MR URL）
 - [ ] S 仅 throwaway：笔记路径已记；不要求入库代码
 
 ### env_verified / `env_notes`（可选；O4 / O11 / O14）
@@ -156,7 +157,14 @@
 ## gate（环 9）
 
 - [ ] `门禁清单.md` 存在（或 `回链.md` 指向等价清单）
-- [ ] 机械轨已处理（hooks 结果可指认）
+- [ ] **机械轨**已处理：按下表优先序取**至少一项**可指认证据（写入门禁清单或 `回链.md`）
+  | 序 | 可接受证据 |
+  |---|---|
+  | A | 本地 hooks / lint / 约定 smoke：命令 + exit 0 可指认 |
+  | B | 若有 `env_notes.verify_commands[]`：每条 exit 0（可粘贴命令+退出码） |
+  | C | PR Checks / CI 链接且结论可指认 |
+  | D | **无 CI 时**：用户显式接受本地自证 → 记 `mech_track: local_self_attest` + 命令清单 |
+- [ ] **禁止**：仅写「测试已跑过」而无命令/退出码/路径/Checks 链接
 - [ ] 语义轨：绑定 review skill 结论无未决 blocker（或 blocker 列表为空）
 - [ ] **Full+UI（O9）**：`integration_ready` 仍成立
 - [ ] → advance 写 `gates.gate`
@@ -246,6 +254,8 @@
 | **`subagent`**（默认） | 开 Task/子代理；只传产物路径 + 本页当前离开环节节 + 禁止清单。无 Task → **自动降级** `inline`，且须在 `回链.md`/门禁写明（见 [start.md](../start.md)、下文 Part C；禁止静默） |
 | **`inline`** | 本会话换「审核帽」：只读标准与产物，不写业务 |
 
+**同会话摩擦（F-07）**：即使宿主有 Task，若 L2 实际由同会话审核帽完成（含 CloudAgent/executor）→ 须降 `progress.review_policy` 为 `inline` **或**回链写 `review_effective: inline（同会话审核帽）`。**不**强制开 Task；禁止 `subagent` 静默同会话。
+
 ## 审核输入（指针）
 
 ```text
@@ -304,7 +314,7 @@
 ### 离开 proto（仅 `proto=entered`）
 
 - [ ] 主路径交互可走通
-- [ ] 用户原型确认可指认
+- [ ] `gates.proto_confirmed` 为 ISO 且回链授权可指认
 
 ### 离开 testdesign（仅 F）
 
@@ -372,11 +382,11 @@
 **禁止**：把「看起来像对话」的假 transcript / 占位笔录（含伪造的「用户：确认」多轮对话）写入授权证据。校验器 / selfcheck / `scripts/gate-evidence.mjs` 拒绝此类占位。  
 **禁止自造** `user_task_fixture|auto|todo|placeholder|test|dummy` 等占位 id；`user_task_<id>` 须来自用户或任务跑批真实 id。
 
-**证据机检（0.2.11）**：凡 `progress.gates.<name>` 为 ISO，回链本表须有对应行且 `authorized_by` 合法；下列闸另须主题根存在审核文件且含 **`result: pass`**（`fail` 不得推进）——`shared_understanding`→`审核-grill.md`，`design_confirmed`→`审核-design.md`，`go`→`审核-plan.md`，`gate`→`审核-gate.md`，`verify`→`审核-verify.md`。`triage` / `pre_impl` / `close` 不要求完整 L2 文件，但仍要合法授权。`policy_exception` 不豁免 L2 pass。`controller_proxy` 不豁免；proxy 且存在任一 ISO gate 时回链「仪式与降级」须非空。
+**证据机检（0.2.11 / 0.2.24）**：凡 `progress.gates.<name>` 为 ISO，回链本表须有对应行且 `authorized_by` 合法；下列闸另须主题根存在审核文件且含 **`result: pass`**（`fail` 不得推进）——`shared_understanding`→`审核-grill.md`，`design_confirmed`→`审核-design.md`，`go`→`审核-plan.md`，`gate`→`审核-gate.md`，`verify`→`审核-verify.md`。`triage` / `proto_confirmed` / `pre_impl` / `close` 不要求完整 L2 文件，但仍要合法授权。另：`progress.proto=entered` 时 **必须**有 ISO `gates.proto_confirmed`（`skipped*` 时保持 null）。`policy_exception` 不豁免 L2 pass。`controller_proxy` 不豁免；proxy 且存在任一 ISO gate 时回链「仪式与降级」须非空。
 
-## review_policy 降级备注（O5）
+## review_policy 降级备注（O5 / F-07）
 
-`start` 若将 `review_policy` 从 `subagent` 降为 `inline`（宿主无 Task），须在本主题 `回链.md`「仪式与降级」与门禁清单写明，**禁止静默**。L2 仍按上文 Part B 执行。
+`start` 若将 `review_policy` 从 `subagent` 降为 `inline`（宿主无 Task），须在本主题 `回链.md`「仪式与降级」与门禁清单写明，**禁止静默**。环间若实际同会话戴审核帽而 progress 仍为 `subagent`，同须降级或写 `review_effective: inline`。L2 仍按上文 Part B 执行。
 
 ## 跨仓契约闸（O8）
 
@@ -425,11 +435,11 @@
 
 - 通过：L1+L2（离开 grill）过；用户显式确认可进设计（同义可）；advance 写 `gates.shared_understanding`。若用户已提跨仓配对 → `sibling_repos` 至少一条。
 - 失败：继续澄清；不得进环 2。
-- `express`：可与设计确认闸合并为**一次总 yes**（同时写两闸时间戳）；仍须用户显式确认，不得默认静默通过。
+- `express`：可与设计确认闸合并为**一次总 yes**（同时写两闸时间戳；**相同 ISO 可接受**）；硬闸授权表两行同戳**可接受**（F-10）。仍须用户显式确认，不得默认静默通过。
 
 ## 设计确认闸（环 2 末）
 
-- 通过：L1+L2（离开 design）过；B = 短设计获用户显式 yes；F = 整体或每段 yes；`express` = 与 grill 合并的一次总 yes。advance 写 `gates.design_confirmed`。
+- 通过：L1+L2（离开 design）过；B = 短设计获用户显式 yes；F = 整体或每段 yes；`express` = 与 grill 合并的一次总 yes。advance 写 `gates.design_confirmed`（可与 `shared_understanding` **同 ISO**）。
 - 失败：回到设计；不得进定稿桥 / spec。
 - 通过后 → 跑 [bridges.md](bridges.md)（默认常 skipped，再进 spec 或 domain）。
 
@@ -440,23 +450,30 @@
 ## 计划 Go 闸（环 5 末，计划侧）
 
 - 通过：L1+L2（离开 plan）过；三问语义成立：①任务依赖无环 ②契约变更已列入首批 ③每任务有可测验收；用户短确认（若尚未在 plan 审中显式 yes）。写 `gates.go`。
-- 失败：补 plan；不得进 Proto 桥。
+- **B 无独立 plan 文件**：三问针对短设计 / 内联 checklist 语义成立即可（见 [bridges.md](bridges.md)）；写 `gates.go` 后**立即**进 Proto 桥，禁止空等「环 5 结束」。
+- 失败：补 plan / checklist；不得进 Proto 桥。
 - **≠** 仓库开干（`ai_coding_ready`；工程化仓口径）。
 
 ## Proto 桥（环 5→6）
 
 - 规则见 [bridges.md](bridges.md)；决定 `proto=*`（展示结论可推翻；需 UI 须显式同意）。结束后按 `handoff_policy` 主动进下一环。
 
+## Proto 确认闸（仅 `proto=entered`）
+
+- 通过：用户显式确认原型（或 O12 草图）；advance 写 ISO `gates.proto_confirmed` + 回链授权行；**无** `审核-proto.md` 要求。
+- `proto=skipped|skipped_by_user`：`gates.proto_confirmed` 保持 `null`。
+- 失败：未确认不得进 Pre-Impl（当 entered）。
+
 ## Pre-Impl 闸（环 7b）
 
-- F 通过：上文 Part A 中 proto（若 entered）与 testdesign 两节 L1 勾选全过；testdesign/proto 适用时 L2 已过；适用时 O8 消费契约 / O9 联调矩阵 / M3 monorepo Spec 章节已满足。
-- B 通过：proto（若 entered）勾选全过；**无** TestDesign 要求；适用时 O9 同上。
+- F 通过：上文 Part A 中 proto（若 entered，含 `gates.proto_confirmed`）与 testdesign 两节 L1 勾选全过；testdesign/proto 适用时 L2 已过；适用时 O8 消费契约 / O9 联调矩阵 / M3 monorepo Spec 章节已满足。
+- B 通过：proto（若 entered，含 `gates.proto_confirmed`）勾选全过；**无** TestDesign 要求；适用时 O9 同上。
 - 失败：停；按勾选表列缺失项；不得进环 8。
 - 通过后按 `handoff_policy` 主动调起 implement。
 
 ## Gate 闸（环 9）
 
-- 通过：上文 Part A gate 节 L1 全过 + L2（离开 gate）过（机械轨 + 语义轨无未决 blocker）；Full+UI 时 O9 `integration_ready` 仍成立（或 `accepted_blocked`）。
+- 通过：上文 Part A gate 节 L1 全过 + L2（离开 gate）过（机械轨 A–D 枚举至少一项可指认 + 语义轨无未决 blocker）；Full+UI 时 O9 `integration_ready` 仍成立（或 `accepted_blocked`）。无 CI / PR Checks 空时走 D（`mech_track: local_self_attest`），禁止空自报。
 - 失败：回环 8 修；不得进环 10 / 10′。
 
 ## Verify 闸（环 10，仅 F）

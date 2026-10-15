@@ -38,6 +38,7 @@ const GATE_KEYS = [
   "shared_understanding",
   "design_confirmed",
   "go",
+  "proto_confirmed",
   "pre_impl",
   "gate",
   "verify",
@@ -50,6 +51,7 @@ const L2_FOR_GATE = {
   shared_understanding: "审核-grill.md",
   design_confirmed: "审核-design.md",
   go: "审核-plan.md",
+  proto_confirmed: null,
   pre_impl: null,
   gate: "审核-gate.md",
   verify: "审核-verify.md",
@@ -231,6 +233,19 @@ if (progress) {
       );
     } else {
       ok.push("controller_proxy 仪式与降级 present");
+    }
+  }
+
+  // F-04: proto=entered requires ISO gates.proto_confirmed
+  const protoVal = readScalar(progress, "proto");
+  if (protoVal === "entered") {
+    const pc = nestedScalar(progress, "gates", "proto_confirmed");
+    if (!isIsoGate(pc)) {
+      issues.push(
+        "progress.proto=entered requires ISO gates.proto_confirmed"
+      );
+    } else {
+      ok.push("gates.proto_confirmed present for proto=entered");
     }
   }
 }

@@ -24,6 +24,8 @@ artifacts:
   testcases: null
   test_report: null
   qa_report: null
+  implement: null
+  pr_url: null
 
 tasks:
   - id: T1
@@ -36,6 +38,7 @@ gates:
   shared_understanding: "2026-09-19T11:00:00+08:00"
   design_confirmed: "2026-09-19T12:00:00+08:00"
   go: "2026-09-19T13:00:00+08:00"
+  proto_confirmed: null
   pre_impl: "2026-09-19T14:00:00+08:00"
   gate: "2026-09-19T15:00:00+08:00"
   verify: null

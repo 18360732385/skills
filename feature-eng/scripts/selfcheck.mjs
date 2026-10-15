@@ -548,12 +548,15 @@ const ARTIFACT_KEYS = [
   "testcases",
   "test_report",
   "qa_report",
+  "implement",
+  "pr_url",
 ];
 const GATE_KEYS = [
   "triage",
   "shared_understanding",
   "design_confirmed",
   "go",
+  "proto_confirmed",
   "pre_impl",
   "gate",
   "verify",
@@ -1224,6 +1227,60 @@ assert(/禁止静默/.test(startMd + gatesCommon), "O5 forbids silent review_pol
 assert(/subagent.*inline|inline/.test(startMd), "O5 start mentions subagent→inline");
 const gatesReview = read("modes/specs/gates.md") || "";
 assert(/降级|无 Task/.test(gatesReview), "O5 gates-review documents Task downgrade");
+
+// O5b invoke host probe (F-01)
+const flowMd = read("modes/specs/flow.md") || "";
+assert(/O5b|invoke 宿主探测/.test(startMd), "O5b start.md documents invoke probe");
+assert(/strict→inline|strict.*inline/.test(startMd) && /CloudAgent|executor/.test(startMd), "O5b start.md strict→inline CloudAgent/executor");
+assert(/禁止静默/.test(startMd) && /invoke/.test(startMd), "O5b forbids silent invoke keep-strict");
+assert(/invoke_effective/.test(flowMd), "O5b flow.md pointer has invoke_effective");
+assert(/CloudAgent|executor/.test(flowMd), "O5b flow.md documents CloudAgent/executor downgrade");
+assert(/invoke：/.test(huilianTmpl) && /O5b/.test(huilianTmpl), "O5b 回链.tmpl has invoke ritual line");
+assert(/O5b|CloudAgent|invoke/.test(quick) && /inline/.test(quick), "O5b QUICKSTART mentions invoke downgrade");
+
+// Gate mech_track evidence enum (F-02)
+assert(/mech_track/.test(gatesReview) && /local_self_attest/.test(gatesReview), "F-02 gates.md has mech_track local_self_attest");
+assert(/无 CI/.test(gatesReview + quick), "F-02 gates/QUICKSTART mention 无 CI");
+assert(/local_self_attest/.test(quick), "F-02 QUICKSTART has local_self_attest");
+assert(/测试已跑过/.test(gatesReview + quick), "F-02 forbids empty 测试已跑过 self-report");
+
+// F-03 design/spec forbid paste
+assert(/粘贴.*forbid|forbid:.*原文/.test(flowMd), "F-03 flow requires paste forbid list");
+assert(/未粘贴 forbid|不算过/.test(flowMd), "F-03 flow D fails without forbid paste");
+
+// F-04 gates.proto_confirmed
+assert(/proto_confirmed/.test(progressTmpl), "F-04 progress.tmpl has proto_confirmed");
+assert(/proto_confirmed/.test(huilianTmpl), "F-04 回链.tmpl has proto_confirmed");
+assert(/proto_confirmed/.test(gatesReview), "F-04 gates.md documents proto_confirmed");
+assert(
+  /proto=entered.*proto_confirmed|proto_confirmed.*entered/.test(
+    read("scripts/gate-evidence.mjs") || ""
+  ),
+  "F-04 gate-evidence requires proto_confirmed when entered"
+);
+
+// F-05 B no plan → Go → proto-bridge
+assert(/Go 等价|无独立 plan/.test(flowMd + (read("modes/specs/bridges.md") || "")), "F-05 B no-plan Go path documented");
+assert(/立即进|禁止空等/.test(flowMd + (read("modes/specs/bridges.md") || "") + gatesReview), "F-05 forbids waiting for ring 5 end");
+
+// F-06 artifacts.implement / pr_url
+assert(/implement:\s*null/.test(progressTmpl) && /pr_url:\s*null/.test(progressTmpl), "F-06 progress.tmpl has implement/pr_url");
+assert(ARTIFACT_KEYS.includes("implement") && ARTIFACT_KEYS.includes("pr_url"), "F-06 ARTIFACT_KEYS include implement/pr_url");
+
+// F-07 review_effective / same-session L2
+assert(/review_effective/.test(startMd + gatesReview + huilianTmpl), "F-07 documents review_effective");
+assert(/同会话审核帽|不强制开 Task/.test(startMd + gatesReview), "F-07 accepts same-session L2 without forcing Task");
+
+// F-08 close PR branch / merge refresh
+const closeMdP2 = read("modes/close.md") || "";
+assert(/pr_branch|契约同步:\s*pr_branch/.test(closeMdP2), "F-08 close.md has 契约同步 pr_branch");
+assert(/merge 后再|PR 未合入/.test(closeMdP2), "F-08 close.md merge-then-refresh");
+
+// F-09 pitfalls hygiene is target-repo
+assert(/→ Pn|目标仓.*卫生|不是.*feature-eng/.test(closeMdP2), "F-09 pitfalls → Pn is target-repo hygiene");
+
+// F-10 express same ISO stamp accepted
+assert(/相同 ISO|同戳/.test(startMd + gatesReview), "F-10 express same ISO / 同戳 accepted");
 
 // O6 Chinese filenames contract
 const readmeMd = read("README.md") || "";
