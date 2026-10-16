@@ -5,6 +5,8 @@
  * Never auto-deletes user docs; coverage / covered_gt → skipped handoff only.
  * 0.7.47: optional --migrate-coverage=append|dry-run (default off) may append
  * missing pages/sections only. covered_gt never produces a delete op.
+ * 0.7.48: thick truths → default dry-run; API path-prefix match; skip hollow ## 字段
+ * when CREATE TABLE already covers columns.
  */
 import fs from "fs";
 import path from "path";
@@ -13,6 +15,8 @@ import {
   detectApiFieldDrift,
   detectJobsTaskDrift,
   detectRedisKeyDrift,
+  collectDocApiPaths,
+  docCreateCoversColumns,
 } from "./field-drift.mjs";
 import { loadDomainInventory } from "./inventory-paths.mjs";
 import { truthsPath, loadDomainRegistry } from "./domains.mjs";
@@ -33,6 +37,116 @@ const SKIP_PREFIXES = [
 function isSkipBlocker(b) {
   const s = String(b || "");
   return SKIP_PREFIXES.some((p) => s === p || s.includes(p));
+}
+
+/**
+ * 0.7.48: thick / MATURE-ish truths — any contract NN-*.md with real body.
+ * @param {string} root
+ * @param {{ mature?: boolean }} [opts]
+ * @returns {boolean}
+ */
+export function detectThickTruths(root, opts = {}) {
+  if (opts.mature === true) return true;
+  const abs = path.resolve(root);
+  const reg = loadDomainRegistry();
+  const domains = ["api", "db", "redis", "jobs", "func"];
+  for (const d of domains) {
+    let dir;
+    try {
+      dir = truthsPath(abs, d, reg);
+    } catch {
+      continue;
+    }
+    if (!dir || !fs.existsSync(dir)) continue;
+    const files = [];
+    function walk(p, depth = 0) {
+      if (depth > 6 || !fs.existsSync(p)) return;
+      for (const n of fs.readdirSync(p)) {
+        if (/^README/i.test(n) || n === ".fill-work") continue;
+        const fp = path.join(p, n);
+        let st;
+        try {
+          st = fs.statSync(fp);
+        } catch {
+          continue;
+        }
+        if (st.isDirectory()) walk(fp, depth + 1);
+        else if (/^\d+-.*\.md$/i.test(n)) files.push(fp);
+      }
+    }
+    walk(dir);
+    for (const f of files) {
+      let text;
+      try {
+        text = fs.readFileSync(f, "utf8");
+      } catch {
+        continue;
+      }
+      if (/TODO\(harness-eng\)/i.test(text) && text.length < 800) continue;
+      if (/CREATE\s+TABLE\s+/i.test(text)) return true;
+      if (/\*\*接口地址[：:]?\*\*/i.test(text) && /`\/[^`]+`/.test(text)) return true;
+      if (/^\|\s*`[^`]+`\s*\|/m.test(text) && /Key|TTL|前缀/i.test(text)) return true;
+      const stripped = text
+        .replace(/```[\s\S]*?```/g, "")
+        .replace(/^#+\s.*$/gm, "")
+        .replace(/^\|.*\|$/gm, "")
+        .trim();
+      if (stripped.length > 400) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Pick best api md for an endpoint path: longest shared prefix with documented paths,
+ * else filename slug overlap; null → caller should create new file.
+ * @param {string} epPath
+ * @param {{ file: string, paths: Set<string>, slug: string }[]} indexed
+ * @returns {string|null} abs file path
+ */
+export function pickApiDocForPath(epPath, indexed) {
+  const p = String(epPath || "").trim();
+  if (!p || !indexed?.length) return null;
+  let best = null;
+  let bestScore = 0;
+  for (const item of indexed) {
+    let score = 0;
+    for (const dp of item.paths) {
+      const pure = String(dp).includes(":")
+        ? String(dp).slice(String(dp).indexOf(":") + 1)
+        : String(dp);
+      if (!pure.startsWith("/")) continue;
+      // shared prefix length (segment-aware); ignore lone "api"/"v1" root
+      const a = pure.split("/").filter(Boolean);
+      const b = p.split("/").filter(Boolean);
+      let i = 0;
+      while (i < a.length && i < b.length && a[i] === b[i]) i++;
+      const meaningful = i >= 2 || (i === 1 && !/^(api|v\d+|rest)$/i.test(a[0]));
+      if (meaningful) score = Math.max(score, i);
+    }
+    const slugParts = String(item.slug || "")
+      .toLowerCase()
+      .split(/[-_]/)
+      .filter((x) => x.length > 2 && !/^(api|module|modules)$/i.test(x));
+    for (const s of slugParts) {
+      if (p.toLowerCase().includes(s)) score = Math.max(score, 2);
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = item.file;
+    }
+  }
+  // require meaningful match (not just /api)
+  return bestScore >= 2 ? best : null;
+}
+
+function indexApiDocs(apiFiles) {
+  return apiFiles.map((f) => {
+    const text = fs.readFileSync(f, "utf8");
+    const { paths } = collectDocApiPaths(text);
+    const slug = path.basename(f).replace(/^\d+-/, "").replace(/\.md$/i, "");
+    return { file: f, paths, slug };
+  });
 }
 
 function listMdFiles(dir) {
@@ -269,6 +383,29 @@ export function planMigrateDocs(root, opts = {}) {
         ),
       });
     } else {
+      // 0.7.48: skip hollow ## 字段 when CREATE TABLE already covers inventory cols
+      const absDoc = path.isAbsolute(g.file) ? g.file : path.join(absRoot, g.file);
+      let md = "";
+      try {
+        md = fs.readFileSync(absDoc, "utf8");
+      } catch {
+        md = "";
+      }
+      const wantCols = g.missing_in_doc || [];
+      const invCols = (inventories.db?.tables || []).find(
+        (t) => String(t.name || "").toLowerCase() === String(g.table).toLowerCase()
+      );
+      const allInv = [
+        ...(invCols?.columns || []).map((c) => (typeof c === "string" ? c : c.name)),
+        ...wantCols,
+      ].filter(Boolean);
+      if (docCreateCoversColumns(md, allInv)) {
+        skipped.push({
+          blocker: `doc_field_drift:${g.table}:${wantCols.join("+")}`,
+          reason: "CREATE TABLE already covers columns — skip hollow ## 字段 append",
+        });
+        continue;
+      }
       ops.push({
         kind: "db_append_fields",
         blocker: `doc_field_drift:${g.table}:${(g.missing_in_doc || []).join("+")}`,
@@ -283,6 +420,7 @@ export function planMigrateDocs(root, opts = {}) {
   const apiDrift = detectApiFieldDrift(absRoot, inventories.api || { endpoints: [] });
   const apiDir = truthsPath(absRoot, "api", reg);
   const apiFiles = listMdFiles(apiDir);
+  const apiIndex = indexApiDocs(apiFiles);
   const missingPaths = [];
   for (const g of apiDrift.gaps || []) {
     if (g.missing_paths_in_doc) missingPaths.push(...g.missing_paths_in_doc);
@@ -314,20 +452,47 @@ export function planMigrateDocs(root, opts = {}) {
         method: String(eps[0].method || eps[0].httpMethod || eps[0].http || "GET").toUpperCase(),
       });
     } else {
-      const dest =
-        apiFiles[0] || nextIndexedName(apiDir, "migrate-endpoints");
-      ops.push({
-        kind: "api_append_endpoints",
-        blocker: `doc_path_drift:api:${missingPaths.slice(0, 8).join("+")}`,
-        file: rel(absRoot, dest),
-        endpoints: eps,
-      });
+      // 0.7.48: group endpoints by best-matching doc; unmatched → new page
+      const byFile = new Map();
+      const unmatched = [];
+      for (const ep of eps) {
+        const epth = String(ep.path || ep.url || "").trim();
+        const hit = pickApiDocForPath(epth, apiIndex);
+        if (hit) {
+          if (!byFile.has(hit)) byFile.set(hit, []);
+          byFile.get(hit).push(ep);
+        } else {
+          unmatched.push(ep);
+        }
+      }
+      for (const [file, group] of byFile) {
+        ops.push({
+          kind: "api_append_endpoints",
+          blocker: `doc_path_drift:api:${missingPaths.slice(0, 8).join("+")}`,
+          file: rel(absRoot, file),
+          endpoints: group,
+        });
+      }
+      if (unmatched.length) {
+        const slug =
+          String(unmatched[0].path || unmatched[0].url || "migrate-endpoints")
+            .replace(/^\//, "")
+            .replace(/\//g, "-")
+            .slice(0, 40) || "migrate-endpoints";
+        ops.push({
+          kind: "api_append_endpoints",
+          blocker: `doc_path_drift:api:${missingPaths.slice(0, 8).join("+")}`,
+          file: rel(absRoot, nextIndexedName(apiDir, slug)),
+          endpoints: unmatched,
+        });
+      }
     }
   }
   for (const g of apiDrift.gaps || []) {
     const fields = g.missing_annotation_params || g.missing_in_doc;
     if (!fields?.length) continue;
-    const dest = apiFiles[0] || nextIndexedName(apiDir, "migrate-fields");
+    // field-only gaps lack a path; prefer new page over dumping into first md
+    const dest = nextIndexedName(apiDir, "migrate-fields");
     ops.push({
       kind: "api_append_fields",
       blocker: `doc_field_drift:api:${fields.slice(0, 8).join("+")}`,

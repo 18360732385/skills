@@ -100,4 +100,4 @@ PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BO
 **冷 clone**：`docs/**/.fill-work/` 默认 gitignore。新 clone 建议 `node scripts/harness.mjs --mode refresh --root <TARGET>` 落盘 inventory；0.7.37+ 若 live 扫描成功，fill-score 不再仅因缺磁盘 inventory 记 `missing_inventory`。
 
 多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.47**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.48**）。

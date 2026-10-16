@@ -29,7 +29,7 @@
 | **审计** | `audit` | 只读对照缺口，默认不写盘 |
 | **会话自证** | `session-live` | 当前宿主核验 MCP/hooks/rules/githooks + **human_gates**（检查表 **1.2**）；多宿主 `--emit-playbook` / `--merge-matrix`；见 [session-live.md](modes/session-live.md) |
 | **升阶** | `upgrade` | 当前完整阶再 +1（书面可到指定阶）；规格 [upgrade.md](modes/upgrade.md) |
-| **migrate-docs** | `harness --migrate-docs` | upgrade 升严后**结构化迁移真相文档**（默认 auto；`--no-migrate-docs` 仅移交）。**≠** `--migrate-policy`；**≠** `--migrate-coverage` |
+| **migrate-docs** | `harness --migrate-docs` | upgrade 升严后**结构化迁移真相文档**（薄仓默认 auto；**厚仓默认 dry-run**，0.7.48；`--no-migrate-docs` 仅移交）。**≠** `--migrate-policy`；**≠** `--migrate-coverage` |
 | **migrate-coverage** | `harness --migrate-coverage` | 覆盖类 blocker 的缺页/缺节 append。**默认 off**；`append` 不删文档；`covered_gt` 仍移交。与 `migrate-docs` 正交 |
 | **migrate-policy** | `fill-score --migrate-policy` | 仅字段级迁移 `score-policy.yaml`（如 `morph_floor`）。**≠** `--migrate-docs`；**≠** `--migrate-coverage` |
 | **last_mode** | meta 字段 | resume↔upgrade 会改行；**accepted residual**——CI 用 `harness --check-meta-stable`（默认忽略该键），勿当内容漂移 H |
@@ -57,7 +57,7 @@
 | **开干**（仓库开干） | 仅 `ai_coding_ready` | 建议可以 AI 改业务的唯一闸（仓库级；≠ feature 计划 Go） |
 
 技术字段（骨架/语义/Plan/gate/gold；`ready.ok` 已废弃）见 [fill-score.md](fill/fill-score.md)。  
-`gate_profile`：有 score-policy 未写则 **strict**；无文件则 **legacy**；显式 `legacy` 可回退；显式 **`gold`** 为高门槛档（覆盖 100% / 形态≥**95** / 完成度≥95 / TODO 扫面 B / warnings=0）。新仓【推荐】仍 **strict**（`Q_GATE_PROFILE`）。**0.7.0**：形态满分 100（探针+深度）；`morph_scale: "0.7"`；strict 形态地板 **75**。
+`gate_profile`：有 score-policy 未写则 **strict**；无文件则 **legacy**；显式 `legacy` 可回退；显式 **`gold`** 为高门槛档（覆盖 100% / 形态≥**95** / 完成度≥95 / TODO 扫面 B / warnings=0）；显式 **`mature_compat`**（0.7.48）= strict 形态地板 + gold 级 acceptance，**live drift 不阻断开干**、覆盖不强制 1.0（厚成熟仓【推荐】替代盲目降 legacy）。新仓【推荐】仍 **strict**（`Q_GATE_PROFILE`）。**0.7.0**：形态满分 100（探针+深度）；`morph_scale: "0.7"`；strict 形态地板 **75**。
 
 ### 覆盖裁决（score-policy vs meta）
 

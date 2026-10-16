@@ -151,29 +151,140 @@ export function warnManualReplaceGaps(targetRoot, log = console) {
 const MAINT_HEAD = "## 维护约定（SSOT）";
 
 /**
+ * Detect db migration mode from meta / docs hints / fingerprint files.
+ * @returns {'flyway'|'manual_sql'|'none'}
+ */
+export function detectDbMigrationMode(root) {
+  const abs = path.resolve(root);
+  const metaCandidates = [
+    path.join(abs, "docs", "harness-eng", "harness-meta.yaml"),
+    path.join(abs, ".cursor", "harness-meta.yaml"),
+  ];
+  for (const m of metaCandidates) {
+    if (!fs.existsSync(m)) continue;
+    try {
+      const t = fs.readFileSync(m, "utf8");
+      const hit = t.match(/db_migration_mode:\s*["']?(\w+)/i);
+      if (hit) {
+        const v = hit[1].toLowerCase();
+        if (v === "flyway" || v === "manual_sql" || v === "none") return v;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  const dbMd = path.join(abs, "docs", "db", "db.md");
+  if (fs.existsSync(dbMd)) {
+    try {
+      const t = fs.readFileSync(dbMd, "utf8");
+      if (/manual_sql|人工按序|四位.*(DDL|DML)|DDL\s*\|\s*DML/i.test(t)) return "manual_sql";
+      if (/flyway_schema_history|V\{?\d+\}?__/i.test(t) && /Flyway/i.test(t)) return "flyway";
+    } catch {
+      /* ignore */
+    }
+  }
+  // fingerprint: presence of db/migration Flyway scripts vs numbered DDL/DML
+  const flywayDirs = [
+    path.join(abs, "src", "main", "resources", "db", "migration"),
+    path.join(abs, "db", "migration"),
+  ];
+  for (const d of flywayDirs) {
+    if (!fs.existsSync(d)) continue;
+    try {
+      if (fs.readdirSync(d).some((n) => /^V\d+__.*\.sql$/i.test(n))) return "flyway";
+    } catch {
+      /* ignore */
+    }
+  }
+  return "manual_sql";
+}
+
+function buildMaintenanceBlock(mode) {
+  if (mode === "flyway") {
+    return `${MAINT_HEAD}
+
+### 迁移命名
+
+- 默认（Flyway 标准）：\`V{数字}__{snake}.sql\`，正则 \`^V[0-9]+__[a-z0-9_]+\\.sql$\`
+- 只追加新版本；**禁止**修改已发布脚本
+
+### 表文档演进
+
+- \`## 建表语句\` = **最新完整 CREATE TABLE**（含后续 ALTER 已合并的列）
+- \`_change.sql\`：**追加**各版本迁移原文，勿当首迁唯一来源
+
+### flyway vs 人工执行
+
+- \`flyway\`：应用启动自动迁移时，**勿**要求「人工执行到 mysql」
+`;
+  }
+  if (mode === "none") {
+    return `${MAINT_HEAD}
+
+### 迁移命名
+
+- 本仓 \`db_migration_mode=none\`：无统一迁移管线；表结构以真相文档 \`## 建表语句\` 为准
+
+### 表文档演进
+
+- \`## 建表语句\` = **最新完整 CREATE TABLE**
+- 变更同步更新字段说明 / 业务说明
+`;
+  }
+  // manual_sql (default for thick non-Flyway repos)
+  return `${MAINT_HEAD}
+
+### 迁移命名
+
+- 模式：\`manual_sql\`（无 Flyway 依赖；禁伪造 \`flyway_schema_history\`）
+- 常见命名：四位序号 + \`DDL\`/\`DML\`（如 \`0001_DDL_xxx.sql\` / \`0002_DML_xxx.sql\`）；以本仓 AGENTS / rule 13 为准
+- 只追加新脚本；**禁止**修改已发布 SQL
+
+### 表文档演进
+
+- \`## 建表语句\` = **最新完整 CREATE TABLE**（含后续变更已合并的列）
+- \`_change.sql\`：追加各版本原文，勿当首迁唯一来源
+- 字段说明 / 业务说明随列变更同步
+
+### flyway vs 人工执行
+
+- \`manual_sql\`：发版 / 新环境须**人工按序**执行；勿伪造 \`flyway_schema_history\`
+`;
+}
+
+/**
  * 0.7.40: append db.md 维护约定 if missing. Does not rewrite the user index.
- * @returns {{ appended: boolean, path?: string }}
+ * 0.7.48: render by db_migration_mode (manual_sql / flyway / none); never replace {{}} with "none".
+ * @returns {{ appended: boolean, path?: string, mode?: string }}
  */
 export function ensureDbMdMaintenance(root, skillRoot = DEFAULT_SKILL_ROOT) {
   const dbMd = path.join(path.resolve(root), "docs", "db", "db.md");
   if (!fs.existsSync(dbMd)) return { appended: false };
   const cur = fs.readFileSync(dbMd, "utf8");
   if (/维护约定/.test(cur)) return { appended: false, path: dbMd };
-  const tmpl = path.join(skillRoot, "templates", "docs", "db", "db.md.tmpl");
-  let block = "";
-  if (fs.existsSync(tmpl)) {
-    const raw = fs.readFileSync(tmpl, "utf8");
-    const m = raw.match(/##\s*维护约定[\s\S]*?(?=\n##\s+表文档|\n##\s+变更记录|$)/);
-    block = m ? m[0].trim() : "";
+  const mode = detectDbMigrationMode(root);
+  let block = buildMaintenanceBlock(mode);
+  // Prefer template slice when flyway and tmpl present — fill known placeholders only
+  if (mode === "flyway") {
+    const tmpl = path.join(skillRoot, "templates", "docs", "db", "db.md.tmpl");
+    if (fs.existsSync(tmpl)) {
+      const raw = fs.readFileSync(tmpl, "utf8");
+      const m = raw.match(/##\s*维护约定[\s\S]*?(?=\n##\s+表文档|\n##\s+变更记录|$)/);
+      if (m) {
+        block = m[0]
+          .trim()
+          .replace(/\{\{DB_MIGRATION_MODE\}\}/g, "flyway")
+          .replace(/\{\{MIGRATION_NAME_RE\}\}/g, "^V[0-9]+__[a-z0-9_]+\\.sql$")
+          .replace(/\{\{[^}]+\}\}/g, "");
+      }
+    }
   }
-  if (!block) {
-    block = `${MAINT_HEAD}\n\n### 迁移命名\n\n- 默认（Flyway 标准）：\`V{数字}__{snake}.sql\`\n- 只追加新版本；**禁止**修改已发布脚本\n`;
-  }
-  block = block.replace(/\{\{[^}]+\}\}/g, "none");
   const next = cur.replace(/\s*$/, "") + "\n\n" + block + "\n";
   fs.writeFileSync(dbMd, next, "utf8");
-  console.error(`harness: 已补齐 docs/db/db.md「维护约定」（merge 追加，未改索引正文）`);
-  return { appended: true, path: dbMd };
+  console.error(
+    `harness: 已补齐 docs/db/db.md「维护约定」（mode=${mode}，merge 追加，未改索引正文）`
+  );
+  return { appended: true, path: dbMd, mode };
 }
 
 function readMcpServerKeys(filePath) {

@@ -175,19 +175,31 @@ function isParamTablePointer(block) {
   );
 }
 
+/** 0.7.48: strip fenced code so JSON `|` does not fake markdown tables. */
+function stripCodeFences(text) {
+  return String(text || "").replace(/```[\s\S]*?```/g, "\n");
+}
+
 /** Parse first markdown table under ### 请求参数 / ### 响应参数. */
 function parseParamTable(body, sectionTitle) {
   const sec = body.match(
     new RegExp(`###\\s*${sectionTitle}([\\s\\S]*?)(?=###\\s*|##\\s+\\d+\\.|$)`, "i")
   );
   if (!sec) return { skip: true };
-  const block = sec[1];
+  const rawBlock = sec[1];
+  const block = stripCodeFences(rawBlock);
   const tableMatch = block.match(
     /\|[^\n]+\|[\r\n]+\|[:\s-|]+\|([\s\S]*?)(?=\n\s*\n|\n###|\n##|$)/
   );
   if (!tableMatch) {
-    if (/void|stream|无参数|无请求体|HttpServletResponse/i.test(block)) return { skip: true };
-    if (isParamTablePointer(block)) return { skip: true };
+    if (/void|stream|无参数|无请求体|HttpServletResponse/i.test(rawBlock)) return { skip: true };
+    if (isParamTablePointer(rawBlock)) return { skip: true };
+    // only fences / prose, no real table
+    if (!/\|[^\n]+\|/.test(block.trim())) {
+      if (/void|stream|无参数|无请求体|HttpServletResponse/i.test(block)) return { skip: true };
+      if (isParamTablePointer(block)) return { skip: true };
+      return { issues: [{ id: "api-empty-examples", issue: "missing parameter table" }] };
+    }
     return { issues: [{ id: "api-empty-examples", issue: "missing parameter table" }] };
   }
   const headerLine = block.match(/\|[^\n]+\|/);

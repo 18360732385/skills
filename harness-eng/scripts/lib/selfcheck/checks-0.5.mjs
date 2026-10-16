@@ -1002,9 +1002,10 @@ assert(
   "session-dashboard four narrative sections"
 );
 assert(/可 AI coding|ai_coding_ready/.test(sessionDashMd), "session-dashboard 现状 = AI coding only");
-assert(/详情请查询仪表盘/.test(sessionDashMd), "session-dashboard detail link copy");
-assert(/会话仪表盘（精简） · 未打分/.test(sessionDashMd), "session-dashboard documents compact B format");
-assert(/┌/.test(sessionDashMd) && /│/.test(sessionDashMd) && /└/.test(sessionDashMd), "session-dashboard documents four-side box");
+assert(/详情报告 → report-latest\.html/.test(sessionDashMd), "session-dashboard detail report foot");
+assert(/会话仪表盘（精简）/.test(sessionDashMd) && /未打分/.test(sessionDashMd), "session-dashboard documents compact B format");
+assert(/┌/.test(sessionDashMd) && /│ ▸ 【阶段】/.test(sessionDashMd) && /└/.test(sessionDashMd), "session-dashboard documents open-right ▸ box");
+assert(/【下一步建议】/.test(sessionDashMd), "session-dashboard documents 【下一步建议】 label");
 assert(
   /使用手册\.(html|md)/.test(sessionDashMd) && /第6章|#s6|60-对话内会话仪表盘/.test(sessionDashMd),
   "session-dashboard handbook anchor"
@@ -1048,10 +1049,14 @@ assert(!/对齐矩阵（0\.5\.7）/.test(aiTools063), "ai-tools matrix title not
   assert(/精简/.test(emptyOut), "session-dash empty uses compact footer");
   assert(/未打分/.test(emptyOut), "session-dash compact titles 未打分");
   assert(/【下一步建议】/.test(emptyOut) || /【工作】/.test(emptyOut), "session-dash compact has next/work");
-  assert(/详情请查询仪表盘/.test(emptyOut), "session-dash compact has report footer");
+  assert(/详情报告 → report-latest\.html/.test(emptyOut), "session-dash compact has report foot");
   assert(!/\| \*\*决策台\*\*/.test(emptyOut), "session-dash empty omits four-panel table");
-  assert(/┌/.test(emptyOut) && /└/.test(emptyOut), "session-dash compact has box frame");
-  assert(/【现状】/.test(emptyOut) && /AI coding/.test(emptyOut), "session-dash compact 现状 is AI coding");
+  assert(/┌/.test(emptyOut) && /└/.test(emptyOut) && /│ ▸ 【现状】/.test(emptyOut), "session-dash compact open-right ▸");
+  assert(/AI coding/.test(emptyOut), "session-dash compact 现状 is AI coding");
+  assert(
+    !(emptyOut.split("\n").find((l) => l.startsWith("│ ▸")) || "").endsWith("│"),
+    "session-dash open-right (no trailing │ on body)"
+  );
 }
 
 
@@ -1130,14 +1135,8 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "session-dash four one-liners"
     );
     assert(!/施工态势：/.test(dashMd.stdout || ""), "session-dash no longer prints 施工态势");
-    assert(/详情请查询仪表盘/.test(dashMd.stdout || ""), "session-dash detail link line");
-    assert(
-      /使用手册/.test(dashMd.stdout || "") &&
-        (/使用手册\.(html|md)/.test(dashMd.stdout || "") ||
-          /%E4%BD%BF%E7%94%A8%E6%89%8B%E5%86%8C\.html/.test(dashMd.stdout || "") ||
-          /#s6|#60-对话内会话仪表盘/.test(dashMd.stdout || "")),
-      "session-dash handbook link"
-    );
+    assert(/详情报告 → report-latest\.html/.test(dashMd.stdout || ""), "session-dash detail report foot");
+    assert(/│ ▸ 【阶段】/.test(dashMd.stdout || ""), "session-dash ▸ narrative rows");
     const dashEng = runNode([
       path.join(skillRoot, "scripts/session-dash.mjs"),
       "--root",
@@ -1146,7 +1145,9 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       "engineering",
     ]);
     assert(
-      dashEng.status === 0 && /## harness-eng 会话仪表盘/.test(dashEng.stdout || ""),
+      dashEng.status === 0 &&
+        /harness-eng 会话仪表盘/.test(dashEng.stdout || "") &&
+        /┌/.test(dashEng.stdout || ""),
       "session-dash --intent engineering renders"
     );
     const dashMeta = runNode([

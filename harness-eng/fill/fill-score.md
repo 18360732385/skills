@@ -70,9 +70,12 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 
 **ai_coding_ready（开干闸）**：`skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed`；若 `gate_profile=strict|gold` 再并入 `gate.*`。  
 - **strict**（有 score-policy 未写 profile 亦视为 strict）：缺省 `morph_floor=75` / `todo_scan=truths` / `acceptance_blockers_max=0`；另检 **entry_ready**（根/分册 AGENTS `## Commands`/`Critical` 不得仍含 `TODO(harness-eng)`，否则 blocker `entry_todo`）；前端无契约域时 `frontend_coverage: not_measured`（不阻断）；语义 `generic≤3 && unbound≤2 && tc≥70`。  
-- **gold**：覆盖目标强制 1.0；`morph_floor=95`；`template_completeness_min=95`；`todo_scan=harness_docs`；`acceptance_blockers_max=0`；`acceptance_warnings_max=0`；语义 `generic≤0 && unbound≤0 && tc≥95`。  
-- **legacy**：语义保持 `generic≤5 && unbound≤3 && tc≥50`。  
+- **gold**：覆盖目标强制 1.0；`morph_floor=95`；`template_completeness_min=95`；`todo_scan=harness_docs`；`acceptance_blockers_max=0`；`acceptance_warnings_max=0`；语义 `generic≤0 && unbound≤0 && tc≥95`；**live drift 阻断开干**。  
+- **mature_compat**（0.7.48）：`morph_floor=75` + acceptance blockers/warnings=0（同 gold 验收条）；覆盖**不**强制 1.0；**live drift 只报告、不阻断** `ai_coding_ready`。厚成熟仓【推荐】，避免盲目降 `legacy`。  
+- **legacy**：语义保持 `generic≤5 && unbound≤3 && tc≥50`；drift 不阻断。  
 显式 `gate_profile: legacy` 可回退宽松语义。缺 fill-plan → `ai_coding_ready=false`。新仓【推荐】仍 strict。
+
+**inventory 模式**（0.7.48）：`--inventory-mode file|live|hybrid`（默认 `live`）。`file` 只用磁盘 `.fill-work`；`hybrid` 在 live 失败时回退 file。
 
 **形态上限**：`domain_caps`（各域 **100**）/ `formula_ceiling≈100`；抬 caps 不会使 `ai_coding_ready` 变 true。存量仓 `morph_floor: 60|90` 由 resume/upgrade 或 `fill-score --migrate-policy` 字段级迁到 75/95。  
 注意：`--migrate-policy` 只改 `score-policy.yaml` 字段，**≠** `harness --migrate-docs`（真相文档结构化迁移；见 [upgrade.md](../modes/upgrade.md) 旗标消歧）。`harness --migrate-coverage` 默认 **off**，与 `migrate-docs` 正交，只在显式 `append` 时补覆盖缺页/缺节。

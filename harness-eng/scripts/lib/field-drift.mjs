@@ -2,12 +2,15 @@
  * Field-level doc ↔ inventory drift (0.7.25 SG-1).
  * Compares db inventory columns to docs/db/table field tables;
  * optionally api inventory DTO-ish field names vs api module field tables.
+ * 0.7.48: exact ## 字段 · CREATE TABLE fallback · schedule/redis noise normalize.
  */
 import fs from "fs";
 import path from "path";
 import { loadDomainInventory } from "./inventory-paths.mjs";
 import { truthsPath, loadDomainRegistry } from "./domains.mjs";
 import { splitTableRows, isEmptyOrHollow } from "./doc-density.mjs";
+import { parseCreateBodyColumns } from "./inventory-db.mjs";
+import { isNoisePattern } from "./inventory-redis.mjs";
 
 function listTableDocs(root) {
   const dir = truthsPath(root, "db", loadDomainRegistry());
@@ -18,21 +21,100 @@ function listTableDocs(root) {
     .map((n) => path.join(dir, n));
 }
 
-/** Extract field names from ## 字段 table. */
-export function parseDocFieldNames(md) {
-  const sec = String(md || "").match(/##\s*字段[\s\S]*?(?=\n##\s+|$)/i);
-  if (!sec) return [];
-  const { headers, rows } = splitTableRows(sec[0]);
-  if (!headers?.length || !rows.length) return [];
-  const nameIdx = headers.findIndex((h) => /字段名|列名|name|column/i.test(h));
-  const idx = nameIdx >= 0 ? nameIdx : 0;
+/**
+ * Extract column names from fenced CREATE TABLE in docs (## 建表语句 or any ```sql).
+ * @param {string} md
+ * @returns {string[]}
+ */
+export function parseDocCreateFieldNames(md) {
+  const text = String(md || "");
   const names = [];
-  for (const cells of rows) {
-    const raw = (cells[idx] ?? "").replace(/`/g, "").trim();
-    if (!raw || isEmptyOrHollow(raw) || /字段名|列名/.test(raw)) continue;
-    names.push(raw);
+  const seen = new Set();
+  const fences = [...text.matchAll(/```(?:sql)?\s*([\s\S]*?)```/gi)];
+  const blobs = fences.length
+    ? fences.map((m) => m[1])
+    : (() => {
+        const sec = text.match(/##\s*建表语句[\s\S]*?(?=\n##\s+|$)/i);
+        return sec ? [sec[0]] : [];
+      })();
+  for (const blob of blobs) {
+    const re = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?\w+[`"]?/gi;
+    let m;
+    while ((m = re.exec(blob)) !== null) {
+      const start = m.index;
+      let i = start + m[0].length;
+      let depth = 0;
+      let bodyStart = -1;
+      for (; i < blob.length; i++) {
+        if (blob[i] === "(") {
+          if (depth === 0) bodyStart = i + 1;
+          depth++;
+        } else if (blob[i] === ")") {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      if (bodyStart < 0) continue;
+      const { columns } = parseCreateBodyColumns(blob.slice(bodyStart, i));
+      for (const c of columns || []) {
+        const n = String(c.name || "").trim();
+        if (!n || seen.has(n.toLowerCase())) continue;
+        seen.add(n.toLowerCase());
+        names.push(n);
+      }
+    }
   }
   return names;
+}
+
+/**
+ * Extract field names from exact ## 字段 table; fallback to CREATE TABLE columns.
+ * 0.7.48: `^##\s*字段\s*$` only — does not match ## 字段说明.
+ */
+export function parseDocFieldNames(md) {
+  const text = String(md || "");
+  const lines = text.split(/\r?\n/);
+  let start = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s*字段\s*$/i.test(lines[i].trim())) {
+      start = i;
+      break;
+    }
+  }
+  if (start >= 0) {
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i++) {
+      if (/^##\s+/.test(lines[i])) {
+        end = i;
+        break;
+      }
+    }
+    const sec = lines.slice(start, end).join("\n");
+    const { headers, rows } = splitTableRows(sec);
+    if (headers?.length && rows.length) {
+      const nameIdx = headers.findIndex((h) => /字段名|列名|name|column/i.test(h));
+      const idx = nameIdx >= 0 ? nameIdx : 0;
+      const names = [];
+      for (const cells of rows) {
+        const raw = (cells[idx] ?? "").replace(/`/g, "").trim();
+        if (!raw || isEmptyOrHollow(raw) || /字段名|列名/.test(raw)) continue;
+        names.push(raw);
+      }
+      if (names.length) return names;
+    }
+  }
+  return parseDocCreateFieldNames(md);
+}
+
+/**
+ * True when doc CREATE TABLE already lists all inventory columns (skip hollow ## 字段 append).
+ */
+export function docCreateCoversColumns(md, colNames) {
+  const want = [...new Set((colNames || []).map((c) => String(c).toLowerCase()).filter(Boolean))];
+  if (!want.length) return false;
+  const have = new Set(parseDocCreateFieldNames(md).map((n) => n.toLowerCase()));
+  if (!have.size) return false;
+  return want.every((c) => have.has(c));
 }
 
 function tableNameFromDoc(file, md) {
@@ -77,7 +159,7 @@ export function detectDbFieldDrift(root, dbInventory) {
   for (const f of docs) {
     const md = fs.readFileSync(f, "utf8");
     const name = tableNameFromDoc(f, md);
-    byTable.set(name, { file: f, fields: parseDocFieldNames(md) });
+    byTable.set(name, { file: f, fields: parseDocFieldNames(md), md });
   }
   for (const t of inv.tables) {
     const key = String(t.name || "").toLowerCase();
@@ -108,11 +190,10 @@ export function detectDbFieldDrift(root, dbInventory) {
  * Collect METHOD + path tokens from api docs (接口地址 / 请求方式 / GET `/path`).
  * 0.7.37: accept colon inside or outside bold (`**接口地址：**` from fill-auto-api).
  */
-function collectDocApiPaths(docText) {
+export function collectDocApiPaths(docText) {
   const paths = new Set();
   const methodsByNear = [];
   const text = String(docText || "");
-  // **接口地址：** /api/x | **接口地址:** `/api/x` | **接口地址**： /api/x
   for (const m of text.matchAll(/\*\*接口地址[：:]?\*\*[：:]?\s*`?([^\s`*]+)`?/gi)) {
     const p = m[1].trim();
     if (p.startsWith("/")) paths.add(p);
@@ -120,7 +201,6 @@ function collectDocApiPaths(docText) {
   for (const m of text.matchAll(/\*\*请求方式[：:]?\*\*[：:]?\s*`?([A-Z]+)`?/gi)) {
     methodsByNear.push(m[1].toUpperCase());
   }
-  // METHOD `/path` or METHOD /path
   for (const m of text.matchAll(
     /\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b\s*`(\/[^`\s]+)`/gi
   )) {
@@ -133,7 +213,6 @@ function collectDocApiPaths(docText) {
     paths.add(`${m[1].toUpperCase()}:${m[2]}`);
     paths.add(m[2]);
   }
-  // bare `/api/...` in backticks
   for (const m of text.matchAll(/`(\/[a-zA-Z0-9_/{}.\-]+)`/g)) {
     if (m[1].length > 1) paths.add(m[1]);
   }
@@ -142,11 +221,6 @@ function collectDocApiPaths(docText) {
 
 /**
  * Lightweight api drift: inventory endpoint param/response names vs field tables in api modules.
- * 0.7.36 G8-like: also METHOD+path set vs docs (path rename / missing endpoint).
- * Only flags when inventory has structured field lists (fields) or path tokens (path).
- * @param {string} root
- * @param {object} apiInventory
- * @param {{ missingRatio?: number }} [opts]  default 0.15 (0.7.31 SG-1; was 0.3)
  */
 export function detectApiFieldDrift(root, apiInventory, opts = {}) {
   const gaps = [];
@@ -174,7 +248,6 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
   const docText = docFiles.map((f) => fs.readFileSync(f, "utf8")).join("\n");
   const { paths: docPaths } = collectDocApiPaths(docText);
 
-  // 0.7.36: path/method set drift (G8-like)
   const codePaths = [];
   for (const ep of apiInventory.endpoints) {
     const method = String(ep.method || ep.httpMethod || "").toUpperCase();
@@ -186,7 +259,6 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
     const missingPaths = codePaths.filter(
       (c) => !docPaths.has(c.path) && !(c.method && docPaths.has(c.key))
     );
-    // block when ≥1 code endpoint path absent from docs (strict path rename detection)
     if (missingPaths.length >= 1) {
       const sample = missingPaths.slice(0, 8).map((c) => c.key || c.path);
       gaps.push({ missing_paths_in_doc: sample });
@@ -231,7 +303,6 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
     return { ok: blockers.length === 0, gaps, blockers };
   }
 
-  // 0.7.31: undocumented @RequestParam/@PathVariable → immediate blocker
   const missingAnn = [...annotationFields].filter((c) => !docFields.has(c));
   if (missingAnn.length >= 1) {
     gaps.push({ missing_annotation_params: missingAnn.slice(0, 20) });
@@ -252,9 +323,6 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
   return { ok: blockers.length === 0, gaps, blockers };
 }
 
-/**
- * 0.7.29 SG-1: func inventory method names vs docs/func module tables / checklists.
- */
 export function detectFuncMethodDrift(root, funcInventory) {
   const gaps = [];
   const blockers = [];
@@ -280,7 +348,6 @@ export function detectFuncMethodDrift(root, funcInventory) {
   }
   if (!codeMethods.size) return { ok: true, gaps, blockers };
   const missing = [...codeMethods].filter((name) => !docText.includes(name));
-  // 0.7.31 SG-1: block when ≥25% methods absent (was 50%)
   if (missing.length && missing.length >= Math.max(1, Math.ceil(codeMethods.size * 0.25))) {
     gaps.push({ missing_in_doc: missing.slice(0, 20) });
     blockers.push(`doc_method_drift:func:${missing.slice(0, 8).join("+")}`);
@@ -288,10 +355,6 @@ export function detectFuncMethodDrift(root, funcInventory) {
   return { ok: blockers.length === 0, gaps, blockers };
 }
 
-/**
- * 0.7.34 FS-4/G8: redis inventory keys vs documented Key 模式 rows.
- * Blocker when ≥1 redis_true key pattern is absent from docs (strict/gold).
- */
 export function detectRedisKeyDrift(root, redisInventory) {
   const gaps = [];
   const blockers = [];
@@ -304,14 +367,13 @@ export function detectRedisKeyDrift(root, redisInventory) {
       inv.keys
         .filter((k) => k.redis !== false)
         .map((k) => String(k.pattern || "").trim())
-        .filter(Boolean)
+        .filter((p) => p && !isNoisePattern(p))
     ),
   ];
   if (!codeKeys.length) return { ok: true, gaps, blockers };
 
   const dir = truthsPath(root, "redis", loadDomainRegistry());
   if (!fs.existsSync(dir)) {
-    // docs missing entirely while code has keys → drift
     gaps.push({ missing_in_doc: codeKeys.slice(0, 20) });
     blockers.push(`doc_key_drift:redis:${codeKeys.slice(0, 8).join("+")}`);
     return { ok: false, gaps, blockers };
@@ -326,7 +388,6 @@ export function detectRedisKeyDrift(root, redisInventory) {
     const m = row.match(/`([^`]+)`/);
     if (m) docPatterns.add(m[1]);
   }
-  // also plain backticks elsewhere
   for (const m of docText.matchAll(/`([^`]+)`/g)) {
     if (m[1] && !/\s/.test(m[1])) docPatterns.add(m[1]);
   }
@@ -339,9 +400,25 @@ export function detectRedisKeyDrift(root, redisInventory) {
 }
 
 /**
- * 0.7.34 FS-4/G8: jobs inventory tasks vs docs/jobs task md / index.
- * 0.7.36 G8-like: also compare @Scheduled cron/fixedRate/fixedDelay defaults in docs.
+ * Normalize schedule token: `${prop:default}` → default; else raw.
+ * 0.7.48
  */
+export function normalizeScheduleToken(tok) {
+  const s = String(tok ?? "").trim();
+  if (!s) return "";
+  const m = s.match(/^\$\{[^}:]+:([^}]*)\}$/);
+  if (m) return m[1].trim();
+  return s;
+}
+
+function scheduleTokenInDoc(docTextLower, tok) {
+  const raw = String(tok || "").trim();
+  if (!raw) return true;
+  const norm = normalizeScheduleToken(raw);
+  const candidates = [...new Set([raw, norm].filter(Boolean))];
+  return candidates.some((c) => docTextLower.includes(c.toLowerCase()));
+}
+
 export function detectJobsTaskDrift(root, jobsInventory) {
   const gaps = [];
   const blockers = [];
@@ -372,15 +449,20 @@ export function detectJobsTaskDrift(root, jobsInventory) {
     blockers.push(`doc_task_drift:jobs:${missing.slice(0, 8).join("+")}`);
   }
 
-  // schedule default drift: cron / fixedRate / fixedDelay present in inventory but absent in docs
   const missingSched = [];
   for (const t of inv.tasks) {
     const sched = t.scheduler || {};
-    const tokens = [sched.cron, sched.fixedRate, sched.fixedDelay, sched.fixedRateString, sched.fixedDelayString]
+    const tokens = [
+      sched.cron,
+      sched.fixedRate,
+      sched.fixedDelay,
+      sched.fixedRateString,
+      sched.fixedDelayString,
+    ]
       .map((x) => (x == null ? "" : String(x).trim()))
       .filter(Boolean);
     for (const tok of tokens) {
-      if (!docText.includes(tok.toLowerCase())) {
+      if (!scheduleTokenInDoc(docText, tok)) {
         missingSched.push(`${t.task_code || t.slug || "?"}:${tok}`);
       }
     }

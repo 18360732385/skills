@@ -68,4 +68,4 @@
 确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton]`。  
 非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，生成物由目标仓 `node scripts/agent-config/sync.mjs` 发出。  
 **升级 L5**：刷新 `scripts/agent-config/sync.mjs`；`node scripts/harness.mjs --check-freshness --root <TARGET>`。  
-**升严常用**：`harness --mode upgrade`（默认 migrate-docs）· `--migrate-coverage` 默认 **off**（与 migrate-docs 正交；`append` 只补缺页/缺节）· `--check-meta-stable --baseline <meta>`（忽略 last_mode）· `--retire-wrappers` / `HARNESS_RETIRE_WRAPPERS=1`。
+**升严常用**：`harness --mode upgrade`（薄仓默认 migrate-docs=auto；**厚仓默认 dry-run**，显式 `--migrate-docs=auto` 才写真相）· `--migrate-coverage` 默认 **off** · `--check-meta-stable --baseline <meta>` · `--retire-wrappers` / `HARNESS_RETIRE_WRAPPERS=1`。厚仓开干档可 `mature_compat`（drift 不阻断）。

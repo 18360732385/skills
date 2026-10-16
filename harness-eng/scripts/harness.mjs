@@ -163,8 +163,11 @@ function parseArgs(argv) {
     baseline: null,
     findings: null,
     retireWrappers: false,
-    /** @type {'auto'|'off'|'dry-run'} upgrade 默认 auto */
-    migrateDocs: "auto",
+    /**
+     * null = unset（0.7.48：厚仓默认 dry-run，薄仓默认 auto）
+     * @type {'auto'|'off'|'dry-run'|null}
+     */
+    migrateDocs: null,
     /** @type {'off'|'append'|'dry-run'} 默认 off；与 migrate-docs 正交 */
     migrateCoverage: "off",
   };

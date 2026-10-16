@@ -10,7 +10,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { readSkillVersion } from "./skill-version.mjs";
-import { normalizeCoverageMode, runMigrateDocs } from "./migrate-docs.mjs";
+import {
+  normalizeCoverageMode,
+  runMigrateDocs,
+  detectThickTruths,
+} from "./migrate-docs.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
@@ -131,7 +135,8 @@ function runFillScoreJson(absRoot) {
 
 /**
  * Normalize migrateDocs mode from opts.
- * @param {{ dryRun?: boolean, migrateDocs?: string|boolean }} opts
+ * 0.7.48: unset + thickTruths → dry-run; explicit auto|off|dry-run wins.
+ * @param {{ dryRun?: boolean, migrateDocs?: string|boolean|null, thickTruths?: boolean, migrateDocsExplicit?: boolean }} opts
  * @returns {'auto'|'off'|'dry-run'}
  */
 export function resolveMigrateDocsMode(opts = {}) {
@@ -139,6 +144,9 @@ export function resolveMigrateDocsMode(opts = {}) {
   const m = opts.migrateDocs;
   if (m === false || m === "off" || m === "false" || m === "no") return "off";
   if (m === "dry-run" || m === "dryrun") return "dry-run";
+  if (m === "auto" || m === true || m === "true" || m === "on") return "auto";
+  // unset / null / undefined
+  if (opts.thickTruths === true) return "dry-run";
   return "auto";
 }
 
@@ -167,7 +175,12 @@ function isCoverageBlocker(b) {
 
 export function emitUpgradeStrictnessDiff(root, opts = {}) {
   const absRoot = path.resolve(root);
-  const migrateMode = resolveMigrateDocsMode(opts);
+  const thick =
+    opts.thickTruths === true ||
+    opts.thickTruths === false
+      ? !!opts.thickTruths
+      : detectThickTruths(absRoot, { mature: opts.mature === true });
+  const migrateMode = resolveMigrateDocsMode({ ...opts, thickTruths: thick });
   const coverageMode = resolveCoverageMode(opts);
   const beforeReport = loadScoreLatest(absRoot);
   const before = collectScoreBlockers(beforeReport);
@@ -185,14 +198,17 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     score_error: null,
     ready_before: beforeReport?.ai_coding_ready?.ok ?? null,
     ready_after: null,
-    migrate_docs: { mode: migrateMode, applied: [], skipped: [] },
+    thick_truths: thick,
+    migrate_docs: { mode: migrateMode, applied: [], skipped: [], thick_truths: thick },
     migrate_coverage: { mode: coverageMode, ops: [], skipped: [], applied: [] },
     note:
       migrateMode === "off"
         ? "升严不自动改用户文档（--no-migrate-docs）；对照 docs/harness-eng/upgrade-diff.json"
         : migrateMode === "dry-run"
-          ? "升严 migrate-docs=dry-run：只预览结构化补丁，不写真相文档"
-          : "升严默认自动结构化迁移真相文档（path/field/task/schedule/key）；coverage 默认仍移交（--migrate-coverage 默认 off）；--no-migrate-docs 可退出",
+          ? thick && (opts.migrateDocs == null || opts.migrateDocs === undefined)
+            ? "升严厚仓默认 migrate-docs=dry-run（只预览）；写真相文档请显式 --migrate-docs=auto"
+            : "升严 migrate-docs=dry-run：只预览结构化补丁，不写真相文档"
+          : "升严自动结构化迁移真相文档（path/field/task/schedule/key）；coverage 默认仍移交（--migrate-coverage 默认 off）；厚仓未显式指定时默认 dry-run",
   };
   if (coverageMode === "append") {
     payload.note += "；--migrate-coverage=append 只补缺页/缺节，covered_gt 不删文档";

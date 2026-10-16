@@ -1,6 +1,7 @@
 /**
- * ai_coding_ready gate helpers (strict / gold).
+ * ai_coding_ready gate helpers (strict / gold / mature_compat).
  * 0.3.3: gold profile · todo_scan · acceptance_warnings_max
+ * 0.7.48: mature_compat — strict morph + gold acceptance, no coverage 1.0 force
  */
 import fs from "fs";
 import path from "path";
@@ -61,10 +62,22 @@ export function applyGoldCoverageDefaults(targets = {}) {
 }
 
 /**
+ * 0.7.48: thick/mature repos — strict morph floor + gold acceptance bars;
+ * does NOT force coverage 1.0 / all_domains.
+ */
+export function applyMatureCompatGateDefaults(gate, explicit = {}) {
+  const g = applyStrictGateDefaults(gate, explicit);
+  if (typeof g.acceptance_warnings_max !== "number" && !explicit.acceptance_warnings_max) {
+    g.acceptance_warnings_max = 0;
+  }
+  return g;
+}
+
+/**
  * 0.7.30 NEW-12: re-apply gate_profile defaults (shared by loadScorePolicy + CLI --gate-profile).
  * Gold clears strict fingerprints (morph_floor 75 / todo_scan truths) so applyGoldGateDefaults can fill.
  * @param {object} policy  mutable score-policy object ({ gate, coverage_targets, coverage_mode, ... })
- * @param {"strict"|"gold"|"legacy"|string} profile
+ * @param {"strict"|"gold"|"legacy"|"mature_compat"|string} profile
  * @param {{ explicit?: object, coverageModeFromFile?: boolean }} [opts]
  * @returns {object} policy
  */
@@ -84,6 +97,15 @@ export function reapplyGateProfile(policy, profile, opts = {}) {
     p.coverage_targets = applyGoldCoverageDefaults(p.coverage_targets || {});
     // match loadScorePolicy: only set all_domains when file omitted coverage_mode
     if (!opts.coverageModeFromFile) p.coverage_mode = "all_domains";
+  } else if (profile === "mature_compat") {
+    // clear gold fingerprints if switching down from gold
+    if (gate.morph_floor === 95) delete gate.morph_floor;
+    if (gate.todo_scan === "harness_docs") {
+      delete gate.todo_scan;
+      delete explicit.todo_scan;
+    }
+    if (gate.template_completeness_min === 95) delete gate.template_completeness_min;
+    p.gate = applyMatureCompatGateDefaults(gate, explicit);
   } else if (profile === "strict") {
     p.gate = applyStrictGateDefaults(gate, explicit);
   } else {
@@ -246,7 +268,8 @@ export function checkEntryReady(root) {
  */
 export function evaluateAiCodingGate(report, policy, gold) {
   const profile = policy.gate_profile || "legacy";
-  const active = profile === "strict" || profile === "gold";
+  const active =
+    profile === "strict" || profile === "gold" || profile === "mature_compat";
   const checks = {
     gate_profile: profile,
     morph_floor_ok: null,
@@ -263,8 +286,8 @@ export function evaluateAiCodingGate(report, policy, gold) {
   }
   const g = policy.gate || {};
   const blockers = [];
-  // strict: AGENTS Commands/Critical 不得仍是 TODO
-  if (profile === "strict" && report.root) {
+  // strict / mature_compat: AGENTS Commands/Critical 不得仍是 TODO
+  if ((profile === "strict" || profile === "mature_compat") && report.root) {
     const entry = checkEntryReady(report.root);
     checks.entry_ready = entry.ok;
     if (!entry.ok) {

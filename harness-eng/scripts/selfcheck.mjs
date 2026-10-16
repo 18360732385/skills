@@ -39,6 +39,7 @@ import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
   applyGoldCoverageDefaults,
+  applyMatureCompatGateDefaults,
   reapplyGateProfile,
   evaluateAiCodingGate,
   countHarnessTodos,
@@ -72,7 +73,12 @@ import {
   detectJobsTaskDrift,
   detectApiFieldDrift,
   detectDbFieldDrift,
+  parseDocFieldNames,
+  parseDocCreateFieldNames,
+  normalizeScheduleToken,
+  docCreateCoversColumns,
 } from "./lib/field-drift.mjs";
+import { isNoisePattern } from "./lib/inventory-redis.mjs";
 import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
 import { readGitHead } from "./lib/git-head.mjs";
 import {
@@ -88,6 +94,8 @@ import {
   runMigrateDocs,
   planCoverageAppend,
   normalizeCoverageMode,
+  detectThickTruths,
+  pickApiDocForPath,
 } from "./lib/migrate-docs.mjs";
 import {
   stripYamlKeys,
@@ -131,6 +139,7 @@ import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
 import { mergeYamlMaps } from "./render.mjs";
 import {
   ensureDbMdMaintenance,
+  detectDbMigrationMode,
   warnMcpExampleProfile,
   warnManualReplaceGaps,
 } from "./lib/sync-freshness.mjs";
@@ -4895,6 +4904,196 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   } finally {
     fs.rmSync(coldTmp, { recursive: true, force: true });
   }
+}
+
+// --- 0.7.48 thick-repo harden: migrate-docs dry-run · CREATE fields · fence | · mature_compat ---
+{
+  assert(
+    resolveMigrateDocsMode({ thickTruths: true }) === "dry-run",
+    "0.7.48 thickTruths default migrateDocs dry-run"
+  );
+  assert(
+    resolveMigrateDocsMode({ thickTruths: true, migrateDocs: "auto" }) === "auto",
+    "0.7.48 explicit auto overrides thickTruths"
+  );
+  assert(resolveMigrateDocsMode({}) === "auto", "0.7.48 thin/unset still auto");
+
+  // ## 字段说明 must not steal; CREATE TABLE fallback
+  const mdField说明 = [
+    "## 字段说明",
+    "",
+    "业务备注一堆文字",
+    "",
+    "## 建表语句",
+    "",
+    "```sql",
+    "CREATE TABLE t_foo (",
+    "  id bigint NOT NULL,",
+    "  name varchar(64),",
+    "  PRIMARY KEY (id),",
+    "  KEY idx_name (name)",
+    ");",
+    "```",
+    "",
+  ].join("\n");
+  const fromCreate = parseDocFieldNames(mdField说明);
+  assert(
+    fromCreate.map((x) => x.toLowerCase()).includes("id") &&
+      fromCreate.map((x) => x.toLowerCase()).includes("name") &&
+      !fromCreate.some((x) => /primary|idx_/i.test(x)),
+    `0.7.48 CREATE fallback fields (got ${JSON.stringify(fromCreate)})`
+  );
+  assert(
+    parseDocCreateFieldNames(mdField说明).length >= 2,
+    "0.7.48 parseDocCreateFieldNames"
+  );
+  assert(docCreateCoversColumns(mdField说明, ["id", "name"]), "0.7.48 docCreateCoversColumns");
+
+  assert(normalizeScheduleToken("${app.cron:0 0 * * *}") === "0 0 * * *", "0.7.48 cron placeholder normalize");
+  assert(isNoisePattern("会话不存在或已过期"), "0.7.48 redis CJK noise");
+  assert(isNoisePattern("script/rate_limit.lua"), "0.7.48 redis lua noise");
+  assert(!isNoisePattern("SMS:login:token:"), "0.7.48 real redis key kept");
+
+  // schedule drift: docs with resolved cron match ${prop:default}
+  const jobsSched = fs.mkdtempSync(path.join(os.tmpdir(), "harness-048-sched-"));
+  try {
+    fs.mkdirSync(path.join(jobsSched, "docs", "jobs"), { recursive: true });
+    fs.writeFileSync(
+      path.join(jobsSched, "docs", "jobs", "01-task.md"),
+      "task_code: clean-job\n\ncron: `0 0 * * *`\n",
+      "utf8"
+    );
+    const inv = {
+      tasks: [
+        {
+          task_code: "clean-job",
+          scheduler: { cron: "${jobs.clean:0 0 * * *}" },
+        },
+      ],
+    };
+    const drift = detectJobsTaskDrift(jobsSched, inv);
+    assert(
+      drift.ok || !drift.blockers.some((b) => /doc_schedule_drift/.test(b)),
+      `0.7.48 schedule normalize no false drift (blockers=${JSON.stringify(drift.blockers)})`
+    );
+  } finally {
+    fs.rmSync(jobsSched, { recursive: true, force: true });
+  }
+
+  // acceptance: fenced JSON with `|` must not poison a real param table
+  const accFence = fs.mkdtempSync(path.join(os.tmpdir(), "harness-048-acc-"));
+  try {
+    fs.mkdirSync(path.join(accFence, "docs", "api", "modules"), { recursive: true });
+    fs.writeFileSync(
+      path.join(accFence, "docs", "api", "modules", "01-demo.md"),
+      [
+        "## 1. demo",
+        "",
+        "**接口地址：** `/api/demo`",
+        "**请求方式：** POST",
+        "**功能描述：** demo",
+        "**evidence：** FooController#demo",
+        "",
+        "### 功能逻辑",
+        "",
+        "- 校验入参",
+        "- 调用 Service 返回",
+        "",
+        "### 请求参数",
+        "",
+        "| 参数名 | 类型 | 必填 | 说明 | 示例值 |",
+        "|---|---|---|---|---|",
+        "| id | long | 是 | 主键 | `1` |",
+        "",
+        "```json",
+        '{ "pipe": "a|b|c", "note": "|not|a|table|" }',
+        "```",
+        "",
+        "### 响应参数",
+        "",
+        "无参数",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const acc = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/acceptance-check.mjs"), "--root", accFence],
+      { encoding: "utf8", windowsHide: true }
+    );
+    const out = `${acc.stdout || ""}\n${acc.stderr || ""}`;
+    assert(
+      !/api-empty-examples/.test(out),
+      `0.7.48 fence | not api-empty-examples (out=${out.slice(0, 500)})`
+    );
+  } finally {
+    fs.rmSync(accFence, { recursive: true, force: true });
+  }
+
+  // mature_compat: gate active, no gold coverage force, drift not in profile defaults
+  const mc = { gate: {}, coverage_targets: { api: 0.8 } };
+  reapplyGateProfile(mc, "mature_compat", {});
+  assert(mc.gate_profile === "mature_compat", "0.7.48 mature_compat profile set");
+  assert(mc.gate.morph_floor === 75, "0.7.48 mature_compat morph_floor 75");
+  assert(mc.gate.acceptance_warnings_max === 0, "0.7.48 mature_compat warnings_max 0");
+  assert(mc.coverage_targets.api === 0.8, "0.7.48 mature_compat keeps coverage target");
+  assert(
+    applyMatureCompatGateDefaults({}).morph_floor === 75,
+    "0.7.48 applyMatureCompatGateDefaults"
+  );
+
+  // pickApiDocForPath prefers path prefix over first file
+  const indexed = [
+    { file: "/a/01-auth.md", paths: new Set(["/api/auth/login"]), slug: "auth" },
+    { file: "/a/02-neo4j.md", paths: new Set(["/api/graph/node"]), slug: "neo4j" },
+  ];
+  assert(
+    pickApiDocForPath("/api/graph/edge", indexed) === "/a/02-neo4j.md",
+    "0.7.48 pickApiDocForPath prefix"
+  );
+  assert(pickApiDocForPath("/api/unknown/x", indexed) == null, "0.7.48 pickApiDoc unmatched null");
+
+  // thick truths detect
+  const thickTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-048-thick-"));
+  try {
+    fs.mkdirSync(path.join(thickTmp, "docs", "db", "table"), { recursive: true });
+    fs.writeFileSync(
+      path.join(thickTmp, "docs", "db", "table", "01-t_foo.md"),
+      "## 建表语句\n\n```sql\nCREATE TABLE t_foo (id int);\n```\n",
+      "utf8"
+    );
+    assert(detectThickTruths(thickTmp) === true, "0.7.48 detectThickTruths");
+  } finally {
+    fs.rmSync(thickTmp, { recursive: true, force: true });
+  }
+
+  // manual_sql maintenance block
+  const dbMaint = fs.mkdtempSync(path.join(os.tmpdir(), "harness-048-dbm-"));
+  try {
+    fs.mkdirSync(path.join(dbMaint, "docs", "db"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dbMaint, "docs", "db", "db.md"),
+      "# 索引\n\n| 表名 | 路径 |\n|---|---|\n| t | table/01.md |\n",
+      "utf8"
+    );
+    assert(detectDbMigrationMode(dbMaint) === "manual_sql", "0.7.48 detectDbMigrationMode default");
+    const r = ensureDbMdMaintenance(dbMaint, skillRoot);
+    assert(r.appended && r.mode === "manual_sql", "0.7.48 ensureDbMdMaintenance manual_sql");
+    const body = fs.readFileSync(path.join(dbMaint, "docs", "db", "db.md"), "utf8");
+    assert(/manual_sql/.test(body) && !/\bnone\b/.test(body.split("维护约定")[1] || ""), "0.7.48 maint no literal none");
+    assert(/DDL|人工按序/.test(body), "0.7.48 maint mentions DDL or 人工");
+  } finally {
+    fs.rmSync(dbMaint, { recursive: true, force: true });
+  }
+
+  const scoreSrc48 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/inventory-mode|inventoryMode/.test(scoreSrc48), "0.7.48 fill-score inventory-mode");
+  assert(/score-latest\.prev\.json/.test(scoreSrc48), "0.7.48 score-latest.prev backup");
+  assert(/mature_compat/.test(scoreSrc48), "0.7.48 fill-score mature_compat");
+
+  const upMd48 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/0\.7\.48|厚仓|dry-run/.test(upMd48), "0.7.48 upgrade.md notes");
+  assert(logExists("0.7.48"), "0.7.48 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

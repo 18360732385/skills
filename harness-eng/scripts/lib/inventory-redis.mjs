@@ -124,11 +124,17 @@ function isHardNoise(pat) {
   return /yyyy|customfield_|Bearer |HMAC|AES|9999-12-31|https?:/i.test(pat || "");
 }
 
-function isNoisePattern(val) {
+/** 0.7.48: shared with field-drift — filter CJK errors / lua / non-key noise */
+export function isNoisePattern(val) {
   if (!val || val.length < 2) return true;
   if (/\\[dwWsSb]|yyyy|MM-dd|HH:mm|%s|%n|%d|\{0\}|\\\\/.test(val)) return true;
   if (/^[\d\-/:\s.]+$/.test(val)) return true;
   if (/https?:\/\//i.test(val)) return true;
+  // 0.7.48: Chinese error / message strings, lua scripts, Bearer tokens
+  if (/\.lua\b/i.test(val)) return true;
+  if (/Bearer\s+/i.test(val)) return true;
+  if (/[\u4e00-\u9fff]{2,}/.test(val) && !/[:/]/.test(val)) return true;
+  if (/会话不存在|不存在或已过期|请重新登录|操作失败|系统错误/.test(val)) return true;
   return false;
 }
 

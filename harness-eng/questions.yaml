@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.7.47"
+version: "0.7.48"
 
 all_recommend_phrases:
   - 全部推荐
@@ -154,7 +154,7 @@ batches:
         recommended_when: "S_MULTI_TOOL || S_AGENT_CONFIG || ladder >= L5"
       # 0.7.26 QF-4: land 路径可达（勿只放在 batch-fill）
       - id: Q_GATE_PROFILE
-        text: 开干档 gate_profile？（写入 score-policy；strict=常用；gold=高门槛）
+        text: 开干档 gate_profile？（写入 score-policy；strict=常用；gold=高门槛；mature_compat=厚成熟仓【推荐】）
         type: choice
         when_mode: [land, resume, upgrade]
         options:
@@ -427,7 +427,7 @@ batches:
           - { value: "0.9", label: 0.9（90%） }
         recommended: "0.8"
       - id: Q_GATE_PROFILE
-        text: 开干档 gate_profile？（写入 score-policy；strict=常用；gold=覆盖100%·形态≥90·完成度≥95·TODO·B·warnings=0）
+        text: 开干档 gate_profile？（写入 score-policy；strict=常用；gold=覆盖100%·形态≥95·完成度≥95·TODO·B·warnings=0；mature_compat=厚仓【推荐】）
         type: choice
         when_mode: [fill-score, fill-gate, fill-plan, fill-truths-agents, pipeline, upgrade, resume, land]
         options:

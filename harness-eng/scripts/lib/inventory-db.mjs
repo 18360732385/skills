@@ -113,11 +113,11 @@ function walkFiles(dir, pred, acc = []) {
   return acc;
 }
 
-const SQL_CONSTRAINT_HEAD =
+export const SQL_CONSTRAINT_HEAD =
   /^(PRIMARY|UNIQUE|KEY|CONSTRAINT|INDEX|FOREIGN|CHECK|FULLTEXT|SPATIAL)\b/i;
 
-/** Parse CREATE body lines → all columns (not only COMMENT lines). 0.7.25 FC-4 */
-function parseCreateBodyColumns(body) {
+/** Parse CREATE body lines → all columns (not only COMMENT lines). 0.7.25 FC-4 · exported 0.7.48 */
+export function parseCreateBodyColumns(body) {
   const columnComments = {};
   const columns = [];
   for (const line of body.split(/\r?\n/)) {

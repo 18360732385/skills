@@ -2,6 +2,7 @@
  * Chat footer dashboard for harness-eng this-turn engineering steps (0.5.3+; gated 0.5.4+; tightened 0.6.9).
  * 0.4.0 / 0.7.17: consume buildReportUi (go_nogo/tasks) + host_surface.
  * 0.7.17+: four-side box; 【阶段】【现状】【工作】【下一步建议】各一句；现状仅 AI coding 可否（无 mermaid）。
+ * 0.7.48+: 左封闭右开放：┌─ 标题 ─ / │ ▸ 【段】 / └─ 详情报告 → report ─（避 CJK 右缘锯齿）。
  * When to SHOW/HIDE: session-dashboard.md (agent decides per this turn; --intent on session-dash.mjs).
  */
 import fs from "fs";
@@ -68,12 +69,6 @@ function displayWidth(s) {
   return w;
 }
 
-function padVisual(s, width) {
-  const str = String(s ?? "");
-  const pad = Math.max(0, width - displayWidth(str));
-  return str + " ".repeat(pad);
-}
-
 function truncVisual(s, maxW) {
   const str = String(s ?? "");
   if (displayWidth(str) <= maxW) return str;
@@ -110,28 +105,66 @@ function wrapVisual(s, maxW) {
   return lines.length ? lines : [""];
 }
 
-/** Four-side Unicode box; title centered on top/bottom bars. */
-function frameBox(innerLines, title, footTitle) {
+/**
+ * Open-right rail: `┌────  mid  ────` / `└────  mid  ────` (no ┐/┘).
+ * @param {"┌"|"└"} start
+ * @param {string} midText
+ * @param {number} width
+ */
+function openRail(start, midText, width) {
+  const mid = `  ${truncVisual(String(midText || ""), width - 8)}  `;
+  const fill = Math.max(4, width - displayWidth(mid) - 1);
+  const left = Math.max(2, Math.floor(fill / 2));
+  const right = Math.max(2, fill - left);
+  return start + "─".repeat(left) + mid + "─".repeat(right);
+}
+
+/**
+ * 0.7.48 定稿：左封闭右开放 + ▸ 四句。
+ * ┌────  title  ────
+ * │ ▸ 【阶段】…
+ * └────  详情报告 → report-latest.html  ────
+ */
+function frameBox(innerLines, title, footMid) {
   const width = BOX_INNER;
-  const t = truncVisual(title || "harness-eng 会话仪表盘", width - 4);
-  const f = truncVisual(footTitle || "详情 · 五台读法", width - 4);
-  const topPad = Math.max(0, width - displayWidth(t) - 2);
-  const topLeft = Math.floor(topPad / 2);
-  const topRight = topPad - topLeft;
-  const botPad = Math.max(0, width - displayWidth(f) - 2);
-  const botLeft = Math.floor(botPad / 2);
-  const botRight = botPad - botLeft;
-  const top =
-    "┌" + "─".repeat(topLeft) + "◆" + t + "◆" + "─".repeat(topRight) + "┐";
-  const bot =
-    "└" + "─".repeat(botLeft) + "◆" + f + "◆" + "─".repeat(botRight) + "┘";
+  const top = openRail("┌", title || "harness-eng 会话仪表盘", width);
+  const bot = openRail(
+    "└",
+    footMid || "详情报告 → report-latest.html",
+    width
+  );
+  const bodyW = width - 4; // after "│ ▸ " or "│ "
   const body = [];
   for (const line of innerLines || []) {
-    for (const part of wrapVisual(line, width)) {
-      body.push("│" + padVisual(part, width) + "│");
+    const raw = String(line ?? "");
+    if (!raw) {
+      body.push("│");
+      continue;
+    }
+    const isNarrative = raw.startsWith("▸ ");
+    const prefix = isNarrative ? "│ " : "│ ";
+    const content = isNarrative ? raw : raw;
+    for (const part of wrapVisual(content, bodyW)) {
+      if (!part) {
+        body.push("│");
+        continue;
+      }
+      // continuation lines of a ▸ row keep indent without repeating ▸
+      if (isNarrative && part !== content && !part.startsWith("▸ ")) {
+        body.push(`│   ${part}`);
+      } else {
+        body.push(`${prefix}${part}`);
+      }
     }
   }
   return [top, ...body, bot].join("\n");
+}
+
+function reportFootMid(data) {
+  const name = "report-latest.html";
+  if (data?.reportExists) return `详情报告 → ${name}`;
+  if (data?.reportExpectedRel) return `详情报告 → ${name}（未生成）`;
+  return `详情报告 → ${name}`;
 }
 
 /** Keep each narrative section to one short sentence. */
@@ -379,17 +412,16 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
         ? data.task.line
         : "说「完整度打分」或先 audit/land";
     const inner = [
-      "## harness-eng 会话仪表盘（精简） · 未打分",
-      `\`${data.root}\``,
-      "",
-      `【阶段】${modeBit} · 未打分`,
-      "【现状】尚未打分，暂不能判断是否可 AI coding",
-      `【工作】${oneSentence(nextLine)}`,
-      `【下一步建议】${oneSentence(nextLine)}`,
-      "",
-      renderDashboardLinkFooter(data),
+      `▸ 【阶段】${modeBit} · 未打分`,
+      "▸ 【现状】尚未打分，暂不能判断是否可 AI coding",
+      `▸ 【工作】${oneSentence(nextLine)}`,
+      `▸ 【下一步建议】${oneSentence(nextLine)}`,
     ];
-    return frameBox(inner, "会话仪表盘（精简）·未打分", "详情 · 五台读法");
+    return frameBox(
+      inner,
+      "harness-eng 会话仪表盘（精简）·未打分",
+      reportFootMid(data)
+    );
   }
 
   const ladderRaw = data.diagnose.ladder;
@@ -425,25 +457,20 @@ export function renderSessionDashboardMarkdown(data, opts = {}) {
   const cmds = Array.isArray(data.decision.next_commands)
     ? data.decision.next_commands
     : [];
+  // 下一步与【工作】拆开：优先 next_commands，勿复用 task.line
   let nextLine =
-    (data.task?.line && data.task.line !== "—" && data.task.line) ||
     cmds[0] ||
     (ai === true
-      ? "打开 report 核对五台后写业务"
+      ? "业务改动；或打开 report 核对五台"
       : "fill-plan --status 后 agents 清 semantic");
   nextLine = oneSentence(nextLine);
 
   const inner = [
-    "## harness-eng 会话仪表盘",
-    `\`${data.root}\``,
-    "",
-    `【阶段】${phaseLine}`,
-    `【现状】${statusLine}`,
-    `【工作】${workLine}`,
-    `【下一步建议】${nextLine}`,
-    "",
-    renderDashboardLinkFooter(data),
+    `▸ 【阶段】${phaseLine}`,
+    `▸ 【现状】${statusLine}`,
+    `▸ 【工作】${workLine}`,
+    `▸ 【下一步建议】${nextLine}`,
   ];
 
-  return frameBox(inner, "harness-eng 会话仪表盘", "详情 · 五台读法");
+  return frameBox(inner, "harness-eng 会话仪表盘", reportFootMid(data));
 }

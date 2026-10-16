@@ -4,7 +4,7 @@
 
 | 旗标 / CLI | 作用对象 | 说明 |
 |---|---|---|
-| `--migrate-docs[=auto\|dry-run\|off]` | 真相文档 `docs/{api,func,db,redis,jobs}` | upgrade 升严后**默认 auto**；`--no-migrate-docs` 仅 `doc_todos` 移交 |
+| `--migrate-docs[=auto\|dry-run\|off]` | 真相文档 `docs/{api,func,db,redis,jobs}` | 薄仓默认 **auto**；**厚仓 / MATURE 默认 dry-run**（0.7.48）；写真相须显式 `--migrate-docs=auto`；`--no-migrate-docs` 仅 `doc_todos` 移交 |
 | `fill-score --migrate-policy` | `score-policy.yaml` 字段（如 `morph_floor`） | **≠** `--migrate-docs`；不写真相文档 |
 | `--check-meta-stable [--baseline]` | `harness-meta.yaml` | CI 稳态；默认忽略 `last_mode`（跨 mode **accepted residual**） |
 | `--migrate-coverage[=off\|append\|dry-run]` | 覆盖类 blocker（`coverage_ready` / `covered_gt`） | **默认 off**；`append` 只补缺页/缺节；`covered_gt` 仍移交、不删文档；**≠** `--migrate-docs` |
@@ -16,7 +16,8 @@
 3. 目标阶 [ladder.md](ladder.md) 必备项勾选通过；分级移交 TODO 已打印
 4. **升版后必跑升严差分 + acceptance 摘要**  
    - `harness --mode upgrade` 成功收尾写 `docs/harness-eng/upgrade-diff.json`（stderr 摘要）；对照升前 `score-latest.json` 的 blockers  
-   - **默认自动结构化 migrate-docs**（path / field / task / schedule / key）；报告见 `migrate-docs-report.json`；`--no-migrate-docs` 退回仅 `doc_todos` 移交；`--migrate-docs=dry-run` 只预览  
+   - **migrate-docs**：薄仓默认 auto；厚仓默认 **dry-run**（仍出 `migrate-docs-report.json`）；显式 `--migrate-docs=auto` 才写真相；`--no-migrate-docs` 仅 `doc_todos` 移交  
+
    - `coverage` / `covered_gt` **默认不自动改文档**（`--migrate-coverage` 默认 **off**）。可选 `append` 只补缺页/缺节；`covered_gt` 仍移交、**不删**用户文档。残留 TODO 见 stderr  
    - 仍建议：`node scripts/acceptance-check.mjs --root <TARGET> [--gold]`（或 `fill-plan --residual [--gold]`）  
    - 仅 warnings 且批次已关：走 `fill-plan --residual` 清残项
@@ -94,10 +95,20 @@
 4. **calibrate**：纯 charset/width/unsigned 风格差 → `db_style_warn`（不 exit2）；列集合/类型族差仍 exit2
 5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.45`）后再 sync
 
+## 0.7.47 → 0.7.48 迁移要点
+
+1. **meta**：`skill_version` → `0.7.48`
+2. **厚仓 migrate-docs**：MATURE / 已有非空真相时**默认 dry-run**（仍写 `migrate-docs-report.json`）；写真相文档须显式 `--migrate-docs=auto`
+3. **API 挂接**：缺端点按路径前缀匹配模块；无匹配则新建页，禁止一律 append 到第一个 md
+4. **drift**：`## 字段` 精确标题；CREATE TABLE 可作字段 SSOT；`--inventory-mode file|live|hybrid`；redis/jobs 噪声过滤；schedule `${prop:default}` 归一化
+5. **开干档**：厚成熟仓可用 `gate_profile: mature_compat`（acceptance 金标 + strict 形态；drift 不阻断）
+6. **卫生**：覆盖 `score-latest` 前备份 `score-latest.prev.json`；尺度变更 stderr 提示「尺度不可比」；`db.md` 维护约定按 `manual_sql`/`flyway` 渲染
+7. **acceptance**：参数表解析忽略 code fence 内的 `|`
+
 ## 0.7.43 → 0.7.44 迁移要点
 
 1. **meta**：`skill_version` → `0.7.44`
-2. **migrate-docs（默认 AUTO）**：upgrade 升严后自动对齐 path / field / task / schedule / key；落盘 `migrate-docs-report.json`；迁移后重跑 fill-score
+2. **migrate-docs（当时默认 AUTO）**：upgrade 升严后自动对齐 path / field / task / schedule / key；落盘 `migrate-docs-report.json`；迁移后重跑 fill-score。**0.7.48 起厚仓默认改为 dry-run**，见上节
 3. **退出**：`--no-migrate-docs` 或 `--migrate-docs=off` → 仅 `doc_todos` 移交（0.7.41 行为）；`--migrate-docs=dry-run` 只预览
 4. **边界**：不覆写业务说明；`coverage` / `covered_gt` 不自动灌水/删文档；`--migrate-policy`（score-policy 字段）≠ `--migrate-docs`（真相文档）
 5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.44`）后再 sync

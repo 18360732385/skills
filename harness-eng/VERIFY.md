@@ -1,10 +1,22 @@
-# harness-eng 验收记录（0.7.47）
+# harness-eng 验收记录（0.7.48）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.47**（e2e-19：coverage append · 长跳/冷 clone 夹具；其上 0.7.46 P3 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.48**（厚仓加固；其上 0.7.47 e2e-19 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.48 增量验收（厚仓加固）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.48` | 有 |
+| 厚仓 / thickTruths 未显式指定时 `migrate-docs` 默认 **dry-run**；显式 `auto` 可写盘 | 有 |
+| `parseDocFieldNames` 精确 `## 字段` + CREATE TABLE 回退；`--inventory-mode`；redis/jobs 噪声 | 有 |
+| acceptance 忽略 code fence 内 `\|`；`mature_compat` 档 drift 不阻断开干 | 有 |
+| `score-latest.prev.json` 备份；`ensureDbMdMaintenance` 按 manual_sql/flyway | 有 |
+| upgrade `## 0.7.47 → 0.7.48`；CHANGELOG / `_log/0.7/0.7.48.md` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.47 增量验收（e2e-19）
 

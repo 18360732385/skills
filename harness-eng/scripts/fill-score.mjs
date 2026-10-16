@@ -120,6 +120,8 @@ function parseArgs(argv) {
     domains: [], // 0.3.4: CLI override; empty → meta / disk / core
     migratePolicy: false,
     gateProfile: null,
+    /** @type {'file'|'live'|'hybrid'} 0.7.48 */
+    inventoryMode: "live",
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -139,9 +141,14 @@ function parseArgs(argv) {
     else if (a === "--migrate-policy") out.migratePolicy = true;
     else if (a === "--gate-profile") {
       const gp = String(argv[++i] || "").toLowerCase();
-      if (!["strict", "gold", "legacy"].includes(gp))
-        throw new Error("--gate-profile must be strict|gold|legacy");
+      if (!["strict", "gold", "legacy", "mature_compat"].includes(gp))
+        throw new Error("--gate-profile must be strict|gold|legacy|mature_compat");
       out.gateProfile = gp;
+    } else if (a === "--inventory-mode") {
+      const im = String(argv[++i] || "").toLowerCase();
+      if (!["file", "live", "hybrid"].includes(im))
+        throw new Error("--inventory-mode must be file|live|hybrid");
+      out.inventoryMode = im;
     } else if (a === "--inventory") out.inventory = argv[++i];
     else if (a === "--compare") out.compare = argv[++i];
     else if (a === "--ready-quality") {
@@ -185,7 +192,8 @@ Options:
   --ready-quality <n>     Morph quality floor override
   --ready-coverage <n>    Coverage ratio override
   --compare <path>        Previous score JSON for diff hints
-  --gate-profile <name>   Override score-policy gate_profile (strict|gold|legacy)
+  --gate-profile <name>   Override score-policy (strict|gold|legacy|mature_compat)
+  --inventory-mode <m>    file|live|hybrid (default live; 0.7.48)
   --quiet / --verbose / --summary-only / --write-progress / --migrate-policy
   --help, -h
 
@@ -1291,6 +1299,8 @@ function main() {
   const currentHead = readGitHead(root);
   const liveByDomain = {};
   const staleDomains = [];
+  const inventoryMode = args.inventoryMode || "live";
+  report.inventory_mode = inventoryMode;
   for (const d of domains) {
     if (!["api", "func", "db", "redis", "jobs"].includes(d)) continue;
     const diskInv =
@@ -1298,22 +1308,28 @@ function main() {
     if (diskInv && isInventoryStale(diskInv, currentHead)) {
       staleDomains.push(d);
     }
+    // 0.7.48: --inventory-mode file|live|hybrid
+    if (inventoryMode === "file") {
+      if (diskInv) liveByDomain[d] = diskInv;
+      continue;
+    }
     try {
       const live = liveInventoryScan(root, d);
       if (live) {
         liveByDomain[d] = live;
         if (d === "api" && live.endpoints) {
-          // prefer live api for coverage numerator path below
           inventory = inventory || live;
         }
-        // 0.7.38: live scan at current HEAD clears stale for that domain
         if (!isInventoryStale(live, currentHead)) {
           const i = staleDomains.indexOf(d);
           if (i >= 0) staleDomains.splice(i, 1);
         }
+      } else if (inventoryMode === "hybrid" && diskInv) {
+        liveByDomain[d] = diskInv;
       }
     } catch (e) {
       progress.log(`live inventory ${d} skip: ${e.message || e}`);
+      if (inventoryMode === "hybrid" && diskInv) liveByDomain[d] = diskInv;
     }
   }
   report.inventory_stale = staleDomains;
@@ -1406,10 +1422,12 @@ function main() {
     semanticOk = genericN <= 0 && unboundN <= 0 && tcOverall >= 95;
     semanticRule =
       "gold: generic_logic<=0 && dto_unbound<=0 && template_completeness>=95";
-  } else if (gateProfile === "strict") {
+  } else if (gateProfile === "strict" || gateProfile === "mature_compat") {
     semanticOk = genericN <= 3 && unboundN <= 2 && tcOverall >= 70;
     semanticRule =
-      "strict: generic_logic<=3 && dto_unbound<=2 && template_completeness>=70";
+      gateProfile === "mature_compat"
+        ? "mature_compat: generic_logic<=3 && dto_unbound<=2 && template_completeness>=70"
+        : "strict: generic_logic<=3 && dto_unbound<=2 && template_completeness>=70";
   } else {
     semanticOk = genericN <= 5 && unboundN <= 3 && tcOverall >= 50;
     semanticRule =
@@ -1458,12 +1476,14 @@ function main() {
     jobs: jobsDrift,
     ok: dbDrift.ok && apiDrift.ok && funcDrift.ok && redisDrift.ok && jobsDrift.ok,
   };
+  // 0.7.48: drift blocks only strict|gold; mature_compat|legacy report-only
+  const driftBlocksReady = gateProfile === "strict" || gateProfile === "gold";
   const driftBlockers = [
-    ...(gateProfile === "strict" || gateProfile === "gold" ? dbDrift.blockers : []),
-    ...(gateProfile === "strict" || gateProfile === "gold" ? apiDrift.blockers : []),
-    ...(gateProfile === "strict" || gateProfile === "gold" ? funcDrift.blockers : []),
-    ...(gateProfile === "strict" || gateProfile === "gold" ? redisDrift.blockers : []),
-    ...(gateProfile === "strict" || gateProfile === "gold" ? jobsDrift.blockers : []),
+    ...(driftBlocksReady ? dbDrift.blockers : []),
+    ...(driftBlocksReady ? apiDrift.blockers : []),
+    ...(driftBlocksReady ? funcDrift.blockers : []),
+    ...(driftBlocksReady ? redisDrift.blockers : []),
+    ...(driftBlocksReady ? jobsDrift.blockers : []),
   ];
   const staleBlocker =
     staleDomains.length > 0 ? `inventory_stale:${staleDomains.join(",")}` : null;
@@ -1622,6 +1642,31 @@ function main() {
         ? path.resolve(args.output)
         : path.resolve(root, dest);
     fs.mkdirSync(path.dirname(outAbs), { recursive: true });
+    // 0.7.48: backup previous score-latest before overwrite
+    const isDefaultLatest =
+      !args.output ||
+      /(?:^|[/\\])score-latest\.json$/i.test(String(args.output).replace(/\\/g, "/"));
+    if (isDefaultLatest && fs.existsSync(outAbs)) {
+      try {
+        const prev = JSON.parse(fs.readFileSync(outAbs, "utf8"));
+        const prevAbs = path.join(path.dirname(outAbs), "score-latest.prev.json");
+        fs.copyFileSync(outAbs, prevAbs);
+        const scaleChanged =
+          (prev.morph_scale && prev.morph_scale !== report.morph_scale) ||
+          (prev.report_schema && prev.report_schema !== report.report_schema) ||
+          (typeof prev.formula_ceiling === "number" &&
+            typeof report.formula_ceiling === "number" &&
+            prev.formula_ceiling !== report.formula_ceiling);
+        if (scaleChanged) {
+          console.error(
+            "fill-score: 尺度不可比 — morph_scale/report_schema/formula_ceiling 相对 score-latest.prev 已变；勿与历史 overall 直接对比"
+          );
+          report.scale_incomparable_vs_prev = true;
+        }
+      } catch {
+        /* ignore backup errors */
+      }
+    }
     fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
     console.error(`Wrote ${outAbs}`);
   }
