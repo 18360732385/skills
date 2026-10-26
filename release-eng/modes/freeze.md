@@ -26,7 +26,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-rele
 
 | 模式 | 提交 / 路径统计 | 上线候选（sql/config/jobs） |
 |---|---|---|
-| 有基线 | `base..head` log + `diff --name-only` | **`键级diff`** + **`线上已存在`**（基线树）+ **`清单已收录`**（archive `artifacts.json` 优先，否则 md 启发式）；仅清单有 → draft + `priorOnly`；仅基线有 → suppressed |
+| 有基线 | `base..head` log + `diff --name-only` | **`键级diff`** + **`线上已存在`**（基线树）+ **`清单已收录`**（archive `artifacts.json` 优先，否则 md 启发式）；仅清单有 → draft + `priorOnly`；仅基线有 → suppressed；**配置仅** `application-prod.yml` / nacos prod overlay（非 prod → `layerSuppressed`）；`draft.sql`≥40/100 → 体积 warning |
 | **`首次发版`** | head 全历史 + 树全量统计 | **`首次发版-layered`**：SQL=全 migration；配置=`application-prod.yml` 全键；任务=`SyncTaskCode`；其余 path → `layerSuppressed` |
 
 脚本产出：Git 二表（提交列表 + 合并来源）、`releaseSummaryLines`、`candidates`、`changeObjects`、`configKeys`/`jobKeys`/`taskCodes`、`draft`/`draftSuppressed`、`priorRelease`/`priorReleases`、`baselinePresence`、`overdueNotes`、`aiTrack`（stub）、`inventory`（首次）、`gitlabUrl`、`mergeSources`、`timezone=Asia/Shanghai`、`todoPlaceholders`（TODO 占位）、`jobsConfigGaps`（jobs↔config 交叉）、`indexDrift`（索引↔磁盘对账）。  
@@ -47,7 +47,8 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-rele
 - 默认 `--prior auto`：`docs/releases/archive/` **全量并集**（扁平 `*.md` 与目录包 `{id}/{id}.md`）；优先读同目录 **`artifacts.json`**，否则 md 启发式
 - `--prior-since <YYYY-MM-DD|identity>`：只并入日期/身份 ≥ 该前缀的 archive
 - **线上已存在**（基线树有 migration/键/task）→ `draftSuppressed`
-- **仅清单已收录** → 仍进 `draft`，标 `priorOnly`（漏检优先）
+- **Flyway 命名 alias**：`Vn__….sql` ≡ `Vn_0__….sql`（`_0` 与无子号等价；`_1+` 独立）。prior / 基线按 **canonicalId** 命中 → `suppressReason=rename-alias`（**勿重跑**，不进执行序）
+- **仅清单已收录**（精确 basename，非 rename alias）→ 仍进 `draft`，标 `priorOnly`（漏检优先）
 - `--prior none` 关闭清单侧；或显式单份路径
 
 ## `双轨研判`（MVP1 stub）
@@ -62,8 +63,8 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 
 | kind | 如何进候选 |
 |---|---|
-| **sql** | 仅 `**/db/migration/V*__*.sql`；另附 `docs/db/table/*_change.sql`（对照，非替代执行序） |
-| **config** | `application*.yml` / `.env` / `*secret*`；yml 有可扁平键差 → `confidence=key-diff` 并列出 `keys`；**说明**来自 README/AGENTS 表或 yml 行尾注释 |
+| **sql** | 仅 `**/db/migration/Vdddd__*.sql` 或现行 `Vdddd_d__*.sql`（SQL序=`migrationSortKey`）；另附 `docs/db/table/*_change.sql`（对照，非替代执行序） |
+| **config** | **仅** `application-prod.yml` + `config/nacos/application-prod-nacos.yml` 键级 diff → draft；其它 `application*.yml` / `.env` / `*secret*` → `layerSuppressed`（`non-prod-layer`）；**说明**来自 README/AGENTS 表或 yml 行尾注释 |
 | **jobs** | `docs/jobs`、`*Scheduler.java`、`SyncTaskCode`、`SyncTaskMetadataRegistry`；或 yml 键名含 `cron`/`scheduling`；Java diff 抽 `taskCodes`；**交叉** `docs/jobs/tasks` → `jobsHits` |
 | **third-party** | feign / 问学 / 乐享 / dashscope / mcp 路径关键词 |
 
@@ -90,7 +91,7 @@ audit【推荐】：`--format audit-json`。一屏摘要：`--format summary`。
 - 其余 config/jobs 路径：`layerSuppressed` → `draftSuppressed`  
 - 仍输出 `inventory.migrationRange` 供问卷确认起迁  
 - **TODO 占位扫描**：prod 配置值 `TODO_*` 进 `todoPlaceholders`（上线前必填）  
-- **jobs ↔ config 交叉**：任务 cronKey 在 prod 配置缺失 → `jobsConfigGaps`（`cronExpressionMissing`，可能由 Nacos overlay 提供）  
+- **jobs ↔ config 交叉**：仅**本版 `draft.jobs`** 的 cronKey 在 prod 配置缺失 → `jobsConfigGaps`；全库 catalog 缺键 → `jobsConfigGapsAppendix`（不进发版单正文）  
 - **上线内容摘要**：首次发版无合并来源时取最近 max 条非合并业务提交（`recentFirst`），不再取最旧提交  
 
 ## `截断5`（提交列表写入发版单时强制）
@@ -109,12 +110,12 @@ JSON 可保留全量 hash；写入发版单用 `commitsDisplay` 或 md。
 ## `mergeSources`（合并来源去重全量）
 
 按 `guessSourceBranch` 推测来源分支去重，**`origin/`、`refs/remotes/`、`refs/heads/` 前缀归一**（如 `code-scaffold` 与 `origin/code-scaffold` 视为同一分支，计数合并）；空归「无/未识别」。  
-产出 `mergeSources: [{ source, count, branchFeatures[], branchSummary }]`（`branchSummary` 为一句话中文总结），**全部展示、不截断**。  
+产出 `mergeSources: [{ source, count, branchFeatures[], branchSummary, noise }]`（`branchSummary` 为一句话中文总结；`noise`=环境支/未识别/`merge/*`）。JSON **全量保留**；发版单表优先业务支，噪声折叠为「环境支/未识别（合计）」一行；`releaseSummaryLines` 跳过 noise。  
 表列：推测来源分支 | 出现次数 | **来源分支功能**（一句话中文，≤28 字；优先中文关键词映射分支名，其次样例提交主题收成业务短句）。
 
 ## `上线内容摘要`（← 分支级聚合；并入元信息）
 
-`releaseSummaryLines`：**分支级聚合** —— 合并来源按次数降序各取一句话总结，不足时以非合并提交业务短语（新→旧）补足，**最多 1～5 项**；无合并来源（含首次发版）时 `recentFirst`。  
+`releaseSummaryLines`：**分支级聚合** —— 合并来源按次数降序各取一句话总结（**跳过 noise 环境支**），不足时以非合并提交业务短语（新→旧）补足，**最多 1～5 项**；无合并来源（含首次发版）时 `recentFirst`。  
 note-merge 写入元信息章内 `### 上线内容摘要` 的 `<!-- auto:summary -->`（不再单独成「二、」章）。
 
 ## 时区

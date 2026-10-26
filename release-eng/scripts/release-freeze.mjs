@@ -42,6 +42,12 @@ import {
   detectRemoteHost,
   buildRemoteBrowseUrl,
   remoteHintLine,
+  isMigrationSql,
+  migrationVersion,
+  migrationSortKey,
+  migrationCanonicalId,
+  migrationAliasSet,
+  isProdConfigPath,
 } from "./release-format.mjs";
 
 function isNoneBase(v) {
@@ -160,13 +166,6 @@ function baseName(p) {
   return n.split("/").pop() || n;
 }
 
-/** SQL 收紧：仅 migration Vn__*.sql；附带 docs/db/table/*_change.sql */
-function isMigrationSql(filePath) {
-  const n = normPath(filePath);
-  const base = baseName(n);
-  return /\/db\/migration\/V\d+__.+\.sql$/i.test(n) || (/^V\d+__.+\.sql$/i.test(base) && n.includes("db/migration"));
-}
-
 function isDbChangeSql(filePath) {
   return /docs\/db\/table\/.+_change\.sql$/i.test(normPath(filePath));
 }
@@ -182,9 +181,7 @@ function isConfigPath(filePath) {
 
 /** Nacos 覆盖配置：prod 业务配置常置于 config/nacos/application-prod-nacos.yml */
 function isNacosProdOverlay(filePath) {
-  const n = normPath(filePath);
-  const base = baseName(n);
-  return /config\/nacos\//i.test(n) && /^application-prod-nacos\.ya?ml$/i.test(base);
+  return isProdConfigPath(filePath) && /nacos/i.test(normPath(filePath));
 }
 
 function isJobsPath(filePath) {
@@ -207,12 +204,6 @@ function isThirdPartyPath(filePath) {
     /\/mcp/i.test(n) ||
     /mcp\.json/i.test(n)
   );
-}
-
-function migrationVersion(filePath) {
-  const base = baseName(filePath);
-  const m = base.match(/^V(\d+)__/i);
-  return m ? Number(m[1]) : null;
 }
 
 function isJobsKey(keyPath) {
@@ -327,12 +318,9 @@ function sortSqlCandidates(candidates) {
   const sql = candidates.filter((c) => c.kinds.includes("sql"));
   const rest = candidates.filter((c) => !c.kinds.includes("sql"));
   sql.sort((a, b) => {
-    const va = migrationVersion(a.path);
-    const vb = migrationVersion(b.path);
-    if (va == null && vb == null) return a.path.localeCompare(b.path);
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    if (va !== vb) return va - vb;
+    const ka = migrationSortKey(a.path);
+    const kb = migrationSortKey(b.path);
+    if (ka !== kb) return ka - kb;
     return a.path.localeCompare(b.path);
   });
   return [...sql, ...rest];
@@ -543,9 +531,7 @@ function mergeSourcesDisplayPayload(mergeSources) {
 
 function buildFirstReleaseInventory(files) {
   const migrations = files.filter(isMigrationSql).sort((a, b) => {
-    const va = migrationVersion(a) ?? 0;
-    const vb = migrationVersion(b) ?? 0;
-    return va - vb || a.localeCompare(b);
+    return migrationSortKey(a) - migrationSortKey(b) || a.localeCompare(b);
   });
   const versions = migrations.map(migrationVersion).filter((v) => v != null);
   const minV = versions.length ? Math.min(...versions) : null;
@@ -704,16 +690,40 @@ function buildFirstReleaseLayeredCandidates(root, head, files) {
   };
 }
 
-/** 增量：基线树上是否已有该 migration/键/task */
+/** 列出 base ref 上全部 migration 路径（供 rename alias 命中） */
+function listMigrationsOnRef(root, ref) {
+  if (!ref) return [];
+  const r = git(root, ["ls-tree", "-r", "--name-only", ref]);
+  if (!r.ok || !r.stdout) return [];
+  return r.stdout
+    .split(/\r?\n/)
+    .map((p) => p.trim())
+    .filter((p) => p && isMigrationSql(p));
+}
+
+/** 增量：基线树上是否已有该 migration/键/task（含 Vn__ ≡ Vn_0__ alias） */
 function computeBaselinePresence(root, base, { candidates, configKeys, jobKeys, taskCodes }) {
   const sqlScripts = [];
   const configKeyList = [];
   const jobIds = [];
+  const baseMigNames = listMigrationsOnRef(root, base).map(baseName);
+  const baseMigAlias = migrationAliasSet(baseMigNames);
+  // 基线侧原始名全部入册（供 exact + alias 扩集）；head 同 path 可读时再记 head bn
+  for (const bn of baseMigNames) sqlScripts.push(bn);
 
   for (const c of candidates || []) {
     if (!c.kinds?.includes("sql") || !isMigrationSql(c.path)) continue;
+    const bn = baseName(c.path);
     const text = gitShow(root, base, c.path);
-    if (text != null) sqlScripts.push(baseName(c.path));
+    if (text != null) {
+      sqlScripts.push(bn);
+      continue;
+    }
+    const canon = migrationCanonicalId(bn);
+    if (baseMigAlias.has(bn) || baseMigAlias.has(canon)) {
+      if (c.detail) c.detail = `${c.detail}; alias-baseline`;
+      else c.detail = "alias-baseline";
+    }
   }
 
   const ymlCache = new Map();
@@ -834,11 +844,23 @@ function buildIncrementalCandidates(root, base, head, files) {
       });
     }
 
-    if (isApplicationYml(n)) {
+    if (isApplicationYml(n) || isNacosProdOverlay(n)) {
+      if (!isProdConfigPath(n)) {
+        upsert({
+          kinds: ["config"],
+          kind: "config",
+          path: n,
+          confidence: "path",
+          keys: [],
+          detail: "incremental non-prod config → layer suppressed",
+          layerSuppressed: true,
+        });
+        continue;
+      }
       const enriched = enrichApplicationCandidate(root, base, head, n);
       upsert(enriched);
       for (const k of enriched.keys || []) {
-        const row = { ...k, path: n };
+        const row = { ...k, path: n, source: isNacosProdOverlay(n) ? "nacos-overlay" : "application-prod" };
         if (k.jobs) jobKeys.push(row);
         else configKeys.push(row);
       }
@@ -852,7 +874,8 @@ function buildIncrementalCandidates(root, base, head, files) {
         path: n,
         confidence: "path",
         keys: [],
-        detail: "config path",
+        detail: "config path → layer suppressed（非 prod）",
+        layerSuppressed: true,
       });
     }
 

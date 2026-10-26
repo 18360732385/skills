@@ -43,7 +43,7 @@ node .cursor/skills/release-eng/scripts/release-ai-track.mjs --root . --freeze-j
 }
 ```
 
-约束：`stableId` 必须来自 prompt 列表；**合并时校验**——不在候选集的 `kind:stableId` 会被拒绝（不打标），记入 `aiTrack.rejectedUnknown` 与 `warnings`。`aiNoise` 表示「建议问卷默认不勾选」，不是从 `draft` 删除。
+约束：`stableId` 必须来自 prompt 列表；**合并时校验**——不在候选集的 `kind:stableId` 会被拒绝（不打标），记入 `aiTrack.rejectedUnknown` 与 `warnings`。`aiNoise` 表示「建议问卷默认不勾选」，不是从 `draft` 删除。每条 `reason` 须针对本 stableId；hint 含 `rename-alias` → 优先 noise。合并后 `aiTrack.status=tagged`（仅打标、`draftCountsUnchanged=true` 时**禁止**写 `filled`）。
 
 4. 合并进 freeze，供问卷 / WritePlan / note-merge：
 
@@ -57,7 +57,7 @@ node .cursor/skills/release-eng/scripts/release-ai-track.mjs --root . --freeze-j
 ## Done
 
 - [ ] 已跑 prompt 或显式跳过（无候选 / AI 失败）  
-- [ ] 若合并：`aiTrack.status=filled`；`draft` 行数未因 AI 减少  
+- [ ] 若合并：`aiTrack.status=tagged`（有打标）；`draft` 行数未因 AI 减少；含 `rankedTagged`/`noiseTagged`  
 - [ ] 若合并：`aiTrack.rejectedUnknown` 为空或已向用户说明被拒键  
 - [ ] 问卷已按 aiNoise 给默认勾选说明  
 - [ ] 落盘 artifacts 含完整 `aiTrack`（允许空数组）  

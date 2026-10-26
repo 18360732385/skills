@@ -5,6 +5,11 @@
  */
 import fs from "fs";
 import path from "path";
+import {
+  migrationAliasSet,
+  migrationCanonicalId,
+  bundleSqlVolumeWarning,
+} from "./release-format.mjs";
 
 const CONFIDENCE_ORDER = ["path", "key-diff", "catalog-hit", "docs-hit"];
 
@@ -416,28 +421,6 @@ export function enrichFreezePayload(root, payload, options = {}) {
     }
   }
 
-  // —— jobs ↔ config 交叉校验：有 taskCode/cronKey 但 prod 配置无对应 cron 表达式键 ——
-  const configKeySet = new Set(configKeys.map((k) => k.key));
-  const jobsConfigGaps = [];
-  const gapSeen = new Set();
-  for (const hit of jobsHitsMap.values()) {
-    const cronKey = hit.cronKey || null;
-    if (!cronKey) continue;
-    const id = hit.taskCode || cronKey;
-    if (gapSeen.has(id)) continue;
-    if (!configKeySet.has(cronKey)) {
-      gapSeen.add(id);
-      jobsConfigGaps.push({
-        taskCode: hit.taskCode || null,
-        cronKey,
-        truthPath: hit.truthPath || null,
-        displayName: hit.displayName || null,
-        reason: "cronExpressionMissing",
-        hint: "cron 表达式可能由 Nacos overlay 提供，或本次未随 prod yml 上线",
-      });
-    }
-  }
-
   // —— 索引 ↔ 磁盘对账：releases.md 进行中表行指向的 note 须存在 ——
   const indexDrift = scanIndexDrift(root);
 
@@ -471,6 +454,17 @@ export function enrichFreezePayload(root, payload, options = {}) {
     configKeys: marked.configKeys,
     jobKeys: marked.jobKeys,
     jobsHits: [...jobsHitsMap.values()],
+  });
+
+  // —— jobs ↔ config：主 gaps 仅本版 draft.jobs；全库 catalog 进 appendix ——
+  const configKeySet = new Set();
+  for (const k of marked.configKeys) {
+    if (k.key && !k.alreadyReleased && !k.layerSuppressed) configKeySet.add(k.key);
+  }
+  const { jobsConfigGaps, jobsConfigGapsAppendix } = computeJobsConfigGaps({
+    draftJobs: draftBundle.active?.jobs || [],
+    jobsHitsMap,
+    configKeySet,
   });
 
   const changeObjects = buildChangeObjects({
@@ -521,9 +515,18 @@ export function enrichFreezePayload(root, payload, options = {}) {
   }
   if (jobsConfigGaps.length) {
     warnings.push(
-      `jobs↔config 交叉：${jobsConfigGaps.length} 个任务在 prod 配置未找到对应 cron 表达式键（cronExpressionMissing），可能由 Nacos overlay 提供或本次未上线`
+      `jobs↔config 交叉（本版 draft）：${jobsConfigGaps.length} 个任务在 prod 配置未找到对应 cron 表达式键（cronExpressionMissing），可能由 Nacos overlay 提供或本次未上线`
     );
   }
+  if (jobsConfigGapsAppendix.length) {
+    warnings.push(
+      `jobs↔config 全库附录：另有 ${jobsConfigGapsAppendix.length} 条 catalog 缺 cron 键（见 jobsConfigGapsAppendix；不写入发版单正文）`
+    );
+  }
+  const sqlVol = bundleSqlVolumeWarning(draftBundle.active?.sql?.length || 0, {
+    context: "draft.sql",
+  });
+  if (sqlVol) warnings.push(sqlVol);
   if (indexDrift.length) {
     warnings.push(
       `索引漂移：releases.md 进行中表有 ${indexDrift.length} 行指向不存在的 note（${indexDrift
@@ -568,6 +571,7 @@ export function enrichFreezePayload(root, payload, options = {}) {
     overdueNotes,
     todoPlaceholders,
     jobsConfigGaps,
+    jobsConfigGapsAppendix,
     indexDrift,
     aiTrack: {
       status: "stub",
@@ -786,35 +790,132 @@ export function parseReleaseNoteArtifacts(text) {
  * - 仅清单已收录 → priorOnly，仍留 draft（漏检优先）
  * - layerSuppressed → 首次分层策略 suppress
  */
+function sqlListedIn(setOrAlias, bn) {
+  if (!bn) return false;
+  if (setOrAlias.has(bn)) return true;
+  const canon = migrationCanonicalId(bn);
+  return setOrAlias.has(canon);
+}
+
+/**
+ * jobs↔config 交叉：主列表仅本版 draft.jobs；全库 hits 缺键进 appendix。
+ * @returns {{ jobsConfigGaps: object[], jobsConfigGapsAppendix: object[] }}
+ */
+export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySet }) {
+  const gaps = [];
+  const appendix = [];
+  const primarySeen = new Set();
+  const appendixSeen = new Set();
+
+  const pushGap = (list, seen, hit) => {
+    const cronKey = hit.cronKey || null;
+    if (!cronKey) return;
+    const id = hit.taskCode || cronKey;
+    if (seen.has(id)) return;
+    if (configKeySet.has(cronKey)) return;
+    seen.add(id);
+    list.push({
+      taskCode: hit.taskCode || null,
+      cronKey,
+      truthPath: hit.truthPath || null,
+      displayName: hit.displayName || null,
+      reason: "cronExpressionMissing",
+      hint: "cron 表达式可能由 Nacos overlay 提供，或本次未随 prod yml 上线",
+    });
+  };
+
+  for (const row of draftJobs) {
+    const taskCode = row.taskCode || null;
+    const cronKey =
+      row.cronKey ||
+      (taskCode && jobsHitsMap?.get?.(taskCode)?.cronKey) ||
+      (typeof row["task / cron 键"] === "string" && !String(row["task / cron 键"]).includes(":")
+        ? row["task / cron 键"]
+        : null) ||
+      null;
+    const hit =
+      (taskCode && jobsHitsMap?.get?.(taskCode)) ||
+      {
+        taskCode,
+        cronKey,
+        truthPath: row.真相 || row.truthPath || null,
+        displayName: row.说明 || row.displayName || null,
+      };
+    pushGap(gaps, primarySeen, {
+      ...hit,
+      cronKey: cronKey || hit.cronKey || null,
+      taskCode: taskCode || hit.taskCode || null,
+    });
+  }
+
+  for (const hit of jobsHitsMap?.values?.() || []) {
+    const id = hit.taskCode || hit.cronKey;
+    if (!id || primarySeen.has(id)) continue;
+    if (hit.alreadyReleased) continue;
+    pushGap(appendix, appendixSeen, hit);
+  }
+
+  return { jobsConfigGaps: gaps, jobsConfigGapsAppendix: appendix };
+}
+
 function markDualSource(parts, priorArtifacts, baselinePresence, priorBundle) {
   const priorPath = priorBundle.notes.map((n) => n.path).join("; ") || null;
-  const sqlScripts = priorArtifacts.sqlScripts;
+  const sqlScripts = migrationAliasSet(priorArtifacts.sqlScripts || []);
+  const baselineSql = migrationAliasSet(baselinePresence.sqlScripts || []);
+  const priorSqlRaw = new Set(
+    [...(priorArtifacts.sqlScripts || [])].map((s) => baseName(s))
+  );
+  const baselineSqlRaw = new Set(
+    [...(baselinePresence.sqlScripts || [])].map((s) => baseName(s))
+  );
   const configKeysSet = priorArtifacts.configKeys;
   const jobIds = priorArtifacts.jobIds;
 
   const candidates = parts.candidates.map((c) => {
     if (c.layerSuppressed) {
+      const nonProd = /non-prod/i.test(String(c.detail || ""));
       return {
         ...c,
         alreadyReleased: true,
         priorOnly: false,
-        suppressReason: "first-release-layer",
+        suppressReason: nonProd ? "non-prod-layer" : "first-release-layer",
         priorNote: null,
       };
     }
     const bn = baseName(c.path);
-    const onBaseline =
-      (c.kinds?.includes("sql") && baselinePresence.sqlScripts.has(bn)) ||
+    const onBaselineExact =
+      (c.kinds?.includes("sql") && baselineSqlRaw.has(bn)) ||
       (c.job?.taskCode && baselinePresence.jobIds.has(c.job.taskCode)) ||
       (c.job?.cronKey && baselinePresence.jobIds.has(c.job.cronKey));
-    const listed =
-      (c.kinds?.includes("sql") && sqlScripts.has(bn)) ||
+    const onBaselineAlias =
+      c.kinds?.includes("sql") && !onBaselineExact && sqlListedIn(baselineSql, bn);
+    const onBaseline = onBaselineExact || onBaselineAlias;
+    const listedExact =
+      (c.kinds?.includes("sql") && priorSqlRaw.has(bn)) ||
       (c.job?.taskCode && jobIds.has(c.job.taskCode)) ||
       (c.job?.cronKey && jobIds.has(c.job.cronKey));
+    const listedAlias = c.kinds?.includes("sql") && !listedExact && sqlListedIn(sqlScripts, bn);
+    const listed = listedExact || listedAlias;
     if (onBaseline) {
-      return { ...c, alreadyReleased: true, priorOnly: false, suppressReason: "baseline", priorNote: priorPath };
+      return {
+        ...c,
+        alreadyReleased: true,
+        priorOnly: false,
+        suppressReason: onBaselineAlias ? "rename-alias" : "baseline",
+        priorNote: priorPath,
+      };
     }
     if (listed) {
+      // prior alias 命中且 basename 不同 → 已发版等价 rename，抑制执行序
+      if (listedAlias) {
+        return {
+          ...c,
+          alreadyReleased: true,
+          priorOnly: false,
+          suppressReason: "rename-alias",
+          priorNote: priorPath,
+        };
+      }
       return { ...c, alreadyReleased: false, priorOnly: true, suppressReason: null, priorNote: priorPath };
     }
     return { ...c, alreadyReleased: false, priorOnly: false, suppressReason: null, priorNote: null };

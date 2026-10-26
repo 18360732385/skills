@@ -259,6 +259,18 @@ const {
   buildRemoteBrowseUrl,
   remoteHintLine,
   upsertReleasesIndexRow,
+  parseReleasesIndexHeader,
+  isMigrationSql,
+  migrationSortKey,
+  migrationCanonicalId,
+  migrationAliasSet,
+  isProdConfigPath,
+  isMergeSourceNoise,
+  formatMergeSourcesTableRows,
+  buildMergeSources,
+  bundleSqlVolumeWarning,
+  BUNDLE_SQL_WARN_COUNT,
+  BUNDLE_SQL_ALERT_COUNT,
 } = format;
 
 assert(typeof identityFromBranch === "function", "export identityFromBranch");
@@ -273,6 +285,97 @@ assert(typeof detectRemoteHost === "function", "export detectRemoteHost");
 assert(typeof buildRemoteBrowseUrl === "function", "export buildRemoteBrowseUrl");
 assert(typeof remoteHintLine === "function", "export remoteHintLine");
 assert(typeof upsertReleasesIndexRow === "function", "export upsertReleasesIndexRow");
+assert(typeof isMigrationSql === "function", "export isMigrationSql");
+assert(typeof migrationCanonicalId === "function", "export migrationCanonicalId");
+assert(typeof migrationAliasSet === "function", "export migrationAliasSet");
+assert(typeof isProdConfigPath === "function", "export isProdConfigPath");
+assert(typeof isMergeSourceNoise === "function", "export isMergeSourceNoise");
+assert(typeof formatMergeSourcesTableRows === "function", "export formatMergeSourcesTableRows");
+assert(typeof bundleSqlVolumeWarning === "function", "export bundleSqlVolumeWarning");
+
+// P2：mergeSources noise + 摘要跳过环境支 + 体积闸
+{
+  assert(isMergeSourceNoise("test") && isMergeSourceNoise("uat"), "P2 noise test/uat");
+  assert(isMergeSourceNoise("无/未识别") && isMergeSourceNoise("merge/foo"), "P2 noise unknown/merge");
+  assert(!isMergeSourceNoise("feature/zj8/milvus集合优化"), "P2 feature not noise");
+  assert(!isMergeSourceNoise("release/V261029"), "P2 release branch not noise");
+  const sources = [
+    { source: "test", count: 61, branchSummary: "测试分支合入", noise: true },
+    {
+      source: "feature/zj8/00-sms-ai项目/261029-milvus集合优化",
+      count: 18,
+      branchSummary: "milvus集合优化",
+      noise: false,
+    },
+    { source: "uat", count: 7, branchSummary: "uat 相关能力", noise: true },
+  ];
+  const summary = buildReleaseSummaryLines([], { mergeSources: sources, max: 5 });
+  assert(!/测试分支合入/.test(summary[0] || ""), "P2 summary does not lead with test noise");
+  assert(/milvus/i.test(summary[0] || ""), "P2 summary prefers business branch");
+  const table = formatMergeSourcesTableRows(sources);
+  assert(table.some((r) => r.folded && r.count === 68), "P2 fold row sums noise counts");
+  assert(table.filter((r) => !r.folded).length === 1, "P2 table keeps one business row");
+  const built = buildMergeSources([
+    { source: "origin/test", subject: "Merge branch test" },
+    { source: "feature/x/y", subject: "feat: ship" },
+  ]);
+  assert(built.find((r) => r.source === "test")?.noise === true, "P2 buildMergeSources marks noise");
+  assert(BUNDLE_SQL_WARN_COUNT === 40 && BUNDLE_SQL_ALERT_COUNT === 100, "P2 volume thresholds");
+  assert(/40/.test(bundleSqlVolumeWarning(40) || ""), "P2 warn at 40");
+  assert(/100/.test(bundleSqlVolumeWarning(100) || ""), "P2 alert at 100");
+  assert(bundleSqlVolumeWarning(10) == null, "P2 no warn under 40");
+}
+
+// P0：Flyway 命名 + canonical alias + prod 路径
+{
+  assert(
+    isMigrationSql("sms-ai/src/main/resources/db/migration/V0001__DDL__x.sql"),
+    "P0 isMigrationSql Vn__"
+  );
+  assert(
+    isMigrationSql("sms-ai/src/main/resources/db/migration/V0001_0__DDL__x.sql"),
+    "P0 isMigrationSql Vn_0__"
+  );
+  assert(
+    isMigrationSql("sms-ai/src/main/resources/db/migration/V0115_1__DML__y.sql"),
+    "P0 isMigrationSql Vn_1__"
+  );
+  assert(
+    !isMigrationSql("docs/db/table/foo_change.sql"),
+    "P0 isMigrationSql rejects non-migration"
+  );
+  assert(
+    migrationCanonicalId("V0001__DDL__x.sql") ===
+      migrationCanonicalId("V0001_0__DDL__x.sql"),
+    "P0 canonical Vn__ ≡ Vn_0__"
+  );
+  assert(
+    migrationCanonicalId("V0001_1__DDL__x.sql") !==
+      migrationCanonicalId("V0001_0__DDL__x.sql"),
+    "P0 canonical Vn_1__ ≠ Vn_0__"
+  );
+  const priorHit = migrationAliasSet(["V0001__DDL__baseline_schema.sql"]);
+  assert(
+    priorHit.has(migrationCanonicalId("V0001_0__DDL__baseline_schema.sql")),
+    "P0 aliasSet prior Vn__ hits head Vn_0__"
+  );
+  assert(
+    migrationSortKey("V0001_0__a.sql") < migrationSortKey("V0001_1__a.sql"),
+    "P0 migrationSortKey orders sub-versions"
+  );
+  assert(
+    isProdConfigPath("sms-ai/src/main/resources/application-prod.yml"),
+    "P0 isProdConfigPath application-prod"
+  );
+  assert(
+    isProdConfigPath("sms-ai/src/main/resources/config/nacos/application-prod-nacos.yml"),
+    "P0 isProdConfigPath nacos overlay"
+  );
+  assert(
+    !isProdConfigPath("sms-ai/src/main/resources/application-dev.yml"),
+    "P0 isProdConfigPath rejects application-dev"
+  );
+}
 
 // D3：无 mergeSources + recentFirst → 取最近业务句
 {
@@ -361,6 +464,43 @@ assert(typeof upsertReleasesIndexRow === "function", "export upsertReleasesIndex
   });
   const idHits = (up2.text.match(/release-V251016/g) || []).length;
   assert(idHits >= 1 && /bob/.test(up2.text), "D5 upsert same identity updates row");
+}
+
+// P1：releases.md upsert 自适应 sms-ai 列序（版本身份|发版日期|…|路径）
+{
+  assert(typeof parseReleasesIndexHeader === "function", "export parseReleasesIndexHeader");
+  const smsSkeleton = `# idx
+
+## 进行中
+
+| 版本身份 | 发版日期 | 分支对 | 状态 | 路径 | 负责人 |
+|---|---|---|---|---|---|
+| — | （暂无） | — | — | — | — |
+
+## 其它
+`;
+  const up = upsertReleasesIndexRow(smsSkeleton, {
+    date: "2026-10-29",
+    identity: "release-V261029",
+    branchPair: "`release/V261029` ← `main`",
+    status: "已定版",
+    noteRel: "[`notes/release-V261029/`](./notes/release-V261029/release-V261029.md)",
+    owner: "待定",
+  });
+  assert(up.updated, "P1 sms-ai upsert updated");
+  assert(
+    /^\|\s*release-V261029\s*\|/.test(
+      (up.text.match(/^\|.*release-V261029.*\|/m) || [""])[0]
+    ),
+    "P1 sms-ai upsert identity is first data column"
+  );
+  assert(/2026-10-29/.test(up.text), "P1 sms-ai upsert writes date");
+  assert(
+    !/\| 日期 \| 版本身份 \|/.test(up.text.split("## 进行中")[1] || ""),
+    "P1 sms-ai upsert does not insert tip default header"
+  );
+  const headerCount = (up.text.match(/\| 版本身份 \| 发版日期 \|/g) || []).length;
+  assert(headerCount === 1, "P1 sms-ai upsert keeps single matching header");
 }
 
 // D2：首次 inventory 空层可观测
@@ -685,6 +825,132 @@ assert(/release\.mjs/.test(index), "AGENT-INDEX mentions release.mjs");
 assert(/release\.mjs/.test(quick), "QUICKSTART mentions release.mjs");
 assert(/release\.mjs/.test(readme), "README mentions release.mjs");
 assert(/release\.mjs/.test(verify), "VERIFY mentions release.mjs");
+
+// P1：ai-track merge → tagged；prompt 约束
+{
+  const aiUrl = pathToFileURL(path.join(skillRoot, "scripts/release-ai-track.mjs")).href;
+  const aiMod = await import(aiUrl);
+  const { mergeAiTrack, buildPromptMd, collectAiCandidates } = aiMod;
+  const freeze = {
+    draft: {
+      sql: [{ 脚本: "V0001_0__DDL__x.sql", 路径: "db/migration/V0001_0__DDL__x.sql", confidence: "path" }],
+      config: [{ 键: "sms.ai.x", 来源: "application-prod.yml", 说明: "待补", confidence: "key-diff", 值: "1" }],
+      jobs: [],
+    },
+    changeObjects: [],
+  };
+  const prompt = buildPromptMd(freeze, collectAiCandidates(freeze));
+  assert(/rename-alias/.test(prompt) && /禁止对多条/.test(prompt), "P1 prompt has rename + per-reason rules");
+  const merged = mergeAiTrack(freeze, {
+    aiRanked: [{ kind: "config", stableId: "sms.ai.x", recommend: "keep", reason: "prod 必改" }],
+    aiNoise: [{ kind: "sql", stableId: "V0001_0__DDL__x.sql", reason: "rename-alias：勿重跑" }],
+  });
+  assert(merged.aiTrack?.status === "tagged", "P1 mergeAiTrack status=tagged");
+  assert(merged.aiTrack?.status !== "filled", "P1 mergeAiTrack not filled");
+  assert(merged.aiTrack?.rankedTagged === 1 && merged.aiTrack?.noiseTagged === 1, "P1 tagged counts");
+  assert(merged.aiTrack?.draftCountsUnchanged === true, "P1 draftCountsUnchanged");
+  assert(merged.draft.sql.length === 1 && merged.draft.config.length === 1, "P1 draft rows unchanged");
+}
+
+// P1：jobsConfigGaps 仅 draft.jobs
+{
+  const enrichUrl = pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href;
+  const enrichMod = await import(enrichUrl);
+  const { computeJobsConfigGaps } = enrichMod;
+  const hits = new Map([
+    ["a:job", { taskCode: "a:job", cronKey: "cron.a", displayName: "A" }],
+    ["b:job", { taskCode: "b:job", cronKey: "cron.b", displayName: "B" }],
+    ["c:job", { taskCode: "c:job", cronKey: "cron.c", displayName: "C" }],
+  ]);
+  const { jobsConfigGaps, jobsConfigGapsAppendix } = computeJobsConfigGaps({
+    draftJobs: [{ taskCode: "a:job", "task / cron 键": "cron.a" }],
+    jobsHitsMap: hits,
+    configKeySet: new Set(),
+  });
+  assert(jobsConfigGaps.length === 1 && jobsConfigGaps[0].taskCode === "a:job", "P1 gaps only draft job");
+  assert(jobsConfigGapsAppendix.length === 2, "P1 appendix has remaining catalog gaps");
+}
+
+// P0：seal-check 非 prod config → exit 1
+{
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "release-eng-seal-prod-"));
+  try {
+    const noteDir = path.join(work, "docs/releases/notes/release-P0");
+    fs.mkdirSync(path.join(noteDir, "config"), { recursive: true });
+    fs.mkdirSync(path.join(work, "docs/releases"), { recursive: true });
+    fs.writeFileSync(path.join(work, "docs/releases/releases.md"), "# idx\n");
+    const md = `# 发版单：release-P0
+
+> 状态：已定版
+> 发版日期：2099-12-31
+
+## 一、元信息
+
+| 项 | 值 |
+|---|---|
+| 版本身份 | release-P0 |
+| 发版日期 | 2099-12-31 |
+| 状态 | 已定版 |
+
+## 二、Git 定版
+
+| hash | author | date | subject |
+|---|---|---|---|
+| abcdef01 | u | 2099-01-01 | feat |
+
+## 四、数据库与 SQL
+
+| 执行序 | 脚本/版本 | 动作 | 目标 profile | 已确认 |
+|---|---|---|---|---|
+| — | 无 | — | prod | — |
+
+## 五、配置项
+
+> 目标 profile = prod
+
+## 六、定时任务
+
+| — | 无 | — | prod | — |
+
+## 七、包内附属文件
+
+| 类型 | 包内路径 | 源路径 |
+|---|---|---|
+| config | [application-dev.yml](./config/application-dev.yml) | \`x\` |
+`;
+    fs.writeFileSync(path.join(noteDir, "release-P0.md"), md);
+    fs.writeFileSync(path.join(noteDir, "config/application-dev.yml"), "x: 1\n");
+    fs.writeFileSync(
+      path.join(noteDir, "artifacts.json"),
+      JSON.stringify({
+        identity: "release-P0",
+        version: 1,
+        sql: [],
+        config: [
+          {
+            stableId: "x",
+            path: "sms-ai/src/main/resources/application-dev.yml",
+            profile: "prod",
+          },
+        ],
+        jobs: [],
+        changeObjects: [],
+        aiTrack: {},
+      })
+    );
+    const bin = path.join(skillRoot, "scripts/release-seal-check.mjs");
+    const r = spawnSync(
+      process.execPath,
+      [bin, "--root", work, "--note", "docs/releases/notes/release-P0/release-P0.md"],
+      { encoding: "utf8", maxBuffer: 2 * 1024 * 1024 }
+    );
+    assert(r.status === 1, "P0 seal-check non-prod config exit 1");
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(/非 prod/.test(out), "P0 seal-check reports 非 prod");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
 
 // --- report ---
 const total = ok.length + fail.length;

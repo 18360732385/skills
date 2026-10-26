@@ -37,6 +37,10 @@ import {
   remoteHintLine,
   detectRemoteHost,
   upsertReleasesIndexRow,
+  isMigrationSql,
+  isProdConfigPath,
+  formatMergeSourcesTableRows,
+  bundleSqlVolumeWarning,
 } from "./release-format.mjs";
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
 
@@ -177,14 +181,14 @@ function buildGitSection(freeze) {
   lines.push("");
   lines.push("| 推测来源分支 | 出现次数 | 来源分支功能 |");
   lines.push("|---|---|---|");
-  const mergeRows =
+  const mergeRaw =
     (freeze.mergeSources?.length ? freeze.mergeSources : null) ||
     (freeze.mergesDisplay?.rows?.length ? freeze.mergesDisplay.rows : null) ||
     buildMergeSources(freeze.merges);
+  const mergeRows = formatMergeSourcesTableRows(mergeRaw);
   if (!mergeRows.length) lines.push("| — | 0 | 无 |");
   for (const m of mergeRows) {
-    const summary = m.branchSummary || m.sampleSubject || m.subject || "";
-    lines.push(`| ${esc(m.source || "无/未识别")} | ${m.count ?? 1} | ${esc(summary)} |`);
+    lines.push(`| ${esc(m.source || "无/未识别")} | ${m.count ?? 1} | ${esc(m.summary || "")} |`);
   }
   lines.push("");
   lines.push("<!-- auto:git:end -->");
@@ -283,16 +287,21 @@ function buildJobsSection(freeze) {
     lines.push("> 本版任务汇总清单（code / 名称 / cron 表达式 / 默认参数 / 引用链接）：[jobs/README.md](./jobs/README.md)");
     lines.push("");
   }
-  // jobs ↔ config 交叉：有任务但 prod 配置无对应 cron 表达式键
+  // jobs ↔ config 交叉：仅本版 draft 任务；全库附录不落正文
   const gaps = freeze.jobsConfigGaps || [];
   if (gaps.length) {
-    lines.push(`> **jobs ↔ config 交叉（${gaps.length} 个任务缺 cron 表达式键）**：下列任务的 cron 表达式键未在 prod 配置（application-prod.yml / Nacos overlay）中找到，可能由 Nacos DataId 提供，或本次未随 prod yml 上线；请勿手工编造键值。`);
+    lines.push(`> **jobs ↔ config 交叉（本版 draft：${gaps.length} 个任务缺 cron 表达式键）**：下列任务的 cron 表达式键未在 prod 配置（application-prod.yml / Nacos overlay）中找到，可能由 Nacos DataId 提供，或本次未随 prod yml 上线；请勿手工编造键值。`);
     lines.push("");
     lines.push("| taskCode | cron 键 | 真相 | 说明 |");
     lines.push("|---|---|---|---|");
     for (const g of gaps) {
       lines.push(`| ${esc(g.taskCode || "—")} | \`${esc(g.cronKey)}\` | ${esc(g.truthPath || "—")} | ${esc(g.displayName || "—")} |`);
     }
+    lines.push("");
+  }
+  const appendixN = (freeze.jobsConfigGapsAppendix || []).length;
+  if (appendixN) {
+    lines.push(`> 另有 ${appendixN} 条全库 catalog 缺 cron 键附录（见 freeze JSON \`jobsConfigGapsAppendix\`；不展开）。`);
     lines.push("");
   }
   lines.push("<!-- auto:jobs:end -->");
@@ -767,17 +776,10 @@ function uniqueDestName(destDir, baseName, used) {
   return name;
 }
 
-/** 仅 migration 脚本进 sql/（不含 docs/_change.sql 等对照件） */
-function isBundleMigrationSql(filePath) {
-  const n = String(filePath || "").replace(/\\/g, "/");
-  const base = path.basename(n);
-  return /\/db\/migration\/V\d+__.+\.sql$/i.test(n) || (/^V\d+__.+\.sql$/i.test(base) && n.includes("db/migration"));
-}
-
 /**
  * 目录包附属路径：只收本版 draft 中的「新增」制品，不收 candidates 扫描到的涉及文件。
- * - sql：draft.sql 中的 migration
- * - config：draft.config 且 变更=added 的来源文件
+ * - sql：draft.sql 中的 migration（含 Vdddd_d__）
+ * - config：draft.config 且 变更=added 的 **prod** 来源文件
  * - jobs：不拷贝逐任务真相，改由 buildJobsSummaryMd 生成单文件汇总清单（jobs/README.md）
  */
 function collectDraftBundlePaths(freeze) {
@@ -785,13 +787,16 @@ function collectDraftBundlePaths(freeze) {
   const sqlPaths = new Set();
   for (const r of draft.sql || []) {
     const p = r.路径 ? String(r.路径).replace(/\\/g, "/") : "";
-    if (p && isBundleMigrationSql(p)) sqlPaths.add(p);
+    if (p && isMigrationSql(p)) sqlPaths.add(p);
   }
 
   const configPaths = new Set();
   for (const r of draft.config || []) {
     if (String(r.变更 || "") !== "added") continue;
-    if (r.来源) configPaths.add(String(r.来源).replace(/\\/g, "/"));
+    if (!r.来源) continue;
+    const src = String(r.来源).replace(/\\/g, "/");
+    if (!isProdConfigPath(src)) continue;
+    configPaths.add(src);
   }
 
   return {
@@ -937,6 +942,10 @@ function copyBundleFiles(root, bundleDir, freeze, head) {
       sourcePath: `docs/jobs/tasks/（汇总 ${(freeze.draft?.jobs || []).length} 项）`,
     });
   }
+
+  const sqlCopied = copied.filter((c) => c.kind === "sql").length;
+  const sqlVol = bundleSqlVolumeWarning(sqlCopied, { context: "包内 sql/" });
+  if (sqlVol) warnings.push(sqlVol);
   return { copied, warnings };
 }
 

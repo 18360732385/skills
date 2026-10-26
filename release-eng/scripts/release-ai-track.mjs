@@ -12,6 +12,7 @@
  */
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 const NEED_AI_CONF = new Set(["path"]);
 
@@ -44,6 +45,27 @@ function needsAi(obj) {
   return false;
 }
 
+function looksLikeRenameAlias(...parts) {
+  const blob = parts.map((p) => String(p || "")).join(" ");
+  return /rename-alias|alias-baseline|rename/i.test(blob);
+}
+
+function sqlHint(r) {
+  if (looksLikeRenameAlias(r.suppressReason, r.detail, r.aiReason)) {
+    return "rename-alias：建议 aiNoise / 勿重跑";
+  }
+  if (r.priorOnly) return "prior-only";
+  return "path-confidence";
+}
+
+function changeObjectHint(o) {
+  if (looksLikeRenameAlias(o.suppressReason, o.detail)) {
+    return "rename-alias：建议 aiNoise / 勿重跑";
+  }
+  if (o.priorOnly) return "prior-only：清单有但基线无";
+  return `confidence=${o.confidence}`;
+}
+
 /** 从 freeze 抽出待 AI 研判项 */
 export function collectAiCandidates(freeze) {
   const items = [];
@@ -65,7 +87,7 @@ export function collectAiCandidates(freeze) {
       confidence: o.confidence || null,
       priorOnly: Boolean(o.priorOnly),
       sources: o.sources || [],
-      hint: o.priorOnly ? "prior-only：清单有但基线无" : `confidence=${o.confidence}`,
+      hint: changeObjectHint(o),
     });
   }
 
@@ -84,7 +106,7 @@ export function collectAiCandidates(freeze) {
     }
   }
   for (const r of freeze.draft?.sql || []) {
-    if (r.priorOnly || NEED_AI_CONF.has(r.confidence)) {
+    if (r.priorOnly || NEED_AI_CONF.has(r.confidence) || looksLikeRenameAlias(r.suppressReason, r.detail)) {
       push({
         kind: "sql",
         stableId: r.脚本,
@@ -92,7 +114,7 @@ export function collectAiCandidates(freeze) {
         confidence: r.confidence,
         priorOnly: Boolean(r.priorOnly),
         sources: ["draft"],
-        hint: r.priorOnly ? "prior-only" : "path-confidence",
+        hint: sqlHint(r),
       });
     }
   }
@@ -113,7 +135,7 @@ export function collectAiCandidates(freeze) {
   return items;
 }
 
-function buildPromptMd(freeze, items) {
+export function buildPromptMd(freeze, items) {
   const lines = [];
   lines.push("# release-eng 双轨研判提示");
   lines.push("");
@@ -127,8 +149,13 @@ function buildPromptMd(freeze, items) {
   lines.push("## 任务");
   lines.push("");
   lines.push("你是发版清单降噪助手。规则轨 `draft` 已保证召回；请对下列项分类：");
-  lines.push("- **aiRanked**：建议问卷默认确认上线（keep）");
-  lines.push("- **aiNoise**：建议问卷默认不勾选（仍留在 draft，用户可拉回）");
+  lines.push("- **aiRanked**：建议问卷默认确认上线（keep）——仅**真正本轮新增/变更**的上线项");
+  lines.push("- **aiNoise**：建议问卷默认不勾选（仍留在 draft，用户可拉回）——含 rename/已上线等价、非 prod、纯噪声");
+  lines.push("");
+  lines.push("约束：");
+  lines.push("- 每条 `reason` 必须**针对本 stableId** 写一句，禁止对多条 SQL/配置复制同一句 reason");
+  lines.push("- hint 含 `rename-alias` / 已上线等价 → 优先进 **aiNoise**（勿重跑），不要 keep");
+  lines.push("- 真正新增 migration / prod 必改键 → **aiRanked**");
   lines.push("");
   lines.push("只输出一个 JSON 对象（不要 Markdown 围栏），字段：`aiRanked`、`aiNoise`。");
   lines.push("`stableId` / `kind` 必须来自下表。不要发明新键。");
@@ -157,7 +184,7 @@ function buildPromptMd(freeze, items) {
   lines.push("## 输出示例");
   lines.push("");
   lines.push(
-    '{"aiRanked":[{"kind":"sql","stableId":"V0003__x.sql","recommend":"keep","reason":"本轮新增 migration"}],"aiNoise":[{"kind":"config","stableId":"sms.ai.demo","reason":"非 prod 上线项"}]}'
+    '{"aiRanked":[{"kind":"sql","stableId":"V0116_0__DML__new.sql","recommend":"keep","reason":"本轮新增 V0116_0 pending 执行"}],"aiNoise":[{"kind":"sql","stableId":"V0001_0__DDL__baseline_schema.sql","reason":"rename-alias：等同已上线 V0001__，勿重跑"},{"kind":"config","stableId":"sms.ai.demo","reason":"非 prod 上线项"}]}'
   );
   lines.push("");
   return lines.join("\n");
@@ -184,6 +211,11 @@ export function mergeAiTrack(freeze, aiPayload) {
   const noiseOk = aiNoise.filter(known);
   const noiseSet = new Set(noiseOk.map((x) => `${x.kind}:${x.stableId}`));
   const rankedSet = new Set(rankedOk.map((x) => `${x.kind}:${x.stableId}`));
+  const warnings = [];
+  const both = [...noiseSet].filter((k) => rankedSet.has(k));
+  for (const k of both) {
+    warnings.push(`aiNoise+aiRanked 同时命中 ${k}：保留 ranked keep，仍记 noise 标记供人工复核`);
+  }
 
   const draftBefore = {
     sql: freeze.draft?.sql?.length || 0,
@@ -200,6 +232,7 @@ export function mergeAiTrack(freeze, aiPayload) {
       next.aiSuggestSuppress = true;
       next.aiReason = noiseOk.find((x) => `${x.kind}:${x.stableId}` === k)?.reason || "";
     }
+    // ranked 优先：同键时 keep 标记覆盖 reason（仍可保留 aiSuggestSuppress 供复核）
     if (rankedSet.has(k)) {
       next.aiSuggestKeep = true;
       next.aiReason =
@@ -208,6 +241,7 @@ export function mergeAiTrack(freeze, aiPayload) {
     return next;
   };
 
+  const tagged = rankedOk.length > 0 || noiseOk.length > 0;
   const next = {
     ...freeze,
     draft: {
@@ -230,16 +264,19 @@ export function mergeAiTrack(freeze, aiPayload) {
       return n;
     }),
     aiTrack: {
-      status: "filled",
+      // 仅打标、draft 行数不变 → tagged（禁止伪 filled）
+      status: tagged ? "tagged" : "stub",
       policy: "dual-track",
       filledAt: new Date().toISOString(),
       aiRanked: rankedOk,
       aiNoise: noiseOk,
+      rankedTagged: rankedOk.length,
+      noiseTagged: noiseOk.length,
       rejectedUnknown: unknownKeys,
       draftCountsUnchanged: true,
       draftBefore,
       draftAfter: { ...draftBefore },
-      warnings: [],
+      warnings,
     },
   };
 
@@ -347,9 +384,13 @@ function main() {
   process.exit(1);
 }
 
-try {
-  main();
-} catch (e) {
-  console.error(String(e.message || e));
-  process.exit(1);
+const isDirectRun =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectRun) {
+  try {
+    main();
+  } catch (e) {
+    console.error(String(e.message || e));
+    process.exit(1);
+  }
 }

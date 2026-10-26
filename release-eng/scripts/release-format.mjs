@@ -107,9 +107,40 @@ function escapeRe(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** 环境支 / 未识别：不进上线摘要优先位，合并来源表折叠 */
+const MERGE_NOISE_EXACT = new Set([
+  "无/未识别",
+  "test",
+  "uat",
+  "pre",
+  "main",
+  "master",
+  "develop",
+  "dev",
+  "staging",
+  "prod",
+  "production",
+]);
+
+/**
+ * 是否合并来源噪声支（环境支 / 未识别 / merge/*）。
+ * 归一后再判；`feature/...`、`release/...` 业务支为 false。
+ */
+export function isMergeSourceNoise(source) {
+  const norm = normalizeSourceBranch(source);
+  if (!norm || norm === "无/未识别") return true;
+  const lower = norm.toLowerCase();
+  if (MERGE_NOISE_EXACT.has(lower)) return true;
+  if (/^merge\//i.test(norm)) return true;
+  // 末段为环境短名：foo/test、origin 已剥
+  const last = lower.split("/").filter(Boolean).pop() || "";
+  if (MERGE_NOISE_EXACT.has(last) && last !== "release") return true;
+  return false;
+}
+
 /**
  * 上线内容摘要行：1～5 项，**分支级聚合**（不再简单截取最近 5 条提交）。
- * 先按合并来源逐分支一句话（按出现次数降序），再用直推（非 Merge）提交短句补足；
+ * 先按合并来源逐分支一句话（按出现次数降序，**跳过 noise**），再用直推（非 Merge）提交短句补足；
  * recentFirst=true（首次发版，或无 mergeSources）：直推取最近若干条，避免"Initial commit"等最旧提交占位。
  */
 export function buildReleaseSummaryLines(
@@ -126,7 +157,8 @@ export function buildReleaseSummaryLines(
   const sources = Array.isArray(mergeSources) ? [...mergeSources] : [];
   sources.sort((a, b) => (b?.count || 0) - (a?.count || 0));
   for (const m of sources) {
-    if (!m || !m.source || m.source === "无/未识别") continue;
+    if (!m || !m.source) continue;
+    if (m.noise === true || isMergeSourceNoise(m.source)) continue;
     const s = m.branchSummary || branchOneLineSummary(m.source, m.subjects);
     if (!s || seen.has(s)) continue;
     seen.add(s);
@@ -275,7 +307,7 @@ export function normalizeSourceBranch(source) {
     .replace(/^origin\//, "");
 }
 
-/** 按推测来源分支去重（origin/ 前缀归一）；产出 branchSummary=一句话 + branchFeatures[]（JSON 兼容） */
+/** 按推测来源分支去重（origin/ 前缀归一）；产出 branchSummary=一句话 + branchFeatures[] + noise（JSON 兼容） */
 export function buildMergeSources(merges) {
   const map = new Map();
   for (const m of merges || []) {
@@ -294,15 +326,64 @@ export function buildMergeSources(merges) {
     .map((row) => {
       const branchFeatures = branchFeaturesFromSubjects(row.source, row.subjects);
       const branchSummary = branchOneLineSummary(row.source, row.subjects);
+      const noise = isMergeSourceNoise(row.source);
       return {
         source: row.source,
         count: row.count,
         branchFeatures,
         branchSummary,
         sampleSubject: branchSummary,
+        noise,
       };
     })
     .sort((a, b) => b.count - a.count || a.source.localeCompare(b.source));
+}
+
+/**
+ * 发版单「合并来源」表行：业务支全列；噪声折叠为一行。
+ * @returns {{ source: string, count: number, summary: string, folded?: boolean }[]}
+ */
+export function formatMergeSourcesTableRows(mergeSources) {
+  const rows = Array.isArray(mergeSources) ? mergeSources : [];
+  const business = [];
+  let noiseCount = 0;
+  for (const m of rows) {
+    const noise = m?.noise === true || isMergeSourceNoise(m?.source);
+    if (noise) {
+      noiseCount += Number(m?.count) || 1;
+      continue;
+    }
+    business.push({
+      source: m.source || "无/未识别",
+      count: m.count ?? 1,
+      summary: m.branchSummary || m.sampleSubject || m.subject || "",
+    });
+  }
+  if (noiseCount > 0) {
+    business.push({
+      source: "环境支/未识别（合计）",
+      count: noiseCount,
+      summary: "（已折叠，见 freeze.mergeSources noise=true）",
+      folded: true,
+    });
+  }
+  return business;
+}
+
+/** 目录包 SQL 份数告警阈值（不 fail，仅 warning） */
+export const BUNDLE_SQL_WARN_COUNT = 40;
+export const BUNDLE_SQL_ALERT_COUNT = 100;
+
+/** draft.sql / 包内 sql/ 超阈文案；未超返回 null */
+export function bundleSqlVolumeWarning(sqlCount, { context = "draft.sql" } = {}) {
+  const n = Number(sqlCount) || 0;
+  if (n >= BUNDLE_SQL_ALERT_COUNT) {
+    return `${context} 达 ${n} 份（≥${BUNDLE_SQL_ALERT_COUNT}）：疑似准首次/prior 失效，请核对 rename-alias 与基线树后再定版`;
+  }
+  if (n >= BUNDLE_SQL_WARN_COUNT) {
+    return `${context} 达 ${n} 份（≥${BUNDLE_SQL_WARN_COUNT}）：包体偏大，请确认本版 pending SQL 是否过宽`;
+  }
+  return null;
 }
 
 function escCell(v) {
@@ -464,6 +545,76 @@ export function bundleLinkCell(bundlePath) {
   return `[${name}](./${rel})`;
 }
 
+function normMigrationPath(p) {
+  return String(p || "").replace(/\\/g, "/");
+}
+
+function migrationBaseName(p) {
+  const n = normMigrationPath(p);
+  return n.split("/").pop() || n;
+}
+
+/**
+ * SQL 收紧：migration `Vdddd__…` 或现行 `Vdddd_d__DDL|DML__…`；须在 db/migration 下。
+ */
+export function isMigrationSql(filePath) {
+  const n = normMigrationPath(filePath);
+  const base = migrationBaseName(n);
+  const nameOk = /^V\d+(_\d+)?__.+\.sql$/i.test(base);
+  return nameOk && n.includes("db/migration");
+}
+
+/** 主版本号（忽略子序号）；无法解析则 null */
+export function migrationVersion(filePath) {
+  const base = migrationBaseName(filePath);
+  const m = base.match(/^V(\d+)(?:_(\d+))?__/i);
+  return m ? Number(m[1]) : null;
+}
+
+/** SQL序：四位主号*10 + 子序号（旧格式无子号视为 0） */
+export function migrationSortKey(filePath) {
+  const base = migrationBaseName(filePath);
+  const m = base.match(/^V(\d+)(?:_(\d+))?__/i);
+  if (!m) return Number.MAX_SAFE_INTEGER;
+  return Number(m[1]) * 10 + (m[2] != null ? Number(m[2]) : 0);
+}
+
+/**
+ * prior/baseline 去重用 canonical id：`_0` 与无子号等价；`_1+` 保留。
+ * 例：V0001__DDL__x.sql ≡ V0001_0__DDL__x.sql → V0001__DDL__x.sql
+ */
+export function migrationCanonicalId(nameOrPath) {
+  const base = migrationBaseName(nameOrPath);
+  const m = base.match(/^V(\d+)(?:_(\d+))?__(.+)$/i);
+  if (!m) return base;
+  const major = m[1];
+  const minor = m[2] != null ? Number(m[2]) : 0;
+  const rest = m[3];
+  if (minor === 0) return `V${major}__${rest}`;
+  return `V${major}_${minor}__${rest}`;
+}
+
+/** 把原始名与 canonical 一并入 Set，供 prior/baseline 命中 */
+export function migrationAliasSet(names) {
+  const out = new Set();
+  for (const n of names || []) {
+    const base = migrationBaseName(n);
+    if (!base) continue;
+    out.add(base);
+    out.add(migrationCanonicalId(base));
+  }
+  return out;
+}
+
+/** 上线配置路径：application-prod.yml 或 nacos prod overlay */
+export function isProdConfigPath(filePath) {
+  const n = normMigrationPath(filePath);
+  const base = migrationBaseName(n);
+  if (/^application-prod\.ya?ml$/i.test(base)) return true;
+  if (/config\/nacos\//i.test(n) && /^application-prod-nacos\.ya?ml$/i.test(base)) return true;
+  return false;
+}
+
 /** 从 origin web URL 识别宿主：gitlab | github | other */
 export function detectRemoteHost(webUrl) {
   const u = String(webUrl || "").toLowerCase();
@@ -506,15 +657,63 @@ export function remoteHintLine(url, host) {
   return `> 完整记录请登录 ${label} 查看：${url}`;
 }
 
+const DEFAULT_INDEX_HEADER = "| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |";
+const DEFAULT_INDEX_SEP = "|---|---|---|---|---|---|";
+
+/** 解析进行中表头 → 列角色下标（cells 含首尾空串，数据列从 1 起） */
+export function parseReleasesIndexHeader(headerLine) {
+  const cells = String(headerLine || "")
+    .split("|")
+    .map((c) => c.trim());
+  const roles = {};
+  for (let i = 1; i < cells.length - 1; i++) {
+    const h = cells[i];
+    if (!h || /^-+$/.test(h)) continue;
+    if (/版本身份/.test(h)) roles.identity = i;
+    else if (/发版日期|^日期$/.test(h)) roles.date = i;
+    else if (/分支对/.test(h)) roles.branchPair = i;
+    else if (/^状态$/.test(h)) roles.status = i;
+    else if (/发版单|路径/.test(h)) roles.note = i;
+    else if (/负责人/.test(h)) roles.owner = i;
+  }
+  return roles;
+}
+
+function buildIndexRowFromRoles(roles, values, colCount) {
+  const { date, identity, branchPair, status, noteRel, owner } = values;
+  const byRole = {
+    date: date || "—",
+    identity,
+    branchPair: branchPair || "—",
+    status: status || "已定版",
+    note: noteRel || "—",
+    owner: owner || "—",
+  };
+  const n = colCount || 6;
+  const cells = new Array(n).fill("—");
+  for (const [role, idx] of Object.entries(roles)) {
+    if (idx == null || idx < 1 || idx > n) continue;
+    // roles.identity 等是 split 下标；数据列 = idx（同 header cells 下标）
+    const dataIdx = idx - 1; // 0-based among data columns
+    if (dataIdx >= 0 && dataIdx < n && byRole[role] != null) cells[dataIdx] = byRole[role];
+  }
+  // 若未解析到 identity 列，回退 tip 默认：日期|版本身份|…
+  if (roles.identity == null) {
+    return `| ${byRole.date} | ${byRole.identity} | ${byRole.branchPair} | ${byRole.status} | ${byRole.note} | ${byRole.owner} |`;
+  }
+  return `| ${cells.join(" | ")} |`;
+}
+
 /**
  * upsert docs/releases/releases.md「进行中」表行。
+ * 自适应表头列序（tip：日期|版本身份|…；sms-ai：版本身份|发版日期|…|路径|…）。
  * @returns {{ text: string, row: string, updated: boolean }}
  */
 export function upsertReleasesIndexRow(
   indexText,
   { date, identity, branchPair, status, noteRel, owner }
 ) {
-  const row = `| ${date || "—"} | ${identity} | ${branchPair || "—"} | ${status || "已定版"} | ${noteRel || "—"} | ${owner || "—"} |`;
+  const values = { date, identity, branchPair, status, noteRel, owner };
   const text = String(indexText || "");
   const lines = text.split(/\r?\n/);
   let sectionStart = -1;
@@ -528,17 +727,15 @@ export function upsertReleasesIndexRow(
       break;
     }
   }
+
+  const defaultRoles = parseReleasesIndexHeader(DEFAULT_INDEX_HEADER);
+  const defaultRow = buildIndexRowFromRoles(defaultRoles, values, 6);
+
   if (sectionStart < 0) {
-    const block = [
-      "",
-      "## 进行中",
-      "",
-      "| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |",
-      "|---|---|---|---|---|---|",
-      row,
-      "",
-    ].join("\n");
-    return { text: `${text.trimEnd()}\n${block}\n`, row, updated: true };
+    const block = ["", "## 进行中", "", DEFAULT_INDEX_HEADER, DEFAULT_INDEX_SEP, defaultRow, ""].join(
+      "\n"
+    );
+    return { text: `${text.trimEnd()}\n${block}\n`, row: defaultRow, updated: true };
   }
 
   for (let i = sectionStart + 1; i < lines.length; i++) {
@@ -546,7 +743,9 @@ export function upsertReleasesIndexRow(
       sectionEnd = i;
       break;
     }
-    if (tableHeader < 0 && /^\|\s*日期\s*\|/.test(lines[i])) {
+    if (tableHeader < 0 && /^\|/.test(lines[i]) && /版本身份|日期/.test(lines[i])) {
+      // 跳过分隔行
+      if (/^\|[\s-|]+$/.test(lines[i].trim())) continue;
       tableHeader = i;
       if (i + 1 < lines.length && /^\|[\s-|]+$/.test(lines[i + 1].trim())) {
         tableSep = i + 1;
@@ -555,15 +754,16 @@ export function upsertReleasesIndexRow(
   }
 
   if (tableHeader < 0) {
-    const insert = [
-      "| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |",
-      "|---|---|---|---|---|---|",
-      row,
-      "",
-    ];
+    const insert = [DEFAULT_INDEX_HEADER, DEFAULT_INDEX_SEP, defaultRow, ""];
     lines.splice(sectionStart + 1, 0, "", ...insert);
-    return { text: lines.join("\n"), row, updated: true };
+    return { text: lines.join("\n"), row: defaultRow, updated: true };
   }
+
+  const roles = parseReleasesIndexHeader(lines[tableHeader]);
+  const headerCells = lines[tableHeader].split("|").map((c) => c.trim());
+  const colCount = Math.max(0, headerCells.length - 2);
+  const row = buildIndexRowFromRoles(roles, values, colCount);
+  const idCol = roles.identity != null ? roles.identity : 2;
 
   const bodyStart = (tableSep >= 0 ? tableSep : tableHeader) + 1;
   const body = [];
@@ -576,8 +776,7 @@ export function upsertReleasesIndexRow(
     }
     if (/（暂无）/.test(line)) continue;
     const cells = line.split("|").map((c) => c.trim());
-    // | date | identity | ...
-    const idCell = cells[2] || "";
+    const idCell = cells[idCol] || "";
     if (idCell === identity) {
       body.push(row);
       found = true;
@@ -589,7 +788,6 @@ export function upsertReleasesIndexRow(
 
   const before = lines.slice(0, bodyStart);
   const after = lines.slice(sectionEnd);
-  // 保留表头与分隔行之间到 bodyStart 已在 before；拼 body + 空行 + 后续节
   const mid = [...body, ""];
   return { text: [...before, ...mid, ...after].join("\n"), row, updated: true };
 }

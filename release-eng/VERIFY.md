@@ -1,18 +1,50 @@
-# release-eng 验收记录（0.3.23）
+# release-eng 验收记录（0.3.26）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.23**（P3：D3/D4/D5；起本版正式号不加 `-dev`）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+当前 **0.3.26**（P2：噪声折叠 + SQL 体积闸）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+
+## 0.3.26 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
+| manifest / 文档钉头 **0.3.26**；`sync-skill-version --check` | 有 |
+| `isMergeSourceNoise`；summary 跳过 test/uat；折叠行合计 | 有（selfcheck） |
+| `bundleSqlVolumeWarning` 40/100 阈值 | 有（selfcheck） |
+| 仍标明非 harness land | 有 |
+
+## 0.3.25 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测（历史） |
+| manifest / 文档钉头 **0.3.25**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.26） |
+| mergeAiTrack → `status=tagged`（非 filled）；prompt 含 rename / per-reason 约束 | 有（selfcheck） |
+| upsert 兼容「版本身份\|发版日期\|…\|路径」表头 | 有（selfcheck） |
+| `computeJobsConfigGaps` 主列表仅 draft.jobs；附录独立 | 有（selfcheck） |
+| 仍标明非 harness land | 有 |
+
+## 0.3.24 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测（历史） |
+| manifest / 文档钉头 **0.3.24**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.25） |
+| `isMigrationSql` 认 `Vn__` / `Vn_0__` / `Vn_1__`；canonical `Vn__`≡`Vn_0__` | 有（selfcheck） |
+| prior/baseline rename-alias 抑制（`suppressReason=rename-alias`） | 有（逻辑 + aliasSet 断言） |
+| 增量配置仅 prod；非 prod → layerSuppressed；seal-check 非 prod exit 1 | 有（selfcheck） |
+| 仍标明非 harness land | 有 |
 
 ## 0.3.23 增量验收
 
 | 检查 | 结果 |
 |---|---|
-| `node scripts/selfcheck.mjs` exit 0（PASS 171/171） | 烟测 |
-| manifest / 文档钉头 **0.3.23**；`sync-skill-version --check` | 有 |
+| `node scripts/selfcheck.mjs` exit 0（PASS 171/171） | 烟测（历史） |
+| manifest / 文档钉头 **0.3.23**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.24） |
 | D3：`mergeSources=[]` 时 summary recentFirst（非最旧 Initial） | 有（selfcheck） |
 | D4：GitHub/GitLab browse URL + 宿主文案 | 有（selfcheck） |
 | D5：`upsertReleasesIndexRow` 写入进行中表并清占位 | 有（selfcheck） |

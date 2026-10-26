@@ -13,6 +13,11 @@
  */
 import fs from "fs";
 import path from "path";
+import {
+  isProdConfigPath,
+  bundleSqlVolumeWarning,
+  BUNDLE_SQL_ALERT_COUNT,
+} from "./release-format.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -153,9 +158,18 @@ function main() {
           warnings.push(`artifacts.sql 含 ${id} 但 Markdown「数据库与 SQL」未出现该脚本名`);
         }
       }
-      for (const m of (sqlSec || "").matchAll(/\b(V\d+__[A-Za-z0-9_.-]+\.sql)\b/gi)) {
+      for (const m of (sqlSec || "").matchAll(/\b(V\d+(?:_\d+)?__[A-Za-z0-9_.-]+\.sql)\b/gi)) {
         if (sqlIds.size && !sqlIds.has(m[1])) {
           warnings.push(`Markdown 含 ${m[1]} 但 artifacts.json sql[] 无对应 stableId`);
+        }
+      }
+      for (const row of artifacts.config || []) {
+        const p = row.path || row.来源 || "";
+        if (p && !isProdConfigPath(p)) {
+          errors.push(`artifacts.config 含非 prod 路径: ${p}`);
+        }
+        if (row.profile != null && String(row.profile).toLowerCase() !== "prod") {
+          errors.push(`artifacts.config profile 须为 prod（stableId=${row.stableId || "?"} profile=${row.profile}）`);
         }
       }
     }
@@ -176,6 +190,17 @@ function main() {
           files = [];
         }
         if (!files.length) warnings.push(`正文含 ${sub} 附属但 ${sub}/ 为空`);
+        if (sub === "sql" && files.length >= BUNDLE_SQL_ALERT_COUNT) {
+          const w = bundleSqlVolumeWarning(files.length, { context: "包内 sql/" });
+          if (w) warnings.push(w);
+        }
+        if (sub === "config") {
+          for (const f of files) {
+            if (!isProdConfigPath(f) && !isProdConfigPath(`config/${f}`)) {
+              errors.push(`包内 config/ 含非 prod 文件: ${f}`);
+            }
+          }
+        }
         if (sub === "jobs" && files.length > 1) {
           warnings.push(`jobs/ 应只放 1 个文件（README.md 上线任务清单），当前 ${files.length} 个`);
         }

@@ -5,6 +5,9 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.3.26](../_log/release-eng/0.3/0.3.26.md) | 2026-10-26 | P2：mergeSources noise 折叠；摘要跳过环境支；SQL 包体 40/100 warning |
+| [0.3.25](../_log/release-eng/0.3/0.3.25.md) | 2026-10-26 | P1：ai-track tagged；索引表头自适应；jobsConfigGaps 收窄本版 draft |
+| [0.3.24](../_log/release-eng/0.3/0.3.24.md) | 2026-10-26 | P0：Flyway `Vdddd_d__` + rename-alias；增量配置仅 prod；seal-check 非 prod fail |
 | [0.3.23](../_log/release-eng/0.3/0.3.23.md) | 2026-10-15 | P3：D3 recentFirst；D4 远端宿主；D5 索引回写（起本版无 -dev） |
 | [0.3.22-dev](../_log/release-eng/0.3/0.3.22-dev.md) | 2026-10-15 | D1 never-pushed fail；D2 首次 inventory 空层可观测 |
 | [0.3.21-dev](../_log/release-eng/0.3/0.3.21-dev.md) | 2026-09-29 | 纪律 bulletproof（Red Flags / 借口表；RED→GREEN 4/4） |
