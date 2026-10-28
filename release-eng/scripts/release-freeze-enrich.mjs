@@ -834,9 +834,15 @@ export function parseReleaseNoteArtifacts(text) {
   return out;
 }
 
+/** 增量键级 diff 的值变更/删除：键可能已在基线树，但仍须进 draft */
+function isValueLevelChange(change) {
+  return change === "changed" || change === "removed";
+}
+
 /**
  * 双源标记：
  * - 线上已存在 → alreadyReleased（进 suppressed）
+ * - 配置/任务键：基线有键但 change=changed|removed → 仍进 draft（priorKeyHit），勿静默 suppress
  * - 仅清单已收录 → priorOnly，仍留 draft（漏检优先）
  * - layerSuppressed → 首次分层策略 suppress
  */
@@ -857,12 +863,36 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
   const primarySeen = new Set();
   const appendixSeen = new Set();
 
+  const intervalCompanionCovers = (cronKey, keys) => {
+    const ck = String(cronKey || "");
+    if (!ck) return false;
+    const prefix = ck
+      .replace(/\.cron(expression)?$/i, "")
+      .replace(/cron$/i, "")
+      .replace(/\.$/, "");
+    if (!prefix) return false;
+    for (const k of keys || []) {
+      const s = String(k);
+      if (s.startsWith(prefix) && /interval|fixed[-]?delay|delay-ms/i.test(s)) return true;
+    }
+    return false;
+  };
+
+  const lookFixedDelayTruth = (hit) => {
+    const blob = [hit?.hint, hit?.displayName, hit?.truthPath, hit?.scheduleType, hit?.schedule]
+      .filter(Boolean)
+      .join(" ");
+    return /fixed\s*delay|fixedDelay|interval-?ms|非\s*cron/i.test(blob);
+  };
+
   const pushGap = (list, seen, hit) => {
     const cronKey = hit.cronKey || null;
     if (!cronKey) return;
     const id = hit.taskCode || cronKey;
     if (seen.has(id)) return;
     if (configKeySet.has(cronKey)) return;
+    if (intervalCompanionCovers(cronKey, configKeySet)) return;
+    if (lookFixedDelayTruth(hit)) return;
     seen.add(id);
     list.push({
       taskCode: hit.taskCode || null,
@@ -977,6 +1007,16 @@ function markDualSource(parts, priorArtifacts, baselinePresence, priorBundle) {
     }
     const onBaseline = baselinePresence.configKeys.has(k.key);
     const listed = configKeysSet.has(k.key);
+    if (onBaseline && isValueLevelChange(k.change)) {
+      return {
+        ...k,
+        alreadyReleased: false,
+        priorOnly: false,
+        priorKeyHit: true,
+        suppressReason: null,
+        priorNote: priorPath,
+      };
+    }
     if (onBaseline) {
       return { ...k, alreadyReleased: true, priorOnly: false, suppressReason: "baseline", priorNote: priorPath };
     }
@@ -1000,6 +1040,16 @@ function markDualSource(parts, priorArtifacts, baselinePresence, priorBundle) {
       (k.job?.cronKey && jobIds.has(k.job.cronKey)) ||
       jobIds.has(k.key) ||
       configKeysSet.has(k.key);
+    if (onBaseline && isValueLevelChange(k.change)) {
+      return {
+        ...k,
+        alreadyReleased: false,
+        priorOnly: false,
+        priorKeyHit: true,
+        suppressReason: null,
+        priorNote: priorPath,
+      };
+    }
     if (onBaseline) {
       return { ...k, alreadyReleased: true, priorOnly: false, suppressReason: "baseline", priorNote: priorPath };
     }
@@ -1100,7 +1150,12 @@ function buildDraftRows({ candidates, configKeys, jobKeys, jobsHits }) {
       来源: k.path,
       键: k.key,
       说明: k.description || "待补",
-      值: k.change === "removed" ? "（删除）" : k.value ?? "",
+      值:
+        k.change === "removed"
+          ? "（删除）"
+          : k.change === "changed" && k.from != null && k.from !== ""
+            ? `${k.from}→${k.value ?? ""}`
+            : k.value ?? "",
       "目标 profile": "prod",
       变更: k.change,
       prodPath: k.prodPath,
@@ -1109,6 +1164,7 @@ function buildDraftRows({ candidates, configKeys, jobKeys, jobsHits }) {
       confidence: k.confidence || "key-diff",
       alreadyReleased: Boolean(k.alreadyReleased),
       priorOnly: Boolean(k.priorOnly),
+      priorKeyHit: Boolean(k.priorKeyHit),
       suppressReason: k.suppressReason || null,
       已确认: "",
     }));

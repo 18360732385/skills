@@ -1321,6 +1321,190 @@ app.both: 9 # 行尾应输
   }
 }
 
+// --- 0.3.30：N11 值变更不因 baseline 键身份 suppress ---
+{
+  const enrichUrl = pathToFileURL(
+    path.join(skillRoot, "scripts/release-freeze-enrich.mjs")
+  ).href;
+  const enrich = await import(enrichUrl);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-n11-"));
+  try {
+    const out = enrich.enrichFreezePayload(
+      work,
+      {
+        candidates: [],
+        configKeys: [
+          {
+            key: "unpaid-timeout-minutes",
+            path: "backend/application-prod.yml",
+            value: "45",
+            from: "30",
+            change: "changed",
+            isLeaf: true,
+            comment: "超时",
+          },
+          {
+            key: "timeout-batch-size",
+            path: "backend/application-prod.yml",
+            value: "100",
+            change: "added",
+            isLeaf: true,
+            comment: "批次",
+          },
+          {
+            key: "legacy.static",
+            path: "backend/application-prod.yml",
+            value: "1",
+            change: "added",
+            isLeaf: true,
+            comment: "误标但基线已有",
+          },
+        ],
+        jobKeys: [],
+        taskCodes: [],
+      },
+      {
+        prior: "none",
+        baselinePresence: {
+          sqlScripts: [],
+          configKeys: ["unpaid-timeout-minutes", "legacy.static"],
+          jobIds: [],
+        },
+      }
+    );
+    const draftKeys = (out.draft?.config || []).map((r) => r.键);
+    const suppressedKeys = (out.draftSuppressed?.config || []).map((r) => r.键);
+    assert(draftKeys.includes("unpaid-timeout-minutes"), "N11 changed key stays in draft");
+    assert(draftKeys.includes("timeout-batch-size"), "N11 added key in draft");
+    assert(
+      (out.draft?.config || []).some(
+        (r) => r.键 === "unpaid-timeout-minutes" && r.值 === "30→45"
+      ),
+      "N11 draft value shows old→new"
+    );
+    assert(!suppressedKeys.includes("unpaid-timeout-minutes"), "N11 changed not suppressed");
+    assert(suppressedKeys.includes("legacy.static"), "N11 baseline identity still suppresses non-value-change");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.30：N12 完整记录 URL 在 auto:git / 旧壳兜底 ---
+{
+  const mergeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-note-merge.mjs")).href;
+  const merge = await import(mergeUrl);
+  const freeze = {
+    gitlabUrl: "https://github.com/org/repo/compare/a...b",
+    remoteHost: "github",
+    timezone: "Asia/Shanghai",
+    commits: [],
+    merges: [],
+    mergeSources: [],
+    draft: { sql: [], config: [], jobs: [] },
+  };
+  const shell = `## 二、Git 定版
+
+> 截断说明
+> 完整记录：
+
+<!-- auto:git:start -->
+
+OLD
+
+<!-- auto:git:end -->
+`;
+  const out = merge.applySections(shell, freeze);
+  assert(/完整记录请登录 GitHub 查看：https:\/\/github\.com\/org\/repo\/compare\/a\.\.\.b/.test(out), "N12 GitHub hint present");
+  assert(!/^> 完整记录：\s*$/m.test(out), "N12 empty 完整记录 shell gone");
+  assert(
+    out.indexOf("完整记录请登录") > out.indexOf("auto:git:start") &&
+      out.indexOf("完整记录请登录") < out.indexOf("auto:git:end"),
+    "N12 hint inside auto:git markers"
+  );
+}
+
+// --- 0.3.30：N7 pathBucket top-level + inferServices ---
+{
+  const freezeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-freeze.mjs")).href;
+  const freezeMod = await import(freezeUrl);
+  assert(freezeMod.pathBucket("backend/src/x.java") === "backend/", "N7 pathBucket backend");
+  assert(freezeMod.pathBucket("order-api/a.yml") === "order-api/", "N7 pathBucket order-api");
+  assert(freezeMod.pathBucket("sms-ai/a.java") === "sms-ai/", "N7 pathBucket sms-ai");
+  assert(freezeMod.pathBucket("docs/x.md") === "docs/", "N7 pathBucket docs");
+  const mergeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-note-merge.mjs")).href;
+  const merge = await import(mergeUrl);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-n7-"));
+  try {
+    fs.mkdirSync(path.join(work, "backend"), { recursive: true });
+    const block = merge.inferServices(work, { pathStats: { "backend/": 3, 其它: 0 } });
+    assert(/\|\s*backend\s*\|\s*是\s*\|/.test(block), "N7 inferServices lists backend");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.30：N13 未跟踪目录 fs-rename 无 fatal warning ---
+{
+  const sealUrl = pathToFileURL(path.join(skillRoot, "scripts/release-seal.mjs")).href;
+  const seal = await import(sealUrl);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-n13-"));
+  try {
+    spawnSync("git", ["init"], { cwd: work, encoding: "utf8" });
+    const fromDir = path.join(work, "docs", "releases", "rel-n13");
+    const toDir = path.join(work, "docs", "releases", "archive", "rel-n13");
+    fs.mkdirSync(fromDir, { recursive: true });
+    fs.writeFileSync(path.join(fromDir, "rel-n13.md"), "# n13\n", "utf8");
+    fs.mkdirSync(path.dirname(toDir), { recursive: true });
+    const mv = seal.gitMv(work, fromDir, toDir);
+    assert(mv.ok === true, "N13 gitMv ok");
+    assert(mv.method === "fs-rename", "N13 untracked uses fs-rename");
+    assert(!mv.warning || !/fatal/i.test(String(mv.warning)), "N13 no fatal warning");
+    assert(fs.existsSync(path.join(toDir, "rel-n13.md")), "N13 dest exists");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.30：N14 interval/fixedDelay 伴键不报 cron 缺口 ---
+{
+  const enrichUrl = pathToFileURL(
+    path.join(skillRoot, "scripts/release-freeze-enrich.mjs")
+  ).href;
+  const enrich = await import(enrichUrl);
+  const { jobsConfigGaps } = enrich.computeJobsConfigGaps({
+    draftJobs: [{ taskCode: "order-timeout-cancel", cronKey: "order.timeout.cron" }],
+    jobsHitsMap: new Map(),
+    configKeySet: new Set(["order.timeout.interval-ms"]),
+  });
+  assert(jobsConfigGaps.length === 0, "N14 interval companion covers cron gap");
+  const stillGap = enrich.computeJobsConfigGaps({
+    draftJobs: [{ taskCode: "x", cronKey: "app.jobs.cron" }],
+    jobsHitsMap: new Map(),
+    configKeySet: new Set(["unrelated.key"]),
+  });
+  assert(stillGap.jobsConfigGaps.length === 1, "N14 true cron miss still gaps");
+}
+
+// --- 0.3.30：N1 叶子继承父级 map 注释 ---
+{
+  const freezeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-freeze.mjs")).href;
+  const freezeMod = await import(freezeUrl);
+  const map = freezeMod.flattenYamlKeys(`# 库存告警阈值
+stock-alert:
+  threshold: 20
+
+# 父级
+parent:
+  # 叶子自有
+  leaf: 1
+`);
+  assert(
+    map.get("stock-alert.threshold")?.comment === "库存告警阈值",
+    "N1 inherit parent map comment"
+  );
+  assert(map.get("parent.leaf")?.comment === "叶子自有", "N1 leaf comment not overwritten");
+}
+
 // --- report ---
 const total = ok.length + fail.length;
 if (fail.length) {

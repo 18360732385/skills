@@ -149,12 +149,14 @@ function guessSourceBranch(subject) {
   return m ? m[1] : null;
 }
 
-function pathBucket(p) {
+/** 路径一级桶：docs / db/migration 特例；其余取 top-level 目录名（可移植 monorepo） */
+export function pathBucket(p) {
   const n = p.replace(/\\/g, "/");
   if (n.includes("db/migration") || /\/V\d+__/.test(n)) return "db/migration";
-  if (n.startsWith("sms-ai-web/") || n.startsWith("sms-ai-web\\")) return "sms-ai-web/";
-  if (n.startsWith("sms-ai/") || n.startsWith("sms-ai\\")) return "sms-ai/";
   if (n.startsWith("docs/") || n.startsWith("docs\\")) return "docs/";
+  if (!n.includes("/")) return "其它";
+  const top = n.split("/")[0];
+  if (top && /^[a-zA-Z0-9._-]+$/.test(top)) return `${top}/`;
   return "其它";
 }
 
@@ -215,6 +217,7 @@ function isJobsKey(keyPath) {
 /**
  * 轻量 YAML 扁平化（无外部依赖）。
  * 说明注释：键上一行 `# …` 优先；否则同行行尾 ` # …`。空行清空上一行缓存（防跨键误挂）。
+ * 叶子无注释时回退继承最近父级 map 注释。
  * 值存 `{ value, comment, isLeaf }`；多行 / 锚点不解析——漏检时仍保留 path 级候选。
  */
 export function flattenYamlKeys(text) {
@@ -264,6 +267,19 @@ export function flattenYamlKeys(text) {
       if (!map.has(full)) map.set(full, { value: "", comment, isLeaf: false });
     } else {
       map.set(full, { value: val, comment, isLeaf: true });
+    }
+  }
+  // 叶子无注释 → 继承最近父级 map 注释（N1 边角）
+  for (const [full, entry] of map.entries()) {
+    if (!entry || entry.isLeaf === false || (entry.comment && String(entry.comment).trim())) continue;
+    const parts = String(full).split(".");
+    for (let i = parts.length - 1; i >= 1; i--) {
+      const parentKey = parts.slice(0, i).join(".");
+      const parent = map.get(parentKey);
+      if (parent?.comment && String(parent.comment).trim()) {
+        entry.comment = parent.comment;
+        break;
+      }
     }
   }
   return map;
@@ -999,15 +1015,10 @@ function main() {
     process.exit(1);
   }
   const files = names.stdout ? names.stdout.split(/\r?\n/).filter(Boolean) : [];
-  const pathStats = {
-    "sms-ai/": 0,
-    "sms-ai-web/": 0,
-    "docs/": 0,
-    "db/migration": 0,
-    其它: 0,
-  };
+  const pathStats = {};
   for (const f of files) {
-    pathStats[pathBucket(f)] += 1;
+    const bucket = pathBucket(f);
+    pathStats[bucket] = (pathStats[bucket] || 0) + 1;
   }
 
   const authorsMap = new Map();

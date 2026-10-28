@@ -127,17 +127,36 @@ function metaFromNote(text) {
   return { branch, baseline, date, owner, identity };
 }
 
-function gitMv(root, fromAbs, toAbs) {
+export function gitMv(root, fromAbs, toAbs) {
   fs.mkdirSync(path.dirname(toAbs), { recursive: true });
   const relFrom = path.relative(root, fromAbs).replace(/\\/g, "/");
   const relTo = path.relative(root, toAbs).replace(/\\/g, "/");
+
+  const tracked = spawnSync("git", ["ls-files", "--", relFrom], {
+    cwd: root,
+    encoding: "utf8",
+    env: gitEnvChina(),
+  });
+  const hasTracked =
+    tracked.status === 0 && String(tracked.stdout || "").trim().length > 0;
+
+  // 未跟踪目录包：直接 fs-rename，避免 git mv fatal 噪声（N13）
+  if (!hasTracked) {
+    try {
+      fs.renameSync(fromAbs, toAbs);
+      return { ok: true, method: "fs-rename" };
+    } catch (e) {
+      return { ok: false, error: String(e?.message || e) };
+    }
+  }
+
   const r = spawnSync("git", ["mv", relFrom, relTo], {
     cwd: root,
     encoding: "utf8",
     env: gitEnvChina(),
   });
   if (r.status === 0) return { ok: true, method: "git-mv" };
-  // 非 git 仓或未跟踪：fs rename 兜底
+  // 已跟踪但 git mv 失败：fs rename 兜底
   try {
     fs.renameSync(fromAbs, toAbs);
     return { ok: true, method: "fs-rename", warning: r.stderr || "git mv failed; used fs.rename" };

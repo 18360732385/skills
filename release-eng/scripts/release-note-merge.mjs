@@ -149,7 +149,7 @@ function displayRows(payload) {
   return [];
 }
 
-function buildGitSection(freeze) {
+export function buildGitSection(freeze) {
   const lines = [];
   const url = freeze.gitlabUrl || "";
   const host = freeze.remoteHost || detectRemoteHost(url);
@@ -159,9 +159,10 @@ function buildGitSection(freeze) {
   lines.push(
     `> 提交列表遵循 \`截断5\`（≤5 全量；>5 前 3 + \`…\` + 后 2；hash 取前 8 位）。合并来源按分支去重全量（\`origin/\` 前缀归一；来源分支功能为一句话中文总结）。时区：${tz}`
   );
-  lines.push(remoteHintLine(url || null, host));
   lines.push("");
   lines.push("<!-- auto:git:start -->");
+  lines.push("");
+  lines.push(remoteHintLine(url || null, host));
   lines.push("");
   lines.push(`### ${H3_GIT.commits}`);
   lines.push("");
@@ -474,7 +475,7 @@ function replaceHeadingSection(text, headingLine, newSection) {
   return next.join("\n");
 }
 
-function applySections(text, freeze) {
+export function applySections(text, freeze) {
   let out = ensureSummaryInMeta(text);
   out = normalizeSectionHeadings(out);
   const draft = freeze.draft || { sql: [], config: [], jobs: [] };
@@ -500,6 +501,20 @@ function applySections(text, freeze) {
   else {
     const r = replaceHeadingSection(out, "Git 定版", gitFull);
     if (r != null) out = r;
+  }
+
+  // 旧模板标记外残留空「完整记录：」→ 删除（提示已在 auto:git 内；N12）
+  {
+    const url = freeze.gitlabUrl || "";
+    const host = freeze.remoteHost || detectRemoteHost(url);
+    const hint = remoteHintLine(url || null, host);
+    const hadEmptyShell = /^> 完整记录：\s*$/m.test(out) || /^> 完整记录：\s*<gitlabUrl>\s*$/m.test(out);
+    out = out.replace(/^> 完整记录：\s*$/m, "");
+    out = out.replace(/^> 完整记录：\s*<gitlabUrl>\s*$/m, "");
+    // 若整篇仍无提示行（极端旧稿无 auto:git），再回填一处
+    if (hadEmptyShell && !/完整记录请登录/.test(out)) {
+      out = out.replace(/(##[^\n]*Git 定版[^\n]*\n(?:(?!^## ).*\n)*?)/m, `$1${hint}\n`);
+    }
   }
 
   marked = replaceMarked(out, "sql", sqlInner);
@@ -577,7 +592,6 @@ function skeletonNote(meta) {
 ## ${H2.git}
 
 > 提交列表遵循 \`截断5\`（前 3 后 2；hash 取前 8 位）；合并来源按分支去重全量（\`origin/\` 归一；来源分支功能一句话）。时区：Asia/Shanghai
-> 完整记录：
 
 <!-- auto:git:start -->
 
@@ -709,7 +723,7 @@ function dirExists(root, name) {
   }
 }
 
-function inferServices(root, freeze) {
+export function inferServices(root, freeze) {
   const stats = freeze.pathStats || {};
   const known = ["sms-ai", "sms-ai-web"];
   const rows = [];
@@ -1290,10 +1304,14 @@ function planBundleFiles(freeze) {
   return out;
 }
 
-try {
-  main();
-} catch (e) {
-  console.error(String(e.message || e));
-  process.exit(1);
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  try {
+    main();
+  } catch (e) {
+    console.error(String(e.message || e));
+    process.exit(1);
+  }
 }
 

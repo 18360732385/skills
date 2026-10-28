@@ -47,6 +47,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-rele
 - 默认 `--prior auto`：`docs/releases/archive/` **全量并集**（扁平 `*.md` 与目录包 `{id}/{id}.md`）；优先读同目录 **`artifacts.json`**，否则 md 启发式
 - `--prior-since <YYYY-MM-DD|identity>`：只并入日期/身份 ≥ 该前缀的 archive
 - **线上已存在**（基线树有 migration/键/task）→ `draftSuppressed`
+- **配置/任务键值变更例外**：基线树已有键身份，但增量 `change=changed|removed` → **仍进 `draft`**（标 `priorKeyHit`；值列展示 `旧→新`），不得因键曾出现在基线而静默 suppress
 - **Flyway 命名 alias**：`Vn__….sql` ≡ `Vn_0__….sql`（`_0` 与无子号等价；`_1+` 独立）。prior / 基线按 **canonicalId** 命中 → `suppressReason=rename-alias`（**勿重跑**，不进执行序）
 - **仅清单已收录**（精确 basename，非 rename alias）→ 仍进 `draft`，标 `priorOnly`（漏检优先）
 - `--prior none` 关闭清单侧；或显式单份路径
@@ -64,7 +65,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 | kind | 如何进候选 |
 |---|---|
 | **sql** | 仅 `**/db/migration/Vdddd__*.sql` 或现行 `Vdddd_d__*.sql`（SQL序=`migrationSortKey`）；另附 `docs/db/table/*_change.sql`（对照，非替代执行序） |
-| **config** | **仅** `application-prod.yml` + `config/nacos/application-prod-nacos.yml` 键级 diff → draft；其它 `application*.yml` / `.env` / `*secret*` → `layerSuppressed`（`non-prod-layer`）；**说明**来自 README/AGENTS 表或 yml **键上一行 `#`（优先）/ 行尾 ` #`（兜底）** |
+| **config** | **仅** `application-prod.yml` + `config/nacos/application-prod-nacos.yml` 键级 diff → draft；其它 `application*.yml` / `.env` / `*secret*` → `layerSuppressed`（`non-prod-layer`）；**说明**来自 README/AGENTS 表或 yml **键上一行 `#`（优先）/ 行尾 ` #`（兜底）；叶子无注释时回退继承最近父级 map 注释** |
 | **jobs** | `docs/jobs`、`*Scheduler.java`、`SyncTaskCode`、`SyncTaskMetadataRegistry`；或 yml 键名含 `cron`/`scheduling`；Java diff 抽 `taskCodes`；**交叉** `docs/jobs/tasks` → `jobsHits` |
 | **third-party** | feign / 问学 / 乐享 / dashscope / mcp 路径关键词 |
 
