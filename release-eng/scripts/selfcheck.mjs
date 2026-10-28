@@ -1485,6 +1485,70 @@ OLD
   assert(stillGap.jobsConfigGaps.length === 1, "N14 true cron miss still gaps");
 }
 
+// --- 0.3.31：N14 实仓 docs-hit + 非 cron 真相（cronKey=null 回退 taskCode）---
+{
+  const enrichUrl = pathToFileURL(
+    path.join(skillRoot, "scripts/release-freeze-enrich.mjs")
+  ).href;
+  const enrich = await import(enrichUrl);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "release-eng-n14-truth-"));
+  try {
+    fs.mkdirSync(path.join(work, "docs/jobs/tasks"), { recursive: true });
+    fs.writeFileSync(
+      path.join(work, "docs/jobs/jobs.md"),
+      [
+        "| # | 显示名 | task_code | 真相路径 | engine | mode |",
+        "|---|---|---|---|---|---|",
+        "| 01 | 未支付订单超时取消 | `order-timeout-cancel` | [tasks/01-order-timeout-cancel.md](tasks/01-order-timeout-cancel.md) | Spring | INC |",
+        "",
+      ].join("\n")
+    );
+    fs.writeFileSync(
+      path.join(work, "docs/jobs/tasks/01-order-timeout-cancel.md"),
+      [
+        "| task_code | `order-timeout-cancel` |",
+        "| 显示名 | 未支付订单超时取消 |",
+        "| 配置键 | 非 cron：`fixedDelayString=${app.order.timeout-job.interval-ms:60000}`，`initialDelayString=${app.order.timeout-job.initial-delay-ms:30000}` |",
+        "| cronConfigKey | `timeout-job`（无 cron 表达式） |",
+        "| 默认表达式 | fixedDelay 60000 ms |",
+      ].join("\n")
+    );
+    const e = enrich.loadJobsCatalog(work).byTaskCode.get("order-timeout-cancel");
+    assert(e, "N14 truth catalog entry exists");
+    assert(e.cronKey == null, "N14 truth cronKey stays null (non-cron cell)");
+    assert(e.scheduleType === "fixedDelay", "N14 truth scheduleType=fixedDelay");
+    assert(
+      Array.isArray(e.intervalKeys) &&
+        e.intervalKeys.includes("app.order.timeout-job.interval-ms"),
+      "N14 truth intervalKeys from SpEL"
+    );
+    assert(e.cronConfigKey === "timeout-job", "N14 truth cronConfigKey");
+    const hit = enrich.jobScheduleSlice(e);
+    const { jobsConfigGaps } = enrich.computeJobsConfigGaps({
+      draftJobs: [
+        {
+          taskCode: hit.taskCode,
+          "task / cron 键": hit.cronKey || hit.taskCode,
+          真相: hit.truthPath,
+          说明: hit.displayName,
+          scheduleType: hit.scheduleType,
+          intervalKeys: hit.intervalKeys,
+          cronConfigKey: hit.cronConfigKey,
+        },
+      ],
+      jobsHitsMap: new Map([[hit.taskCode, hit]]),
+      configKeySet: new Set([
+        "app.order.timeout-job.interval-ms",
+        "app.order.timeout-job.initial-delay-ms",
+        "app.order.timeout-job.enabled",
+      ]),
+    });
+    assert(jobsConfigGaps.length === 0, "N14 real-world fixedDelay docs-hit no cron gap");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
 // --- 0.3.30：N1 叶子继承父级 map 注释 ---
 {
   const freezeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-freeze.mjs")).href;

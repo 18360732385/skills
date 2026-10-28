@@ -1,11 +1,11 @@
-# release-eng 验收记录（0.3.30）
+# release-eng 验收记录（0.3.31）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.30**（N11/N12/N7/N13/N14/N1 父级注释）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+当前 **0.3.31**（N11/N12/N7/N13/N14/N1 父级注释）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
 
 ## 0.3.30 增量验收
 

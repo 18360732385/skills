@@ -141,6 +141,58 @@ export function loadSyncTaskCodeMap(root) {
   return map;
 }
 
+/** 真相「配置键 / 默认表达式」单元格是否声明 fixedDelay / 非 cron */
+const JOBS_FIXED_DELAY_RE = /非\s*cron|fixed\s*delay|fixedDelay|fixedDelayString|interval-?ms/i;
+
+/** 从 SpEL / 反引号中抽出配置键（interval / delay / enabled 等） */
+export function extractJobsIntervalKeys(cell) {
+  const keys = [];
+  for (const m of String(cell || "").matchAll(/\$\{([a-zA-Z][a-zA-Z0-9_.-]*?)(?::[^}]*)?\}/g)) {
+    keys.push(m[1]);
+  }
+  for (const m of String(cell || "").matchAll(/`([a-zA-Z][a-zA-Z0-9_.-]+)`/g)) {
+    if (/interval|fixed[-]?delay|delay-ms|enabled/i.test(m[1])) keys.push(m[1]);
+  }
+  return [...new Set(keys)];
+}
+
+/**
+ * 解析 jobs 真相「配置键」单元格。
+ * - 非 cron / fixedDelay：设 scheduleType，抽 intervalKeys，不写 cronKey
+ * - 真 cron：反引号内纯配置键 → cronKey
+ */
+export function parseJobsConfigKeyCell(cell) {
+  const text = String(cell || "").trim();
+  const out = { cronKey: null, scheduleType: null, intervalKeys: [] };
+  if (!text) return out;
+  if (JOBS_FIXED_DELAY_RE.test(text)) {
+    out.scheduleType = "fixedDelay";
+    out.intervalKeys = extractJobsIntervalKeys(text);
+    return out;
+  }
+  const tick = text.match(/`([^`]+)`/);
+  if (tick) {
+    const v = tick[1].trim();
+    if (v && !/=/.test(v) && !/\$\{/.test(v)) out.cronKey = v;
+  }
+  return out;
+}
+
+/** 组装 job / jobsHits 共用调度字段 */
+export function jobScheduleSlice(job) {
+  if (!job) return null;
+  return {
+    taskCode: job.taskCode,
+    displayName: job.displayName,
+    truthPath: job.truthPath,
+    cronKey: job.cronKey ?? null,
+    cronConfigKey: job.cronConfigKey || null,
+    defaultCron: job.defaultCron || null,
+    scheduleType: job.scheduleType || null,
+    intervalKeys: Array.isArray(job.intervalKeys) ? [...job.intervalKeys] : [],
+  };
+}
+
 /**
  * 加载 docs/jobs：索引行 + 各 task 真相中的 配置键 / cronConfigKey / 显示名
  */
@@ -177,6 +229,8 @@ export function loadJobsCatalog(root) {
         cronConfigKey: null,
         enableKey: null,
         defaultCron: null,
+        scheduleType: null,
+        intervalKeys: [],
       };
       jobs.push(entry);
       byTaskCode.set(taskCode, entry);
@@ -207,6 +261,8 @@ export function loadJobsCatalog(root) {
         cronConfigKey: null,
         enableKey: null,
         defaultCron: null,
+        scheduleType: null,
+        intervalKeys: [],
       };
       jobs.push(entry);
       bySlugFile.set(file, entry);
@@ -218,10 +274,17 @@ export function loadJobsCatalog(root) {
     }
     const nameM = text.match(/\|\s*显示名\s*\|\s*([^|]+)\|/);
     if (nameM) entry.displayName = nameM[1].trim();
-    const cronKeyM = text.match(/\|\s*配置键\s*\|\s*`([^`]+)`/);
-    if (cronKeyM) {
-      entry.cronKey = cronKeyM[1].trim();
-      byCronKey.set(entry.cronKey, entry);
+    const cfgCellM = text.match(/\|\s*配置键\s*\|\s*([^|]+)\|/);
+    if (cfgCellM) {
+      const parsed = parseJobsConfigKeyCell(cfgCellM[1]);
+      if (parsed.scheduleType) entry.scheduleType = parsed.scheduleType;
+      if (parsed.intervalKeys.length) {
+        entry.intervalKeys = [...new Set([...(entry.intervalKeys || []), ...parsed.intervalKeys])];
+      }
+      if (parsed.cronKey) {
+        entry.cronKey = parsed.cronKey;
+        byCronKey.set(entry.cronKey, entry);
+      }
     }
     const slugM = text.match(/\|\s*cronConfigKey\s*\|\s*`([^`]+)`/);
     if (slugM) {
@@ -232,8 +295,13 @@ export function loadJobsCatalog(root) {
     if (enableM) {
       entry.enableKey = enableM[1].replace(/\s*（.*$/, "").trim();
     }
-    const defM = text.match(/\|\s*默认表达式\s*\|\s*`([^`]+)`/);
-    if (defM) entry.defaultCron = defM[1].trim();
+    const defCellM = text.match(/\|\s*默认表达式\s*\|\s*([^|]+)\|/);
+    if (defCellM) {
+      const cell = defCellM[1].trim();
+      const tick = cell.match(/`([^`]+)`/);
+      entry.defaultCron = tick ? tick[1].trim() : cell.replace(/\s*（.*$/, "").trim();
+      if (JOBS_FIXED_DELAY_RE.test(cell)) entry.scheduleType = entry.scheduleType || "fixedDelay";
+    }
     const daysM = text.match(/\|\s*defaultDays\s*\|\s*([^|]+)\|/);
     if (daysM) entry.defaultDays = daysM[1].trim();
     const hoursM = text.match(/\|\s*defaultHours\s*\|\s*([^|]+)\|/);
@@ -335,16 +403,7 @@ export function enrichFreezePayload(root, payload, options = {}) {
       ...row,
       description: hit.description || (job ? job.displayName : null),
       descriptionSource: hit.source || (job ? job.truthPath : null),
-      job: job
-        ? {
-            taskCode: job.taskCode,
-            displayName: job.displayName,
-            truthPath: job.truthPath,
-            cronKey: job.cronKey,
-            cronConfigKey: job.cronConfigKey,
-            defaultCron: job.defaultCron,
-          }
-        : null,
+      job: jobScheduleSlice(job),
       prodPath: isProdConfigPath(row.path),
       confidence: rankConfidence("key-diff", job ? "docs-hit" : null, hit.description ? "catalog-hit" : null),
     };
@@ -364,12 +423,20 @@ export function enrichFreezePayload(root, payload, options = {}) {
     const id = job?.taskCode || code;
     if (seenCodes.has(id)) continue;
     seenCodes.add(id);
+    const sliced = jobScheduleSlice(job) || {
+      taskCode: code,
+      displayName: null,
+      truthPath: null,
+      cronKey: null,
+      cronConfigKey: null,
+      defaultCron: null,
+      scheduleType: null,
+      intervalKeys: [],
+    };
     taskCodes.push({
       raw,
+      ...sliced,
       taskCode: job?.taskCode || code,
-      displayName: job?.displayName || null,
-      truthPath: job?.truthPath || null,
-      cronKey: job?.cronKey || null,
       docsHit: Boolean(job),
       confidence: job ? "docs-hit" : "key-diff",
     });
@@ -385,12 +452,7 @@ export function enrichFreezePayload(root, payload, options = {}) {
           ? resolveJobHit(c.taskCodes[0], jobsCatalog, syncEnumMap)
           : null);
       if (job) {
-        next.job = {
-          taskCode: job.taskCode,
-          displayName: job.displayName,
-          truthPath: job.truthPath,
-          cronKey: job.cronKey,
-        };
+        next.job = jobScheduleSlice(job);
         conf = rankConfidence(conf, "docs-hit");
       }
     }
@@ -408,9 +470,7 @@ export function enrichFreezePayload(root, payload, options = {}) {
           ...k,
           description: hit.description || (job ? job.displayName : null),
           descriptionSource: hit.source || (job ? job.truthPath : null),
-          job: job
-            ? { taskCode: job.taskCode, displayName: job.displayName, truthPath: job.truthPath }
-            : null,
+          job: jobScheduleSlice(job),
           confidence: kConf,
         };
       });
@@ -427,10 +487,7 @@ export function enrichFreezePayload(root, payload, options = {}) {
   for (const t of taskCodes) {
     if (t.docsHit) {
       jobsHitsMap.set(t.taskCode, {
-        taskCode: t.taskCode,
-        displayName: t.displayName,
-        truthPath: t.truthPath,
-        cronKey: t.cronKey,
+        ...jobScheduleSlice(t),
         confidence: t.confidence,
       });
     }
@@ -862,8 +919,21 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
   const appendix = [];
   const primarySeen = new Set();
   const appendixSeen = new Set();
+  const keySet = configKeySet instanceof Set ? configKeySet : new Set(configKeySet || []);
 
-  const intervalCompanionCovers = (cronKey, keys) => {
+  const intervalCompanionCovers = (cronKey, keys, hit) => {
+    if (Array.isArray(hit?.intervalKeys)) {
+      for (const ik of hit.intervalKeys) {
+        if (ik && keys.has(ik)) return true;
+      }
+    }
+    const slug = hit?.cronConfigKey ? String(hit.cronConfigKey).trim() : "";
+    if (slug) {
+      for (const k of keys) {
+        const s = String(k);
+        if (s.includes(slug) && /interval|fixed[-]?delay|delay-ms/i.test(s)) return true;
+      }
+    }
     const ck = String(cronKey || "");
     if (!ck) return false;
     const prefix = ck
@@ -871,7 +941,7 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
       .replace(/cron$/i, "")
       .replace(/\.$/, "");
     if (!prefix) return false;
-    for (const k of keys || []) {
+    for (const k of keys) {
       const s = String(k);
       if (s.startsWith(prefix) && /interval|fixed[-]?delay|delay-ms/i.test(s)) return true;
     }
@@ -879,10 +949,18 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
   };
 
   const lookFixedDelayTruth = (hit) => {
-    const blob = [hit?.hint, hit?.displayName, hit?.truthPath, hit?.scheduleType, hit?.schedule]
+    if (String(hit?.scheduleType || "").toLowerCase() === "fixeddelay") return true;
+    const blob = [
+      hit?.hint,
+      hit?.displayName,
+      hit?.truthPath,
+      hit?.scheduleType,
+      hit?.schedule,
+      hit?.defaultCron,
+    ]
       .filter(Boolean)
       .join(" ");
-    return /fixed\s*delay|fixedDelay|interval-?ms|非\s*cron/i.test(blob);
+    return JOBS_FIXED_DELAY_RE.test(blob);
   };
 
   const pushGap = (list, seen, hit) => {
@@ -890,8 +968,8 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
     if (!cronKey) return;
     const id = hit.taskCode || cronKey;
     if (seen.has(id)) return;
-    if (configKeySet.has(cronKey)) return;
-    if (intervalCompanionCovers(cronKey, configKeySet)) return;
+    if (keySet.has(cronKey)) return;
+    if (intervalCompanionCovers(cronKey, keySet, hit)) return;
     if (lookFixedDelayTruth(hit)) return;
     seen.add(id);
     list.push({
@@ -920,11 +998,22 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
         cronKey,
         truthPath: row.真相 || row.truthPath || null,
         displayName: row.说明 || row.displayName || null,
+        scheduleType: row.scheduleType || null,
+        cronConfigKey: row.cronConfigKey || null,
+        intervalKeys: row.intervalKeys || [],
+        defaultCron: row.defaultCron || null,
       };
     pushGap(gaps, primarySeen, {
       ...hit,
       cronKey: cronKey || hit.cronKey || null,
       taskCode: taskCode || hit.taskCode || null,
+      scheduleType: hit.scheduleType || row.scheduleType || null,
+      cronConfigKey: hit.cronConfigKey || row.cronConfigKey || null,
+      intervalKeys:
+        (hit.intervalKeys && hit.intervalKeys.length ? hit.intervalKeys : null) ||
+        row.intervalKeys ||
+        [],
+      defaultCron: hit.defaultCron || row.defaultCron || null,
     });
   }
 
@@ -1124,6 +1213,13 @@ function attachJobScheduleFields(row, job, configKeys) {
     enableKey: j.enableKey || null,
     defaultDays: j.defaultDays ?? null,
     defaultHours: j.defaultHours ?? null,
+    scheduleType: j.scheduleType || row.scheduleType || null,
+    cronConfigKey: j.cronConfigKey || row.cronConfigKey || null,
+    intervalKeys: Array.isArray(j.intervalKeys)
+      ? j.intervalKeys
+      : Array.isArray(row.intervalKeys)
+        ? row.intervalKeys
+        : [],
   };
 }
 
