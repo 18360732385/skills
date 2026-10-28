@@ -1,6 +1,6 @@
 # release-eng 版本清单（权威号）
 
-version: "0.3.28"
+version: "0.3.29"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false
@@ -8,9 +8,10 @@ description: >-
   发版仪式 skill：prepare/resume/audit/seal；变更对象 + 双源去重 + artifacts.json；
   双轨研判（release-ai-track prompt/merge）；首次分层；逾期硬闸；prior 并集；
   Asia/Shanghai；截断5（前3后2、hash前8位）；摘要分支级聚合并入元信息；来源分支功能一句话（origin/ 归一去重）；
-  版本身份=发版分支归一化（日期解耦）；jobs 汇总单文件；yml 注释键上一行；目录包仅本版新增制品（不含 candidates）；键级diff；note-merge；seal-check；prod。
-  0.3.28：sql/refs + release-V{yyMMdd}-DDL|DML 整理与静态校验（sql-classify/sql-bundle）；
-  继承 0.3.27（去 notes/）；非 harness land。
+  版本身份=发版分支归一化（日期解耦）；jobs 汇总单文件；yml 注释键上一行优先/行尾兜底；目录包仅本版新增制品（不含 candidates）；键级diff；note-merge；seal-check；seal 一键；prod。
+  0.3.29：N1 上一行注释；N2 SyncTaskCode 可发现+无强制冒号；N3/N4 draft 可读性/剔父级；
+  N7 模块启发；N8 首次压缩问卷；N9 release-seal；N10 stripBom；D4 文案；
+  继承 0.3.28（sql/refs）；非 harness land。
 
 modes_dir: modes/
 modes:
@@ -30,6 +31,7 @@ scripts:
   - scripts/release-sql-bundle.mjs
   - scripts/release-note-merge.mjs
   - scripts/release-seal-check.mjs
+  - scripts/release-seal.mjs
   - scripts/selfcheck.mjs
 
 fixtures: fixtures/docs/releases/

@@ -1,18 +1,31 @@
-# release-eng 验收记录（0.3.28）
+# release-eng 验收记录（0.3.29）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.28**（sql/refs + DDL/DML 整理与静态校验）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+当前 **0.3.29**（N1–N4/N7–N10 实战缺陷修复 + seal 一键）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+
+## 0.3.29 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 有（271/271） |
+| manifest / 文档钉头 **0.3.29**；`sync-skill-version --check` | 有 |
+| N1 `flattenYamlKeys` 上一行优先 / 行尾兜底 / 空行隔离 | 有（selfcheck） |
+| N2 `findSyncTaskCodeFiles` + 无冒号 task_code | 有（selfcheck） |
+| N4 draft/changeObjects 剔除父级键 | 有（selfcheck） |
+| N9 `release-seal.mjs` dry-run + index/ARCHIVE helpers | 有（selfcheck） |
+| N10 `stripBom` | 有（selfcheck） |
+| 仍标明非 harness land | 有 |
 
 ## 0.3.28 增量验收
 
 | 检查 | 结果 |
 |---|---|
-| `node scripts/selfcheck.mjs` exit 0 | 有（248/248） |
-| manifest / 文档钉头 **0.3.28**；`sync-skill-version --check` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有（248/248，历史） |
+| manifest / 文档钉头 **0.3.28**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.29） |
 | `classifyMigrationKindByFilename` 双轨 + 旧四位子号不误判 | 有（selfcheck） |
 | `runSqlBundle` 生成 `release-V*-DDL\|DML`；缺侧不落盘；篡改检测 | 有（selfcheck） |
 | note-merge → `sql/refs/` + `sqlBundles`；seal-check 硬校验 | 有 |

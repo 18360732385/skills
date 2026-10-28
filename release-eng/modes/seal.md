@@ -21,15 +21,25 @@ node .cursor/skills/release-eng/scripts/release-seal-check.mjs --root . --note d
    - warning 可继续，须在 WritePlan 白话摘要列出  
    - 目录包须含 **`artifacts.json`**（与 md SQL 主键对齐）；若有 `sql/refs/` 则须有 **`sqlBundles`** 且与整理文件哈希一致；配置项/artifacts **允许密文**，seal-check **不**因密文失败  
 3. [write-plan.md](write-plan.md) 展示将改路径（状态字段、`<identity>/`→`archive/{identity}/`、`releases.md`、`ARCHIVE.md`）+ seal-check 结论 → **确认词之后**才执行下列动作  
-4. 文首状态改为 `已上线`；填写上线日期与执行人  
-5. `git mv`：**整夹** `docs/releases/<identity>/` → `docs/releases/archive/<identity>/`（含 md + `sql/`（refs + 整理文件）/`config/`/`jobs/`；identity = 发版分支名归一化；旧仓若仍在 `notes/<identity>/` 则从该处 mv）  
-6. 从 [releases.md](../../../../docs/releases/releases.md) 进行中表移除该行  
-7. 追加到 [ARCHIVE.md](../../../../docs/releases/ARCHIVE.md)  
+4. 【推荐】脚本一键（确认词后 `--apply`；默认 dry-run 只打计划）：
+
+```bash
+# 先看计划
+node .cursor/skills/release-eng/scripts/release-seal.mjs --root . --note docs/releases/<identity>/<identity>.md --online-date YYYY-MM-DD --executor <姓名> --dry-run
+# 或：node scripts/release.mjs seal -- --root . --note … --online-date … --executor … --dry-run
+
+# 确认词后写盘
+node .cursor/skills/release-eng/scripts/release-seal.mjs --root . --note docs/releases/<identity>/<identity>.md --online-date YYYY-MM-DD --executor <姓名> --apply
+```
+
+   脚本会：状态→已上线、填上线日期/执行人、整夹 mv→`archive/<identity>/`、进行中表删行、`ARCHIVE.md` 追加。非已定版须加 `--force`（与 seal-check 一致）。  
+
+5. 回退（脚本不可用时手工）：文首状态改为 `已上线`；填写上线日期与执行人；`git mv` 整夹 `docs/releases/<identity>/` → `docs/releases/archive/<identity>/`；从 releases.md 进行中表移除该行；追加到 ARCHIVE.md。  
 
 ## Done
 
 - [ ] bootstrap Done（四路径均存在：releases.md · templates · archive/ · ARCHIVE.md）  
 - [ ] seal-check 已跑：通过，或用户强制 + `--force` 且警告已展示  
-- [ ] WritePlan 已获确认（或预授权）后才发生 mv/索引变更  
+- [ ] WritePlan 已获确认（或预授权）后才发生 mv/索引变更（`--apply`）  
 - [ ] `docs/releases/` 根下无该进行中目录包；`archive/` 有该目录包  
 - [ ] 进行中表无该行；`ARCHIVE.md` 有对应行  

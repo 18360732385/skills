@@ -5,6 +5,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.3.29](../_log/release-eng/0.3/0.3.29.md) | 2026-10-28 | N1–N4/N7–N10：注释采集、SyncTaskCode 可发现、draft 剔父级、seal 一键、BOM、首次问卷 |
 | [0.3.28](../_log/release-eng/0.3/0.3.28.md) | 2026-10-28 | sql/refs + release-V*-DDL\|DML 整理与静态校验（sql-classify/sql-bundle） |
 | [0.3.27](../_log/release-eng/0.3/0.3.27.md) | 2026-10-28 | 去掉 notes/；进行中目录包直接挂在 docs/releases/<slug>/ |
 | [0.3.26](../_log/release-eng/0.3/0.3.26.md) | 2026-10-26 | P2：mergeSources noise 折叠；摘要跳过环境支；SQL 包体 40/100 warning |

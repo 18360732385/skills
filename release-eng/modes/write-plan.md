@@ -4,7 +4,7 @@
 
 ## 展示格式
 
-顺序强制：① 白话摘要 → ② 技术摘要 → ③ 路径表 → ④ **`draft` 预览**（三章表）→ ⑤ Git 定版摘要（截断5 / mergeSources / GitLab）。
+顺序强制：① 白话摘要 → ② 技术摘要 → ③ 路径表 → ④ **`draft` 预览**（三章表）→ ⑤ Git 定版摘要（截断5 / mergeSources / 远端浏览链接按 `remoteHost`）。
 
 ### 白话摘要（强制）
 
@@ -15,8 +15,8 @@
 - 分支对: <发版> vs <基线|无（首次发版）>（origin 优先）
 - 版本身份: <slug>（= 发版分支名归一化：去 origin/ 前缀、/ → -）
 - 本轮: 新建 | 合并刷新自动段 | 归档
-- Git 表: 提交截断5（前3后2、hash 前 8 位）；合并来源按分支去重（origin/ 归一）、来源分支功能一句话（完整见 GitLab 链接）；时区 Asia/Shanghai
-- 摘要: 元信息内 1～5 项（分支级聚合）；配置 yml 键上一行 `#` 中文注释
+- Git 表: 提交截断5（前3后2、hash 前 8 位）；合并来源按分支去重（origin/ 归一）、来源分支功能一句话（完整见 GitLab|GitHub 链接，按 origin）；时区 Asia/Shanghai
+- 摘要: 元信息内 1～5 项（分支级聚合）；配置 yml 键上一行 `#`（采集亦可来自行尾）
 - 目录包: docs/releases/{identity}/（md + sql/refs 原件 + release-V*-DDL|DML 整理 + config + jobs/README.md；附属为相对 md 链接；无 notes/）
 - 目标 profile: prod（SQL / 配置 / 定时任务）；yml 配置按 YAML
 - draft: sql/config/jobs（未上线）；suppressed 行数（baseline/layer）；aiTrack: stub|ready|filled|skipped；aiNoise 默认不勾数
@@ -78,7 +78,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --base <base
 
 ### Git 定版摘要
 
-贴截断后的提交/合并来源要点 + GitLab 链接（来自 freeze md/json 的 `*Display` / `gitlabUrl`）。
+贴截断后的提交/合并来源要点 + 远端浏览链接（来自 freeze md/json 的 `*Display` / `gitlabUrl` + `remoteHost`）。
 
 ## 确认闸门（强制）
 

@@ -70,6 +70,7 @@ const SCRIPTS = [
   "scripts/release-sql-bundle.mjs",
   "scripts/release-note-merge.mjs",
   "scripts/release-seal-check.mjs",
+  "scripts/release-seal.mjs",
   "scripts/selfcheck.mjs",
 ];
 
@@ -260,7 +261,10 @@ const {
   buildRemoteBrowseUrl,
   remoteHintLine,
   upsertReleasesIndexRow,
+  removeReleasesIndexRow,
+  appendArchiveRow,
   parseReleasesIndexHeader,
+  stripBom,
   isMigrationSql,
   migrationSortKey,
   migrationCanonicalId,
@@ -286,6 +290,9 @@ assert(typeof detectRemoteHost === "function", "export detectRemoteHost");
 assert(typeof buildRemoteBrowseUrl === "function", "export buildRemoteBrowseUrl");
 assert(typeof remoteHintLine === "function", "export remoteHintLine");
 assert(typeof upsertReleasesIndexRow === "function", "export upsertReleasesIndexRow");
+assert(typeof removeReleasesIndexRow === "function", "export removeReleasesIndexRow");
+assert(typeof appendArchiveRow === "function", "export appendArchiveRow");
+assert(typeof stripBom === "function", "export stripBom");
 assert(typeof isMigrationSql === "function", "export isMigrationSql");
 assert(typeof migrationCanonicalId === "function", "export migrationCanonicalId");
 assert(typeof migrationAliasSet === "function", "export migrationAliasSet");
@@ -1085,6 +1092,230 @@ assert(/release\.mjs/.test(verify), "VERIFY mentions release.mjs");
     assert(r.status === 1, "P0 seal-check non-prod config exit 1");
     const out = `${r.stdout || ""}${r.stderr || ""}`;
     assert(/非 prod/.test(out), "P0 seal-check reports 非 prod");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.29：N1 flattenYamlKeys 上一行注释 ---
+{
+  const freezeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-freeze.mjs")).href;
+  const freezeMod = await import(freezeUrl);
+  assert(typeof freezeMod.flattenYamlKeys === "function", "export flattenYamlKeys");
+  const map = freezeMod.flattenYamlKeys(`
+# 上一行中文说明
+app.timeout: 30
+app.inline: 1 # 行尾说明
+
+# 会被空行隔断
+
+app.afterBlank: 2
+
+# 上一行优先
+app.both: 9 # 行尾应输
+`);
+  assert(map.get("app.timeout")?.comment === "上一行中文说明", "N1 previous-line comment");
+  assert(map.get("app.inline")?.comment === "行尾说明", "N1 trailing comment");
+  assert(map.get("app.afterBlank")?.comment === "", "N1 blank clears pending");
+  assert(map.get("app.both")?.comment === "上一行优先", "N1 previous wins over trailing");
+}
+
+// --- 0.3.29：N2 SyncTaskCode 发现 + 无冒号 ---
+{
+  const enrichUrl = pathToFileURL(
+    path.join(skillRoot, "scripts/release-freeze-enrich.mjs")
+  ).href;
+  const enrich = await import(enrichUrl);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-n2-"));
+  try {
+    const javaDir = path.join(work, "svc", "enums");
+    fs.mkdirSync(javaDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(javaDir, "SyncTaskCode.java"),
+      `public enum SyncTaskCode {
+  ORDER_TIMEOUT("order-timeout-cancel"),
+  LEGACY("sms:legacy-job");
+}`
+    );
+    const files = enrich.findSyncTaskCodeFiles(work);
+    assert(
+      files.some((f) => /SyncTaskCode\.java$/.test(f)),
+      "N2 findSyncTaskCodeFiles discovers non-sms-ai path"
+    );
+    const map = enrich.loadSyncTaskCodeMap(work);
+    assert(map.get("ORDER_TIMEOUT") === "order-timeout-cancel", "N2 no-colon code");
+    assert(map.get("LEGACY") === "sms:legacy-job", "N2 colon code still ok");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.29：N4 父级键不进 draft/changeObjects ---
+{
+  const enrichUrl = pathToFileURL(
+    path.join(skillRoot, "scripts/release-freeze-enrich.mjs")
+  ).href;
+  const enrich = await import(enrichUrl);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-n4-"));
+  try {
+    const out = enrich.enrichFreezePayload(work, {
+      candidates: [],
+      configKeys: [
+        { key: "app", path: "application-prod.yml", value: "", isLeaf: false, change: "added" },
+        {
+          key: "app.timeout",
+          path: "application-prod.yml",
+          value: "30",
+          isLeaf: true,
+          change: "added",
+          comment: "超时",
+        },
+      ],
+      jobKeys: [],
+      taskCodes: [],
+    });
+    assert(
+      (out.draft?.config || []).every((r) => r.键 !== "app"),
+      "N4 draft.config excludes parent"
+    );
+    assert(
+      (out.draft?.config || []).some((r) => r.键 === "app.timeout"),
+      "N4 draft.config keeps leaf"
+    );
+    assert(
+      !(out.changeObjects || []).some((o) => o.kind === "config" && o.stableId === "app"),
+      "N4 changeObjects excludes parent"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.29：N10 stripBom ---
+{
+  assert(stripBom("\uFEFF{\"a\":1}") === '{"a":1}', "N10 stripBom removes FEFF");
+  assert(stripBom("plain") === "plain", "N10 stripBom plain unchanged");
+}
+
+// --- 0.3.29：N9 seal dry-run + index/ARCHIVE helpers ---
+{
+  const skeleton = `# idx
+
+## 进行中
+
+| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |
+|---|---|---|---|---|---|
+| 2026-10-22 | release-V261028 | a→b | 已定版 | release-V261028/x.md | alice |
+`;
+  const rem = removeReleasesIndexRow(skeleton, "release-V261028");
+  assert(rem.removed, "N9 removeReleasesIndexRow removed");
+  assert(!/release-V261028/.test(rem.text), "N9 index row gone");
+
+  const arch = appendArchiveRow("", {
+    date: "2026-10-22",
+    identity: "release-V261028",
+    branchPair: "a→b",
+    onlineDate: "2026-10-28",
+    executor: "bob",
+    noteRel: "./archive/release-V261028/release-V261028.md",
+  });
+  assert(arch.appended && /release-V261028/.test(arch.row), "N9 appendArchiveRow");
+
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-n9-"));
+  try {
+    const id = "release-N9";
+    const noteDir = path.join(work, "docs/releases", id);
+    fs.mkdirSync(path.join(noteDir, "config"), { recursive: true });
+    fs.mkdirSync(path.join(work, "docs/releases/archive"), { recursive: true });
+    const md = `# 发版单：${id}
+
+> 状态：已定版
+> 发版日期：2026-10-22
+> 发版分支：release/N9 · 基线分支：无
+> 负责人：alice
+
+## 一、元信息
+
+| 项 | 值 |
+|---|---|
+| 版本身份 | ${id} |
+| 发版日期 | 2026-10-22 |
+| 状态 | 已定版 |
+| 上线日期 | （seal 时填；可与发版日期相同） |
+| 上线执行人 | （seal 时填） |
+
+## 二、Git 定版
+
+| hash | author | date | subject |
+|---|---|---|---|
+| abc | a | 2026-10-01 | x |
+
+## 四、数据库与 SQL
+
+| 执行序 | 脚本/版本 | 动作 | 目标 profile | 已确认 |
+|---|---|---|---|---|
+| — | 无 | — | prod | — |
+
+## 五、配置项
+
+| 来源 | 键 | 说明 | 值 | 目标 profile |
+|---|---|---|---|---|
+| — | 无 | — | — | prod |
+
+## 六、定时任务
+
+| task_code | 名称 | cron | 目标 profile |
+|---|---|---|---|
+| — | 无 | — | prod |
+`;
+    fs.writeFileSync(path.join(noteDir, `${id}.md`), md);
+    fs.writeFileSync(
+      path.join(noteDir, "artifacts.json"),
+      JSON.stringify({
+        identity: id,
+        version: 1,
+        sql: [],
+        config: [],
+        jobs: [],
+        changeObjects: [],
+        aiTrack: {},
+      })
+    );
+    fs.writeFileSync(
+      path.join(work, "docs/releases/releases.md"),
+      `# idx\n\n## 进行中\n\n| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |\n|---|---|---|---|---|---|\n| 2026-10-22 | ${id} | x | 已定版 | ${id}/${id}.md | alice |\n`
+    );
+    fs.writeFileSync(
+      path.join(work, "docs/releases/ARCHIVE.md"),
+      `# ARCHIVE\n\n| 日期 | 版本身份 | 分支对 | 上线日期 | 执行人 | 发版单 |\n|---|---|---|---|---|---|\n| — | （暂无） | — | — | — | — |\n`
+    );
+    const bin = path.join(skillRoot, "scripts/release-seal.mjs");
+    const dry = spawnSync(
+      process.execPath,
+      [
+        bin,
+        "--root",
+        work,
+        "--note",
+        `docs/releases/${id}/${id}.md`,
+        "--online-date",
+        "2026-10-28",
+        "--executor",
+        "bob",
+        "--force",
+        "--dry-run",
+      ],
+      { encoding: "utf8", maxBuffer: 2 * 1024 * 1024 }
+    );
+    assert(dry.status === 0, "N9 seal dry-run exit 0");
+    let dryJson = {};
+    try {
+      dryJson = JSON.parse(dry.stdout || "{}");
+    } catch {
+      dryJson = {};
+    }
+    assert(dryJson.dryRun === true, "N9 seal dry-run flag");
+    assert(Array.isArray(dryJson.actions) && dryJson.actions.length >= 3, "N9 seal plan actions");
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }

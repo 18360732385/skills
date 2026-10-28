@@ -18,6 +18,7 @@
 import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import {
   enrichFreezePayload,
   extractTaskCodesFromJavaDiff as enrichExtractTaskCodes,
@@ -212,31 +213,49 @@ function isJobsKey(keyPath) {
 }
 
 /**
- * 轻量 YAML 扁平化（无外部依赖）。跳过列表项行与纯注释。
- * 值存 `{ value, comment }`；多行 / 锚点不解析——漏检时仍保留 path 级候选。
+ * 轻量 YAML 扁平化（无外部依赖）。
+ * 说明注释：键上一行 `# …` 优先；否则同行行尾 ` # …`。空行清空上一行缓存（防跨键误挂）。
+ * 值存 `{ value, comment, isLeaf }`；多行 / 锚点不解析——漏检时仍保留 path 级候选。
  */
-function flattenYamlKeys(text) {
+export function flattenYamlKeys(text) {
   const map = new Map();
   if (!text) return map;
   const stack = [];
+  let pendingComment = "";
   for (const raw of text.split(/\r?\n/)) {
-    if (!raw.trim() || raw.trim().startsWith("#")) continue;
-    if (/^\s*-\s/.test(raw)) continue;
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      pendingComment = "";
+      continue;
+    }
+    if (trimmed.startsWith("#")) {
+      pendingComment = trimmed.replace(/^#+\s*/, "").trim();
+      continue;
+    }
+    if (/^\s*-\s/.test(raw)) {
+      pendingComment = "";
+      continue;
+    }
     const m = raw.match(/^(\s*)([^:#\s][^:]*?)\s*:\s*(.*?)\s*$/);
-    if (!m) continue;
+    if (!m) {
+      pendingComment = "";
+      continue;
+    }
     const indent = m[1].length;
     const key = m[2].trim().replace(/^['"]|['"]$/g, "");
     let val = m[3];
-    let comment = "";
+    let trailing = "";
     if (val.startsWith('"') || val.startsWith("'")) {
       val = val.replace(/^['"]|['"]$/g, "");
     } else {
       const hash = val.indexOf(" #");
       if (hash >= 0) {
-        comment = val.slice(hash + 2).trim();
+        trailing = val.slice(hash + 2).trim();
         val = val.slice(0, hash).trim();
       }
     }
+    const comment = pendingComment || trailing;
+    pendingComment = "";
     while (stack.length && stack[stack.length - 1].indent >= indent) stack.pop();
     stack.push({ indent, key });
     const full = stack.map((s) => s.key).join(".");
@@ -677,7 +696,7 @@ function buildFirstReleaseLayeredCandidates(root, head, files) {
 
   for (const [name, code] of syncEnumMap.entries()) {
     if (!/^[A-Z][A-Z0-9_]+$/.test(name)) continue;
-    const taskCode = typeof code === "string" && code.includes(":") ? code : null;
+    const taskCode = typeof code === "string" && code.trim() ? code.trim() : null;
     if (!taskCode) continue;
     taskCodes.add(taskCode);
   }
@@ -750,9 +769,13 @@ function computeBaselinePresence(root, base, { candidates, configKeys, jobKeys, 
   const syncPathCandidates = (candidates || [])
     .map((c) => c.path)
     .filter((p) => /SyncTaskCode/i.test(p || ""));
+  const discoveredSync = loadSyncTaskCodeMap(root);
+  const discoveredFiles = Array.isArray(discoveredSync.files) ? discoveredSync.files : [];
   let syncBaseText = "";
   if (syncPathCandidates.length) {
     syncBaseText = gitShow(root, base, syncPathCandidates[0]) || "";
+  } else if (discoveredFiles.length) {
+    syncBaseText = gitShow(root, base, discoveredFiles[0]) || "";
   } else {
     syncBaseText =
       gitShow(root, base, "sms-ai/src/main/java/com/juneyaoair/msp/sms/ai/domain/enums/sync/SyncTaskCode.java") || "";
@@ -1102,4 +1125,7 @@ function main() {
   if (data.overdueHardGate) process.exit(1);
 }
 
-main();
+const isMain =
+  process.argv[1] &&
+  path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
+if (isMain) main();

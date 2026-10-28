@@ -13,8 +13,13 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { stripBom } from "./release-format.mjs";
 
 const NEED_AI_CONF = new Set(["path"]);
+
+function readJsonFile(filePath) {
+  return JSON.parse(stripBom(fs.readFileSync(filePath, "utf8")));
+}
 
 function parseArgs(argv) {
   const out = {
@@ -319,7 +324,7 @@ function main() {
   const freezePath = path.isAbsolute(args.freezeJson)
     ? args.freezeJson
     : path.join(args.root, args.freezeJson);
-  const freeze = JSON.parse(fs.readFileSync(freezePath, "utf8"));
+  const freeze = readJsonFile(freezePath);
   const items = collectAiCandidates(freeze);
 
   const emit = (text) => {
@@ -374,7 +379,7 @@ function main() {
       process.exit(0);
     }
     const aiPath = path.isAbsolute(args.aiJson) ? args.aiJson : path.join(args.root, args.aiJson);
-    const aiPayload = JSON.parse(fs.readFileSync(aiPath, "utf8"));
+    const aiPayload = readJsonFile(aiPath);
     const merged = mergeAiTrack(freeze, aiPayload);
     emit(JSON.stringify(merged, null, 2));
     process.exit(0);

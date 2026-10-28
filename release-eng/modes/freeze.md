@@ -64,7 +64,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 | kind | 如何进候选 |
 |---|---|
 | **sql** | 仅 `**/db/migration/Vdddd__*.sql` 或现行 `Vdddd_d__*.sql`（SQL序=`migrationSortKey`）；另附 `docs/db/table/*_change.sql`（对照，非替代执行序） |
-| **config** | **仅** `application-prod.yml` + `config/nacos/application-prod-nacos.yml` 键级 diff → draft；其它 `application*.yml` / `.env` / `*secret*` → `layerSuppressed`（`non-prod-layer`）；**说明**来自 README/AGENTS 表或 yml 行尾注释 |
+| **config** | **仅** `application-prod.yml` + `config/nacos/application-prod-nacos.yml` 键级 diff → draft；其它 `application*.yml` / `.env` / `*secret*` → `layerSuppressed`（`non-prod-layer`）；**说明**来自 README/AGENTS 表或 yml **键上一行 `#`（优先）/ 行尾 ` #`（兜底）** |
 | **jobs** | `docs/jobs`、`*Scheduler.java`、`SyncTaskCode`、`SyncTaskMetadataRegistry`；或 yml 键名含 `cron`/`scheduling`；Java diff 抽 `taskCodes`；**交叉** `docs/jobs/tasks` → `jobsHits` |
 | **third-party** | feign / 问学 / 乐享 / dashscope / mcp 路径关键词 |
 
@@ -86,8 +86,8 @@ audit【推荐】：`--format audit-json`。一屏摘要：`--format summary`。
 ## `首次发版-layered`
 
 - SQL：全量 `db/migration/V*__*.sql` 进 draft（SQL序）  
-- 配置：`application-prod.yml` 全键 **+ `config/nacos/application-prod-nacos.yml` overlay 键**（标 `source`）进 draft；`flattenYamlKeys` 标 `isLeaf`，父级键不计「说明待补」  
-- 任务：`SyncTaskCode` 枚举 task_code 进 draft  
+- 配置：`application-prod.yml` 全键 **+ `config/nacos/application-prod-nacos.yml` overlay 键**（标 `source`）进 draft；`flattenYamlKeys` 标 `isLeaf`，**父级键不进 draft.config / changeObjects**，也不计「说明待补」；注释采集=键上一行 `#` 优先，行尾 ` #` 兜底  
+- 任务：仓内发现的 `SyncTaskCode.java` 枚举 task_code 进 draft（不强制 code 含 `:`）  
 - 其余 config/jobs 路径：`layerSuppressed` → `draftSuppressed`  
 - 仍输出 `inventory.migrationRange` 供问卷确认起迁  
 - **TODO 占位扫描**：prod 配置值 `TODO_*` 进 `todoPlaceholders`（上线前必填）  
@@ -104,7 +104,7 @@ audit【推荐】：`--format audit-json`。一屏摘要：`--format summary`。
 | > 5 | 前 3 行 + 一行 `…`（省略 N 条）+ 后 2 行 |
 
 **hash 列展示前 8 位**（截断自 `git %H`，如 `0afa1ab7`）。  
-省略行下方：`完整记录请登录 GitLab|GitHub|远端仓库 查看：<url>`（按 `remoteHost` / origin）。  
+省略行下方：`完整记录请登录 GitLab|GitHub|远端仓库 查看：<url>`（按 freeze `remoteHost` / origin；字段名仍可能叫 `gitlabUrl`）。  
 JSON 可保留全量 hash；写入发版单用 `commitsDisplay` 或 md。
 
 ## `mergeSources`（合并来源去重全量）
@@ -150,7 +150,7 @@ sql 候选按 migration **版本号数字升序**。
 - [ ] Git 二表可写入发版单「Git 定版」（提交已 `截断5` 前3后2 + hash 前 8 位；合并来源含来源分支功能一句话中文 + 远端宿主提示；时区 Asia/Shanghai）  
 - [ ] `releaseSummaryLines`（≤5，分支级聚合）可供元信息内上线内容摘要  
 - [ ] 增量：`candidates` 能回指路径；sql 已 `SQL序`；带 `confidence`；`draft`/`draftSuppressed`/`priorRelease` 可读  
-- [ ] 配置键尽量带 `description`（落单时写入 yml 键上一行 `#` 注释）；任务键尽量挂 `docs/jobs`；prior 命中项已标记 `alreadyReleased`  
+- [ ] 配置键尽量带 `description`（采集自键上一行 `#` 或行尾；落单时仍写键上一行 `#`）；任务键尽量挂 `docs/jobs`；prior 命中项已标记 `alreadyReleased`  
 - [ ] 首次发版：`candidatePolicy=first-release-layered`；分层 draft 可读；`inventory` 可供问卷  
 - [ ] 本轮已处于 push-gate Done（通过）之后；若 `overdueHardGate` 则已中止或书面跳过  
 - [ ] 【推荐】已用 `release-freeze.mjs`（或注明回退手工）  

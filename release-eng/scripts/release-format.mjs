@@ -21,6 +21,12 @@ export function shortCommitHash(hash) {
   return h.length > COMMIT_HASH_DISPLAY_LEN ? h.slice(0, COMMIT_HASH_DISPLAY_LEN) : h;
 }
 
+/** 去掉 UTF-8 BOM（PowerShell 重定向 / 部分编辑器易引入） */
+export function stripBom(text) {
+  const s = String(text ?? "");
+  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+}
+
 /**
  * 版本身份/目录包名派生：发版分支名（去 refs 与 origin/ 前缀，`/` → `-`）。
  * 例：`origin/release/V260827` → `release-V260827`。
@@ -498,20 +504,21 @@ export function formatConfigAsYamlMd(configRows) {
 
 /**
  * 从 AGENTS.md / README 抽一句话模块说明。
+ * moduleKey 为目录名或「其它」；优先读该模块下文档，否则仓根。
  */
 export function loadModuleBlurb(root, moduleKey) {
-  const candidates =
-    moduleKey === "sms-ai"
-      ? ["sms-ai/AGENTS.md", "sms-ai/README.md"]
-      : moduleKey === "sms-ai-web"
-        ? ["sms-ai-web/AGENTS.md", "sms-ai-web/README.md"]
-        : ["AGENTS.md", "README.md"];
+  const key = String(moduleKey || "").replace(/\/$/, "");
+  const candidates = [];
+  if (key && key !== "其它" && key !== "docs") {
+    candidates.push(`${key}/AGENTS.md`, `${key}/README.md`);
+  }
+  candidates.push("AGENTS.md", "README.md");
 
   for (const rel of candidates) {
     const full = path.join(root, rel);
     let text;
     try {
-      text = fs.readFileSync(full, "utf8");
+      text = stripBom(fs.readFileSync(full, "utf8"));
     } catch {
       continue;
     }
@@ -522,9 +529,10 @@ export function loadModuleBlurb(root, moduleKey) {
     const first = text.match(/^#\s+.+\n+>\s*(.+)$/m) || text.match(/^#\s+.+\n\n([^\n#]+)/m);
     if (first) return oneSentence(first[1]);
   }
-  if (moduleKey === "sms-ai") return "后端 AI Agent 脚手架服务";
-  if (moduleKey === "sms-ai-web") return "前端管理与对话 SPA";
-  return "仓库其它路径（文档、脚手架、配置等）";
+  if (key === "sms-ai") return "后端 AI Agent 脚手架服务";
+  if (key === "sms-ai-web") return "前端管理与对话 SPA";
+  if (key === "其它" || !key) return "仓库其它路径（文档、脚手架、配置等）";
+  return `${key} 模块`;
 }
 
 function oneSentence(s) {
@@ -814,19 +822,21 @@ export function parseReleasesIndexHeader(headerLine) {
     const h = cells[i];
     if (!h || /^-+$/.test(h)) continue;
     if (/版本身份/.test(h)) roles.identity = i;
+    else if (/上线日期/.test(h)) roles.onlineDate = i;
     else if (/发版日期|^日期$/.test(h)) roles.date = i;
     else if (/分支对/.test(h)) roles.branchPair = i;
     else if (/^状态$/.test(h)) roles.status = i;
     else if (/发版单|路径/.test(h)) roles.note = i;
-    else if (/负责人/.test(h)) roles.owner = i;
+    else if (/负责人|执行人/.test(h)) roles.owner = i;
   }
   return roles;
 }
 
 function buildIndexRowFromRoles(roles, values, colCount) {
-  const { date, identity, branchPair, status, noteRel, owner } = values;
+  const { date, identity, branchPair, status, noteRel, owner, onlineDate } = values;
   const byRole = {
     date: date || "—",
+    onlineDate: onlineDate || date || "—",
     identity,
     branchPair: branchPair || "—",
     status: status || "已定版",
@@ -934,6 +944,161 @@ export function upsertReleasesIndexRow(
   const after = lines.slice(sectionEnd);
   const mid = [...body, ""];
   return { text: [...before, ...mid, ...after].join("\n"), row, updated: true };
+}
+
+/**
+ * 从 docs/releases/releases.md「进行中」表删除指定版本身份行。
+ * @returns {{ text: string, removed: boolean, row: string|null }}
+ */
+export function removeReleasesIndexRow(indexText, identity) {
+  const text = String(indexText || "");
+  const id = String(identity || "").trim();
+  if (!id) return { text, removed: false, row: null };
+  const lines = text.split(/\r?\n/);
+  let sectionStart = -1;
+  let tableHeader = -1;
+  let tableSep = -1;
+  let sectionEnd = lines.length;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s*进行中/.test(lines[i].trim())) {
+      sectionStart = i;
+      break;
+    }
+  }
+  if (sectionStart < 0) return { text, removed: false, row: null };
+
+  for (let i = sectionStart + 1; i < lines.length; i++) {
+    if (/^##\s+/.test(lines[i].trim())) {
+      sectionEnd = i;
+      break;
+    }
+    if (tableHeader < 0 && /^\|/.test(lines[i]) && /版本身份|日期/.test(lines[i])) {
+      if (/^\|[\s-|]+$/.test(lines[i].trim())) continue;
+      tableHeader = i;
+      if (i + 1 < lines.length && /^\|[\s-|]+$/.test(lines[i + 1].trim())) {
+        tableSep = i + 1;
+      }
+    }
+  }
+  if (tableHeader < 0) return { text, removed: false, row: null };
+
+  const roles = parseReleasesIndexHeader(lines[tableHeader]);
+  const idCol = roles.identity != null ? roles.identity : 2;
+  const bodyStart = (tableSep >= 0 ? tableSep : tableHeader) + 1;
+  const body = [];
+  let removedRow = null;
+  for (let i = bodyStart; i < sectionEnd; i++) {
+    const line = lines[i];
+    if (!/^\|/.test(line.trim())) {
+      if (line.trim() === "") continue;
+      break;
+    }
+    if (/（暂无）/.test(line)) {
+      body.push(line);
+      continue;
+    }
+    const cells = line.split("|").map((c) => c.trim());
+    const idCell = cells[idCol] || "";
+    if (idCell === id) {
+      removedRow = line;
+      continue;
+    }
+    body.push(line);
+  }
+  if (!removedRow) return { text, removed: false, row: null };
+  const before = lines.slice(0, bodyStart);
+  const after = lines.slice(sectionEnd);
+  const mid = body.length ? [...body, ""] : [""];
+  return { text: [...before, ...mid, ...after].join("\n"), removed: true, row: removedRow };
+}
+
+/**
+ * 追加一行到 docs/releases/ARCHIVE.md（无表则建默认表；适配 tip ARCHIVE 列序）。
+ * @returns {{ text: string, row: string, appended: boolean }}
+ */
+export function appendArchiveRow(
+  archiveText,
+  { date, identity, branchPair, status, noteRel, owner, onlineDate, executor } = {}
+) {
+  const releaseDate = date || "—";
+  const onDate = onlineDate || date || "—";
+  const id = identity || "—";
+  const pair = branchPair || "—";
+  const st = status || "已上线";
+  const note = noteRel || "—";
+  const who = executor || owner || "—";
+  const text = String(archiveText || "").trimEnd();
+  const lines = text ? text.split(/\r?\n/) : [];
+  let tableHeader = -1;
+  let tableSep = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (tableHeader < 0 && /^\|/.test(lines[i]) && /版本身份/.test(lines[i])) {
+      if (/^\|[\s-|]+$/.test(lines[i].trim())) continue;
+      tableHeader = i;
+      if (i + 1 < lines.length && /^\|[\s-|]+$/.test(lines[i + 1].trim())) tableSep = i + 1;
+      break;
+    }
+  }
+
+  const defaultHeader = "| 日期 | 版本身份 | 分支对 | 上线日期 | 执行人 | 发版单 |";
+  const defaultSep = "|---|---|---|---|---|---|";
+
+  if (tableHeader < 0) {
+    const archiveRow = `| ${releaseDate} | ${id} | ${pair} | ${onDate} | ${who} | ${note} |`;
+    const block = ["# docs/releases — 已上线归档索引", "", defaultHeader, defaultSep, archiveRow, ""].join(
+      "\n"
+    );
+    return {
+      text: text ? `${text}\n\n${defaultHeader}\n${defaultSep}\n${archiveRow}\n` : block,
+      row: archiveRow,
+      appended: true,
+    };
+  }
+
+  const roles = parseReleasesIndexHeader(lines[tableHeader]);
+  const headerCells = lines[tableHeader].split("|").map((c) => c.trim());
+  const colCount = Math.max(0, headerCells.length - 2);
+  const values = {
+    date: releaseDate,
+    onlineDate: onDate,
+    identity: id,
+    branchPair: pair,
+    status: st,
+    noteRel: note,
+    owner: who,
+  };
+  const row = buildIndexRowFromRoles(roles, values, colCount);
+
+  const idCol = roles.identity != null ? roles.identity : 2;
+  const bodyStart = (tableSep >= 0 ? tableSep : tableHeader) + 1;
+  let found = false;
+  for (let i = bodyStart; i < lines.length; i++) {
+    if (!/^\|/.test(lines[i].trim())) break;
+    if (/（暂无）/.test(lines[i])) {
+      lines.splice(i, 1);
+      i--;
+      continue;
+    }
+    const cells = lines[i].split("|").map((c) => c.trim());
+    if ((cells[idCol] || "") === id) {
+      lines[i] = row;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    let insertAt = lines.length;
+    for (let i = bodyStart; i < lines.length; i++) {
+      if (!/^\|/.test(lines[i].trim()) && lines[i].trim() !== "") {
+        insertAt = i;
+        break;
+      }
+      if (/^\|/.test(lines[i].trim())) insertAt = i + 1;
+    }
+    lines.splice(insertAt, 0, row);
+  }
+  return { text: lines.join("\n") + (lines[lines.length - 1] === "" ? "" : "\n"), row, appended: true };
 }
 
 /**

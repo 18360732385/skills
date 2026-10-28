@@ -79,32 +79,64 @@ export function loadConfigDescriptionCatalog(root) {
   return map;
 }
 
-/** 解析 SyncTaskCode.java：ENUM → task_code 字符串 */
-export function loadSyncTaskCodeMap(root) {
-  const file = path.join(
-    root,
-    "sms-ai",
-    "src",
-    "main",
-    "java",
-    "com",
-    "juneyaoair",
-    "msp",
-    "sms",
-    "ai",
-    "domain",
-    "enums",
-    "sync",
-    "SyncTaskCode.java"
-  );
-  const text = readText(file);
-  const map = new Map(); // ENUM_NAME -> task_code, also task_code -> ENUM
-  if (!text) return map;
+const SYNC_SKIP_DIRS = new Set([
+  "node_modules",
+  ".git",
+  "target",
+  "dist",
+  "build",
+  ".idea",
+  ".cursor",
+]);
+
+/** 递归发现 SyncTaskCode.java（相对 root；跳过常见构建/依赖目录） */
+export function findSyncTaskCodeFiles(root) {
+  const out = [];
+  const walk = (abs, rel) => {
+    let entries;
+    try {
+      entries = fs.readdirSync(abs, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const ent of entries) {
+      if (ent.name.startsWith(".") && ent.name !== ".git") {
+        /* allow hidden only if not skip; still skip .git via set */
+      }
+      if (ent.isDirectory()) {
+        if (SYNC_SKIP_DIRS.has(ent.name)) continue;
+        walk(path.join(abs, ent.name), rel ? `${rel}/${ent.name}` : ent.name);
+        continue;
+      }
+      if (ent.isFile() && ent.name === "SyncTaskCode.java") {
+        out.push(rel ? `${rel}/${ent.name}` : ent.name);
+      }
+    }
+  };
+  walk(root, "");
+  return out.map((p) => p.replace(/\\/g, "/"));
+}
+
+function parseSyncTaskCodeText(text, map) {
+  if (!text) return;
   const re = /([A-Z][A-Z0-9_]+)\s*\(\s*"([^"]+)"\s*\)/g;
   let m;
   while ((m = re.exec(text))) {
     map.set(m[1], m[2]);
     map.set(m[2], m[1]);
+  }
+}
+
+/**
+ * 解析 SyncTaskCode.java：ENUM → task_code 字符串。
+ * 扫描仓内全部 SyncTaskCode.java；`map.files` = 相对路径列表。
+ */
+export function loadSyncTaskCodeMap(root) {
+  const map = new Map(); // ENUM_NAME -> task_code, also task_code -> ENUM
+  const files = findSyncTaskCodeFiles(root);
+  map.files = files;
+  for (const rel of files) {
+    parseSyncTaskCodeText(readText(path.join(root, rel)), map);
   }
   return map;
 }
@@ -242,10 +274,12 @@ export function resolveJobHit(keyOrCode, jobsCatalog, syncEnumMap) {
   if (cronTail && jobsCatalog.byCronConfigKey.has(cronTail[1])) {
     return jobsCatalog.byCronConfigKey.get(cronTail[1]);
   }
-  // ENUM_NAME
-  if (syncEnumMap.has(s) && String(syncEnumMap.get(s)).includes(":")) {
+  // ENUM_NAME → task_code（不强制含 ':'）
+  if (syncEnumMap.has(s) && /^[A-Z][A-Z0-9_]+$/.test(s)) {
     const code = syncEnumMap.get(s);
-    if (jobsCatalog.byTaskCode.has(code)) return jobsCatalog.byTaskCode.get(code);
+    if (typeof code === "string" && jobsCatalog.byTaskCode.has(code)) {
+      return jobsCatalog.byTaskCode.get(code);
+    }
   }
   // path docs/jobs/tasks/01-xxx.md
   const base = baseName(s);
@@ -320,8 +354,9 @@ export function enrichFreezePayload(root, payload, options = {}) {
   const seenCodes = new Set();
   for (const raw of payload.taskCodes || []) {
     let code = raw;
-    if (syncEnumMap.has(raw) && String(syncEnumMap.get(raw)).includes(":")) {
-      code = syncEnumMap.get(raw);
+    if (syncEnumMap.has(raw) && /^[A-Z][A-Z0-9_]+$/.test(String(raw))) {
+      const mapped = syncEnumMap.get(raw);
+      if (typeof mapped === "string" && mapped) code = mapped;
     } else if (syncEnumMap.has(raw) && /^[A-Z0-9_]+$/.test(raw) === false) {
       code = raw;
     }
@@ -527,6 +562,11 @@ export function enrichFreezePayload(root, payload, options = {}) {
     context: "draft.sql",
   });
   if (sqlVol) warnings.push(sqlVol);
+  if (draftBundle.parentKeysSkipped > 0) {
+    warnings.push(
+      `已忽略 ${draftBundle.parentKeysSkipped} 个 YAML 父级键（不进 draft.config / changeObjects）`
+    );
+  }
   if (indexDrift.length) {
     warnings.push(
       `索引漂移：releases.md 进行中表有 ${indexDrift.length} 行指向不存在的 note（${indexDrift
@@ -1053,30 +1093,39 @@ function buildDraftRows({ candidates, configKeys, jobKeys, jobsHits }) {
       已确认: "",
     }));
 
-  const configAll = configKeys.map((k) => ({
-    来源: k.path,
-    键: k.key,
-    说明: k.description || "待补",
-    值: k.change === "removed" ? "（删除）" : k.value ?? "",
-    "目标 profile": "prod",
-    变更: k.change,
-    prodPath: k.prodPath,
-    isLeaf: k.isLeaf !== false,
-    source: k.source || null,
-    confidence: k.confidence || "key-diff",
-    alreadyReleased: Boolean(k.alreadyReleased),
-    priorOnly: Boolean(k.priorOnly),
-    suppressReason: k.suppressReason || null,
-    已确认: "",
-  }));
+  const parentSkipped = (configKeys || []).filter((k) => k.isLeaf === false).length;
+  const configAll = configKeys
+    .filter((k) => k.isLeaf !== false)
+    .map((k) => ({
+      来源: k.path,
+      键: k.key,
+      说明: k.description || "待补",
+      值: k.change === "removed" ? "（删除）" : k.value ?? "",
+      "目标 profile": "prod",
+      变更: k.change,
+      prodPath: k.prodPath,
+      isLeaf: true,
+      source: k.source || null,
+      confidence: k.confidence || "key-diff",
+      alreadyReleased: Boolean(k.alreadyReleased),
+      priorOnly: Boolean(k.priorOnly),
+      suppressReason: k.suppressReason || null,
+      已确认: "",
+    }));
 
-  const jobsFromKeys = jobKeys.map((k) =>
-    attachJobScheduleFields(
+  const jobsFromKeys = jobKeys.map((k) => {
+    const cronKey = k.job?.cronKey || k.key;
+    const taskCode = k.job?.taskCode || "";
+    const keyTail = String(cronKey || "")
+      .split(".")
+      .filter(Boolean)
+      .pop();
+    return attachJobScheduleFields(
       {
-        "task / cron 键": k.job?.cronKey || k.key,
-        taskCode: k.job?.taskCode || "",
+        "task / cron 键": cronKey,
+        taskCode,
         变更类型: k.change === "added" ? "新建/改 Cron" : k.change === "removed" ? "开关/删除" : "改 Cron",
-        说明: k.job?.displayName || k.description || "",
+        说明: k.job?.displayName || k.description || keyTail || "",
         真相: k.job?.truthPath || "",
         "目标 profile": "prod",
         confidence: k.confidence || "key-diff",
@@ -1087,8 +1136,8 @@ function buildDraftRows({ candidates, configKeys, jobKeys, jobsHits }) {
       },
       k.job,
       configKeys
-    )
-  );
+    );
+  });
 
   const jobsFromHits = jobsHits
     .filter((h) => !jobsFromKeys.some((j) => j.taskCode && j.taskCode === h.taskCode))
@@ -1127,6 +1176,7 @@ function buildDraftRows({ candidates, configKeys, jobKeys, jobsHits }) {
   return {
     active: { sql: sql.active, config: config.active, jobs: jobs.active },
     suppressed: { sql: sql.suppressed, config: config.suppressed, jobs: jobs.suppressed },
+    parentKeysSkipped: parentSkipped,
   };
 }
 
@@ -1157,6 +1207,7 @@ export function buildChangeObjects({ candidates, configKeys, jobKeys, taskCodes,
     }
   }
   for (const k of configKeys || []) {
+    if (k.isLeaf === false) continue;
     push({
       kind: "config",
       stableId: k.key,
@@ -1491,8 +1542,22 @@ export function toDraftPreviewMd(data) {
     const { rows, omitted } = takeRows(draft.jobs || [], DRAFT_PREVIEW_MAX);
     if (!rows.length) lines.push("| （无） | — | — | — | — |");
     for (const r of rows) {
+      const codeCol =
+        r.taskCode ||
+        (r["task / cron 键"] ? `\`${r["task / cron 键"]}\`` : "") ||
+        "—";
+      const nameCol =
+        r.名称 ||
+        r.说明 ||
+        (r["task / cron 键"]
+          ? String(r["task / cron 键"])
+              .split(".")
+              .filter(Boolean)
+              .pop()
+          : "") ||
+        "—";
       lines.push(
-        `| ${escCell(r.taskCode)} | ${escCell(r.名称 || r.说明)} | ${escCell(r.cron)} | ${escCell(r.参数)} | ${escCell(r.开关)} |`
+        `| ${escCell(codeCol)} | ${escCell(nameCol)} | ${escCell(r.cron)} | ${escCell(r.参数)} | ${escCell(r.开关)} |`
       );
     }
     if (omitted) lines.push(`| … | （另有 ${omitted} 条未展示） | — | — | — |`);

@@ -41,6 +41,7 @@ import {
   isProdConfigPath,
   formatMergeSourcesTableRows,
   bundleSqlVolumeWarning,
+  stripBom,
 } from "./release-format.mjs";
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
 import { runSqlBundle } from "./release-sql-bundle.mjs";
@@ -103,7 +104,7 @@ function parseArgs(argv) {
 
 function readText(p) {
   try {
-    return fs.readFileSync(p, "utf8");
+    return stripBom(fs.readFileSync(p, "utf8"));
   } catch {
     return null;
   }
@@ -700,17 +701,38 @@ function freezeRangeLine(meta) {
   return null;
 }
 
+function dirExists(root, name) {
+  try {
+    return fs.statSync(path.join(root, name)).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
 function inferServices(root, freeze) {
   const stats = freeze.pathStats || {};
-  const rows = [
-    ["sms-ai", (stats["sms-ai/"] || 0) > 0 ? "是" : "否", loadModuleBlurb(root, "sms-ai")],
-    ["sms-ai-web", (stats["sms-ai-web/"] || 0) > 0 ? "是" : "否", loadModuleBlurb(root, "sms-ai-web")],
-    [
-      "其它",
-      (stats["其它"] || 0) > 0 || (stats["docs/"] || 0) > 0 ? "是" : "否",
-      loadModuleBlurb(root, "其它"),
-    ],
-  ];
+  const known = ["sms-ai", "sms-ai-web"];
+  const rows = [];
+  for (const mod of known) {
+    const hit = (stats[`${mod}/`] || 0) > 0;
+    const exists = dirExists(root, mod);
+    if (!hit && !exists) continue;
+    rows.push([mod, hit ? "是" : "否", loadModuleBlurb(root, mod)]);
+  }
+  // pathStats 其它一级桶（如 custom-svc/）
+  for (const [bucket, n] of Object.entries(stats)) {
+    if (!n || bucket === "其它" || bucket === "docs/" || bucket === "db/migration") continue;
+    const name = String(bucket).replace(/\/$/, "");
+    if (known.includes(name)) continue;
+    if (!/^[a-zA-Z0-9._-]+$/.test(name)) continue;
+    if (rows.some((r) => r[0] === name)) continue;
+    rows.push([name, "是", loadModuleBlurb(root, name)]);
+  }
+  const otherHit =
+    (stats["其它"] || 0) > 0 || (stats["docs/"] || 0) > 0 || rows.length === 0;
+  if (otherHit) {
+    rows.push(["其它", rows.length === 0 ? "是" : (stats["其它"] || stats["docs/"] ? "是" : "否"), loadModuleBlurb(root, "其它")]);
+  }
   const block = [
     `## ${H2.services}`,
     "",

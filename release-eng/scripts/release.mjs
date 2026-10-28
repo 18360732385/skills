@@ -43,7 +43,8 @@ const MODES = [
     name: "seal",
     doc: "modes/seal.md",
     desc: "已上线：seal-check 通过后 进行中目录→archive",
-    scripts: ["seal-check"],
+    scripts: ["seal-check", "seal"],
+    hint: "确认词后 release.mjs seal -- --apply …",
   },
 ];
 
@@ -57,6 +58,8 @@ const DISPATCH = {
   "sql-bundle": "release-sql-bundle.mjs",
   "note-merge": "release-note-merge.mjs",
   "seal-check": "release-seal-check.mjs",
+  seal: "release-seal.mjs",
+  "seal-apply": "release-seal.mjs",
   format: "release-format.mjs",
 };
 
@@ -76,15 +79,17 @@ Usage:
   seal      已上线上归档
 
 可转发脚本子命令:
-  push-gate | freeze | enrich | ai-track | sql-classify | sql-bundle | note-merge | seal-check | format
+  push-gate | freeze | enrich | ai-track | sql-classify | sql-bundle | note-merge | seal-check | seal | format
 
 示例:
   node scripts/release.mjs modes
   node scripts/release.mjs audit --help
   node scripts/release.mjs freeze -- --root . --base main --head HEAD --format audit-json
   node scripts/release.mjs seal-check -- --root . --note docs/releases/<slug>/<slug>.md
+  node scripts/release.mjs seal -- --root . --note docs/releases/<slug>/<slug>.md --online-date YYYY-MM-DD --executor NAME --dry-run
+  node scripts/release.mjs seal -- --root . --note … --online-date … --executor … --apply
 
-边界：确认词 / WritePlan / 问卷仍由 Agent 按模式 md 执行；本入口不代写盘。
+边界：确认词 / WritePlan / 问卷仍由 Agent 按模式 md 执行；seal --apply 仅在确认词后调用。
 热路径：AGENT-INDEX.md · 烟测：node scripts/selfcheck.mjs
 `);
 }
@@ -173,7 +178,8 @@ if (["prepare", "resume", "audit", "seal"].includes(cmd)) {
     dispatch("freeze", rest.slice(1));
   }
   if (cmd === "seal" && rest[0] === "--") {
-    dispatch("seal-check", rest.slice(1));
+    // 转发 release-seal.mjs（默认 dry-run；含 --apply 才写盘）
+    dispatch("seal", rest.slice(1));
   }
   if (
     rest.length === 0 ||
