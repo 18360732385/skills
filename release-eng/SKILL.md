@@ -9,12 +9,12 @@ disable-model-invocation: true
 
 # release-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.3.26**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.3.28**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`（`modes` / 脚本转发）。
 
 Skill = **发版仪式**。真相在 `docs/releases/`（过程域；术语见根 [CONTEXT.md](../../../CONTEXT.md)）。对用户优先中文。  
 拓扑：`modes/` 模式规格（prepare/resume/audit/seal 等）· `scripts/release.mjs` 统一薄入口 · `fixtures/docs/releases/` 骨架种子。  
-Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan` · `seal` · `全部推荐` · `gates-common` · `首次发版` · `截断5` · `mergeSources` · `目录包` · `prod` · `SQL序` · `键级diff` · `jobs交叉` · `draft` · `双源去重` · `变更对象` · `artifacts.json` · `双轨研判` · `ai-track` · `逾期未归档` · `confidence` · `draft-md` · `note-merge` · `seal-check` · `Asia/Shanghai` · `来源分支功能` · `上线内容摘要`。
+Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan` · `seal` · `全部推荐` · `gates-common` · `首次发版` · `截断5` · `mergeSources` · `目录包` · `prod` · `SQL序` · `sql/refs` · `sql-bundle` · `键级diff` · `jobs交叉` · `draft` · `双源去重` · `变更对象` · `artifacts.json` · `双轨研判` · `ai-track` · `逾期未归档` · `confidence` · `draft-md` · `note-merge` · `seal-check` · `Asia/Shanghai` · `来源分支功能` · `上线内容摘要`。
 
 ## 模式分流
 
@@ -31,8 +31,8 @@ Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan
 
 ## 硬闸（正目标）
 
-1. **首问**：确认 **`发版日期`**（【推荐】≥提问日+2 的第一个周四）+ 发版分支 +（基线分支或 **`首次发版`（基线=`无`）**）后才进入 push-gate（见 [gates-common.md](modes/gates-common.md)）。发版单路径 = `notes/<slug>/<slug>.md`（`<slug>` = 发版分支名归一化：`origin/` 前缀去除、`/` → `-`；发版日期独立、不拼入目录名）。  
-2. **逾期未归档**：`notes/` 已定版且发版日期已过 → 硬闸（先 seal）。  
+1. **首问**：确认 **`发版日期`**（【推荐】≥提问日+2 的第一个周四）+ 发版分支 +（基线分支或 **`首次发版`（基线=`无`）**）后才进入 push-gate（见 [gates-common.md](modes/gates-common.md)）。发版单路径 = `docs/releases/<slug>/<slug>.md`（`<slug>` = 发版分支名归一化：`origin/` 前缀去除、`/` → `-`；发版日期独立、不拼入目录名；**无 notes/ 中间层**）。  
+2. **逾期未归档**：进行中目录包已定版且发版日期已过 → 硬闸（先 seal）。  
 3. **push-gate**：通过后才 freeze / 问卷 / 定版 WritePlan；中止则模式结束。  
 4. **WritePlan**：写盘当且仅当过确认词（或同会话预授权）；audit 仅报告。  
 5. **骨架**：缺失则 [bootstrap.md](modes/bootstrap.md) 从 skill fixtures 创建；已存在 skip。  
@@ -43,14 +43,14 @@ Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan
 
 - 「别问日期/分支了，直接写」→ 仍回显首问三项并记确认，再 push-gate  
 - 「旧单以后再 archive」→ 逾期已定版硬闸；先 seal（或用户**书面**跳过）  
-- 「先落盘给评审，push 稍后」→ push-gate 未通过则**勿**写 `notes/` / artifacts；聊天可贴草稿  
+- 「先落盘给评审，push 稍后」→ push-gate 未通过则**勿**写 `docs/releases/<slug>/` / artifacts；聊天可贴草稿  
 - 「看着不错，继续吧」/ Slack 👍 → **不是**确认词；回要词表内确认或预授权  
 - 「archive 只是 housekeeping / 硬闸保 optics」→ 假；逾期硬闸挡的是并发定版混乱  
 
 | 借口 | 现实 |
 |---|---|
 | 领导已口述参数 = 仪式关闭 | 须回显确认记入首问；仍走 push-gate → WritePlan |
-| 已定版 archive 可 TODO 后补 | 日期已过且仍在 notes/ → 先 seal，再新 prepare |
+| 已定版 archive 可 TODO 后补 | 日期已过且仍在进行中目录 → 先 seal，再新 prepare |
 | unpushed 只挡执行不挡落盘 | 未通过 = 模式中止；评审用聊天/gist，不写目录包 |
 | 「继续」≈ 确认；卡词表无意义 | 写盘仅认词表；非正式口语一律再问一句 |
 
@@ -67,6 +67,7 @@ Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan
 | fetch / push-gate | [git-gates.md](modes/git-gates.md) · `scripts/release-push-gate.mjs` |
 | 只读检查 / prior·freeze 体检 | [audit.md](modes/audit.md) · `--format audit-json` |
 | 定版采集 / 截断5 / mergeSources / SQL序 / 键级diff / jobs交叉 / Asia/Shanghai | [freeze.md](modes/freeze.md) · `scripts/release-freeze.mjs` · `scripts/release-freeze-enrich.mjs` · `scripts/release-format.mjs` |
+| SQL 整理 `sql/refs` + `release-V*-DDL|DML` | `scripts/release-sql-classify.mjs` · `scripts/release-sql-bundle.mjs`（note-merge 自动调用） |
 | 双轨研判 AI | [ai-track.md](modes/ai-track.md) · `scripts/release-ai-track.mjs` |
 | 骨架 | [bootstrap.md](modes/bootstrap.md) · `fixtures/docs/releases/` |
 | 问卷 / prod / 说明 | [questions.md](modes/questions.md) |

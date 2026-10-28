@@ -43,6 +43,7 @@ import {
   bundleSqlVolumeWarning,
 } from "./release-format.mjs";
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
+import { runSqlBundle } from "./release-sql-bundle.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -65,6 +66,8 @@ function parseArgs(argv) {
     dryRun: false,
     bundleFiles: true,
     updateIndex: true,
+    sqlAiJson: null,
+    skipAiClassify: false,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -88,6 +91,8 @@ function parseArgs(argv) {
     else if (a === "--bundle-files") out.bundleFiles = true;
     else if (a === "--no-update-index") out.updateIndex = false;
     else if (a === "--update-index") out.updateIndex = true;
+    else if (a === "--sql-ai-json") out.sqlAiJson = argv[++i] || null;
+    else if (a === "--skip-ai-classify") out.skipAiClassify = true;
     else if (a === "--help" || a === "-h") out.help = true;
   }
   if (out.base && ["none", "无", "-", "null"].includes(String(out.base).toLowerCase())) {
@@ -214,6 +219,9 @@ function buildSqlSection(draft) {
   lines.push(`## ${H2.sql}`);
   lines.push("");
   lines.push("> 按 **SQL序**（`Vn` 数字升序；无版本号置后并注明依赖）填写执行序；目标 profile = `prod`。");
+  lines.push(
+    "> 包内整理文件：原件在 `sql/refs/`；根下 `release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘）。**prod 先执行 DDL 整理文件，再执行 DML 整理文件**（各类内部仍按 SQL序）。"
+  );
   lines.push("");
   lines.push("<!-- auto:sql:start -->");
   lines.push("");
@@ -331,12 +339,15 @@ function indexDateOf(meta) {
 
 function planIndexUpsert(args, meta, relNote) {
   const branchPair = `${meta.releaseBranch || "release"} → ${meta.baseline || "main"}`;
+  // 索引相对 docs/releases/：release-Vxx/release-Vxx.md（旧仓仍可为 notes/…）
+  let indexRel = String(relNote || `${meta.identity}/${meta.identity}.md`).replace(/\\/g, "/");
+  indexRel = indexRel.replace(/^docs\/releases\//, "");
   return {
     date: indexDateOf(meta),
     identity: meta.identity,
     branchPair,
     status: meta.status || "已定版",
-    noteRel: relNote || `notes/${meta.identity}/${meta.identity}.md`,
+    noteRel: indexRel || `${meta.identity}/${meta.identity}.md`,
     owner: meta.owner || "—",
   };
 }
@@ -711,8 +722,8 @@ function inferServices(root, freeze) {
 }
 
 /**
- * 规范化为目录包路径：notes/{identity}/{identity}.md
- * 若传入旧扁平 notes/{identity}.md 或目录 notes/{identity}/，均解析为夹内同名 md。
+ * 规范化为目录包路径：docs/releases/{identity}/{identity}.md
+ * 兼容旧路径 notes/{identity}/… 与扁平 .md；新写默认落在 releases 根下（无 notes/）。
  */
 function resolveNoteBundle(root, noteArg, identityHint) {
   const abs = path.isAbsolute(noteArg) ? noteArg : path.join(root, noteArg);
@@ -720,20 +731,33 @@ function resolveNoteBundle(root, noteArg, identityHint) {
   let identity = identityHint;
   let notePath = abs;
 
-  if (rel.match(/docs\/releases\/notes\/[^/]+\/[^/]+\.md$/i)) {
-    identity = identity || path.basename(abs, ".md");
+  const legacyBundle = rel.match(/docs\/releases\/notes\/([^/]+)\/([^/]+)\.md$/i);
+  const legacyFlat = rel.match(/docs\/releases\/notes\/([^/]+)\.md$/i);
+  const rootBundle = rel.match(/docs\/releases\/([^/]+)\/([^/]+)\.md$/i);
+  const rootFlat = rel.match(/docs\/releases\/([^/]+)\.md$/i);
+  const reserved = new Set(["archive", "templates", "notes"]);
+
+  if (legacyBundle) {
+    identity = identity || legacyBundle[1];
     notePath = abs;
-  } else if (rel.match(/docs\/releases\/notes\/[^/]+\.md$/i)) {
-    identity = identity || path.basename(abs, ".md");
+  } else if (legacyFlat) {
+    identity = identity || legacyFlat[1];
+    // 旧扁平 → 仍读/写到 legacy notes 目录包（不静默搬家）
     notePath = path.join(root, "docs", "releases", "notes", identity, `${identity}.md`);
+  } else if (rootBundle && !reserved.has(rootBundle[1].toLowerCase())) {
+    identity = identity || rootBundle[1];
+    notePath = abs;
+  } else if (rootFlat && !reserved.has(rootFlat[1].replace(/\.md$/i, "").toLowerCase())) {
+    identity = identity || rootFlat[1].replace(/\.md$/i, "");
+    notePath = path.join(root, "docs", "releases", identity, `${identity}.md`);
   } else if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
     identity = identity || path.basename(abs);
     notePath = path.join(abs, `${identity}.md`);
   } else if (identity) {
-    notePath = path.join(root, "docs", "releases", "notes", identity, `${identity}.md`);
+    notePath = path.join(root, "docs", "releases", identity, `${identity}.md`);
   } else {
     identity = path.basename(abs).replace(/\.md$/i, "") || "unknown";
-    notePath = path.join(root, "docs", "releases", "notes", identity, `${identity}.md`);
+    notePath = path.join(root, "docs", "releases", identity, `${identity}.md`);
   }
 
   const bundleDir = path.dirname(notePath);
@@ -882,20 +906,18 @@ function buildJobsSummaryMd(root, freeze, head) {
   return lines.join("\n");
 }
 
-/** 刷新前清空 sql/config/jobs，避免上次 candidates 污染残留 */
+/** 刷新前清空 sql/config/jobs（含 sql/refs 与旧整理文件），避免上次污染残留 */
 function resetBundleKindDirs(bundleDir) {
   for (const kind of ["sql", "config", "jobs"]) {
     const dir = path.join(bundleDir, kind);
     if (!fs.existsSync(dir)) continue;
-    for (const name of fs.readdirSync(dir)) {
-      fs.rmSync(path.join(dir, name), { recursive: true, force: true });
-    }
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 }
 
 /**
- * 从 head 拷贝本版新增制品到 bundleDir/{sql,config}/（← draft 新增；不含 candidates）；
- * jobs/ 不拷贝真相文档，生成单文件汇总清单 `jobs/README.md`（← draft.jobs 全量任务）。
+ * 从 head 拷贝本版新增制品：sql → sql/refs/；config → config/；
+ * jobs/ 生成单文件汇总清单 `jobs/README.md`（← draft.jobs 全量任务）。
  */
 function copyBundleFiles(root, bundleDir, freeze, head) {
   const warnings = [];
@@ -911,7 +933,10 @@ function copyBundleFiles(root, bundleDir, freeze, head) {
 
   for (const [kind, paths] of groups) {
     if (!paths.length) continue;
-    const destDir = path.join(bundleDir, kind);
+    const destDir =
+      kind === "sql"
+        ? path.join(bundleDir, "sql", "refs")
+        : path.join(bundleDir, kind);
     fs.mkdirSync(destDir, { recursive: true });
     const used = new Set();
     for (const src of paths) {
@@ -925,7 +950,7 @@ function copyBundleFiles(root, bundleDir, freeze, head) {
       fs.writeFileSync(dest, content, "utf8");
       copied.push({
         kind,
-        bundlePath: `${kind}/${destName}`,
+        bundlePath: kind === "sql" ? `sql/refs/${destName}` : `${kind}/${destName}`,
         sourcePath: src,
       });
     }
@@ -944,7 +969,7 @@ function copyBundleFiles(root, bundleDir, freeze, head) {
   }
 
   const sqlCopied = copied.filter((c) => c.kind === "sql").length;
-  const sqlVol = bundleSqlVolumeWarning(sqlCopied, { context: "包内 sql/" });
+  const sqlVol = bundleSqlVolumeWarning(sqlCopied, { context: "包内 sql/refs/" });
   if (sqlVol) warnings.push(sqlVol);
   return { copied, warnings };
 }
@@ -953,7 +978,9 @@ function buildBundleSection(copied) {
   const lines = [];
   lines.push(`## ${H2.bundle}`);
   lines.push("");
-  lines.push("> 定版时仅拷贝本版 **新增** 制品到 `sql/` / `config/`（← draft：migration / 变更=added 的配置来源；**不含** candidates 扫描到的涉及文件）；`jobs/` 为单文件汇总清单 `README.md`（← draft.jobs；不逐任务拷贝真相）。包内路径为相对本发版单的 Markdown 链接。");
+  lines.push(
+    "> 定版时拷贝本版 **新增** 原件到 `sql/refs/` / `config/`（← draft；**不含** candidates）；并生成整理文件 `sql/release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘；prod **先 DDL 后 DML**）。`jobs/` 为单文件汇总清单 `README.md`。包内路径为相对本发版单的 Markdown 链接。"
+  );
   lines.push("");
   lines.push("<!-- auto:bundle:start -->");
   lines.push("");
@@ -1004,7 +1031,7 @@ function main() {
   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
 Options: --identity --release-branch --baseline --release-date --owner --status --no-bundle-files --no-update-index
 默认回写 docs/releases/releases.md 进行中表（--no-update-index 关闭）
-Note path: docs/releases/notes/{identity}/{identity}.md（目录包；扁平 .md 会规范化）
+Note path: docs/releases/{identity}/{identity}.md（进行中目录包直接挂在 releases/；兼容旧 notes/）
 identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 release-V260827；发版日期经 --release-date 传入`);
     process.exit(0);
   }
@@ -1018,7 +1045,8 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
   // 版本身份：显式 --identity 优先；note 路径占位于语义名（release/含日期前缀的旧约定）时按发版分支派生
   const identityHint =
     args.identity ||
-    (args.releaseBranch && (!noteBase || noteBase === "notes" || noteBase === ".")
+    (args.releaseBranch &&
+    (!noteBase || noteBase === "notes" || noteBase === "releases" || noteBase === ".")
       ? identityFromBranch(args.releaseBranch)
       : noteBase);
   const bundle = resolveNoteBundle(args.root, args.note, identityHint);
@@ -1039,10 +1067,18 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
   };
 
   let text = readText(notePath);
-  // 兼容读旧扁平 notes/{id}.md
+  // 兼容读旧扁平 / 旧 notes 目录包
   if (!text) {
-    const flat = path.join(args.root, "docs", "releases", "notes", `${identity}.md`);
-    text = readText(flat);
+    const candidates = [
+      path.join(args.root, "docs", "releases", identity, `${identity}.md`),
+      path.join(args.root, "docs", "releases", "notes", identity, `${identity}.md`),
+      path.join(args.root, "docs", "releases", "notes", `${identity}.md`),
+      path.join(args.root, "docs", "releases", `${identity}.md`),
+    ];
+    for (const c of candidates) {
+      text = readText(c);
+      if (text) break;
+    }
   }
   if (!text) {
     text = skeletonNote(meta);
@@ -1099,14 +1135,66 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
     process.exit(0);
   }
 
+  let sqlBundleResult = null;
   if (args.bundleFiles) {
     fs.mkdirSync(bundle.bundleDir, { recursive: true });
     bundleResult = copyBundleFiles(args.root, bundle.bundleDir, freeze, meta.head);
+
+    const hasSqlRefs = (bundleResult.copied || []).some((c) => c.kind === "sql");
+    if (hasSqlRefs) {
+      const releaseDate = resolveReleaseDate(meta);
+      const priorArt = path.join(bundle.bundleDir, "artifacts.json");
+      const sourcePathByBasename = new Map();
+      for (const c of bundleResult.copied) {
+        if (c.kind === "sql") {
+          sourcePathByBasename.set(path.basename(c.bundlePath), c.sourcePath);
+        }
+      }
+      sqlBundleResult = runSqlBundle({
+        bundleDir: bundle.bundleDir,
+        releaseDate,
+        freeze,
+        root: args.root,
+        aiJsonPath: args.sqlAiJson
+          ? path.isAbsolute(args.sqlAiJson)
+            ? args.sqlAiJson
+            : path.join(args.root, args.sqlAiJson)
+          : null,
+        priorArtifactsPath: fs.existsSync(priorArt) ? priorArt : null,
+        skipAiClassify: args.skipAiClassify,
+        sourcePathByBasename,
+      });
+      for (const w of sqlBundleResult.warnings || []) bundleResult.warnings.push(w);
+      if (!sqlBundleResult.ok) {
+        if (sqlBundleResult.promptMd) {
+          console.error("--- sql-classify prompt-md ---");
+          console.error(sqlBundleResult.promptMd);
+          console.error(
+            "--- 将模型 JSON 存盘后重跑 note-merge，并加 --sql-ai-json <file>（无需用户确认）---"
+          );
+        }
+        for (const e of sqlBundleResult.errors || []) console.error(e);
+        process.exit(1);
+      }
+      for (const b of sqlBundleResult.sqlBundles || []) {
+        bundleResult.copied.push({
+          kind: "sql-bundle",
+          bundlePath: b.path,
+          sourcePath: `← sql/refs/ × ${b.sourceCount}（${b.kind}）`,
+        });
+      }
+    }
+
     text = applyBundleSection(text, bundleResult.copied);
   }
 
   // artifacts.json SSOT（允许密文值；不做密文拦截）
   const artifacts = buildArtifactsJson(identity, freeze);
+  if (sqlBundleResult?.sqlBundles) {
+    artifacts.sqlBundles = sqlBundleResult.sqlBundles;
+  } else if (!artifacts.sqlBundles) {
+    artifacts.sqlBundles = [];
+  }
   const artifactsPath = path.join(bundle.bundleDir, "artifacts.json");
   fs.mkdirSync(bundle.bundleDir, { recursive: true });
   fs.writeFileSync(artifactsPath, JSON.stringify(artifacts, null, 2), "utf8");
@@ -1142,6 +1230,7 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
         },
         changeObjects: freeze.changeObjects?.length || 0,
         bundleFiles: bundleResult.copied.length,
+        sqlBundles: sqlBundleResult?.sqlBundles?.map((b) => b.path) || [],
         warnings: bundleResult.warnings,
         prior: freeze.priorRelease?.path || null,
         todoPlaceholders: freeze.todoPlaceholders?.length || 0,
@@ -1163,7 +1252,8 @@ function planBundleFiles(freeze) {
     for (const src of paths) {
       out.push({
         kind,
-        bundlePath: `${kind}/${path.basename(src)}`,
+        bundlePath:
+          kind === "sql" ? `sql/refs/${path.basename(src)}` : `${kind}/${path.basename(src)}`,
         sourcePath: src,
       });
     }

@@ -66,6 +66,8 @@ const SCRIPTS = [
   "scripts/release-freeze.mjs",
   "scripts/release-freeze-enrich.mjs",
   "scripts/release-ai-track.mjs",
+  "scripts/release-sql-classify.mjs",
+  "scripts/release-sql-bundle.mjs",
   "scripts/release-note-merge.mjs",
   "scripts/release-seal-check.mjs",
   "scripts/selfcheck.mjs",
@@ -75,8 +77,7 @@ const FIXTURE_SEED = [
   "fixtures/docs/releases/releases.md",
   "fixtures/docs/releases/ARCHIVE.md",
   "fixtures/docs/releases/templates/release-note-template.md",
-  "fixtures/docs/releases/notes/_example-artifacts.json",
-  "fixtures/docs/releases/notes/.gitkeep",
+  "fixtures/docs/releases/_example-artifacts.json",
   "fixtures/docs/releases/archive/.gitkeep",
 ];
 
@@ -377,6 +378,139 @@ assert(typeof bundleSqlVolumeWarning === "function", "export bundleSqlVolumeWarn
   );
 }
 
+// 0.3.28：SQL 归类 / 拼接 / bundle / mock AI
+{
+  const {
+    classifyMigrationKindByFilename,
+    releaseSqlBundleName,
+    releaseDateToYyMmDd,
+    sqlBundleSeparator,
+    buildSqlBundleContent,
+    sha256Hex,
+    assertStatementsEndWithSemicolon,
+    detectMixedDdlDml,
+  } = format;
+  assert(classifyMigrationKindByFilename("V0003_0__DDL__x.sql") === "DDL", "028 filename DDL");
+  assert(classifyMigrationKindByFilename("V0005_0__DML__y.sql") === "DML", "028 filename DML");
+  assert(
+    classifyMigrationKindByFilename("V0113_1__DDL__x.sql") === "DDL",
+    "028 old subver _1 still DDL via literal"
+  );
+  assert(
+    classifyMigrationKindByFilename("V261026153045123_0__a__x.sql") === "DDL",
+    "028 new-track _0=DDL"
+  );
+  assert(
+    classifyMigrationKindByFilename("V261026153045123_1__a__y.sql") === "DML",
+    "028 new-track _1=DML"
+  );
+  assert(
+    classifyMigrationKindByFilename("V0003_1__mystery__x.sql") == null,
+    "028 old four-digit subver alone → null"
+  );
+  assert(releaseDateToYyMmDd("2026-10-29") === "261029", "028 yyMMdd");
+  assert(
+    releaseSqlBundleName("2026-10-29", "DML") === "release-V261029-DML.sql",
+    "028 bundle name"
+  );
+  assert(
+    sqlBundleSeparator("V1__x.sql", "begin") === "-- >>> begin: V1__x.sql",
+    "028 begin sep"
+  );
+  const c1 = "CREATE TABLE a (id INT);\n";
+  const c2 = "ALTER TABLE a ADD COLUMN x INT;\n";
+  const once = buildSqlBundleContent([
+    { basename: "V1__DDL__a.sql", content: c1 },
+    { basename: "V2__DDL__b.sql", content: c2 },
+  ]);
+  const twice = buildSqlBundleContent([
+    { basename: "V1__DDL__a.sql", content: c1 },
+    { basename: "V2__DDL__b.sql", content: c2 },
+  ]);
+  assert(once === twice && sha256Hex(once) === sha256Hex(twice), "028 bundle sha reproducible");
+  assert(assertStatementsEndWithSemicolon("CREATE TABLE t (id INT);").ok, "028 semicolon ok");
+  assert(!assertStatementsEndWithSemicolon("CREATE TABLE t (id INT)").ok, "028 semicolon fail");
+  assert(detectMixedDdlDml("CREATE TABLE t(id INT);\nINSERT INTO t VALUES(1);").mixed, "028 mixed");
+  assert(!detectMixedDdlDml("INSERT INTO t VALUES(1);").mixed, "028 dml only not mixed");
+
+  const { classifyRefs } = await import(pathToFileURL(path.join(skillRoot, "scripts/release-sql-classify.mjs")).href);
+  const { runSqlBundle, verifySqlBundlesOnDisk } = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-sql-bundle.mjs")).href
+  );
+
+  const needs = classifyRefs(
+    [{ basename: "V99__mystery__x.sql", content: "INSERT INTO t VALUES (1);\n" }],
+    {}
+  );
+  assert(needs.needsAi.length === 1 && !needs.ok, "028 needsAi without ai-json");
+
+  const withAi = classifyRefs(
+    [{ basename: "V99__mystery__x.sql", content: "INSERT INTO t VALUES (1);\n" }],
+    {
+      aiByName: new Map([
+        ["V99__mystery__x.sql", { path: "V99__mystery__x.sql", kind: "DML", confidence: "high", reason: "insert" }],
+      ]),
+    }
+  );
+  assert(withAi.ok && withAi.resolved[0].kind === "DML" && withAi.resolved[0].classifySource === "ai", "028 ai-json closes");
+
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "re-sql-bundle-"));
+  try {
+    const refs = path.join(tmpRoot, "sql", "refs");
+    fs.mkdirSync(refs, { recursive: true });
+    fs.writeFileSync(path.join(refs, "V0001_0__DDL__a.sql"), "CREATE TABLE a (id INT);\n", "utf8");
+    fs.writeFileSync(path.join(refs, "V0002_0__DML__b.sql"), "INSERT INTO a VALUES (1);\n", "utf8");
+    const onlyDmlDir = path.join(tmpRoot, "dml-only");
+    fs.mkdirSync(path.join(onlyDmlDir, "sql", "refs"), { recursive: true });
+    fs.writeFileSync(
+      path.join(onlyDmlDir, "sql", "refs", "V0005_0__DML__x.sql"),
+      "INSERT INTO t VALUES (1);\n",
+      "utf8"
+    );
+
+    const both = runSqlBundle({
+      bundleDir: tmpRoot,
+      releaseDate: "2026-10-29",
+      freeze: {
+        draft: {
+          sql: [
+            { 脚本: "V0001_0__DDL__a.sql", 路径: "db/migration/V0001_0__DDL__a.sql" },
+            { 脚本: "V0002_0__DML__b.sql", 路径: "db/migration/V0002_0__DML__b.sql" },
+          ],
+        },
+      },
+    });
+    assert(both.ok, `028 bundle both ok: ${both.errors.join(";")}`);
+    assert(both.sqlBundles.length === 2, "028 two bundles");
+    assert(fs.existsSync(path.join(tmpRoot, "sql", "release-V261029-DDL.sql")), "028 ddl file");
+    assert(fs.existsSync(path.join(tmpRoot, "sql", "release-V261029-DML.sql")), "028 dml file");
+    assert(
+      verifySqlBundlesOnDisk(tmpRoot, both.sqlBundles, "2026-10-29").length === 0,
+      "028 verify ok"
+    );
+    fs.writeFileSync(path.join(tmpRoot, "sql", "release-V261029-DDL.sql"), "-- tampered\n", "utf8");
+    assert(
+      verifySqlBundlesOnDisk(tmpRoot, both.sqlBundles, "2026-10-29").length > 0,
+      "028 tamper detected"
+    );
+
+    const dmlOnly = runSqlBundle({
+      bundleDir: onlyDmlDir,
+      releaseDate: "2026-10-29",
+      freeze: {
+        draft: {
+          sql: [{ 脚本: "V0005_0__DML__x.sql", 路径: "db/migration/V0005_0__DML__x.sql" }],
+        },
+      },
+    });
+    assert(dmlOnly.ok, "028 dml-only ok");
+    assert(dmlOnly.sqlBundles.length === 1 && dmlOnly.sqlBundles[0].kind === "DML", "028 only DML side");
+    assert(!fs.existsSync(path.join(onlyDmlDir, "sql", "release-V261029-DDL.sql")), "028 no empty DDL");
+  } finally {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  }
+}
+
 // D3：无 mergeSources + recentFirst → 取最近业务句
 {
   const commits = [
@@ -448,7 +582,7 @@ assert(typeof bundleSqlVolumeWarning === "function", "export bundleSqlVolumeWarn
     identity: "release-V251016",
     branchPair: "release/V251016 → main",
     status: "已定版",
-    noteRel: "notes/release-V251016/release-V251016.md",
+    noteRel: "release-V251016/release-V251016.md",
     owner: "alice",
   });
   assert(up.updated, "D5 upsert updated");
@@ -459,7 +593,7 @@ assert(typeof bundleSqlVolumeWarning === "function", "export bundleSqlVolumeWarn
     identity: "release-V251016",
     branchPair: "release/V251016 → main",
     status: "已定版",
-    noteRel: "notes/release-V251016/release-V251016.md",
+    noteRel: "release-V251016/release-V251016.md",
     owner: "bob",
   });
   const idHits = (up2.text.match(/release-V251016/g) || []).length;
@@ -484,7 +618,7 @@ assert(typeof bundleSqlVolumeWarning === "function", "export bundleSqlVolumeWarn
     identity: "release-V261029",
     branchPair: "`release/V261029` ← `main`",
     status: "已定版",
-    noteRel: "[`notes/release-V261029/`](./notes/release-V261029/release-V261029.md)",
+    noteRel: "[`release-V261029/`](./release-V261029/release-V261029.md)",
     owner: "待定",
   });
   assert(up.updated, "P1 sms-ai upsert updated");
@@ -620,7 +754,7 @@ assert(
 );
 
 // artifacts.json SSOT 形（seal-check 输入）
-const artRel = "fixtures/docs/releases/notes/_example-artifacts.json";
+const artRel = "fixtures/docs/releases/_example-artifacts.json";
 const artRaw = read(artRel);
 assert(artRaw != null, "example artifacts.json readable");
 let art = null;
@@ -645,12 +779,16 @@ assert(
   art.config[0]?.stableId && art.config[0]?.profile === "prod",
   "artifacts.config[0] has stableId + profile=prod"
 );
+assert(Array.isArray(art.sqlBundles), "028 example artifacts.sqlBundles");
+assert(art.sqlBundles[0]?.kind === "DDL" && art.sqlBundles[0]?.path, "028 sqlBundles[0] shape");
 
 // 模板提及截断5 / 版本身份分支化
 const tmpl = read("fixtures/docs/releases/templates/release-note-template.md") || "";
 assert(/截断5/.test(tmpl), "release-note-template mentions 截断5");
 assert(/版本身份/.test(tmpl), "release-note-template mentions 版本身份");
 assert(/Asia\/Shanghai/.test(tmpl), "release-note-template mentions Asia/Shanghai");
+assert(/sql\/refs/.test(tmpl), "release-note-template mentions sql/refs");
+assert(/release-V\{yyMMdd\}-DDL|release-V\d+-DDL/.test(tmpl), "release-note-template mentions DDL bundle");
 
 // seal-check / push-gate dry CLI（--help，无写盘）
 function spawnHelp(scriptRel) {
@@ -875,7 +1013,7 @@ assert(/release\.mjs/.test(verify), "VERIFY mentions release.mjs");
 {
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "release-eng-seal-prod-"));
   try {
-    const noteDir = path.join(work, "docs/releases/notes/release-P0");
+    const noteDir = path.join(work, "docs/releases/release-P0");
     fs.mkdirSync(path.join(noteDir, "config"), { recursive: true });
     fs.mkdirSync(path.join(work, "docs/releases"), { recursive: true });
     fs.writeFileSync(path.join(work, "docs/releases/releases.md"), "# idx\n");
@@ -941,7 +1079,7 @@ assert(/release\.mjs/.test(verify), "VERIFY mentions release.mjs");
     const bin = path.join(skillRoot, "scripts/release-seal-check.mjs");
     const r = spawnSync(
       process.execPath,
-      [bin, "--root", work, "--note", "docs/releases/notes/release-P0/release-P0.md"],
+      [bin, "--root", work, "--note", "docs/releases/release-P0/release-P0.md"],
       { encoding: "utf8", maxBuffer: 2 * 1024 * 1024 }
     );
     assert(r.status === 1, "P0 seal-check non-prod config exit 1");

@@ -29,5 +29,21 @@
     "policy": "dual-track",
     "aiRanked": [],
     "aiNoise": []
-  }
+  },
+  "sqlBundles": [
+    {
+      "kind": "DDL",
+      "path": "sql/release-V260821-DDL.sql",
+      "sourceCount": 1,
+      "contentSha256": "example",
+      "sources": [
+        {
+          "stableId": "V0003__example.sql",
+          "sha256": "example",
+          "kind": "DDL",
+          "classifySource": "filename"
+        }
+      ]
+    }
+  ]
 }

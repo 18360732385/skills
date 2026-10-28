@@ -17,7 +17,7 @@
 - 本轮: 新建 | 合并刷新自动段 | 归档
 - Git 表: 提交截断5（前3后2、hash 前 8 位）；合并来源按分支去重（origin/ 归一）、来源分支功能一句话（完整见 GitLab 链接）；时区 Asia/Shanghai
 - 摘要: 元信息内 1～5 项（分支级聚合）；配置 yml 键上一行 `#` 中文注释
-- 目录包: notes/{identity}/（md + sql/config 本版新增 + jobs/README.md 汇总清单；附属为相对 md 链接）
+- 目录包: docs/releases/{identity}/（md + sql/refs 原件 + release-V*-DDL|DML 整理 + config + jobs/README.md；附属为相对 md 链接；无 notes/）
 - 目标 profile: prod（SQL / 配置 / 定时任务）；yml 配置按 YAML
 - draft: sql/config/jobs（未上线）；suppressed 行数（baseline/layer）；aiTrack: stub|ready|filled|skipped；aiNoise 默认不勾数
 - 上线摘要: ← 分支级聚合（可人工补）
@@ -31,7 +31,7 @@
 ```text
 目标根: …
 on_exists: merge | skip | fail
-发版单路径: docs/releases/notes/<slug>/<slug>.md（slug = 发版分支名归一化）
+发版单路径: docs/releases/<slug>/<slug>.md（slug = 发版分支名归一化；无 notes/）
 索引: docs/releases/releases.md
 预授权: 是|否
 freeze: --format draft-md（本轮预览来源）
@@ -39,10 +39,10 @@ freeze: --format draft-md（本轮预览来源）
 
 | 目标路径 | 动作 | 说明 |
 |---|---|---|
-| `docs/releases/notes/{id}/{id}.md` | create / merge | 【推荐】`release-note-merge.mjs`（← `draft` + Git 定版 + 附属拷贝） |
-| `docs/releases/notes/{id}/artifacts.json` | create / refresh | 发版制品清单 SSOT（含 aiTrack；允许密文） |
-| `docs/releases/notes/{id}/{sql,config}/` | create / refresh | 自 head 拷贝本版 **新增** 制品（← draft；不含 candidates） |
-| `docs/releases/notes/{id}/jobs/README.md` | create / refresh | 任务汇总清单（code/名称/cron/默认参数/引用链接；不再逐份拷贝真相） |
+| `docs/releases/{id}/{id}.md` | create / merge | 【推荐】`release-note-merge.mjs`（← `draft` + Git 定版 + 附属拷贝） |
+| `docs/releases/{id}/artifacts.json` | create / refresh | 发版制品清单 SSOT（含 aiTrack；允许密文） |
+| `docs/releases/{id}/sql/refs/` + `release-V*-DDL|DML.sql` / `config/` | create / refresh | 自 head 拷贝本版 **新增** 原件到 refs，并整理 DDL/DML（← draft；不含 candidates） |
+| `docs/releases/{id}/jobs/README.md` | create / refresh | 任务汇总清单（code/名称/cron/默认参数/引用链接；不再逐份拷贝真相） |
 | `docs/releases/releases.md` | merge | 索引行 |
 | `docs/releases/archive/{id}/` | git mv 整夹 | 仅 seal |
 
@@ -51,7 +51,7 @@ freeze: --format draft-md（本轮预览来源）
 【推荐】：
 
 ```bash
-node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/notes/<slug>/<slug>.md --base <baseRef> --head <headRef> --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
+node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<slug>/<slug>.md --base <baseRef> --head <headRef> --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
 ```
 
 `--dry-run` 只报告将写字节与 draft/bundle 行数。手工落单须与 `draft-md` 预览一致。

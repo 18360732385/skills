@@ -1,18 +1,39 @@
-# release-eng 验收记录（0.3.26）
+# release-eng 验收记录（0.3.28）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.26**（P2：噪声折叠 + SQL 体积闸）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+当前 **0.3.28**（sql/refs + DDL/DML 整理与静态校验）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+
+## 0.3.28 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 有（248/248） |
+| manifest / 文档钉头 **0.3.28**；`sync-skill-version --check` | 有 |
+| `classifyMigrationKindByFilename` 双轨 + 旧四位子号不误判 | 有（selfcheck） |
+| `runSqlBundle` 生成 `release-V*-DDL\|DML`；缺侧不落盘；篡改检测 | 有（selfcheck） |
+| note-merge → `sql/refs/` + `sqlBundles`；seal-check 硬校验 | 有 |
+| 仍标明非 harness land | 有 |
+
+## 0.3.27 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 烟测（历史） |
+| manifest / 文档钉头 **0.3.27**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.28） |
+| 进行中路径 = `docs/releases/<slug>/`；fixtures 无 `notes/` | 有 |
+| note-merge / seal-check / overdue 扫新路径；兼容旧 notes/ | 有 |
+| 仍标明非 harness land | 有 |
 
 ## 0.3.26 增量验收
 
 | 检查 | 结果 |
 |---|---|
-| `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| manifest / 文档钉头 **0.3.26**；`sync-skill-version --check` | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 烟测（历史） |
+| manifest / 文档钉头 **0.3.26**；`sync-skill-version --check` | 有（历史钉；现行见 0.3.27） |
 | `isMergeSourceNoise`；summary 跳过 test/uat；折叠行合计 | 有（selfcheck） |
 | `bundleSqlVolumeWarning` 40/100 阈值 | 有（selfcheck） |
 | 仍标明非 harness land | 有 |
@@ -116,14 +137,14 @@
 | [SKILL.md](SKILL.md) 链到 AGENT-INDEX / VERIFY / QUICKSTART | 有 |
 | [README.md](README.md) 含「如何烟测」；不再声称无 VERIFY/selfcheck | 有 |
 | 关键脚本齐：release / format / push-gate / freeze / freeze-enrich / ai-track / note-merge / seal-check / selfcheck | 有 |
-| fixtures 种子：`fixtures/docs/releases/`（releases.md · templates · notes 示例 artifacts） | 有 |
+| fixtures 种子：`fixtures/docs/releases/`（releases.md · templates · `_example-artifacts.json` · archive） | 有 |
 | selfcheck 行为断言：`identityFromBranch` · 截断5 常量 · `shortCommitHash` · artifacts.json 形 · seal-check `--help` | 有 |
 
 ## 继承基线（0.3.17）
 
 | 检查 | 关键词 |
 |---|---|
-| 版本身份 = 发版分支归一化；发版日期解耦 | `identityFromBranch` · notes/`<slug>`/`<slug>`.md |
+| 版本身份 = 发版分支归一化；发版日期解耦 | `identityFromBranch` · docs/releases/`<slug>`/`<slug>`.md |
 | 截断5（前3后2、hash前8位） | `COMMIT_DISPLAY_*` · `shortCommitHash` |
 | 合并来源 origin/ 归一 + 一句话 | `normalizeSourceBranch` · `branchOneLineSummary` |
 | 目录包 artifacts.json SSOT；seal-check | note-merge · seal-check |

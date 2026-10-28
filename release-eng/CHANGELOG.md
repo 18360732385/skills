@@ -5,6 +5,8 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.3.28](../_log/release-eng/0.3/0.3.28.md) | 2026-10-28 | sql/refs + release-V*-DDL\|DML 整理与静态校验（sql-classify/sql-bundle） |
+| [0.3.27](../_log/release-eng/0.3/0.3.27.md) | 2026-10-28 | 去掉 notes/；进行中目录包直接挂在 docs/releases/<slug>/ |
 | [0.3.26](../_log/release-eng/0.3/0.3.26.md) | 2026-10-26 | P2：mergeSources noise 折叠；摘要跳过环境支；SQL 包体 40/100 warning |
 | [0.3.25](../_log/release-eng/0.3/0.3.25.md) | 2026-10-26 | P1：ai-track tagged；索引表头自适应；jobsConfigGaps 收窄本版 draft |
 | [0.3.24](../_log/release-eng/0.3/0.3.24.md) | 2026-10-26 | P0：Flyway `Vdddd_d__` + rename-alias；增量配置仅 prod；seal-check 非 prod fail |

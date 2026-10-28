@@ -502,7 +502,7 @@ export function enrichFreezePayload(root, payload, options = {}) {
   }
   if (overdueHard.length) {
     warnings.push(
-      `逾期硬闸：存在 ${overdueHard.length} 份已定版且发版日期已过的 notes/ 发版单，须先 seal 或书面跳过后再定版`
+      `逾期硬闸：存在 ${overdueHard.length} 份已定版且发版日期已过的进行中发版单，须先 seal 或书面跳过后再定版`
     );
   }
   if (todoPlaceholders.length) {
@@ -654,8 +654,14 @@ export function loadArtifactsForNoteFile(root, mdFullPath) {
   };
 }
 
-/** 按 identity 日期前缀倒序列出发版单 md（兼容扁平 archive/*.md 与目录包 archive/{id}/{id}.md） */
-function listReleaseNotesNewestFirst(dir) {
+/** releases/ 根下保留名：不是进行中版本身份目录 */
+const RELEASES_RESERVED_DIRS = new Set(["archive", "templates", "notes"]);
+
+/** 按 identity 日期前缀倒序列出发版单 md（兼容扁平 *.md 与目录包 {id}/{id}.md） */
+function listReleaseNotesNewestFirst(dir, { skipDirs = [] } = {}) {
+  const skip = new Set(
+    [...skipDirs, ...RELEASES_RESERVED_DIRS].map((s) => String(s).toLowerCase())
+  );
   const found = [];
   let entries = [];
   try {
@@ -665,13 +671,17 @@ function listReleaseNotesNewestFirst(dir) {
   }
   for (const ent of entries) {
     if (ent.isFile() && ent.name.endsWith(".md")) {
+      const base = ent.name.replace(/\.md$/i, "");
+      // 跳过索引/说明类顶层 md
+      if (/^(releases|archive|readme|changelog)$/i.test(base)) continue;
       found.push({
         file: ent.name,
         full: path.join(dir, ent.name),
         sort: /^(\d{4}-\d{2}-\d{2})/.test(ent.name) ? ent.name : `0000-00-00-${ent.name}`,
-        identity: ent.name.replace(/\.md$/i, ""),
+        identity: base,
       });
     } else if (ent.isDirectory()) {
+      if (skip.has(ent.name.toLowerCase())) continue;
       const nested = path.join(dir, ent.name, `${ent.name}.md`);
       if (fs.existsSync(nested)) {
         found.push({
@@ -1249,16 +1259,28 @@ export function buildArtifactsJson(identity, freeze) {
     })),
     changeObjects: freeze.changeObjects || [],
     aiTrack: freeze.aiTrack || { status: "stub", aiRanked: [], aiNoise: [] },
+    /** 由 note-merge / sql-bundle 写入；enrich 默认空数组 */
+    sqlBundles: freeze.sqlBundles || [],
   };
 }
 
-/** notes/ 逾期未归档：发版日期 < 今天(上海)；已定版→hard，准备中→soft */
+/**
+ * 进行中发版单逾期未归档：发版日期 < 今天(上海)；已定版→hard，准备中→soft。
+ * 扫描 docs/releases/{id}/（跳过 archive/templates）；兼容旧 docs/releases/notes/。
+ */
 export function scanOverdueNotes(root) {
-  const notesDir = path.join(root, "docs", "releases", "notes");
-  const listed = listReleaseNotesNewestFirst(notesDir);
+  const releasesDir = path.join(root, "docs", "releases");
+  const listed = [
+    ...listReleaseNotesNewestFirst(releasesDir),
+    ...listReleaseNotesNewestFirst(path.join(releasesDir, "notes"), { skipDirs: [] }),
+  ];
+  // 同 identity 去重：优先新路径（releases 根下先列出）
+  const seen = new Set();
   const today = chinaToday();
   const out = [];
   for (const n of listed) {
+    if (seen.has(n.identity)) continue;
+    seen.add(n.identity);
     const text = readText(n.full);
     if (!text) continue;
     const dateM = text.match(/\|\s*发版日期\s*\|\s*([^|]+)\|/) || text.match(/>\s*发版日期：\s*(\S+)/);
@@ -1313,11 +1335,15 @@ export function scanIndexDrift(root) {
     }
     if (!inProgress) continue;
     if (!line.includes("|") || line.includes("---")) continue;
-    // 提取 markdown 链接目标：[`...`](./notes/xxx/xxx.md)
+    // 提取 markdown 链接目标：[`...`](./release-Vxx/release-Vxx.md) 或旧 ./notes/...
     const linkM = line.match(/\]\(([^)]+\.md)\)/);
     if (!linkM) continue;
     const rel = linkM[1].replace(/^\.?\//, "");
-    if (!rel.startsWith("notes/")) continue;
+    if (rel.startsWith("archive/") || rel.startsWith("templates/")) continue;
+    // 进行中：releases 根下 {id}/{id}.md，或兼容 notes/{id}/…
+    if (!/^[^/]+\/[^/]+\.md$/i.test(rel) && !/^notes\/[^/]+(\/[^/]+)?\.md$/i.test(rel)) {
+      continue;
+    }
     const full = path.join(root, "docs", "releases", rel);
     const identity = rel.split("/").pop().replace(/\.md$/i, "");
     if (!fs.existsSync(full)) {

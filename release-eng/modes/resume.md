@@ -4,7 +4,7 @@
 
 1. [gates-common.md](gates-common.md)（续跑时 `发版日期`【推荐】= 既有发版单元信息中的日期，勿擅自改成新的推荐周四）  
    - 若 git-gates **Done（中止）** → 本模式结束（勿继续下列步骤）  
-2. 定位发版单：用户 slug（= 发版分支名归一化），或进行中唯一行，或多行则请用户选（路径为目录包 `notes/{identity}/{identity}.md`）  
+2. 定位发版单：用户 slug（= 发版分支名归一化），或进行中唯一行，或多行则请用户选（路径为目录包 `docs/releases/{identity}/{identity}.md`）  
 3. `on_exists` 默认 merge（[idempotency.md](idempotency.md)）  
 4. [freeze.md](freeze.md) — 【推荐】`release-freeze.mjs` 刷新自动段（`首次发版` 用 `--first-release` + inventory；增量 **键级diff**；提交 `截断5`；合并来源去重全量）  
 5. [questions.md](questions.md) 仅补缺（已有非空人工段默认保留；自适应以本轮 `draft`/`configKeys`/`jobKeys` 为准；目标 **`prod`**）  

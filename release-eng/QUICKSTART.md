@@ -1,6 +1,6 @@
 # release-eng 一页纸
 
-点名本 skill → 按意图走模式。热路径索引：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`（`modes` / `push-gate` / `freeze` / `seal-check` …）。
+点名本 skill → 按意图走模式。热路径索引：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`（`modes` / `push-gate` / `freeze` / `sql-bundle` / `seal-check` …）。定版包 SQL：原件 `sql/refs/`，整理 `release-V{yyMMdd}-DDL|DML.sql`（prod 先 DDL 后 DML）。
 
 ## 主循环
 
@@ -23,7 +23,7 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 | **prepare** | 新建发版单：首问 → push-gate → freeze → 问卷 → WritePlan |
 | **resume** | 同版本身份续跑（刷新 draft / 补问卷 / 再定版） |
 | **audit** | 只读体检 prior·freeze，不写盘 |
-| **seal** | 已上线：seal-check 通过后 notes→archive |
+| **seal** | 已上线：seal-check 通过后 进行中目录→archive |
 
 ## 三条硬规则
 
@@ -31,6 +31,6 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 2. **确认词才写盘**——WritePlan / note-merge / seal 搬迁须过确认（或同会话预授权）；「继续吧」等非正式口语不算；audit 永不写盘。
 3. **非 harness land**——不对齐 harness 自动 land；跨仓靠整目录拷贝 + 点名仪式。
 
-逾期已定版仍在 `notes/` → 先 seal。push-gate 未通过 → 勿写 `notes/`（聊天可贴草稿）。Red Flags：[SKILL.md](SKILL.md)。
+逾期已定版仍在 `docs/releases/<slug>/` → 先 seal。push-gate 未通过 → 勿写进行中目录包（聊天可贴草稿）。Red Flags：[SKILL.md](SKILL.md)。
 
 详情：[SKILL.md](SKILL.md) · [modes/README.md](modes/README.md) · [gates-common.md](modes/gates-common.md) · [freeze.md](modes/freeze.md)

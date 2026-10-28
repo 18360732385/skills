@@ -4,6 +4,7 @@
  */
 import fs from "fs";
 import path from "path";
+import { createHash } from "crypto";
 
 export const TZ_CHINA = "Asia/Shanghai";
 
@@ -604,6 +605,149 @@ export function migrationAliasSet(names) {
     out.add(migrationCanonicalId(base));
   }
   return out;
+}
+
+/**
+ * 按文件名归类 DDL|DML（整理用）。
+ * 1) `__DDL__`/`__DML__` 字面量优先；
+ * 2) 新轨 `V{ts≥10位}_{0|1}__` → _0=DDL _1=DML；
+ * 3) 旧四位子号不作类型 → null。
+ * @returns {"DDL"|"DML"|null}
+ */
+export function classifyMigrationKindByFilename(nameOrPath) {
+  const base = migrationBaseName(nameOrPath);
+  if (/__DDL__/i.test(base)) return "DDL";
+  if (/__DML__/i.test(base)) return "DML";
+  const tsType = base.match(/^V(\d{10,})_(0|1)__/i);
+  if (tsType) return tsType[2] === "0" ? "DDL" : "DML";
+  return null;
+}
+
+/** 发版日期 YYYY-MM-DD → yyMMdd；非法则 null */
+export function releaseDateToYyMmDd(releaseDate) {
+  const m = String(releaseDate || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return `${m[1].slice(2)}${m[2]}${m[3]}`;
+}
+
+/**
+ * 整理文件名：`release-V{yyMMdd}-DDL.sql` / `-DML.sql`
+ * @param {string} releaseDate YYYY-MM-DD
+ * @param {"DDL"|"DML"} kind
+ */
+export function releaseSqlBundleName(releaseDate, kind) {
+  const ymd = releaseDateToYyMmDd(releaseDate);
+  if (!ymd) throw new Error(`invalid releaseDate for sql bundle: ${releaseDate}`);
+  const k = String(kind || "").toUpperCase();
+  if (k !== "DDL" && k !== "DML") throw new Error(`invalid sql bundle kind: ${kind}`);
+  return `release-V${ymd}-${k}.sql`;
+}
+
+/** 拼接分隔注释（不改源 SQL 正文） */
+export function sqlBundleSeparator(basename, which = "begin") {
+  const bn = migrationBaseName(basename);
+  if (which === "end") return `-- <<< end: ${bn}`;
+  return `-- >>> begin: ${bn}`;
+}
+
+export function sha256Hex(buf) {
+  return createHash("sha256").update(buf == null ? "" : buf).digest("hex");
+}
+
+/**
+ * 去掉注释与字符串字面量，供分号结构检查（非完整 SQL 解析器）。
+ */
+export function stripSqlCommentsAndStrings(src) {
+  const s = String(src || "");
+  let out = "";
+  let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    const n = s[i + 1];
+    if (c === "-" && n === "-") {
+      i += 2;
+      while (i < s.length && s[i] !== "\n") i++;
+      continue;
+    }
+    if (c === "/" && n === "*") {
+      i += 2;
+      while (i < s.length - 1 && !(s[i] === "*" && s[i + 1] === "/")) i++;
+      i += 2;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === "`") {
+      const q = c;
+      out += " ";
+      i++;
+      while (i < s.length) {
+        if (s[i] === "\\" && q !== "`") {
+          i += 2;
+          continue;
+        }
+        if (s[i] === q) {
+          if (q === "'" && s[i + 1] === "'") {
+            i += 2;
+            continue;
+          }
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
+/**
+ * 去注释/字符串后，每个非空语句须以 `;` 结束。
+ * @returns {{ ok: boolean, message?: string }}
+ */
+export function assertStatementsEndWithSemicolon(src) {
+  const stripped = stripSqlCommentsAndStrings(src);
+  const parts = stripped.split(";").map((p) => p.trim()).filter(Boolean);
+  if (!parts.length) {
+    const onlyNoise = !/\S/.test(stripped);
+    if (onlyNoise) return { ok: true };
+    return { ok: false, message: "非空 SQL 无完整以 ; 结束的语句" };
+  }
+  const trimmedSrc = stripSqlCommentsAndStrings(src).trimEnd();
+  if (!trimmedSrc.endsWith(";")) {
+    return { ok: false, message: "存在不以 ; 结束的非空语句" };
+  }
+  return { ok: true };
+}
+
+/**
+ * 按序拼接整理文件内容。
+ * @param {{ basename: string, content: string }[]} orderedFiles
+ */
+export function buildSqlBundleContent(orderedFiles) {
+  const chunks = [];
+  for (const f of orderedFiles || []) {
+    const bn = migrationBaseName(f.basename || f.path || "");
+    const body = f.content == null ? "" : String(f.content);
+    chunks.push(sqlBundleSeparator(bn, "begin"));
+    chunks.push(body.endsWith("\n") ? body.slice(0, -1) : body);
+    chunks.push(sqlBundleSeparator(bn, "end"));
+    chunks.push("");
+  }
+  return chunks.join("\n");
+}
+
+/** 检测正文是否同时含明显 DDL 与 DML 动词（混合 → 硬失败） */
+export function detectMixedDdlDml(src) {
+  const stripped = stripSqlCommentsAndStrings(src).toUpperCase();
+  const hasDdl =
+    /\b(CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/.test(stripped) ||
+    /\b(ADD|MODIFY|CHANGE)\s+(COLUMN|INDEX|CONSTRAINT|PRIMARY|UNIQUE|FOREIGN)\b/.test(stripped);
+  const hasDml =
+    /\b(INSERT|UPDATE|DELETE|REPLACE|MERGE)\b/.test(stripped) ||
+    /\b(LOAD\s+DATA)\b/.test(stripped);
+  return { hasDdl, hasDml, mixed: hasDdl && hasDml };
 }
 
 /** 上线配置路径：application-prod.yml 或 nacos prod overlay */

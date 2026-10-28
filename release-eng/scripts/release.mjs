@@ -42,7 +42,7 @@ const MODES = [
   {
     name: "seal",
     doc: "modes/seal.md",
-    desc: "已上线：seal-check 通过后 notes→archive",
+    desc: "已上线：seal-check 通过后 进行中目录→archive",
     scripts: ["seal-check"],
   },
 ];
@@ -53,6 +53,8 @@ const DISPATCH = {
   enrich: "release-freeze-enrich.mjs",
   "freeze-enrich": "release-freeze-enrich.mjs",
   "ai-track": "release-ai-track.mjs",
+  "sql-classify": "release-sql-classify.mjs",
+  "sql-bundle": "release-sql-bundle.mjs",
   "note-merge": "release-note-merge.mjs",
   "seal-check": "release-seal-check.mjs",
   format: "release-format.mjs",
@@ -74,13 +76,13 @@ Usage:
   seal      已上线上归档
 
 可转发脚本子命令:
-  push-gate | freeze | enrich | ai-track | note-merge | seal-check | format
+  push-gate | freeze | enrich | ai-track | sql-classify | sql-bundle | note-merge | seal-check | format
 
 示例:
   node scripts/release.mjs modes
   node scripts/release.mjs audit --help
   node scripts/release.mjs freeze -- --root . --base main --head HEAD --format audit-json
-  node scripts/release.mjs seal-check -- --root . --note docs/releases/notes/<slug>/<slug>.md
+  node scripts/release.mjs seal-check -- --root . --note docs/releases/<slug>/<slug>.md
 
 边界：确认词 / WritePlan / 问卷仍由 Agent 按模式 md 执行；本入口不代写盘。
 热路径：AGENT-INDEX.md · 烟测：node scripts/selfcheck.mjs

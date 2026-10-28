@@ -5,9 +5,9 @@
  * Usage:
  *   node release-seal-check.mjs --root <REPO> --note <path> [--force] [--format json|md]
  *
- * 检查：位于 notes/、状态已定版（或 --force）、元信息/发版日期、Git 定版、
- * SQL·配置·任务目标 profile=prod（或显式无）、目录包 artifacts.json SSOT、
- * 索引进行中表有对应行（警告级可缺）。
+ * 检查：位于 docs/releases/{id}/（进行中；兼容旧 notes/）、状态已定版（或 --force）、
+ * 元信息/发版日期、Git 定版、SQL·配置·任务目标 profile=prod（或显式无）、
+ * 目录包 artifacts.json SSOT、索引进行中表有对应行（警告级可缺）。
  * 密文：配置项章 / artifacts.json **允许**含密文，本脚本不做密文拦截。
  * Exit 0=通过（仅 warning 也可 0）；1=有 error
  */
@@ -18,6 +18,7 @@ import {
   bundleSqlVolumeWarning,
   BUNDLE_SQL_ALERT_COUNT,
 } from "./release-format.mjs";
+import { verifySqlBundlesOnDisk } from "./release-sql-bundle.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -89,21 +90,44 @@ function main() {
     process.exit(1);
   }
 
-  if (!rel.includes("docs/releases/notes/")) {
-    errors.push(`seal 源路径须在 docs/releases/notes/，当前: ${rel}`);
-  }
   if (rel.includes("docs/releases/archive/")) {
     errors.push("发版单已在 archive/，勿重复 seal");
   }
 
-  // 推荐目录包：notes/{identity}/{identity}.md
-  const bundleMatch = rel.match(/^docs\/releases\/notes\/([^/]+)\/([^/]+)\.md$/i);
-  const flatMatch = rel.match(/^docs\/releases\/notes\/([^/]+)\.md$/i);
-  if (flatMatch && !bundleMatch) {
-    warnings.push(
-      `发版单仍为扁平路径 notes/${flatMatch[1]}.md；推荐目录包 notes/${flatMatch[1]}/${flatMatch[1]}.md（seal 仍可强制）`
+  const reservedTop = new Set(["archive", "templates"]);
+  const legacyBundle = rel.match(/^docs\/releases\/notes\/([^/]+)\/([^/]+)\.md$/i);
+  const legacyFlat = rel.match(/^docs\/releases\/notes\/([^/]+)\.md$/i);
+  const rootBundle = rel.match(/^docs\/releases\/([^/]+)\/([^/]+)\.md$/i);
+  const rootFlat = rel.match(/^docs\/releases\/([^/]+)\.md$/i);
+  const isLegacy = Boolean(legacyBundle || legacyFlat);
+  const isRootBundle =
+    rootBundle && !reservedTop.has(rootBundle[1].toLowerCase()) && rootBundle[1].toLowerCase() !== "notes";
+  const isRootFlat =
+    rootFlat &&
+    !reservedTop.has(rootFlat[1].replace(/\.md$/i, "").toLowerCase()) &&
+    rootFlat[1].toLowerCase() !== "notes.md";
+
+  if (!isLegacy && !isRootBundle && !isRootFlat) {
+    errors.push(
+      `seal 源路径须为 docs/releases/{identity}/{identity}.md（或兼容旧 notes/），当前: ${rel}`
     );
   }
+  if (isLegacy) {
+    warnings.push(
+      `发版单仍在旧路径 notes/；推荐迁至 docs/releases/${(legacyBundle || legacyFlat)[1]}/ 后再 seal`
+    );
+  }
+  if (legacyFlat && !legacyBundle) {
+    warnings.push(
+      `发版单仍为扁平路径 notes/${legacyFlat[1]}.md；推荐目录包 ${(legacyFlat[1])}/${legacyFlat[1]}.md`
+    );
+  }
+  if (isRootFlat && !isRootBundle) {
+    warnings.push(
+      `发版单仍为扁平路径 ${rootFlat[1]}；推荐目录包 ${rootFlat[1].replace(/\.md$/i, "")}/${rootFlat[1]}`
+    );
+  }
+  const bundleMatch = legacyBundle || (isRootBundle ? rootBundle : null);
   if (bundleMatch && bundleMatch[1] !== bundleMatch[2]) {
     warnings.push(`目录名 ${bundleMatch[1]} 与 md 名 ${bundleMatch[2]} 不一致`);
   }
@@ -172,12 +196,62 @@ function main() {
           errors.push(`artifacts.config profile 须为 prod（stableId=${row.stableId || "?"} profile=${row.profile}）`);
         }
       }
+
+      const refsDir = path.join(bundleDir, "sql", "refs");
+      const hasRefsDir = fs.existsSync(refsDir);
+      let refFiles = [];
+      if (hasRefsDir) {
+        try {
+          refFiles = fs.readdirSync(refsDir).filter((f) => f.toLowerCase().endsWith(".sql"));
+        } catch {
+          refFiles = [];
+        }
+      }
+      const bundles = artifacts.sqlBundles || [];
+      const requiresBundles = hasRefsDir || bundles.length > 0;
+
+      if (requiresBundles) {
+        if (hasRefsDir && !bundles.length && refFiles.length) {
+          errors.push("存在 sql/refs/ 但 artifacts.sqlBundles 为空（请用 note-merge/sql-bundle 重写）");
+        }
+        if (bundles.length) {
+          const sqlIds = new Set((artifacts.sql || []).map((r) => r.stableId).filter(Boolean));
+          const refSet = new Set(refFiles);
+          for (const id of sqlIds) {
+            if (refSet.size && !refSet.has(id)) {
+              errors.push(`artifacts.sql 含 ${id} 但 sql/refs/ 无对应文件`);
+            }
+          }
+          for (const f of refFiles) {
+            if (sqlIds.size && !sqlIds.has(f)) {
+              warnings.push(`sql/refs/ 含 ${f} 但 artifacts.sql[] 无 stableId`);
+            }
+          }
+          const dateMatch =
+            text.match(/\|\s*发版日期\s*\|\s*(\d{4}-\d{2}-\d{2})/) ||
+            text.match(/>\s*发版日期：\s*(\d{4}-\d{2}-\d{2})/);
+          const releaseDate = dateMatch ? dateMatch[1] : null;
+          for (const e of verifySqlBundlesOnDisk(bundleDir, bundles, releaseDate)) {
+            errors.push(e);
+          }
+        }
+        if (refFiles.length >= BUNDLE_SQL_ALERT_COUNT) {
+          const w = bundleSqlVolumeWarning(refFiles.length, { context: "包内 sql/refs/" });
+          if (w) warnings.push(w);
+        }
+      }
     }
     const bundleSection = section(text, "包内附属文件");
     const claimsFiles = bundleSection && !/\|\s*—\s*\|\s*无\s*\|/.test(bundleSection);
     if (claimsFiles) {
       for (const sub of ["sql", "config", "jobs"]) {
-        if (!bundleSection.includes(`| ${sub} |`) && !bundleSection.includes(`|${sub}|`)) continue;
+        if (
+          !bundleSection.includes(`| ${sub} |`) &&
+          !bundleSection.includes(`|${sub}|`) &&
+          !(sub === "sql" && /sql\/refs|sql-bundle|release-V\d+-(DDL|DML)/i.test(bundleSection))
+        ) {
+          continue;
+        }
         const subDir = path.join(bundleDir, sub);
         if (!fs.existsSync(subDir)) {
           warnings.push(`正文引用 ${sub}/ 但目录不存在`);
@@ -190,9 +264,20 @@ function main() {
           files = [];
         }
         if (!files.length) warnings.push(`正文含 ${sub} 附属但 ${sub}/ 为空`);
-        if (sub === "sql" && files.length >= BUNDLE_SQL_ALERT_COUNT) {
-          const w = bundleSqlVolumeWarning(files.length, { context: "包内 sql/" });
-          if (w) warnings.push(w);
+        if (sub === "sql") {
+          const refsPath = path.join(subDir, "refs");
+          let refCount = 0;
+          if (fs.existsSync(refsPath)) {
+            try {
+              refCount = fs.readdirSync(refsPath).filter((f) => f.endsWith(".sql")).length;
+            } catch {
+              refCount = 0;
+            }
+          }
+          if (refCount >= BUNDLE_SQL_ALERT_COUNT) {
+            const w = bundleSqlVolumeWarning(refCount, { context: "包内 sql/refs/" });
+            if (w) warnings.push(w);
+          }
         }
         if (sub === "config") {
           for (const f of files) {

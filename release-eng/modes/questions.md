@@ -20,7 +20,7 @@
 
 ## 固定
 
-1. 版本身份 slug【推荐】= 发版分支名归一化（如 `release/V260827` → `release-V260827`），发版单路径 = `notes/<slug>/<slug>.md`（发版日期为独立字段，不拼入路径）  
+1. 版本身份 slug【推荐】= 发版分支名归一化（如 `release/V260827` → `release-V260827`），发版单路径 = `docs/releases/<slug>/<slug>.md`（发版日期为独立字段，不拼入路径；无 notes/）  
 2. 上线内容摘要（【推荐】采纳 freeze `releaseSummaryLines`；1～5 项业务短句；写入元信息；可改）  
 3. 发版负责人  
 
@@ -42,7 +42,7 @@
 
 - [ ] 固定 1–3 均有答复（允许「待定」）；版本身份 = 发版分支名归一化，发版日期为 gates-common 已确认值  
 - [ ] 自适应 4–9 均已收敛：有答、或标「无」、或标「待定」  
-- [ ] SQL：增量已 `SQL序`；首次已确认起迁（或显式「无 SQL」）；目标 profile=`prod`  
+- [ ] SQL：增量已 `SQL序`；首次已确认起迁（或显式「无 SQL」）；目标 profile=`prod`；知悉包内整理文件 prod 先 DDL 后 DML  
 - [ ] 配置：有值时每条含**说明**（落单写入 yml 键上一行 `#` 注释）、来源、目标 profile=`prod`；优先落了 `configKeys`  
 - [ ] 定时任务：有变更时目标 profile=`prod`；优先落了 `jobKeys`/`taskCodes`  
 - [ ] 若用户说了「全部推荐」：本轮未答项已按 [recommended.md](recommended.md) 填齐  

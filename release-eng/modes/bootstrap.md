@@ -9,7 +9,7 @@
 | 1（已存在） | 目标仓路径已有 → **skip**（保留已有正文与发版单） |
 | 2（缺失） | 本 skill [`fixtures/docs/releases/`](../fixtures/docs/releases/) → **复制**到目标仓对应路径 |
 
-`notes/`、`archive/` 缺失时建空目录（fixture 含 `.gitkeep`）。  
+`archive/` 缺失时建空目录（fixture 含 `.gitkeep`）。进行中版本目录按版本身份落在 `docs/releases/<slug>/`，**不**预建 `notes/`。  
 仓内已有文件是日常正文 SSOT；fixture 只作空仓/缺路径种子，不覆盖已有。
 
 ## 步骤
@@ -26,7 +26,6 @@
 |---|
 | `docs/releases/releases.md` |
 | `docs/releases/templates/release-note-template.md` |
-| `docs/releases/notes/` |
 | `docs/releases/archive/` |
 | `docs/releases/ARCHIVE.md` |
 

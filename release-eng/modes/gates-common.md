@@ -5,14 +5,14 @@
 ## 步骤
 
 1. [bootstrap.md](bootstrap.md)  
-2. **逾期未归档预检**【推荐】：扫 `docs/releases/notes/`；发版日期 < 今天（Asia/Shanghai）且状态=`已定版` → **硬闸**（中止定版，先 seal）；状态=`准备中` → 软提醒。亦可由后续 freeze 的 `overdueHardGate` 再拦一次。  
-   - **索引 ↔ 磁盘对账**：`releases.md`「进行中」表行指向的 note 路径须磁盘存在；不存在 → 索引漂移（freeze 产出 `indexDrift` 并 warning，须先修正索引或补建 note 再继续）。  
+2. **逾期未归档预检**【推荐】：扫 `docs/releases/<slug>/`（进行中目录包；兼容旧 `notes/`）；发版日期 < 今天（Asia/Shanghai）且状态=`已定版` → **硬闸**（中止定版，先 seal）；状态=`准备中` → 软提醒。亦可由后续 freeze 的 `overdueHardGate` 再拦一次。  
+   - **索引 ↔ 磁盘对账**：`releases.md`「进行中」表行指向的发版单路径须磁盘存在；不存在 → 索引漂移（freeze 产出 `indexDrift` 并 warning，须先修正索引或补建目录包再继续）。  
    - **无例外口头豁免**：「旧单以后再 archive」「先定新版」「archive 是 housekeeping」**不**解除硬闸。仅用户**书面**「跳过逾期硬闸」并记入本轮交付物时可继续。  
 3. **首问**（每批 ≤ 5；每题展示【推荐】；可 `全部推荐`）  
    1. **`发版日期`**【推荐】= **≥提问日+2 天的第一个周四**（算法见下；口语可称「下周四」）  
    2. 发版分支【推荐】`release`（可预填上次或索引）  
    3. 基线分支【推荐】`main`；可为 **`无`（`首次发版`）**  
-   - **权威口述 ≠ 跳过首问**：用户说「别问了 / 用 release 对 main / 日期写周四」时，仍须**回显三项**请其未改口确认（或走 `全部推荐` 展示预填），然后才进步骤 4。禁止未回显直接写 `notes/`。  
+   - **权威口述 ≠ 跳过首问**：用户说「别问了 / 用 release 对 main / 日期写周四」时，仍须**回显三项**请其未改口确认（或走 `全部推荐` 展示预填），然后才进步骤 4。禁止未回显直接写 `docs/releases/<slug>/`。  
 4. [git-gates.md](git-gates.md) — 【推荐】`scripts/release-push-gate.mjs`  
 
 ### 发版日期【推荐】算法
@@ -28,7 +28,7 @@
 
 `全部推荐` 可预填本步三项：须向用户展示预填值；用户未改口即视为确认后再执行步骤 3（协议见 [recommended.md](recommended.md)）。  
 用户已明示基线=`无` / `首次发版` 时，不得改回 `main`。  
-**发版单路径约定**：版本身份 `<slug>` = **发版分支名归一化**（去 `origin/`、`refs/heads|remotes/`，`/` → `-`，连 `-` 收敛；如 `release/V260827` → `release-V260827`），与 `发版日期` 解耦（日期不拼入目录名）；发版单路径 = `notes/<slug>/<slug>.md`。改 `发版日期` 不影响路径，仅更新元信息日期字段。
+**发版单路径约定**：版本身份 `<slug>` = **发版分支名归一化**（去 `origin/`、`refs/heads|remotes/`，`/` → `-`，连 `-` 收敛；如 `release/V260827` → `release-V260827`），与 `发版日期` 解耦（日期不拼入目录名）；发版单路径 = `docs/releases/<slug>/<slug>.md`（与 `archive/`、`templates/`、索引并列，**无 notes/ 中间层**）。改 `发版日期` 不影响路径，仅更新元信息日期字段。
 
 ## 出口
 

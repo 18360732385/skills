@@ -31,7 +31,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-rele
 
 脚本产出：Git 二表（提交列表 + 合并来源）、`releaseSummaryLines`、`candidates`、`changeObjects`、`configKeys`/`jobKeys`/`taskCodes`、`draft`/`draftSuppressed`、`priorRelease`/`priorReleases`、`baselinePresence`、`overdueNotes`、`aiTrack`（stub）、`inventory`（首次）、`gitlabUrl`、`mergeSources`、`timezone=Asia/Shanghai`、`todoPlaceholders`（TODO 占位）、`jobsConfigGaps`（jobs↔config 交叉）、`indexDrift`（索引↔磁盘对账）。  
 首次 `inventory` 另含空层可观测：`prodConfigKeyCount`、`nacosOverlayKeyCount`、`syncTaskCodeCount`、`layerEmpty`（如 `["config"]`/`["jobs"]`）；层为空时 `warnings` 明示「prod 层 0 键」「SyncTaskCode 枚举 0」，**不**改变 layered 收录策略。  
-存在 **逾期硬闸**（`notes/` 已定版且发版日期已过）时 exit 1。
+存在 **逾期硬闸**（进行中目录包已定版且发版日期已过）时 exit 1。
 
 ## `confidence`（分级）
 
@@ -57,7 +57,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 
 ## `逾期未归档`
 
-`notes/` 中发版日期 < 运行日（Asia/Shanghai）：`已定版` → 硬闸（freeze `ok=false` / exit 1）；`准备中` → soft warning。须先 seal 或书面跳过。 
+进行中目录包（`docs/releases/<slug>/`，兼容旧 `notes/`）发版日期 < 运行日（Asia/Shanghai）：`已定版` → 硬闸（freeze `ok=false` / exit 1）；`准备中` → soft warning。须先 seal 或书面跳过。 
 
 ## 候选规则（增量）
 
@@ -127,6 +127,8 @@ note-merge 写入元信息章内 `### 上线内容摘要` 的 `<!-- auto:summary
 sql 候选按 migration **版本号数字升序**。  
 无版本号的 `_change.sql` 置后，问卷确认是否仅对照、是否需执行。  
 落单「数据库与 SQL」按同一顺序填 **执行序** 1..N，目标 profile=`prod`。
+
+定版落盘后（note-merge）：原件进 `sql/refs/`；按文件名双轨（`__DDL__`/`__DML__` 或新轨 `V{ts}_{0|1}__`）归类，失败则 AI JSON（`--sql-ai-json`，不问用户）生成 `sql/release-V{yyMMdd}-DDL|DML.sql`（缺侧不落盘）。**prod 执行：先 DDL 整理文件，再 DML**（各类内部仍 SQL序）。`_change.sql` 不进 refs/整理。
 
 ## 回退（脚本不可用时）
 

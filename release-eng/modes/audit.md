@@ -5,7 +5,7 @@
 
 ## 步骤
 
-1. 检骨架五路径 → 填报告「骨架」  
+1. 检骨架四路径（releases.md · templates · archive/ · ARCHIVE.md）→ 填报告「骨架」  
 2. 读 `releases.md` 进行中表 → 填「进行中」  
 3. 分支对：首问 `发版日期`+发版/基线，或【推荐】≥提问日+2 的第一个周四 + `release`/`main`（或用户指定 **`首次发版`/基线=`无`**）→ 【推荐】`release-push-gate.mjs` 只读 → 填「push-gate」   
 4. **prior / freeze 体检**（【推荐】）：在仓库根跑  
@@ -69,4 +69,4 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --base <base
 
 - [ ] 报告含上述**七个**二级标题且每节有实质内容或显式「无/未检查/未跑」  
 - [ ] prior / freeze 节已填（或显式「未跑 freeze」）  
-- [ ] 本轮对 `notes/`、`archive/`、索引正文的动作仅为「无」或用户要求的 bootstrap  
+- [ ] 本轮对进行中目录包、`archive/`、索引正文的动作仅为「无」或用户要求的 bootstrap  
