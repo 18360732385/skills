@@ -1236,6 +1236,8 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
       });
       for (const w of sqlBundleResult.warnings || []) bundleResult.warnings.push(w);
       if (!sqlBundleResult.ok) {
+        // 失败回滚已写附属，避免半成品污染下一轮 freeze / seal-check
+        resetBundleKindDirs(bundle.bundleDir);
         if (sqlBundleResult.promptMd) {
           console.error("--- sql-classify prompt-md ---");
           console.error(sqlBundleResult.promptMd);

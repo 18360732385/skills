@@ -498,6 +498,39 @@ export function enrichFreezePayload(root, payload, options = {}) {
     }
   }
 
+  // docs/jobs 路径变更（或首次 inventory.jobsDocPaths）→ 即使无 SyncTaskCode 也进 jobsHits / draft.jobs
+  const jobsDocPaths = new Set();
+  for (const p of payload.inventory?.jobsDocPaths || []) {
+    if (p) jobsDocPaths.add(normPath(p));
+  }
+  for (const c of candidates) {
+    const p = normPath(c.path || "");
+    if (p.includes("docs/jobs")) jobsDocPaths.add(p);
+  }
+  if (jobsDocPaths.size) {
+    const seedFromEntry = (entry, confidence = "docs-hit") => {
+      if (!entry?.taskCode) return;
+      if (jobsHitsMap.has(entry.taskCode)) return;
+      jobsHitsMap.set(entry.taskCode, {
+        ...jobScheduleSlice(entry),
+        confidence,
+        docsHit: true,
+      });
+    };
+    for (const p of jobsDocPaths) {
+      const hit = resolveJobHit(p, jobsCatalog, syncEnumMap);
+      if (hit) seedFromEntry(hit);
+    }
+    // jobs.md 索引变更：seed 索引内全部 task（无 SyncTaskCode 时仍有 draft.jobs）
+    if ([...jobsDocPaths].some((p) => /docs\/jobs\/jobs\.md$/i.test(p))) {
+      for (const entry of jobsCatalog.jobs || []) seedFromEntry(entry);
+    }
+    // 首次发版：有任意 docs/jobs 路径则 seed catalog 全量（分层下 docs 路径常 layerSuppressed）
+    if (payload.firstRelease) {
+      for (const entry of jobsCatalog.jobs || []) seedFromEntry(entry);
+    }
+  }
+
   // —— TODO 占位扫描：prod 配置值中的 TODO_* 须上线前填妥 ——
   const todoPlaceholders = [];
   for (const k of configKeys) {

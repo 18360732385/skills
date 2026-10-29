@@ -66,7 +66,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 |---|---|
 | **sql** | 仅 `**/db/migration/Vdddd__*.sql` 或现行 `Vdddd_d__*.sql`（SQL序=`migrationSortKey`）；另附 `docs/db/table/*_change.sql`（对照，非替代执行序） |
 | **config** | **仅** `application-prod.yml` + `config/nacos/application-prod-nacos.yml` 键级 diff → draft；其它 `application*.yml` / `.env` / `*secret*` → `layerSuppressed`（`non-prod-layer`）；**说明**来自 README/AGENTS 表或 yml **键上一行 `#`（优先）/ 行尾 ` #`（兜底）；叶子无注释时回退继承最近父级 map 注释** |
-| **jobs** | `docs/jobs`、`*Scheduler.java`、`SyncTaskCode`、`SyncTaskMetadataRegistry`；或 yml 键名含 `cron`/`scheduling`；Java diff 抽 `taskCodes`；**交叉** `docs/jobs/tasks` → `jobsHits` |
+| **jobs** | `docs/jobs`、`*Scheduler.java`、`SyncTaskCode`、`SyncTaskMetadataRegistry`；或 yml 键名含 `cron`/`scheduling`；Java diff 抽 `taskCodes`；**交叉** `docs/jobs/tasks` → `jobsHits`；**仅** `docs/jobs` 路径变更（无 SyncTaskCode）也可 seed catalog → `draft.jobs` |
 | **third-party** | feign / 问学 / 乐享 / dashscope / mcp 路径关键词 |
 
 同一文件可同时 `config`+`jobs`（`kinds` 数组；兼容字段 `kind`=首个）。目标 profile=prod、配置白名单等约定见 [conventions.md](conventions.md)。

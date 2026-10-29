@@ -170,6 +170,11 @@ function normPath(p) {
   return p.replace(/\\/g, "/");
 }
 
+/** 发版过程域路径：采集候选时排除，避免包内 sql/config 再进 draft */
+export function excludeReleasePackageFiles(files) {
+  return (files || []).filter((f) => !normPath(f).startsWith("docs/releases/"));
+}
+
 function baseName(p) {
   const n = normPath(p);
   return n.split("/").pop() || n;
@@ -304,6 +309,12 @@ function entryComment(entry) {
   return "";
 }
 
+function entryIsLeaf(entry) {
+  if (entry == null) return undefined;
+  if (typeof entry === "object" && "isLeaf" in entry) return entry.isLeaf === true;
+  return true;
+}
+
 function diffKeyMaps(before, after) {
   const keys = new Set([...before.keys(), ...after.keys()]);
   const out = [];
@@ -318,6 +329,7 @@ function diffKeyMaps(before, after) {
         change: "added",
         value: av,
         comment: entryComment(after.get(key)),
+        isLeaf: entryIsLeaf(after.get(key)),
         jobs: isJobsKey(key),
       });
     } else if (hasB && !hasA) {
@@ -326,6 +338,7 @@ function diffKeyMaps(before, after) {
         change: "removed",
         value: bv,
         comment: entryComment(before.get(key)),
+        isLeaf: entryIsLeaf(before.get(key)),
         jobs: isJobsKey(key),
       });
     } else if (bv !== av) {
@@ -335,6 +348,7 @@ function diffKeyMaps(before, after) {
         value: av,
         from: bv,
         comment: entryComment(after.get(key)) || entryComment(before.get(key)),
+        isLeaf: entryIsLeaf(after.get(key)),
         jobs: isJobsKey(key),
       });
     }
@@ -1036,7 +1050,10 @@ function main() {
     console.error(names.stderr || "git path listing failed");
     process.exit(1);
   }
-  const files = names.stdout ? names.stdout.split(/\r?\n/).filter(Boolean) : [];
+  // 跳过 docs/releases/**：发版包内 sql/config 拷贝不得再进 draft（半成品污染链）
+  const files = excludeReleasePackageFiles(
+    names.stdout ? names.stdout.split(/\r?\n/).filter(Boolean) : []
+  );
   const pathStats = {};
   for (const f of files) {
     const bucket = pathBucket(f);

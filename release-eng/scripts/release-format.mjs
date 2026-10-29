@@ -736,9 +736,22 @@ export function buildSqlBundleContent(orderedFiles) {
   return chunks.join("\n");
 }
 
+/**
+ * 剥掉 MySQL 列/FK 选项里的 ON UPDATE / ON DELETE 子句，避免误判为 DML 动词。
+ * 覆盖到下一逗号、右括号或换行（已 upper 文本）。
+ */
+export function stripOnUpdateDeleteClauses(upperSql) {
+  return String(upperSql || "").replace(
+    /\bON\s+(UPDATE|DELETE)\b[^,)\n]*/g,
+    " "
+  );
+}
+
 /** 检测正文是否同时含明显 DDL 与 DML 动词（混合 → 硬失败） */
 export function detectMixedDdlDml(src) {
-  const stripped = stripSqlCommentsAndStrings(src).toUpperCase();
+  const stripped = stripOnUpdateDeleteClauses(
+    stripSqlCommentsAndStrings(src).toUpperCase()
+  );
   const hasDdl =
     /\b(CREATE|ALTER|DROP|TRUNCATE|RENAME)\b/.test(stripped) ||
     /\b(ADD|MODIFY|CHANGE)\s+(COLUMN|INDEX|CONSTRAINT|PRIMARY|UNIQUE|FOREIGN)\b/.test(stripped);
@@ -748,13 +761,17 @@ export function detectMixedDdlDml(src) {
   return { hasDdl, hasDml, mixed: hasDdl && hasDml };
 }
 
-/** 上线配置路径：application-prod.yml 或 nacos prod overlay（路径段或包内拍平 basename 均放行） */
+/** 上线配置路径：application-prod.yml 或 nacos prod overlay（路径段或包内拍平 basename；撞名 __hex 后缀仍放行） */
 export function isProdConfigPath(filePath) {
   const n = normMigrationPath(filePath);
   const base = migrationBaseName(n);
-  if (/^application-prod\.ya?ml$/i.test(base)) return true;
-  if (/^application-prod-nacos\.ya?ml$/i.test(base)) return true;
-  if (/config\/nacos\//i.test(n) && /^application-prod-nacos\.ya?ml$/i.test(base)) return true;
+  // application-prod.yml | application-prod__deadbe.yml
+  if (/^application-prod(__[0-9a-f]+)?\.ya?ml$/i.test(base)) return true;
+  // application-prod-nacos.yml | application-prod-nacos__deadbe.yml
+  if (/^application-prod-nacos(__[0-9a-f]+)?\.ya?ml$/i.test(base)) return true;
+  if (/config\/nacos\//i.test(n) && /^application-prod-nacos(__[0-9a-f]+)?\.ya?ml$/i.test(base)) {
+    return true;
+  }
   return false;
 }
 

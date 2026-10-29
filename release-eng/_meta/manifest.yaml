@@ -1,6 +1,6 @@
 # release-eng 版本清单（权威号）
 
-version: "0.3.32"
+version: "0.3.33"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false

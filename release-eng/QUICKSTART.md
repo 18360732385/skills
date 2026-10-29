@@ -31,4 +31,6 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 
 逾期已定版仍在 `docs/releases/<slug>/` → 先 seal。push-gate 未通过 → 勿写进行中目录包（聊天可贴草稿）。Red Flags：[SKILL.md](SKILL.md)。骨架缺失 / 旁路路由：[AGENT-INDEX.md](AGENT-INDEX.md)。
 
+bare / 无 web remote 时 freeze/audit 警告「未能推导浏览链接」属预期（非故障）。
+
 详情：[SKILL.md](SKILL.md) · [modes/README.md](modes/README.md)

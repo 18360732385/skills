@@ -2,7 +2,7 @@
 
 > **本目录是发版过程域，不是运行时契约 SSOT。**  
 > 冲突时以 `docs/func|api|db|redis|jobs` 真相 + 代码为准；本处只引用路径与上线清单。  
-> 仪式 Skill：[`release-eng`](../../.cursor/skills/release-eng/SKILL.md)（版本见 skill [`_meta/manifest.yaml`](../../.cursor/skills/release-eng/_meta/manifest.yaml)）。
+> 仪式 Skill：release-eng（版本见安装目录 `_meta/manifest.yaml`；勿依赖 `.cursor/skills/` 相对路径）。
 
 ## 读文档说明
 

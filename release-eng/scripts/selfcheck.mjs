@@ -196,6 +196,10 @@ assert(
 );
 
 const logRoot = path.resolve(skillRoot, "..", "_log", "release-eng");
+const repoRootReadmePath = path.join(skillRoot, "..", "README.md");
+/** monorepo：仓根 README + _log 齐；孤立拷贝 skill 目录时仓外钉 skip */
+const ISOLATED_INSTALL =
+  !fs.existsSync(logRoot) || !fs.existsSync(repoRootReadmePath);
 function logFileCandidates(ver) {
   const name = `${ver}.md`;
   const m = String(ver).match(/^(\d+\.\d+)\./);
@@ -221,48 +225,54 @@ assert(
   changelogIndex != null && changelogIndex.includes(PIN),
   `CHANGELOG mentions ${PIN}`
 );
-assert(logExists(PIN), `_log/release-eng/${PIN}.md exists`);
 assert(
   changelogIndex != null && changelogIndex.includes(`${PIN}.md`),
   `CHANGELOG index links ${PIN}`
 );
-assert(logExists("0.3.18-dev"), "_log retains 0.3.18-dev (live or archive)");
 assert(
   changelogIndex != null && changelogIndex.includes("0.3.18-dev.md"),
   "CHANGELOG index links 0.3.18-dev"
 );
-assert(logExists("0.3.19-dev"), "_log retains 0.3.19-dev (live or archive)");
 assert(
   /_log\/release-eng\/archive\//.test(changelogIndex || ""),
   "CHANGELOG points to _log/release-eng/archive/"
 );
-assert(
-  fs.existsSync(path.join(logRoot, "archive", "README.md")),
-  "_log/archive/README.md exists"
-);
-
-
-{
-  const syncCheck = spawnSync(
-    process.execPath,
-    [path.join(skillRoot, "scripts/sync-skill-version.mjs"), "--check"],
-    { encoding: "utf8" }
-  );
-  assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
-}
-
-{
-  const repoRootReadmePath = path.join(skillRoot, "..", "README.md");
-  const repoRootReadme = fs.existsSync(repoRootReadmePath)
-    ? fs.readFileSync(repoRootReadmePath, "utf8")
-    : null;
-  assert(repoRootReadme != null, "repo root README.md exists (../README.md)");
+if (ISOLATED_INSTALL) {
+  assert(true, "skip:isolated _log/release-eng pin exists");
+  assert(true, "skip:isolated _log retains 0.3.18-dev");
+  assert(true, "skip:isolated _log retains 0.3.19-dev");
+  assert(true, "skip:isolated _log/archive/README.md exists");
+  assert(true, "skip:isolated sync-skill-version --check");
+  assert(true, "skip:isolated repo root README.md exists");
+  assert(true, "skip:isolated repo root README release-eng row pin");
+} else {
+  assert(logExists(PIN), `_log/release-eng/${PIN}.md exists`);
+  assert(logExists("0.3.18-dev"), "_log retains 0.3.18-dev (live or archive)");
+  assert(logExists("0.3.19-dev"), "_log retains 0.3.19-dev (live or archive)");
   assert(
-    new RegExp(
-      String.raw`release-eng/README\.md[^\n]*当前 ` + VER_RE
-    ).test(repoRootReadme || ""),
-    `repo root README release-eng row pins ${PIN}`
+    fs.existsSync(path.join(logRoot, "archive", "README.md")),
+    "_log/archive/README.md exists"
   );
+
+  {
+    const syncCheck = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/sync-skill-version.mjs"), "--check"],
+      { encoding: "utf8" }
+    );
+    assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
+  }
+
+  {
+    const repoRootReadme = fs.readFileSync(repoRootReadmePath, "utf8");
+    assert(repoRootReadme != null, "repo root README.md exists (../README.md)");
+    assert(
+      new RegExp(
+        String.raw`release-eng/README\.md[^\n]*当前 ` + VER_RE
+      ).test(repoRootReadme || ""),
+      `repo root README release-eng row pins ${PIN}`
+    );
+  }
 }
 
 // =====================================================================
@@ -2100,6 +2110,274 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   assert((skill || "").includes("modes/conventions.md"), "⑪ SKILL 链接 conventions.md");
   const gatesCommonText = read("modes/gates-common.md") || "";
   assert(gatesCommonText.includes("conventions.md"), "⑪ gates-common 链接 conventions.md");
+}
+
+// =====================================================================
+// 0.3.33：EVAL 实战缺口（ON UPDATE / 原子回滚 / prod hash / isLeaf / docs-jobs / 孤立）
+// =====================================================================
+
+// --- 0.3.33 A：detectMixedDdlDml 不误杀 ON UPDATE / ON DELETE ---
+{
+  const { detectMixedDdlDml: mixedFn } = format;
+  assert(
+    !mixedFn(
+      "CREATE TABLE t (id INT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);"
+    ).mixed,
+    "033 A ON UPDATE CURRENT_TIMESTAMP 非 mixed"
+  );
+  assert(
+    !mixedFn(
+      "ALTER TABLE t ADD CONSTRAINT fk FOREIGN KEY (id) REFERENCES o(id) ON DELETE CASCADE ON UPDATE CASCADE;"
+    ).mixed,
+    "033 A ON DELETE/UPDATE FK 非 mixed"
+  );
+  assert(
+    mixedFn("CREATE TABLE t(id INT);\nINSERT INTO t VALUES(1);").mixed,
+    "033 A 真 mixed 仍报"
+  );
+  assert(mixedFn("UPDATE t SET a=1;").hasDml && !mixedFn("UPDATE t SET a=1;").mixed, "033 A 纯 DML");
+}
+
+// --- 0.3.33 B：isProdConfigPath 认撞名 __hash 后缀 ---
+{
+  assert(isProdConfigPath("application-prod__a1b2c3.yml") === true, "033 B prod__hash 放行");
+  assert(
+    isProdConfigPath("application-prod-nacos__deadbe.yml") === true,
+    "033 B nacos__hash 放行"
+  );
+  assert(isProdConfigPath("application-dev__a1b2c3.yml") === false, "033 B dev__hash 不放行");
+  assert(isProdConfigPath("application-prod.yml") === true, "033 B 原 prod basename 仍放行");
+}
+
+// --- 0.3.33 C：excludeReleasePackageFiles ---
+{
+  const freezeUrlC = pathToFileURL(path.join(skillRoot, "scripts/release-freeze.mjs")).href;
+  const freezeC = await import(freezeUrlC);
+  assert(typeof freezeC.excludeReleasePackageFiles === "function", "033 C export exclude");
+  const filtered = freezeC.excludeReleasePackageFiles([
+    "sms-ai/application-prod.yml",
+    "docs/releases/release-X/config/application-prod.yml",
+    "docs/releases/archive/release-Y/sql/refs/a.sql",
+    "docs/jobs/tasks/01-x.md",
+  ]);
+  assert(filtered.length === 2, "033 C 排除 docs/releases 后剩 2");
+  assert(filtered.includes("sms-ai/application-prod.yml"), "033 C 保留业务 prod");
+  assert(filtered.includes("docs/jobs/tasks/01-x.md"), "033 C 保留 docs/jobs");
+}
+
+// --- 0.3.33 D：增量父键 isLeaf=false 不进 draft.config ---
+{
+  const enrichUrlD = pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href;
+  const enrichD = await import(enrichUrlD);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0333-isleaf-"));
+  try {
+    const out = enrichD.enrichFreezePayload(
+      work,
+      {
+        candidates: [],
+        configKeys: [
+          {
+            key: "app.widget",
+            path: "application-prod.yml",
+            value: "",
+            isLeaf: false,
+            change: "added",
+          },
+          {
+            key: "app.widget.enabled",
+            path: "application-prod.yml",
+            value: "true",
+            isLeaf: true,
+            change: "added",
+          },
+        ],
+        jobKeys: [],
+        taskCodes: [],
+      },
+      { prior: "none" }
+    );
+    const keys = (out.draft?.config || []).map((r) => r.键);
+    assert(!keys.includes("app.widget"), "033 D 父键不进 draft.config");
+    assert(keys.includes("app.widget.enabled"), "033 D 叶子进 draft.config");
+    assert((out.parentKeysSkipped || 0) >= 1 || keys.length === 1, "033 D 父键被跳过可观测");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.33 E：docs/jobs 无 SyncTaskCode 也可进 draft.jobs ---
+{
+  const enrichUrlE = pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href;
+  const enrichE = await import(enrichUrlE);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0333-jobsdoc-"));
+  try {
+    fs.mkdirSync(path.join(work, "docs/jobs/tasks"), { recursive: true });
+    fs.writeFileSync(
+      path.join(work, "docs/jobs/jobs.md"),
+      "| NN | 显示名 | task_code | 文档 |\n|---|---|---|---|\n| 01 | 超时取消 | `order-timeout-cancel` | [tasks/01-order-timeout-cancel.md](tasks/01-order-timeout-cancel.md) |\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(work, "docs/jobs/tasks/01-order-timeout-cancel.md"),
+      "| 字段 | 值 |\n|---|---|\n| task_code | `order-timeout-cancel` |\n| 显示名 | 超时取消 |\n| 默认表达式 | `0 */5 * * * ?` |\n",
+      "utf8"
+    );
+    const out = enrichE.enrichFreezePayload(
+      work,
+      {
+        firstRelease: true,
+        candidates: [
+          {
+            kinds: ["jobs"],
+            kind: "jobs",
+            path: "docs/jobs/tasks/01-order-timeout-cancel.md",
+            confidence: "path",
+            keys: [],
+          },
+        ],
+        configKeys: [],
+        jobKeys: [],
+        taskCodes: [],
+        inventory: {
+          jobsDocPaths: ["docs/jobs/tasks/01-order-timeout-cancel.md", "docs/jobs/jobs.md"],
+        },
+      },
+      { prior: "none" }
+    );
+    assert((out.draft?.jobs || []).length >= 1, "033 E docs/jobs seed → draft.jobs>=1");
+    assert(
+      (out.jobsHits || []).some((h) => h.taskCode === "order-timeout-cancel"),
+      "033 E jobsHits 含 order-timeout-cancel"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.33 F：note-merge sql-bundle 失败回滚附属目录 ---
+{
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0333-rollback-"));
+  try {
+    gitIn(work, ["init"]);
+    gitIn(work, ["config", "user.email", "selfcheck@test"]);
+    gitIn(work, ["config", "user.name", "selfcheck"]);
+    const migRel = "db/migration/V1__DDL__create_widget.sql";
+    fs.mkdirSync(path.join(work, "db/migration"), { recursive: true });
+    // 真 mixed → sql-bundle 硬失败，验证附属回滚
+    fs.writeFileSync(
+      path.join(work, migRel),
+      "CREATE TABLE t(id INT);\nINSERT INTO t VALUES(1);\n",
+      "utf8"
+    );
+    fs.mkdirSync(path.join(work, "docs/releases"), { recursive: true });
+    fs.writeFileSync(path.join(work, "docs/releases/releases.md"), "# idx\n\n## 进行中\n\n| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |\n|---|---|---|---|---|---|\n", "utf8");
+    gitIn(work, ["add", "."]);
+    gitIn(work, ["commit", "-m", "init"]);
+
+    const freezePath = path.join(work, "freeze.json");
+    const freezeJson = {
+      ok: true,
+      firstRelease: true,
+      head: "HEAD",
+      draft: {
+        sql: [
+          {
+            执行序: 1,
+            脚本: "V1__DDL__create_widget.sql",
+            路径: migRel,
+            动作: "新增/变更",
+            "目标 profile": "prod",
+            已确认: "是",
+          },
+        ],
+        config: [],
+        jobs: [],
+      },
+      changeObjects: [],
+      commits: [],
+      mergeSources: [],
+      releaseSummaryLines: [],
+    };
+    fs.writeFileSync(freezePath, JSON.stringify(freezeJson), "utf8");
+
+    const noteRel = "docs/releases/release-RB/release-RB.md";
+    const bin = path.join(skillRoot, "scripts/release-note-merge.mjs");
+    const r = spawnSync(
+      process.execPath,
+      [
+        bin,
+        "--root",
+        work,
+        "--note",
+        noteRel,
+        "--freeze-json",
+        freezePath,
+        "--identity",
+        "release-RB",
+        "--release-date",
+        "2026-11-05",
+        "--release-branch",
+        "release/V261105",
+        "--owner",
+        "tester",
+        "--head",
+        "HEAD",
+      ],
+      { encoding: "utf8" }
+    );
+    assert(r.status !== 0, "033 F mixed SQL → note-merge 失败");
+    const bundleDir = path.join(work, "docs/releases/release-RB");
+    assert(!fs.existsSync(path.join(bundleDir, "sql")), "033 F 失败后 sql/ 已回滚");
+    assert(!fs.existsSync(path.join(bundleDir, "config")), "033 F 失败后 config/ 已回滚");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.33 G：fixtures 无 .cursor/skills 断链；QUICKSTART bare 提示 ---
+{
+  const fx = read("fixtures/docs/releases/releases.md") || "";
+  assert(!/\.cursor\/skills\/release-eng/.test(fx), "033 G fixtures 无 .cursor/skills 断链");
+  assert(/_meta\/manifest\.yaml/.test(fx), "033 G fixtures 指向 manifest 文本");
+  const qs = read("QUICKSTART.md") || "";
+  assert(/未能推导浏览链接|bare/.test(qs), "033 G QUICKSTART 写明 bare/无 web URL 预期");
+}
+
+// --- 0.3.33 H：seal-check 放行包内 application-prod__hash.yml ---
+{
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0333-sealhash-"));
+  try {
+    const id = "release-HASH";
+    const noteDir = path.join(work, "docs/releases", id);
+    fs.mkdirSync(path.join(noteDir, "config"), { recursive: true });
+    fs.writeFileSync(
+      path.join(noteDir, `${id}.md`),
+      `# 发版单：${id}\n\n| 状态 | 已定版 |\n| 发版日期 | 2026-11-05 |\n\n## 配置项\n\n见 config/\n`,
+      "utf8"
+    );
+    fs.writeFileSync(path.join(noteDir, "config/application-prod__ab12cd.yml"), "app:\n  x: 1\n", "utf8");
+    fs.writeFileSync(
+      path.join(noteDir, "artifacts.json"),
+      JSON.stringify({
+        identity: id,
+        sql: [],
+        sqlBundles: [],
+        config: [{ path: "application-prod.yml", bundlePath: "config/application-prod__ab12cd.yml" }],
+        jobs: [],
+      }),
+      "utf8"
+    );
+    fs.mkdirSync(path.join(work, "docs/releases"), { recursive: true });
+    fs.writeFileSync(path.join(work, "docs/releases/releases.md"), "# idx\n", "utf8");
+    const r = runSealCheckBin(work, `docs/releases/${id}/${id}.md`);
+    const errText = `${r.stderr || ""}${r.stdout || ""}`;
+    assert(
+      !/非 prod 文件:\s*application-prod__ab12cd\.yml/.test(errText),
+      "033 H seal-check 不因 prod__hash 报非 prod"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
 }
 
 // --- report ---
