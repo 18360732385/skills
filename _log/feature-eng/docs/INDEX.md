@@ -2,10 +2,10 @@
 
 热技能树外的历史文档与实证。`npx skills add --skill feature-eng` **不会**安装本目录。
 
-| 文件 | 说明 |
+| 路径 | 说明 |
 |---|---|
-| `WRITING-SKILLS-P2.md` | writing-skills P2：description SDO（control 未失败）+ express×Pre-Impl（RED 5/5 → GREEN 5/5；补「并进实现」合理化） |
-| `WRITING-SKILLS-P1.md` | writing-skills P1：开干易混 + 续跑顺便 harness / 同会话并行（control 均未失败，跳过 GREEN） |
-| `WRITING-SKILLS-P0.md` | writing-skills P0：硬闸推定授权（control 未失败）+ proxy 跳过 L2（RED 5/5 → GREEN 5/5，无 SKILL 变更） |
+| [`_archive/writing-skills/`](../_archive/writing-skills/) | writing-skills P0/P1/P2 评审实证 |
+| [`_archive/0.1/`](../_archive/0.1/) | 0.1.x 版本明细 |
+| [`_archive/0.2-early/`](../_archive/0.2-early/) | 0.2.0…0.2.18-dev 明细（热路径仅保留 CHANGELOG 近期索引对应文件） |
 
-版本变更明细：[`../`](../)（按 `major.minor` 分目录，一版本一文件）。
+现行热履历：[`../0.2/`](../0.2/)（自 0.2.20-dev 起）。

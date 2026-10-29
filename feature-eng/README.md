@@ -6,32 +6,7 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
-0.2.26 要点：批修复——死链 9 处清零；GATE_KEYS/L2_FOR_GATE 单源；gate-evidence 中途环 L2 机检+内联防御+时间一致性；close-check 幽灵键修复+superpowers 归档检查；user_task 数字；status-scan needs-close；门禁清单模板；handoff 推导序钉死；PowerShell 配方；proxy reviewer。叠在 0.2.25 之上。
-0.2.25 要点：P2——`review_effective`；close `pr_branch`；pitfalls 归仓；express 同戳可接受。叠在 0.2.24 之上。
-0.2.24 要点：P1——design/spec 强制粘贴 forbid；`gates.proto_confirmed`；B 无 plan→Go→proto-bridge；`artifacts.implement`/`pr_url`。叠在 0.2.23-dev 之上。
-0.2.23-dev 要点：P0 O5b invoke 宿主探测（CloudAgent/无 Task → inline）+ Gate 无 CI 机械轨证据枚举（`mech_track: local_self_attest`）。叠在 0.2.22 之上。
-0.2.22 要点：版本单点维护——`_meta/manifest.yaml` SSOT；`sync-skill-version.mjs` 同步文档钉头；selfcheck 读 PIN。叠在 0.2.21 之上。
-0.2.21 要点（正式号，无 `-dev`）：P3 `schema: topic-run/1`；P4 字段 `eng_probe` / `eng_snapshot` / `eng_land`；close 只写 `eng_snapshot`。叠在 0.2.20-dev 之上。
-0.2.20-dev 要点：P0/P1/P2 解耦——能力探测；close 优先 `refresh-score`；禁 sync 路径化。叠在 0.2.18-dev 之上。
-0.2.18-dev 要点：批 E——domain-bridge 判据收窄；close 死链改写 + close-check；ARCHIVE「提交」列 PR→merge SHA。叠在 0.2.17-dev 之上。
-0.2.17-dev 要点：批 D——close 跟 `delivery-checklist.md`；可选 `harness refresh`；失败标 `harness_snapshot: stale`。叠在 0.2.16-dev 之上。
-0.2.16-dev 要点：批 C——绑定 SSOT 迁至目标仓 `docs/runs/stage-bindings.yaml`；禁止代跑 harness sync；`run_mode: unattended` 集中降级。叠在 0.2.15-dev 之上。
-0.2.15-dev 要点：P2 harness_probe 软探测 + 有 lint-pitfalls 时本主题 close_pitfalls 收紧为 on（yaml 默认仍 optional）。叠在 0.2.14-dev 之上。
-0.2.14-dev 要点：P0 与 harness-eng 消歧与接力（配合与互斥短节；计划 Go 闸 ≠ 仓库开干；环间 L1/L2 ≠ 阶梯）。叠在 0.2.13-dev 之上。
-0.2.13-dev 要点：modes 大合并——根目录仅 7 入口；`modes/specs/{flow,gates,bridges,handoff}` 四手册；旧扁平规格废除。叠在 0.2.12-dev 之上。
-0.2.12-dev 要点：P2（auth/progress-shape lib；status-scan --cwd；交接/术语增量/设计笔记/审核-stage 模板；pre-impl↔pre_impl 别名；manifest specs）。叠在 0.2.11-dev 之上。
-0.2.11-dev 要点：闸检须 `result: pass`；`user_task_*` 占位黑名单；夹具 Spec/Plan stub；feature.mjs 转发 gate-evidence/close-check；close-check 组合 gate-evidence；AGENT-INDEX ≤8 文件；minimal 绑定包；proxy「仪式与降级」机检。叠在 0.2.10-dev 之上。
-0.2.10-dev 要点：闸门证据机检（gate-evidence + advance-gate/close-ready 金样落盘审核文件 + gate-theater-bad 负例）；SKILL 证据条/红旗/SDO；叠在 0.2.9-dev 之上。
-0.2.9-dev 要点：M1–M6 monorepo 摩擦优化（layout/packages/docs_root / verify_commands / 单 Spec API·UI·测试矩阵 / 根 README SSOT / workdir_policy / monorepo_bootstrap 剥离）；叠在 0.2.8-dev 之上。
-0.2.8-dev 要点：O8–O14 摩擦优化（sibling_repos / CORS·Proxy 联调门禁 / 绿地前端 mktemp 配方 / pinned_deps·Node×jsdom / proto 轻量草图 / 会话存储枚举 / api_base_mode）；叠在 0.2.7-dev 之上。
-0.2.7-dev 要点：O1–O7 摩擦优化（chef_mode / repo_bootstrap / authorized_by / env_notes / review_policy 探测 / 中文文件名契约 / close 双归档检查单）；叠在 0.2.6-dev 之上。
-0.2.6-dev 要点：`modes/` + 薄 CLI `feature.mjs` + 加厚夹具（`advance-gate` / `bindings-bad` / `close-ready`）与行为自检；叠在 0.2.5-dev 之上。  
-0.2.5-dev 要点：最小夹具（`scripts/fixtures/init-skeleton` / `progress-bad`）+ selfcheck 行为断言（progress 形状/枚举、模板↔夹具契约、status-scan 夹具烟测）；V0.6.X 开发钉（不改默认绑定 skill 名）。  
-0.2.4 要点：正式钉号；P0 索引/selfcheck；P1 lookup 预检 + truncate-contracts + QUICKSTART；P2 status-scan + close_pitfalls。一页纸：[QUICKSTART.md](QUICKSTART.md)。  
-0.2.3 要点：过程态 `docs/runs/{active|archive}/`（与 superpowers 平级）；人读中文短名 + `progress.yaml` 机读；close 归档。  
-0.2.2 要点：过闸主动调起；L1/L2 环间审核。  
-0.2.1 要点：init 中文环节表；domain 条件桥；Proto 可推翻；禁根 CONTEXT。  
-0.2.0 要点：`invoke` / `run_mode` / 写盘权责 / 指针卡片 / 口令协议。
+0.2.27 要点：selfcheck 主题拆分（harness/context/suite-*）；`_log` 早期 0.2 归档至 `_archive/0.2-early`；RETAINED=CHANGELOG 近期索引；`--verbose`/`--no-log`/`--strict-log`。历史版本见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/feature-eng/`](../_log/feature-eng/)。
 
 ## 可移植性
 

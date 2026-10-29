@@ -1,6 +1,6 @@
 # feature-eng 一页纸
 
-**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.26**。
+**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.27**。
 
 **可选接力**：需要工程化仓时先完成工程化（常见实现别名：`harness-eng`）→ **新会话**再点名本 skill；同会话勿并行。本 skill 可独立使用（无工程化 meta 亦可）。有工程化 meta 时 `start` 会软提示 `ai_coding_ready`（可忽略继续）；详见 [SKILL.md](SKILL.md)「可选接力（工程化仓）」。
 
@@ -89,75 +89,18 @@ init/start 遇「仅模板文件、无 package.json」时**提示本配方**，�
 
 ## CORS 或 Dev Proxy（O9）
 
-Full+UI 联调二选一（或 `accepted_blocked`）。矩阵见 [gates.md](modes/specs/gates.md)。
+Full+UI 联调二选一（或 `accepted_blocked`）。矩阵与完整片段见 [gates.md](modes/specs/gates.md)。
 
-**Vite Dev Proxy（前端仓）：**
-
-```ts
-// vite.config.ts
-export default defineConfig({
-  server: {
-    proxy: {
-      '/api': { target: 'http://localhost:8080', changeOrigin: true },
-    },
-  },
-})
-```
-
-**Spring CORS（后端仓）：**
-
-```java
-@Bean
-CorsConfigurationSource corsConfigurationSource() {
-  var c = new CorsConfiguration();
-  c.setAllowedOrigins(List.of("http://localhost:5173"));
-  c.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-  c.setAllowedHeaders(List.of("*"));
-  c.setAllowCredentials(true);
-  var s = new UrlBasedCorsConfigurationSource();
-  s.registerCorsConfiguration("/**", c);
-  return s;
-}
-```
-
-`SecurityFilterChain` 仅 `cors(withDefaults())` **不够**——须有 `CorsConfigurationSource` Bean，或改用前端 proxy。
+- **Vite**：`vite.config.ts` → `server.proxy['/api']` → 后端 origin
+- **Spring**：须有 `CorsConfigurationSource` Bean（仅 `cors(withDefaults())` 不够）；或改用前端 proxy
 
 ## 同仓 monorepo（M1–M6 速记）
 
 - **M1**：`layout: monorepo` + `packages: [{ path, role: api|web|other }]` + `docs_root: docs/`；**勿**用 sibling_repos 指本仓包路径。
-- **M2 / M5**：`env_notes.verify_commands` 全员 exit 0 才写 `gates.verify`；`workdir_policy: repo_root`（默认），命令从仓根写。
+- **M2 / M5**：`env_notes.verify_commands` 全员 exit 0 才写 `gates.verify`；`workdir_policy: repo_root`（默认），命令从仓根写（例：`mvn -f backend test` · `npm --prefix frontend test`）。
 - **M3**：单 Spec 强制 `## API` / `## UI` / `## 测试矩阵`。
 - **M4**：根 README = 双端启动 SSOT；子包 README 短链到根。
 - **M6**：合并旧仓时剥离子包 `docs/runs|superpowers`；可选 `docs/HISTORY-split-repos.md`。
-
-### monorepo 双端验收示例（M2）
-
-```bash
-# 一律从仓库根（workdir_policy=repo_root）
-mvn -f backend test
-npm --prefix frontend test
-npm --prefix frontend run build
-# 或文档内一致写法：cd frontend && npm test && cd ..
-```
-
-progress 示例：
-
-```yaml
-layout: monorepo
-packages:
-  - path: backend
-    role: api
-  - path: frontend
-    role: web
-docs_root: "docs/"
-env_notes:
-  workdir_policy: repo_root
-  verify_commands:
-    - "mvn -f backend test"
-    - "npm --prefix frontend test"
-    - "npm --prefix frontend run build"
-  api_base_mode: proxy
-```
 
 ## 跨仓 / env_notes 速记
 

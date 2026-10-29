@@ -13,9 +13,9 @@ feature-eng：**根目录 = 用户入口**；**specs/ = 契约手册**。热路�
 
 ## 契约（specs/）
 
-| 文件 | 用途 | 合并自 |
-|---|---|---|
-| [specs/flow.md](specs/flow.md) | 环节表 + 绑定 lookup / invoke / 截断 | stages + binding |
-| [specs/gates.md](specs/gates.md) | L1 产物 + L2 审核 + 硬闸 | artifacts + gates-review + gates-common |
-| [specs/bridges.md](specs/bridges.md) | 定稿桥 + Proto 桥 | domain-bridge + proto-bridge |
-| [specs/handoff.md](specs/handoff.md) | 交接 | handoff |
+| 文件 | 用途 |
+|---|---|
+| [specs/flow.md](specs/flow.md) | 环节表 + 绑定 lookup / invoke / 截断 |
+| [specs/gates.md](specs/gates.md) | L1 产物 + L2 审核 + 硬闸 |
+| [specs/bridges.md](specs/bridges.md) | 定稿桥 + Proto 桥 |
+| [specs/handoff.md](specs/handoff.md) | 交接 |
