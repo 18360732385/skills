@@ -22,7 +22,7 @@
 | live 校准 | `fill-calibrate-live` | MCP 不可用时直连；可按引擎过 **填充 MCP 闸** | `scripts/fill-calibrate-live.mjs` |
 | HTML 报告 | `fill-report-html` | score → Dashboard；「开干」绑 ai_coding_ready | `scripts/fill-report-html.mjs` |
 | 多 Agent 精填 | `fill-truths-agents` | 按模板完整档 + Plan 批次【推荐】 | [fill-truths-agents.md](fill-truths-agents.md) |
-| 自动填充 | `fill-truths-auto` | **仅脚本、对话不推荐** | [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) |
+| 自动填充 | `fill-truths-auto` | **已归档**：仅脚本、对话不推荐 | [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) |
 | 契约填充 | `fill-truths` | 完整档；默认 agents | [fill-truths.md](fill-truths.md) · [fill-workers.md](fill-workers.md) |
 
 ## 填充引擎 `Q_FILL_ENGINE`
@@ -31,7 +31,7 @@
 |---|---|---|
 | **agents**【推荐】 | 多 Agent + fill-plan；跳过 auto SSOT | 默认 |
 | `hybrid` | 可选 `--work-only` 薄草稿 + agents | 用户明确要草稿加速 |
-| `auto` | **legacy** 仅脚本 | 无多会话；WritePlan 须显式写出 |
+| `auto` | **已归档移除**（0.7.50 脚本下线） | 不可选用 |
 
 ## 与 seed 边界
 

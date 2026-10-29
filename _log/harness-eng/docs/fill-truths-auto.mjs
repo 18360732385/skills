@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
  * fill-truths-auto — fill contract truths from inventory + source (no npm deps).
+ * 【只读档案副本】0.7.50 起热树脚本已删；本文件 lib 依赖（./lib/*）为当时包内 scripts/lib，
+ * 未随档案保存，档案形态不可运行。仅作历史规格阅读。
  *
  * Usage:
  *   node scripts/fill-truths-auto.mjs --root <TARGET>

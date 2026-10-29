@@ -83,8 +83,34 @@ skills/
 │   ├── CHANGELOG.md
 │   ├── README.md
 │   └── SKILL.md
+├── _log/
 └── README.md
 ```
+
+## 仓库级档案与发版（`_log/`）
+
+`_log/` 是**仓库级档案**：版本变更明细与历史正文只随全仓 git 可见；`npx skills add` / 拷贝安装**不含**，技能运行时**零依赖**（harness-eng 0.7.50 起由双态 selfcheck 保证：无 `_log` 时档案断言自动跳过）。
+
+### 布局
+
+```
+_log/
+  <skill-name>/            # 如 harness-eng / feature-eng / release-eng
+    <major.minor>/         # 版本系列目录，如 0.7
+      <major.minor.patch>.md
+      <major.minor.patch>-dev.md
+    docs/                  # 非版本档案：ROADMAP / TRAE-P0-EVIDENCE / VERIFY 历史表 / OPTIMIZATION / fill-truths-auto 等
+    selfcheck-legacy/      # 历史整文件 selfcheck（harness-eng 0.2–0.5.1）
+```
+
+### 发版手册（各 skill 通用）
+
+1. 只改对应 skill `_meta/manifest.yaml` 的 `version`。
+2. `node scripts/sync-skill-version.mjs`（机械副本 + 文档钉头 + 仓根 README 版本行）。
+3. 更新该 skill `CHANGELOG.md` 索引一行与 `VERIFY.md` 增量；**版本要点写入** `_log/<skill>/<major.minor>/<ver>.md`（系列目录不存在则新建）。
+4. `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）须全绿。
+
+> 约定（harness-eng 0.7.50+）：随包文档**零 `_log` 路径**，一律以「仓库级档案（见仓根 README）」指代；selfcheck 新增档案断言必须以 `hasLogRoot` 门禁包裹（install 态自动跳过）。
 
 ## Documentation
 
@@ -92,7 +118,7 @@ skills/
 |----------|-------------|
 | [harness-eng/SKILL.md](harness-eng/SKILL.md) | 施工仪式入口：落地 / 续跑 / 流水线 / 审计 / 填充 |
 | [harness-eng/QUICKSTART.md](harness-eng/QUICKSTART.md) | harness-eng 一页纸 |
-| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.7.23） |
+| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.7.50） |
 | [feature-eng/SKILL.md](feature-eng/SKILL.md) | 开发流程入口：init / rebind / start / resume / status / advance / close |
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
 | [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.25）；须点名加载 |

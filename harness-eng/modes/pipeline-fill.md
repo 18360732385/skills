@@ -32,9 +32,9 @@
 12. 早停：Plan 开放批次=0 且语义/金标过阈 → 移交；或达 --max-rounds
 ```
 
-`Q_FILL_ENGINE=agents`（默认）：跳过 fill-truths-auto。  
-`hybrid`：可选薄 auto，仅 `--work-only` → `.fill-work/`；SSOT 只经 agents → acceptance → merge。
-`auto`：legacy；WritePlan 须显式写出。
+`Q_FILL_ENGINE=agents`（默认）：直接 agents 精填。  
+`hybrid`：薄草稿环节已随 `auto` 归档移除（0.7.50）；SSOT 只经 agents → acceptance → merge。
+`auto`：已归档移除（0.7.50 脚本下线）；勿再选用。
 
 用户说「继续」且已预授权：先确认填充 MCP 闸仍成立 → `fill-score` → 读 fill-plan 下一批 → agents → acceptance → merge → score → report。  
 usage-limit 后启发式只进 draft（`quality: heuristic`），见 [truth-quality.md](truth-quality.md)。
@@ -44,7 +44,7 @@ usage-limit 后启发式只进 draft（`quality: heuristic`），见 [truth-qual
 | 参数 | 默认 | 说明 |
 |---|---|---|
 | 目标阶梯 | **L4** | 骨架战役已对齐 |
-| `Q_FILL_ENGINE` | **agents** | agents【推荐】/ hybrid / auto（legacy） |
+| `Q_FILL_ENGINE` | **agents** | agents【推荐】/ hybrid / auto（已归档移除） |
 | `--ready-quality` | **80** | 形态 `ready.ok` 兼容（可读 meta） |
 | `--ready-coverage` | **0.8** | 开干覆盖门槛（可读 meta.`ready_coverage`） |
 | `--max-rounds` | 2 | fill 循环上限；Plan 未关时可继续（须说明） |

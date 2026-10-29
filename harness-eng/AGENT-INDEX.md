@@ -5,7 +5,7 @@
 
 **拓扑**：`modes/` · `fill/` · `host/`。对外四支 / 三档见 [SKILL.md](SKILL.md)；细阶仍 L0–L5。  
 **manifest 双写**：[`_meta/manifest.yaml`](_meta/manifest.yaml) ≡ [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)（`version` 须一致）。  
-**发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（机械副本 + 文档钉头）→ ③ 在 [`../_log/harness-eng/<major.minor>/<ver>.md`](../_log/harness-eng/) 写要点并更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [modes/upgrade.md](modes/upgrade.md) / [VERIFY.md](VERIFY.md) 增量 → ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。
+**发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（机械副本 + 文档钉头 + 仓根 README 行）→ ③ 更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [modes/upgrade.md](modes/upgrade.md) / [VERIFY.md](VERIFY.md) 增量；版本要点写**仓库级版本档案**（流程见仓库根 `README.md`「仓库级档案与发版」节）→ ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。
 
 ## 必读（写盘前）≤8
 
@@ -58,7 +58,7 @@
 | CodeBuddy / WorkBuddy | [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md) |
 | Qoder（Claude 族） | [host/QODER-PARITY.md](host/QODER-PARITY.md)（rules 全量镜像 + settings.json hooks + 根 .mcp.json） |
 | Codex **高** | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md) |
-| Trae 高 | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · [`_log/.../TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md) |
+| Trae 高 | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · TRAE-P0-EVIDENCE（仓库级档案） |
 | 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` |
 | 会话仪表盘 | [modes/session-dashboard.md](modes/session-dashboard.md) |
 | 版本 / 模板清单 | [CHANGELOG.md](CHANGELOG.md) · 双 manifest |

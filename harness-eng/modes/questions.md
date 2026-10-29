@@ -35,7 +35,7 @@ Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘�
 | `batch-fill` | fill-* / pipeline | `Q_FILL_ENGINE`(agents【推荐】) / 域/模块/MCP 先行/报告；**完整档**唯一 |
 
 `Q_AI_TOOL` 选项与写入 params 见 [ai-tools.md](../host/ai-tools.md)。含 **Codex** 时对齐程度为 **高（推荐纪律 B）**（未探测不进「全部推荐」）；L5 `sync.mjs` 发出原生 rules/hooks/MCP/skills，**不做** `.mdc` 镜像（见 [adapters/codex.md](../templates/ai-tools/adapters/codex.md)）。无探测时「全部推荐」的 `ai_tools` 为 `[]`，须追问一次，**不**默认 Cursor。
-`Q_FILL_ENGINE`：`agents`【大仓推荐】/ `hybrid`（可选薄草稿）/ `auto`（legacy）（见 [fill-truths-agents.md](../fill/fill-truths-agents.md) · [fill-plan.md](../fill/fill-plan.md)）。  
+`Q_FILL_ENGINE`：`agents`【大仓推荐】/ `hybrid`（可选薄草稿）/ `auto`（已归档移除）（见 [fill-truths-agents.md](../fill/fill-truths-agents.md) · [fill-plan.md](../fill/fill-plan.md)）。  
 大仓 / pipeline 默认 `Q_LADDER=L4`（见 [recommended-profile.md](recommended-profile.md)）。  
 `Q_MODULES` → manifest：`solo`→`agents-root-solo`；`few`/`all`→`agents-root`+`agents-module`。  
 `Q_MODULE_AGENTS`：`auto`【前后端 monorepo 推荐】/ `default` / `spring` / `frontend` → `params.module_agents_template`；render **按目录探测**（pom→spring、package.json→frontend），全局 spring 不会盖住 frontend 分册。`questions-next` 截断时带 `remaining`/`truncated`。  

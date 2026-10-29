@@ -332,12 +332,17 @@ assert(/fill_mcp_profile:\s*test/.test(metaTmpl), "harness-meta fill_mcp_profile
   assert(syncCheck.status === 0, "sync-skill-version --check exit 0");
 }
 const logRoot = path.resolve(skillRoot, "../_log/harness-eng");
+// 0.7.50 双态门禁：install 态（npx skills add，无 _log 兄弟目录）自动跳过仓库级档案断言
+const hasLogRoot = fs.existsSync(logRoot);
+if (!hasLogRoot) {
+  console.log("[install mode] 无仓库级 _log 档案（安装包不含）：档案类断言自动跳过（dev 全仓态全量真跑）。");
+}
 function logFile(ver) {
   const m = String(ver).match(/^(\d+\.\d+)\./);
   return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
 }
 function logExists(ver) {
-  return fs.existsSync(logFile(ver));
+  return !hasLogRoot || fs.existsSync(logFile(ver));
 }
 function readLog(ver) {
   const p = logFile(ver);
@@ -361,10 +366,10 @@ const changelogIndex = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "ut
 const changelog = listVersionLogFiles(logRoot)
   .map((p) => fs.readFileSync(p, "utf8"))
   .join("\n");
-assert(/_log\/harness-eng\//.test(changelogIndex), "CHANGELOG points to _log/harness-eng/");
+assert(!/_log[\/\\]/.test(changelogIndex), "CHANGELOG purged of _log paths");
 for (const ver of ["0.5.2","0.5.3","0.5.4","0.5.5","0.5.6","0.5.7","0.5.8","0.5.9","0.5.10"]) {
   assert(logExists(ver), `_log has ${ver}`);
-  assert(changelogIndex.includes(`${ver}.md`), `CHANGELOG index links ${ver}`);
+  assert(changelogIndex.includes(`| ${ver} |`), `CHANGELOG index row ${ver}`);
 }
 assert(!/^## 0\.5\.10/m.test(changelogIndex), "hot CHANGELOG dropped 0.5.x ## sections");
 for (const ver of [
@@ -374,10 +379,10 @@ for (const ver of [
   "0.7.22","0.7.23","0.7.24","0.7.25","0.7.26", EXPECTED,
 ]) {
   assert(logExists(ver), `_log has ${ver}`);
-  assert(changelogIndex.includes(`${ver}.md`), `CHANGELOG index links ${ver}`);
+  assert(changelogIndex.includes(`| ${ver} |`), `CHANGELOG index row ${ver}`);
 }
 assert(!/# 0\.6\.7[^\n]*-dev/.test(readLog("0.6.7")), "CHANGELOG formal 0.6.7 no -dev");
-assert(/Codex P0|增量解冻/.test(changelog), "CHANGELOG Codex P0 Chinese entry");
+assert(!hasLogRoot || /Codex P0|增量解冻/.test(changelog), "CHANGELOG Codex P0 Chinese entry");
 
 // --- 0.2.26 acceptance empty examples ---
 const acceptSrc = fs.readFileSync(
@@ -528,8 +533,8 @@ assert(
 );
 {
   const hist = path.resolve(skillRoot, "../_log/harness-eng/selfcheck-legacy");
-  assert(fs.existsSync(path.join(hist, "selfcheck-0.5.1.mjs")), "_log keeps 0.5.1 selfcheck");
-  assert(fs.existsSync(path.join(hist, "selfcheck-0.4.0.mjs")), "_log keeps 0.4.0 selfcheck");
+  assert(!hasLogRoot || fs.existsSync(path.join(hist, "selfcheck-0.5.1.mjs")), "_log keeps 0.5.1 selfcheck");
+  assert(!hasLogRoot || fs.existsSync(path.join(hist, "selfcheck-0.4.0.mjs")), "_log keeps 0.4.0 selfcheck");
 }
 assert(
   fs.existsSync(path.join(skillRoot, "archive/selfcheck/legacy/INDEX.md")),
@@ -547,7 +552,8 @@ assert(
   "archive README no stale 0.3 hot-path line"
 );
 assert(
-  fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.2.27.md")),
+  !hasLogRoot ||
+    fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.2.27.md")),
   "VERIFY history 0.2.27 in _log"
 );
 assert(
@@ -561,9 +567,12 @@ assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftove
 assert(/session-dashboard/.test(verifyMd), "VERIFY mentions session-dashboard");
 assert(!/## 0\.2\.18 增量验收/.test(verifyMd), "VERIFY dropped historical increment tables");
 
-assert(fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.6.0.md")), "VERIFY 0.6 history in _log");
+assert(
+  !hasLogRoot || fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.6.0.md")),
+  "VERIFY 0.6 history in _log"
+);
 assert(/VERIFY-history-through-0\.6\.0/.test(verifyMd), "VERIFY points to 0.6 history archive");
-assert(/_log\/harness-eng\/docs/.test(verifyMd), "VERIFY points _log/harness-eng/docs");
+assert(!/_log[\/\\]/.test(verifyMd), "VERIFY purged of _log paths");
 assert(/历史增量/.test(verifyMd), "VERIFY has history stub section");
 
 
@@ -644,7 +653,7 @@ assert(/fill-report-html\.mjs/.test(skill), "SKILL points report to script");
 
 assert(!fs.existsSync(path.join(skillRoot, "OPTIMIZATION-PROPOSAL-0.2.x.md")), "OPTIMIZATION not in skill root");
 assert(
-  fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/OPTIMIZATION-PROPOSAL-0.2.x.md")),
+  !hasLogRoot || fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/OPTIMIZATION-PROPOSAL-0.2.x.md")),
   "OPTIMIZATION in _log docs"
 );
 assert(
@@ -4783,7 +4792,8 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     "0.7.47 VERIFY section"
   );
   assert(
-    fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/e2e-19-verify.md")),
+    !hasLogRoot ||
+      fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng/docs/e2e-19-verify.md")),
     "0.7.47 e2e-19-verify record exists"
   );
 
@@ -5094,6 +5104,74 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   const upMd48 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
   assert(/0\.7\.48|厚仓|dry-run/.test(upMd48), "0.7.48 upgrade.md notes");
   assert(logExists("0.7.48"), "0.7.48 _log note exists");
+}
+
+// --- 0.7.50: 运行时 _log 零依赖（stub 移除 + purge 不变量 + 双态门禁） ---
+{
+  assert(!fs.existsSync(path.join(skillRoot, "scripts/fill-truths-auto.mjs")), "0.7.50 fill-truths-auto stub removed");
+  const autoIdx750 = fs.readFileSync(path.join(skillRoot, "archive/fill-truths-auto/INDEX.md"), "utf8");
+  assert(/0\.7\.50/.test(autoIdx750) && /不可运行/.test(autoIdx750), "0.7.50 archive INDEX removed + not runnable");
+  assert(/对话不推荐/.test(autoIdx750), "0.7.50 archive INDEX keeps 对话不推荐");
+
+  const skill750 = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
+  assert(/已归档/.test(skill750) && /archive\/fill-truths-auto/.test(skill750), "0.7.50 SKILL marks archived");
+
+  // purge 不变量：除 selfcheck 三件套外，随包树零 _log **路径形引用**（`_log/`、`_log\`）。
+  // 描述性裸词提及（如「运行时 _log 零依赖」措辞）允许；路径形才构成运行时依赖。
+  // generic_logic / job_log / last_login_at 无斜杠，天然不命中。
+  const LOG_TOKEN_750 = /_log[\\\/]/;
+  const exempt750 = new Set([
+    path.join("scripts", "selfcheck.mjs"),
+    path.join("scripts", "lib", "selfcheck", "checks-0.5.mjs"),
+    path.join("scripts", "lib", "selfcheck", "checks-0.6.mjs"),
+  ]);
+  const skipDirs750 = new Set([path.join("docs", "harness-eng")]); // 本地运行态产物（gitignore，不入包）
+  const binExt750 = /\.(png|jpe?g|gif|webp|ico|woff2?|ttf|eot|zip|map)$/i;
+  const offenders750 = [];
+  const walk750 = (dir) => {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, ent.name);
+      if (ent.isDirectory()) {
+        if (!skipDirs750.has(path.relative(skillRoot, p))) walk750(p);
+      } else if (!binExt750.test(ent.name)) {
+        const rel = path.relative(skillRoot, p);
+        if (exempt750.has(rel)) continue;
+        let text750 = "";
+        try {
+          text750 = fs.readFileSync(p, "utf8");
+        } catch {
+          continue;
+        }
+        if (LOG_TOKEN_750.test(text750)) offenders750.push(rel);
+      }
+    }
+  };
+  walk750(skillRoot);
+  assert(
+    offenders750.length === 0,
+    `0.7.50 runtime tree free of _log refs (offenders: ${offenders750.slice(0, 6).join(", ")})`
+  );
+
+  // 双态门禁在位
+  const selfSrc750 = fs.readFileSync(path.join(skillRoot, "scripts/selfcheck.mjs"), "utf8");
+  assert(/const hasLogRoot = fs\.existsSync\(logRoot\)/.test(selfSrc750), "0.7.50 selfcheck hasLogRoot detection");
+  const checks06Src750 = fs.readFileSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.6.mjs"), "utf8");
+  assert(/const hasLog = fs\.existsSync\(logRoot\)/.test(checks06Src750), "0.7.50 checks-0.6 hasLog detection");
+
+  // 随包文档新措辞
+  const changelogMd750 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
+  assert(/仓库级档案/.test(changelogMd750) && !/_log[\/\\]/.test(changelogMd750), "0.7.50 CHANGELOG repo-archive wording");
+  assert(/^\| 0\.7\.49 \|/m.test(changelogMd750), "0.7.50 CHANGELOG plain row format");
+  assert(/^\| 0\.7\.50 \|/m.test(changelogMd750), "0.7.50 CHANGELOG index row 0.7.50");
+  const verifyMd750 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  assert(!/_log[\/\\]/.test(verifyMd750), "0.7.50 VERIFY purged");
+  const agentIdx750 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
+  assert(/仓库级版本档案/.test(agentIdx750) && /「仓库级档案与发版」/.test(agentIdx750), "0.7.50 AGENT-INDEX release step repo-archive");
+  const upMd750 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  assert(/## 0\.7\.49 → 0\.7\.50/.test(upMd750), "0.7.50 upgrade migration section");
+  assert(/hasLogRoot/.test(upMd750) && /门禁包裹/.test(upMd750), "0.7.50 upgrade gating convention note");
+
+  assert(logExists("0.7.50"), "0.7.50 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

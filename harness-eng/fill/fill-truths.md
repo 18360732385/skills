@@ -25,12 +25,12 @@
 - [ ] 3 inventory：api / 可选 db / 可选 redis（默认写入 docs/<domain>/.fill-work/）
 - [ ] 4 用 MCP 或 calibrate-live 扫相关表/Key（不编造）
 - [ ] 5 WritePlan：一次列出全部 domains/shards — 等待确认
-- [ ] 6 确认后按 `Q_FILL_ENGINE`：【推荐】fill-truths-agents；或薄底 auto；或仅 auto
+- [ ] 6 确认后按 `Q_FILL_ENGINE`：【推荐】fill-truths-agents（薄底 `auto` 已归档移除）
 - [ ] 7 `fill-merge.mjs --domain <id> --check|--write`；api 需 `--enrich-dto` 时加在统一 CLI
 - [ ] 8 可选 fill-dto-batch；拆页（≥200）；fill-progress；fill-score（ready + template_completeness）
 ```
 
-深度精填见 [fill-truths-agents.md](fill-truths-agents.md)。薄底见 [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md)。  
+深度精填见 [fill-truths-agents.md](fill-truths-agents.md)。薄底 auto 已归档（[archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md)，不可运行）。  
 执行细节见 [fill-workers.md](fill-workers.md)（**工具无关**：默认串行；并行可选）。
 
 ## 完整档检查清单（api）

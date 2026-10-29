@@ -36,8 +36,8 @@
 | **补空壳真相** | `seed-truths` | 索引表加导航行 + `01-*.md` 空壳（**无**字段级契约） |
 | **填充计划** | `fill-plan` | 目标/批次/Done；进度 SSOT（`docs/harness-eng/fill-plan.yaml`） |
 | **多 Agent 精填** | `fill-truths-agents` | 按 Plan 批次 + 模板完整档写深度真相【推荐】 |
-| **自动填充** | `fill-truths-auto` | **仅脚本、对话不推荐**；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
-| **填充引擎** | `Q_FILL_ENGINE` | `agents`【推荐】/ `hybrid`（可选）/ `auto`（legacy） |
+| **自动填充** | `fill-truths-auto` | **已归档**：仅脚本、对话不推荐；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
+| **填充引擎** | `Q_FILL_ENGINE` | `agents`【推荐】/ `hybrid`（可选）/ `auto`（已归档移除） |
 | **inventory 默认路径** | — | `docs/<domain>/.fill-work/inventory*.json`（fill-score 可自动发现） |
 | **续跑工程化** | `resume` | 已有一半 harness：读 meta/指纹，**只补缺口**（幂等）。**≠** 主题环续跑主题（`docs/runs/active`） |
 | **完整度打分** | `fill-score` | 双轴：形态 + 仓库开干；见 [fill-score.md](fill/fill-score.md) |

@@ -1759,12 +1759,13 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
 
   const changelog0510 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8");
   const logRoot05 = path.resolve(skillRoot, "../_log/harness-eng");
-  assert(fs.existsSync(path.join(logRoot05, "0.5", "0.5.10.md")), "_log has 0.5.10");
+  const hasLog05 = fs.existsSync(logRoot05);
+  assert(!hasLog05 || fs.existsSync(path.join(logRoot05, "0.5", "0.5.10.md")), "_log has 0.5.10");
   assert(
-    /_log\/harness-eng\//.test(changelog0510) && changelog0510.includes("0.5.10.md"),
-    "hot CHANGELOG points to _log and 0.5.10"
+    !/_log[\/\\]/.test(changelog0510) && changelog0510.includes("| 0.5.10 |"),
+    "hot CHANGELOG purged of _log + plain 0.5.10 row"
   );
-  assert(fs.existsSync(path.join(logRoot05, "0.4", "0.4.0.md")), "_log has 0.4.0");
+  assert(!hasLog05 || fs.existsSync(path.join(logRoot05, "0.4", "0.4.0.md")), "_log has 0.4.0");
   assert(!/^## 0\.5\.10/m.test(changelog0510), "hot CHANGELOG no 0.5.10 ## section");
   assert(!/^## 0\.4\.0/m.test(changelog0510), "main CHANGELOG dropped 0.4.0 ## body");
 
@@ -1773,8 +1774,8 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   const autoSpec = path.join(histDocs, "fill-truths-auto.md");
   const autoScript = path.join(histDocs, "fill-truths-auto.mjs");
   assert(fs.existsSync(autoIdx), "archive/fill-truths-auto/INDEX.md");
-  assert(fs.existsSync(autoSpec), "_log fill-truths-auto spec");
-  assert(fs.existsSync(autoScript), "_log fill-truths-auto script");
+  assert(!hasLog05 || fs.existsSync(autoSpec), "_log fill-truths-auto spec");
+  assert(!hasLog05 || fs.existsSync(autoScript), "_log fill-truths-auto script");
   assert(!fs.existsSync(path.join(skillRoot, "archive/fill-truths-auto/fill-truths-auto.mjs")), "fill-truths-auto.mjs not in archive pack");
   assert(!fs.existsSync(path.join(skillRoot, "fill-truths-auto.md")), "no root fill-truths-auto stub");
   const autoIdxText = fs.readFileSync(autoIdx, "utf8");

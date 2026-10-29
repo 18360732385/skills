@@ -45,7 +45,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 | **审计 / 自证** | `audit` · `session-live` | [audit-report.md](modes/audit-report.md) · [ladder.md](modes/ladder.md) · [session-live.md](modes/session-live.md) |
 | **填充** | `fill-score` / `fill-morph` / `fill-gate` · `fill-plan` · `fill-truths-agents` · `fill-truths` · `fill-mcp` | [fill/README.md](fill/README.md) · [fill-score.md](fill/fill-score.md) |
 
-legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见 [AGENT-INDEX.md](AGENT-INDEX.md) 与 [fill/README.md](fill/README.md)。
+legacy / 脚本：`fill-truths-auto`（**已归档**：仅脚本、对话不推荐 → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见 [AGENT-INDEX.md](AGENT-INDEX.md) 与 [fill/README.md](fill/README.md)。
 
 未指定：`MATURE`→audit；`PARTIAL`/已有 meta 未满阶→**resume**；**大仓首次**→**pipeline**（L4，`fill_engine=agents`）；否则→land（大仓默认 L4）。  
 **对外三档**阶梯：**协作入口**(L0) · **契约与回流**(L1–L2) · **门禁·工具·SSOT**(L3–L5)；细阶 L0–L5 见 [glossary.md](glossary.md) / [ladder.md](modes/ladder.md)。

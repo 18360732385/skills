@@ -31,7 +31,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 | `gate_profile` | 大仓 / pipeline /「全部推荐」→ **strict**（`Q_GATE_PROFILE`）；契约贴顶后可显式 **gold**；演示/兼容 → `legacy`；**0.3.0**：已有 score-policy 未写本字段 → 运行时按 **strict** |
 | `score_policy` | 大仓【推荐】写入 `docs/harness-eng/score-policy.yaml`（`coverage_mode=all_domains`，targets=0.8，`gate_profile=strict`）；**coverage_ready / 开干 gate 以此为准** |
 | `fill_depth` | 恒为 **完整档**（无选项） |
-| `fill_engine` | 默认 **agents**（多 Agent + fill-plan）；`hybrid` 仅用户要薄草稿时；`auto` **不**进「全部推荐」 |
+| `fill_engine` | 默认 **agents**（多 Agent + fill-plan）；`hybrid` 仅用户要薄草稿时；`auto` 已归档移除（0.7.50） |
 | `fill_gold` | 大仓 / pipeline → 默认 **是**（金标批次 + 强制 `sample_n`） |
 | 宿主对齐 | 已选 `ai_tools` 与入口/镜像交叉校验；缺失时推荐包脚注「补 render / land 镜像」 |
 

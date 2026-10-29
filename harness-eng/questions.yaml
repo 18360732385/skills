@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.7.49"
+version: "0.7.50"
 
 all_recommend_phrases:
   - 全部推荐
@@ -364,7 +364,6 @@ batches:
         options:
           - { value: agents, label: agents 多Agent+fill-plan精填, recommended_when: "large_repo" }
           - { value: hybrid, label: hybrid 可选薄草稿+Agent }
-          - { value: auto, label: auto legacy仅脚本（不推荐） }
         recommended_when: "large_repo"
         recommended: agents
       - id: Q_FILL_GOLD

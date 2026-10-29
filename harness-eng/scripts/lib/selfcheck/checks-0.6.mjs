@@ -28,6 +28,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const EXPECTED = readSkillVersion(skillRoot);
   const VER_RE = escapeSemverRe(EXPECTED);
   const logRoot = path.resolve(skillRoot, "../_log/harness-eng");
+  // 0.7.50 双态门禁：install 态（无 _log）自动跳过仓库级档案断言
+  const hasLog = fs.existsSync(logRoot);
   const logFile = (ver) => {
     const m = String(ver).match(/^(\d+\.\d+)\./);
     return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
@@ -79,25 +81,25 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 // --- 0.6.0-dev M1: harness CLI · ROADMAP · G6 freeze · version pin ---
 {
   const roadmapPath = path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md");
-  assert(fs.existsSync(roadmapPath), "_log ROADMAP-0.6.0.md body");
+  assert(!hasLog || fs.existsSync(roadmapPath), "_log ROADMAP-0.6.0.md body");
   assert(!fs.existsSync(path.join(skillRoot, "ROADMAP-0.6.0.md")), "no root ROADMAP stub (0.7.1)");
-  const roadmap = fs.readFileSync(roadmapPath, "utf8");
-  assert(/G1/.test(roadmap) && /G7/.test(roadmap), "ROADMAP has G1–G7");
-  assert(/M1/.test(roadmap) && /M4/.test(roadmap), "ROADMAP has M1–M4");
-  assert(/pipeline-skeleton/.test(roadmap), "ROADMAP names pipeline-skeleton");
-  assert(/入口单一|统一入口/.test(roadmap), "ROADMAP theme 统一入口");
-  assert(/冻结/.test(roadmap) && /P2/.test(roadmap) && /另立项/.test(roadmap), "ROADMAP G6 Codex P2 freeze");
-  assert(/非目标|Non-goals|不做/.test(roadmap), "ROADMAP lists non-goals");
+  const roadmap = hasLog ? fs.readFileSync(roadmapPath, "utf8") : "";
+  assert(!hasLog || /G1/.test(roadmap) && /G7/.test(roadmap), "ROADMAP has G1–G7");
+  assert(!hasLog || /M1/.test(roadmap) && /M4/.test(roadmap), "ROADMAP has M1–M4");
+  assert(!hasLog || /pipeline-skeleton/.test(roadmap), "ROADMAP names pipeline-skeleton");
+  assert(!hasLog || /入口单一|统一入口/.test(roadmap), "ROADMAP theme 统一入口");
+  assert(!hasLog || /冻结/.test(roadmap) && /P2/.test(roadmap) && /另立项/.test(roadmap), "ROADMAP G6 Codex P2 freeze");
+  assert(!hasLog || /非目标|Non-goals|不做/.test(roadmap), "ROADMAP lists non-goals");
 
   assert(/CHANGELOG/.test(readme), "README points CHANGELOG (ROADMAP archived)");
   const agentIndex060 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
   assert(!/\]\(ROADMAP-0\.6\.0\.md\)/.test(agentIndex060), "AGENT-INDEX no root ROADMAP link");
   const changelog060 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(
+  assert(!hasLog || 
     /# 0\.6\.0\b/.test(changelog060) && /ROADMAP-0\.6\.0/.test(changelog060),
     "CHANGELOG 0.6.0 + ROADMAP"
   );
-  assert(/^# 0\.6\.0\b/m.test(changelog060), "CHANGELOG has formal 0.6.0 heading");
+  assert(!hasLog || /^# 0\.6\.0\b/m.test(changelog060), "CHANGELOG has formal 0.6.0 heading");
 
   assert(fs.existsSync(path.join(skillRoot, "scripts/harness.mjs")), "harness.mjs");
   const harnessHelp = runNode([path.join(skillRoot, "scripts/harness.mjs"), "--help"]);
@@ -288,12 +290,14 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/fill\/fill-score\.md/.test(skillM2), "SKILL points fill/fill-score.md");
   assert(/host\/ai-tools\.md/.test(skillM2), "SKILL points host/ai-tools.md");
 
-  const roadmapM2 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
-  assert(/\[x\].*T2\.1/.test(roadmapM2) && /\[x\].*T2\.5/.test(roadmapM2), "ROADMAP G2 T2.1–T2.5 checked");
+  const roadmapM2 = hasLog
+    ? fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8")
+    : "";
+  assert(!hasLog || /\[x\].*T2\.1/.test(roadmapM2) && /\[x\].*T2\.5/.test(roadmapM2), "ROADMAP G2 T2.1–T2.5 checked");
 
   const changelogM2 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/G2|文档拓扑/.test(changelogM2), "CHANGELOG notes M2 / G2 文档拓扑");
-  assert(/# 0\.6\.0\b/.test(changelogM2), "CHANGELOG has formal 0.6.0");
+  assert(!hasLog || /G2|文档拓扑/.test(changelogM2), "CHANGELOG notes M2 / G2 文档拓扑");
+  assert(!hasLog || /# 0\.6\.0\b/.test(changelogM2), "CHANGELOG has formal 0.6.0");
 
   const verifyM2 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/M2/.test(verifyM2) && /根目录/.test(verifyM2), "VERIFY has M2 section");
@@ -456,13 +460,15 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(scanSignals(qoderFixM3).S_HOOKS, "qoder-hooks still S_HOOKS");
   assert(scanSignals(stackFixM3).S_STACK && !scanSignals(stackFixM3).MATURE, "stack-node still S_STACK only");
 
-  const roadmapM3 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
-  assert(/\[x\].*T3\.1/.test(roadmapM3) && /\[x\].*T3\.3/.test(roadmapM3), "ROADMAP G3 T3.1–T3.3 checked");
-  assert(/\[x\].*T4\.1/.test(roadmapM3) && /\[x\].*T4\.3/.test(roadmapM3), "ROADMAP G4 T4.1–T4.3 checked");
+  const roadmapM3 = hasLog
+    ? fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8")
+    : "";
+  assert(!hasLog || /\[x\].*T3\.1/.test(roadmapM3) && /\[x\].*T3\.3/.test(roadmapM3), "ROADMAP G3 T3.1–T3.3 checked");
+  assert(!hasLog || /\[x\].*T4\.1/.test(roadmapM3) && /\[x\].*T4\.3/.test(roadmapM3), "ROADMAP G4 T4.1–T4.3 checked");
 
   const changelogM3 = readRel("CHANGELOG.md") + "\n" + changelogLogs;
-  assert(/G3|fill 引擎|内聚/.test(changelogM3) && /G4|黄金集|fixture/.test(changelogM3), "CHANGELOG notes M3 G3/G4");
-  assert(/# 0\.6\.0\b/.test(changelogM3), "CHANGELOG has formal 0.6.0");
+  assert(!hasLog || /G3|fill 引擎|内聚/.test(changelogM3) && /G4|黄金集|fixture/.test(changelogM3), "CHANGELOG notes M3 G3/G4");
+  assert(!hasLog || /# 0\.6\.0\b/.test(changelogM3), "CHANGELOG has formal 0.6.0");
 
   const verifyM3 = readRel("VERIFY.md");
   assert(/M3/.test(verifyM3) && /l5-sync-golden|黄金/.test(verifyM3), "VERIFY has M3 section");
@@ -514,20 +520,20 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
 
   const historyDir = path.resolve(skillRoot, "../_log/harness-eng/selfcheck-legacy");
-  assert(fs.existsSync(path.join(historyDir, "INDEX.md")), "_log/harness-eng/selfcheck-legacy/INDEX.md");
-  assert(
+  assert(!hasLog || fs.existsSync(path.join(historyDir, "INDEX.md")), "_log/harness-eng/selfcheck-legacy/INDEX.md");
+  assert(!hasLog || 
     fs.existsSync(path.join(historyDir, "selfcheck-0.3.10.mjs")),
     "legacy bulk lives in _log (0.3.10)"
   );
-  assert(
+  assert(!hasLog || 
     fs.existsSync(path.join(historyDir, "selfcheck-0.2.10.mjs")),
     "legacy bulk lives in _log (0.2.10)"
   );
-  assert(
+  assert(!hasLog || 
     fs.existsSync(path.join(historyDir, "selfcheck-0.5.1.mjs")),
     "0.5.1 bulk lives in _log after pack slim"
   );
-  assert(
+  assert(!hasLog || 
     fs.existsSync(path.join(historyDir, "selfcheck-0.4.0.mjs")),
     "0.4.0 bulk lives in _log after pack slim"
   );
@@ -536,17 +542,19 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const verLine = manifestM4.match(/^version:\s*"([^"]+)"/m);
   assert(verLine && verLine[1] === EXPECTED, `manifest version exactly ${EXPECTED}`);
 
-  const roadmapM4 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
-  assert(/\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
-  assert(/\[x\].*T7\.1/.test(roadmapM4) && /\[x\].*T7\.3/.test(roadmapM4), "ROADMAP G7 T7.1–T7.3 checked");
-  assert(/列车已收口|列车完成|正式 0\.6\.0.*收口/.test(roadmapM4), "ROADMAP notes train complete");
-  assert(/M1–M4 已|M1-M4 已|M4.*已完成|已完成（M1–M4）/.test(roadmapM4), "ROADMAP marks M1–M4 done");
+  const roadmapM4 = hasLog
+    ? fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8")
+    : "";
+  assert(!hasLog || /\[x\].*T5\.1/.test(roadmapM4) && /\[x\].*T5\.3/.test(roadmapM4), "ROADMAP G5 T5.1–T5.3 checked");
+  assert(!hasLog || /\[x\].*T7\.1/.test(roadmapM4) && /\[x\].*T7\.3/.test(roadmapM4), "ROADMAP G7 T7.1–T7.3 checked");
+  assert(!hasLog || /列车已收口|列车完成|正式 0\.6\.0.*收口/.test(roadmapM4), "ROADMAP notes train complete");
+  assert(!hasLog || /M1–M4 已|M1-M4 已|M4.*已完成|已完成（M1–M4）/.test(roadmapM4), "ROADMAP marks M1–M4 done");
 
   const changelogM4 = readRel("CHANGELOG.md") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.0\b/m.test(changelogM4), "CHANGELOG formal 0.6.0 section");
-  assert(!/^## Unreleased/m.test(changelogM4), "CHANGELOG no Unreleased heading");
-  assert(/G5/.test(changelogM4) && /发包|legacy/.test(changelogM4), "CHANGELOG notes G5 slim pack");
-  assert(/M1/.test(changelogM4) && /M2/.test(changelogM4) && /M3/.test(changelogM4) && /M4/.test(changelogM4), "CHANGELOG summarizes M1–M4");
+  assert(!hasLog || /^# 0\.6\.0\b/m.test(changelogM4), "CHANGELOG formal 0.6.0 section");
+  assert(!hasLog || !/^## Unreleased/m.test(changelogM4), "CHANGELOG no Unreleased heading");
+  assert(!hasLog || /G5/.test(changelogM4) && /发包|legacy/.test(changelogM4), "CHANGELOG notes G5 slim pack");
+  assert(!hasLog || /M1/.test(changelogM4) && /M2/.test(changelogM4) && /M3/.test(changelogM4) && /M4/.test(changelogM4), "CHANGELOG summarizes M1–M4");
 
   const verifyM4 = readRel("VERIFY.md");
   assert(/M4/.test(verifyM4) && /legacy|发包/.test(verifyM4), "VERIFY has M4 packaging section");
@@ -567,13 +575,13 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 // --- 0.6.1: Trae 高 formal pin (evidence · MCP panel PASS · matrix 高) ---
 {
   const evidencePath = path.resolve(skillRoot, "../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md");
-  assert(fs.existsSync(evidencePath), "_log TRAE-P0-EVIDENCE.md");
+  assert(!hasLog || fs.existsSync(evidencePath), "_log TRAE-P0-EVIDENCE.md");
   assert(!fs.existsSync(path.join(skillRoot, "host/TRAE-P0-EVIDENCE.md")), "no host TRAE-P0-EVIDENCE stub");
-  const evidence = fs.readFileSync(evidencePath, "utf8");
-  assert(/T-P0-1/.test(evidence) && /T-P0-4/.test(evidence), "TRAE-P0-EVIDENCE has T-P0-1…4");
-  assert(/docs PASS/.test(evidence) && /partial/.test(evidence), "TRAE-P0-EVIDENCE statuses");
-  assert(/RunCommand/.test(evidence) && /alwaysApply/.test(evidence), "TRAE-P0-EVIDENCE cites FM + RunCommand");
-  assert(/docs\.trae\.ai\/ide\/rules/.test(evidence), "TRAE-P0-EVIDENCE cites official rules URL");
+  const evidence = hasLog ? fs.readFileSync(evidencePath, "utf8") : "";
+  assert(!hasLog || /T-P0-1/.test(evidence) && /T-P0-4/.test(evidence), "TRAE-P0-EVIDENCE has T-P0-1…4");
+  assert(!hasLog || /docs PASS/.test(evidence) && /partial/.test(evidence), "TRAE-P0-EVIDENCE statuses");
+  assert(!hasLog || /RunCommand/.test(evidence) && /alwaysApply/.test(evidence), "TRAE-P0-EVIDENCE cites FM + RunCommand");
+  assert(!hasLog || /docs\.trae\.ai\/ide\/rules/.test(evidence), "TRAE-P0-EVIDENCE cites official rules URL");
   assert(fs.existsSync(path.join(skillRoot, "host/TRAE-P0-MANUAL.md")), "TRAE-P0-MANUAL.md");
   const manual = fs.readFileSync(path.join(skillRoot, "host/TRAE-P0-MANUAL.md"), "utf8");
   assert(/RunCommand/.test(manual) && /MCP/.test(manual) && /Specific Files|globs/.test(manual), "MANUAL covers hooks/MCP/rules");
@@ -583,11 +591,11 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/一等公民/.test(traeAd), "trae adapter skills first-class");
   assert(/alwaysApply/.test(traeAd) && /globs/.test(traeAd), "trae adapter documents native FM");
   assert(/RunCommand/.test(traeAd), "trae adapter notes RunCommand matcher risk");
-  assert(/TRAE-P0-EVIDENCE/.test(traeAd), "trae adapter links evidence");
+  assert(!hasLog || /TRAE-P0-EVIDENCE/.test(traeAd), "trae adapter links evidence");
   assert(/刷新/.test(traeAd) && /sync\.mjs/.test(traeAd), "trae adapter notes consumer sync.mjs refresh");
 
   const parity061 = fs.readFileSync(path.join(skillRoot, "host/TRAE-PARITY.md"), "utf8");
-  assert(/TRAE-P0-EVIDENCE/.test(parity061) && /0\.6\.1/.test(parity061), "TRAE-PARITY links evidence + 0.6.1");
+  assert(!hasLog || /TRAE-P0-EVIDENCE/.test(parity061) && /0\.6\.1/.test(parity061), "TRAE-PARITY links evidence + 0.6.1");
   assert(/0\.6\.1-dev/.test(parity061), "TRAE-PARITY still records 0.6.1-dev spike lineage");
   assert(/消费仓/.test(parity061) && /刷新/.test(parity061), "TRAE-PARITY T-P0-1 consumer refresh required");
   assert(/IDE 已消费|已消费/.test(parity061), "TRAE-PARITY T-P0-2 IDE consumes file");
@@ -613,49 +621,51 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/host === "trae"/.test(syncTmpl061), "sync.mjs.tmpl toHostMd branches by trae");
   assert(/host === "trae"[\s\S]{0,200}rule\.raw/.test(syncTmpl061), "trae toHostMd preserve uses rule.raw");
 
-  assert(/实机回传 2026-09-12 Trae CN/.test(evidence), "EVIDENCE has 2026-09-12 Trae CN session section");
-  assert(/实例化/.test(evidence) && /sync\.mjs/.test(evidence), "EVIDENCE records T-P0-1 consumer sync.mjs drift");
-  assert(/mcp_gitlab/.test(evidence) && /mcp_Apifox_Dao_Ru/.test(evidence), "EVIDENCE records IDE-consumed MCP names");
-  assert(/disable-model-invocation/.test(evidence), "EVIDENCE records T-P0-4 SKILL.md FM honor");
+  assert(!hasLog || /实机回传 2026-09-12 Trae CN/.test(evidence), "EVIDENCE has 2026-09-12 Trae CN session section");
+  assert(!hasLog || /实例化/.test(evidence) && /sync\.mjs/.test(evidence), "EVIDENCE records T-P0-1 consumer sync.mjs drift");
+  assert(!hasLog || /mcp_gitlab/.test(evidence) && /mcp_Apifox_Dao_Ru/.test(evidence), "EVIDENCE records IDE-consumed MCP names");
+  assert(!hasLog || /disable-model-invocation/.test(evidence), "EVIDENCE records T-P0-4 SKILL.md FM honor");
 
   assert(/sync\.mjs/.test(manual) && /刷新|重写|落地/.test(manual), "MANUAL has consumer sync.mjs refresh recipe");
   assert(/新.*会话/.test(manual) && /git commit/.test(manual), "MANUAL hooks probe in new session");
   assert(/dry-run/.test(manual), "MANUAL keeps git commit --dry-run probe");
 
   const changelog061 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.1\b/m.test(changelog061), "CHANGELOG formal 0.6.1 section");
-  assert(/0\.6\.1-dev/.test(changelog061), "CHANGELOG folds 0.6.1-dev notes");
-  assert(/刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
-  assert(/00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1 notes L5 SSOT 00");
-  const roadmap061 = fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8");
-  assert(/0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
-  assert(/0\.6\.1/.test(roadmap061) && /高/.test(roadmap061), "ROADMAP notes 0.6.1 Trae 高 pin");
+  assert(!hasLog || /^# 0\.6\.1\b/m.test(changelog061), "CHANGELOG formal 0.6.1 section");
+  assert(!hasLog || /0\.6\.1-dev/.test(changelog061), "CHANGELOG folds 0.6.1-dev notes");
+  assert(!hasLog || /刷新/.test(changelog061) && /sync\.mjs/.test(changelog061), "CHANGELOG notes consumer sync.mjs refresh");
+  assert(!hasLog || /00-harness-ssot/.test(changelog061), "CHANGELOG 0.6.1 notes L5 SSOT 00");
+  const roadmap061 = hasLog
+    ? fs.readFileSync(path.resolve(skillRoot, "../_log/harness-eng/docs/ROADMAP-0.6.0.md"), "utf8")
+    : "";
+  assert(!hasLog || /0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
+  assert(!hasLog || /0\.6\.1/.test(roadmap061) && /高/.test(roadmap061), "ROADMAP notes 0.6.1 Trae 高 pin");
   const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
   assert(/0\.6\.1/.test(verify061) && /mature-trae|Trae P0/.test(verify061), "VERIFY has 0.6.1 Trae P0 section");
 
-  assert(/2026-09-12/.test(evidence) && /stale|过期/.test(evidence), "EVIDENCE records 2026-09-12 sync stale cleanup");
-  assert(/git restore|从 git 恢复/.test(evidence) && /❌/.test(evidence), "EVIDENCE marks git-restore orphans as wrong");
-  assert(/00-harness-ssot\.mdc/.test(evidence), "EVIDENCE points 00 at SSOT");
-  assert(/不要|勿|不要\s*`?git/.test(manual) && /00-harness-ssot/.test(manual), "MANUAL says do not git-restore host 00");
+  assert(!hasLog || /2026-09-12/.test(evidence) && /stale|过期/.test(evidence), "EVIDENCE records 2026-09-12 sync stale cleanup");
+  assert(!hasLog || /git restore|从 git 恢复/.test(evidence) && /❌/.test(evidence), "EVIDENCE marks git-restore orphans as wrong");
+  assert(!hasLog || /00-harness-ssot\.mdc/.test(evidence), "EVIDENCE points 00 at SSOT");
+  assert(!hasLog || /不要|勿|不要\s*`?git/.test(manual) && /00-harness-ssot/.test(manual), "MANUAL says do not git-restore host 00");
   assert(/1x-contract-sync/.test(manual) && /消失|gone|不要从 git/.test(manual), "MANUAL expects 1x gone after sync");
   assert(/00-harness-ssot/.test(parity061) && /SSOT/.test(parity061), "TRAE-PARITY notes L5 00 via SSOT");
   assert(/00-harness-ssot\.mdc/.test(traeAd), "trae adapter points L5 00 at SSOT");
   assert(/L5_SSOT_HARNESS_TARGET|00-harness-ssot\.mdc/.test(render061), "render.mjs L5 SSOT 00 constant or target");
   assert(/1x-contract-sync/.test(syncTmpl061) && /00-harness-ssot/.test(syncTmpl061), "sync.mjs.tmpl header documents 1x/00 prune");
 
-  assert(/Round A/.test(evidence) && /c-be-sms-ai/.test(evidence), "EVIDENCE Round A names c-be-sms-ai");
-  assert(/磁盘 \+ 行为 PASS|磁盘\+行为 PASS/.test(evidence), "EVIDENCE Round A T-P0-1 disk+behavior PASS");
-  assert(/1x-contract-sync/.test(evidence) && /#17/.test(evidence), "EVIDENCE Round A confirms no 1x (#17)");
-  assert(/17-frontend-web/.test(evidence) && /globs/.test(evidence), "EVIDENCE Round A selective globs injection");
-  assert(/Round C/.test(evidence) && /本机行为 FAIL/.test(evidence), "EVIDENCE Round C T-P0-3 local FAIL");
-  assert(/误诊/.test(evidence) && /RunCommand/.test(evidence), "EVIDENCE reclassifies Round C as matcher misdiagnosis");
-  assert(/Settings/.test(evidence) && /Hooks/.test(evidence) && /新会话/.test(evidence), "EVIDENCE requires Settings→Hooks + new session retest");
-  assert(/Hooks 复测 PASS/.test(evidence), "EVIDENCE has dated Hooks 复测 PASS section");
-  assert(/2026-09-14/.test(evidence) && /additionalContext|additional_context/.test(evidence), "EVIDENCE 2026-09-14 additionalContext injection");
-  assert(/软/.test(evidence) && /allow|放行|不阻断/.test(evidence), "EVIDENCE hooks retest soft allow");
-  assert(/单独不授权/.test(evidence), "EVIDENCE: hooks PASS alone does not authorize 高");
-  assert(/beforeShellExecution/.test(evidence) && /\.cursor\/hooks\.json/.test(evidence), "EVIDENCE Round B invalid Cursor channel");
-  assert(/永远不要|勿/.test(manual) && /\.cursor\/hooks\.json/.test(manual) && /beforeShellExecution/.test(manual), "MANUAL forbids Cursor channel as Trae hooks evidence");
+  assert(!hasLog || /Round A/.test(evidence) && /c-be-sms-ai/.test(evidence), "EVIDENCE Round A names c-be-sms-ai");
+  assert(!hasLog || /磁盘 \+ 行为 PASS|磁盘\+行为 PASS/.test(evidence), "EVIDENCE Round A T-P0-1 disk+behavior PASS");
+  assert(!hasLog || /1x-contract-sync/.test(evidence) && /#17/.test(evidence), "EVIDENCE Round A confirms no 1x (#17)");
+  assert(!hasLog || /17-frontend-web/.test(evidence) && /globs/.test(evidence), "EVIDENCE Round A selective globs injection");
+  assert(!hasLog || /Round C/.test(evidence) && /本机行为 FAIL/.test(evidence), "EVIDENCE Round C T-P0-3 local FAIL");
+  assert(!hasLog || /误诊/.test(evidence) && /RunCommand/.test(evidence), "EVIDENCE reclassifies Round C as matcher misdiagnosis");
+  assert(!hasLog || /Settings/.test(evidence) && /Hooks/.test(evidence) && /新会话/.test(evidence), "EVIDENCE requires Settings→Hooks + new session retest");
+  assert(!hasLog || /Hooks 复测 PASS/.test(evidence), "EVIDENCE has dated Hooks 复测 PASS section");
+  assert(!hasLog || /2026-09-14/.test(evidence) && /additionalContext|additional_context/.test(evidence), "EVIDENCE 2026-09-14 additionalContext injection");
+  assert(!hasLog || /软/.test(evidence) && /allow|放行|不阻断/.test(evidence), "EVIDENCE hooks retest soft allow");
+  assert(!hasLog || /单独不授权/.test(evidence), "EVIDENCE: hooks PASS alone does not authorize 高");
+  assert(!hasLog || /beforeShellExecution/.test(evidence) && /\.cursor\/hooks\.json/.test(evidence), "EVIDENCE Round B invalid Cursor channel");
+  assert(!hasLog || /永远不要|勿/.test(manual) && /\.cursor\/hooks\.json/.test(manual) && /beforeShellExecution/.test(manual), "MANUAL forbids Cursor channel as Trae hooks evidence");
   assert(/RunCommand/.test(manual) && /Settings/.test(manual) && /Hooks/.test(manual), "MANUAL probe uses RunCommand + Settings→Hooks");
   assert(/additionalContext|systemMessage/.test(manual), "MANUAL expects systemMessage/additionalContext");
   assert(/\.githooks/.test(manual), "MANUAL keeps .githooks as fallback");
@@ -664,28 +674,28 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/本机行为 FAIL/.test(parity061) && /误诊/.test(parity061), "TRAE-PARITY T-P0-3 FAIL reclassified as matcher misdiagnosis");
   assert(/Round A/.test(parity061) && /PASS/.test(parity061), "TRAE-PARITY T-P0-1 Round A PASS");
   assert(/RunCommand/.test(traeAd) && /beforeShellExecution/.test(traeAd), "trae adapter documents RunCommand + forbids Cursor channel");
-  assert(/Round C/.test(changelog061) && /本机行为 FAIL/.test(changelog061), "CHANGELOG notes Round C FAIL");
-  assert(
+  assert(!hasLog || /Round C/.test(changelog061) && /本机行为 FAIL/.test(changelog061), "CHANGELOG notes Round C FAIL");
+  assert(!hasLog || 
     /误诊/.test(changelog061) && /RunCommand/.test(changelog061),
     "CHANGELOG reclassifies Round C as matcher misdiagnosis + RunCommand fix"
   );
-  assert(/Settings/.test(changelog061) && /Hooks/.test(changelog061), "CHANGELOG requires Settings→Hooks enable project");
-  assert(
+  assert(!hasLog || /Settings/.test(changelog061) && /Hooks/.test(changelog061), "CHANGELOG requires Settings→Hooks enable project");
+  assert(!hasLog || 
     /中高\s*→\s*高|中高 → 高/.test(changelog061) && /MCP 面板 PASS|T-P0-2 PASS/.test(changelog061),
     "CHANGELOG 0.6.1 records Trae 高 + MCP panel PASS"
   );
-  assert(/Hooks 复测 PASS/.test(changelog061) && /2026-09-14/.test(changelog061), "CHANGELOG notes Hooks live PASS after T-P1-2");
-  assert(/单独不授权/.test(changelog061), "CHANGELOG: hooks PASS alone does not authorize 高");
+  assert(!hasLog || /Hooks 复测 PASS/.test(changelog061) && /2026-09-14/.test(changelog061), "CHANGELOG notes Hooks live PASS after T-P1-2");
+  assert(!hasLog || /单独不授权/.test(changelog061), "CHANGELOG: hooks PASS alone does not authorize 高");
   assert(/live PASS|Hooks live PASS|Hooks 复测 PASS/.test(traeAd), "trae adapter notes Hooks live PASS");
   assert(/单独不授权/.test(traeAd), "trae adapter: hooks PASS alone does not authorize 高");
   assert(/\*\*高\*\*/.test(traeAd) && !/\*\*中高\*\*/.test(traeAd), "trae adapter alignment 高");
   assert(/Settings/.test(traeAd) && /开关|toggle/.test(traeAd), "trae adapter MCP Settings toggles");
 
-  assert(/MCP 面板 PASS|Settings MCP/.test(evidence) && /\b12\b/.test(evidence), "EVIDENCE MCP panel 12 servers");
-  assert(/gitlab/.test(evidence) && /chrome-devtools/.test(evidence) && /Apifox/.test(evidence), "EVIDENCE MCP ON trio");
-  assert(/sonarqube/.test(evidence) && /redis/.test(evidence) && /mysql/.test(evidence), "EVIDENCE MCP OFF via toggle");
-  assert(/T-P0-2/.test(evidence) && /\*\*PASS\*\*/.test(evidence), "EVIDENCE marks T-P0-2 PASS");
-  assert(/开关|toggle/.test(evidence) && /误读|toggled off/.test(evidence), "EVIDENCE explains earlier 缺 7 台 misread");
+  assert(!hasLog || /MCP 面板 PASS|Settings MCP/.test(evidence) && /\b12\b/.test(evidence), "EVIDENCE MCP panel 12 servers");
+  assert(!hasLog || /gitlab/.test(evidence) && /chrome-devtools/.test(evidence) && /Apifox/.test(evidence), "EVIDENCE MCP ON trio");
+  assert(!hasLog || /sonarqube/.test(evidence) && /redis/.test(evidence) && /mysql/.test(evidence), "EVIDENCE MCP OFF via toggle");
+  assert(!hasLog || /T-P0-2/.test(evidence) && /\*\*PASS\*\*/.test(evidence), "EVIDENCE marks T-P0-2 PASS");
+  assert(!hasLog || /开关|toggle/.test(evidence) && /误读|toggled off/.test(evidence), "EVIDENCE explains earlier 缺 7 台 misread");
 
   const fillMcp061 = readDoc("fill-mcp.md");
   assert(/\.trae\/mcp\.json/.test(fillMcp061) && /Settings/.test(fillMcp061), "fill-mcp.md Trae path + Settings enable");
@@ -846,8 +856,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 // --- 0.6.2: session dashboard drops mermaid (Trae Syntax Error) ---
 {
   const changelog062 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.2\b/m.test(changelog062), "CHANGELOG formal 0.6.2 section");
-  assert(/quadrantChart|mermaid/.test(changelog062) && /施工态势/.test(changelog062), "CHANGELOG 0.6.2 notes mermaid drop + 施工态势");
+  assert(!hasLog || /^# 0\.6\.2\b/m.test(changelog062), "CHANGELOG formal 0.6.2 section");
+  assert(!hasLog || /quadrantChart|mermaid/.test(changelog062) && /施工态势/.test(changelog062), "CHANGELOG 0.6.2 notes mermaid drop + 施工态势");
   const libDash062 = fs.readFileSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs"), "utf8");
   assert(!/quadrantChart/.test(libDash062) && !/```mermaid/.test(libDash062), "session-dashboard.mjs emits no mermaid");
   assert(/stanceQuadrant/.test(libDash062), "session-dashboard.mjs keeps stanceQuadrant helper");
@@ -878,7 +888,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const stanceMd = renderSessionDashboardMarkdown(dashSkeleton);
   assert(/【现状】暂不可 AI coding（开干 NO）/.test(stanceMd), "footer 现状 is AI coding only");
   assert(!/施工态势：/.test(stanceMd), "footer no longer prints 施工态势");
-  assert(!/```\s*mermaid/.test(stanceMd) && !/quadrantChart/.test(stanceMd), "footer still has no mermaid");
+  assert(!hasLog || !/```\s*mermaid/.test(stanceMd) && !/quadrantChart/.test(stanceMd), "footer still has no mermaid");
 }
 
 // --- 0.6.3 formal: freshness · report_schema narrative · upgrade three-step ---
@@ -942,17 +952,17 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(harnessHelp063.status === 0 && /--check-freshness/.test(harnessHelp063.stdout), "harness --help lists --check-freshness");
 
   const changelog063 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.3\b/m.test(changelog063), "CHANGELOG 0.6.3 heading");
-  assert(/freshness|HARNESS_SYNC_TMPL_ID/.test(changelog063), "CHANGELOG notes freshness");
-  assert(/tree\/main\/harness-eng/.test(changelog063), "CHANGELOG production install URL main");
-  assert(/V0\.6\.X/.test(changelog063) && /合并进/.test(changelog063), "CHANGELOG notes V0.6.X is dev train then merge to main");
+  assert(!hasLog || /^# 0\.6\.3\b/m.test(changelog063), "CHANGELOG 0.6.3 heading");
+  assert(!hasLog || /freshness|HARNESS_SYNC_TMPL_ID/.test(changelog063), "CHANGELOG notes freshness");
+  assert(!hasLog || /tree\/main\/harness-eng/.test(changelog063), "CHANGELOG production install URL main");
+  assert(!hasLog || /V0\.6\.X/.test(changelog063) && /合并进/.test(changelog063), "CHANGELOG notes V0.6.X is dev train then merge to main");
 
   const upgrade063 = readDoc("upgrade.md");
   assert(/0\.6\.2 → 0\.6\.3/.test(upgrade063), "upgrade has 0.6.2 → 0.6.3");
   assert(/刷新/.test(upgrade063) && /sync\.mjs/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade L5 must refresh sync.mjs");
 
-  assert(/^# 0\.6\.3\b/m.test(changelog063) && !((changelog063.match(/^# 0\.6\.3[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.3 no -dev heading");
-  assert(/兼容别名/.test(changelog063) && /report_schema/.test(changelog063), "CHANGELOG notes report_schema / ui.version alias");
+  assert(!hasLog || /^# 0\.6\.3\b/m.test(changelog063) && !((changelog063.match(/^# 0\.6\.3[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.3 no -dev heading");
+  assert(!hasLog || /兼容别名/.test(changelog063) && /report_schema/.test(changelog063), "CHANGELOG notes report_schema / ui.version alias");
   assert(/升级三步/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade 0.6.3 has three-step playbook");
   const gloss063 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/report_schema/.test(gloss063) && /兼容别名/.test(gloss063), "glossary report_schema primary; ui.version alias");
@@ -1034,11 +1044,11 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/CODEBUDDY-PARITY/.test(syncHosts064), "sync-hosts links CODEBUDDY-PARITY");
 
   const changelog064 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.4\b/m.test(changelog064), "CHANGELOG 0.6.4 heading");
-  assert(/^# 0\.6\.4\b/m.test(changelog064) && !((changelog064.match(/^# 0\.6\.4[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.4 no -dev heading");
-  assert(/正式钉号：CodeBuddy\/WorkBuddy/.test(changelog064), "CHANGELOG 0.6.4 formal pin subtitle");
-  assert(/由 \*\*0\.6\.4-dev\*\* 钉号/.test(changelog064), "CHANGELOG notes promoted from 0.6.4-dev");
-  assert(/（无 `-dev`）/.test(changelog064), "CHANGELOG pins without -dev");
+  assert(!hasLog || /^# 0\.6\.4\b/m.test(changelog064), "CHANGELOG 0.6.4 heading");
+  assert(!hasLog || /^# 0\.6\.4\b/m.test(changelog064) && !((changelog064.match(/^# 0\.6\.4[^\n]*/m)||[""])[0].includes("-dev")), "CHANGELOG formal 0.6.4 no -dev heading");
+  assert(!hasLog || /正式钉号：CodeBuddy\/WorkBuddy/.test(changelog064), "CHANGELOG 0.6.4 formal pin subtitle");
+  assert(!hasLog || /由 \*\*0\.6\.4-dev\*\* 钉号/.test(changelog064), "CHANGELOG notes promoted from 0.6.4-dev");
+  assert(!hasLog || /（无 `-dev`）/.test(changelog064), "CHANGELOG pins without -dev");
   const upgrade064 = readDoc("upgrade.md");
   assert(/0\.6\.3 → 0\.6\.4/.test(upgrade064), "upgrade has 0.6.3 → 0.6.4");
   assert(/升级三步/.test(upgrade064) && /check-freshness/.test(upgrade064) && /\*\*`main`\*\*|\*\*main\*\*/.test(upgrade064), "upgrade 0.6.4 L5 three-step (main · check-freshness · refresh sync)");
@@ -1080,9 +1090,9 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/function sameText/.test(syncTmpl065), "sync.mjs.tmpl sameText EOL-agnostic");
 
   const changelog065 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.5\b/m.test(changelog065), "CHANGELOG keeps 0.6.5 heading");
-  assert(/正式钉号：API 字段表/.test(changelog065), "CHANGELOG 0.6.5 formal pin subtitle");
-  assert(/sameText|EOL/.test(changelog065), "CHANGELOG notes sync EOL fix");
+  assert(!hasLog || /^# 0\.6\.5\b/m.test(changelog065), "CHANGELOG keeps 0.6.5 heading");
+  assert(!hasLog || /正式钉号：API 字段表/.test(changelog065), "CHANGELOG 0.6.5 formal pin subtitle");
+  assert(!hasLog || /sameText|EOL/.test(changelog065), "CHANGELOG notes sync EOL fix");
 
   const upgrade065 = readDoc("upgrade.md");
   assert(/0\.6\.4 → 0\.6\.5/.test(upgrade065), "upgrade has 0.6.4 → 0.6.5");
@@ -1094,8 +1104,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 // --- 0.6.6: OpenAPI bridge + thick module AGENTS (historical pin retained) ---
 {
   const changelog066 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.6\b/m.test(changelog066), "CHANGELOG keeps 0.6.6 heading");
-  assert(/OpenAPI|分册厚/.test(changelog066), "CHANGELOG 0.6.6 OpenAPI + thick AGENTS");
+  assert(!hasLog || /^# 0\.6\.6\b/m.test(changelog066), "CHANGELOG keeps 0.6.6 heading");
+  assert(!hasLog || /OpenAPI|分册厚/.test(changelog066), "CHANGELOG 0.6.6 OpenAPI + thick AGENTS");
 
   const upgrade066 = readDoc("upgrade.md");
   assert(/0\.6\.5 → 0\.6\.6/.test(upgrade066), "upgrade has 0.6.5 → 0.6.6");
@@ -1204,13 +1214,13 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
 // --- 0.6.7: Pn reflux ops + FE/BE contract gate profile ---
 {
   const changelog067 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.7\b/m.test(changelog067), "CHANGELOG 0.6.7 heading");
-  assert(
+  assert(!hasLog || /^# 0\.6\.7\b/m.test(changelog067), "CHANGELOG 0.6.7 heading");
+  assert(!hasLog || 
     /^# 0\.6\.7\b/m.test(changelog067) &&
       !((changelog067.match(/^# 0\.6\.7[^\n]*/m) || [""])[0].includes("-dev")),
     "CHANGELOG formal 0.6.7 no -dev heading"
   );
-  assert(/Pn 回流|前后端契约/.test(changelog067), "CHANGELOG 0.6.7 Pn + FE gate");
+  assert(!hasLog || /Pn 回流|前后端契约/.test(changelog067), "CHANGELOG 0.6.7 Pn + FE gate");
 
   const upgrade067 = readDoc("upgrade.md");
   assert(/0\.6\.6 → 0\.6\.7/.test(upgrade067), "upgrade has 0.6.6 → 0.6.7");
@@ -1358,12 +1368,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/CODEX-PARITY/.test(agentIdx068), "AGENT-INDEX links CODEX-PARITY (ROADMAP stub removed)");
 
   const changelog068 = fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8") + "\n" + changelogLogs;
-  assert(/^# 0\.6\.9\b/m.test(changelog068), "CHANGELOG 0.6.9 heading");
-  assert(/^# 0\.7\.0\b/m.test(changelog068), "CHANGELOG 0.7.0 heading");
-  assert(/^# 0\.7\.2\b/m.test(changelog068), "CHANGELOG 0.7.1 heading");
-  assert(/^# 0\.6\.8-dev\b/m.test(changelog068), "CHANGELOG keeps 0.6.8-dev");
-  assert(/Codex P0|增量解冻/.test(changelog068), "CHANGELOG Chinese Codex P0 entry");
-  assert(/\*\*`main`\*\*|\*\*main\*\*/.test(changelog068), "CHANGELOG keeps main install URL");
+  assert(!hasLog || /^# 0\.6\.9\b/m.test(changelog068), "CHANGELOG 0.6.9 heading");
+  assert(!hasLog || /^# 0\.7\.0\b/m.test(changelog068), "CHANGELOG 0.7.0 heading");
+  assert(!hasLog || /^# 0\.7\.2\b/m.test(changelog068), "CHANGELOG 0.7.1 heading");
+  assert(!hasLog || /^# 0\.6\.8-dev\b/m.test(changelog068), "CHANGELOG keeps 0.6.8-dev");
+  assert(!hasLog || /Codex P0|增量解冻/.test(changelog068), "CHANGELOG Chinese Codex P0 entry");
+  assert(!hasLog || /\*\*`main`\*\*|\*\*main\*\*/.test(changelog068), "CHANGELOG keeps main install URL");
 
   const upgrade068 = readDoc("upgrade.md");
   assert(/0\.6\.8-dev → 0\.6\.9/.test(upgrade068), "upgrade has 0.6.8-dev → 0.6.9");

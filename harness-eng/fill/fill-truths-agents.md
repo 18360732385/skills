@@ -43,9 +43,9 @@ inventory（脚本；jobs=`fill-inventory.mjs --domain jobs`）
 
 | `Q_FILL_ENGINE` | 行为 |
 |---|---|
-| `agents`【推荐】 | 跳过 auto SSOT，直接 agents |
-| `hybrid` | 可选 `--work-only` 草稿 → agents |
-| `auto` | legacy；仅无多会话时 |
+| `agents`【推荐】 | 直接 agents 精填 |
+| `hybrid` | 薄草稿已随 `auto` 归档移除（0.7.50）；agents 为主 |
+| `auto` | 已归档移除（0.7.50 脚本下线） |
 
 ## 主 Agent 流水线
 

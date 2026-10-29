@@ -8,14 +8,14 @@
 
 | 路径 | 说明 |
 |---|---|
-| [fill-truths-auto/INDEX.md](fill-truths-auto/INDEX.md) | 自动填充指针（仅脚本、对话不推荐） |
+| [fill-truths-auto/INDEX.md](fill-truths-auto/INDEX.md) | 自动填充指针（已归档：仅脚本、对话不推荐） |
 | [selfcheck/](selfcheck/) | 旧 selfcheck 指针（legacy 仅 INDEX） |
 
-## 已迁出热树（仓库 `_log/harness-eng`）
+## 已迁出热树（仓库级档案；不随安装分发）
 
 | 位置 | 内容 |
 |---|---|
-| [`_log/harness-eng/docs/`](../../_log/harness-eng/docs/INDEX.md) | ROADMAP / TRAE-P0-EVIDENCE、VERIFY 历史表、OPTIMIZATION、fill-truths-auto、`superpowers-codex-0.6.9/`；版本明细见 [`../`](../../_log/harness-eng/) |
-| [`_log/harness-eng/selfcheck-legacy/`](../../_log/harness-eng/selfcheck-legacy/INDEX.md) | 0.2–0.5.1 逐版 selfcheck |
+| 仓库级档案 `docs/`（git 历史可考） | ROADMAP / TRAE-P0-EVIDENCE、VERIFY 历史表、OPTIMIZATION、fill-truths-auto、`superpowers-codex-0.6.9/`；版本明细见其上级 |
+| 仓库级档案 `selfcheck-legacy/` | 0.2–0.5.1 逐版 selfcheck |
 
 排除清单：[`.skillignore`](../.skillignore)。

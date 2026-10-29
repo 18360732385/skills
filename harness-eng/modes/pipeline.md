@@ -30,7 +30,7 @@
 
 写盘走公开入口 `scripts/harness.mjs`，**不要**把 `render.mjs` 当 Agent 主路径。`pipeline-skeleton` 只覆盖本文件骨架战役；填充战役仍在骨架 Done 且非 `fill_deferred` 后再 Read [pipeline-fill.md](pipeline-fill.md)。
 
-引擎默认：`Q_FILL_ENGINE=agents`（填充战役用）。hybrid/auto 见 [pipeline-fill.md](pipeline-fill.md) · [fill.md](../fill/fill.md)。
+引擎默认：`Q_FILL_ENGINE=agents`（填充战役用）。hybrid 见 [pipeline-fill.md](pipeline-fill.md) · [fill.md](../fill/fill.md)；auto 已归档移除。
 
 ## 确认与预授权
 

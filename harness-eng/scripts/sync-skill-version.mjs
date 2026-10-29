@@ -35,7 +35,8 @@ function printHelp() {
   console.log(`Usage: node scripts/sync-skill-version.mjs [--check] [--help]
 
 SSOT: _meta/manifest.yaml → version
-Syncs mechanical copies + known doc "current version" headers.
+Syncs mechanical copies + known doc "current version" headers
+(+ repo root README harness-eng row).
 Does not edit CHANGELOG / upgrade.md / stale fixtures / schema versions.`);
 }
 
@@ -175,6 +176,20 @@ function planUpdates(skillRoot, version) {
       "handbook-html"
     )
   );
+
+  // Repo-root README row pin may lag SSOT badly (doc-header sync short-circuits
+  // when prev === version, so this row is managed independently). Semver-only
+  // replacement keeps full-width punctuation on the row intact.
+  // Standalone install (no repo root beside the skill, e.g. npx skills add):
+  // skip — repo-row pin is a repo-level nicety, not a standalone requirement.
+  if (fs.existsSync(path.join(skillRoot, "../README.md"))) {
+    touch("../README.md", (t) =>
+      t.replace(
+        /(harness-eng\/README\.md[^\n]*当前 )\d+\.\d+\.\d+/,
+        `$1${version}`
+      )
+    );
+  }
 
   return { version, prev, updates };
 }

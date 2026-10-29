@@ -28,7 +28,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 | **审计 / 自证** | **审计** / **会话自证** | 对照 **L0–L5** 缺口或核验当前宿主；默认不写盘（audit） |
 | **填充** | **填充** / fill-plan / agents / **打分** | MCP 过闸 → Plan → agents → acceptance → merge → score |
 
-含 Cron/Scheduler：域含 **jobs** → `fill-inventory.mjs --domain jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT）。仅脚本薄草稿（对话不推荐）：[archive/fill-truths-auto](archive/fill-truths-auto/INDEX.md)。
+含 Cron/Scheduler：域含 **jobs** → `fill-inventory.mjs --domain jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT）。自动填充已归档（仅脚本薄草稿、对话不推荐；0.7.50 脚本下线）：[archive/fill-truths-auto](archive/fill-truths-auto/INDEX.md)。
 
 ## 能否 AI Coding（10 秒）
 
@@ -100,4 +100,4 @@ PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BO
 **冷 clone**：`docs/**/.fill-work/` 默认 gitignore。新 clone 建议 `node scripts/harness.mjs --mode refresh --root <TARGET>` 落盘 inventory；0.7.37+ 若 live 扫描成功，fill-score 不再仅因缺磁盘 inventory 记 `missing_inventory`。
 
 多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.49**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.50**）。
