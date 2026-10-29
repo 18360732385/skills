@@ -1,0 +1,53 @@
+# feature-eng fixture：中途环 L2 负例（path=full 越过 spec/testdesign 环但缺对应审核文件）
+slug: "2026-09-29-midstage-l2-bad"
+title: "midstage-l2-bad 夹具"
+created_at: "2026-09-29"
+updated_at: "2026-09-29T11:30:00+08:00"
+
+path: full
+run_mode: guided
+invoke: strict
+handoff_policy: confirm
+review_policy: subagent
+chef_mode: bound
+stage: implement
+
+domain: skipped
+proto: skipped
+
+artifacts:
+  adr: []
+  spec: "docs/superpowers/specs/2026-09-29-midstage-l2-bad-设计.md"
+  plan: "docs/superpowers/plans/2026-09-29-midstage-l2-bad-实施计划.md"
+  proto: null
+  context_delta: null
+  testcases: null
+  test_report: null
+  qa_report: null
+  implement: null
+  pr_url: null
+
+tasks:
+  - id: T1
+    title: "夹具任务"
+    depends_on: []
+    status: pending
+
+gates:
+  triage: "2026-09-29T09:00:00+08:00"
+  shared_understanding: "2026-09-29T09:30:00+08:00"
+  design_confirmed: "2026-09-29T10:00:00+08:00"
+  go: "2026-09-29T10:30:00+08:00"
+  proto_confirmed: null
+  pre_impl: "2026-09-29T11:00:00+08:00"
+  gate: null
+  verify: null
+  close: null
+
+env_verified: null
+env_notes: null
+layout: null
+packages: null
+docs_root: "docs/"
+sibling_repos: null
+accepted_residual: null

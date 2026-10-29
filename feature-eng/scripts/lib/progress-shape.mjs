@@ -40,6 +40,77 @@ export const STAGE_ENUM = new Set([
   null,
 ]);
 
+/**
+ * progress.yaml 结构契约单一事实源（0.2.26 单源收敛）：
+ * selfcheck（validateProgressShape）/ gate-evidence / close-check 共用，勿在脚本内复制。
+ */
+/** 顶层键契约（progress.yaml.tmpl ↔ 夹具共用） */
+export const PROGRESS_TOP_KEYS = [
+  "slug",
+  "title",
+  "created_at",
+  "updated_at",
+  "path",
+  "run_mode",
+  "invoke",
+  "handoff_policy",
+  "review_policy",
+  "chef_mode",
+  "stage",
+  "domain",
+  "proto",
+  "artifacts",
+  "tasks",
+  "gates",
+  "env_verified",
+  "env_notes",
+  "layout",
+  "packages",
+  "docs_root",
+  "sibling_repos",
+  "accepted_residual",
+];
+
+/** artifacts: 子键契约（adr 为数组，其余为路径或 null） */
+export const ARTIFACT_KEYS = [
+  "adr",
+  "spec",
+  "plan",
+  "proto",
+  "context_delta",
+  "testcases",
+  "test_report",
+  "qa_report",
+  "implement",
+  "pr_url",
+];
+
+/** 9 闸键契约（gates: 子键） */
+export const GATE_KEYS = [
+  "triage",
+  "shared_understanding",
+  "design_confirmed",
+  "go",
+  "proto_confirmed",
+  "pre_impl",
+  "gate",
+  "verify",
+  "close",
+];
+
+/** ISO 闸 → 必须落盘的 L2 审核文件（null = 该闸不要求 L2） */
+export const L2_FOR_GATE = {
+  triage: null,
+  shared_understanding: "审核-grill.md",
+  design_confirmed: "审核-design.md",
+  go: "审核-plan.md",
+  proto_confirmed: null,
+  pre_impl: null,
+  gate: "审核-gate.md",
+  verify: "审核-verify.md",
+  close: null,
+};
+
 export function parseScalar(text, key) {
   if (!text) return undefined;
   const m = text.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
@@ -63,8 +134,9 @@ export function parsePackagesRoles(text) {
   if (!text) return { ok: false, roles: [], empty: true };
   const start = text.search(/^packages:\s*$/m);
   if (start < 0) {
-    const inlineNull = /^packages:\s*null\s*$/m.test(text);
-    return { ok: true, roles: [], empty: true, nullish: inlineNull || true };
+    // 无块状 packages: 键（含内联 packages: null / 整键缺失）一律视为 nullish
+    // —— 原写法 `inlineNull || true` 恒真，语义即“缺失视为 null”，据此钉死。
+    return { ok: true, roles: [], empty: true, nullish: true };
   }
   const from = text.slice(start);
   const firstNl = from.indexOf("\n");

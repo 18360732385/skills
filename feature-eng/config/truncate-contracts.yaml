@@ -1,6 +1,6 @@
 # feature-eng design/spec 截断契约（机读 SSOT）
 # 当 design 与 spec 同绑 brainstorming（或同名 skill）时，lookup 必须附加本契约，避免一口气写到 plan。
-# 人读摘要见 binding.md「同 skill 多环」；改本文件后 selfcheck 会核对键齐全。
+# 人读摘要见 modes/specs/flow.md「同 skill 多环」；改本文件后 selfcheck 会核对键齐全。
 
 version: 1
 

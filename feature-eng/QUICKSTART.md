@@ -1,6 +1,6 @@
 # feature-eng 一页纸
 
-**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.25**。
+**须点名**本 skill（不自动加载）。按意图走模式。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。版本：**0.2.26**。
 
 **可选接力**：需要工程化仓时先完成工程化（常见实现别名：`harness-eng`）→ **新会话**再点名本 skill；同会话勿并行。本 skill 可独立使用（无工程化 meta 亦可）。有工程化 meta 时 `start` 会软提示 `ai_coding_ready`（可忽略继续）；详见 [SKILL.md](SKILL.md)「可选接力（工程化仓）」。
 
@@ -71,6 +71,17 @@ scaffold_dir=$(mktemp -d)
 npm create vite@latest "$scaffold_dir" -- --template react-ts
 cp -a "$scaffold_dir"/. .
 rm -rf "$scaffold_dir"
+# 保留远程已有 LICENSE/.gitignore；冲突时人工合并后再 commit + push
+```
+
+PowerShell 等价（Windows 宿主）：
+
+```powershell
+# Vite 示例（按需改 template）
+$tmp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ("scaffold-" + [guid]::NewGuid().ToString("N").Substring(0,8)))
+npm create vite@latest $tmp.FullName -- --template react-ts
+Copy-Item -Path (Join-Path $tmp.FullName '*') -Destination . -Recurse -Force
+Remove-Item -Recurse -Force $tmp
 # 保留远程已有 LICENSE/.gitignore；冲突时人工合并后再 commit + push
 ```
 

@@ -32,6 +32,7 @@ export function isLegalAuthorizedBy(value, opts = {}) {
   if (isFakeChatTranscriptPlaceholder(s)) return false;
   if (isUserTaskPlaceholder(s)) return false;
   if (s === "user_chat" || s === "policy_exception") return true;
-  if (/^user_task_[A-Za-z0-9._-]+$/.test(s)) return true;
+  // user_task_<id>：id 段须至少含一位数字（拒绝 user_task_whatever 等无数字占位）
+  if (/^user_task_(?=[A-Za-z0-9._-]*\d)[A-Za-z0-9._-]+$/.test(s)) return true;
   return false;
 }

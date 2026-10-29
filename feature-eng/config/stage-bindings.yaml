@@ -14,14 +14,14 @@ defaults:
   close_pitfalls: optional   # off | optional | on — skill 默认 optional；start 若发现 lint-pitfalls.mjs 则本主题写 on（可显式覆盖）；见 close.md
 
 stages:
-  grill:      { skill: grill-me }                        # 环 1 澄清（术语草稿随 runs；禁止根 CONTEXT）
-  design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认（见 binding.md）
+  grill:      { skill: grill-me }                        # 环 1 澄清（术语草稿随 runs；禁止根 CONTEXT；宿主若装的是 grilling 等别名，init 首问逐环改绑）
+  design:     { skill: brainstorming }                   # 环 2 设计：截断到设计确认（见 modes/specs/flow.md）
   domain:     { skill: domain-modeling }                 # 环 3 定稿：仅 domain=entered（ADR + 术语增量.md）
   spec:       { skill: brainstorming }                   # 环 4 规格：仅写 Spec 段（同名 skill，靠截断区分）
   plan:       { skill: writing-plans }                   # 环 5 计划
   proto:      { skill: prototype }                       # 环 6 原型：仅 proto=entered
   testdesign: { skill: lynxce-test-cases }               # 环 7 集成测试设计（仅 F）
-  implement:  { skill: subagent-driven-development }     # 环 8 优先 SDD；不可用则 executing-plans（见 binding.md）
+  implement:  { skill: subagent-driven-development }     # 环 8 优先 SDD；不可用则 executing-plans（见 modes/specs/flow.md）
   review:     { skill: code-review }                     # 环 9 语义轨评审
   verify:     { skill: qa }                              # 环 10 集成验证（仅 F）
   diagnose:   { skill: systematic-debugging }            # 环 10b 排障（按需）

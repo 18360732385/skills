@@ -12,7 +12,7 @@
    - **empty-ish 时**：Cloud Agent / SCM 常对空仓报 **400**；指引改为 **本地脚手架 → 首批业务文件 commit → push**，再继续 feature-eng。不得假装「已有工程」而跳过脚手架。
    - **绿地前端 / 非空目录（O10）**：若根目录**仅有** VCS（`.git`）/ `LICENSE*` / `.gitignore`（及可选占位 README）且 **无 `package.json`**，而用户要起 Vite/Next 等脚手架：
      - **勿**直接在仓根跑 `npm create vite@latest .`（工具常因目录非空而 cancelled）。
-     - **提示**临时目录配方（完整见 [QUICKSTART.md](../QUICKSTART.md)「绿地前端」）：`scaffold_dir=$(mktemp -d) && npm create vite@latest "$scaffold_dir" -- --template <tpl> && cp -a "$scaffold_dir"/. .`
+     - **提示**临时目录配方（完整见 [QUICKSTART.md](../QUICKSTART.md)「绿地前端」）：`scaffold_dir=$(mktemp -d) && npm create vite@latest "$scaffold_dir" -- --template <tpl> && cp -a "$scaffold_dir"/. .`；Windows 宿主用 QUICKSTART 的 PowerShell 配方
      - init/start **提示配方**，不要只报「目录非空」就失败。
    - **非 empty-ish**：正常继续。预检结论可写入 `回链.md`「其他」一行。
 1b. **eng_probe（软·不阻断）**：只读探测仓库工程化状态；**禁止**因结果拒绝 start / 分诊。

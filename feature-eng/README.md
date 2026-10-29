@@ -6,6 +6,7 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
+0.2.26 要点：批修复——死链 9 处清零；GATE_KEYS/L2_FOR_GATE 单源；gate-evidence 中途环 L2 机检+内联防御+时间一致性；close-check 幽灵键修复+superpowers 归档检查；user_task 数字；status-scan needs-close；门禁清单模板；handoff 推导序钉死；PowerShell 配方；proxy reviewer。叠在 0.2.25 之上。
 0.2.25 要点：P2——`review_effective`；close `pr_branch`；pitfalls 归仓；express 同戳可接受。叠在 0.2.24 之上。
 0.2.24 要点：P1——design/spec 强制粘贴 forbid；`gates.proto_confirmed`；B 无 plan→Go→proto-bridge；`artifacts.implement`/`pr_url`。叠在 0.2.23-dev 之上。
 0.2.23-dev 要点：P0 O5b invoke 宿主探测（CloudAgent/无 Task → inline）+ Gate 无 CI 机械轨证据枚举（`mech_track: local_self_attest`）。叠在 0.2.22 之上。
@@ -50,8 +51,8 @@
 | `测试用例.md` | Full 路径用例 |
 | `测试报告.md` | Full 路径验证报告 |
 | `术语增量.md` | 主题术语（禁写根 CONTEXT.md） |
-| `门禁清单.md` | 门禁备注（可选） |
+| `门禁清单.md` | gate 环 L1 必查（或回链等价） |
 | `审核-<stage>.md` | L2 审核结论（stage 为英文键） |
 | `交接.md` | 交接 |
 
-脚本与夹具须 **UTF-8**；跑 selfcheck / 跨平台工具时建议 `LC_ALL=C.UTF-8`（或等价 UTF-8 locale）。
+脚本与夹具须 **UTF-8**；跑 selfcheck / 跨平台工具时建议 `LC_ALL=C.UTF-8`（或等价 UTF-8 locale）。Windows：Node 不依赖 LC_ALL，PowerShell 默认 UTF-8 即可。

@@ -1,6 +1,6 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.25"
+version: "0.2.26"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 eng_land: false
@@ -42,6 +42,7 @@ templates:
   - templates/术语增量.md.tmpl
   - templates/设计笔记.md.tmpl
   - templates/审核-stage.md.tmpl
+  - templates/门禁清单.md.tmpl
 
 runs_root: docs/runs/
 runs_active: docs/runs/active/

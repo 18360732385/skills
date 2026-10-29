@@ -36,12 +36,13 @@
 若根目录仅有 VCS / `LICENSE*` / `.gitignore`（及可选占位 README）且 **无 `package.json`**，而用户要 `create-vite` / `create-next-app`：
 
 - **不要**只报「目录必须为空」就失败。
-- **提示**临时目录配方（见 [QUICKSTART.md](../QUICKSTART.md)「绿地前端」）：`mktemp -d` → create → `cp -a` 回仓根。
+- **提示**临时目录配方（见 [QUICKSTART.md](../QUICKSTART.md)「绿地前端」）：`mktemp -d` → create → `cp -a` 回仓根；Windows 宿主用 QUICKSTART 的 PowerShell 配方。
 - init 本身仍只写绑定；脚手架动作留给 start / 用户确认后的 bootstrap。
 
 ## 步骤
 
 1. **扫描**：列出当前环境可调起的相关 skill（按能力粗分：澄清 / 设计 / 定稿 / 规格 / 计划 / 原型 / 测设 / 实现 / 评审 / 验证 / 排障）。宿主无法枚举时，允许用户手工填写 skill 名。
+   - 推荐名与本机扫描命中不一致（如 grill-me vs grilling）时，以扫描命中为准并在首问表标注别名。
    - 完成标准：11 个可绑环节每个至少有 1 个候选，或显式标注「无候选」。
 2. **首问（推荐包表）**：Read `config/stage-bindings.example.yaml` 与 [flow.md](specs/flow.md)「可绑环节中文名与产物一句话」。**一键采用前也必须先展示下表**，再停下问用户：
 

@@ -83,9 +83,11 @@ for (const slugDir of entries) {
     continue;
   }
   const text = fs.readFileSync(progressPath, "utf8");
+  const stageVal = readField(text, "stage");
   rows.push({
     slug: readField(text, "slug") || slugDir,
-    stage: readField(text, "stage") || "—",
+    // stage=done 但主题仍躺在 active/ → 未 close，显式标注 needs-close
+    stage: stageVal === "done" ? "done(needs-close)" : stageVal || "—",
     path: readField(text, "path") || "—",
     note: rel,
   });

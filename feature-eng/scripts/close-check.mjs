@@ -11,6 +11,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
+import { ARTIFACT_KEYS } from "./lib/progress-shape.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -148,6 +149,31 @@ if (!progress) {
   } else {
     ok.push("progress.slug matches");
   }
+
+  // D6-①：close 归档态下 spec/plan 应指向 docs/superpowers/…/archive/，不得残留未归档路径
+  for (const key of ["spec", "plan"]) {
+    const p = nestedScalar(progress, "artifacts", key);
+    if (
+      p &&
+      typeof p === "string" &&
+      p.includes("docs/superpowers/") &&
+      !p.includes("/archive/")
+    ) {
+      issues.push(`artifacts.${key} still points at un-archived superpowers path: ${p}`);
+    }
+  }
+  // D6-②：归档态 artifacts 指针（非 null 非 http 的可路径键）必须对应真实文件
+  for (const key of ARTIFACT_KEYS.filter((k) => k !== "adr")) {
+    const p = nestedScalar(progress, "artifacts", key);
+    if (p && typeof p === "string" && !p.startsWith("http")) {
+      const abs = path.isAbsolute(p) ? p : path.join(cwd, p);
+      if (!fs.existsSync(abs)) {
+        issues.push(`artifacts.${key} dangling after archive: ${p}`);
+      } else {
+        ok.push(`artifacts.${key} exists`);
+      }
+    }
+  }
 }
 
 if (!exists(huilianRel)) {
@@ -165,7 +191,9 @@ if (exists(archiveRel)) {
   }
 }
 if (progress) {
-  for (const key of ["spec", "plan", "design", "proto", "report"]) {
+  // 修复幽灵键：design/report 不是 progress.yaml 的 artifacts 键；
+  // 改扫 lib ARTIFACT_KEYS 中可为路径的键（adr 为数组，跳过）
+  for (const key of ARTIFACT_KEYS.filter((k) => k !== "adr")) {
     const p = nestedScalar(progress, "artifacts", key);
     if (p && typeof p === "string" && !p.startsWith("http")) {
       const abs = path.isAbsolute(p) ? p : path.join(cwd, p);

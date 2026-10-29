@@ -1,0 +1,30 @@
+# 门禁清单 — {{slug}}
+
+> 环 9 L1 必查：机械轨 + 语义轨（或由 `回链.md` 指认等价清单）。枚举见 modes/specs/gates.md Part A「gate」。
+
+## 机械轨证据（A–D 至少一项；行内填实际命令/链接与结论）
+
+| 序 | 证据类型 | 命令或链接 | 退出码或结论 |
+|---|---|---|---|
+| A | 本地 hooks / lint / smoke 命令 | — | —（须 exit 0） |
+| B | `env_notes.verify_commands[]` 每条 | — | —（每条须 exit 0） |
+| C | PR Checks / CI 链接 | — | —（结论可指认） |
+| D | 无 CI：`mech_track: local_self_attest` + 命令清单 | — | —（用户显式接受本地自证） |
+
+**禁止**仅写「测试已跑过」而无命令/退出码/路径/Checks 链接。
+
+## 语义轨
+
+- 绑定 review skill 结论（`审核-gate.md`，`result: pass | fail`）：—
+- 未决 blocker 列表（无则写「无」）：—
+
+## integration_ready（O9，Full+UI 时勾一项）
+
+- [ ] `cors_ready`
+- [ ] `proxy_ready`
+- [ ] `accepted_blocked`（须写入 `accepted_residual` / 回链备注）
+- 非 Full+UI → 本节 N/A
+
+## 备注
+
+- 按 delivery-checklist：—（存在 `docs/agent-kb/delivery-checklist.md` 时记「按 delivery-checklist」）

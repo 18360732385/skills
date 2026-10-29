@@ -32,15 +32,15 @@ run_mode: guided
 invoke: strict
 
 # auto | confirm（过闸后是否立即调起下一 skill；见 advance.md）
-# 推导：express→auto；guided→confirm；可被 defaults.handoff_policy / 首问覆盖
+# 缺省推导序（钉死）：① progress（主题首问写入）> ② run_mode 推导（express/unattended→auto，guided→confirm）> ③ defaults.handoff_policy（仅当 start 未按 run_mode 推导写入时兜底）
 handoff_policy: confirm
 
-# subagent | inline（环间 L2 语义审核；见 gates-review.md）
+# subagent | inline（环间 L2 语义审核；见 modes/specs/gates.md Part B）
 # 默认 subagent；宿主无 Task 能力则降级 inline（须显式写 gate 备注，见 start.md O5）
 review_policy: subagent
 
 # bound | controller_proxy（start 探测绑定 skill 可调起；不可用则强制 controller_proxy + 警告）
-# 见 binding.md「chef_mode」；controller_proxy = 显式降级：控制器兼代厨师角色落盘产物
+# 见 modes/specs/flow.md「chef_mode」；controller_proxy = 显式降级：控制器兼代厨师角色落盘产物
 chef_mode: bound
 
 # off | optional | on（close 时 pitfalls lint；解析序见 close.md）
@@ -77,7 +77,7 @@ tasks: []
 #    depends_on: []
 #    status: pending | doing | done
 
-# 各闸通过时间（ISO）；无时间戳 = 未过（通过条件见 gates-common.md）
+# 各闸通过时间（ISO）；无时间戳 = 未过（通过条件见 modes/specs/gates.md Part C）
 gates:
   triage: null
   shared_understanding: null   # 用户显式确认可进设计

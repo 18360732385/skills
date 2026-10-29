@@ -4,7 +4,7 @@
 
 ## 步骤
 
-1. 列 `docs/runs/active/` 下主题（读各目录 `progress.yaml`，`stage != done`）；多个时让用户选。  
+1. 列 `docs/runs/active/` 下主题（读各目录 `progress.yaml`，`stage != done`；stage=done 未归档条目由 status-scan 以 needs-close 标注）；多个时让用户选。  
    - **兼容**：若存在旧路径 `docs/superpowers/runs/<slug>/` 且 active 无对应项 → 列入候选并提示「建议迁到 docs/runs/active/（须确认后搬，勿静默）」。
 2. 读该主题 `progress.yaml`：path、run_mode、invoke、handoff_policy、review_policy、stage、domain、proto、gates、artifacts。缺字段时按 start 推导 / defaults 对待并建议补写；缺 `domain`/`proto` 且 stage 已过对应桥则建议按 `回链.md` 理由回填。
 2b. **eng_probe（可选补）**：**不强制**重跑。若 `回链.md` 无 `eng_probe` 且无旧键 `harness_probe`，且磁盘现有工程化 meta（`docs/harness-eng/harness-meta.yaml` 或遗留 `.cursor/harness-meta.yaml`）→ 可按 [start.md](start.md) 1b 补一行（同样**不阻断**续跑）。

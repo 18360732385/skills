@@ -275,6 +275,7 @@
 # L2 review — <stage> — <slug>
 
 - result: pass | fail
+- reviewer: bound_subagent | inline_session | self(controller_proxy)
 - summary: …
 - defects:（fail 时逐条；pass 可空）
   - …

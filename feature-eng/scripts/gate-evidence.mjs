@@ -16,6 +16,7 @@ import {
   isUserTaskPlaceholder,
   isLegalAuthorizedBy,
 } from "./lib/auth.mjs";
+import { GATE_KEYS, L2_FOR_GATE } from "./lib/progress-shape.mjs";
 
 function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
@@ -33,30 +34,32 @@ if (!slug) {
   process.exit(2);
 }
 
-const GATE_KEYS = [
+/** 主链 stage 顺序（smoke/diagnose 为旁态，不参与中途环推断） */
+const STAGE_ORDER = [
   "triage",
-  "shared_understanding",
-  "design_confirmed",
-  "go",
-  "proto_confirmed",
-  "pre_impl",
+  "grill",
+  "design",
+  "domain-bridge",
+  "domain",
+  "spec",
+  "plan",
+  "proto-bridge",
+  "proto",
+  "testdesign",
+  "pre-impl",
+  "implement",
   "gate",
   "verify",
   "close",
+  "done",
 ];
 
-/** ISO gate → required L2 review file (null = L2 not required for that gate) */
-const L2_FOR_GATE = {
-  triage: null,
-  shared_understanding: "审核-grill.md",
-  design_confirmed: "审核-design.md",
-  go: "审核-plan.md",
-  proto_confirmed: null,
-  pre_impl: null,
-  gate: "审核-gate.md",
-  verify: "审核-verify.md",
-  close: null,
-};
+/** stage 是否已越过主链上 target 环（任一不在主链内则视为未越过） */
+function passedStage(stage, target) {
+  const a = STAGE_ORDER.indexOf(String(stage));
+  const b = STAGE_ORDER.indexOf(target);
+  return a >= 0 && b >= 0 && a > b;
+}
 
 const issues = [];
 const ok = [];
@@ -174,6 +177,10 @@ const authMap = parseAuthTable(huilian || "");
 
 let anyIsoGate = false;
 if (progress) {
+  // D4：内联 gates 映射（gates: {...}）块状解析器读不到，显式拒绝，杜绝静默漏检
+  if (/^gates:\s*\{/m.test(progress)) {
+    issues.push("inline gates mapping not supported; use block style");
+  }
   for (const gate of GATE_KEYS) {
     const ts = nestedScalar(progress, "gates", gate);
     if (!isIsoGate(ts)) continue;
@@ -203,6 +210,17 @@ if (progress) {
       );
     } else {
       ok.push(`gates.${gate} authorized_by=${auth}`);
+    }
+
+    // D5：授权表 time 列 ↔ progress gates ISO 时间一致性（双非空且字符串不等 → issue）
+    if (row.time && row.time !== "—") {
+      if (String(ts) !== row.time) {
+        issues.push(
+          `gates.${gate} auth table time mismatch (progress=${String(ts)} table=${row.time})`
+        );
+      } else {
+        ok.push(`gates.${gate} auth table time matches`);
+      }
     }
 
     const reviewFile = L2_FOR_GATE[gate];
@@ -246,6 +264,47 @@ if (progress) {
       );
     } else {
       ok.push("gates.proto_confirmed present for proto=entered");
+    }
+  }
+
+  // D2：中途环 L2 阶段推断 —— stage 越过环 X 时须有 审核-X.md 且 result: pass
+  // spec / testdesign 仅 path=full 检查（B 路径无独立 spec/testdesign 环，勿误伤）；
+  // smoke / diagnose 为旁态，跳过本检查。
+  const stageVal = readScalar(progress, "stage");
+  const pathVal = readScalar(progress, "path");
+  const domainVal = readScalar(progress, "domain");
+  if (stageVal !== "smoke" && stageVal !== "diagnose" && runRel) {
+    const midReqs = [];
+    if (pathVal === "full" && passedStage(stageVal, "spec")) {
+      midReqs.push(["spec", "审核-spec.md"]);
+    }
+    if (pathVal === "full" && passedStage(stageVal, "testdesign")) {
+      midReqs.push(["testdesign", "审核-testdesign.md"]);
+    }
+    if (passedStage(stageVal, "implement")) {
+      midReqs.push(["implement", "审核-implement.md"]);
+    }
+    if (domainVal === "entered" && passedStage(stageVal, "domain")) {
+      midReqs.push(["domain", "审核-domain.md"]);
+    }
+    for (const [ring, reviewFile] of midReqs) {
+      const reviewRel = `${runRel}/${reviewFile}`;
+      const body = read(reviewRel);
+      if (!body) {
+        issues.push(
+          `stage=${stageVal} passed ring ${ring} but missing ${reviewRel}`
+        );
+      } else if (!/result:\s*pass\b/i.test(body)) {
+        if (/result:\s*fail\b/i.test(body)) {
+          issues.push(
+            `${reviewRel} result: fail (stage=${stageVal} passed ring ${ring} requires result: pass)`
+          );
+        } else {
+          issues.push(`${reviewRel} missing result: pass`);
+        }
+      } else {
+        ok.push(`${reviewFile} result: pass (stage=${stageVal} passed ring ${ring})`);
+      }
     }
   }
 }

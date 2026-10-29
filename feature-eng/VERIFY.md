@@ -1,14 +1,33 @@
-﻿# feature-eng 验收记录（0.2.25）
+﻿# feature-eng 验收记录（0.2.26）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测（含 fixtures / behavioral checks）。真实 init/start/advance/close 仍须在目标仓由 Agent 执行并遵守硬闸。
 
 ## 版本
 
-当前 **0.2.25**（P2：F-07～F-10；其上 0.2.24 P1 · …）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/feature-eng/`](../_log/feature-eng/)）。
+当前 **0.2.26**（批修复：死链清零 · 单源 · 机检加固 · 文档口径；其上 0.2.25 P2 · 0.2.24 P1 · …）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/feature-eng/`](../_log/feature-eng/)）。
 
-本版**不**改动默认绑定 skill 名；`eng_land` 仍为 false；`feature.mjs` 不写盘；yaml `defaults.close_pitfalls` 字面仍为 `optional`；**不**改 gate-evidence 机检逻辑（仅文档口径）。
+本版**不**改动默认绑定 skill 名（`grill` 等别名仅加对照提示）；`eng_land` 仍为 false；`feature.mjs` 不写盘；yaml `defaults.close_pitfalls` 字面仍为 `optional`。本版**含** gate-evidence / close-check / auth / status-scan 机检改动（见 0.2.26 增量验收）。
 
 **钉号纪律**：文首与 manifest 为现行权威钉；「继承 · as-of」不得把旧钉写成现行。自 **0.2.24** 起开发增量亦用正式号（不加 `-dev`）。发版用 `sync-skill-version.mjs` 同步文档钉头。
+
+## 0.2.26 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0（含 0.2.26 新增断言） | 烟测 |
+| `_meta/manifest.yaml` 为权威 `0.2.26`；入口文档钉头一致 | 有 |
+| 死链零引用断言有（包内 md/yaml/tmpl 扫描旧名模式，selfcheck 26-1） | 有 |
+| `GATE_KEYS`/`L2_FOR_GATE` 单源有（lib 导出 + gate-evidence/close-check/selfcheck import） | 有 |
+| gate-evidence 中途环机检有（midstage-l2-bad 正向 FAIL、`--expect-fail` exit 0、close-ready PASS） | 有 |
+| gate-evidence 内联 gates 防御 + 授权时间一致性 | 有 |
+| close-check 幽灵键修复（ARTIFACT_KEYS 对齐）+ superpowers 归档双检查 | 有 |
+| status-scan `done(needs-close)` 有 | 有 |
+| auth `user_task` 须含数字有 | 有 |
+| 门禁清单.md.tmpl 有（manifest templates + selfcheck TEMPLATES 双登记） | 有 |
+| flow.md handoff 缺省推导序有 | 有 |
+| SKILL description 含 `status`/`rebind` 有 | 有 |
+| 审核文件 `reviewer` 字段有（tmpl + gates.md Part B） | 有 |
+| CHANGELOG 索引含 0.2.26 且存在 `_log/feature-eng/0.2/0.2.26.md` | 有 |
 
 ## 0.2.25 增量验收
 
@@ -71,7 +90,7 @@
 
 ## 继承 · as-of 0.2.20-dev / 更早
 
-见 CHANGELOG 索引与 `_log/feature-eng/`；P0/P1/P2 解耦、批 E bridges/close、批 D refresh、批 C 绑定解耦、unattended、modes 大合并等仍有效。现行权威钉：**0.2.25**。
+见 CHANGELOG 索引与 `_log/feature-eng/`；P0/P1/P2 解耦、批 E bridges/close、批 D refresh、批 C 绑定解耦、unattended、modes 大合并等仍有效。现行权威钉：**0.2.26**。
 
 ## Node×jsdom 已知坏组合（O11）
 
@@ -79,6 +98,17 @@
 |---|---|---|
 | Node 20 × jsdom@30 | `webidl.util.markAsUncloneable is not a function` | 钉 `jsdom@^24.1.3` 或升 Node ≥22 |
 | `node -v` 低于 `engines.node` | worker / 工具链崩 | verify 前对照 engines |
+
+## 与 harness-eng 对齐路径清单
+
+| 依赖点 | 硬编码路径 | 用途 |
+|---|---|---|
+| start 探测（1b） | `docs/harness-eng/harness-meta.yaml` / 遗留 `.cursor/harness-meta.yaml` | 工程化 meta 软探测（皆无 → 静默跳过） |
+| close 1b 代跑 | 目标仓 `scripts/agent-kb/refresh-score.mjs` | 工程化快照刷新（优先） |
+| close 1b 回退 | `<工程化技能目录>/scripts/harness.mjs --mode refresh --root <目标仓根>` | 无 refresh-score 且有 meta 时回退 |
+| 软提示 | `fill-score` / `refresh-score` | `ai_coding_ready=NO|未知` 时建议先打分 |
+
+harness-eng 布局演进时以本清单对照；失配仅影响软提示/可选步骤，不阻断独立模式。
 
 ## 烟测命令
 

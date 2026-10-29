@@ -73,7 +73,7 @@
 4b. **死链改写（只改路径字符串）**  
    归档后扫描主题根 `docs/runs/archive/<slug>/`，以及回链 / `progress.artifacts` 列出的 chef、审核、Spec/Plan 产物：将仍指向 `docs/runs/active/<slug>/`（或归档前 Spec/Plan 路径）的字符串改写为对应 archive 路径。**勿**改写语义正文，只替换路径。
 
-5. 输出交付摘要：路径、各环节产物、测试报告通过率（F）、残留风险、本仓跳过的可选增强项、`eng_snapshot`（读侧兼容旧 `harness_snapshot`）状态。
+5. 输出交付摘要：路径、各环节产物、测试报告通过率（F）、残留风险、本仓跳过的可选增强项、`eng_snapshot`（读侧兼容旧 `harness_snapshot`）状态。`chef_mode=controller_proxy` 时摘要须提示：本主题 L2 为控制器自审。
 
 ## 双归档 L1 检查单（O7，可勾选）
 

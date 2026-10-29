@@ -149,7 +149,7 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 
 ### 环间交接策略 `handoff_policy`
 
-读自 `progress.handoff_policy`（缺省：`express`→`auto`，`guided`→`confirm`，或 `defaults.handoff_policy`）。
+读自 progress.handoff_policy。缺省推导序（钉死）：① progress（主题首问写入）> ② run_mode 推导（express/unattended→auto，guided→confirm）> ③ defaults.handoff_policy（仅当 start 未按 run_mode 推导写入时兜底）。
 
 | 值 | 行为 |
 |---|---|
