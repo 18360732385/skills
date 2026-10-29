@@ -4,7 +4,7 @@
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。
 
 **拓扑（0.3.32）**：`modes/` 模式规格（prepare / resume / audit / seal 等）· `scripts/release.mjs` 统一薄入口 · `scripts/` 仪式脚本 · `fixtures/docs/releases/` 骨架种子；SQL 整理 `sql/refs` + `sql-bundle`。  
-**发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（文档钉头 + 仓根 README 行）→ ③ 在 [`../_log/release-eng/<major.minor>/<ver>.md`](../_log/release-eng/) 写要点并更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [VERIFY.md](VERIFY.md) 增量 → ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。  
+**发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（文档钉头 + 仓根 README 行）→ ③ 在 [`../_log/release-eng/<major.minor>/<ver>.md`](../_log/release-eng/) 写要点并更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [VERIFY.md](VERIFY.md)**仅替换当前版**增量表（勿堆历史）→ ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`；默认汇总，`--verbose` 逐条）。  
 **非 harness land**（`harness_land: false`）——无自动 land 流水线；靠用户点名仪式。
 
 ## 必读（写盘 / 定版前）≤9
@@ -43,3 +43,7 @@
 ## 写盘纪律（一行）
 
 push-gate 通过后才 freeze / 问卷 / 定版 WritePlan；写盘当且仅当过确认词（或同会话预授权）；audit 只报告不写盘；seal 前先 `seal-check`。
+
+## Leading keywords
+
+热路径检索词（SKILL 只留核心子集）：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan` · `seal` · `全部推荐` · `gates-common` · `首次发版` · `截断5` · `mergeSources` · `目录包` · `prod` · `SQL序` · `sql/refs` · `sql-bundle` · `键级diff` · `jobs交叉` · `draft` · `双源去重` · `变更对象` · `artifacts.json` · `双轨研判` · `ai-track` · `逾期未归档` · `confidence` · `draft-md` · `note-merge` · `seal-check` · `Asia/Shanghai` · `来源分支功能` · `上线内容摘要`。

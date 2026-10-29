@@ -14,8 +14,8 @@ Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。一页纸：[QUICKSTART.md]
 
 Skill = **发版仪式**。真相在 `docs/releases/`（过程域；术语见根 [CONTEXT.md](../../../CONTEXT.md)）。对用户优先中文。  
 拓扑：`modes/` 模式规格（prepare/resume/audit/seal 等）· `scripts/release.mjs` 统一薄入口 · `fixtures/docs/releases/` 骨架种子。  
-约定 SSOT：[modes/conventions.md](modes/conventions.md)（发版日期算法 / 身份归一化 / 目录包 / 截断5 / mergeSources / prod / SQL序 / 密文 / notes/ 兼容层 / repo-profile / 逾期硬闸书面跳过）——skill 侧其它文档只引用不复述。  
-Leading：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan` · `seal` · `全部推荐` · `gates-common` · `首次发版` · `截断5` · `mergeSources` · `目录包` · `prod` · `SQL序` · `sql/refs` · `sql-bundle` · `键级diff` · `jobs交叉` · `draft` · `双源去重` · `变更对象` · `artifacts.json` · `双轨研判` · `ai-track` · `逾期未归档` · `confidence` · `draft-md` · `note-merge` · `seal-check` · `Asia/Shanghai` · `来源分支功能` · `上线内容摘要`。
+约定 SSOT：[modes/conventions.md](modes/conventions.md)——其它文档只引用不复述。  
+Leading（核心）：`定版` · `发版单` · `发版日期` · `push-gate` · `WritePlan` · `seal` · `首次发版` · `截断5` · `artifacts.json` · `note-merge` · `seal-check` · `逾期未归档`。全文见 [AGENT-INDEX.md](AGENT-INDEX.md)#leading-keywords。
 
 ## 模式分流
 

@@ -7,6 +7,9 @@
  * seal-check --help · release.mjs --help/modes · sync-skill-version --check ·
  * push-gate 临时仓（never-pushed / in-sync / unpushed>0）· layerEmpty 可观测。
  *
+ * 用法：node scripts/selfcheck.mjs [--verbose|-v] [--help]
+ * 默认只打印 PASS/FAIL 汇总；`--verbose` 列出每条 ✓。
+ *
  * 非 harness land：不对齐 harness 自动 land 流水线。
  */
 import fs from "fs";
@@ -18,6 +21,13 @@ import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
+const argv = process.argv.slice(2);
+if (argv.includes("--help") || argv.includes("-h")) {
+  console.log(`Usage: node scripts/selfcheck.mjs [--verbose|-v] [--help]
+Default: summary only (PASS n/n). --verbose lists each ✓ assertion.`);
+  process.exit(0);
+}
+const VERBOSE = argv.includes("--verbose") || argv.includes("-v");
 const fail = [];
 const ok = [];
 
@@ -186,12 +196,20 @@ assert(
 );
 
 const logRoot = path.resolve(skillRoot, "..", "_log", "release-eng");
-function logFile(ver) {
+function logFileCandidates(ver) {
+  const name = `${ver}.md`;
   const m = String(ver).match(/^(\d+\.\d+)\./);
-  return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
+  if (m) {
+    return [
+      path.join(logRoot, m[1], name),
+      path.join(logRoot, "archive", m[1], name),
+      path.join(logRoot, "archive", name),
+    ];
+  }
+  return [path.join(logRoot, name), path.join(logRoot, "archive", name)];
 }
 function logExists(ver) {
-  return fs.existsSync(logFile(ver));
+  return logFileCandidates(ver).some((p) => fs.existsSync(p));
 }
 const changelogIndex = read("CHANGELOG.md");
 assert(changelogIndex != null, "CHANGELOG.md exists");
@@ -208,12 +226,20 @@ assert(
   changelogIndex != null && changelogIndex.includes(`${PIN}.md`),
   `CHANGELOG index links ${PIN}`
 );
-assert(logExists("0.3.18-dev"), "_log retains 0.3.18-dev");
+assert(logExists("0.3.18-dev"), "_log retains 0.3.18-dev (live or archive)");
 assert(
   changelogIndex != null && changelogIndex.includes("0.3.18-dev.md"),
   "CHANGELOG index links 0.3.18-dev"
 );
-assert(logExists("0.3.19-dev"), "_log retains 0.3.19-dev");
+assert(logExists("0.3.19-dev"), "_log retains 0.3.19-dev (live or archive)");
+assert(
+  /_log\/release-eng\/archive\//.test(changelogIndex || ""),
+  "CHANGELOG points to _log/release-eng/archive/"
+);
+assert(
+  fs.existsSync(path.join(logRoot, "archive", "README.md")),
+  "_log/archive/README.md exists"
+);
 
 
 {
@@ -2084,4 +2110,6 @@ if (fail.length) {
   process.exit(1);
 }
 console.log(`PASS ${ok.length}/${total} (release-eng ${PIN})`);
-for (const m of ok) console.log("  ✓", m);
+if (VERBOSE) {
+  for (const m of ok) console.log("  ✓", m);
+}

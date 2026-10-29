@@ -25,7 +25,7 @@ node scripts/release.mjs --help
 node scripts/release.mjs modes
 ```
 
-须 `PASS … (release-eng 0.3.32)` 且 exit 0。覆盖：manifest 钉号 · `modes/` 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / artifacts 形 · seal-check `--help` · release.mjs modes。
+须 `PASS … (release-eng 0.3.32)` 且 exit 0（默认只打汇总；逐条用 `--verbose`）。覆盖：manifest 钉号 · `modes/` 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / artifacts 形 · seal-check `--help` · release.mjs modes。
 
 ## 可移植性
 
@@ -38,9 +38,6 @@ node scripts/release.mjs modes
 
 基线填 **`无`**（脚本 `--baseline none`）：push-gate 只验发版分支；freeze 的 Git 四表取全量，**上线候选不扫整树**（`inventory` + 问卷起迁）。增量发版仍用 `release` / `main`（或你确认的基线）走 **键级diff**。
 
-## 发版日期与落单约定（要点）
+## 约定
 
-- 首问 **`发版日期`**【推荐】≥提问日+2 的第一个周四（独立元信息字段）；目录包 `docs/releases/<slug>/`（**无 notes/**），`<slug>` = **发版分支名归一化**  
-- Git 提交列表 **`截断5`**、合并来源 **`mergeSources`** 去重全量、时区 **Asia/Shanghai**、远端链接按 origin 宿主；SQL/配置/任务目标 **`prod`**；SQL 按 **`SQL序`**  
-- 增量 **`键级diff`** + **`jobs交叉`** + **`draft`** + **`prior去重`**；WritePlan **`draft-md`**；落单 **`note-merge`**；seal **`seal-check`**  
-- 约定全文（日期算法示例表 / 身份归一化 / 目录包构成 / 截断5 / mergeSources / prod / SQL序 / 密文 / notes/ 兼容层 / repo-profile / 逾期硬闸书面跳过）见 [modes/conventions.md](modes/conventions.md)——skill 侧约定唯一权威 SSOT，本文只列要点。
+全文唯一权威：[modes/conventions.md](modes/conventions.md)（发版日期算法、身份归一化、目录包、截断5、mergeSources、prod、SQL序、密文、notes/ 兼容、repo-profile、逾期书面跳过）。本文不复述。
