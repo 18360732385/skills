@@ -26,8 +26,21 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 import { spawnSync } from "child_process";
 import { createHash } from "crypto";
+import {
+  normalizeMigrationDir,
+  buildHookBackfill,
+  detectHookProfile,
+  diffHookPlaceholders,
+} from "./lib/hook-backfill.mjs";
+import {
+  normalizeUpgradeFixHooks,
+  detectStructuralHookCustomization,
+  decideFixHookAction,
+  stripHookConstSkeleton,
+} from "./lib/upgrade-fix-hooks.mjs";
 import { buildReportUi } from "./lib/report-ui.mjs";
 import { buildHostSurface, formatHostSurfaceLine } from "./lib/host-surface.mjs";
 import {
@@ -1775,8 +1788,8 @@ if (fs.existsSync(fixture)) {
   assert(/module_agents_template/.test(renderSrc), "render supports module_agents_template");
   assert(/if\s*\(\s*!passesWhenGates\(e\)\s*\)/.test(renderSrc), "0.7.27 passesWhenGates is called in expand loop");
   assert(
-    /DB_MIGRATION_DIR/.test(renderSrc) && renderSrc.includes('.replace(/\\/?$/, "/")'),
-    "0.7.27 ensureStandardPlaceholders normalizes DB_MIGRATION_DIR slash"
+    /DB_MIGRATION_DIR/.test(renderSrc) && /normalizeMigrationDir/.test(renderSrc),
+    "0.7.53 render normalizes DB_MIGRATION_DIR via normalizeMigrationDir"
   );
   assert(/previewMarkdownMerge/.test(renderSrc), "render has previewMarkdownMerge");
   assert(/mergePreview/.test(renderSrc), "render logs mergePreview");
@@ -2188,13 +2201,28 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
     phMigChained.DB_MIGRATION_DIR === "backend/src/main/resources/db/migration/",
     "0.7.27 HS-3 chained existing DB_MIGRATION_DIR gets trailing slash"
   );
+  // 0.7.53: GLOB_* no longer merged into CONTRACT_CHECKS (rules-only)
   const checksJs = buildContractChecksJs(["api"], { GLOB_API: "frontend/src/api/**" });
-  assert(/frontend\/src\/api/.test(checksJs), "E7 buildContractChecksJs unions GLOB_API");
+  assert(
+    !/frontend\/src\/api/.test(checksJs),
+    "0.7.53 buildContractChecksJs does not union GLOB_API"
+  );
   const checksArr = new Function(`return (${checksJs});`)();
   assert(
     Array.isArray(checksArr) &&
-      checksArr.some((c) => c.id === "api" && typeof c.code === "function" && c.code("frontend/src/api/x.ts")),
-    "E7 staged frontend/src/api/x.ts hits api predicate"
+      checksArr.some(
+        (c) =>
+          c.id === "api" &&
+          typeof c.code === "function" &&
+          c.code("src/main/java/com/x/controller/FooController.java")
+      ),
+    "E7 staged *Controller.java hits api hook_code predicate"
+  );
+  const checksFunc = buildContractChecksJs(["func"], { GLOB_FUNC: "**/src/**,docs/func/**" });
+  assert(!/startsWith\("src\/"\)/.test(checksFunc), "0.7.53 func CONTRACT_CHECKS no bare src/");
+  assert(
+    !/!f\.startsWith\("docs\/"\) && f\.startsWith\("docs\//.test(checksFunc),
+    "0.7.53 func CONTRACT_CHECKS no docs glob dead pred"
   );
   const domYamlE = fs.readFileSync(path.join(skillRoot, "templates/_meta/domains.yaml"), "utf8");
   assert(/dto/.test(domYamlE), "E7 domains.yaml has dto");
@@ -2537,8 +2565,12 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   assert(predsDocs.includes("docs/api/"), "0.7.28 HS-4 glob expands docs/api/");
   const checksDocs = buildContractChecksJs(["api"], { GLOB_API: "docs/api/**" });
   assert(
-    /!f\.startsWith\("docs\/"\)/.test(checksDocs) && /docs\/api\//.test(checksDocs),
-    "0.7.28 HS-4 docs/api/** code pred guarded"
+    !/!f\.startsWith\("docs\/"\) && f\.startsWith\("docs\/api/.test(checksDocs),
+    "0.7.53 GLOB docs/api/** not merged into CONTRACT_CHECKS"
+  );
+  assert(
+    /!f\.startsWith\("docs\/"\)/.test(checksDocs),
+    "0.7.28 HS-4 docsGuard still wraps hook_code regex preds"
   );
 
   // SG-5 / NEW-4: narrow header — data row with 返回类型 must not reset headers
@@ -5095,7 +5127,8 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     assert(r.appended && r.mode === "manual_sql", "0.7.48 ensureDbMdMaintenance manual_sql");
     const body = fs.readFileSync(path.join(dbMaint, "docs", "db", "db.md"), "utf8");
     assert(/manual_sql/.test(body) && !/\bnone\b/.test(body.split("维护约定")[1] || ""), "0.7.48 maint no literal none");
-    assert(/DDL|人工按序/.test(body), "0.7.48 maint mentions DDL or 人工");
+    assert(/人工按序|rule 13|AGENTS/.test(body), "0.7.48/0.7.53 maint points to AGENTS/rule 13");
+    assert(!/0001_DDL/.test(body), "0.7.53 maint forbids fictional 0001_DDL sample");
   } finally {
     fs.rmSync(dbMaint, { recursive: true, force: true });
   }
@@ -5278,6 +5311,312 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   assert(/hasLogRoot/.test(upMd750) && /门禁包裹/.test(upMd750), "0.7.50 upgrade gating convention note");
 
   assert(logExists("0.7.50"), "0.7.50 _log note exists");
+}
+
+// --- 0.7.53: thick-repo hooks harden ---
+{
+  assert(
+    normalizeMigrationDir("**/db/migration/") === "db/migration/",
+    "0.7.53 normalizeMigrationDir strips **/ glob"
+  );
+  assert(!/[*?]/.test(normalizeMigrationDir("**/db/migration/")), "0.7.53 no star left after normalize");
+  const phDefault = buildHookPlaceholders({
+    params: { domains: ["db"] },
+    agentConfig: false,
+    existing: {},
+    root: skillRoot,
+  });
+  assert(
+    phDefault.DB_MIGRATION_DIR === "db/migration/" && !/[*?]/.test(phDefault.DB_MIGRATION_DIR),
+    "0.7.53 default DB_MIGRATION_DIR has no glob"
+  );
+
+  const invTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-053-inv-"));
+  try {
+    fs.mkdirSync(path.join(invTmp, "docs", "harness-eng"), { recursive: true });
+    fs.writeFileSync(
+      path.join(invTmp, "docs", "harness-eng", "harness-meta.yaml"),
+      'skill_version: "0.7.53"\ninventory:\n  db:\n    sql_root: sms-ai/src/main/resources/db/migration\n',
+      "utf8"
+    );
+    fs.mkdirSync(path.join(invTmp, "scripts", "agent-kb"), { recursive: true });
+    fs.writeFileSync(path.join(invTmp, "scripts", "agent-kb", "lint-pitfalls.mjs"), "//x\n", "utf8");
+    assert(detectHookProfile(invTmp, {}) === "mature", "0.7.53 detectHookProfile mature via lint");
+    const bf = buildHookBackfill(invTmp, {}, {});
+    assert(
+      bf.DB_MIGRATION_DIR === "sms-ai/src/main/resources/db/migration/",
+      "0.7.53 backfill inventory.sql_root → DB_MIGRATION_DIR"
+    );
+    assert(bf.HOOK_PROFILE === "mature", "0.7.53 backfill sets HOOK_PROFILE mature");
+    const phInv = buildHookPlaceholders({
+      params: { domains: ["db"] },
+      agentConfig: false,
+      existing: bf,
+      root: invTmp,
+    });
+    assert(
+      phInv.DB_MIGRATION_DIR === "sms-ai/src/main/resources/db/migration/",
+      "0.7.53 buildHookPlaceholders keeps inventory path"
+    );
+    assert(phInv.HOOK_PROFILE === "mature", "0.7.53 HOOK_PROFILE mature from backfill");
+  } finally {
+    fs.rmSync(invTmp, { recursive: true, force: true });
+  }
+
+  const afterTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/after-edit-reminder.js.tmpl"),
+    "utf8"
+  );
+  assert(/MIGRATION_SEG_RE|db\/migration\//.test(afterTmpl), "0.7.53 after-edit path-segment fallback");
+  const softTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(/HOOK_PROFILE/.test(softTmpl) && /lint-pitfalls/.test(softTmpl), "0.7.53 soft-gate mature autorun");
+  const stopTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/stop-delivery-checklist.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    /harness-stop-fingerprint/.test(stopTmpl) && /loop_count/.test(stopTmpl),
+    "0.7.53 stop-checklist fingerprint + loop_count"
+  );
+  const syncFr = fs.readFileSync(path.join(skillRoot, "scripts/lib/sync-freshness.mjs"), "utf8");
+  assert(!/0001_DDL_xxx/.test(syncFr), "0.7.53 sync-freshness no 0001_DDL fiction");
+  const upDiffSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/upgrade-diff.mjs"), "utf8");
+  assert(
+    /hooks_placeholder_delta/.test(upDiffSrc) && /capability_lost/.test(upDiffSrc),
+    "0.7.53 upgrade-diff hooks audit fields"
+  );
+  const lost = diffHookPlaceholders(
+    { MIGRATION_ENV_STATUS_CMD: "python x", HOOK_PROFILE: "mature" },
+    { MIGRATION_ENV_STATUS_CMD: "", HOOK_PROFILE: "thin" }
+  );
+  assert(
+    lost.capability_lost.includes("ledger_status_autorun") &&
+      lost.capability_lost.includes("lint_autorun"),
+    "0.7.53 diffHookPlaceholders capability_lost"
+  );
+
+  // dual-track smoke: render soft-gate with inventory path + name RE
+  const dualTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-053-dual-"));
+  try {
+    const hookBody = softTmpl
+      .replace(/\{\{DB_MIGRATION_DIR\}\}/g, "sms-ai/src/main/resources/db/migration/")
+      .replace(/\{\{MIGRATION_ENVS\}\}/g, "dev")
+      .replace(/\{\{MIGRATION_NAME_RE\}\}/g, JSON.stringify("^V[0-9]{15}_[01]__.+\\.sql$"))
+      .replace(/\{\{MIGRATION_ENV_STATUS_CMD\}\}/g, "")
+      .replace(/\{\{MIGRATION_NEW_SCRIPT\}\}/g, "python scripts/new_migration.py")
+      .replace(/\{\{MIGRATION_OLD_NAME_RE\}\}/g, JSON.stringify("^V\\d{4}_\\d__(DDL|DML)__.+\\.sql$"))
+      .replace(/\{\{HOOK_PROFILE\}\}/g, "mature")
+      .replace(/\{\{CONTRACT_CHECKS_JS\}\}/g, "[]")
+      .replace(/\{\{JOBS_YML_RE\}\}/g, JSON.stringify("ya?ml$"))
+      .replace(/\{\{CODE_PREFIXES\}\}/g, "src/")
+      .replace(/\{\{OPENAPI_BRIDGE_TIP\}\}/g, "");
+    const hookPath = path.join(dualTmp, "soft-gate.js");
+    fs.writeFileSync(hookPath, hookBody, "utf8");
+    const req = createRequire(import.meta.url);
+    const { isMigrationSql } = req(hookPath);
+    assert(
+      typeof isMigrationSql === "function" &&
+        isMigrationSql("sms-ai/src/main/resources/db/migration/V20251029120000_0__u__x.sql") === true,
+      "0.7.53 isMigrationSql hits inventory path"
+    );
+    assert(
+      isMigrationSql("other/src/main/resources/db/migration/V1__x.sql") === true,
+      "0.7.53 isMigrationSql path-segment fallback"
+    );
+  } finally {
+    fs.rmSync(dualTmp, { recursive: true, force: true });
+  }
+
+  assert(/0\.7\.53/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.53 upgrade.md");
+  assert(/0\.7\.53/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.53 VERIFY.md");
+  assert(logExists("0.7.53"), "0.7.53 _log note exists");
+}
+
+// --- 0.7.54: upgrade_fix_hooks=auto ---
+{
+  assert(normalizeUpgradeFixHooks(null) === "auto", "0.7.54 null → auto");
+  assert(normalizeUpgradeFixHooks(true) === "replace", "0.7.54 true → replace");
+  assert(normalizeUpgradeFixHooks(false) === "skip", "0.7.54 false → skip");
+  assert(normalizeUpgradeFixHooks("auto") === "auto", "0.7.54 auto stays");
+  const harnessSrc54 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(/upgrade_fix_hooks = "auto"/.test(harnessSrc54), "0.7.54 harness defaults auto");
+
+  const baseSoft = `#!/usr/bin/env node
+const MIGRATION_PREFIX = "db/migration/";
+const HOOK_PROFILE = "thin";
+function hello() { return 1; }
+module.exports = { hello };
+`;
+  const renderedSoft = `#!/usr/bin/env node
+const MIGRATION_PREFIX = "sms-ai/src/main/resources/db/migration/";
+const HOOK_PROFILE = "mature";
+function hello() { return 1; }
+module.exports = { hello };
+`;
+  assert(
+    !detectStructuralHookCustomization(baseSoft, renderedSoft),
+    "0.7.54 const-only diff is not structural"
+  );
+  const customSoft =
+    baseSoft + "\nfunction customThickLogic() { return 42; }\nmodule.exports.customThickLogic = customThickLogic;\n";
+  assert(
+    detectStructuralHookCustomization(customSoft, renderedSoft),
+    "0.7.54 extra function is structural"
+  );
+  assert(
+    decideFixHookAction({
+      mode: "auto",
+      targetRel: ".cursor/hooks/git-commit-soft-gate.js",
+      diskText: customSoft,
+      renderedText: renderedSoft,
+      exists: true,
+    }) === "skip",
+    "0.7.54 auto skips structural soft-gate"
+  );
+  assert(
+    decideFixHookAction({
+      mode: "replace",
+      targetRel: ".cursor/hooks/git-commit-soft-gate.js",
+      diskText: customSoft,
+      renderedText: renderedSoft,
+      exists: true,
+    }) === "replace",
+    "0.7.54 replace forces structural soft-gate"
+  );
+  assert(
+    decideFixHookAction({
+      mode: "auto",
+      targetRel: ".cursor/hooks/claude-adapter.js",
+      diskText: customSoft,
+      renderedText: renderedSoft,
+      exists: true,
+    }) === "replace",
+    "0.7.54 auto always replaces adapter"
+  );
+  assert(typeof stripHookConstSkeleton(baseSoft) === "string", "0.7.54 stripHookConstSkeleton");
+
+  // e2e: auto skip custom soft-gate on disk
+  const tmpAuto = fs.mkdtempSync(path.join(os.tmpdir(), "harness-054-auto-"));
+  try {
+    const hooksDir = path.join(tmpAuto, ".cursor", "hooks");
+    fs.mkdirSync(hooksDir, { recursive: true });
+    const softTmpl = fs.readFileSync(
+      path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+      "utf8"
+    );
+    // render-like baseline then append custom thick logic
+    const baseline = softTmpl
+      .replace(/\{\{DB_MIGRATION_DIR\}\}/g, "db/migration/")
+      .replace(/\{\{MIGRATION_ENVS\}\}/g, "dev")
+      .replace(/\{\{MIGRATION_NAME_RE\}\}/g, JSON.stringify("^V[0-9]+__[a-z0-9_]+\\.sql$"))
+      .replace(/\{\{MIGRATION_ENV_STATUS_CMD\}\}/g, "")
+      .replace(/\{\{MIGRATION_NEW_SCRIPT\}\}/g, "")
+      .replace(/\{\{MIGRATION_OLD_NAME_RE\}\}/g, "null")
+      .replace(/\{\{HOOK_PROFILE\}\}/g, "thin")
+      .replace(/\{\{CONTRACT_CHECKS_JS\}\}/g, "[]")
+      .replace(/\{\{JOBS_YML_RE\}\}/g, JSON.stringify("ya?ml$"))
+      .replace(/\{\{CODE_PREFIXES\}\}/g, "src/")
+      .replace(/\{\{OPENAPI_BRIDGE_TIP\}\}/g, "");
+    const customMarker = "function __harnessCustomThick(){return 99}";
+    fs.writeFileSync(
+      path.join(hooksDir, "git-commit-soft-gate.js"),
+      baseline + "\n" + customMarker + "\n",
+      "utf8"
+    );
+    const paramsPath = path.join(tmpAuto, "params.json");
+    fs.writeFileSync(
+      paramsPath,
+      JSON.stringify({
+        mode: "upgrade",
+        upgrade_fix_hooks: "auto",
+        ladder: "L4",
+        domains: ["api"],
+        ai_tools: ["cursor"],
+        hooks_family: ["commit-gate-extended"],
+        on_exists: "skip",
+        expandFromManifest: true,
+        placeholders: {
+          REPO_NAME: "up54",
+          REPO_DESC: "up54",
+          DATE: "2026-10-29",
+          LADDER_TARGET: "L4",
+          AGENTS_VARIANT: "solo",
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "upgrade",
+          CODE_PREFIXES: "src/",
+        },
+      }),
+      "utf8"
+    );
+    const r = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpAuto,
+      "--params",
+      paramsPath,
+    ]);
+    assert(r.status === 0, "0.7.54 auto upgrade render exits 0");
+    const after = fs.readFileSync(path.join(hooksDir, "git-commit-soft-gate.js"), "utf8");
+    assert(after.includes(customMarker), "0.7.54 auto preserved custom soft-gate");
+    assert(/custom-hooks|模板外定制/.test(r.stderr || r.stdout || ""), "0.7.54 stderr skip tip");
+    const side = path.join(tmpAuto, "docs", "harness-eng", "hooks-fix-skip.json");
+    assert(fs.existsSync(side), "0.7.54 hooks-fix-skip sidecar");
+    const sideJ = JSON.parse(fs.readFileSync(side, "utf8"));
+    assert(
+      (sideJ.hooks_skipped_custom || []).some((p) => /git-commit-soft-gate/.test(p)),
+      "0.7.54 sidecar lists soft-gate"
+    );
+
+    // force replace
+    fs.writeFileSync(
+      paramsPath,
+      JSON.stringify({
+        mode: "upgrade",
+        upgrade_fix_hooks: "replace",
+        ladder: "L4",
+        domains: ["api"],
+        ai_tools: ["cursor"],
+        hooks_family: ["commit-gate-extended"],
+        on_exists: "skip",
+        expandFromManifest: true,
+        placeholders: {
+          REPO_NAME: "up54",
+          REPO_DESC: "up54",
+          DATE: "2026-10-29",
+          LADDER_TARGET: "L4",
+          AGENTS_VARIANT: "solo",
+          GLOB_PROFILE: "wide",
+          LAST_MODE: "upgrade",
+          CODE_PREFIXES: "src/",
+        },
+      }),
+      "utf8"
+    );
+    const r2 = runNode([
+      path.join(skillRoot, "scripts/render.mjs"),
+      "--root",
+      tmpAuto,
+      "--params",
+      paramsPath,
+    ]);
+    assert(r2.status === 0, "0.7.54 replace upgrade render exits 0");
+    const after2 = fs.readFileSync(path.join(hooksDir, "git-commit-soft-gate.js"), "utf8");
+    assert(!after2.includes(customMarker), "0.7.54 replace overwrites custom soft-gate");
+  } finally {
+    fs.rmSync(tmpAuto, { recursive: true, force: true });
+  }
+
+  const upDiff54 = fs.readFileSync(path.join(skillRoot, "scripts/lib/upgrade-diff.mjs"), "utf8");
+  assert(
+    /hooks_fix_policy/.test(upDiff54) && /hooks_skipped_custom/.test(upDiff54),
+    "0.7.54 upgrade-diff audit fields"
+  );
+  assert(/0\.7\.54/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.54 upgrade.md");
+  assert(/0\.7\.54/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.54 VERIFY.md");
+  assert(logExists("0.7.54"), "0.7.54 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

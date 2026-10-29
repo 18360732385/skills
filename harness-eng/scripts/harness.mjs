@@ -274,12 +274,9 @@ function applyModeDefaults(params, mode, paramsPath) {
       next.on_exists = "skip";
     }
   }
-  // 0.7.28: upgrade 默认重渲行为修复类 hooks（可用 upgrade_fix_hooks:false 关闭）
-  if (
-    mode === "upgrade" &&
-    next.upgrade_fix_hooks == null
-  ) {
-    next.upgrade_fix_hooks = true;
+  // 0.7.54: upgrade 默认 auto（薄仓 replace；结构定制 skip；显式 true/false/replace/skip）
+  if (mode === "upgrade" && next.upgrade_fix_hooks == null) {
+    next.upgrade_fix_hooks = "auto";
   }
   // 0.7.32 ID-6: resume|upgrade always pin LAST_MODE (override land leftovers)
   const ph = { ...(next.placeholders || {}) };

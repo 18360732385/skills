@@ -36,6 +36,16 @@ import {
   resolveAgentConfig,
   resolveRulehook,
 } from "./lib/hooks-checks.mjs";
+import {
+  buildHookBackfill,
+  normalizeMigrationDir,
+} from "./lib/hook-backfill.mjs";
+import {
+  normalizeUpgradeFixHooks,
+  isUpgradeFixHookTarget,
+  shouldReplaceFixHook,
+  decideFixHookAction,
+} from "./lib/upgrade-fix-hooks.mjs";
 import { mavenCmdsForModule as mavenCmdsForModuleLib, listPomModules } from "./lib/maven-cmds.mjs";
 import {
   HARNESS_META_CANONICAL,
@@ -320,10 +330,11 @@ function buildSpringDbBlock(params) {
     (params && (params.db_migration_mode || params.DB_MIGRATION_MODE)) ||
     ph.DB_MIGRATION_MODE ||
     "manual_sql";
-  const migDir =
+  const migDir = normalizeMigrationDir(
     (params && (params.db_migration_dir || params.DB_MIGRATION_DIR)) ||
-    ph.DB_MIGRATION_DIR ||
-    "**/db/migration/";
+      ph.DB_MIGRATION_DIR ||
+      "db/migration/"
+  );
   return `### 各环境库名（骨架）
 
 | Profile | 配置文件 | MySQL 库名 |
@@ -437,13 +448,16 @@ function ensureStandardPlaceholders(params, placeholders, root) {
     "DB_MIGRATION_MODE",
     String(params.db_migration_mode || params.DB_MIGRATION_MODE || "manual_sql")
   );
-  // 0.7.27 HS-3: trailing slash so after-edit MIGRATION_RE matches (before buildHookPlaceholders put-skip)
-  set(
-    "DB_MIGRATION_DIR",
-    String(params.db_migration_dir || params.DB_MIGRATION_DIR || "**/db/migration/")
-      .replace(/\\/g, "/")
-      .replace(/\/?$/, "/")
-  );
+  // 0.7.53: do NOT invent DB_MIGRATION_DIR here — backfill (inventory/scrape) then
+  // buildHookPlaceholders owns defaults. Only normalize if params/placeholders already set.
+  if (params.db_migration_dir || params.DB_MIGRATION_DIR) {
+    set(
+      "DB_MIGRATION_DIR",
+      normalizeMigrationDir(params.db_migration_dir || params.DB_MIGRATION_DIR)
+    );
+  } else if (ph.DB_MIGRATION_DIR != null && String(ph.DB_MIGRATION_DIR).trim()) {
+    ph.DB_MIGRATION_DIR = normalizeMigrationDir(ph.DB_MIGRATION_DIR);
+  }
   set("BASE_PACKAGE", String(params.base_package || params.BASE_PACKAGE || ""));
   set("FRONTEND_DIR", String(params.frontend_dir || params.FRONTEND_DIR || "frontend"));
   set("GLOB_API", "**/controller/**,**/*Controller.java,docs/api/**");
@@ -879,32 +893,6 @@ function resolveMcpEngines(params) {
   );
 }
 
-/** 0.7.28: upgrade 自动 replace 的 hook 脚本（行为修复类）。 */
-const UPGRADE_FIX_HOOK_SCRIPTS = new Set([
-  "git-commit-soft-gate.js",
-  "after-edit-reminder.js",
-  "superpowers-commit-gate.js",
-  "mcp-mysql-guard.js",
-  "stop-delivery-checklist.js",
-  "codex-stop-checklist.js",
-  "codex-adapter.js",
-  "claude-adapter.js",
-  "codex-hook.cmd",
-]);
-
-function isUpgradeFixHookTarget(relNorm) {
-  const rel = String(relNorm || "").replace(/\\/g, "/");
-  const base = path.basename(rel);
-  if (!UPGRADE_FIX_HOOK_SCRIPTS.has(base)) return false;
-  return (
-    rel.startsWith("docs/agent-config/hooks/") ||
-    /^(\.cursor|\.claude|\.codex|\.qoder|\.trae|\.codebuddy|\.githooks)\/hooks\//.test(
-      rel
-    ) ||
-    rel.startsWith(".githooks/")
-  );
-}
-
 function expandFromManifest(manifestPath, params, root) {
   const text = fs.readFileSync(manifestPath, "utf8");
   const entries = parseManifestFiles(text);
@@ -969,12 +957,17 @@ function expandFromManifest(manifestPath, params, root) {
       const absSync = path.join(root, relNorm);
       return fs.existsSync(absSync) ? "replace" : "create";
     }
-    // 0.7.28 P1: upgrade 默认 replace 行为修复类 hook 脚本（可用 upgrade_fix_hooks:false 关闭）
-    const fixHooks =
-      (params.mode === "upgrade" || params.last_mode === "upgrade") &&
-      params.upgrade_fix_hooks !== false &&
-      params.upgrade_fix_hooks !== "false";
-    if (fixHooks && isUpgradeFixHookTarget(relNorm)) {
+    // 0.7.54: upgrade_fix_hooks = auto|replace|skip（结构定制在 applyOne 再闸）
+    const isUpgradeMode =
+      params.mode === "upgrade" || params.last_mode === "upgrade";
+    if (
+      isUpgradeMode &&
+      isUpgradeFixHookTarget(relNorm) &&
+      shouldReplaceFixHook({
+        mode: params.upgrade_fix_hooks,
+        targetRel: relNorm,
+      })
+    ) {
       const absHook = path.join(root, relNorm);
       return fs.existsSync(absHook) ? "replace" : "create";
     }
@@ -1581,17 +1574,51 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   if (action === "replace") {
     // 0.7.32 NEW-17: upgrade fix-hook replace → backup first + stderr tip
     // 0.7.35 HK-2: identical content → skip backup and write (no .bak churn)
-    const isFixHook =
+    // 0.7.54: auto 下结构定制 → skip（不写盘）
+    const isUpgradeMode =
       opts.params &&
-      (opts.params.mode === "upgrade" || opts.params.last_mode === "upgrade") &&
-      isUpgradeFixHookTarget(targetRel);
+      (opts.params.mode === "upgrade" || opts.params.last_mode === "upgrade");
+    const isFixHook = isUpgradeMode && isUpgradeFixHookTarget(targetRel);
+    let disk = "";
     if (exists) {
-      let disk = "";
       try {
         disk = fs.readFileSync(abs, "utf8");
       } catch {
         disk = "";
       }
+    }
+    if (isFixHook && exists) {
+      const fixMode = normalizeUpgradeFixHooks(opts.params?.upgrade_fix_hooks);
+      const decided = decideFixHookAction({
+        mode: fixMode,
+        targetRel,
+        diskText: disk,
+        renderedText: rendered,
+        exists: true,
+      });
+      if (decided === "skip") {
+        console.error(
+          `harness upgrade: skip ${targetRel}（检测到模板外定制；upgrade_fix_hooks:replace 可强制；旋钮请靠 params/inventory 回填）`
+        );
+        if (opts.params) {
+          if (!Array.isArray(opts.params._hooks_skipped_custom)) {
+            opts.params._hooks_skipped_custom = [];
+          }
+          const relNorm = String(targetRel).replace(/\\/g, "/");
+          if (!opts.params._hooks_skipped_custom.includes(relNorm)) {
+            opts.params._hooks_skipped_custom.push(relNorm);
+          }
+        }
+        log.push({
+          target: targetRel,
+          action: "skip",
+          status: "custom-hooks",
+          note: "structural customization; upgrade_fix_hooks:replace to force",
+        });
+        return;
+      }
+    }
+    if (exists) {
       if (
         disk &&
         normalizeRenderedForCompare(disk) === normalizeRenderedForCompare(rendered)
@@ -1610,7 +1637,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       try {
         fs.copyFileSync(abs, bak);
         console.error(
-          `harness upgrade: backed up ${targetRel} → ${path.basename(bak)}（按本次 params 重渲；过期 land 占位可能覆盖手工值；upgrade_fix_hooks:false 可关）`
+          `harness upgrade: backed up ${targetRel} → ${path.basename(bak)}（按本次 params 重渲；upgrade_fix_hooks=auto|replace|skip）`
         );
         log.push({
           target: targetRel,
@@ -1773,10 +1800,26 @@ function main() {
     placeholders.CODE_PREFIXES =
       params.code_prefixes || params.CODE_PREFIXES || "src/";
   }
-  Object.assign(
-    placeholders,
-    buildHookPlaceholders({ params, agentConfig, existing: placeholders, root })
-  );
+  // 0.7.53: thick-repo backfill (inventory / scripts / scraped hooks) before hook placeholders
+  Object.assign(placeholders, buildHookBackfill(root, params, placeholders));
+  if (placeholders.DB_MIGRATION_DIR != null) {
+    placeholders.DB_MIGRATION_DIR = normalizeMigrationDir(
+      placeholders.DB_MIGRATION_DIR
+    );
+  }
+  const hookPh = buildHookPlaceholders({
+    params,
+    agentConfig,
+    existing: placeholders,
+    root,
+  });
+  Object.assign(placeholders, hookPh);
+  // upgrade visibility: migration dir / name RE after resolve
+  if (params.mode === "upgrade" || params.last_mode === "upgrade") {
+    console.error(
+      `harness hooks: DB_MIGRATION_DIR=${placeholders.DB_MIGRATION_DIR} MIGRATION_NAME_RE=${placeholders.MIGRATION_NAME_RE} HOOK_PROFILE=${placeholders.HOOK_PROFILE}`
+    );
+  }
   const log = [];
 
   if (!fs.existsSync(root)) {
@@ -1852,6 +1895,34 @@ function main() {
   }
 
   const ok = unresolved.length === 0;
+  const hooksSkippedCustom = Array.isArray(params._hooks_skipped_custom)
+    ? params._hooks_skipped_custom
+    : [];
+  // 0.7.54: sidecar for parent harness / upgrade-diff (child process cannot mutate params file)
+  if (
+    !args.dryRun &&
+    (params.mode === "upgrade" || params.last_mode === "upgrade")
+  ) {
+    try {
+      const skipDir = path.join(root, "docs", "harness-eng");
+      fs.mkdirSync(skipDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(skipDir, "hooks-fix-skip.json"),
+        JSON.stringify(
+          {
+            skill_version: readSkillVersion(SKILL_ROOT),
+            upgrade_fix_hooks: normalizeUpgradeFixHooks(params.upgrade_fix_hooks),
+            hooks_skipped_custom: hooksSkippedCustom,
+          },
+          null,
+          2
+        ),
+        "utf8"
+      );
+    } catch {
+      /* ignore */
+    }
+  }
   console.log(
     JSON.stringify(
       {
@@ -1862,6 +1933,7 @@ function main() {
         expandedFromManifest,
         manifest: expandedFromManifest ? manifestPath : undefined,
         warnings: unresolved.length ? { unresolved } : undefined,
+        hooks_skipped_custom: hooksSkippedCustom,
         results: log,
       },
       null,

@@ -4,12 +4,19 @@
  * 观察向、fail-open：只写 stderr，绝不返回 followup_message / decision:block。
  * （Cursor 的 followup_message 与 Claude 族的 block 都会强制续聊，曾导致 Trae/WorkBuddy 接管会话并自行提交。）
  *
- * 渲染占位：DB_MIGRATION_DIR、MIGRATION_ENVS（空串=关闭）、CODE_PREFIXES。
+ * 渲染占位：DB_MIGRATION_DIR、MIGRATION_ENVS（空串=关闭）、CODE_PREFIXES、HOOK_PROFILE。
+ * 0.7.53 mature：status/loop_count 门闩 + .git 指纹去重（thin 关闭）。
  */
 const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 
 const MIGRATION_PREFIX = "{{DB_MIGRATION_DIR}}";
 const MIGRATION_ENVS = "{{MIGRATION_ENVS}}";
+const MIGRATION_SEG_RE = /(?:^|\/)db\/migration\/[^/]+\.sql$/i;
+const HOOK_PROFILE = "{{HOOK_PROFILE}}" === "mature" ? "mature" : "thin";
+const FINGERPRINT_FILE = ".git/harness-stop-fingerprint";
 
 const CODE_PREFIXES = "{{CODE_PREFIXES}}"
   .split(",")
@@ -54,9 +61,47 @@ function git(cmd, cwd) {
   });
 }
 
+function isMigrationPath(f) {
+  if (!f.endsWith(".sql")) return false;
+  if (MIGRATION_PREFIX && f.startsWith(MIGRATION_PREFIX)) return true;
+  return MIGRATION_SEG_RE.test(f);
+}
+
+function shouldSkipByPayload(payload) {
+  if (HOOK_PROFILE !== "mature") return false;
+  const status = payload && payload.status;
+  const loop = Number(payload && payload.loop_count);
+  if (status != null && status !== "completed") return true;
+  if (Number.isFinite(loop) && loop > 0) return true;
+  return false;
+}
+
+function fingerprintOf(files) {
+  return crypto.createHash("sha1").update(files.slice().sort().join("\n")).digest("hex");
+}
+
+function shouldSkipByFingerprint(root, fp) {
+  if (HOOK_PROFILE !== "mature") return false;
+  try {
+    const p = path.join(root, FINGERPRINT_FILE);
+    if (fs.existsSync(p) && fs.readFileSync(p, "utf8").trim() === fp) return true;
+    fs.writeFileSync(p, fp + "\n", "utf8");
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 (async () => {
   try {
-    await readStdin();
+    const raw = await readStdin();
+    let payload = {};
+    try {
+      payload = JSON.parse(raw || "{}");
+    } catch {
+      payload = {};
+    }
+    if (shouldSkipByPayload(payload)) allow();
 
     let root;
     try {
@@ -78,8 +123,11 @@ function git(cmd, cwd) {
       .filter(Boolean);
     if (files.length === 0) allow();
 
+    const fp = fingerprintOf(files);
+    if (shouldSkipByFingerprint(root, fp)) allow();
+
     const lines = [];
-    const migrations = files.filter((f) => f.startsWith(MIGRATION_PREFIX) && f.endsWith(".sql"));
+    const migrations = files.filter(isMigrationPath);
     if (MIGRATION_ENVS && migrations.length) {
       lines.push(
         `未提交的 migration：${migrations.join("、")} —— 交付前人工同步到 ${MIGRATION_ENVS}，勿只合代码`
@@ -103,8 +151,17 @@ function git(cmd, cwd) {
         ? CODE_PREFIXES
         : ["src/", "backend/", "frontend/", "apps/", "packages/"];
     const codeChanged = files.some((f) => prefixes.some((p) => f.startsWith(p)));
+    // 0.7.53: mature — only nudge pitfalls when code changed AND no open plan signal
     if (codeChanged) {
-      lines.push("业务代码有改动：按 rule 19 三问自检 pitfalls 回流；按 rule 11–16 核对契约同步");
+      if (HOOK_PROFILE === "mature") {
+        if (!plansUntracked.length) {
+          lines.push(
+            "业务代码有改动：按 rule 19 三问自检 pitfalls 回流；按 rule 11–16 核对契约同步"
+          );
+        }
+      } else {
+        lines.push("业务代码有改动：按 rule 19 三问自检 pitfalls 回流；按 rule 11–16 核对契约同步");
+      }
     }
 
     if (lines.length) {

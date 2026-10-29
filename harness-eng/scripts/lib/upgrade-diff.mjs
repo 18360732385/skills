@@ -16,6 +16,13 @@ import {
   runMigrateDocs,
   detectThickTruths,
 } from "./migrate-docs.mjs";
+import {
+  scrapeHookPlaceholders,
+  diffHookPlaceholders,
+  buildHookBackfill,
+  detectHookProfile,
+} from "./hook-backfill.mjs";
+import { normalizeUpgradeFixHooks } from "./upgrade-fix-hooks.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
@@ -174,6 +181,45 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
   const coverageMode = resolveCoverageMode(opts);
   const beforeReport = loadScoreLatest(absRoot);
   const before = collectScoreBlockers(beforeReport);
+  // 0.7.53: hooks placeholder audit (scrape before; after = scrape + would-be backfill)
+  const hooksBefore =
+    opts.hooksBefore && typeof opts.hooksBefore === "object"
+      ? opts.hooksBefore
+      : scrapeHookPlaceholders(absRoot);
+  const hooksAfterBase = scrapeHookPlaceholders(absRoot);
+  const hooksBackfill = buildHookBackfill(absRoot, opts.params || {}, hooksAfterBase);
+  const hooksAfter = { ...hooksAfterBase, ...hooksBackfill };
+  if (!hooksAfter.HOOK_PROFILE) {
+    hooksAfter.HOOK_PROFILE = detectHookProfile(absRoot, opts.params || {});
+  }
+  const hookDiff = diffHookPlaceholders(hooksBefore, hooksAfter);
+  let hooksSkippedCustom = Array.isArray(opts.hooksSkippedCustom)
+    ? [...opts.hooksSkippedCustom]
+    : Array.isArray(opts.params?._hooks_skipped_custom)
+      ? [...opts.params._hooks_skipped_custom]
+      : [];
+  let hooksFixPolicy = normalizeUpgradeFixHooks(
+    opts.params?.upgrade_fix_hooks ?? opts.upgrade_fix_hooks ?? "auto"
+  );
+  // 0.7.54: read sidecar written by render.mjs during upgrade
+  try {
+    const skipSidecar = path.join(absRoot, "docs", "harness-eng", "hooks-fix-skip.json");
+    if (fs.existsSync(skipSidecar)) {
+      const side = JSON.parse(fs.readFileSync(skipSidecar, "utf8"));
+      if (Array.isArray(side.hooks_skipped_custom) && side.hooks_skipped_custom.length) {
+        hooksSkippedCustom = [...new Set([...hooksSkippedCustom, ...side.hooks_skipped_custom])];
+      }
+      if (side.upgrade_fix_hooks != null) {
+        hooksFixPolicy = normalizeUpgradeFixHooks(side.upgrade_fix_hooks);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  const capabilityLost = [...hookDiff.capability_lost];
+  if (hooksSkippedCustom.length && !capabilityLost.includes("hooks_behavior_patch_skipped")) {
+    capabilityLost.push("hooks_behavior_patch_skipped");
+  }
   const payload = {
     ok: true,
     skill_version: readSkillVersion(SKILL_ROOT),
@@ -191,6 +237,10 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     thick_truths: thick,
     migrate_docs: { mode: migrateMode, applied: [], skipped: [], thick_truths: thick },
     migrate_coverage: { mode: coverageMode, ops: [], skipped: [], applied: [] },
+    hooks_placeholder_delta: hookDiff.hooks_placeholder_delta,
+    capability_lost: capabilityLost,
+    hooks_fix_policy: hooksFixPolicy,
+    hooks_skipped_custom: hooksSkippedCustom,
     note:
       migrateMode === "off"
         ? "升严不自动改用户文档（--no-migrate-docs）；对照 docs/harness-eng/upgrade-diff.json"
@@ -335,6 +385,20 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
         : "  残留文档迁移 TODO（migrate-docs 未消尽 / coverage 类）："
     );
     for (const t of payload.doc_todos) line.push(`    - ${t}`);
+  }
+  const deltaKeys = Object.keys(payload.hooks_placeholder_delta || {});
+  if (deltaKeys.length) {
+    line.push(`  hooks_placeholder_delta: ${deltaKeys.join(", ")}`);
+  }
+  if ((payload.capability_lost || []).length) {
+    line.push(`  capability_lost: ${payload.capability_lost.join(", ")}`);
+  }
+  if ((payload.hooks_skipped_custom || []).length) {
+    line.push(
+      `  hooks_fix_policy=${payload.hooks_fix_policy} skipped_custom=${payload.hooks_skipped_custom.join(", ")}`
+    );
+  } else {
+    line.push(`  hooks_fix_policy=${payload.hooks_fix_policy}`);
   }
   console.error(line.join("\n"));
   console.error(JSON.stringify(payload));

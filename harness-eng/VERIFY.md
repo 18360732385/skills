@@ -1,10 +1,35 @@
-# harness-eng 验收记录（0.7.52）
+﻿# harness-eng 验收记录（0.7.54）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.52**（全量修复列车；其下 0.7.51 迁移命名双轨 · 0.7.50 运行时 _log 零依赖 · 0.7.49 sms-ai 回流 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.7.54**（upgrade_fix_hooks=auto；其下 0.7.53 厚仓 hooks 加固 · 0.7.52 全量修复列车 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.7.54 增量验收（upgrade_fix_hooks=auto）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.54` | 有 |
+| upgrade 默认 `upgrade_fix_hooks=auto`；显式 `replace`/`skip`/`true`/`false` | 有 |
+| 结构定制 soft-gate → skip + sidecar；纯常量差 → replace；adapter 始终 replace | 有 |
+| upgrade-diff：`hooks_fix_policy` / `hooks_skipped_custom` / `hooks_behavior_patch_skipped` | 有 |
+| upgrade `## 0.7.53 → 0.7.54`；CHANGELOG 0.7.54；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
+
+## 0.7.53 增量验收（厚仓 hooks 加固）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.53` | 有 |
+| `normalizeMigrationDir` 拒绝 `**/…`；默认 `db/migration/`；inventory `sql_root` 回填 | 有 |
+| `hook-backfill.mjs`：脚本探测 + 旧 soft-gate 刮取；`hook_profile` mature/thin（≠ gate mature_compat） | 有 |
+| `buildContractChecksJs` 只用 `hook_code`，不并 GLOB | 有 |
+| soft-gate mature 真跑 lint/sync --check；stop 指纹 + loop_count | 有 |
+| `ensureDbMdMaintenance` manual_sql 无 `0001_DDL` 虚构样例 | 有 |
+| upgrade-diff 含 `hooks_placeholder_delta` / `capability_lost` | 有 |
+| upgrade `## 0.7.52 → 0.7.53`；CHANGELOG 0.7.53 索引行；仓库级版本要点档案 | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.52 增量验收（全量修复列车）
 

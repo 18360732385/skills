@@ -12,7 +12,7 @@
  * MIGRATION_ENVS（空串=关闭环境提醒，flyway 仓用）、MIGRATION_ENV_STATUS_CMD（空=禁用
  * dev 账本自动 status，失败/超时降级文字提醒）、MIGRATION_NEW_SCRIPT（空=禁用命名软提醒）、
  * MIGRATION_OLD_NAME_RE（null=单轨；双轨仓识别「新写了存量旧格式」给专属文案）、
- * JOBS_YML_RE、CODE_PREFIXES。
+ * JOBS_YML_RE、CODE_PREFIXES、HOOK_PROFILE（mature|thin；≠ gate_profile）。
  */
 const { execSync, execFileSync } = require("child_process");
 const fs = require("fs");
@@ -20,6 +20,8 @@ const path = require("path");
 
 const STDIN_TIMEOUT_MS = 2000;
 const MIGRATION_PREFIX = "{{DB_MIGRATION_DIR}}";
+/** 0.7.53: path-segment fallback when prefix misses multi-module layouts */
+const MIGRATION_SEG_RE = /(?:^|\/)db\/migration\/[^/]+\.sql$/i;
 /** 迁移须人工同步的环境清单；空串 = 关闭本提醒（如 flyway 自动迁移仓） */
 const MIGRATION_ENVS = "{{MIGRATION_ENVS}}";
 const MIGRATION_NAME_RE = new RegExp({{MIGRATION_NAME_RE}});
@@ -31,6 +33,8 @@ const MIGRATION_NEW_SCRIPT = "{{MIGRATION_NEW_SCRIPT}}";
 const MIGRATION_OLD_NAME_RE_SRC = {{MIGRATION_OLD_NAME_RE}};
 const MIGRATION_OLD_NAME_RE =
   MIGRATION_OLD_NAME_RE_SRC == null ? null : new RegExp(MIGRATION_OLD_NAME_RE_SRC);
+/** 0.7.53: mature = autorun lint/sync；thin = 文案提醒（≠ gate_profile mature_compat） */
+const HOOK_PROFILE = "{{HOOK_PROFILE}}" === "mature" ? "mature" : "thin";
 
 const CODE_PREFIXES = "{{CODE_PREFIXES}}"
   .split(",")
@@ -149,7 +153,9 @@ function ymlDiffTouchesJobs(root, file) {
 
 function isMigrationSql(f) {
   const p = normalizePath(f);
-  return p.startsWith(MIGRATION_PREFIX) && p.endsWith(".sql");
+  if (!p.endsWith(".sql")) return false;
+  if (MIGRATION_PREFIX && p.startsWith(MIGRATION_PREFIX)) return true;
+  return MIGRATION_SEG_RE.test(p);
 }
 
 /** 从 `git merge …` 命令解析合并源（最后一个非 option 参数）。 */
@@ -380,22 +386,39 @@ function collectSuperpowersReminders(root, staged) {
 }
 
 /**
- * agent-kb 回流软提醒：暂存含 pitfalls.md 时提醒跑 lint（脚本存在才提示）；
- * 暂存含业务代码但未含 pitfalls.md 时提醒按 rule 19 三问回流。
+ * agent-kb 回流：thin=文案；mature=真跑 lint-pitfalls（失败附输出，超时降级）。
  */
 function collectPitfallsReminders(root, staged) {
   if (!fs.existsSync(path.join(root, "docs", "agent-kb", "pitfalls.md"))) return [];
   const pitfallsTouched = staged.some(
     (f) => normalizePath(f) === "docs/agent-kb/pitfalls.md"
   );
-  const lintExists = fs.existsSync(
-    path.join(root, "scripts", "agent-kb", "lint-pitfalls.mjs")
-  );
+  const lintPath = path.join(root, "scripts", "agent-kb", "lint-pitfalls.mjs");
+  const lintExists = fs.existsSync(lintPath);
   const lines = [];
   if (pitfallsTouched && lintExists) {
-    lines.push(
-      "- agent-kb：pitfalls.md 已变更，请执行 node scripts/agent-kb/lint-pitfalls.mjs 校验"
-    );
+    if (HOOK_PROFILE === "mature") {
+      try {
+        execFileSync(process.execPath, [lintPath], {
+          cwd: root,
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "pipe"],
+          timeout: 15000,
+          windowsHide: true,
+        });
+        lines.push("- agent-kb：pitfalls.md 已变更；lint-pitfalls 已通过");
+      } catch (e) {
+        const out = String((e && (e.stderr || e.stdout)) || e.message || "").trim();
+        lines.push(
+          "- agent-kb：lint-pitfalls 未通过（fail-open）" +
+            (out ? `：\n${out.slice(0, 1200)}` : "；请本地执行 node scripts/agent-kb/lint-pitfalls.mjs")
+        );
+      }
+    } else {
+      lines.push(
+        "- agent-kb：pitfalls.md 已变更，请执行 node scripts/agent-kb/lint-pitfalls.mjs 校验"
+      );
+    }
   } else if (!pitfallsTouched && codeTouchedByPrefixes(staged)) {
     lines.push(
       "- agent-kb：若本轮修复/确认了智能体易再犯的错误做法，按 rule 19 回流 pitfalls.md（三问）；否则忽略"
@@ -429,7 +452,28 @@ function collectAgentConfigReminders(root, staged) {
   if (!fs.existsSync(path.join(root, "docs", "agent-config"))) return [];
   const ssotTouched = staged.some((f) => normalizePath(f).startsWith("docs/agent-config/"));
   const generatedTouched = staged.some(isGeneratedPath);
+  const syncPath = path.join(root, "scripts", "agent-config", "sync.mjs");
   if (ssotTouched && !generatedTouched) {
+    if (HOOK_PROFILE === "mature" && fs.existsSync(syncPath)) {
+      try {
+        execFileSync(process.execPath, [syncPath, "--check"], {
+          cwd: root,
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "pipe"],
+          timeout: 20000,
+          windowsHide: true,
+        });
+        return [
+          "- agent-config：SSOT 已变更；sync.mjs --check 已通过，请一并暂存 .cursor/ 等生成物",
+        ];
+      } catch (e) {
+        const out = String((e && (e.stderr || e.stdout)) || e.message || "").trim();
+        return [
+          "- agent-config：sync.mjs --check 未通过（fail-open）" +
+            (out ? `：\n${out.slice(0, 1200)}` : "；请执行 node scripts/agent-config/sync.mjs"),
+        ];
+      }
+    }
     return [
       "- agent-config：SSOT 已变更但生成物未暂存，请执行 node scripts/agent-config/sync.mjs 并一并暂存 .cursor/ 等生成物",
     ];
@@ -503,6 +547,7 @@ module.exports = {
   CONTRACT_CHECKS,
   JOBS_YML_RE,
   JOBS_DIFF_KEYWORD_RE,
+  HOOK_PROFILE,
 };
 
 if (require.main === module) {

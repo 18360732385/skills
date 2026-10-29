@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.52"
+version: "0.7.54"
 source_repo: ""
 description: "De-domainized Agent Harness templates for cross-repo landing. Write entry: scripts/harness.mjs; hot path: AGENT-INDEX.md."
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -62,6 +62,8 @@ placeholders:
   - MIGRATION_TZ
   - MYSQL_GUARD_SERVERS
   - MIGRATION_NAME_RE
+  - MIGRATION_HEADER_KEYS
+  - HOOK_PROFILE
   - JOBS_YML_RE
   - HOOKS_CURSOR_EVENTS
   - HOOKS_CLAUDE_GROUPS

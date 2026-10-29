@@ -24,6 +24,7 @@ import { parseDomainsYaml } from "./domains.mjs";
 import fs from "fs";
 import { mcpServerName } from "./mcp-server-name.mjs";
 import { readMysqlGuardServers, writeMysqlGuardServers } from "./inventory-meta.mjs";
+import { normalizeMigrationDir } from "./hook-backfill.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = path.resolve(__dirname, "../..");
@@ -338,23 +339,19 @@ export function globListToCodePreds(globCsv) {
   return out;
 }
 
-/** 从 domains.yaml 的 hook_* 段生成 CONTRACT_CHECKS；api 域并上 placeholders.GLOB_API。 */
+/**
+ * 从 domains.yaml 的 hook_code 段生成 CONTRACT_CHECKS。
+ * 0.7.53: 不再把 GLOB_*（rules 用宽 glob）并进 hook code pred——避免 src/ 过宽与 docs/**+docsGuard 死条件。
+ * placeholders 保留参数兼容，忽略 GLOB_*。
+ */
 export function buildContractChecksJs(domains, placeholders = {}) {
+  void placeholders;
   const registry = loadRegistry();
   const blocks = [];
-  const globByDomain = {
-    api: placeholders.GLOB_API || placeholders.glob_api,
-    func: placeholders.GLOB_FUNC || placeholders.glob_func,
-    db: placeholders.GLOB_DB || placeholders.glob_db,
-  };
   for (const d of domains || []) {
     const def = registry[d];
     if (!def || !def.hook_docs) continue;
     const codes = Array.isArray(def.hook_code) ? [...def.hook_code] : [];
-    const extra = globListToCodePreds(globByDomain[d]);
-    for (const e of extra) {
-      if (!codes.includes(e)) codes.push(e);
-    }
     if (!codes.length) continue;
     const tip = def.hook_tip || `同步 ${def.hook_docs}`;
     blocks.push(
@@ -465,23 +462,32 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     if (ph[k] == null) out[k] = v;
   };
 
-  put(
-    "CONTRACT_CHECKS_JS",
-    buildContractChecksJs(domains, {
-      ...(params && params.placeholders),
-      ...ph,
-    })
-  );
+  // 0.7.53: scraped CONTRACT_CHECKS_JS (thick overlay) wins over regenerated narrow hook_code
+  if (ph.CONTRACT_CHECKS_JS != null && String(ph.CONTRACT_CHECKS_JS).trim()) {
+    put("CONTRACT_CHECKS_JS", String(ph.CONTRACT_CHECKS_JS));
+  } else {
+    put(
+      "CONTRACT_CHECKS_JS",
+      buildContractChecksJs(domains, {
+        ...(params && params.placeholders),
+        ...ph,
+      })
+    );
+  }
   const registry = loadRegistry();
-  // 0.7.24 HS-3: always trailing slash so MIGRATION_RE matches path/V*.sql
-  // 0.7.27: force-normalize even when ensureStandardPlaceholders already set the key
+  // 0.7.24 HS-3: trailing slash; 0.7.53: never keep globs (*); params → ph (backfill/inventory) → registry
   const migDirRaw =
+    (params && (params.db_migration_dir || params.DB_MIGRATION_DIR)) ||
     (ph.DB_MIGRATION_DIR != null && String(ph.DB_MIGRATION_DIR)) ||
-    (params && params.db_migration_dir) ||
     (registry.db && registry.db.hook_migration_dir) ||
     "db/migration/";
-  const migDir = String(migDirRaw).replace(/\\/g, "/").replace(/\/?$/, "/");
-  out.DB_MIGRATION_DIR = migDir;
+  out.DB_MIGRATION_DIR = normalizeMigrationDir(migDirRaw, "db/migration/");
+  // 0.7.53 hook_profile (≠ gate_profile mature_compat); always emit on out
+  out.HOOK_PROFILE = String(
+    (params && (params.hook_profile || params.HOOK_PROFILE)) ||
+      ph.HOOK_PROFILE ||
+      "thin"
+  );
   // flyway 自动迁移仓关闭「人工同步环境」提醒：MIGRATION_ENVS 置空
   const migMode =
     (ph.DB_MIGRATION_MODE != null && String(ph.DB_MIGRATION_MODE)) ||

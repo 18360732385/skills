@@ -232,12 +232,13 @@ function buildMaintenanceBlock(mode) {
 `;
   }
   // manual_sql (default for thick non-Flyway repos)
+  // 0.7.53: never invent naming samples — thick repos vary; SSOT = AGENTS / rule 13
   return `${MAINT_HEAD}
 
 ### 迁移命名
 
 - 模式：\`manual_sql\`（无 Flyway 依赖；禁伪造 \`flyway_schema_history\`）
-- 常见命名：四位序号 + \`DDL\`/\`DML\`（如 \`0001_DDL_xxx.sql\` / \`0002_DML_xxx.sql\`）；以本仓 AGENTS / rule 13 为准
+- **命名以本仓 AGENTS / rule 13 为准**（双轨/自定义正则勿抄通用样例）；hooks 占位 \`MIGRATION_NAME_RE\` 与之一致
 - 只追加新脚本；**禁止**修改已发布 SQL
 
 ### 表文档演进

@@ -71,6 +71,24 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.53 → 0.7.54 迁移要点
+
+1. **meta**：`skill_version` → `0.7.54`
+2. **upgrade_fix_hooks 默认 `auto`**（不再硬默认 `true`）：剥常量后正文≠模板 → 该 hook **skip** 并 stderr；适配器/`codex-hook.cmd` 在 auto 下仍 replace；显式 `replace`|`true` 强制盖；`skip`|`false` 全关
+3. **审计**：`docs/harness-eng/hooks-fix-skip.json` sidecar；upgrade-diff 含 `hooks_fix_policy` / `hooks_skipped_custom` / `capability_lost: hooks_behavior_patch_skipped`
+4. **≠ hook_profile**：`mature` 仅影响 autorun/门闩；无结构差时 auto 仍可 replace 修行为
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.54`）后再 sync
+
+## 0.7.52 → 0.7.53 迁移要点
+
+1. **meta**：`skill_version` → `0.7.53`
+2. **P0 hooks**：禁止 `**/db/migration/` 写入 hook 常量（`startsWith` 非 glob）；`inventory.db.sql_root` / 旧 hook 刮取 / `apply_env_migrations.py`·`new_migration.py` 探测回填厚仓旋钮
+3. **hook_profile**：`mature`|`thin`（**≠** `gate_profile: mature_compat`）；探测到 lint-pitfalls / apply_env_migrations / `docs/agent-config` 默认 mature——soft-gate 真跑 lint/sync --check；stop 开指纹去重与 status/loop 门闩
+4. **CONTRACT_CHECKS**：不再把 `GLOB_*` 并进 code pred（rules 仍用宽 glob）
+5. **db.md**：维护约定禁止虚构 `0001_DDL_xxx`；以本仓 AGENTS / rule 13 为准
+6. **upgrade-diff**：增加 `hooks_placeholder_delta` / `capability_lost[]`
+7. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.53`）后再 sync；hooks replace 前占位须已回填
+
 ## 0.7.51 → 0.7.52 迁移要点
 
 1. **meta**：`skill_version` → `0.7.52`

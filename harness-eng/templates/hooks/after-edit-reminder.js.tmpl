@@ -8,11 +8,14 @@
  * 渲染占位：DB_MIGRATION_DIR、MIGRATION_NAME_RE、JOBS_YML_RE（与 domains.yaml hook 段一致）。
  */
 const MIGRATION_DIR = "{{DB_MIGRATION_DIR}}";
+/** 0.7.53: path-segment fallback when prefix is short or multi-module */
+const MIGRATION_SEG = "/db/migration/";
 function escapeRe(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 /** 0.7.32 LT-7: any *.sql under migration dir (incl. bad_name.sql); V* still get header checks */
 const MIGRATION_ANY_RE = new RegExp("^" + escapeRe(MIGRATION_DIR) + "([^/]+\\.sql)$", "i");
+const MIGRATION_SEG_RE = /(?:^|\/)db\/migration\/([^/]+\.sql)$/i;
 const MIGRATION_NAME_RE = new RegExp({{MIGRATION_NAME_RE}});
 const JOBS_YML_RE = new RegExp({{JOBS_YML_RE}});
 const JOBS_KEYWORD_RE =
@@ -54,10 +57,19 @@ function toRelative(filePath, roots) {
     const rr = String(r).replace(/\\/g, "/").replace(/\/+$/, "") + "/";
     if (p.startsWith(rr)) return p.slice(rr.length);
   }
-  // 多工作区 / 绝对路径兜底：取迁移目录锚点之后的相对段
+  // 多工作区 / 绝对路径兜底：精确前缀，再退到 /db/migration/ 路径段
   const idx = p.indexOf("/" + MIGRATION_DIR);
   if (idx >= 0) return p.slice(idx + 1);
+  const seg = p.indexOf(MIGRATION_SEG);
+  if (seg >= 0) return p.slice(seg + 1);
   return p;
+}
+
+function matchMigration(rel) {
+  const m = rel.match(MIGRATION_ANY_RE);
+  if (m) return m[1];
+  const s = rel.match(MIGRATION_SEG_RE);
+  return s ? s[1] : null;
 }
 
 function isDdl(l) {
@@ -77,9 +89,9 @@ function isDml(l) {
       .filter(Boolean)
       .join("\n");
 
-    const mig = rel.match(MIGRATION_ANY_RE);
-    if (mig) {
-      const fname = mig[1];
+    const migFname = matchMigration(rel);
+    if (migFname) {
+      const fname = migFname;
       const lines = [];
       if (!MIGRATION_NAME_RE.test(fname)) {
         lines.push(
