@@ -6,7 +6,7 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
 
-0.2.27 要点：selfcheck 主题拆分（harness/context/suite-*）；`_log` 早期 0.2 归档至 `_archive/0.2-early`；RETAINED=CHANGELOG 近期索引；`--verbose`/`--no-log`/`--strict-log`。历史版本见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/feature-eng/`](../_log/feature-eng/)。
+0.2.28 要点：selfcheck 主题拆分（harness/context/suite-*）；`_log` 早期 0.2 归档至 `_archive/0.2-early`；RETAINED=CHANGELOG 近期索引；`--verbose`/`--no-log`/`--strict-log`。历史版本见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/feature-eng/`](../_log/feature-eng/)。
 
 ## 可移植性
 

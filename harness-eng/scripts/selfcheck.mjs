@@ -62,11 +62,15 @@ import { parseDomainsYaml, resolveScoreDomains, expandDomainPackEntries, parseDo
 import {
   HARNESS_META_CANONICAL,
   MCP_USAGE_GUIDE_CANONICAL,
+  SUPERPOWERS_ARCHIVE_CANONICAL,
+  SUPERPOWERS_ARCHIVE_LEGACY,
   findHarnessMetaFile,
   harnessMetaExists,
   migrateHarnessMetaIfNeeded,
   findMcpUsageGuideFile,
   migrateMcpUsageGuideIfNeeded,
+  migrateSuperpowersArchiveIfNeeded,
+  looksLikeSuperpowersThemeTable,
 } from "./lib/harness-meta.mjs";
 import { scanSignals } from "./lib/detect-signals.mjs";
 import {
@@ -2235,9 +2239,10 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
     const oldReadme =
       "# docs/superpowers\n\n## 进行中主题\n\n| 日期 | 主题 | Spec | Plan | 提交 |\n|---|---|---|---|---|\n| 2026-01-01 | old-theme | a | b | pr:1 |\n";
     fs.writeFileSync(path.join(spDir, "README.md"), oldReadme, "utf8");
+    fs.mkdirSync(path.join(spDir, "archive"), { recursive: true });
     fs.writeFileSync(
-      path.join(spDir, "ARCHIVE.md"),
-      "# ARCHIVE\n\n## 已交付主题\n\n| 日期 | 主题 | Spec | Plan | 提交 |\n|---|---|---|---|---|\n| — | （尚无） | — | — | — |\n",
+      path.join(spDir, "archive", "ARCHIVE.md"),
+      "# ARCHIVE\n\n## 已交付\n\n| 日期 | 用户 | 主题 | Spec | Plan | Commit |\n|---|---|---|---|---|---|\n| — | — | （尚无） | — | — | — |\n",
       "utf8"
     );
     const pSp = path.join(tmpSp, "params.json");
@@ -5617,6 +5622,87 @@ module.exports = { hello };
   assert(/0\.7\.54/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.54 upgrade.md");
   assert(/0\.7\.54/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.54 VERIFY.md");
   assert(logExists("0.7.54"), "0.7.54 _log note exists");
+}
+
+// --- 0.7.55: sms-ai ARCHIVE path parity ---
+{
+  assert(
+    !fs.existsSync(path.join(skillRoot, "templates/docs/superpowers/ARCHIVE.md.tmpl")),
+    "0.7.55 no root ARCHIVE.md.tmpl"
+  );
+  const archTmpl = path.join(
+    skillRoot,
+    "templates/docs/superpowers/archive/ARCHIVE.md.tmpl"
+  );
+  assert(fs.existsSync(archTmpl), "0.7.55 archive/ARCHIVE.md.tmpl exists");
+  const archBody = fs.readFileSync(archTmpl, "utf8");
+  assert(
+    /\|\s*日期\s*\|\s*用户\s*\|\s*主题\s*\|\s*Spec\s*\|\s*Plan\s*\|\s*Commit\s*\|/.test(archBody),
+    "0.7.55 ARCHIVE tmpl has 用户+Commit columns"
+  );
+  const man55 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/manifest.yaml"),
+    "utf8"
+  );
+  assert(
+    /target:\s*docs\/superpowers\/archive\/ARCHIVE\.md/.test(man55),
+    "0.7.55 manifest sp-archive target under archive/"
+  );
+  const readme55 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/superpowers/README.md.tmpl"),
+    "utf8"
+  );
+  assert(
+    /archive\/ARCHIVE\.md/.test(readme55),
+    "0.7.55 README links archive/ARCHIVE.md"
+  );
+  const rule18 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/18-superpowers-corpus.mdc.tmpl"),
+    "utf8"
+  );
+  assert(
+    /archive\/ARCHIVE\.md/.test(rule18) && /勿再写根级/.test(rule18),
+    "0.7.55 rule 18 archive path + forbid root stub"
+  );
+  assert(
+    looksLikeSuperpowersThemeTable(
+      "| 日期 | 用户 | 主题 | Spec | Plan | Commit |"
+    ),
+    "0.7.55 theme-table recognizes 用户 column"
+  );
+  assert(
+    looksLikeSuperpowersThemeTable("| 日期 | 主题 | Spec | Plan | 提交 |"),
+    "0.7.55 theme-table still recognizes legacy header"
+  );
+  const tmpMig = fs.mkdtempSync(path.join(os.tmpdir(), "harness-sp-arch-"));
+  try {
+    const leg = path.join(tmpMig, "docs", "superpowers", "ARCHIVE.md");
+    fs.mkdirSync(path.dirname(leg), { recursive: true });
+    fs.writeFileSync(
+      leg,
+      "# legacy\n\n| 日期 | 主题 | Spec | Plan | 提交 |\n|---|---|---|---|---|\n| 2026-01-01 | t | a | b | pr:1 |\n",
+      "utf8"
+    );
+    const mig = migrateSuperpowersArchiveIfNeeded(tmpMig);
+    assert(mig.migrated === true, "0.7.55 migrate copies legacy ARCHIVE");
+    assert(
+      fs.existsSync(path.join(tmpMig, "docs", "superpowers", "archive", "ARCHIVE.md")),
+      "0.7.55 canonical ARCHIVE created"
+    );
+    assert(fs.existsSync(leg), "0.7.55 legacy ARCHIVE retained");
+    const mig2 = migrateSuperpowersArchiveIfNeeded(tmpMig);
+    assert(mig2.migrated === false, "0.7.55 second migrate is no-op");
+  } finally {
+    fs.rmSync(tmpMig, { recursive: true, force: true });
+  }
+  assert(/0\.7\.55/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.55 upgrade.md");
+  assert(/0\.7\.55/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.55 VERIFY.md");
+  assert(logExists("0.7.55"), "0.7.55 _log note exists");
+  assert(
+    SUPERPOWERS_ARCHIVE_CANONICAL === "docs/superpowers/archive/ARCHIVE.md" &&
+      SUPERPOWERS_ARCHIVE_LEGACY === "docs/superpowers/ARCHIVE.md",
+    "0.7.55 archive path constants"
+  );
 }
 
 console.log(`ok: ${ok.length}`);

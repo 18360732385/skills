@@ -71,6 +71,14 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.54 → 0.7.55 迁移要点
+
+1. **meta**：`skill_version` → `0.7.55`
+2. **ARCHIVE 权威路径**：`docs/superpowers/archive/ARCHIVE.md`（对齐 sms-ai 活跃/归档物理隔离）；land/upgrade 经 `migrateSuperpowersArchiveIfNeeded` 把遗留根级 `docs/superpowers/ARCHIVE.md` **复制**到新路径（不删旧文件）
+3. **索引列**：ARCHIVE 表头与 README/rule 18 统一为 `日期 | 用户 | 主题 | Spec | Plan | Commit`；勿再新建根级 stub ARCHIVE
+4. **双文件态**（根 stub + archive 真表，如 sms-ai）：以 `archive/ARCHIVE.md` 为准；根 stub 可人工删除或留作兼容
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.55`）后再 sync；rule 18 / 00 会随 replace/merge 更新路径话术
+
 ## 0.7.53 → 0.7.54 迁移要点
 
 1. **meta**：`skill_version` → `0.7.54`

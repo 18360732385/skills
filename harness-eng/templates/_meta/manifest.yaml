@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.54"
+version: "0.7.55"
 source_repo: ""
 description: "De-domainized Agent Harness templates for cross-repo landing. Write entry: scripts/harness.mjs; hot path: AGENT-INDEX.md."
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -254,8 +254,9 @@ files:
     target: docs/superpowers/README.md
   - id: sp-archive
     ladder: L3
-    template: docs/superpowers/ARCHIVE.md.tmpl
-    target: docs/superpowers/ARCHIVE.md
+    template: docs/superpowers/archive/ARCHIVE.md.tmpl
+    target: docs/superpowers/archive/ARCHIVE.md
+    note: 0.7.55 起权威路径在 archive/；遗留根级 ARCHIVE.md 由 migrateSuperpowersArchiveIfNeeded 迁入
   - id: sp-gitkeep-active-plans
     ladder: L3
     template: docs/superpowers/plans/.gitkeep

@@ -1,10 +1,21 @@
-﻿# harness-eng 验收记录（0.7.54）
+﻿# harness-eng 验收记录（0.7.55）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.54**（upgrade_fix_hooks=auto；其下 0.7.53 厚仓 hooks 加固 · 0.7.52 全量修复列车 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.7.55**（sms-ai ARCHIVE 路径对标；其下 0.7.54 upgrade_fix_hooks=auto · 0.7.53 厚仓 hooks 加固 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.7.55 增量验收（sms-ai ARCHIVE 对标）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.55` | 有 |
+| `sp-archive` target = `docs/superpowers/archive/ARCHIVE.md`；无根级 `ARCHIVE.md.tmpl` | 有 |
+| README / rule 18 / 00 链到 `archive/ARCHIVE.md`；表头含「用户」列 | 有 |
+| `migrateSuperpowersArchiveIfNeeded` + `looksLikeSuperpowersThemeTable`（认用户列） | 有 |
+| upgrade `## 0.7.54 → 0.7.55`；CHANGELOG 0.7.55；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.54 增量验收（upgrade_fix_hooks=auto）
 

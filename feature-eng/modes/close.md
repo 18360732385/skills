@@ -38,11 +38,13 @@
 2. **superpowers 收口（内建最小集）**  
    - Spec/Plan（若存在）文首徽章改「已交付」  
    - `git mv` 入 `docs/superpowers/archive/specs|plans/`（目录不存在则先建；**未跟踪**则用普通 `mv`）  
-   - 若有 `docs/superpowers/README.md` 进行中表：删本主题行 → 写入 `ARCHIVE.md`（日期倒序；「提交」列见下方钉死规则）  
+   - 若有 `docs/superpowers/README.md` 进行中表：删本主题行 → 写入 `docs/superpowers/archive/ARCHIVE.md`（日期倒序；「Commit」列见下方钉死规则；目录不存在则先建）  
+   - 若仅有遗留根级 `docs/superpowers/ARCHIVE.md`：优先迁到 `archive/ARCHIVE.md` 再写入（勿继续往根级追加新行）  
    - 若有变更记录文件：追加一行  
    - 无 README/ARCHIVE 约定：至少把 Spec/Plan 移入 archive，并向用户说明本仓索引约定缺失
 
-   **ARCHIVE「提交」列（钉死）**：
+   **ARCHIVE「Commit」列（钉死；表头勿用「MR/PR」）**：
+   - 表列：`日期 | 用户 | 主题 | Spec | Plan | Commit`（「用户」= 代表性实现 commit 作者，无则文档创建者）
    - **合并前**：填 PR/MR URL（或 `pr:<n>`）
    - **合并后**：回填 **merge commit SHA**（完整 40hex 或仓内可辨短 SHA）
    - **禁止**仅写 squash 前分支 tip SHA 当最终追溯
@@ -90,7 +92,7 @@
 - [ ] Spec/Plan（若存在）文首徽章改「已交付」
 - [ ] Spec → `docs/superpowers/archive/specs/`；Plan → `docs/superpowers/archive/plans/`（目录不存在则先建；未跟踪用 `mv`）
 - [ ] 若有 `docs/superpowers/README.md` 进行中表：已删本主题行
-- [ ] 若有 `docs/superpowers/ARCHIVE.md`：已按日期倒序追加；「提交」列=合并前 PR/MR URL 或 `pr:<n>`，合并后 merge SHA（禁止仅 squash 前分支 tip）
+- [ ] 若有 `docs/superpowers/archive/ARCHIVE.md`（或遗留根级 `ARCHIVE.md`）：已按日期倒序追加；「Commit」列=合并前 PR/MR URL 或 `pr:<n>`，合并后 merge SHA（禁止仅 squash 前分支 tip）；新行写入 `archive/ARCHIVE.md`
 - [ ] `progress.artifacts.spec|plan` 指针已改为 archive 路径（若原先指向非 archive）
 
 ### 根 README 双端启动 SSOT（M4，layout=monorepo 时必勾）

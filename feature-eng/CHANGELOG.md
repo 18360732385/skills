@@ -4,6 +4,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.2.28](../_log/feature-eng/0.2/0.2.28.md) | 2026-10-29 | close ARCHIVE 权威路径对齐 archive/ARCHIVE.md（harness 0.7.55 / sms-ai） |
 | [0.2.27](../_log/feature-eng/0.2/0.2.27.md) | 2026-10-29 | selfcheck 主题拆分 · `_log` 0.2-early 归档 · RETAINED=近期索引 |
 | [0.2.26](../_log/feature-eng/0.2/0.2.26.md) | 2026-10-29 | 批修复：死链清零 · 枚举单源 · 中途环 L2 机检 · needs-close · 门禁清单模板 · reviewer 字段 |
 | [0.2.25](../_log/feature-eng/0.2/0.2.25.md) | 2026-10-15 | P2：review_effective · close pr_branch · pitfalls 归仓 · express 同戳 |

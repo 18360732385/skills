@@ -106,3 +106,44 @@ export function migrateMcpUsageGuideIfNeeded(root) {
   fs.copyFileSync(found.abs, dest.abs);
   return { migrated: true, from: found.rel, to: dest.rel };
 }
+
+/** 0.7.55：已交付索引权威路径（对齐 sms-ai 物理隔离）。 */
+export const SUPERPOWERS_ARCHIVE_CANONICAL = "docs/superpowers/archive/ARCHIVE.md";
+export const SUPERPOWERS_ARCHIVE_LEGACY = "docs/superpowers/ARCHIVE.md";
+
+export function canonicalSuperpowersArchivePath(root) {
+  return {
+    rel: SUPERPOWERS_ARCHIVE_CANONICAL,
+    abs: toAbs(root, SUPERPOWERS_ARCHIVE_CANONICAL),
+  };
+}
+
+/**
+ * 仅有根级遗留 ARCHIVE、无 archive/ARCHIVE.md 时复制到规范路径；不删除旧文件。
+ * 若规范路径已存在（含 sms-ai 双文件态），不覆盖。
+ * @returns {{ migrated: boolean, from: string|null, to: string }}
+ */
+export function migrateSuperpowersArchiveIfNeeded(root) {
+  const dest = canonicalSuperpowersArchivePath(root);
+  if (fs.existsSync(dest.abs)) {
+    return { migrated: false, from: null, to: dest.rel };
+  }
+  const legacyAbs = toAbs(root, SUPERPOWERS_ARCHIVE_LEGACY);
+  if (!fs.existsSync(legacyAbs) || !fs.statSync(legacyAbs).isFile()) {
+    return { migrated: false, from: null, to: dest.rel };
+  }
+  fs.mkdirSync(path.dirname(dest.abs), { recursive: true });
+  fs.copyFileSync(legacyAbs, dest.abs);
+  return { migrated: true, from: SUPERPOWERS_ARCHIVE_LEGACY, to: dest.rel };
+}
+
+/**
+ * 是否像「主题索引表」表头（兼容有/无「用户」列；0.7.49+ 含用户）。
+ */
+export function looksLikeSuperpowersThemeTable(body) {
+  const text = String(body || "");
+  return (
+    /\|\s*日期\s*\|(?:\s*用户\s*\|)?\s*主题\s*\|/.test(text) ||
+    /\|\s*日期\s*\|\s*主题\s*\|\s*Spec\s*\|/.test(text)
+  );
+}

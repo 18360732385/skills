@@ -1,6 +1,6 @@
 # feature-eng 版本清单（权威号）
 
-version: "0.2.27"
+version: "0.2.28"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 eng_land: false

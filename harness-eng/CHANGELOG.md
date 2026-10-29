@@ -1,11 +1,12 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.54**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.7.55**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.7.55 | 2026-10-29 | sms-ai 对标：ARCHIVE 权威路径迁入 archive/ · 用户列对齐 · 禁根级 stub · migrateSuperpowersArchiveIfNeeded · theme-table 认用户列 |
 | 0.7.54 | 2026-10-29 | upgrade_fix_hooks 默认 auto：结构定制 skip · 适配器仍 replace · 显式 replace/skip · hooks-fix-skip sidecar · upgrade-diff 审计 |
 | 0.7.53 | 2026-10-29 | 厚仓 hooks 加固：禁 **/ migration glob · inventory/脚本/旧 hook 回填 · hook_profile mature/thin · CONTRACT_CHECKS 窄口径 · db.md 禁虚构命名 · upgrade-diff hooks 审计 |
 | 0.7.52 | 2026-10-29 | 全量修复列车：isCliMain/replacer/rule-17 互斥/mature_compat · 文档冲突收口 · 脚本卫生 · RENDER-REGISTRIES · 随后移除 evals 评测树 |

@@ -10,7 +10,7 @@ alwaysApply: false
 
 **收口时机（钉死）**：**交付（合并）前 / 宣称主题主功能交付 / 主题收口**必须按 [`docs/agent-kb/delivery-checklist.md`](docs/agent-kb/delivery-checklist.md) 收口——**不是**每次 `git commit` 前。进行中主题允许中途 commit。
 
-**提交门禁（跨路径）**：用户要求 `git commit` 时，先判断是否「宣称交付」再执行下方门禁。**进行中**主题不因触碰本目录而假收口。
+**提交门禁（跨路径）**：用户要求 `git commit` 时，先判断是否「宣称交付」再执行下方门禁。**进行中**主题不因触碰本目录而假收口。根因：本 rule 默认仅 path-scoped，纯写代码时不会自动注入。
 
 ## 目录约定
 
@@ -19,7 +19,7 @@ alwaysApply: false
 | `plans/`、`specs/` | **仅进行中** |
 | `archive/plans/`、`archive/specs/` | 已交付 / 废弃（默认只读） |
 | `README.md` | 活跃主题索引 |
-| `ARCHIVE.md` | 已交付 / 废弃主题索引 |
+| `archive/ARCHIVE.md` | 已交付 / 废弃主题索引（**权威路径**；勿再写根级 `docs/superpowers/ARCHIVE.md`） |
 
 ## 新建 spec / plan
 
@@ -29,22 +29,28 @@ alwaysApply: false
 
 ## 索引表列
 
-主题表：`日期 | 用户 | 主题 | Spec | Plan | Commit`（**日期倒序**，新主题插表顶）。
+主题表（`README.md` 进行中 / `archive/ARCHIVE.md` 已交付）：`日期 | 用户 | 主题 | Spec | Plan | Commit`（**日期倒序**，新主题插表顶）。
 
-- **日期** = 文档文件名中的 `YYYY-MM-DD`（优先 Spec，否则 Plan）
-- **用户** = 代表性实现 commit 的作者（`git show -s --format="%an" <sha>`）；无 commit 时填文档创建者（`git log --diff-filter=A -- <file>`）
-- **Commit** = **代表性实现 commit**（非 MR；squash 合并下 MR 链接不反映代码真实位置）；确无实现 commit 时可回退 MR/PR URL 或 `pr:<n>`；禁止仅写 squash 前分支 tip；不是「每个 commit」
+| 列 | 约定 |
+|---|---|
+| 日期 | 文档文件名中的 `YYYY-MM-DD`（优先 Spec，否则 Plan） |
+| 用户 | 代表性实现 commit 的作者（`git show -s --format="%an" <sha>`）；无 commit 时填文档创建者（`git log --diff-filter=A -- <file>`） |
+| 主题 | 人类可读短标题 |
+| Spec / Plan | Markdown 链接；**链接文案 = 文件名**（含扩展名）；无文件填 `—` |
+| Commit | **代表性实现 commit**（非 MR 列名；squash 下 MR 链接不反映代码真实位置）；交付收口：合并前可暂填 PR/MR URL 或 `pr:<n>`，合并后回填 merge SHA；禁止仅写 squash 前分支 tip；不是「每个 commit」 |
+
+**变更记录（索引级）**（README / ARCHIVE）：`日期 | 事项及说明 | 状态`（亦按日期倒序追加）。
 
 ## 动手前
 
 1. 先读 `docs/superpowers/README.md`「进行中」表
-2. 勿按「已交付」checkbox 改生产代码；勿遍历 `archive/` 当任务清单
+2. 勿按「已交付」checkbox 改生产代码；勿遍历 `archive/` 或按 `archive/ARCHIVE.md` 当任务清单
 
 ## AI 提交门禁（强制）
 
 1. Read 进行中表；若存在 `docs/runs/active/<slug>/`，可读该主题 `progress.yaml` 的 `stage`
 2. **进行中**（有 `docs/runs/active/<slug>/` 且 `stage ≠ done`，且用户未要求交付 / close）：**允许**按用户授权中途 commit；**禁止**因本 rule 强制 Spec/Plan archive 或改徽章为「已交付」
-3. **宣称交付**（用户要求交付 / 完成主题主功能 / 主题收口）：执行 [`delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)（含 superpowers + runs 双归档）；正文不在本 rule 复述
+3. **宣称交付**（用户要求交付 / 完成主题主功能 / 主题收口）：执行 [`delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)（含 superpowers + runs 双归档；写入 `archive/ARCHIVE.md`）；正文不在本 rule 复述
 4. 纯 fix/chore、无进行中主题：可不改索引
 
 ## 禁止
@@ -54,3 +60,6 @@ alwaysApply: false
 - 把规划语料当成契约真相
 - 未授权按已交付 plan 改生产代码
 - 把「每次 commit 前须收口」当成本 rule 要求
+- 主题表使用「MR/PR」列名，或只写 squash 前分支 tip 当最终追溯
+- 在活跃 `plans/`、`specs/` 长期堆放已交付文件（应交收进 `archive/`）
+- 新建根级 `docs/superpowers/ARCHIVE.md`（权威索引在 `archive/ARCHIVE.md`）

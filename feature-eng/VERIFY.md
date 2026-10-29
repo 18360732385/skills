@@ -1,30 +1,28 @@
-﻿# feature-eng 验收记录（0.2.27）
+﻿# feature-eng 验收记录（0.2.28）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测（含 fixtures / behavioral checks）。真实 init/start/advance/close 仍须在目标仓由 Agent 执行并遵守硬闸。
 
 ## 版本
 
-当前 **0.2.27**（selfcheck 拆分 · `_log` 归档；其上见 [CHANGELOG.md](CHANGELOG.md)）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更明细 [`../_log/feature-eng/`](../_log/feature-eng/)。
+当前 **0.2.28**（ARCHIVE 路径对齐 archive/；其上 0.2.27 selfcheck 拆分 · `_log` 归档；见 [CHANGELOG.md](CHANGELOG.md)）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更明细 [`../_log/feature-eng/`](../_log/feature-eng/)。
 
 本版**不**改动默认绑定 skill 名；`eng_land` 仍为 false；`feature.mjs` 不写盘；yaml `defaults.close_pitfalls` 字面仍为 `optional`。P1/P2 能力（[QUICKSTART.md](QUICKSTART.md) · `truncate-contracts` · `status-scan` · `close_pitfalls`）与 0.2.26 机检仍有效。
 
 **钉号纪律**：文首与 manifest 为现行权威钉；「继承 · as-of」不得把旧钉写成现行。发版用 `sync-skill-version.mjs` 同步文档钉头。
 
-## 0.2.27 增量验收
+## 0.2.28 增量验收
 
 | 检查 | 结果 |
 |---|---|
 | `node scripts/selfcheck.mjs` exit 0 | 烟测 |
-| `node scripts/selfcheck.mjs --no-log` exit 0 | 烟测 |
-| `_meta/manifest.yaml` 为权威 `0.2.27`；入口文档钉头一致 | 有 |
-| `scripts/selfcheck/{harness,context,suite-*}.mjs` 主题拆分有 | 有 |
-| `_log/feature-eng/0.2/` 仅近期热履历；早期在 `_archive/0.2-early/` | 有 |
-| CHANGELOG 近期索引含 0.2.27；「更早」指向 `_archive` | 有 |
+| `_meta/manifest.yaml` 为权威 `0.2.28`；入口文档钉头一致 | 有 |
+| close / close-check 优先 `docs/superpowers/archive/ARCHIVE.md`；fixture 在 archive/ | 有 |
+| CHANGELOG 近期索引含 0.2.28 | 有 |
 | `node scripts/sync-skill-version.mjs --check` exit 0 | 有 |
 
-## 继承 · as-of 0.2.26 / 更早
+## 继承 · as-of 0.2.27 / 更早
 
-见 [CHANGELOG.md](CHANGELOG.md) 索引与 [`../_log/feature-eng/`](../_log/feature-eng/)（含 `_archive`）；0.2.26 批修复与更早能力仍有效。现行权威钉：**0.2.27**。
+见 [CHANGELOG.md](CHANGELOG.md) 索引与 [`../_log/feature-eng/`](../_log/feature-eng/)（含 `_archive`）；0.2.27 selfcheck 拆分与更早能力仍有效。现行权威钉：**0.2.28**。
 
 ## Node×jsdom 已知坏组合（O11）
 

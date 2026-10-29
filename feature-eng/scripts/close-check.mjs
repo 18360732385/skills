@@ -221,32 +221,35 @@ if (!issues.some((i) => String(i).startsWith("dead active path"))) {
   ok.push("no active/<slug> dead links in archive/artifacts");
 }
 
-// E13: ARCHIVE「提交」列（有本主题行时）；不合规则 WARNING，不阻断独立仓
-const archiveMd = read("docs/superpowers/ARCHIVE.md");
+// E13: ARCHIVE「Commit」列（有本主题行时）；不合规则 WARNING，不阻断独立仓
+// 0.2.28 / harness 0.7.55：权威路径 archive/ARCHIVE.md；遗留根级仅兼容读
+const archiveMd =
+  read("docs/superpowers/archive/ARCHIVE.md") ||
+  read("docs/superpowers/ARCHIVE.md");
 if (archiveMd) {
   const rows = archiveMd.split(/\r?\n/).filter((l) => /^\|/.test(l) && l.includes(slug));
   if (rows.length) {
     for (const row of rows) {
-      // table: | 日期 | 主题 | Spec | Plan | 提交 |
+      // table: | 日期 | [用户] | 主题 | Spec | Plan | Commit |
       const parts = row.split("|").map((c) => c.trim()).filter((c) => c !== "");
       if (parts.length < 5) continue;
       const commitCell = parts[parts.length - 1];
       const check = looksLikeCommitCol(commitCell);
       if (check.ok) {
-        ok.push("ARCHIVE 提交 column ok");
+        ok.push("ARCHIVE Commit column ok");
       } else if (check.empty) {
-        warnings.push(`ARCHIVE 提交 column empty for slug=${slug}`);
+        warnings.push(`ARCHIVE Commit column empty for slug=${slug}`);
       } else {
         warnings.push(
-          `ARCHIVE 提交 column not PR/SHA (branch tip?): ${commitCell}`
+          `ARCHIVE Commit column not PR/SHA (branch tip?): ${commitCell}`
         );
       }
     }
   } else {
-    ok.push("ARCHIVE present but no slug row (skip 提交 check)");
+    ok.push("ARCHIVE present but no slug row (skip Commit check)");
   }
 } else {
-  ok.push("no ARCHIVE.md (skip 提交 check)");
+  ok.push("no ARCHIVE.md (skip Commit check)");
 }
 
 if (issues.length) {

@@ -340,10 +340,12 @@ assert(
   try {
     const slugW = CLOSE_SLUG;
     fs.cpSync(path.join(skillRoot, FIX_CLOSE), warnDir, { recursive: true });
-    fs.mkdirSync(path.join(warnDir, "docs", "superpowers"), { recursive: true });
+    fs.mkdirSync(path.join(warnDir, "docs", "superpowers", "archive"), {
+      recursive: true,
+    });
     fs.writeFileSync(
-      path.join(warnDir, "docs", "superpowers", "ARCHIVE.md"),
-      `# ARCHIVE\n\n## 已交付主题\n\n| 日期 | 主题 | Spec | Plan | 提交 |\n|---|---|---|---|---|\n| 2026-09-19 | ${slugW} | a | b | feature/branch-tip-only |\n`,
+      path.join(warnDir, "docs", "superpowers", "archive", "ARCHIVE.md"),
+      `# ARCHIVE\n\n## 已交付\n\n| 日期 | 用户 | 主题 | Spec | Plan | Commit |\n|---|---|---|---|---|---|\n| 2026-09-19 | fixture | ${slugW} | a | b | feature/branch-tip-only |\n`,
       "utf8"
     );
     const warnRun = spawnSync(
@@ -353,8 +355,10 @@ assert(
     );
     assert(warnRun.status === 0, "E13 branch-tip ARCHIVE warn does not FAIL");
     assert(
-      /WARNING|branch tip|提交 column/.test(`${warnRun.stdout || ""}${warnRun.stderr || ""}`),
-      "E13 close-check WARNING for non-PR/SHA 提交"
+      /WARNING|branch tip|Commit column|提交 column/.test(
+        `${warnRun.stdout || ""}${warnRun.stderr || ""}`
+      ),
+      "E13 close-check WARNING for non-PR/SHA Commit"
     );
   } finally {
     fs.rmSync(warnDir, { recursive: true, force: true });

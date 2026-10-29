@@ -50,9 +50,12 @@ import { mavenCmdsForModule as mavenCmdsForModuleLib, listPomModules } from "./l
 import {
   HARNESS_META_CANONICAL,
   MCP_USAGE_GUIDE_CANONICAL,
+  SUPERPOWERS_ARCHIVE_LEGACY,
   findHarnessMetaFile,
+  looksLikeSuperpowersThemeTable,
   migrateHarnessMetaIfNeeded,
   migrateMcpUsageGuideIfNeeded,
+  migrateSuperpowersArchiveIfNeeded,
 } from "./lib/harness-meta.mjs";
 import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
 import { readSkillVersion } from "./lib/skill-version.mjs";
@@ -997,17 +1000,24 @@ function expandFromManifest(manifestPath, params, root) {
     }
     // E8: 既有 superpowers 索引或 runs 过程态 → 不 H2 merge 双表
     if (entryId === "sp-readme" || entryId === "sp-archive") {
-      const absSp = path.join(root, targetRel);
-      if (fs.existsSync(absSp)) {
-        const hasRuns =
-          fs.existsSync(path.join(root, "docs", "runs")) ||
-          fs.existsSync(path.join(root, "docs", "runs", "active"));
+      if (entryId === "sp-archive") {
+        migrateSuperpowersArchiveIfNeeded(root);
+      }
+      const candidates =
+        entryId === "sp-archive"
+          ? [targetRel, SUPERPOWERS_ARCHIVE_LEGACY]
+          : [targetRel];
+      const hasRuns =
+        fs.existsSync(path.join(root, "docs", "runs")) ||
+        fs.existsSync(path.join(root, "docs", "runs", "active"));
+      for (const cand of candidates) {
+        const absSp = path.join(root, cand);
+        if (!fs.existsSync(absSp)) continue;
         let hasThemeTable = false;
         try {
-          const body = fs.readFileSync(absSp, "utf8");
-          hasThemeTable =
-            /\|\s*日期\s*\|\s*主题\s*\|/.test(body) ||
-            /\|\s*日期\s*\|\s*主题\s*\|\s*Spec\s*\|/.test(body);
+          hasThemeTable = looksLikeSuperpowersThemeTable(
+            fs.readFileSync(absSp, "utf8")
+          );
         } catch {
           /* ignore */
         }
