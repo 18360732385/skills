@@ -98,10 +98,11 @@ export function replaceCreateTableBlock(md, ddl) {
   let out = md;
   // Prefer: keep ## 建表语句 … prose, swap only ```sql…```
   if (/##\s*建表语句[\s\S]*?```sql[\s\S]*?```/i.test(out)) {
-    out = out.replace(/(##\s*建表语句[\s\S]*?)```sql[\s\S]*?```/i, `$1${fence}`);
+    // Replacer fn: DDL may contain `$` (DEFAULT/COMMENT) — avoid `$&`/`$$` expansion
+    out = out.replace(/(##\s*建表语句[\s\S]*?)```sql[\s\S]*?```/i, (_m, g1) => `${g1}${fence}`);
   } else {
     // No section — append
-    out = out.replace(/\s*$/, `\n\n## 建表语句\n\n${fence}\n`);
+    out = out.replace(/\s*$/, () => `\n\n## 建表语句\n\n${fence}\n`);
   }
   out = out.replace(
     /(与\s*Flyway[^\n]*一致)/gi,

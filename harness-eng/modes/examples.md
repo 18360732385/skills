@@ -31,7 +31,7 @@
 
 ---
 
-## 3. 对本仓（c-be-sms-ai）audit
+## 3. 对本仓 audit
 
 **输入：**「用 harness-eng 审计本仓成熟度」
 

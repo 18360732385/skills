@@ -112,7 +112,7 @@
 | **会话自证** | 当前宿主自证 MCP（强）/ hooks（强）/ rules（弱·中）/ githooks（中）/ **human_gates**（gate→unproven+reason_code）/ Codex skills·Starlark；`behavior_pass_claim` 仅 MCP+hooks；playbook+matrix 多宿主；`content-shell-scan` 管分册空壳 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
 | **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
-| **会话仪表盘** | 本轮里程碑时附四台摘要；SHOW/HIDE SSOT：[session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs` |
+| **会话仪表盘** | 本轮里程碑时附四句块（阶段/现状/工作/下一步建议）；SHOW/HIDE SSOT：[session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs`；宿主面细节进 HTML 宿主台，不进会话脚注 |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |
 | **score-history** | `docs/harness-eng/score-history.jsonl`：历次 overall/coverage/ready 追加日志 |
 | **progress.yaml** | `docs/harness-eng/progress.yaml`：填充进度状态（`--write-progress`） |
@@ -120,7 +120,7 @@
 | **报告字段** | `gap_to_ready` / `domain_stories` / `diff` / `suggest_upgrade` 等 → [fill-score.md](fill/fill-score.md)「报告字段速查」 |
 | **安全预填** | `Q_SEED`：用无密可推断信息填 Commands/技术栈；不确定仍 TODO |
 | **确认闸门** | 写盘前必须用户明确确认；词表 SSOT：[write-plan.md](modes/write-plan.md) |
-| **预授权** | 首轮确认后，同会话后续 fill/resume 可自动写盘；词表与细则：[write-plan.md](modes/write-plan.md) |
+| **预授权** | 须显式回复「确认预授权」/「预授权后续写盘」（普通「确认」≠预授权）；此后同会话后续 fill/resume 可自动写盘；词表与细则：[write-plan.md](modes/write-plan.md) |
 | **RecommendedProfile** | 探测后自动给出的推荐包；不懂选项时可「全部推荐」 |
 | **WritePlan** | 写入前计划表 + 渲染预览；确认后才写盘 |
 | **AI 工具面** | `Q_AI_TOOL`：Cursor / Claude / Codex / Qoder / Trae / WorkBuddy；可自定义入口。适配层非 SSOT，见 [ai-tools.md](host/ai-tools.md) |
@@ -140,4 +140,4 @@
 
 词表与固定提示语见 [write-plan.md](modes/write-plan.md)（SSOT）。此处不复述等价词。
 
-| `CODEX-PARITY` | Codex 官方对齐清单（**高**；不做 `.mdc` 全量镜像）：[host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [CODEX-MANUAL.md](host/CODEX-MANUAL.md) |
+宿主对齐清单：Codex → [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [CODEX-MANUAL.md](host/CODEX-MANUAL.md)（**高**；不做 `.mdc` 全量镜像）。

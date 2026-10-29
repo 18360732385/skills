@@ -22,7 +22,7 @@
 - [ ] 1 定根；读 harness-meta（domains / glob_profile / 分册 / ready_coverage）
 - [ ] 2 若存在 docs/harness-eng/score-policy.yaml → 按覆盖裁决读入（见下）
 - [ ] 3 确认打分范围：点名模块【推荐】= meta 分册或 Q_MODULES few 列表
-- [ ] 4 可选：scripts/fill-inventory-*.mjs（默认写出 docs/<domain>/.fill-work/inventory*.json）
+- [ ] 4 可选：`scripts/fill-inventory.mjs --domain <api|func|db|redis|jobs>`（默认写出 docs/<domain>/.fill-work/inventory*.json）
 - [ ] 5 运行 scripts/fill-score.mjs --root <TARGET> --focus full [--domains api,func,db,redis,jobs] [--modules a,b] [--threshold 80] [--inventory path] [--compare prev.json] [--ready-quality 80] [--ready-coverage 0.8] [--summary-only] [--verbose]
 - [ ] 6 展示三词摘要 + blockers / miss_histogram / next_shards；建议下一步
 - [ ] 7 【推荐】score JSON 落盘后 `fill-report-html.mjs` → `docs/harness-eng/report-latest.html`；回复路径（须确认/预授权）
@@ -44,7 +44,7 @@ node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score
 
 默认写出：`docs/harness-eng/report-latest.html`、`docs/harness-eng/score-latest.json`。  
 audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标达标率** / 骨架就绪 / 语义抽检 / 文档形态分 / 相对代码覆盖 / 公式上限 / **模板完整度**），英文 ID 放「技术细节」。  
-报告优先对照 **`skill_version` + `report_schema`**（现 0.3.0；**报告壳 ≠ skill**）。`ui.version` 仅为兼容别名。JSON 含 **`morph_scale: "0.7"`**（与 0.6.x 历史 overall 不可比）。术语见 [glossary.md](../glossary.md)。
+报告优先对照 **`skill_version` + `report_schema`**（现 **0.4.0**；**报告壳 ≠ skill**）。`ui.version` 仅为兼容别名。JSON 含 **`morph_scale: "0.7"`**（与 0.6.x 历史 overall 不可比）。术语见 [glossary.md](../glossary.md)。
 
 ### 报告字段速查
 
@@ -96,7 +96,7 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 
 | 字段 | 含义 |
 |---|---|
-| `coverage_mode` | `overall` / `all_domains` / `weighted` |
+| `coverage_mode` | `overall` / `all_domains` / `weighted`（权重见 `templates/_meta/domains.yaml`：api 0.35 · func/db 0.25 · redis 0.15 · jobs 0.10） |
 | `coverage_targets` | 分域目标；缺省回退 `ready_coverage` |
 | `density.*` | 列密度阈值，计入 `template_completeness`（`dens-*`） |
 | `gate_profile` / `gate.*` | 开干附加闸 |

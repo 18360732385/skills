@@ -115,9 +115,9 @@ export function loadDomainRegistry(registryPath = DEFAULT_PATH) {
           kind: "contract",
           index: `${id}.md`,
           truths_dir: id === "db" ? "table" : id === "redis" ? "keys" : "modules",
-          weight: { api: 0.35, func: 0.25, db: 0.25, redis: 0.15 }[id],
-          morph_cap: { api: 100, func: 100, db: 100, redis: 100 }[id],
-          optional: id === "redis",
+          weight: { api: 0.35, func: 0.25, db: 0.25, redis: 0.15, jobs: 0.1 }[id],
+          morph_cap: { api: 100, func: 100, db: 100, redis: 100, jobs: 100 }[id],
+          optional: id === "redis" || id === "jobs",
         },
       ])
     );

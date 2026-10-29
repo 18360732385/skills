@@ -10,6 +10,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { readSkillVersion } from "./skill-version.mjs";
+import { parseFillScoreJson, readJsonFile } from "./json-read.mjs";
 import {
   normalizeCoverageMode,
   runMigrateDocs,
@@ -102,18 +103,7 @@ function loadScoreLatest(root) {
   const p = path.join(root, SCORE_REL);
   if (!fs.existsSync(p)) return null;
   try {
-    return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {
-    return null;
-  }
-}
-
-function parseFillScoreJson(stdout) {
-  const i = String(stdout || "").indexOf("{");
-  const j = String(stdout || "").lastIndexOf("}");
-  if (i < 0 || j <= i) return null;
-  try {
-    return JSON.parse(stdout.slice(i, j + 1));
+    return readJsonFile(p, p);
   } catch {
     return null;
   }

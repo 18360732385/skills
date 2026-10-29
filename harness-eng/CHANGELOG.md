@@ -1,11 +1,12 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.51**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.7.52**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.7.52 | 2026-10-29 | 全量修复列车：isCliMain/replacer/rule-17 互斥/mature_compat · 文档冲突收口 · 脚本卫生 · RENDER-REGISTRIES · evals 可移植 |
 | 0.7.51 | 2026-10-29 | SQL 迁移命名双轨：soft-gate OLD_NAME_RE · A/R 降噪 · 最高号禁令 · new-migration-py 生成器包 |
 | 0.7.50 | 2026-10-29 | 运行时 _log 零依赖：fill-truths-auto stub 移除 · 双态 selfcheck hasLogRoot · 随包文档 purge · auto 引擎下线 |
 | 0.7.49 | 2026-10-29 | sms-ai 回流：vendored_shared 话术 · rule-17 薄指针+full · superpowers 用户列 · soft-gate dev 账本 status+迁移命名 · pitfalls ID 治理 · QODER-PARITY · apifox 7col 工具 |

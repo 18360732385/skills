@@ -46,6 +46,7 @@ import {
 } from "./lib/harness-meta.mjs";
 import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
 import { readSkillVersion } from "./lib/skill-version.mjs";
+import { readJsonFile } from "./lib/json-read.mjs";
 
 /** Map short variant name → template path. */
 function moduleAgentsTmplPath(v) {
@@ -245,7 +246,9 @@ function renderPlaceholders(text, placeholders) {
   let out = text;
   for (const [k, v] of Object.entries(placeholders || {})) {
     const re = new RegExp(`\\{\\{${k}\\}\\}`, "g");
-    out = out.replace(re, v == null ? "" : String(v));
+    // Replacer fn: user values (REPO_DESC etc.) may contain `$&`/`$$`
+    const rep = v == null ? "" : String(v);
+    out = out.replace(re, () => rep);
   }
   return out;
 }
@@ -255,6 +258,16 @@ function normalizeIncludeOptional(v) {
   if (Array.isArray(v)) return v;
   if (v === true) return ["rule-14"];
   return [];
+}
+
+/** rule-17 (thin) and rule-17-full share the same target — never both. */
+function assertRule17Mutex(includeOptional) {
+  const set = includeOptional instanceof Set ? includeOptional : new Set(includeOptional || []);
+  if (set.has("rule-17") && set.has("rule-17-full")) {
+    throw new Error(
+      "include_optional cannot contain both rule-17 and rule-17-full (same target .cursor/rules/17-frontend-web.mdc; pick one)"
+    );
+  }
 }
 
 /** Scan Maven <module> entries from root pom.xml (fs only, UTF-8). */
@@ -916,6 +929,7 @@ function expandFromManifest(manifestPath, params, root) {
   const mcpEngines = resolveMcpEngines(params);
   const variant = params.agents_variant || "solo";
   const includeOptional = new Set(normalizeIncludeOptional(params.include_optional));
+  assertRule17Mutex(includeOptional);
   let moduleDirs = params.module_dirs || [];
   if (params.all_modules === true || params.all_modules === "true") {
     const scanned = scanPomModules(root);
@@ -1720,7 +1734,7 @@ function main() {
     process.exit(0);
   }
   const root = path.resolve(args.root);
-  const params = JSON.parse(fs.readFileSync(path.resolve(args.params), "utf8"));
+  const params = readJsonFile(path.resolve(args.params), "--params");
   let placeholders = ensureYamlListPlaceholders(params, params.placeholders || {});
   placeholders = ensureStandardPlaceholders(params, placeholders, root);
   // 0.5.0 计算占位：agent_config / pitfalls 词表 / hooks 家族（params.placeholders 优先）

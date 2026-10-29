@@ -7,3 +7,9 @@ archive/selfcheck/legacy/**
 !archive/selfcheck/legacy/INDEX.md
 archive/fill-truths-auto/**
 !archive/fill-truths-auto/INDEX.md
+
+# Runtime construction artifacts belong in the target repo, not the skill pack
+docs/harness-eng/score-latest.json
+docs/harness-eng/score-latest.prev.json
+docs/harness-eng/report-latest.html
+docs/harness-eng/score-history.jsonl

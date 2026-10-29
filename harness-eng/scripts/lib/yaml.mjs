@@ -3,6 +3,9 @@
  * Supports: maps, sequences, nested blocks, flow [a,b] / {k:v},
  * booleans/null/numbers, quoted strings, comments.
  * Enough for harness-eng manifest.yaml + questions.yaml.
+ *
+ * NOT supported: block scalars (`|` / `>` / `|-` / `>-` …). Encountering them
+ * throws (do not silently truncate following keys). Prefer quoted / plain scalars.
  */
 export function parse(text) {
   const src = String(text || "").replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
@@ -122,6 +125,11 @@ export function parse(text) {
       let rest = m[2];
       if (rest.startsWith("#")) rest = "";
 
+      if (/^[|>]/.test(String(rest).trim())) {
+        throw new Error(
+          `yaml: block scalars (|/>) not supported at key "${key}" (line ${p.index + 1}); use a plain or quoted scalar`
+        );
+      }
       if (!rest) {
         const next = peek();
         if (!next || next.indent <= minIndent) {

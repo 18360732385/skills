@@ -51,6 +51,7 @@ import {
   retireObsoleteWrappers,
 } from "./lib/obsolete-wrappers.mjs";
 import { runMetaStableCheck } from "./lib/meta-stable.mjs";
+import { readJsonFile } from "./lib/json-read.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
@@ -218,7 +219,7 @@ function parseArgs(argv) {
 function printHelp() {
   console.log(`Usage:
   node scripts/harness.mjs --root <TARGET> --params <params.json>
-      [--mode land|resume|upgrade|pipeline-skeleton]
+      [--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill]
       [--dry-run] [--manifest <path>] [--backup] [--no-sync]
   node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write] [--retire-wrappers]
   node scripts/harness.mjs --mode backfill --root <TARGET> --findings <file|dir>
@@ -236,6 +237,7 @@ Canonical Agent write entry (0.6.0+).
   backfill: 读探针 findings → stdout WritePlan（不写盘）；见 modes/backfill.md。
   --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与目标仓
     scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
+    与 --params 同传时：非 L5 仅跑 freshness（短路、不渲染）；L5 仍 render+sync，再校验 freshness。
   --check-meta-stable: harness-meta 内容 hash（默认忽略 last_mode）；可选 --baseline 比对。
     仅 last_mode 差 → exit 0；其它内容差 → exit 1。供 CI 跨 mode 稳态检查。
   --retire-wrappers: upgrade/refresh 将 fill-score-ready / cold-bootstrap 移到
@@ -251,7 +253,7 @@ Canonical Agent write entry (0.6.0+).
 }
 
 function loadParams(paramsPath) {
-  return JSON.parse(fs.readFileSync(paramsPath, "utf8"));
+  return readJsonFile(paramsPath, "--params");
 }
 
 /**
@@ -347,7 +349,10 @@ function runRender(args) {
   if (args.dryRun) argv.push("--dry-run");
   if (args.backup) argv.push("--backup");
   if (args.manifest) argv.push("--manifest", args.manifest);
-  return spawnSync(process.execPath, argv, { encoding: "utf8" });
+  return spawnSync(process.execPath, argv, {
+    encoding: "utf8",
+    maxBuffer: 20 * 1024 * 1024,
+  });
 }
 
 function syncScript(root) {
@@ -364,7 +369,11 @@ function runSync(root) {
       missing: true,
     };
   }
-  return spawnSync(process.execPath, [script], { encoding: "utf8", cwd: root });
+  return spawnSync(process.execPath, [script], {
+    encoding: "utf8",
+    cwd: root,
+    maxBuffer: 20 * 1024 * 1024,
+  });
 }
 
 /** 0.7.26 DU-4: child chatter → stderr so harness stdout stays JSON-parseable when needed. */

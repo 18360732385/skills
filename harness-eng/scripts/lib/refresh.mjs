@@ -10,6 +10,7 @@ import { spawnSync } from "child_process";
 import { findHarnessMetaFile } from "./harness-meta.mjs";
 import { parseMetaDomains, defaultContractDomains } from "./domains.mjs";
 import { readInventoryMeta } from "./inventory-meta.mjs";
+import { parseFillScoreJson } from "./json-read.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
@@ -40,17 +41,6 @@ function loadDomains(root) {
     /* fall through */
   }
   return defaultContractDomains().filter((d) => d === "api" || d === "func");
-}
-
-function parseFillScoreJson(stdout) {
-  const i = stdout.indexOf("{");
-  const j = stdout.lastIndexOf("}");
-  if (i < 0 || j <= i) return null;
-  try {
-    return JSON.parse(stdout.slice(i, j + 1));
-  } catch {
-    return null;
-  }
 }
 
 /** Replay meta paths for inventory CLI (refresh + fill-score live scan). */

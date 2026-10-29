@@ -265,9 +265,6 @@ function main() {
   try {
     fs.unlinkSync(tmp);
   } catch (_) {}
-  try {
-    fs.unlinkSync(path.join(__dirname, ".tmp-expand.json"));
-  } catch (_) {}
 
   console.log(
     JSON.stringify(

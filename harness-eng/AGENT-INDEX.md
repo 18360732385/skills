@@ -4,7 +4,7 @@
 人读一页纸：[QUICKSTART.md](QUICKSTART.md)。闸门词表：[write-plan.md](modes/write-plan.md)。
 
 **拓扑**：`modes/` · `fill/` · `host/`。对外四支 / 三档见 [SKILL.md](SKILL.md)；细阶仍 L0–L5。  
-**manifest 双写**：[`_meta/manifest.yaml`](_meta/manifest.yaml) ≡ [`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)（`version` 须一致）。  
+**manifest 双写 / 权威**：发版只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（skill 版本 SSOT）；[`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml) 与 `SKILL.md` frontmatter 由 `sync-skill-version.mjs` 机械同步（**勿手改副本当权威**；两边 `version` 须一致）。  
 **发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（机械副本 + 文档钉头 + 仓根 README 行）→ ③ 更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [modes/upgrade.md](modes/upgrade.md) / [VERIFY.md](VERIFY.md) 增量；版本要点写**仓库级版本档案**（流程见仓库根 `README.md`「仓库级档案与发版」节）→ ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。
 
 ## 必读（写盘前）≤8
@@ -14,7 +14,7 @@
 | 闸门 / 预授权 / Windows JSON | [modes/write-plan.md](modes/write-plan.md) |
 | 探测 / 指纹 / MATURE | [modes/detect.md](modes/detect.md) |
 | 推荐包 / 全部推荐 | [modes/recommended-profile.md](modes/recommended-profile.md) |
-| **写盘入口**（land / resume / upgrade / pipeline-skeleton） | **`node scripts/harness.mjs`**（L5/`agent_config` 走 sync，**勿**直渲生成宿主路径） |
+| **写盘入口**（land / resume / upgrade / pipeline-skeleton / refresh / backfill） | **`node scripts/harness.mjs`**（L5/`agent_config` 走 sync，**勿**直渲生成宿主路径） |
 | 填充家族（先索引） | [fill/README.md](fill/README.md) |
 | 冲突 / merge / L5 互斥 | [modes/conflict-policy.md](modes/conflict-policy.md) |
 
@@ -59,14 +59,14 @@
 | Qoder（Claude 族） | [host/QODER-PARITY.md](host/QODER-PARITY.md)（rules 全量镜像 + settings.json hooks + 根 .mcp.json） |
 | Codex **高** | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md) |
 | Trae 高 | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · TRAE-P0-EVIDENCE（仓库级档案） |
-| 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` |
+| 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` · [RENDER-REGISTRIES.md](templates/_meta/RENDER-REGISTRIES.md) |
 | 会话仪表盘 | [modes/session-dashboard.md](modes/session-dashboard.md) |
 | 版本 / 模板清单 | [CHANGELOG.md](CHANGELOG.md) · 双 manifest |
 | L5 / 多宿主黄金夹具 | `scripts/fixtures/l5-sync-golden` · `scripts/fixtures/multi-host-hooks` |
 
 ## 写盘纪律（一行）
 
-确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton]`。  
+确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill]`。  
 非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，生成物由目标仓 `node scripts/agent-config/sync.mjs` 发出。  
 **升级 L5**：刷新 `scripts/agent-config/sync.mjs`；`node scripts/harness.mjs --check-freshness --root <TARGET>`。  
 **升严常用**：`harness --mode upgrade`（薄仓默认 migrate-docs=auto；**厚仓默认 dry-run**，显式 `--migrate-docs=auto` 才写真相）· `--migrate-coverage` 默认 **off** · `--check-meta-stable --baseline <meta>` · `--retire-wrappers` / `HARNESS_RETIRE_WRAPPERS=1`。厚仓开干档可 `mature_compat`（drift 不阻断）。

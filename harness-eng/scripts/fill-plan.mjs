@@ -397,9 +397,20 @@ function main() {
       let totalLines = 0;
       if (fs.existsSync(fillWorkDir)) {
         function walkFillWork(d, acc) {
-          for (const name of fs.readdirSync(d)) {
+          let names;
+          try {
+            names = fs.readdirSync(d);
+          } catch {
+            return;
+          }
+          for (const name of names) {
             const p = path.join(d, name);
-            const st = fs.statSync(p);
+            let st;
+            try {
+              st = fs.statSync(p);
+            } catch {
+              continue;
+            }
             if (st.isDirectory()) walkFillWork(p, acc);
             else if (/\.md$/i.test(name)) {
               acc.push(p);

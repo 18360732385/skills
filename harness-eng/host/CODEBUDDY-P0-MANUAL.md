@@ -14,7 +14,7 @@
 node scripts/harness.mjs --check-freshness --root <TARGET>
 ```
 
-1. 从 **`main`** 升级 skill（生产勿用 `V0.6.X`）
+1. 从 **`main`** 升级 skill
 2. land / upgrade（L5）重渲 `agent-config-sync`（已存在则 **replace**）
 3. `node scripts/agent-config/sync.mjs`
 4. 确认 `.codebuddy/rules/*.md` 顶部有 YAML `alwaysApply` / `globs`；旧 `RULE.mdc` 目录应已消失

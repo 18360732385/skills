@@ -30,6 +30,22 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const logRoot = path.resolve(skillRoot, "../_log/harness-eng");
   // 0.7.50 双态门禁：install 态（无 _log）自动跳过仓库级档案断言
   const hasLog = fs.existsSync(logRoot);
+  const upgradeCorpus = () => {
+    let text = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+    if (hasLog) {
+      const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/upgrade-history-through-0.7.51.md");
+      if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
+    }
+    return text;
+  };
+  const verifyCorpus = () => {
+    let text = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+    if (hasLog) {
+      const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.7.51.md");
+      if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
+    }
+    return text;
+  };
   const logFile = (ver) => {
     const m = String(ver).match(/^(\d+\.\d+)\./);
     return m ? path.join(logRoot, m[1], `${ver}.md`) : path.join(logRoot, `${ver}.md`);
@@ -299,7 +315,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /G2|文档拓扑/.test(changelogM2), "CHANGELOG notes M2 / G2 文档拓扑");
   assert(!hasLog || /# 0\.6\.0\b/.test(changelogM2), "CHANGELOG has formal 0.6.0");
 
-  const verifyM2 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verifyM2 = verifyCorpus();
   assert(/M2/.test(verifyM2) && /根目录/.test(verifyM2), "VERIFY has M2 section");
 
   function collectRelTargets(text) {
@@ -470,7 +486,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /G3|fill 引擎|内聚/.test(changelogM3) && /G4|黄金集|fixture/.test(changelogM3), "CHANGELOG notes M3 G3/G4");
   assert(!hasLog || /# 0\.6\.0\b/.test(changelogM3), "CHANGELOG has formal 0.6.0");
 
-  const verifyM3 = readRel("VERIFY.md");
+  const verifyM3 = verifyCorpus();
   assert(/M3/.test(verifyM3) && /l5-sync-golden|黄金/.test(verifyM3), "VERIFY has M3 section");
 }
 
@@ -556,10 +572,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /G5/.test(changelogM4) && /发包|legacy/.test(changelogM4), "CHANGELOG notes G5 slim pack");
   assert(!hasLog || /M1/.test(changelogM4) && /M2/.test(changelogM4) && /M3/.test(changelogM4) && /M4/.test(changelogM4), "CHANGELOG summarizes M1–M4");
 
-  const verifyM4 = readRel("VERIFY.md");
+  const verifyM4 = verifyCorpus();
   assert(/M4/.test(verifyM4) && /legacy|发包/.test(verifyM4), "VERIFY has M4 packaging section");
 
-  const upgradeM4 = readDoc("upgrade.md");
+  const upgradeM4 = upgradeCorpus();
   assert(/0\.5\.10 → 0\.6\.0/.test(upgradeM4), "upgrade has 0.5.10 → 0.6.0");
   assert(/skill_version.*`?0\.6\.0`?/.test(upgradeM4), "upgrade pins skill_version 0.6.0");
   assert(!/进行中 · 0\.6\.0-dev/.test(upgradeM4), "upgrade checklist no longer in-progress -dev");
@@ -640,7 +656,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     : "";
   assert(!hasLog || /0\.6\.1-dev/.test(roadmap061) && /spike|开工/.test(roadmap061), "ROADMAP notes 0.6.1 Trae spike started");
   assert(!hasLog || /0\.6\.1/.test(roadmap061) && /高/.test(roadmap061), "ROADMAP notes 0.6.1 Trae 高 pin");
-  const verify061 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify061 = verifyCorpus();
   assert(/0\.6\.1/.test(verify061) && /mature-trae|Trae P0/.test(verify061), "VERIFY has 0.6.1 Trae P0 section");
 
   assert(!hasLog || /2026-09-12/.test(evidence) && /stale|过期/.test(evidence), "EVIDENCE records 2026-09-12 sync stale cleanup");
@@ -861,7 +877,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const libDash062 = fs.readFileSync(path.join(skillRoot, "scripts/lib/session-dashboard.mjs"), "utf8");
   assert(!/quadrantChart/.test(libDash062) && !/```mermaid/.test(libDash062), "session-dashboard.mjs emits no mermaid");
   assert(/stanceQuadrant/.test(libDash062), "session-dashboard.mjs keeps stanceQuadrant helper");
-  const upgrade062 = readDoc("upgrade.md");
+  const upgrade062 = upgradeCorpus();
   assert(/0\.6\.1 → 0\.6\.2/.test(upgrade062), "upgrade has 0.6.1 → 0.6.2");
 
   assert(stanceQuadrant(0.8, 0.4) === "Q1 补形态", "stance Q1 补形态");
@@ -957,7 +973,7 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /tree\/main\/harness-eng/.test(changelog063), "CHANGELOG production install URL main");
   assert(!hasLog || /V0\.6\.X/.test(changelog063) && /合并进/.test(changelog063), "CHANGELOG notes V0.6.X is dev train then merge to main");
 
-  const upgrade063 = readDoc("upgrade.md");
+  const upgrade063 = upgradeCorpus();
   assert(/0\.6\.2 → 0\.6\.3/.test(upgrade063), "upgrade has 0.6.2 → 0.6.3");
   assert(/刷新/.test(upgrade063) && /sync\.mjs/.test(upgrade063) && /check-freshness/.test(upgrade063), "upgrade L5 must refresh sync.mjs");
 
@@ -1049,10 +1065,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /正式钉号：CodeBuddy\/WorkBuddy/.test(changelog064), "CHANGELOG 0.6.4 formal pin subtitle");
   assert(!hasLog || /由 \*\*0\.6\.4-dev\*\* 钉号/.test(changelog064), "CHANGELOG notes promoted from 0.6.4-dev");
   assert(!hasLog || /（无 `-dev`）/.test(changelog064), "CHANGELOG pins without -dev");
-  const upgrade064 = readDoc("upgrade.md");
+  const upgrade064 = upgradeCorpus();
   assert(/0\.6\.3 → 0\.6\.4/.test(upgrade064), "upgrade has 0.6.3 → 0.6.4");
   assert(/升级三步/.test(upgrade064) && /check-freshness/.test(upgrade064) && /\*\*`main`\*\*|\*\*main\*\*/.test(upgrade064), "upgrade 0.6.4 L5 three-step (main · check-freshness · refresh sync)");
-  const verify064 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify064 = verifyCorpus();
   assert(/正式钉号/.test(verify064) && /0\.6\.3 → 0\.6\.4/.test(verify064), "VERIFY formal pin acceptance rows");
   const summary064 = fs.readFileSync(path.join(skillRoot, "guide", "使用手册-摘要.md"), "utf8");
   assert(/WorkBuddy\/CodeBuddy（\*\*0\.6\.4\*\*）/.test(summary064), "使用手册-摘要 keeps CodeBuddy 0.6.4 baseline note");
@@ -1094,10 +1110,10 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /正式钉号：API 字段表/.test(changelog065), "CHANGELOG 0.6.5 formal pin subtitle");
   assert(!hasLog || /sameText|EOL/.test(changelog065), "CHANGELOG notes sync EOL fix");
 
-  const upgrade065 = readDoc("upgrade.md");
+  const upgrade065 = upgradeCorpus();
   assert(/0\.6\.4 → 0\.6\.5/.test(upgrade065), "upgrade has 0.6.4 → 0.6.5");
 
-  const verify065 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify065 = verifyCorpus();
   assert(/0\.6\.5 增量验收/.test(verify065) && /0\.6\.4 → 0\.6\.5/.test(verify065), "VERIFY keeps 0.6.5 acceptance rows");
 }
 
@@ -1107,12 +1123,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /^# 0\.6\.6\b/m.test(changelog066), "CHANGELOG keeps 0.6.6 heading");
   assert(!hasLog || /OpenAPI|分册厚/.test(changelog066), "CHANGELOG 0.6.6 OpenAPI + thick AGENTS");
 
-  const upgrade066 = readDoc("upgrade.md");
+  const upgrade066 = upgradeCorpus();
   assert(/0\.6\.5 → 0\.6\.6/.test(upgrade066), "upgrade has 0.6.5 → 0.6.6");
   assert(/Q_APIFOX|OpenAPI/.test(upgrade066), "upgrade 0.6.6 notes OpenAPI bridge");
   assert(/on_exists=skip/.test(upgrade066), "upgrade 0.6.6 notes skip existing module AGENTS");
 
-  const verify066 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify066 = verifyCorpus();
   assert(/0\.6\.6 增量验收/.test(verify066) && /0\.6\.5 → 0\.6\.6/.test(verify066), "VERIFY keeps 0.6.6 acceptance rows");
 
   const q066 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
@@ -1222,11 +1238,11 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
   assert(!hasLog || /Pn 回流|前后端契约/.test(changelog067), "CHANGELOG 0.6.7 Pn + FE gate");
 
-  const upgrade067 = readDoc("upgrade.md");
+  const upgrade067 = upgradeCorpus();
   assert(/0\.6\.6 → 0\.6\.7/.test(upgrade067), "upgrade has 0.6.6 → 0.6.7");
   assert(/hook_code|GLOB_API|路径速查/.test(upgrade067), "upgrade 0.6.7 notes gate + Pn");
 
-  const verify067 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify067 = verifyCorpus();
   assert(/0\.6\.7 增量验收/.test(verify067) && /0\.6\.6 → 0\.6\.7/.test(verify067), "VERIFY 0.6.7 formal pin acceptance rows");
 
   const domYaml = fs.readFileSync(path.join(skillRoot, "templates/_meta/domains.yaml"), "utf8");
@@ -1375,63 +1391,28 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(!hasLog || /Codex P0|增量解冻/.test(changelog068), "CHANGELOG Chinese Codex P0 entry");
   assert(!hasLog || /\*\*`main`\*\*|\*\*main\*\*/.test(changelog068), "CHANGELOG keeps main install URL");
 
-  const upgrade068 = readDoc("upgrade.md");
-  assert(/0\.6\.8-dev → 0\.6\.9/.test(upgrade068), "upgrade has 0.6.8-dev → 0.6.9");
-  assert(/0\.6\.9 → 0\.7\.0/.test(upgrade068), "upgrade has 0.6.9 → 0.7.0");
-  assert(/0\.7\.1 → 0\.7\.2/.test(upgrade068), "upgrade has 0.7.1 → 0.7.2");
-  assert(/0\.7\.3 → 0\.7\.4/.test(upgrade068), "upgrade has 0.7.3 → 0.7.4");
-  assert(/0\.7\.4 → 0\.7\.5/.test(upgrade068), "upgrade has 0.7.4 → 0.7.5");
-  assert(/0\.7\.5 → 0\.7\.6/.test(upgrade068), "upgrade has 0.7.5 → 0.7.6");
-  assert(/0\.7\.6 → 0\.7\.7/.test(upgrade068), "upgrade has 0.7.6 → 0.7.7");
-  assert(/0\.7\.7 → 0\.7\.8/.test(upgrade068), "upgrade has 0.7.7 → 0.7.8");
-  assert(/0\.7\.8 → 0\.7\.9/.test(upgrade068), "upgrade has 0.7.8 → 0.7.9");
-  assert(/0\.7\.9 → 0\.7\.10/.test(upgrade068), "upgrade has 0.7.9 → 0.7.10");
-  assert(/0\.7\.10 → 0\.7\.11/.test(upgrade068), "upgrade has 0.7.10 → 0.7.11");
-  assert(/0\.7\.11 → 0\.7\.12/.test(upgrade068), "upgrade has 0.7.11 → 0.7.12");
-  assert(/0\.7\.12 → 0\.7\.13/.test(upgrade068), "upgrade has 0.7.12 → 0.7.13");
-  assert(/0\.7\.13 → 0\.7\.14/.test(upgrade068), "upgrade has 0.7.13 → 0.7.14");
-  assert(/0\.7\.14 → 0\.7\.15/.test(upgrade068), "upgrade has 0.7.14 → 0.7.15");
-  assert(/0\.7\.15 → 0\.7\.16/.test(upgrade068), "upgrade has 0.7.15 → 0.7.16");
-  assert(/0\.7\.16 → 0\.7\.17/.test(upgrade068), "upgrade has 0.7.16 → 0.7.17");
-  assert(/0\.7\.17 → 0\.7\.18/.test(upgrade068), "upgrade has 0.7.17 → 0.7.18");
-  assert(/0\.7\.19 → 0\.7\.20/.test(upgrade068), "upgrade has 0.7.19 → 0.7.20");
-  assert(/0\.7\.20 → 0\.7\.21/.test(upgrade068), "upgrade has 0.7.20 → 0.7.21");
-  assert(/0\.7\.21 → 0\.7\.22/.test(upgrade068), "upgrade has 0.7.21 → 0.7.22");
-  assert(/0\.7\.22 → 0\.7\.23/.test(upgrade068), "upgrade has 0.7.22 → 0.7.23");
-  assert(/0\.7\.23 → 0\.7\.24/.test(upgrade068), "upgrade has 0.7.23 → 0.7.24");
-  assert(/0\.7\.24 → 0\.7\.25/.test(upgrade068), "upgrade has 0.7.24 → 0.7.25");
-  assert(/0\.7\.25 → 0\.7\.26/.test(upgrade068), "upgrade has 0.7.25 → 0.7.26");
-  assert(/0\.7\.26 → 0\.7\.27/.test(upgrade068), "upgrade has 0.7.26 → 0.7.27");
+  const upgrade068 = upgradeCorpus();
   assert(new RegExp(`→ ${VER_RE}`).test(upgrade068), `upgrade has → ${EXPECTED}`);
-  assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
-  assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
+  assert(/更早迁移|upgrade-history-through/.test(upgrade068), "upgrade points to archived history");
+  if (hasLog) {
+    assert(/0\.6\.8-dev → 0\.6\.9/.test(upgrade068), "upgrade has 0.6.8-dev → 0.6.9");
+    assert(/0\.6\.9 → 0\.7\.0/.test(upgrade068), "upgrade has 0.6.9 → 0.7.0");
+    assert(/0\.7\.1 → 0\.7\.2/.test(upgrade068), "upgrade has 0.7.1 → 0.7.2");
+    assert(/0\.7\.26 → 0\.7\.27/.test(upgrade068), "upgrade has 0.7.26 → 0.7.27");
+    assert(/0\.7\.0 → 0\.7\.1/.test(upgrade068), "upgrade keeps 0.7.0 → 0.7.1");
+    assert(/0\.6\.7 → 0\.6\.8-dev/.test(upgrade068), "upgrade keeps 0.6.7 → 0.6.8-dev");
+  }
 
-  const verify068 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
-  assert(/0\.6\.9 增量验收/.test(verify068), "VERIFY 0.6.9 section");
-  assert(/0\.7\.0 增量验收/.test(verify068), "VERIFY 0.7.0 section");
-  assert(/0\.7\.2 增量验收/.test(verify068), "VERIFY 0.7.1 section");
-  assert(/0\.7\.7 增量验收/.test(verify068), "VERIFY keeps 0.7.7 section");
-  assert(/0\.7\.8 增量验收/.test(verify068), "VERIFY keeps 0.7.8 section");
-  assert(/0\.7\.9 增量验收/.test(verify068), "VERIFY 0.7.9 section");
-  assert(/0\.7\.10 增量验收/.test(verify068), "VERIFY 0.7.10 section");
-  assert(/0\.7\.11 增量验收/.test(verify068), "VERIFY 0.7.11 section");
-  assert(/0\.7\.12 增量验收/.test(verify068), "VERIFY 0.7.12 section");
-  assert(/0\.7\.13 增量验收/.test(verify068), "VERIFY 0.7.13 section");
-  assert(/0\.7\.14 增量验收/.test(verify068), "VERIFY 0.7.14 section");
-  assert(/0\.7\.15 增量验收/.test(verify068), "VERIFY 0.7.15 section");
-  assert(/0\.7\.16 增量验收/.test(verify068), "VERIFY 0.7.16 section");
-  assert(/0\.7\.17 增量验收/.test(verify068), "VERIFY 0.7.17 section");
-  assert(/0\.7\.18 增量验收/.test(verify068), "VERIFY 0.7.18 section");
-  assert(/0\.7\.20 增量验收/.test(verify068), "VERIFY 0.7.20 section");
-  assert(/0\.7\.21 增量验收/.test(verify068), "VERIFY 0.7.21 section");
-  assert(/0\.7\.22 增量验收/.test(verify068), "VERIFY 0.7.22 section");
-  assert(/0\.7\.23 增量验收/.test(verify068), "VERIFY 0.7.23 section");
-  assert(/0\.7\.24 增量验收/.test(verify068), "VERIFY 0.7.24 section");
-  assert(/0\.7\.25 增量验收/.test(verify068), "VERIFY 0.7.25 section");
-  assert(/0\.7\.26 增量验收/.test(verify068), "VERIFY 0.7.26 section");
-  assert(/0\.7\.27 增量验收/.test(verify068), "VERIFY 0.7.27 section");
+  const verify068 = verifyCorpus();
   assert(new RegExp(`${VER_RE} 增量验收`).test(verify068), `VERIFY ${EXPECTED} section`);
-  assert(/0\.7\.6 增量验收/.test(verify068), "VERIFY keeps 0.7.6 section");
+  assert(/更早增量验收|VERIFY-history-through/.test(verify068), "VERIFY points to archived history");
+  if (hasLog) {
+    assert(/0\.6\.9 增量验收/.test(verify068), "VERIFY 0.6.9 section");
+    assert(/0\.7\.0 增量验收/.test(verify068), "VERIFY 0.7.0 section");
+    assert(/0\.7\.2 增量验收/.test(verify068), "VERIFY 0.7.1 section");
+    assert(/0\.7\.27 增量验收/.test(verify068), "VERIFY 0.7.27 section");
+    assert(/0\.7\.6 增量验收/.test(verify068), "VERIFY keeps 0.7.6 section");
+  }
 
   const syncTmpl068 = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(new RegExp(VER_RE).test(syncTmpl068), `sync tmpl id ${EXPECTED}`);

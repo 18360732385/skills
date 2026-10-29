@@ -202,7 +202,8 @@ function inject(tmpl, payload) {
   if (!tmpl.includes("{{REPORT_JSON}}")) {
     throw new Error("template missing {{REPORT_JSON}} placeholder");
   }
-  return tmpl.replace("{{REPORT_JSON}}", safe);
+  // Replacer fn: JSON may contain `$` sequences that String.replace would expand
+  return tmpl.replace("{{REPORT_JSON}}", () => safe);
 }
 
 function ensureDir(p) {

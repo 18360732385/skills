@@ -16,7 +16,7 @@ npx skills add https://github.com/18360732385/skills/tree/main/harness-eng -g
 # 需要指定宿主时加上：--agent <host>
 ```
 
-装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；Trae：`~/.trae/skills/` 或项目 `.trae/skills/`——**示例≠唯一安装目标**；其他按该宿主文档）。更新同 URL 再执行一次即可。生产装/升用 **`main`**。0.6 系列开发在 `V0.6.X`，合并进 `main` 后生产再装/升。详情见手册「2. 如何安装和更新」。
+装完**新开会话**后点名 **harness-eng**。路径因宿主而异（Cursor：`~/.cursor/skills/` 或 `skills-cursor`；Claude Code：`~/.claude/skills/`；Trae：`~/.trae/skills/` 或项目 `.trae/skills/`——**示例≠唯一安装目标**；其他按该宿主文档）。更新同 URL 再执行一次即可。生产装/升用 **`main`**。详情见手册「2. 如何安装和更新」。
 L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --root <TARGET>`；落后则 land/upgrade 刷新 `scripts/agent-config/sync.mjs`，再 `node scripts/agent-config/sync.mjs`。
 
 ## 你要做什么？（对外四支）
@@ -100,4 +100,4 @@ PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BO
 **冷 clone**：`docs/**/.fill-work/` 默认 gitignore。新 clone 建议 `node scripts/harness.mjs --mode refresh --root <TARGET>` 落盘 inventory；0.7.37+ 若 live 扫描成功，fill-score 不再仅因缺磁盘 inventory 记 `missing_inventory`。
 
 多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.51**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.7.52**）。

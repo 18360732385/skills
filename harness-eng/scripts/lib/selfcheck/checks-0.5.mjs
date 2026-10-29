@@ -30,6 +30,15 @@ import { isGeneratedHostPath, resolveLandAgentConfig } from "../../harness.mjs";
 import { readSkillVersion, escapeSemverRe } from "../skill-version.mjs";
 
 export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
+  const hasLog = fs.existsSync(path.resolve(skillRoot, "../_log/harness-eng"));
+  const upgradeCorpus = () => {
+    let text = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+    if (hasLog) {
+      const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/upgrade-history-through-0.7.51.md");
+      if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
+    }
+    return text;
+  };
   const EXPECTED = readSkillVersion(skillRoot);
   const VER_RE = escapeSemverRe(EXPECTED);
   const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
@@ -227,7 +236,7 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
   assert(/生成物勿手改/.test(r00050), "rule00 generated-artifacts rule");
   const conflict050 = readDoc("conflict-policy.md");
   assert(/agent_config/.test(conflict050), "conflict-policy L5 rows");
-  const upg050 = readDoc("upgrade.md");
+  const upg050 = upgradeCorpus();
   assert(/0\.4\.0 → 0\.5\.0/.test(upg050), "upgrade has 0.4.0 → 0.5.0 path");
   assert(/0\.5\.0 → 0\.5\.1/.test(upg050), "upgrade has 0.5.0 → 0.5.1 path");
   assert(/0\.5\.1 → 0\.5\.2/.test(upg050), "upgrade has 0.5.1 → 0.5.2 path");

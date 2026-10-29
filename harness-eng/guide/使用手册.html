@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.7.51</title>
+  <title>harness-eng 使用手册 · v0.7.52</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.7.51</div>
+    <div class="ver">v0.7.52</div>
   </header>
 
   <div class="shell">
@@ -720,7 +720,7 @@ https://github.com/18360732385/skills/tree/main/harness-eng
             </tbody>
           </table>
         </div>
-        <p>生产装/升用上面的 <code>main</code>。0.6 系列开发在 <code>V0.6.X</code>，合并进 <code>main</code> 后生产再装/升。</p>
+        <p>生产装/升用上面的 <code>main</code>。</p>
 
         <h3>2.2 一句话更新</h3>
         <pre><code>帮我更新本机的 harness-eng skill：从
@@ -759,7 +759,7 @@ cp -R &lt;源&gt;/harness-eng &lt;host-skills-dir&gt;/harness-eng</code></pre>
         <div class="callout ok">
           <strong>0.7.2 公开 CLI（Agent / 脚本）</strong>
           <ul>
-            <li>写盘只认 <code>node scripts/harness.mjs</code>（<code>--mode land|resume|upgrade|pipeline-skeleton</code>）；已无 <code>land.mjs</code></li>
+            <li>写盘只认 <code>node scripts/harness.mjs</code>（<code>--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill</code>）；已无 <code>land.mjs</code></li>
             <li>填充只认 <code>fill-inventory.mjs --domain &lt;id&gt;</code> / <code>fill-merge.mjs --domain &lt;id&gt;</code>；域薄包装已删</li>
             <li>迁移替换表见 <a href="../modes/upgrade.md">upgrade.md</a>「0.7.1 → 0.7.2」</li>
           </ul>
@@ -1026,7 +1026,7 @@ node scripts/selfcheck.mjs</code></pre>
         </div>
 
         <h3>6.0 对话内会话仪表盘（工程轮末尾）</h3>
-        <p><strong>里程碑 SHOW</strong>：点名 harness-eng 且<strong>本轮</strong>有实质施工产出、闸门决策点（出示 WritePlan 或用户确认/继续施工）、或显式要读数时，Agent 回复末尾附四台摘要 + 可选宿主面一行 + 可选纯文本态势（无 mermaid）。提问批次 / 定根前 / 等确认空轮 / 纯问版本号、安装、手册、术语、改 skill、跑题则<strong>整块省略</strong>（即便同会话早先施工过）。含糊默认不附。脚注固定 <strong>详情请查询仪表盘</strong> → 目标仓 <code>report-latest.html</code>（已生成时）· 本页 <a href="#s6">#s6 五台读法</a>。</p>
+        <p><strong>里程碑 SHOW</strong>：点名 harness-eng 且<strong>本轮</strong>有实质施工产出、闸门决策点（出示 WritePlan 或用户确认/继续施工）、或显式要读数时，Agent 回复末尾附四句块（阶段/现状/工作/下一步建议）+ 可选纯文本态势（无 mermaid）。宿主面细节进 HTML 宿主台，不进会话脚注。提问批次 / 定根前 / 等确认空轮 / 纯问版本号、安装、手册、术语、改 skill、跑题则<strong>整块省略</strong>（即便同会话早先施工过）。含糊默认不附。脚注固定 <strong>详情请查询仪表盘</strong> → 目标仓 <code>report-latest.html</code>（已生成时）· 本页 <a href="#s6">#s6 五台读法</a>。</p>
         <p>脚本：<code>node scripts/session-dash.mjs --root &lt;目标仓&gt; --intent engineering</code> · 规格 <code>session-dashboard.md</code>。</p>
 
         <h3>6.1 怎么生成 / 打开 HTML 仪表盘</h3>
@@ -1149,7 +1149,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看文首版本钉与 <code>templates/_meta/manifest.yaml</code> 的 <code>version</code>（须一致），以及目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
+          <div class="ans"><p>技能版本看文首版本钉与 <code>_meta/manifest.yaml</code> 的 <code>version</code>（SSOT；<code>templates/_meta</code> 为 sync 副本），以及目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1194,7 +1194,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 与 Markdown 双维护，改内容须同步 · harness-eng v0.7.51
+          HTML 与 Markdown 双维护，改内容须同步 · harness-eng v0.7.52
         </div>
       </section>
     </main>

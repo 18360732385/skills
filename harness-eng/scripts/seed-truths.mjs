@@ -387,15 +387,25 @@ function ensureIndexNav(root, domain, nn, slug, dryRun, log) {
     const tableStart = after.search(/^\|.+\|$/m);
     if (tableStart >= 0) {
       let pos = secIdx + tableStart;
-      // skip header + separator
+      // skip header + separator — advance by real EOLs (CRLF-safe; do not join("\n"))
       const lines = text.slice(pos).split(/\r?\n/);
       let i = 0;
       while (i < lines.length && /^\|/.test(lines[i])) i++;
-      const insertAt = pos + lines.slice(0, i).join("\n").length;
+      let insertAt = pos;
+      for (let n = 0; n < i; n++) {
+        const nlAt = text.indexOf("\n", insertAt);
+        if (nlAt < 0) {
+          insertAt = text.length;
+          break;
+        }
+        insertAt = nlAt + 1;
+      }
       const before = text.slice(0, insertAt);
       const afterPart = text.slice(insertAt);
-      const nl = before.endsWith("\n") ? "" : "\n";
-      text = before + nl + row + (afterPart.startsWith("\n") ? "" : "\n") + afterPart;
+      const eol = text.includes("\r\n") ? "\r\n" : "\n";
+      const needsLead = !(before.endsWith("\n") || before.endsWith("\r"));
+      const needsTrail = !(afterPart.startsWith("\n") || afterPart.startsWith("\r"));
+      text = before + (needsLead ? eol : "") + row + (needsTrail ? eol : "") + afterPart;
     } else {
       text = text.replace(/\s*$/, "") + `\n\n${meta.headers}\n|---|---|---|\n${row}\n`;
     }

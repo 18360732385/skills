@@ -5,10 +5,8 @@
 # - 落地模板权威 = `templates/_meta/manifest.yaml`（files / placeholders / when）
 # - 两边 version 必须一致
 
-version: "0.7.51"
-source_repo: c-be-sms-ai
+version: "0.7.52"
+source_repo: ""
 portable: copy-skill-dir
 harness_land: true
-description: >-
-  De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
-  写盘入口 scripts/harness.mjs；热路径见 AGENT-INDEX.md。
+description: "De-domainized Agent Harness templates for cross-repo landing. Write entry: scripts/harness.mjs; hot path: AGENT-INDEX.md."

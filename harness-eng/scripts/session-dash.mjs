@@ -87,4 +87,9 @@ function main() {
   process.stdout.write(renderSessionDashboardMarkdown(data) + "\n");
 }
 
-main();
+try {
+  main();
+} catch (e) {
+  console.error(`session-dash: ${e && e.message ? e.message : e}`);
+  process.exit(1);
+}

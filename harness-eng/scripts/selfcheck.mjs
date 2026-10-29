@@ -68,6 +68,7 @@ import { mavenCmdsForModule } from "./lib/maven-cmds.mjs";
 import { morphDepthBonus } from "./lib/morph-depth.mjs";
 import { pickRecommended } from "./questions-next.mjs";
 import { isInventoryStale } from "./lib/git-head.mjs";
+import { createSelfcheckHelpers } from "./lib/selfcheck/helpers.mjs";
 import {
   detectRedisKeyDrift,
   detectJobsTaskDrift,
@@ -161,26 +162,13 @@ const VER_RE = escapeSemverRe(EXPECTED);
 const fail = [];
 const ok = [];
 
-function docPath(basename) {
-  return resolveDoc(skillRoot, basename);
-}
-
-function readDoc(basename) {
-  return fs.readFileSync(docPath(basename), "utf8");
-}
-
-function assert(cond, msg) {
-  if (cond) ok.push(msg);
-  else fail.push(msg);
-}
-
-function runNode(args, opts = {}) {
-  return spawnSync(process.execPath, args, {
-    encoding: "utf8",
-    maxBuffer: 20 * 1024 * 1024,
-    ...opts,
-  });
-}
+const _helpers = createSelfcheckHelpers(skillRoot, { ok, fail });
+const { docPath, readDoc, assert, runNode } = _helpers;
+assert(typeof createSelfcheckHelpers === "function", "selfcheck helpers.mjs wired");
+assert(
+  fs.existsSync(path.join(skillRoot, "templates/_meta/RENDER-REGISTRIES.md")),
+  "RENDER-REGISTRIES.md documents code registries"
+);
 
 // --- 0.2.18 inherited checks (abbreviated) ---
 assert(fs.existsSync(docPath("truth-quality.md")), "truth-quality.md");
@@ -343,6 +331,22 @@ function logFile(ver) {
 }
 function logExists(ver) {
   return !hasLogRoot || fs.existsSync(logFile(ver));
+}
+function upgradeCorpus() {
+  let text = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  if (hasLogRoot) {
+    const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/upgrade-history-through-0.7.51.md");
+    if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
+  }
+  return text;
+}
+function verifyCorpus() {
+  let text = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  if (hasLogRoot) {
+    const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.7.51.md");
+    if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
+  }
+  return text;
 }
 function readLog(ver) {
   const p = logFile(ver);
@@ -560,7 +564,7 @@ assert(
   !fs.existsSync(path.join(skillRoot, "archive/VERIFY-history-through-0.2.27.md")),
   "VERIFY 0.2.27 not in harness-eng/archive pack"
 );
-const verifyMd = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+const verifyMd = verifyCorpus();
 assert(new RegExp(`验收记录（${VER_RE}）`).test(verifyMd) && new RegExp(`当前 \\*\\*${VER_RE}\\*\\*`).test(verifyMd), `VERIFY is ${EXPECTED}`);
 assert(!/当前 \*\*0\.6\.4\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.4");
 assert(!/当前 \*\*0\.6\.3\*\*/.test(verifyMd), "VERIFY current pin not leftover 0.6.3");
@@ -1101,8 +1105,8 @@ if (fs.existsSync(fixture)) {
   );
   assert(
     /acceptance 摘要|acceptance-check/.test(
-      fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")
-    ) && /fill-plan --residual/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+      upgradeCorpus()
+    ) && /fill-plan --residual/.test(upgradeCorpus()),
     "upgrade Done requires acceptance summary"
   );
   assert(
@@ -2312,7 +2316,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
       /commit-gate\|mcp-guard\|--direct/.test(syncTmpl27),
     "0.7.27 collectHookScriptRefs parses Codex adapter bare scripts"
   );
-  assert(new RegExp(`→ ${VER_RE}`).test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), `upgrade has → ${EXPECTED}`);
+  assert(new RegExp(`→ ${VER_RE}`).test(upgradeCorpus()), `upgrade has → ${EXPECTED}`);
 
   // NEW-1: spring+db module dry-run must not ReferenceError; preview has migration mode
   const tmpSpring = fs.mkdtempSync(path.join(os.tmpdir(), "harness-027-spring-"));
@@ -2602,7 +2606,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   }
 
   assert(
-    /0\.7\.27 → 0\.7\.28/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.27 → 0\.7\.28/.test(upgradeCorpus()),
     "0.7.28 upgrade.md migration section"
   );
 }
@@ -2692,7 +2696,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   );
 
   assert(
-    /0\.7\.28 → 0\.7\.29/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.28 → 0\.7\.29/.test(upgradeCorpus()),
     "0.7.29 upgrade.md migration section"
   );
 }
@@ -2827,7 +2831,7 @@ allow({ agent_message: "[api] probe" });
   }
 
   assert(
-    /0\.7\.29 → 0\.7\.30/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.29 → 0\.7\.30/.test(upgradeCorpus()),
     "0.7.30 upgrade.md migration section"
   );
   assert(/reapplyGateProfile/.test(fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8")), "0.7.30 fill-score uses reapplyGateProfile");
@@ -2949,7 +2953,7 @@ allow({ agent_message: "[api] probe" });
   }
 
   assert(
-    /0\.7\.30 → 0\.7\.31/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.30 → 0\.7\.31/.test(upgradeCorpus()),
     "0.7.31 upgrade.md migration section"
   );
   assert(
@@ -3038,39 +3042,39 @@ allow({ agent_message: "[api] probe" });
   );
 
   assert(
-    /0\.7\.31 → 0\.7\.32/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.31 → 0\.7\.32/.test(upgradeCorpus()),
     "0.7.32 upgrade.md migration section"
   );
   assert(
-    /0\.7\.32 → 0\.7\.33/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.32 → 0\.7\.33/.test(upgradeCorpus()),
     "0.7.33 upgrade.md migration section"
   );
   assert(
-    /0\.7\.33 → 0\.7\.34/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.33 → 0\.7\.34/.test(upgradeCorpus()),
     "0.7.34 upgrade.md migration section"
   );
   assert(
-    /0\.7\.34 → 0\.7\.35/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.34 → 0\.7\.35/.test(upgradeCorpus()),
     "0.7.35 upgrade.md migration section"
   );
   assert(
-    /0\.7\.35 → 0\.7\.36/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.35 → 0\.7\.36/.test(upgradeCorpus()),
     "0.7.36 upgrade.md migration section"
   );
   assert(
-    /0\.7\.36 → 0\.7\.37/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.36 → 0\.7\.37/.test(upgradeCorpus()),
     "0.7.37 upgrade.md migration section"
   );
   assert(
-    /0\.7\.37 → 0\.7\.38/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.37 → 0\.7\.38/.test(upgradeCorpus()),
     "0.7.38 upgrade.md migration section"
   );
   assert(
-    /0\.7\.38 → 0\.7\.39/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.38 → 0\.7\.39/.test(upgradeCorpus()),
     "0.7.39 upgrade.md migration section"
   );
   assert(
-    /0\.7\.39 → 0\.7\.40/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    /0\.7\.39 → 0\.7\.40/.test(upgradeCorpus()),
     "0.7.40 upgrade.md migration section"
   );
 }
@@ -3897,7 +3901,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
       /upgrade-diff/.test(harnessSrc38),
     "0.7.38 harness wires upgrade-diff"
   );
-  const upMd38 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd38 = upgradeCorpus();
   assert(
     /upgrade-diff\.json/.test(upMd38) && /不自动改用户文档/.test(upMd38),
     "0.7.38 upgrade.md documents upgrade-diff"
@@ -4133,7 +4137,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     fs.rmSync(dryTmp, { recursive: true, force: true });
   }
 
-  const upMd41 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd41 = upgradeCorpus();
   assert(
     /## 0\.7\.40 → 0\.7\.41/.test(upMd41) && /doc_todos/.test(upMd41),
     "0.7.41 upgrade.md migration section"
@@ -4194,7 +4198,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   );
   assert(/env:HARNESS_ENG_ROOT/.test(rsTmpl42), "0.7.42 refresh-score skips env sentinel");
 
-  const upMd42 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd42 = upgradeCorpus();
   assert(/## 0\.7\.41 → 0\.7\.42/.test(upMd42), "0.7.42 upgrade.md migration section");
   assert(logExists("0.7.42"), "0.7.42 _log note exists");
 }
@@ -4272,7 +4276,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     fs.rmSync(batchTmp, { recursive: true, force: true });
   }
 
-  const upMd43 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd43 = upgradeCorpus();
   assert(/## 0\.7\.42 → 0\.7\.43/.test(upMd43), "0.7.43 upgrade.md migration section");
   assert(/【旧仓升级】/.test(upMd43) && /CI 可忽略/.test(upMd43), "0.7.43 upgrade.md last_mode + wrappers notes");
   assert(logExists("0.7.43"), "0.7.43 _log note exists");
@@ -4397,12 +4401,12 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     fs.rmSync(covMig, { recursive: true, force: true });
   }
 
-  const upMd44 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd44 = upgradeCorpus();
   assert(/## 0\.7\.43 → 0\.7\.44/.test(upMd44), "0.7.44 upgrade.md migration section");
   assert(/migrate-docs|migrate_docs|--no-migrate-docs/.test(upMd44), "0.7.44 upgrade.md migrate-docs notes");
   assert(/migrate-policy/.test(upMd44) && /真相文档/.test(upMd44), "0.7.44 distinguishes migrate-policy vs migrate-docs");
   assert(logExists("0.7.44"), "0.7.44 _log note exists");
-  const verify44 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify44 = verifyCorpus();
   assert(/## 0\.7\.44 增量验收/.test(verify44), "0.7.44 VERIFY section");
 }
 
@@ -4546,18 +4550,18 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     "0.7.45 structural fingerprint ignores widths"
   );
 
-  const upMd45 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd45 = upgradeCorpus();
   assert(/## 0\.7\.44 → 0\.7\.45/.test(upMd45), "0.7.45 upgrade.md migration section");
   assert(/check-meta-stable/.test(upMd45), "0.7.45 upgrade.md meta-stable");
   assert(/HARNESS_RETIRE_WRAPPERS|refresh-score/.test(upMd45), "0.7.45 upgrade.md wrappers UX");
   assert(logExists("0.7.45"), "0.7.45 _log note exists");
-  const verify45 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify45 = verifyCorpus();
   assert(/## 0\.7\.45 增量验收/.test(verify45), "0.7.45 VERIFY section");
 }
 
 // --- 0.7.46 e2e-18 P3: docs DX · flag disambiguation · historical handoff note ---
 {
-  const upMd46 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd46 = upgradeCorpus();
   assert(/## 旗标消歧/.test(upMd46), "0.7.46 upgrade.md 旗标消歧 section");
   assert(
     /migrate-docs/.test(upMd46) && /migrate-policy/.test(upMd46) && /check-meta-stable/.test(upMd46),
@@ -4595,7 +4599,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     "0.7.46 fill-score cross-links migrate-docs"
   );
 
-  const verify46 = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const verify46 = verifyCorpus();
   assert(/## 0\.7\.46 增量验收/.test(verify46), "0.7.46 VERIFY section");
   assert(
     /## 0\.7\.41 增量验收[\s\S]*?历史/.test(verify46),
@@ -4769,7 +4773,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
     fs.rmSync(stubRoot, { recursive: true, force: true });
   }
 
-  const upMd47 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd47 = upgradeCorpus();
   assert(/## 0\.7\.46 → 0\.7\.47/.test(upMd47), "0.7.47 upgrade.md migration section");
   assert(/--migrate-coverage/.test(upMd47), "0.7.47 upgrade.md migrate-coverage row");
   const gloss47 = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
@@ -4788,7 +4792,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   );
   assert(logExists("0.7.47"), "0.7.47 _log note exists");
   assert(
-    /## 0\.7\.47 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    /## 0\.7\.47 增量验收/.test(verifyCorpus()),
     "0.7.47 VERIFY section"
   );
   assert(
@@ -5101,9 +5105,28 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   assert(/score-latest\.prev\.json/.test(scoreSrc48), "0.7.48 score-latest.prev backup");
   assert(/mature_compat/.test(scoreSrc48), "0.7.48 fill-score mature_compat");
 
-  const upMd48 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd48 = upgradeCorpus();
   assert(/0\.7\.48|厚仓|dry-run/.test(upMd48), "0.7.48 upgrade.md notes");
   assert(logExists("0.7.48"), "0.7.48 _log note exists");
+}
+
+// --- 0.7.52: full fix train pins ---
+{
+  assert(/isCliMain/.test(fs.readFileSync(path.join(skillRoot, "scripts/questions-next.mjs"), "utf8")), "0.7.52 questions-next isCliMain");
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/_meta/RENDER-REGISTRIES.md")),
+    "0.7.52 RENDER-REGISTRIES.md"
+  );
+  assert(!fs.existsSync(path.join(skillRoot, "scripts/lib/merge-truth.mjs")), "0.7.52 merge-truth orphan gone");
+  assert(!fs.existsSync(path.join(skillRoot, "docs/harness-eng/score-latest.json")), "0.7.52 no packaged score-latest");
+  const fillScoreSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(!/skill_patch:\s*"0\.2\.16"/.test(fillScoreSrc), "0.7.52 dropped skill_patch 0.2.16");
+  assert(/mature_compat/.test(fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8")), "0.7.52 mature_compat in questions");
+  assert(/pipeline-awaits-confirm/.test(fs.readFileSync(path.join(skillRoot, "evals/eval.yaml"), "utf8")), "0.7.52 eval pipeline case");
+  assert(/session-live-no-pretend/.test(fs.readFileSync(path.join(skillRoot, "evals/eval.yaml"), "utf8")), "0.7.52 eval session-live case");
+  assert(/confirm-then-write-intent/.test(fs.readFileSync(path.join(skillRoot, "evals/eval.yaml"), "utf8")), "0.7.52 eval confirm-write case");
+  assert(/## 0\.7\.51 → 0\.7\.52/.test(upgradeCorpus()), "0.7.52 upgrade migration section");
+  assert(logExists("0.7.52"), "0.7.52 _log note exists");
 }
 
 // --- 0.7.51: SQL migration naming dual-track (sms-ai §4.7 v3.54 reflux) ---
@@ -5252,7 +5275,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   assert(!/_log[\/\\]/.test(verifyMd750), "0.7.50 VERIFY purged");
   const agentIdx750 = fs.readFileSync(path.join(skillRoot, "AGENT-INDEX.md"), "utf8");
   assert(/仓库级版本档案/.test(agentIdx750) && /「仓库级档案与发版」/.test(agentIdx750), "0.7.50 AGENT-INDEX release step repo-archive");
-  const upMd750 = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+  const upMd750 = upgradeCorpus();
   assert(/## 0\.7\.49 → 0\.7\.50/.test(upMd750), "0.7.50 upgrade migration section");
   assert(/hasLogRoot/.test(upMd750) && /门禁包裹/.test(upMd750), "0.7.50 upgrade gating convention note");
 

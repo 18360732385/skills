@@ -17,6 +17,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { parse as parseYaml } from "./lib/yaml.mjs";
+import { isCliMain } from "./lib/cli-main.mjs";
+import { parseJsonText, readJsonFile } from "./lib/json-read.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = path.join(__dirname, "..", "questions.yaml");
@@ -34,9 +36,9 @@ function parseArgs(argv) {
 
 function loadAnswers(raw) {
   if (!raw) return {};
-  if (raw.trim().startsWith("{")) return JSON.parse(raw);
-  const abs = path.resolve(raw);
-  return JSON.parse(fs.readFileSync(abs, "utf8"));
+  const stripped = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+  if (stripped.trim().startsWith("{")) return parseJsonText(stripped, "--answers");
+  return readJsonFile(path.resolve(raw), "--answers");
 }
 
 function ladderOrd(l) {
@@ -268,10 +270,7 @@ function main() {
   );
 }
 
-import { pathToFileURL } from "url";
-const isMain =
-  process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url;
-if (isMain) {
+if (isCliMain(import.meta.url)) {
   try {
     main();
   } catch (e) {

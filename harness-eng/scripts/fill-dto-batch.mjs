@@ -186,7 +186,8 @@ function enrichBlock(block, sourceRoots) {
       }
     }
     if (localChange) {
-      text = text.replace(re, `$1${body}`);
+      // Use replacer fn so `$` in body (Java comments) is not treated as replace patterns
+      text = text.replace(re, (_m, g1) => `${g1}${body}`);
     }
   };
 

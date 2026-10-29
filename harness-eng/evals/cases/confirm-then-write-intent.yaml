@@ -1,0 +1,46 @@
+id: confirm-then-write-intent
+title: 确认后允许写盘意图（正向闸门）
+description: |
+  第一轮出示 WritePlan；第二轮用户明确「确认」后，Agent 应表达将执行写盘
+  （或实际调用 harness），不得继续空等确认。本用例验证正向确认路径意图，
+  不强制断言磁盘产物（夹具/引擎差异大）。
+
+context:
+  repo_fixture: scripts/fixtures/new-code
+  git:
+    init: true
+
+input:
+  turns:
+    - role: user
+      content: |
+        点名 harness-eng：请给当前仓库落地（land）到 L0。
+        先探测并出示 WritePlan；在我确认前不要写盘。
+      post_condition:
+        must_contain_any: ["WritePlan", "写盘计划", "产物预览", "确认"]
+        on_fail: skip_remaining
+    - role: user
+      content: |
+        确认。请按计划执行写盘。
+
+constraints:
+  timeout_seconds: 900
+  max_turns: 28
+
+expect:
+  must_not_contain:
+    - "全部推荐即写盘"
+
+judge:
+  type: rule_based
+  success:
+    - turn_response_contains:
+        turn: 1
+        contains_any: ["WritePlan", "写盘计划", "产物预览"]
+    - turn_response_contains:
+        turn: 2
+        contains_any: ["harness.mjs", "写盘", "执行", "land", "render", "已写入", "正在写入"]
+  failure:
+    - turn_response_contains:
+        turn: 2
+        contains_any: ["还没有确认", "仍须确认后才能写", "请再次确认后我才能写盘"]

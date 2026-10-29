@@ -163,7 +163,7 @@ node scripts/session-dash.mjs --root <TARGET> \
 
 ## CLI
 
-`node scripts/session-dash.mjs --help` 列出选项。`--intent meta` 省略输出。目标仓无 `score-latest.json` 且诊断空时，默认输出**精简**仪表盘（标题带「未打分」、下一动作行、与全量同款「详情请查询仪表盘」脚注；非空四台表），减噪；有 score 仍四台全量。
+`node scripts/session-dash.mjs --help` 列出选项。`--intent meta` 省略输出。目标仓无 `score-latest.json` 且诊断空时，默认输出**精简**仪表盘（标题带「未打分」、下一动作行、与全量同款「详情请查询仪表盘」脚注；非空四句块），减噪；有 score 仍四句全量。宿主面细节进 HTML，不进会话脚注。
 
 ## Trae / 多宿主缺口用语
 

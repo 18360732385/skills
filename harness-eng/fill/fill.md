@@ -30,7 +30,7 @@
 | 值 | 含义 | 何时 |
 |---|---|---|
 | **agents**【推荐】 | 多 Agent + fill-plan；跳过 auto SSOT | 默认 |
-| `hybrid` | 可选 `--work-only` 薄草稿 + agents | 用户明确要草稿加速 |
+| `hybrid` | agents 为主（薄草稿脚本已随 auto 归档移除，0.7.50） | 用户明确要草稿加速时仍走 agents→acceptance→merge |
 | `auto` | **已归档移除**（0.7.50 脚本下线） | 不可选用 |
 
 ## 与 seed 边界

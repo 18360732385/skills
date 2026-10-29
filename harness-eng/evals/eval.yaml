@@ -25,6 +25,9 @@ cases:
     # —— 路由 / 确认闸门 ——
     - evals/cases/audit-no-write.yaml
     - evals/cases/land-awaits-confirm.yaml
+    - evals/cases/pipeline-awaits-confirm.yaml
+    - evals/cases/confirm-then-write-intent.yaml
+    - evals/cases/session-live-no-pretend.yaml
     - evals/cases/mature-defaults-audit.yaml
     - evals/cases/partial-defaults-resume.yaml
     - evals/cases/all-recommend-still-needs-confirm.yaml

@@ -35,6 +35,7 @@ import {
 } from "./lib/field-drift.mjs";
 import { readGitHead, isInventoryStale } from "./lib/git-head.mjs";
 import { inventoryArgv } from "./lib/refresh.mjs";
+import { readJsonFile, parseFillScoreJson } from "./lib/json-read.mjs";
 import { spawnSync } from "child_process";
 import {
   applyStrictGateDefaults,
@@ -231,16 +232,26 @@ function buildSuggestUpgrade(report, metaLadder) {
   }
   return {
     next_ladder,
-    skill_patch: "0.2.16",
     reason,
   };
 }
 
 function walkMd(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
-  for (const name of fs.readdirSync(dir)) {
+  let names;
+  try {
+    names = fs.readdirSync(dir);
+  } catch {
+    return acc;
+  }
+  for (const name of names) {
     const p = path.join(dir, name);
-    const st = fs.statSync(p);
+    let st;
+    try {
+      st = fs.statSync(p);
+    } catch {
+      continue;
+    }
     if (st.isDirectory()) walkMd(p, acc);
     else if (/\.md$/i.test(name) && name.toUpperCase() !== "README.MD") acc.push(p);
   }
@@ -555,12 +566,6 @@ function domainFiles(root, domain) {
   else if (domain === "redis") files = walkMd(path.join(base, "keys"));
   else if (domain === "jobs") files = walkMd(path.join(base, sub || "tasks"));
   else if (sub) files = walkMd(path.join(base, sub));
-  // also collect docs/func/frontend for morph listing exclusion at coverage only
-  if (domain === "func") {
-    const fe = walkMd(path.join(base, "frontend"));
-    // coverage skips these; morph callers use domainFiles which still may include modules only
-    void fe;
-  }
   if (domain === "func") files = files.filter((f) => !isFrontendFuncDoc(f));
   return files;
 }
@@ -587,7 +592,7 @@ function loadJson(p) {
   if (!p) return null;
   const abs = path.resolve(p);
   if (!fs.existsSync(abs)) throw new Error(`file missing: ${abs}`);
-  return JSON.parse(fs.readFileSync(abs, "utf8"));
+  return readJsonFile(abs, abs);
 }
 
 function coverageFromInventory(inventory, docEndpointCount) {
@@ -733,15 +738,7 @@ function liveInventoryScan(root, domain) {
     { encoding: "utf8", cwd: root, maxBuffer: 20 * 1024 * 1024, windowsHide: true }
   );
   if (r.status !== 0 && r.status !== 2) return null;
-  const out = String(r.stdout || "");
-  const i = out.indexOf("{");
-  const j = out.lastIndexOf("}");
-  if (i < 0 || j <= i) return null;
-  try {
-    return JSON.parse(out.slice(i, j + 1));
-  } catch {
-    return null;
-  }
+  return parseFillScoreJson(r.stdout);
 }
 
 /** Nav-only API index (links to -part files, no real paths) — exclude from quality avg. */
