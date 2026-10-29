@@ -62,6 +62,8 @@ alwaysApply: false
 
 - **命名、表文档演进、`_change.sql`、头注释、flyway vs 人工执行** → 以 `docs/db/db.md`「维护约定」为准；本 rule 不另写死源仓正则。
 - `flyway`：自动 / 半自动迁移；只追加新版本，禁改已发布脚本。默认文件名 `V{n}__snake.sql`（见 db.md）。
+- **版本号账本纪律**：**禁止**把「当前最高号 / 最新时间戳」写死进 `AGENTS.md` / `README.md` / `docs/db/db.md`（migration 目录即清单；索引版本区间说明仅规则本身变化时更新）。
+- （可选双轨）存量旧格式「永久保留、禁止新写」：params `migration_old_name_re`（domains.yaml `db.hook_old_name_re`）下发旧格式正则，soft-gate 对新增/改名命中旧格式给专属软提醒；生成骨架用 `scripts/new_migration.py`（若装 new-migration-py 包）。
 - `manual_sql`：**无** Flyway 依赖；发版 / 新环境须**人工按序**执行；`*_change.sql` 仅追溯 / 增量草稿；勿伪造 `flyway_schema_history`。
 - `none`：无迁移脚本（表结构靠 `table/` 真相维护）。
 - 建表语句块 = 变更后**完整** CREATE TABLE；下一号以目录最高号 +1 为准，**勿**把「当前最高号」写进 AGENTS/README。

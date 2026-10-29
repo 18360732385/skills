@@ -71,6 +71,14 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.50 → 0.7.51 迁移要点
+
+1. **meta**：`skill_version` → `0.7.51`
+2. **soft-gate 双轨**：默认行为不变（`MIGRATION_OLD_NAME_RE=null` 单轨）；厚 manual_sql 仓在 `domains.yaml` `db.hook_old_name_re` 或 params `migration_old_name_re` 下发存量旧格式正则后，commit 软提醒区分「仍用旧格式」与「不合规」；命名检查扩展到改名（R）
+3. **可选包**：`include_optional` 加 `migration-naming-lib` + `new-migration-py` 得发号 CLI（`scripts/new_migration.py --type DDL|DML "说明"` / `--pair`）；`soft-gate` `hook_new_script` 可指向它
+4. **最高号禁令**：rule 13 / db.md 新增「勿把当前最高号/最新时间戳写死进 AGENTS/README/db.md」——存量仓若已写死须人工移除（migration 目录即清单）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.51`）后再 sync
+
 ## 0.7.49 → 0.7.50 迁移要点
 
 1. **meta**：`skill_version` → `0.7.50`

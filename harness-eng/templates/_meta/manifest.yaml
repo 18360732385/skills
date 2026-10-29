@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.50"
+version: "0.7.51"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -57,6 +57,9 @@ placeholders:
   - MIGRATION_ENVS
   - MIGRATION_ENV_STATUS_CMD
   - MIGRATION_NEW_SCRIPT
+  - MIGRATION_OLD_NAME_RE
+  - MIGRATION_DIR_REL
+  - MIGRATION_TZ
   - MYSQL_GUARD_SERVERS
   - MIGRATION_NAME_RE
   - JOBS_YML_RE
@@ -185,6 +188,19 @@ files:
     target: scripts/apifox/upgrade-field-tables-to-7col.mjs
     optional: true
     note: 存量 5 列字段表批量升 7 列（一次性工具；Include when Q_APIFOX=yes 且存量文档为旧 5 列）
+  - id: migration-naming-lib
+    ladder: L1
+    template: scripts/migration_naming.py.tmpl
+    target: scripts/migration_naming.py
+    placeholders: [MIGRATION_DIR_REL, MIGRATION_TZ]
+    optional: true
+    note: 时间戳双轨发号契约库（存量旧格式正则按仓调整/可置 None；Include when Q_DB_MIGRATION=manual_sql 且选用 new-migration-py 包）
+  - id: new-migration-py
+    ladder: L1
+    template: scripts/new_migration.py.tmpl
+    target: scripts/new_migration.py
+    optional: true
+    note: 迁移骨架生成 CLI（--type DDL|DML / --pair 同毫秒双轨；依赖 migration-naming-lib；soft-gate hook_new_script 可指 scripts/new_migration.py）
 
   # L2
   - id: kb-readme

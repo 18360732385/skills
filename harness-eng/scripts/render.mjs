@@ -444,6 +444,14 @@ function ensureStandardPlaceholders(params, placeholders, root) {
   set("GLOB_FRONTEND", "**/frontend/**,**/src/**");
   set("STACK_BADGES", "");
   set("OPENAPI_BRIDGE_TIP", "");
+  // 0.7.50: Python 生成器包（migration_naming.py.tmpl）占位默认
+  set(
+    "MIGRATION_DIR_REL",
+    String(
+      params.migration_dir_rel || params.MIGRATION_DIR_REL || "src/main/resources/db/migration"
+    ).replace(/\\/g, "/")
+  );
+  set("MIGRATION_TZ", String(params.migration_tz || params.MIGRATION_TZ || "Asia/Shanghai"));
   // 0.7.32 LT-6: docs tree + skill list follow enabled domains (no orphan redis/jobs)
   const domainList = Array.isArray(params.domains)
     ? params.domains.map((d) => String(d).toLowerCase())

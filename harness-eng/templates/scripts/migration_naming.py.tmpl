@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+"""db/migration 文件名契约（时间戳双轨：存量旧格式 + 新时间戳_0|_1 格式）。
+
+SSOT：`docs/db/db.md`「迁移命名」/ rule 13。供本仓迁移工具与 `new_migration.py` 共用。
+
+新格式：V{yyMMddHHmmssSSS}_{0|1}__{emailLocal}__{说明}.sql
+  _0 = DDL，_1 = DML；账本 version = V{ts}_{0|1}（不含 author / 说明）
+
+TODO(harness-eng): 按仓调整——
+  - MIG_DIR_REL / TIMEZONE 由 land 渲染（params.migration_dir_rel / migration_tz 可覆盖）
+  - OLD_RE：存量旧格式正则；无存量轨的仓置 None（单轨降级）；有存量轨时「永久保留、禁止新写」
+  - DESC_MAX_CODEPOINTS / 轨位约定（DDL=_0 / DML=_1）如与仓规不符可直接改本文件
+"""
+from __future__ import annotations
+
+import re
+import subprocess
+from datetime import datetime, timedelta
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+TIMEZONE = ZoneInfo("{{MIGRATION_TZ}}")
+
+# 存量旧格式（永久保留，禁止新写；无存量轨可置 None）
+# TODO(harness-eng): 按仓改写；例 r"^V(\d{4})_(\d)__(DDL|DML)__([a-z0-9_]+)\.sql$"
+OLD_RE = re.compile(r"^V(\d{4})_(\d)__(DDL|DML)__([a-z0-9_]+)\.sql$")
+
+# 新格式：VyyMMddHHmmssSSS_0|1__emailLocal__说明.sql
+NEW_RE = re.compile(
+    r"^V(\d{15})_([01])__([a-zA-Z0-9._-]+)__(.+)\.sql$"
+)
+
+KIND_TO_DIGIT = {"DDL": "0", "DML": "1"}
+DIGIT_TO_KIND = {"0": "DDL", "1": "DML"}
+
+# 说明段：中文 / 字母数字 / _ - . ；禁空格与 __；≤15 Unicode 码点
+DESC_CHAR_RE = re.compile(r"^[\w\u4e00-\u9fff.-]+$", re.UNICODE)
+DESC_MAX_CODEPOINTS = 15
+
+MIG_DIR_REL = Path("{{MIGRATION_DIR_REL}}")
+
+
+def is_old_name(name: str) -> bool:
+    return bool(OLD_RE and OLD_RE.match(name))
+
+
+def is_new_name(name: str) -> bool:
+    m = NEW_RE.match(name)
+    if not m:
+        return False
+    try:
+        validate_desc(m.group(4))
+    except ValueError:
+        return False
+    return True
+
+
+def is_valid_name(name: str) -> bool:
+    return is_old_name(name) or is_new_name(name)
+
+
+def validate_desc(desc: str) -> str:
+    """校验说明段；合法则原样返回，否则抛 ValueError。"""
+    if not desc:
+        raise ValueError("说明不能为空")
+    if " " in desc or "\t" in desc:
+        raise ValueError("说明禁止空格")
+    if "__" in desc:
+        raise ValueError("说明禁止包含 __（与段分隔符冲突）")
+    if len(desc) > DESC_MAX_CODEPOINTS:
+        raise ValueError(
+            f"说明超过 {DESC_MAX_CODEPOINTS} 个 Unicode 码点（当前 {len(desc)}）"
+        )
+    if not DESC_CHAR_RE.match(desc):
+        raise ValueError(
+            "说明仅允许中文、字母、数字、下划线、连字符、点号"
+        )
+    return desc
+
+
+def parse_name(name: str) -> dict:
+    """解析文件名；不合规抛 ValueError。"""
+    if OLD_RE:
+        m = OLD_RE.match(name)
+        if m:
+            return {
+                "track": "old",
+                "dddd": int(m.group(1)),
+                "sub": int(m.group(2)),
+                "kind": m.group(3),
+                "type_digit": None,
+                "slug": m.group(4),
+                "ts": None,
+                "author": None,
+                "desc": m.group(4),
+            }
+    m = NEW_RE.match(name)
+    if m:
+        digit = m.group(2)
+        desc = validate_desc(m.group(4))
+        return {
+            "track": "new",
+            "dddd": None,
+            "sub": None,
+            "kind": DIGIT_TO_KIND[digit],
+            "type_digit": digit,
+            "slug": None,
+            "ts": m.group(1),
+            "author": m.group(3),
+            "desc": desc,
+        }
+    raise ValueError(
+        f"迁移文件名不合规: {name}（存量旧格式或 "
+        f"新格式 VyyMMddHHmmssSSS_0|1__author__说明.sql，见 docs/db/db.md「迁移命名」）"
+    )
+
+
+def version_of(name: str) -> str:
+    """账本主键：旧轨 Vdddd_s；新轨 V{ts}_{0|1}。"""
+    p = parse_name(name)
+    if p["track"] == "old":
+        return f"V{p['dddd']:04d}_{p['sub']}"
+    return f"V{p['ts']}_{p['type_digit']}"
+
+
+def kind_of(name: str) -> str:
+    return parse_name(name)["kind"]
+
+
+def sort_key(name: str) -> tuple:
+    """显式双轨：全部旧格式在前；新格式按 ts → 类型位 0 先于 1 → 文件名。"""
+    p = parse_name(name)
+    if p["track"] == "old":
+        kind_ord = 0 if p["kind"] == "DDL" else 1
+        return (0, p["dddd"], p["sub"], kind_ord, name)
+    return (1, int(p["ts"]), int(p["type_digit"]), name)
+
+
+def git_config(key: str, cwd: Path | None = None) -> str:
+    try:
+        out = subprocess.run(
+            ["git", "config", key],
+            capture_output=True,
+            text=True,
+            cwd=cwd,
+            timeout=5,
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except Exception:
+        pass
+    return ""
+
+
+def email_local_part(cwd: Path | None = None) -> str:
+    email = git_config("user.email", cwd)
+    if not email or "@" not in email:
+        raise SystemExit(
+            "无法从 git config user.email 取 local-part；请先配置 user.email"
+        )
+    local = email.split("@", 1)[0]
+    if not re.fullmatch(r"[a-zA-Z0-9._-]+", local):
+        raise SystemExit(
+            f"user.email local-part 不合规（须 [a-zA-Z0-9._-]+）: {local}"
+        )
+    return local
+
+
+def git_user_name(cwd: Path | None = None) -> str:
+    return git_config("user.name", cwd) or "unknown"
+
+
+def now_tz() -> datetime:
+    return datetime.now(TIMEZONE)
+
+
+def format_ts(dt: datetime) -> str:
+    """yyMMddHHmmssSSS（毫秒三位）。"""
+    ms = dt.microsecond // 1000
+    return dt.strftime("%y%m%d%H%M%S") + f"{ms:03d}"
+
+
+def ts_to_header_time(ts: str) -> str:
+    """文件名时间戳 → 文件头「时间: YYYY-MM-DD HH:MM:SS」（忽略毫秒展示到秒）。"""
+    if len(ts) != 15 or not ts.isdigit():
+        raise ValueError(f"非法时间戳: {ts}")
+    yy, mo, dd = int(ts[0:2]), int(ts[2:4]), int(ts[4:6])
+    hh, mi, ss = int(ts[6:8]), int(ts[8:10]), int(ts[10:12])
+    year = 2000 + yy
+    return f"{year:04d}-{mo:02d}-{dd:02d} {hh:02d}:{mi:02d}:{ss:02d}"
+
+
+def bump_ts(ts: str, delta_ms: int = 1) -> str:
+    """时间戳字符串加 delta 毫秒（按墙钟进位）。"""
+    if len(ts) != 15 or not ts.isdigit():
+        raise ValueError(f"非法时间戳: {ts}")
+    yy, mo, dd = int(ts[0:2]), int(ts[2:4]), int(ts[4:6])
+    hh, mi, ss = int(ts[6:8]), int(ts[8:10]), int(ts[10:12])
+    ms = int(ts[12:15])
+    year = 2000 + yy
+    dt = datetime(year, mo, dd, hh, mi, ss, ms * 1000, tzinfo=TIMEZONE)
+    dt2 = dt + timedelta(milliseconds=delta_ms)
+    return format_ts(dt2)
+
+
+def existing_ts_for_type_digit(mig_dir: Path, digit: str) -> list[str]:
+    """目录内该类型位（跨作者）的新格式时间戳列表。"""
+    if digit not in DIGIT_TO_KIND:
+        raise ValueError(f"类型位须为 0 或 1: {digit}")
+    out: list[str] = []
+    for p in mig_dir.glob("V*.sql"):
+        try:
+            parsed = parse_name(p.name)
+        except ValueError:
+            continue
+        if parsed["track"] == "new" and parsed["type_digit"] == digit:
+            out.append(parsed["ts"])
+    return out
+
+
+def next_free_timestamp(
+    mig_dir: Path,
+    author: str,
+    kind: str,
+    desc: str,
+    start_ts: str | None = None,
+) -> str:
+    """发号：不小于该类型位（跨作者）已有最大戳+1，且 version / 文件名空闲。"""
+    validate_desc(desc)
+    if kind not in KIND_TO_DIGIT:
+        raise ValueError(f"类型须为 DDL 或 DML: {kind}")
+    digit = KIND_TO_DIGIT[kind]
+    ts = start_ts or format_ts(now_tz())
+    existing = existing_ts_for_type_digit(mig_dir, digit)
+    if existing:
+        max_ts = max(existing)
+        if ts <= max_ts:
+            ts = bump_ts(max_ts, 1)
+    for _ in range(10_000):
+        filename = build_filename(ts, author, kind, desc)
+        version = f"V{ts}_{digit}"
+        if (mig_dir / filename).exists():
+            ts = bump_ts(ts, 1)
+            continue
+        conflict = False
+        for p in mig_dir.glob("V*.sql"):
+            try:
+                if version_of(p.name) == version:
+                    conflict = True
+                    break
+            except ValueError:
+                continue
+        if not conflict:
+            return ts
+        ts = bump_ts(ts, 1)
+    raise SystemExit("无法分配空闲时间戳（重试耗尽）")
+
+
+def build_filename(ts: str, author: str, kind: str, desc: str) -> str:
+    validate_desc(desc)
+    if kind not in KIND_TO_DIGIT:
+        raise ValueError(f"类型须为 DDL 或 DML: {kind}")
+    if not re.fullmatch(r"[a-zA-Z0-9._-]+", author):
+        raise ValueError(f"author 不合规: {author}")
+    if len(ts) != 15 or not ts.isdigit():
+        raise ValueError(f"时间戳须 15 位数字: {ts}")
+    digit = KIND_TO_DIGIT[kind]
+    return f"V{ts}_{digit}__{author}__{desc}.sql"
+
+
+def assert_unique_versions(names: list[str]) -> None:
+    """同 version 多文件 → 失败。"""
+    seen: dict[str, str] = {}
+    for name in names:
+        v = version_of(name)
+        if v in seen:
+            raise SystemExit(
+                f"迁移 version 冲突: {v}\n  - {seen[v]}\n  - {name}"
+            )
+        seen[v] = name

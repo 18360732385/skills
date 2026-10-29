@@ -11,6 +11,7 @@
  * 渲染占位：CONTRACT_CHECKS_JS（由 domains.yaml hook_* 段生成）、DB_MIGRATION_DIR、
  * MIGRATION_ENVS（空串=关闭环境提醒，flyway 仓用）、MIGRATION_ENV_STATUS_CMD（空=禁用
  * dev 账本自动 status，失败/超时降级文字提醒）、MIGRATION_NEW_SCRIPT（空=禁用命名软提醒）、
+ * MIGRATION_OLD_NAME_RE（null=单轨；双轨仓识别「新写了存量旧格式」给专属文案）、
  * JOBS_YML_RE、CODE_PREFIXES。
  */
 const { execSync, execFileSync } = require("child_process");
@@ -26,6 +27,10 @@ const MIGRATION_NAME_RE = new RegExp({{MIGRATION_NAME_RE}});
 const MIGRATION_ENV_STATUS_CMD = "{{MIGRATION_ENV_STATUS_CMD}}";
 /** 迁移命名生成脚本（仅软提醒）；空串 = 禁用 */
 const MIGRATION_NEW_SCRIPT = "{{MIGRATION_NEW_SCRIPT}}";
+/** 存量旧格式正则源（双轨仓识别「旧格式禁止新写」）；null = 单轨（仅按 MIGRATION_NAME_RE） */
+const MIGRATION_OLD_NAME_RE_SRC = {{MIGRATION_OLD_NAME_RE}};
+const MIGRATION_OLD_NAME_RE =
+  MIGRATION_OLD_NAME_RE_SRC == null ? null : new RegExp(MIGRATION_OLD_NAME_RE_SRC);
 
 const CODE_PREFIXES = "{{CODE_PREFIXES}}"
   .split(",")
@@ -215,7 +220,13 @@ function collectMigrationEnvReminders(root, files) {
   return lines;
 }
 
-/** 迁移命名软提醒：新增（A）migration 未命中命名规范 → 荐用生成脚本；MIGRATION_NEW_SCRIPT 空=禁用。 */
+/**
+ * 迁移命名软提醒（0.7.50 双轨）：
+ * - 新增（A）/改名（R）的新路径都查；存量改内容（M）不查（降噪）；
+ * - 命中旧格式（MIGRATION_OLD_NAME_RE）→ 专属文案「存量可保留、新文件请用新格式」；
+ * - 不中新格式（MIGRATION_NAME_RE）→ 独立「不合规」文案；
+ * - MIGRATION_NEW_SCRIPT 空 = 整体禁用（单双轨均不提醒）。
+ */
 function collectMigrationNamingReminders(root) {
   if (!MIGRATION_NEW_SCRIPT) return [];
   let rows = [];
@@ -227,21 +238,42 @@ function collectMigrationNamingReminders(root) {
   } catch {
     return [];
   }
-  const bad = [];
+  const oldAdded = [];
+  const invalid = [];
   for (const row of rows) {
     const cols = row.split(/\t+/);
     if (cols.length < 2) continue;
     const status = cols[0].charAt(0);
-    const p = normalizePath(cols[cols.length - 1]);
-    if (status !== "A" || !isMigrationSql(p)) continue;
-    if (!MIGRATION_NAME_RE.test(path.basename(p))) bad.push(p);
+    const p = normalizePath(cols[cols.length - 1]); // R 状态三列时取新路径
+    if ((status !== "A" && status !== "R") || !isMigrationSql(p)) continue;
+    const base = path.basename(p);
+    if (MIGRATION_OLD_NAME_RE && MIGRATION_OLD_NAME_RE.test(base)) {
+      oldAdded.push(p);
+    } else if (!MIGRATION_NAME_RE.test(base)) {
+      invalid.push(p);
+    }
   }
-  if (bad.length === 0) return [];
-  return [
-    "【迁移命名】新增 migration 未命中本仓命名规范（" + MIGRATION_NAME_RE.source + "）：",
-    ...bad.map((p) => `  - ${p}`),
-    `建议用生成脚本 ${MIGRATION_NEW_SCRIPT} 产出规范文件名（软提醒，不拦截）。`,
-  ];
+  const lines = [];
+  if (oldAdded.length) {
+    lines.push(
+      "【迁移命名】新增/改名文件仍用存量旧格式（存量可保留，新文件请用新格式 " +
+        MIGRATION_NAME_RE.source +
+        "）：",
+      ...oldAdded.map((p) => `  - ${p}`)
+    );
+  }
+  if (invalid.length) {
+    lines.push(
+      "【迁移命名】文件名不合规（须 " + MIGRATION_NAME_RE.source + "）：",
+      ...invalid.map((p) => `  - ${p}`)
+    );
+  }
+  if (lines.length) {
+    lines.push(
+      `建议用生成脚本 ${MIGRATION_NEW_SCRIPT} 产出规范文件名（软提醒，不拦截）。`
+    );
+  }
+  return lines;
 }
 
 function collectContractReminders(root, staged) {

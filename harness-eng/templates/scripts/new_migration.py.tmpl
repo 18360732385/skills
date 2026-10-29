@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+"""生成符合命名契约的 db/migration SQL 骨架。
+
+用法：
+  python scripts/new_migration.py --type DML "变更提示词"
+  python scripts/new_migration.py --pair "add_xxx"   # 同毫秒 _0(DDL) + _1(DML)
+
+时区与目录见 scripts/migration_naming.py（land 渲染；可按仓调整）；
+提交人取 git user.email 的 @ 前 local-part。
+文件名：V{yyMMddHHmmssSSS}_{0|1}__{emailLocal}__{说明}.sql（0=DDL，1=DML；说明≤15）
+详见 docs/db/db.md「迁移命名」/ rule 13。
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from migration_naming import (
+    MIG_DIR_REL,
+    build_filename,
+    email_local_part,
+    git_config,
+    git_user_name,
+    next_free_timestamp,
+    ts_to_header_time,
+    validate_desc,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
+MIG_DIR = ROOT / MIG_DIR_REL
+
+
+def render_header(
+    filename: str,
+    ts: str,
+    author_name: str,
+    author_email: str,
+    desc: str,
+    kind: str,
+) -> str:
+    header_time = ts_to_header_time(ts)
+    return (
+        "-- =============================================================================\n"
+        f"-- 文件: {filename}\n"
+        f"-- 时间: {header_time}\n"
+        f"-- 撰写人: {author_name} ({author_email})\n"
+        f"-- 目的: {desc}\n"
+        f"-- 类型: {kind}（本文件禁止"
+        + (" INSERT/UPDATE/DELETE" if kind == "DDL" else " CREATE/ALTER/DROP")
+        + "）\n"
+        "-- =============================================================================\n"
+        "\n"
+        "-- TODO\n"
+    )
+
+
+def create_one(kind: str, desc: str, start_ts: str | None = None) -> tuple[Path, str]:
+    validate_desc(desc)
+    if kind not in ("DDL", "DML"):
+        raise SystemExit(f"--type 须为 DDL 或 DML: {kind}")
+    if not MIG_DIR.is_dir():
+        raise SystemExit(f"迁移目录不存在: {MIG_DIR}")
+    author = email_local_part(ROOT)
+    email = git_config("user.email", ROOT)
+    name = git_user_name(ROOT)
+    ts = next_free_timestamp(MIG_DIR, author, kind, desc, start_ts=start_ts)
+    filename = build_filename(ts, author, kind, desc)
+    path = MIG_DIR / filename
+    path.write_text(
+        render_header(filename, ts, name, email, desc, kind),
+        encoding="utf-8",
+    )
+    return path, ts
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="生成 db/migration 新格式骨架（V{ts}_{0|1}__author__说明）"
+    )
+    parser.add_argument(
+        "--type",
+        choices=("DDL", "DML"),
+        help="单文件类型（与 --pair 互斥；DDL→_0，DML→_1）",
+    )
+    parser.add_argument(
+        "--pair",
+        action="store_true",
+        help="同毫秒生成 DDL(_0) + DML(_1) 两个文件（说明相同）",
+    )
+    parser.add_argument(
+        "desc",
+        help="中英文简短说明（≤15 Unicode 码点；禁空格与 __）",
+    )
+    args = parser.parse_args()
+
+    if args.pair and args.type:
+        raise SystemExit("--pair 与 --type 互斥")
+    if not args.pair and not args.type:
+        raise SystemExit("请指定 --type DDL|DML 或 --pair")
+
+    try:
+        validate_desc(args.desc)
+    except ValueError as e:
+        print(f"说明不合规: {e}", file=sys.stderr)
+        return 1
+
+    if args.pair:
+        # 同毫秒：先占 _0，再强制同一 ts 写 _1（version 因类型位不同而不撞）
+        p1, ts1 = create_one("DDL", args.desc)
+        p2, ts2 = create_one("DML", args.desc, start_ts=ts1)
+        if ts2 != ts1:
+            # 若 _1 侧该戳已被占用则 next_free 会 +ms；仍可接受
+            pass
+        print(p1)
+        print(p2)
+        print(f"OK  DDL={ts1}_0  DML={ts2}_1")
+        return 0
+
+    path, ts = create_one(args.type, args.desc)
+    digit = "0" if args.type == "DDL" else "1"
+    print(path)
+    print(f"OK  {args.type}={ts}_{digit}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

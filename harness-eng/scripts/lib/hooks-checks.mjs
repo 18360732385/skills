@@ -502,6 +502,17 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     (registry.db && registry.db.hook_new_script) ||
     "";
   put("MIGRATION_NEW_SCRIPT", String(migNewScript));
+  // 0.7.50: 双轨旧格式正则（可选；空 = null 单轨）；registry.db.hook_old_name_re / params.migration_old_name_re
+  const oldNameReRaw =
+    (params && (params.migration_old_name_re || params.MIGRATION_OLD_NAME_RE)) ||
+    (ph.MIGRATION_OLD_NAME_RE != null && String(ph.MIGRATION_OLD_NAME_RE)) ||
+    (registry.db && registry.db.hook_old_name_re) ||
+    "";
+  const oldNameReSrc = String(oldNameReRaw).replace(/^\/|\/$/g, "").trim();
+  put(
+    "MIGRATION_OLD_NAME_RE",
+    oldNameReSrc ? JSON.stringify(oldNameReSrc) : "null"
+  );
   // 正则源统一以 JSON 字符串形式下发，模板用 new RegExp(...) 包裹（避免 / 分隔符冲突）
   // 0.7.25 LT-7: default Flyway standard; params.migration_name_re / MIGRATION_NAME_RE override
   const migNameRe =

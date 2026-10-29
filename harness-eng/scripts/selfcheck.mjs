@@ -5106,6 +5106,91 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   assert(logExists("0.7.48"), "0.7.48 _log note exists");
 }
 
+// --- 0.7.51: SQL migration naming dual-track (sms-ai §4.7 v3.54 reflux) ---
+{
+  const softGate50 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    /MIGRATION_OLD_NAME_RE_SRC = \{\{MIGRATION_OLD_NAME_RE\}\}/.test(softGate50),
+    "0.7.51 soft-gate has MIGRATION_OLD_NAME_RE placeholder"
+  );
+  assert(
+    /MIGRATION_OLD_NAME_RE_SRC == null \? null : new RegExp/.test(softGate50),
+    "0.7.51 soft-gate old-RE null fallback (single-track)"
+  );
+  assert(
+    /status !== "A" && status !== "R"/.test(softGate50) && /存量旧格式/.test(softGate50),
+    "0.7.51 soft-gate naming checks A/R with old-format branch"
+  );
+  const hooksChecks50 = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/hooks-checks.mjs"),
+    "utf8"
+  );
+  assert(
+    /migration_old_name_re/.test(hooksChecks50) && /hook_old_name_re/.test(hooksChecks50),
+    "0.7.51 hooks-checks injects migration_old_name_re"
+  );
+  const domains50 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domains.yaml"),
+    "utf8"
+  );
+  assert(/hook_old_name_re: ""/.test(domains50), "0.7.51 domains.yaml db.hook_old_name_re");
+  const manifest50 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/manifest.yaml"),
+    "utf8"
+  );
+  assert(
+    /MIGRATION_OLD_NAME_RE/.test(manifest50) &&
+      /MIGRATION_DIR_REL/.test(manifest50) &&
+      /MIGRATION_TZ/.test(manifest50),
+    "0.7.51 manifest placeholders OLD_NAME_RE / DIR_REL / TZ"
+  );
+  assert(
+    /id: migration-naming-lib/.test(manifest50) && /id: new-migration-py/.test(manifest50),
+    "0.7.51 manifest packs migration-naming-lib + new-migration-py"
+  );
+  const rule13 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/13-db-doc-sync.mdc.tmpl"),
+    "utf8"
+  );
+  assert(
+    /当前最高号 \/ 最新时间戳/.test(rule13) && /migration_old_name_re/.test(rule13),
+    "0.7.51 rule 13 max-version ban + dual-track note"
+  );
+  const dbMd50 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/db/db.md.tmpl"),
+    "utf8"
+  );
+  assert(
+    /版本号账本纪律/.test(dbMd50) && /migration_old_name_re/.test(dbMd50),
+    "0.7.51 db.md.tmpl version-ledger discipline"
+  );
+  const migNaming = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/migration_naming.py.tmpl"),
+    "utf8"
+  );
+  assert(
+    /\{\{MIGRATION_DIR_REL\}\}/.test(migNaming) && /\{\{MIGRATION_TZ\}\}/.test(migNaming),
+    "0.7.51 migration_naming.py.tmpl placeholders"
+  );
+  assert(/bool\(OLD_RE and/.test(migNaming), "0.7.51 migration_naming.py.tmpl OLD_RE None-safe");
+  const newMig = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/new_migration.py.tmpl"),
+    "utf8"
+  );
+  assert(/--pair/.test(newMig) && /from migration_naming import/.test(newMig), "0.7.51 new_migration.py.tmpl CLI");
+  const render50 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(
+    /MIGRATION_DIR_REL/.test(render50) && /MIGRATION_TZ/.test(render50),
+    "0.7.51 render.mjs defaults for generator pack"
+  );
+  const q50 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(/migration_old_name_re/.test(q50), "0.7.51 questions note dual-track");
+  assert(logExists("0.7.51"), "0.7.51 _log note exists");
+}
+
 // --- 0.7.50: 运行时 _log 零依赖（stub 移除 + purge 不变量 + 双态门禁） ---
 {
   assert(!fs.existsSync(path.join(skillRoot, "scripts/fill-truths-auto.mjs")), "0.7.50 fill-truths-auto stub removed");

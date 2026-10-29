@@ -57,6 +57,8 @@ domains:
     hook_env_status_cmd: ""
     # 0.7.49 可选（空=禁用）：迁移命名生成脚本（commit 软提醒）；例 "scripts/new_migration.py"
     hook_new_script: ""
+    # 0.7.50 可选（空=单轨）：存量旧格式正则（新增/改名仍用旧格式 → 专属软提醒）；例 "^V\\d{4}_\\d__(DDL|DML)__[a-z0-9_]+\\.sql$"
+    hook_old_name_re: ""
     note: "迁移模式由 Q_DB_MIGRATION 选定并写入 docs/db/db.md 声明；detect S_NO_FLYWAY/S_SQL_DIR → 荐 manual_sql"
   redis:
     kind: contract

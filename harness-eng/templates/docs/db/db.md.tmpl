@@ -20,6 +20,8 @@
 - 默认（Flyway 标准）：`V{数字}__{snake}.sql`，正则 `^V[0-9]+__[a-z0-9_]+\.sql$`
 - 可用 params `migration_name_re` / 占位 `MIGRATION_NAME_RE` 覆盖（hooks / soft-gate 读取同一占位）
 - 只追加新版本；**禁止**修改已发布脚本
+- **版本号账本纪律**：**勿**把「当前最高号 / 最新时间戳」写进本文件 / `AGENTS.md` / `README.md`（migration 目录即清单；版本区间说明仅规则本身变化时更新）
+- （可选双轨）存量旧格式「永久保留、禁止新写」：params `migration_old_name_re`（domains.yaml `db.hook_old_name_re`）下发旧格式正则，soft-gate 命中新增/改名旧格式给专属软提醒；生成骨架用 `scripts/new_migration.py`（若装 new-migration-py 包）
 
 ### 表文档演进
 
