@@ -56,6 +56,7 @@
 |---|---|
 | AI 工具面 / 多宿主 | [host/ai-tools.md](host/ai-tools.md) · [host/sync-hosts.md](host/sync-hosts.md) |
 | CodeBuddy / WorkBuddy | [host/CODEBUDDY-PARITY.md](host/CODEBUDDY-PARITY.md) · [host/CODEBUDDY-P0-MANUAL.md](host/CODEBUDDY-P0-MANUAL.md) |
+| Qoder（Claude 族） | [host/QODER-PARITY.md](host/QODER-PARITY.md)（rules 全量镜像 + settings.json hooks + 根 .mcp.json） |
 | Codex **高** | [host/CODEX-PARITY.md](host/CODEX-PARITY.md) · [host/CODEX-MANUAL.md](host/CODEX-MANUAL.md) |
 | Trae 高 | [host/TRAE-PARITY.md](host/TRAE-PARITY.md) · [`_log/.../TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md) |
 | 加域 / packs / morph | [modes/domain-extend.md](modes/domain-extend.md) · `templates/_meta/` |

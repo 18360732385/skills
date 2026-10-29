@@ -53,6 +53,10 @@ domains:
     hook_docs: "docs/db/table/"
     hook_tip: "rule 13：同步 docs/db/table + _change.sql"
     hook_migration_dir: "db/migration/"
+    # 0.7.49 可选（空=禁用）：dev 账本自动 status 命令；例 "python scripts/apply_env_migrations.py --env dev --status"
+    hook_env_status_cmd: ""
+    # 0.7.49 可选（空=禁用）：迁移命名生成脚本（commit 软提醒）；例 "scripts/new_migration.py"
+    hook_new_script: ""
     note: "迁移模式由 Q_DB_MIGRATION 选定并写入 docs/db/db.md 声明；detect S_NO_FLYWAY/S_SQL_DIR → 荐 manual_sql"
   redis:
     kind: contract

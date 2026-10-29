@@ -71,6 +71,15 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.48 → 0.7.49 迁移要点
+
+1. **meta**：`skill_version` → `0.7.49`
+2. **rule-17 二选一**：默认薄指针（正文 SSOT=前端分册 AGENTS）；无前端分册仓改 `include_optional` 加 `rule-17-full`（同 target，勿同装）
+3. **soft-gate 新占位**：`MIGRATION_ENV_STATUS_CMD`（dev 账本自动 --status；非零退出码带回输出；超时/依赖缺失降级）与 `MIGRATION_NEW_SCRIPT`（新增迁移命名软提醒）；均默认空=禁用；厚 manual_sql 仓可在 domains.yaml `db.hook_env_status_cmd` / `db.hook_new_script` 或 params 下发
+4. **vendored_shared**：SKILL.md 硬闸门与 fill-mcp.md 话术已补例外（真密入 `docs/agent-config/mcp/servers.json` + sync 分发，勿 gitignore）；消费仓 meta 已声明该档的，`--check-freshness` 后刷新 `sync.mjs` 即可
+5. **superpowers 索引**：表列变 `日期 | 用户 | 主题 | Spec | Plan | Commit`（用户=代表性实现 commit 作者；Commit=代表性实现 commit 非 MR）；存量表可保持旧列，新行按新列
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.49`）后再 sync
+
 ## 0.7.46 → 0.7.47 迁移要点
 
 1. **meta**：`skill_version` → `0.7.47`

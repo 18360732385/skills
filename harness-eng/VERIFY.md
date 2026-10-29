@@ -1,10 +1,26 @@
-# harness-eng 验收记录（0.7.48）
+# harness-eng 验收记录（0.7.49）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.48**（厚仓加固；其上 0.7.47 e2e-19 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+当前 **0.7.49**（sms-ai 实践回流批次；其下 0.7.48 厚仓加固 · 0.7.47 e2e-19 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文见仓库 [`_log/harness-eng/docs/TRAE-P0-EVIDENCE.md`](../_log/harness-eng/docs/TRAE-P0-EVIDENCE.md)。
+
+## 0.7.49 增量验收（sms-ai 实践回流）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.49` | 有 |
+| SKILL.md 硬闸门 / fill-mcp.md 含 `vendored_shared` 例外与 L5 `servers.json` 路径档 | 有 |
+| rule-17 薄指针为默认；`rule-17-full` 厚正文可选（二选一）；17 模板保留「协作包」标记 | 有 |
+| rule 18 / superpowers README 索引表含「用户」列与取值约定 | 有 |
+| soft-gate 六合一：`MIGRATION_ENV_STATUS_CMD`（dev 账本 status + 降级）· `MIGRATION_NEW_SCRIPT`（命名软提醒）；hooks-checks 注入 + domains.yaml 可选键 | 有 |
+| 00 rule 提交门禁含 Apifox 条；文档权威含第 9 位环境/部署文档（可选） | 有 |
+| pitfalls 模板 ID 治理头部 + 「相关」段；`agent-config/mcp/README.md` 模板 + ADR 回链行 | 有 |
+| agents 模板：root 环境变量节 · spring 变更记录/错误码速查/§4.x · frontend 变更记录 | 有 |
+| apifox `upgrade-field-tables-to-7col.mjs`（去域化）+ `host/QODER-PARITY.md` + AGENT-INDEX 登记 | 有 |
+| upgrade `## 0.7.48 → 0.7.49`；CHANGELOG / `_log/0.7/0.7.49.md` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.48 增量验收（厚仓加固）
 

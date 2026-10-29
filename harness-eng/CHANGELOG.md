@@ -1,11 +1,12 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.48**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
-版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（按 `major.minor` 分目录，一版本一文件，如 `0.7/0.7.48.md`）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/）。
+**列车**：当前 **0.7.49**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+版本明细见 [`../_log/harness-eng/`](../_log/harness-eng/)（按 `major.minor` 分目录，一版本一文件，如 `0.7/0.7.49.md`）。非版本档案见 [`docs/`](../_log/harness-eng/docs/) · [`selfcheck-legacy/`](../_log/harness-eng/selfcheck-legacy/）。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.7.49](../_log/harness-eng/0.7/0.7.49.md) | 2026-10-29 | sms-ai 回流：vendored_shared 话术 · rule-17 薄指针+full · superpowers 用户列 · soft-gate dev 账本 status+迁移命名 · pitfalls ID 治理 · QODER-PARITY · apifox 7col 工具 |
 | [0.7.48](../_log/harness-eng/0.7/0.7.48.md) | 2026-10-16 | 厚仓加固：migrate-docs 默认 dry-run · CREATE 字段 · mature_compat · fence `|` · score 备份 |
 | [0.7.47](../_log/harness-eng/0.7/0.7.47.md) | 2026-10-14 | e2e-19：`--migrate-coverage` 默认 off、仅 append 缺页/缺节；长跳/冷 clone selfcheck 夹具 |
 | [0.7.46](../_log/harness-eng/0.7/0.7.46.md) | 2026-10-14 | e2e-18 P3：旗标消歧 · 0.7.41 历史标注 · last_mode accepted residual |

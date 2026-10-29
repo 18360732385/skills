@@ -79,7 +79,7 @@ legacy / 脚本：`fill-truths-auto`（**仅脚本、对话不推荐** → [arch
 - 写盘前拿到确认闸门等价词（或已预授权后续轮次）
 - 只写入已确认的 `Q_TARGET_ROOT`
 - 本 skill 只写目标仓 `AGENTS` / `.cursor/rules` / `docs`（及 fill-mcp 经确认的 `mcp.json`）
-- MCP 真密：仅 fill-mcp 经确认写入 **local 真密路径**（gitignore）；含密文件不随技能分发；模板/example 只含占位符
+- MCP 真密：仅 fill-mcp 经确认写入 **local 真密路径**（gitignore）；含密文件不随技能分发；例外 `mcp_tracking=vendored_shared`（团队约定真密入库 + 须写入 harness-meta；gitignore 不追加真密行）→ [conflict-policy.md](modes/conflict-policy.md)；模板/example 只含占位符
 - **密文对用户话术**：不主动要求用户「不要填密码」；**仅**本轮在创建/引导编辑 local 真密配置（`.cursor/mcp.json` / 根 `.mcp.json` / `.trae/mcp.json` / `.codex/config.toml`）时，提醒可本地填写、**勿提交进 git**（优先 env / `${VAR}`）
 - AGENTS：merge 只追加缺章节；已有同名章节正文保留（[conflict-policy.md](modes/conflict-policy.md)）
 - README 疑似密钥：只检测 + 移交人工（不自动删）

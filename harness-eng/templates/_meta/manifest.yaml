@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.48"
+version: "0.7.49"
 source_repo: c-be-sms-ai
 description: De-domainized Agent Harness templates for cross-repo landing (user-facing series from 0.1.2; patch train 0.2.15→…)
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -55,6 +55,8 @@ placeholders:
   - CONTRACT_CHECKS_JS
   - DB_MIGRATION_DIR
   - MIGRATION_ENVS
+  - MIGRATION_ENV_STATUS_CMD
+  - MIGRATION_NEW_SCRIPT
   - MYSQL_GUARD_SERVERS
   - MIGRATION_NAME_RE
   - JOBS_YML_RE
@@ -129,7 +131,14 @@ files:
     target: .cursor/rules/17-frontend-web.mdc
     placeholders: [GLOB_FRONTEND, FRONTEND_DIR]
     optional: true
-    note: 前端协作包（非契约域）；Include when Q_FRONTEND_RULE=yes（detect S_FRONTEND 推荐）
+    note: 前端协作包（非契约域）；薄指针版（正文 SSOT=前端分册 AGENTS）；Include when Q_FRONTEND_RULE=yes（detect S_FRONTEND 推荐）
+  - id: rule-17-full
+    ladder: L0
+    template: rules/17-frontend-web.full.mdc.tmpl
+    target: .cursor/rules/17-frontend-web.mdc
+    placeholders: [GLOB_FRONTEND, FRONTEND_DIR]
+    optional: true
+    note: 厚正文回退变体；仅当 Q_FRONTEND_RULE=yes 且本仓**无**前端分册 AGENTS 时以此代替 rule-17（二选一，勿同装）
 
   # L1 contract domains → templates/_meta/domain-packs.yaml (render expandDomainPackEntries)
 
@@ -170,6 +179,12 @@ files:
     target: docs/api/generated/README.md
     optional: true
     note: Include when Q_APIFOX=yes
+  - id: openapi-7col
+    ladder: L1
+    template: scripts/apifox/upgrade-field-tables-to-7col.mjs
+    target: scripts/apifox/upgrade-field-tables-to-7col.mjs
+    optional: true
+    note: 存量 5 列字段表批量升 7 列（一次性工具；Include when Q_APIFOX=yes 且存量文档为旧 5 列）
 
   # L2
   - id: kb-readme
@@ -455,6 +470,11 @@ files:
     template: agent-config/mcp/policy.json
     target: docs/agent-config/mcp/policy.json
     note: Codex MCP enabled/approval 策略；sync 投影到 config.toml.example
+  - id: agent-config-mcp-readme
+    ladder: L5
+    template: agent-config/mcp/README.md
+    target: docs/agent-config/mcp/README.md
+    note: MCP 使用说明 SSOT（server 对照 / 安全约定 / 验收骨架；生成到 .cursor/mcp-usage-guide.md 的正文源）
   - id: agent-config-settings
     ladder: L5
     template: agent-config/settings.json.tmpl

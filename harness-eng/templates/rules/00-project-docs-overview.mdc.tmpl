@@ -17,6 +17,7 @@ alwaysApply: true
 6. `docs/superpowers/README.md`：仅「进行中」（若启用；非 SSOT）
 7. `docs/runs/`：主题过程态（非契约 SSOT；有 `active/<slug>/` 时优先读该主题 `progress.yaml` / `回链.md`）
 8. （可选）`docs/releases/`：发版过程域（非契约 SSOT；skill `release-eng`）
+9. （可选）环境/部署文档（如 `docs/jenkins/`）：各环境接入说明（非契约 SSOT；仓内自维护，不设 path rule）
 
 冲突裁决：分册 AGENTS / 契约真相以**磁盘最新**为准；动手前 Read 重读，勿沿用会话早期摘要。
 
@@ -52,6 +53,7 @@ TODO(harness-eng): 将本仓稳定高频翻车压缩为 3～7 行薄片，回链
 - **交付收口**：正文见 [`docs/agent-kb/delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)。**仅当**用户宣称主题主功能交付 / 要求主题收口时执行；进行中（`docs/runs/active/` 且 `stage ≠ done`）允许中途 commit（rule `18`）。
 - **superpowers / runs**：宣称交付时按清单 §3 双归档；勿因本条在实现期强制假收口。
 - **契约同步**（若装 hooks 家族 `commit-gate-extended`）：commit 时按暂存路径软提醒漏同步 `docs/func|api|db|redis|jobs` 真相（domains.yaml `hook:` 段驱动）。
+- **Apifox / OpenAPI 桥**（若装 `scripts/apifox/`）：commit 含 API 契约相关变更（`docs/api/**` 或 controller / 前端契约包）时软提醒执行 `node scripts/apifox/sync-to-apifox.mjs`（不自动 import；契约 SSOT 仍是 `docs/api`）。
 - **SQL/环境**（同上）：暂存含 `db/migration/*.sql` 时软提醒按迁移模式人工同步到各环境（不自动执行）。
 - **agent-kb**：本轮修了智能体高频翻车模式 → 清单 §4 / rule `19` 三问；改过 `pitfalls.md` 须跑 `node scripts/agent-kb/lint-pitfalls.mjs`。
 - **agent-config**（仅 L5 配置 SSOT 管线仓）：改 `docs/agent-config/` 后必跑 `node scripts/agent-config/sync.mjs` 并一并提交生成物；提交前可 `--check` 校验漂移；**生成物勿手改**。

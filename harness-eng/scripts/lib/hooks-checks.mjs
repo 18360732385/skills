@@ -488,6 +488,20 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     (params && params.db_migration_mode) ||
     "";
   put("MIGRATION_ENVS", migMode === "flyway" ? "" : "dev / test / uat");
+  // 0.7.49 P1-6a: dev 账本自动 status（可选；registry.db.hook_env_status_cmd / params.migration_env_status_cmd）
+  const envStatusCmd =
+    (params && (params.migration_env_status_cmd || params.MIGRATION_ENV_STATUS_CMD)) ||
+    (ph.MIGRATION_ENV_STATUS_CMD != null && String(ph.MIGRATION_ENV_STATUS_CMD)) ||
+    (registry.db && registry.db.hook_env_status_cmd) ||
+    "";
+  put("MIGRATION_ENV_STATUS_CMD", String(envStatusCmd));
+  // 0.7.49 P1-6b: 迁移命名生成脚本（可选软提醒；registry.db.hook_new_script / params.migration_new_script）
+  const migNewScript =
+    (params && (params.migration_new_script || params.MIGRATION_NEW_SCRIPT)) ||
+    (ph.MIGRATION_NEW_SCRIPT != null && String(ph.MIGRATION_NEW_SCRIPT)) ||
+    (registry.db && registry.db.hook_new_script) ||
+    "";
+  put("MIGRATION_NEW_SCRIPT", String(migNewScript));
   // 正则源统一以 JSON 字符串形式下发，模板用 new RegExp(...) 包裹（避免 / 分隔符冲突）
   // 0.7.25 LT-7: default Flyway standard; params.migration_name_re / MIGRATION_NAME_RE override
   const migNameRe =

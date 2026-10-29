@@ -22,6 +22,8 @@
 `fill-calibrate-live` 读序：**JSON 真密**（`.cursor/mcp.json` → `.mcp.json` → `.trae/mcp.json` → `.qoder/mcp.json`）→ **`.codex/config.toml`** → **`.codex/config.toml.example`**（只作 schema；`env_vars` 名从本机 `process.env` 取值）→ `application-*.yml`。  
 **仅 Codex 仓**：无需另备 JSON 副本；设好 `MYSQL_*` / `REDIS_URL`（或本机 toml 内联 `[mcp_servers.*.env]`）即可 calibrate。
 
+**L5 vendored_shared 档**（`meta.mcp_tracking=vendored_shared`；须团队明确约定并写入 harness-meta）：真密改写 SSOT `docs/agent-config/mcp/servers.json`（入 git），由 `sync.mjs` 分发到上表各宿主真密路径；**勿**再 gitignore 各真密路径、勿再写 local 真密副本（conflict-policy「vendored_shared」）。其余仓（默认 `example_only`）仍按下表 local 真密路径 + gitignore。
+
 **Codex 启用仪式**（写完 toml 后）：workspace **trust** → 审阅 `docs/agent-config/mcp/policy.json`（决定 example 里谁 `enabled`）→ 拷贝/合并本机 `.codex/config.toml` → `/mcp` 验收。  
 **策略优先级**：`policy.servers.<name>` > heuristics（写库类默认关、gitlab/chrome 等安全工具默认可开）> `defaults`。改 policy 后须 `sync.mjs` 再生 `config.toml.example`；本机 toml 可再覆盖。详见 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)。
 
@@ -80,7 +82,7 @@
 - [ ] 2 确认 L4 example（按 ai_tools 检查各 example 路径）；按矩阵扩展 example 占位（无真密）
 - [ ] 3 从本仓对应 profile 的 yml/properties **读取**连接信息
 - [ ] 4 WritePlan：将写入哪些真密路径 + 哪些 {engine}-{profile} — 确认
-- [ ] 5 写入（多路径内容一致）；gitignore 建议忽略各真密路径
+- [ ] 5 写入（多路径内容一致）；gitignore 建议忽略各真密路径（vendored_shared 档除外：真密入 `docs/agent-config/mcp/servers.json` 并 sync 分发，勿 ignore）
 - [ ] 6 烟测或 calibrate-live（MCP 观测语义见 live-probes）；打印矩阵覆盖表（应有 / 已有 / 缺口）
 - [ ] 7 闸门未过则移交并停止填充；过闸则可供 fill-truths
 ```
@@ -126,6 +128,7 @@ Set-Location "$env:TEMP\harness-mcp-calibrate"; npm init -y; npm i mysql2 ioredi
 ## 密文策略
 
 - **local 真密路径可填**：经确认后，从本仓已有配置抽取的连接参数/密码可写入上表 gitignore 真密文件；用户也可本地自行填写
+- **vendored_shared 档（0.7.49+）**：`meta.mcp_tracking=vendored_shared` 时，经确认后真密改写 `docs/agent-config/mcp/servers.json`（入 git；L5 sync 分发到各宿主）；「勿提交进 git」话术**不适用**该档，但含密文件仍不随技能分发
 - **对用户话术**：不主动说「不要填密码」；**仅**本轮在编辑/引导上述 local 真密文件时，提醒「可本地填 · 勿提交进 git」（优先 env / `${VAR}`）
 - **分发与入库**：他仓密钥不进入本仓；技能模板 / `*.example` / 可提交产物只含占位符；含密文件不随技能分发
 - land 默认只提供 example；真密须走本模式并确认（或用户本地复制 example 后自填）

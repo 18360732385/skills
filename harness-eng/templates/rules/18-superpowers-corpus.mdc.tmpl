@@ -21,9 +21,19 @@ alwaysApply: false
 | `README.md` | 活跃主题索引 |
 | `ARCHIVE.md` | 已交付 / 废弃主题索引 |
 
+## 新建 spec / plan
+
+- 写入活跃 `specs/` / `plans/`；文件名尽量中文（若装 rule `14`）
+- 文首加状态行：`> **状态**：进行中|已交付|废弃 · 详见 [superpowers 索引](../README.md)`
+- 在 `README.md` 主题索引表**按日期倒序插入表顶**一行（「用户」暂填文档创建者；「Commit」可暂 `—`，交付后回填代表性实现 commit）
+
 ## 索引表列
 
-主题表：`日期 | 主题 | Spec | Plan | 提交`（日期倒序；「提交」= 合并前 PR/MR URL 或 `pr:<n>`，合并后回填 merge commit SHA；禁止仅写 squash 前分支 tip；不是「每个 commit」）。
+主题表：`日期 | 用户 | 主题 | Spec | Plan | Commit`（**日期倒序**，新主题插表顶）。
+
+- **日期** = 文档文件名中的 `YYYY-MM-DD`（优先 Spec，否则 Plan）
+- **用户** = 代表性实现 commit 的作者（`git show -s --format="%an" <sha>`）；无 commit 时填文档创建者（`git log --diff-filter=A -- <file>`）
+- **Commit** = **代表性实现 commit**（非 MR；squash 合并下 MR 链接不反映代码真实位置）；确无实现 commit 时可回退 MR/PR URL 或 `pr:<n>`；禁止仅写 squash 前分支 tip；不是「每个 commit」
 
 ## 动手前
 

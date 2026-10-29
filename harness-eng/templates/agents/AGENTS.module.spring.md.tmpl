@@ -47,6 +47,7 @@ TODO(harness-eng): 列出 controller / service / domain / infrastructure / resou
 - 用户上下文经仓内上下文持有者获取，**禁止**硬编码 userId
 - 鉴权注解 / 拦截器：TODO(harness-eng)
 - 日志与中文注释：若装 rule `21`（`21-observability-comments.mdc`）以其为准
+- 编码约束宜按业务子域分小节展开（§4.x：一个高频改动族一节；新增子域先核对分册索引再开节）
 - TODO(harness-eng): 本模块特有编码红线（一句话；细节 → Pn）
 
 ## 改动路径速查
@@ -77,3 +78,13 @@ TODO(harness-eng): 列出 controller / service / domain / infrastructure / resou
 | 表结构 | `docs/db/table/…` |
 | Redis Key | `docs/redis/keys/…` |
 | Cron / 定时任务 | `docs/jobs/tasks/…` |
+
+## 错误码速查（可选）
+
+TODO(harness-eng): 本模块业务错误码闭集表（码 / 含义 / 触发条件；无稳定错误码约定则删除本节）。
+
+## 变更记录
+
+| 日期 | 事项 | 备注 |
+|---|---|---|
+| {{DATE}} | harness-eng 初始化 | — |

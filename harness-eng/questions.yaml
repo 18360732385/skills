@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.7.48"
+version: "0.7.49"
 
 all_recommend_phrases:
   - 全部推荐
@@ -118,9 +118,11 @@ batches:
         text: 是否安装前端协作规则 17-frontend-web？（探测到前端工程时推荐）
         type: boolean
         recommended_when: "S_FRONTEND"
+        note: 有前端分册 AGENTS → rule-17 薄指针版（默认）；无分册 → include_optional 加 rule-17-full（厚正文）；二选一勿同装
       - id: Q_DB_MIGRATION
         text: db 域迁移模式？（无 Flyway 依赖、人工执行 SQL 选 manual_sql）
         type: choice
+        note: manual_sql 厚仓可提供 params.migration_env_status_cmd（commit 时自动跑 dev 账本 --status；如 python scripts/apply_env_migrations.py --env dev --status）与 params.migration_new_script（新增迁移命名软提醒；如 scripts/new_migration.py）；两者缺省空=禁用
         options:
           - { value: flyway, label: flyway（自动/半自动迁移） }
           - { value: manual_sql, label: manual_sql（人工按序执行迁移脚本）, recommended_when: "S_NO_FLYWAY" }
