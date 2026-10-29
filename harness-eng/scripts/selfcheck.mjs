@@ -5122,9 +5122,7 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
   const fillScoreSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
   assert(!/skill_patch:\s*"0\.2\.16"/.test(fillScoreSrc), "0.7.52 dropped skill_patch 0.2.16");
   assert(/mature_compat/.test(fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8")), "0.7.52 mature_compat in questions");
-  assert(/pipeline-awaits-confirm/.test(fs.readFileSync(path.join(skillRoot, "evals/eval.yaml"), "utf8")), "0.7.52 eval pipeline case");
-  assert(/session-live-no-pretend/.test(fs.readFileSync(path.join(skillRoot, "evals/eval.yaml"), "utf8")), "0.7.52 eval session-live case");
-  assert(/confirm-then-write-intent/.test(fs.readFileSync(path.join(skillRoot, "evals/eval.yaml"), "utf8")), "0.7.52 eval confirm-write case");
+  assert(!fs.existsSync(path.join(skillRoot, "evals")), "evals suite removed from skill tree");
   assert(/## 0\.7\.51 → 0\.7\.52/.test(upgradeCorpus()), "0.7.52 upgrade migration section");
   assert(logExists("0.7.52"), "0.7.52 _log note exists");
 }

@@ -6,7 +6,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
-| 0.7.52 | 2026-10-29 | 全量修复列车：isCliMain/replacer/rule-17 互斥/mature_compat · 文档冲突收口 · 脚本卫生 · RENDER-REGISTRIES · evals 可移植 |
+| 0.7.52 | 2026-10-29 | 全量修复列车：isCliMain/replacer/rule-17 互斥/mature_compat · 文档冲突收口 · 脚本卫生 · RENDER-REGISTRIES · 随后移除 evals 评测树 |
 | 0.7.51 | 2026-10-29 | SQL 迁移命名双轨：soft-gate OLD_NAME_RE · A/R 降噪 · 最高号禁令 · new-migration-py 生成器包 |
 | 0.7.50 | 2026-10-29 | 运行时 _log 零依赖：fill-truths-auto stub 移除 · 双态 selfcheck hasLogRoot · 随包文档 purge · auto 引擎下线 |
 | 0.7.49 | 2026-10-29 | sms-ai 回流：vendored_shared 话术 · rule-17 薄指针+full · superpowers 用户列 · soft-gate dev 账本 status+迁移命名 · pitfalls ID 治理 · QODER-PARITY · apifox 7col 工具 |

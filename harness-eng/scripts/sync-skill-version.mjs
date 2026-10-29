@@ -7,7 +7,7 @@
  *   node scripts/sync-skill-version.mjs --check  # drift → exit 1
  *   node scripts/sync-skill-version.mjs --help
  *
- * Does NOT touch: CHANGELOG.md, modes/upgrade.md, l5-sync-stale, evals, schema versions.
+ * Does NOT touch: CHANGELOG.md, modes/upgrade.md, l5-sync-stale, schema versions.
  */
 import fs from "fs";
 import path from "path";

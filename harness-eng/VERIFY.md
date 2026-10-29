@@ -14,7 +14,7 @@
 | `questions-next` 用 `isCliMain`；四处 replace→replacer；rule-17 互斥；`mature_compat` 题库+fill-gate | 有 |
 | 六 mode / report_schema 0.4.0 / 会话四句块 / dual-manifest 权威口径一致 | 有 |
 | CRLF/BOM/maxBuffer/yaml 块标量抛错；孤儿清理；无包内 `score-latest.json`；无 `skill_patch: 0.2.16` | 有 |
-| `templates/_meta/RENDER-REGISTRIES.md`；upgrade/VERIFY 近窗 + 仓库级历史档案；evals 三新用例 | 有 |
+| `templates/_meta/RENDER-REGISTRIES.md`；upgrade/VERIFY 近窗 + 仓库级历史档案；无 `evals/`（skill-up 评测套件已移除） | 有 |
 | upgrade `## 0.7.51 → 0.7.52`；CHANGELOG 0.7.52 索引行；仓库级版本要点档案 | 有 |
 | `node scripts/selfcheck.mjs` exit 0；`selfcheck-render.mjs` ok；`sync-skill-version --check` ok | 有 |
 

@@ -76,7 +76,7 @@
 1. **meta**：`skill_version` → `0.7.52`
 2. **P0**：`questions-next` 用 `isCliMain`；四处动态 `String.replace` 改 replacer；`rule-17`/`rule-17-full` 互斥预检；`mature_compat` 进题库与 fill-gate
 3. **文档/脚本**：六 mode 口径；CRLF/BOM/maxBuffer；yaml 块标量抛错；尸体清理；`skill_patch` 去掉；包内 score-latest 剔除
-4. **结构**：`RENDER-REGISTRIES.md`；upgrade/VERIFY 近窗 + 仓库级历史档案；`parseFillScoreJson` 抽公共；evals 环境变量可移植 + pipeline/session-live/确认正向用例
+4. **结构**：`RENDER-REGISTRIES.md`；upgrade/VERIFY 近窗 + 仓库级历史档案；`parseFillScoreJson` 抽公共；`evals/` 已从 skill 树移除（改以 selfcheck 回归）
 5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.52`）后再 sync
 
 ## 0.7.50 → 0.7.51 迁移要点
