@@ -123,7 +123,7 @@ _log/
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
 | [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.26）；须点名加载 |
 | [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / resume / audit / seal |
-| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.3.31） |
+| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.3.32） |
 | [ip-peitu-tietie/SKILL.md](ip-peitu-tietie/SKILL.md) | 帖帖配图入口：策略 shot list / 单张生成 / QA |
 | [ip-peitu-tietie/CONTEXT.md](ip-peitu-tietie/CONTEXT.md) | 帖帖配图上下文与资产索引 |
 

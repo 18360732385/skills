@@ -15,6 +15,7 @@ import { fileURLToPath } from "url";
 import {
   classifyMigrationKindByFilename,
   sha256Hex,
+  stripBom,
 } from "./release-format.mjs";
 
 function parseArgs(argv) {
@@ -51,7 +52,7 @@ function loadPriorCache(artifactsPath) {
   const bySha = new Map();
   if (!artifactsPath || !fs.existsSync(artifactsPath)) return bySha;
   try {
-    const art = JSON.parse(fs.readFileSync(artifactsPath, "utf8"));
+    const art = JSON.parse(stripBom(fs.readFileSync(artifactsPath, "utf8")));
     for (const b of art.sqlBundles || []) {
       for (const s of b.sources || []) {
         if (s.sha256 && (s.kind === "DDL" || s.kind === "DML" || b.kind)) {
@@ -289,7 +290,7 @@ function main() {
 
   if (args.format === "prompt-md") {
     emit(buildClassifyPromptMd(result.needsAi));
-    process.exit(result.needsAi.length && !args.skipAiClassify ? 0 : 0);
+    process.exit(0);
   }
 
   emit(JSON.stringify(result, null, 2));

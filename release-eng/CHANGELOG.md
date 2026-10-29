@@ -5,6 +5,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.3.32](../_log/release-eng/0.3/0.3.32.md) | 2026-10-29 | 修复轮：_change.sql/nacos prod 判定、prior-since、状态精确匹配、seal 事务性、BOM、--overdue-waived、repo-profile 外置、conventions SSOT |
 | [0.3.31](../_log/release-eng/0.3/0.3.31.md) | 2026-10-28 | N14 收口：docs-hit fixedDelay/非 cron 不误报 cronExpressionMissing |
 | [0.3.30](../_log/release-eng/0.3/0.3.30.md) | 2026-10-28 | N11 值变更不 suppress；N12 完整记录入 auto:git；N7 top-level 桶；N13/N14/N1 父级注释 |
 | [0.3.29](../_log/release-eng/0.3/0.3.29.md) | 2026-10-28 | N1–N4/N7–N10：注释采集、SyncTaskCode 可发现、draft 剔父级、seal 一键、BOM、首次问卷 |

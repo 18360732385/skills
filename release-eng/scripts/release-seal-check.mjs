@@ -13,10 +13,13 @@
  */
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import {
   isProdConfigPath,
   bundleSqlVolumeWarning,
   BUNDLE_SQL_ALERT_COUNT,
+  normalizeNoteStatus,
+  stripBom,
 } from "./release-format.mjs";
 import { verifySqlBundlesOnDisk } from "./release-sql-bundle.mjs";
 
@@ -133,12 +136,14 @@ function main() {
   }
 
   const statusM = text.match(/>\s*状态：\s*([^\n]+)/) || text.match(/\|\s*状态\s*\|\s*([^|]+)\|/);
-  const status = statusM ? statusM[1].trim() : "";
-  if (!status.includes("已定版")) {
-    if (args.force) warnings.push(`状态非「已定版」（${status || "空"}），已 --force`);
-    else errors.push(`状态须为「已定版」（当前: ${status || "空"}）；强制 seal 请加 --force`);
+  const statusRaw = statusM ? statusM[1].trim() : "";
+  // 状态精确归一（normalizeNoteStatus）：模板占位行（含「已上线」字样的枚举串）不再误判（C5/D5）
+  const status = normalizeNoteStatus(statusRaw);
+  if (status !== "已定版") {
+    if (args.force) warnings.push(`状态非「已定版」（${statusRaw || "空"}），已 --force`);
+    else errors.push(`状态须为「已定版」（当前: ${statusRaw || "空"}）；强制 seal 请加 --force`);
   }
-  if (status.includes("已上线")) {
+  if (status === "已上线") {
     errors.push("状态已是「已上线」，可能已 seal");
   }
 
@@ -169,7 +174,7 @@ function main() {
       errors.push("目录包缺少 artifacts.json（发版制品清单 SSOT；请用 note-merge 重写）");
     } else {
       try {
-        artifacts = JSON.parse(fs.readFileSync(artifactsPath, "utf8"));
+        artifacts = JSON.parse(stripBom(fs.readFileSync(artifactsPath, "utf8")));
       } catch (e) {
         errors.push(`artifacts.json 无法解析: ${e.message || e}`);
       }
@@ -355,4 +360,7 @@ function emit(args, data) {
   }
 }
 
-main();
+const isMain =
+  process.argv[1] &&
+  path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
+if (isMain) main();

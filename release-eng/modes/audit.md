@@ -7,7 +7,7 @@
 
 1. 检骨架四路径（releases.md · templates · archive/ · ARCHIVE.md）→ 填报告「骨架」  
 2. 读 `releases.md` 进行中表 → 填「进行中」  
-3. 分支对：首问 `发版日期`+发版/基线，或【推荐】≥提问日+2 的第一个周四 + `release`/`main`（或用户指定 **`首次发版`/基线=`无`**）→ 【推荐】`release-push-gate.mjs` 只读 → 填「push-gate」   
+3. 分支对：首问 `发版日期`+发版/基线，或【推荐】≥提问日+2 的第一个周四 + `release`/`main`（或用户指定 **`首次发版`/基线=`无`**）→ 【推荐】`release-push-gate.mjs` 只读 → 填「push-gate」；只读检查不欲更新远端引用（或离线）时加 **`--no-fetch`**（不 fetch，仅用本地 refs）  
 4. **prior / freeze 体检**（【推荐】）：在仓库根跑  
 
 ```bash

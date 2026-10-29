@@ -1,6 +1,6 @@
 # release-eng 版本清单（权威号）
 
-version: "0.3.31"
+version: "0.3.32"
 source_repo: c-be-sms-ai
 portable: copy-skill-dir
 harness_land: false
@@ -9,8 +9,8 @@ description: >-
   双轨研判（release-ai-track prompt/merge）；首次分层；逾期硬闸；prior 并集；
   Asia/Shanghai；截断5（前3后2、hash前8位）；摘要分支级聚合并入元信息；来源分支功能一句话（origin/ 归一去重）；
   版本身份=发版分支归一化（日期解耦）；jobs 汇总单文件；yml 注释键上一行优先/行尾兜底/父级继承；目录包仅本版新增制品（不含 candidates）；键级diff；note-merge；seal-check；seal 一键；prod。
-  0.3.31：N14 收口 docs-hit fixedDelay/非 cron（scheduleType + intervalKeys，不误报 cron 缺口）；
-  继承 0.3.30；非 harness land。
+  0.3.32：修复轮——_change.sql/nacos prod 判定、prior-since 新式身份、状态精确匹配、seal 事务性与尾注、BOM 统一、--overdue-waived 落点、repo-profile 外置、conventions SSOT；
+  继承 0.3.31；非 harness land。
 
 modes_dir: modes/
 modes:

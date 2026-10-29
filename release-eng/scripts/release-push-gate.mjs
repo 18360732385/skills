@@ -13,6 +13,7 @@
  */
 import { spawnSync } from "child_process";
 import path from "path";
+import { fileURLToPath } from "url";
 
 function isNoneBaseline(v) {
   if (v == null) return false;
@@ -232,4 +233,7 @@ skill_version: see ../_meta/manifest.yaml`);
   process.exit(pass ? 0 : 2);
 }
 
-main();
+const isMain =
+  process.argv[1] &&
+  path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1]);
+if (isMain) main();

@@ -56,6 +56,7 @@ const MODE_SPECS = [
   "modes/bootstrap.md",
   "modes/recommended.md",
   "modes/idempotency.md",
+  "modes/conventions.md",
   "modes/README.md",
 ];
 
@@ -270,6 +271,7 @@ const {
   migrationCanonicalId,
   migrationAliasSet,
   isProdConfigPath,
+  normalizeNoteStatus,
   isMergeSourceNoise,
   formatMergeSourcesTableRows,
   buildMergeSources,
@@ -297,6 +299,7 @@ assert(typeof isMigrationSql === "function", "export isMigrationSql");
 assert(typeof migrationCanonicalId === "function", "export migrationCanonicalId");
 assert(typeof migrationAliasSet === "function", "export migrationAliasSet");
 assert(typeof isProdConfigPath === "function", "export isProdConfigPath");
+assert(typeof normalizeNoteStatus === "function", "export normalizeNoteStatus");
 assert(typeof isMergeSourceNoise === "function", "export isMergeSourceNoise");
 assert(typeof formatMergeSourcesTableRows === "function", "export formatMergeSourcesTableRows");
 assert(typeof bundleSqlVolumeWarning === "function", "export bundleSqlVolumeWarning");
@@ -1567,6 +1570,510 @@ parent:
     "N1 inherit parent map comment"
   );
   assert(map.get("parent.leaf")?.comment === "叶子自有", "N1 leaf comment not overwritten");
+}
+
+// =====================================================================
+// 0.3.32 修复轮新增断言（① sql-bundle _change.sql/D7 · ② nacos prod 判定 ·
+// ③ enrich prodPath · ④ prior-since 新式身份 · ⑤ seal --apply 事务性 ·
+// ⑥ 状态精确匹配 · ⑦ BOM 统一 · ⑧ --overdue-waived · ⑨ repo-profile ·
+// ⑩ prodConfigKeyCount 并入 jobKeys · ⑪ conventions SSOT）
+// =====================================================================
+
+/** seal-check 集成测试用最小发版单（目录包 + 空 artifacts.json） */
+function writeSealCheckFixture(work, id, { status = "已定版", artifactsJson = null } = {}) {
+  const noteDir = path.join(work, "docs", "releases", id);
+  fs.mkdirSync(noteDir, { recursive: true });
+  const md = `# 发版单：${id}
+
+> 状态：${status}
+> 发版日期：2026-10-22
+
+## 一、元信息
+
+| 项 | 值 |
+|---|---|
+| 版本身份 | ${id} |
+| 发版日期 | 2026-10-22 |
+| 状态 | 已定版 |
+
+## 二、Git 定版
+
+| hash | author | date | subject |
+|---|---|---|---|
+| abcdef01 | u | 2026-10-01 | feat |
+
+## 四、数据库与 SQL
+
+| 执行序 | 脚本/版本 | 动作 | 目标 profile | 已确认 |
+|---|---|---|---|---|
+| — | 无 | — | prod | — |
+
+## 五、配置项
+
+> 目标 profile = prod
+
+## 六、定时任务
+
+| task_code | 名称 | cron | 目标 profile |
+|---|---|---|---|
+| — | 无 | — | prod |
+
+## 七、包内附属文件
+
+| 类型 | 包内路径 | 源路径 |
+|---|---|---|
+| — | 无 | — |
+`;
+  fs.writeFileSync(path.join(noteDir, `${id}.md`), md, "utf8");
+  fs.writeFileSync(
+    path.join(noteDir, "artifacts.json"),
+    artifactsJson != null
+      ? artifactsJson
+      : JSON.stringify({
+          identity: id,
+          version: 1,
+          sql: [],
+          config: [],
+          jobs: [],
+          changeObjects: [],
+          aiTrack: {},
+        })
+  );
+  return noteDir;
+}
+
+function runSealCheckBin(root, noteRel, extraArgs = []) {
+  const bin = path.join(skillRoot, "scripts/release-seal-check.mjs");
+  return spawnSync(
+    process.execPath,
+    [bin, "--root", root, "--note", noteRel, ...extraArgs],
+    { encoding: "utf8", maxBuffer: 2 * 1024 * 1024 }
+  );
+}
+
+// --- 0.3.32 ①：runSqlBundle 剔除 _change.sql + 失败路径保留旧整理文件（C1/D1/D7）---
+{
+  const bundleUrl = pathToFileURL(path.join(skillRoot, "scripts/release-sql-bundle.mjs")).href;
+  const bundleMod = await import(bundleUrl);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-sqlbundle-"));
+  try {
+    const refs = path.join(work, "sql", "refs");
+    fs.mkdirSync(refs, { recursive: true });
+    fs.writeFileSync(path.join(refs, "V0001_0__DDL__a.sql"), "CREATE TABLE a (id INT);\n", "utf8");
+    fs.writeFileSync(path.join(refs, "V0002_0__DML__b.sql"), "INSERT INTO a VALUES (1);\n", "utf8");
+
+    const withChangeSql = bundleMod.runSqlBundle({
+      bundleDir: work,
+      releaseDate: "2026-10-29",
+      freeze: {
+        draft: {
+          sql: [
+            { 脚本: "docs/db/table/sms_change.sql", 路径: "docs/db/table/sms_change.sql" },
+            { 脚本: "V0001_0__DDL__a.sql", 路径: "db/migration/V0001_0__DDL__a.sql" },
+            { 脚本: "V0002_0__DML__b.sql", 路径: "db/migration/V0002_0__DML__b.sql" },
+          ],
+        },
+      },
+    });
+    assert(withChangeSql.ok, `① _change.sql + 双 migration bundle ok: ${withChangeSql.errors.join(";")}`);
+    assert(
+      !withChangeSql.errors.join(";").includes("refs 缺少 draft.sql migration"),
+      "① _change.sql 不再触发「refs 缺少 draft.sql migration」"
+    );
+    assert(fs.existsSync(path.join(work, "sql", "release-V261029-DDL.sql")), "① DDL 整理文件落盘");
+    assert(fs.existsSync(path.join(work, "sql", "release-V261029-DML.sql")), "① DML 整理文件落盘");
+
+    // 真缺 migration → ok=false 且失败路径保留旧整理文件（D7）
+    const missing = bundleMod.runSqlBundle({
+      bundleDir: work,
+      releaseDate: "2026-10-29",
+      freeze: {
+        draft: {
+          sql: [{ 脚本: "V0009_0__DDL__missing.sql", 路径: "db/migration/V0009_0__DDL__missing.sql" }],
+        },
+      },
+    });
+    assert(missing.ok === false, "① 真缺 migration → ok=false");
+    assert(
+      missing.errors.some((e) => e.includes("refs 缺少 draft.sql migration")),
+      "① 真缺 migration 仍报缺 refs 错"
+    );
+    assert(
+      fs.existsSync(path.join(work, "sql", "release-V261029-DDL.sql")),
+      "① D7 失败路径保留旧 DDL 整理文件"
+    );
+    assert(
+      fs.existsSync(path.join(work, "sql", "release-V261029-DML.sql")),
+      "① D7 失败路径保留旧 DML 整理文件"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ②：isProdConfigPath 放行 basename application-prod-nacos.yml（C2/D2）---
+{
+  assert(isProdConfigPath("config/application-prod-nacos.yml") === true, "② config/ 下 nacos prod 放行");
+  assert(isProdConfigPath("application-prod-nacos.yml") === true, "② 包内拍平 basename nacos prod 放行");
+  assert(isProdConfigPath("application-dev.yml") === false, "② application-dev 不放行");
+  assert(isProdConfigPath("application.yml") === false, "② application.yml 不放行");
+}
+
+// --- 0.3.32 ③：enrich prodPath 语义统一（nacos=true / application.yml=false）（C3/D3）---
+{
+  const enrichUrlP3 = pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href;
+  const enrichP3 = await import(enrichUrlP3);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-prodpath-"));
+  try {
+    const out = enrichP3.enrichFreezePayload(
+      work,
+      {
+        candidates: [],
+        configKeys: [
+          {
+            key: "sms.ai.timeout",
+            path: "sms-ai/src/main/resources/config/nacos/application-prod-nacos.yml",
+            value: "30",
+            isLeaf: true,
+            change: "added",
+          },
+          {
+            key: "app.name",
+            path: "sms-ai/src/main/resources/application.yml",
+            value: "sms",
+            isLeaf: true,
+            change: "added",
+          },
+        ],
+        jobKeys: [],
+        taskCodes: [],
+      },
+      { prior: "none" }
+    );
+    const nacosRow = (out.configKeys || []).find((r) => r.key === "sms.ai.timeout");
+    const plainRow = (out.configKeys || []).find((r) => r.key === "app.name");
+    assert(nacosRow?.prodPath === true, "③ nacos overlay 键 prodPath=true");
+    assert(plainRow?.prodPath === false, "③ application.yml 键 prodPath=false");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ④：prior-since 新式身份回退读 md 发版日期（C4/D4）---
+{
+  const enrichUrlP4 = pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href;
+  const enrichP4 = await import(enrichUrlP4);
+  assert(typeof enrichP4.noteReleaseDate === "function", "④ export noteReleaseDate");
+  assert(enrichP4.noteReleaseDate("| 发版日期 | 2026-08-27 |") === "2026-08-27", "④ noteReleaseDate 表格式");
+  assert(enrichP4.noteReleaseDate("> 发版日期：2026-08-31") === "2026-08-31", "④ noteReleaseDate 引语式");
+  assert(enrichP4.noteReleaseDate("# 无日期正文") == null, "④ noteReleaseDate 读不到 → null");
+
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-priorsince-"));
+  try {
+    const arch = path.join(work, "docs", "releases", "archive");
+    const mkArchiveNote = (id, md) => {
+      const dir = path.join(arch, id);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, `${id}.md`), md, "utf8");
+    };
+    mkArchiveNote("release-V260827", "# 发版单：release-V260827\n\n| 发版日期 | 2026-08-27 |\n");
+    mkArchiveNote("release-V260831", "# 发版单：release-V260831\n\n> 发版日期：2026-08-31\n");
+    mkArchiveNote("release-V261015", "# 发版单：release-V261015\n\n> 发版日期：2026-10-15\n");
+    mkArchiveNote("release-V261099", "# 发版单：release-V261099\n");
+
+    const since = enrichP4.resolvePriorArtifactsBundle(work, "auto", "2026-09-01");
+    const ids = since.notes.map((n) => n.identity);
+    assert(!ids.includes("release-V260827"), "④ prior-since 过滤 2026-08-27（表格日期）");
+    assert(!ids.includes("release-V260831"), "④ prior-since 过滤 2026-08-31（引语日期）");
+    assert(ids.includes("release-V261015"), "④ prior-since 保留 2026-10-15");
+    assert(ids.includes("release-V261099"), "④ prior-since 无日期保守并入");
+
+    // 旧式日期前缀身份仍按前缀过滤（前缀优先，md 日期更晚也不救）
+    mkArchiveNote("2026-08-20-legacy-foo", "# 发版单：2026-08-20-legacy-foo\n\n> 发版日期：2026-10-20\n");
+    mkArchiveNote("2026-10-01-legacy-bar", "# 发版单：2026-10-01-legacy-bar\n");
+    const since2 = enrichP4.resolvePriorArtifactsBundle(work, "auto", "2026-09-01");
+    const ids2 = since2.notes.map((n) => n.identity);
+    assert(!ids2.includes("2026-08-20-legacy-foo"), "④ 旧式日期前缀身份按前缀过滤");
+    assert(ids2.includes("2026-10-01-legacy-bar"), "④ 旧式日期前缀身份 ≥ since 保留");
+    assert(ids2.length === 3, "④ 过滤后并集 3 份（0.15 + 无日期 + 旧式保留）");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ⑤：seal --apply 事务性 + 分支对尾注剥离（D5/D6）---
+{
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-sealapply-"));
+  try {
+    gitIn(work, ["init"]);
+    gitIn(work, ["checkout", "-b", "main"]);
+    gitIn(work, ["config", "user.email", "selfcheck@test"]);
+    gitIn(work, ["config", "user.name", "selfcheck"]);
+    gitIn(work, ["config", "commit.gpgsign", "false"]);
+    const id = "release-V261029";
+    writeSealCheckFixture(work, id);
+    const noteMdPath = path.join(work, "docs", "releases", id, `${id}.md`);
+    const noteText = fs
+      .readFileSync(noteMdPath, "utf8")
+      .replace(
+        "> 发版日期：2026-10-22\n",
+        "> 发版日期：2026-10-22\n> 发版分支：release/V261029 · 基线分支：main\n> 负责人：alice\n"
+      );
+    fs.writeFileSync(noteMdPath, noteText, "utf8");
+    fs.writeFileSync(
+      path.join(work, "docs", "releases", "releases.md"),
+      `# idx\n\n## 进行中\n\n| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |\n|---|---|---|---|---|---|\n| 2026-10-22 | ${id} | release/V261029 → main | 已定版 | ${id}/${id}.md | alice |\n`
+    );
+    fs.writeFileSync(
+      path.join(work, "docs", "releases", "ARCHIVE.md"),
+      `# ARCHIVE\n\n| 日期 | 版本身份 | 分支对 | 上线日期 | 执行人 | 发版单 |\n|---|---|---|---|---|---|\n| — | （暂无） | — | — | — | — |\n`
+    );
+    gitIn(work, ["add", "."]);
+    gitIn(work, ["commit", "-m", "seed"]);
+
+    const bin = path.join(skillRoot, "scripts/release-seal.mjs");
+    const r = spawnSync(
+      process.execPath,
+      [
+        bin,
+        "--root",
+        work,
+        "--note",
+        `docs/releases/${id}/${id}.md`,
+        "--online-date",
+        "2026-10-29",
+        "--executor",
+        "bob",
+        "--force",
+        "--apply",
+      ],
+      { encoding: "utf8", maxBuffer: 2 * 1024 * 1024 }
+    );
+    const rOut = `${r.stdout || ""}${r.stderr || ""}`.replace(/\s+/g, " ").slice(0, 160);
+    assert(r.status === 0, `⑤ seal --apply exit 0（got ${r.status}: ${rOut}）`);
+    const archivedMdPath = path.join(work, "docs", "releases", "archive", id, `${id}.md`);
+    assert(fs.existsSync(archivedMdPath), "⑤ 归档侧 md 存在");
+    const archivedMd = fs.readFileSync(archivedMdPath, "utf8");
+    assert(/> 状态：已上线/.test(archivedMd), "⑤ 归档侧 md 状态=已上线");
+    assert(!fs.existsSync(path.join(work, "docs", "releases", id)), "⑤ 进行中目录无残留");
+    const releasesMd = fs.readFileSync(path.join(work, "docs", "releases", "releases.md"), "utf8");
+    assert(!releasesMd.includes(id), "⑤ releases.md 行已删");
+    const archiveMd = fs.readFileSync(path.join(work, "docs", "releases", "ARCHIVE.md"), "utf8");
+    assert(/release\/V261029 vs main/.test(archiveMd), "⑤ ARCHIVE 分支对=release vs main");
+    assert(!archiveMd.includes("首次发版填"), "⑤ ARCHIVE 分支对无「（首次发版填「无」）」尾注");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ⑥：normalizeNoteStatus 精确匹配 + seal-check 占位状态（C5/D5）---
+{
+  assert(normalizeNoteStatus("准备中 | 已定版 | 已上线 | 已取消") === "", "⑥ 占位枚举行 → 空串");
+  assert(normalizeNoteStatus("已定版") === "已定版", "⑥ 精确匹配 已定版");
+  assert(normalizeNoteStatus("  已上线  ") === "已上线", "⑥ trim 后精确匹配");
+  assert(normalizeNoteStatus("已上线（草稿）") === "", "⑥ 带装饰后缀 → 空串");
+
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-placeholder-"));
+  try {
+    const id = "release-PLACEHOLDER";
+    writeSealCheckFixture(work, id, {
+      status: "准备中 | 已定版 | 已上线 | 已取消",
+    });
+    const r = runSealCheckBin(work, `docs/releases/${id}/${id}.md`);
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(r.status === 1, "⑥ 占位状态 seal-check exit 1");
+    assert(/状态须为「已定版」/.test(out), "⑥ 占位状态报「状态须为已定版」");
+    assert(!/可能已 seal/.test(out), "⑥ 占位状态不再误报「可能已 seal」");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ⑦：BOM artifacts.json —— seal-check 可解析 + enrich 走 artifacts 源（D8）---
+{
+  const enrichUrlP7 = pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href;
+  const enrichP7 = await import(enrichUrlP7);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-bom-"));
+  try {
+    const id = "release-BOM";
+    const noteDir = writeSealCheckFixture(work, id, {
+      artifactsJson:
+        "\uFEFF" +
+        JSON.stringify({
+          identity: id,
+          version: 1,
+          sql: [],
+          config: [
+            {
+              stableId: "sms.ai.timeout",
+              path: "sms-ai/src/main/resources/config/nacos/application-prod-nacos.yml",
+              profile: "prod",
+            },
+          ],
+          jobs: [],
+          changeObjects: [],
+          aiTrack: {},
+        }),
+    });
+    fs.writeFileSync(
+      path.join(work, "docs", "releases", "releases.md"),
+      `# idx\n\n## 进行中\n\n| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |\n|---|---|---|---|---|---|\n| 2026-10-22 | ${id} | a→b | 已定版 | ${id}/${id}.md | alice |\n`
+    );
+    const loaded = enrichP7.loadArtifactsForNoteFile(work, path.join(noteDir, `${id}.md`));
+    assert(loaded.source === "artifacts.json", "⑦ BOM 下 enrich 仍走 artifacts.json 源");
+    assert(loaded.artifacts.identity === id, "⑦ BOM 下 artifacts identity 正常解析");
+    assert(loaded.artifacts.configKeys.has("sms.ai.timeout"), "⑦ BOM 下 config 键正常收录");
+
+    const r = runSealCheckBin(work, `docs/releases/${id}/${id}.md`);
+    let json = {};
+    try {
+      json = JSON.parse(r.stdout || "{}");
+    } catch {
+      json = {};
+    }
+    assert(r.status === 0, `⑦ BOM 下 seal-check exit 0（got ${r.status}）`);
+    assert(
+      !JSON.stringify(json.errors || []).includes("无法解析"),
+      "⑦ BOM 下 seal-check 不报「artifacts.json 无法解析」"
+    );
+    assert((json.errors || []).length === 0, "⑦ BOM 下 seal-check 无 error");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ⑧：note-merge --overdue-waived 硬闸落点（D15）---
+{
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-overdue-"));
+  try {
+    const freezePath = path.join(work, "freeze.json");
+    fs.writeFileSync(
+      freezePath,
+      JSON.stringify({
+        ok: false,
+        overdueHardGate: true,
+        head: "release/V261029",
+        draft: { sql: [], config: [], jobs: [] },
+        commits: [],
+        merges: [],
+        mergeSources: [],
+        changeObjects: [],
+        todoPlaceholders: [],
+      }),
+      "utf8"
+    );
+    const bin = path.join(skillRoot, "scripts/release-note-merge.mjs");
+    const base = [
+      "--root",
+      work,
+      "--note",
+      "docs/releases/release-OW/release-OW.md",
+      "--freeze-json",
+      freezePath,
+      "--release-date",
+      "2026-10-29",
+    ];
+    const denied = spawnSync(process.execPath, [bin, ...base], {
+      encoding: "utf8",
+      maxBuffer: 4 * 1024 * 1024,
+    });
+    const deniedOut = `${denied.stdout || ""}${denied.stderr || ""}`;
+    assert(denied.status === 1, "⑧ overdueHardGate 无 --overdue-waived → exit 1");
+    assert(!fs.existsSync(path.join(work, "docs", "releases", "release-OW")), "⑧ 拒绝写盘：目录包未落盘");
+    assert(/--overdue-waived/.test(deniedOut), "⑧ 拒绝信息提示 --overdue-waived");
+
+    const reason = "书面说明：历史逾期单经批准跳过";
+    const waived = spawnSync(process.execPath, [bin, ...base, "--overdue-waived", reason], {
+      encoding: "utf8",
+      maxBuffer: 4 * 1024 * 1024,
+    });
+    const waivedOut = `${waived.stdout || ""}${waived.stderr || ""}`.replace(/\s+/g, " ").slice(0, 160);
+    assert(
+      waived.status === 0,
+      `⑧ --overdue-waived → exit 0（got ${waived.status}: ${waivedOut}）`
+    );
+    const artifactsPath = path.join(work, "docs", "releases", "release-OW", "artifacts.json");
+    assert(fs.existsSync(artifactsPath), "⑧ waived 后 artifacts.json 落盘");
+    const art = JSON.parse(fs.readFileSync(artifactsPath, "utf8"));
+    assert(art.overdueWaived?.reason === reason, "⑧ artifacts.overdueWaived.reason 记录书面说明");
+    assert(/^\d{4}-\d{2}-\d{2}$/.test(art.overdueWaived?.date || ""), "⑧ artifacts.overdueWaived.date 落日期");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ⑨：repo-profile 外置覆盖 + slugCn 注入（T6）---
+{
+  const profileUrl = pathToFileURL(path.join(skillRoot, "scripts/lib/repo-profile.mjs")).href;
+  const profileMod = await import(profileUrl);
+  assert(typeof profileMod.loadRepoProfile === "function", "⑨ export loadRepoProfile");
+  assert(
+    profileMod.DEFAULT_REPO_PROFILE?.branchSlugCn?.milvus === "Milvus 向量库同步",
+    "⑨ DEFAULT_REPO_PROFILE.branchSlugCn 保留源仓默认表"
+  );
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0332-profile-"));
+  try {
+    const missing = profileMod.loadRepoProfile(work);
+    assert(
+      missing.branchSlugCn === profileMod.DEFAULT_REPO_PROFILE.branchSlugCn,
+      "⑨ 文件缺失回退 DEFAULT"
+    );
+    const profDir = path.join(work, "docs", "releases");
+    fs.mkdirSync(profDir, { recursive: true });
+    fs.writeFileSync(path.join(profDir, "repo-profile.json"), "{ not json", "utf8");
+    const bad = profileMod.loadRepoProfile(work);
+    assert(bad.branchSlugCn === profileMod.DEFAULT_REPO_PROFILE.branchSlugCn, "⑨ 坏 JSON 回退 DEFAULT 不抛错");
+    fs.writeFileSync(
+      path.join(profDir, "repo-profile.json"),
+      JSON.stringify({ branchSlugCn: { milvus: "自定义向量库短语" } }),
+      "utf8"
+    );
+    const merged = profileMod.loadRepoProfile(work);
+    assert(merged.branchSlugCn.milvus === "自定义向量库短语", "⑨ 覆盖键胜出");
+    assert(
+      merged.branchSlugCn.neo4j === profileMod.DEFAULT_REPO_PROFILE.branchSlugCn.neo4j,
+      "⑨ 深合并保留其它 slug"
+    );
+    assert(
+      merged.knownServices === profileMod.DEFAULT_REPO_PROFILE.knownServices,
+      "⑨ 未覆盖表原样保留"
+    );
+    const built = buildMergeSources([{ source: "feature/milvus", subject: "" }], {
+      slugCn: merged.branchSlugCn,
+    });
+    assert(built[0]?.branchSummary === "自定义向量库短语", "⑨ buildMergeSources 注入覆盖词");
+    const builtDefault = buildMergeSources([{ source: "feature/milvus", subject: "" }]);
+    assert(builtDefault[0]?.branchSummary === "Milvus 向量库同步", "⑨ 缺省 slugCn 不受影响");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.32 ⑩：prodConfigKeyCount 并入 jobKeys（D18）---
+{
+  const obs = enrichFirstReleaseLayerObservability(
+    { policy: "first-release-layered" },
+    {
+      configKeys: [],
+      jobKeys: [{ key: "app.order.timeout-job.cron", source: "application-prod" }],
+      taskCodes: [],
+    }
+  );
+  assert(obs.inventory.prodConfigKeyCount === 1, "⑩ jobKeys 计入 prodConfigKeyCount");
+  assert(!obs.inventory.layerEmpty.includes("config"), "⑩ prod yml 仅 cron 键不再误报 config 空层");
+}
+
+// --- 0.3.32 ⑪：conventions.md SSOT 存在 + 入口链接（T4）---
+{
+  const conventions = read("modes/conventions.md");
+  assert(conventions != null, "⑪ modes/conventions.md 存在");
+  assert(
+    conventions != null && /发版日期/.test(conventions) && /截断5/.test(conventions),
+    "⑪ conventions 覆盖日期算法与截断5"
+  );
+  assert((skill || "").includes("modes/conventions.md"), "⑪ SKILL 链接 conventions.md");
+  const gatesCommonText = read("modes/gates-common.md") || "";
+  assert(gatesCommonText.includes("conventions.md"), "⑪ gates-common 链接 conventions.md");
 }
 
 // --- report ---

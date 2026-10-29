@@ -1,6 +1,7 @@
 # release-eng 一页纸
 
-点名本 skill → 按意图走模式。热路径索引：[AGENT-INDEX.md](AGENT-INDEX.md)。验收：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`（`modes` / `push-gate` / `freeze` / `sql-bundle` / `seal-check` …）。定版包 SQL：原件 `sql/refs/`，整理 `release-V{yyMMdd}-DDL|DML.sql`（prod 先 DDL 后 DML）。
+点名本 skill → 按意图走模式。热路径索引：[AGENT-INDEX.md](AGENT-INDEX.md)（必读 + 按需两张表，唯一旁路路由）。验收：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/release.mjs`。  
+约定全文（发版日期算法 / 身份归一化 / 目录包 / 截断5 / mergeSources / prod / SQL序 / 密文 / 逾期硬闸书面跳过）见 [modes/conventions.md](modes/conventions.md)。
 
 ## 主循环
 
@@ -12,9 +13,6 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
         → … 续跑 resume
           → seal（seal-check → 归档）
 ```
-
-只读检查：`audit`。已上线归档：`seal`。骨架缺失：[bootstrap.md](modes/bootstrap.md) 从 fixtures 种子。模式索引：[modes/README.md](modes/README.md)。
-列模式 / 转发脚本：`node scripts/release.mjs modes`。
 
 ## 模式一句话
 
@@ -31,6 +29,6 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 2. **确认词才写盘**——WritePlan / note-merge / seal 搬迁须过确认（或同会话预授权）；「继续吧」等非正式口语不算；audit 永不写盘。
 3. **非 harness land**——不对齐 harness 自动 land；跨仓靠整目录拷贝 + 点名仪式。
 
-逾期已定版仍在 `docs/releases/<slug>/` → 先 seal。push-gate 未通过 → 勿写进行中目录包（聊天可贴草稿）。Red Flags：[SKILL.md](SKILL.md)。
+逾期已定版仍在 `docs/releases/<slug>/` → 先 seal。push-gate 未通过 → 勿写进行中目录包（聊天可贴草稿）。Red Flags：[SKILL.md](SKILL.md)。骨架缺失 / 旁路路由：[AGENT-INDEX.md](AGENT-INDEX.md)。
 
-详情：[SKILL.md](SKILL.md) · [modes/README.md](modes/README.md) · [gates-common.md](modes/gates-common.md) · [freeze.md](modes/freeze.md)
+详情：[SKILL.md](SKILL.md) · [modes/README.md](modes/README.md)

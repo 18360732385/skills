@@ -50,6 +50,7 @@ import {
   migrationAliasSet,
   isProdConfigPath,
 } from "./release-format.mjs";
+import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
 
 function isNoneBase(v) {
   if (v == null) return false;
@@ -116,7 +117,12 @@ function originWebUrl(root) {
   let url = r.stdout.trim();
   const ssh = url.match(/^git@([^:]+):(.+?)(?:\.git)?$/i);
   if (ssh) {
-    return `http://${ssh[1]}/${ssh[2].replace(/\.git$/i, "")}`;
+    // github.com / gitlab.com 走 https://（可点击、免证书告警）；自建等其余维持 http://（D17）
+    const host = String(ssh[1]).toLowerCase();
+    const scheme = /(^|\.)github\.com$/.test(host) || /(^|\.)gitlab\.com$/.test(host)
+      ? "https"
+      : "http";
+    return `${scheme}://${ssh[1]}/${ssh[2].replace(/\.git$/i, "")}`;
   }
   url = url.replace(/\.git$/i, "");
   if (url.startsWith("https://") || url.startsWith("http://")) return url;
@@ -197,16 +203,18 @@ function isJobsPath(filePath) {
   );
 }
 
-function isThirdPartyPath(filePath) {
-  const n = normPath(filePath);
-  return (
-    /feign/i.test(n) ||
-    /wenxue|问学/i.test(n) ||
-    /lexiang|乐享/i.test(n) ||
-    /dashscope/i.test(n) ||
-    /\/mcp/i.test(n) ||
-    /mcp\.json/i.test(n)
-  );
+/** 第三方/外部依赖路径判定：由关键词表构造 matcher（大小写不敏感子串，语义同旧正则） */
+function buildThirdPartyMatcher(keywords) {
+  const list = (Array.isArray(keywords) && keywords.length
+    ? keywords
+    : DEFAULT_REPO_PROFILE.thirdPartyKeywords
+  )
+    .map((k) => String(k).toLowerCase())
+    .filter(Boolean);
+  return (filePath) => {
+    const n = normPath(filePath).toLowerCase();
+    return list.some((k) => n.includes(k));
+  };
 }
 
 function isJobsKey(keyPath) {
@@ -737,7 +745,12 @@ function listMigrationsOnRef(root, ref) {
 }
 
 /** 增量：基线树上是否已有该 migration/键/task（含 Vn__ ≡ Vn_0__ alias） */
-function computeBaselinePresence(root, base, { candidates, configKeys, jobKeys, taskCodes }) {
+function computeBaselinePresence(
+  root,
+  base,
+  { candidates, configKeys, jobKeys, taskCodes },
+  profile = DEFAULT_REPO_PROFILE
+) {
   const sqlScripts = [];
   const configKeyList = [];
   const jobIds = [];
@@ -793,8 +806,14 @@ function computeBaselinePresence(root, base, { candidates, configKeys, jobKeys, 
   } else if (discoveredFiles.length) {
     syncBaseText = gitShow(root, base, discoveredFiles[0]) || "";
   } else {
-    syncBaseText =
-      gitShow(root, base, "sms-ai/src/main/java/com/juneyaoair/msp/sms/ai/domain/enums/sync/SyncTaskCode.java") || "";
+    // 兜底：循环 profile.syncTaskCodeFallbackPaths 直到 gitShow 非空（原硬编码 sms-ai 路径外置）
+    for (const fallback of profile.syncTaskCodeFallbackPaths || []) {
+      const t = gitShow(root, base, fallback);
+      if (t) {
+        syncBaseText = t;
+        break;
+      }
+    }
   }
   for (const t of taskCodes || []) {
     const code = typeof t === "string" ? t : t.taskCode || t;
@@ -845,7 +864,8 @@ function enrichJavaJobsCandidate(root, base, head, filePath, syncEnumMap) {
   };
 }
 
-function buildIncrementalCandidates(root, base, head, files) {
+function buildIncrementalCandidates(root, base, head, files, profile = DEFAULT_REPO_PROFILE) {
+  const isThirdParty = buildThirdPartyMatcher(profile.thirdPartyKeywords);
   const byPath = new Map();
   const configKeys = [];
   const jobKeys = [];
@@ -936,7 +956,7 @@ function buildIncrementalCandidates(root, base, head, files) {
       }
     }
 
-    if (isThirdPartyPath(n) && !byPath.has(n)) {
+    if (isThirdParty(n) && !byPath.has(n)) {
       upsert({
         kinds: ["third-party"],
         kind: "third-party",
@@ -981,6 +1001,8 @@ function main() {
   const head = args.head;
   const firstRelease = args.firstRelease;
   const range = firstRelease ? `首次发版:${head}` : `${args.base}..${head}`;
+  // 源仓硬编码外置：目标仓可用 docs/releases/repo-profile.json 覆盖七张默认表
+  const profile = loadRepoProfile(args.root);
 
   // 全量 hash（%H）；ISO 作者时间 → Asia/Shanghai
   const logArgs = firstRelease
@@ -1001,7 +1023,7 @@ function main() {
       subject: c.subject,
       source: guessSourceBranch(c.subject),
     }));
-  const mergeSources = buildMergeSources(merges);
+  const mergeSources = buildMergeSources(merges, { slugCn: profile.branchSlugCn });
   const releaseSummaryLines = buildReleaseSummaryLines(commits, {
     recentFirst: firstRelease || !(mergeSources && mergeSources.length),
     mergeSources,
@@ -1056,7 +1078,7 @@ function main() {
     );
     warnings.push(...layerObs.warnings);
   } else {
-    const built = buildIncrementalCandidates(args.root, args.base, head, files);
+    const built = buildIncrementalCandidates(args.root, args.base, head, files, profile);
     candidates = built.candidates;
     configKeys = built.configKeys;
     jobKeys = built.jobKeys;
@@ -1065,7 +1087,7 @@ function main() {
 
   const baselinePresence = firstRelease
     ? { sqlScripts: [], configKeys: [], jobIds: [] }
-    : computeBaselinePresence(args.root, args.base, { candidates, configKeys, jobKeys, taskCodes });
+    : computeBaselinePresence(args.root, args.base, { candidates, configKeys, jobKeys, taskCodes }, profile);
 
   const remoteHost = remoteHostOf(args.root);
   const gitlabUrl = buildGitlabUrl(args.root, {
@@ -1110,6 +1132,7 @@ function main() {
     prior: args.prior,
     priorSince: args.priorSince,
     baselinePresence,
+    profile,
   });
 
   if (args.format === "md") {

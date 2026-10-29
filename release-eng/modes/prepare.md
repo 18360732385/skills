@@ -12,7 +12,7 @@
 7. 【推荐】`release-note-merge.mjs`（优先 `--freeze-json` 带 aiTrack 的 JSON）将 freeze **`draft`** + Git 定版写入**目录包**自动段 + **`artifacts.json`**，并拷贝本版新增原件到 `sql/refs/`/`config/`/`jobs/`（← draft；不含 candidates；同时生成 `sql/release-V{yyMMdd}-DDL|DML.sql`；归类未闭环时 stderr 打 classify prompt，Agent 自动填 `--sql-ai-json` 续跑、**不问用户**；`--dry-run` 可先看）。**勿**默认写入 `draftSuppressed`；状态 `已定版`；**默认回写** [releases.md](../../../../docs/releases/releases.md) 进行中表（`--no-update-index` 可关）；Agent 核对索引行  
 
 ```bash
-node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<slug>/<slug>.md --freeze-json /tmp/freeze-with-ai.json --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
+node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<slug>/<slug>.md --freeze-json /tmp/freeze-with-ai.json --baseline <基线分支|无> --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
 ```
 
 ## Done

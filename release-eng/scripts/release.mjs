@@ -9,7 +9,7 @@
  *   node scripts/release.mjs --help | help
  *   node scripts/release.mjs modes
  *   node scripts/release.mjs prepare|resume|audit|seal [--help]
- *   node scripts/release.mjs push-gate|freeze|enrich|ai-track|note-merge|seal-check|format -- <args...>
+ *   node scripts/release.mjs push-gate|freeze|enrich|ai-track|note-merge|seal-check -- <args...>
  */
 import fs from "fs";
 import path from "path";
@@ -60,7 +60,6 @@ const DISPATCH = {
   "seal-check": "release-seal-check.mjs",
   seal: "release-seal.mjs",
   "seal-apply": "release-seal.mjs",
-  format: "release-format.mjs",
 };
 
 function printHelp() {
@@ -79,7 +78,7 @@ Usage:
   seal      已上线上归档
 
 可转发脚本子命令:
-  push-gate | freeze | enrich | ai-track | sql-classify | sql-bundle | note-merge | seal-check | seal | format
+  push-gate | freeze | enrich | ai-track | sql-classify | sql-bundle | note-merge | seal-check | seal
 
 示例:
   node scripts/release.mjs modes
@@ -141,13 +140,6 @@ function dispatch(alias, forwarded) {
   if (!fs.existsSync(bin)) {
     console.error(`Missing script: scripts/${file}`);
     process.exit(1);
-  }
-  // format.mjs is a library — show a short tip instead of executing
-  if (alias === "format") {
-    console.log(
-      `release-format.mjs 为库模块（供 freeze/note-merge import），无独立 CLI。\n导出见 scripts/release-format.mjs；自检：node scripts/selfcheck.mjs`
-    );
-    process.exit(0);
   }
   const r = spawnSync(process.execPath, [bin, ...forwarded], {
     cwd: process.cwd(),

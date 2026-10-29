@@ -20,7 +20,7 @@
 
 ## 固定
 
-1. 版本身份 slug【推荐】= 发版分支名归一化（如 `release/V260827` → `release-V260827`），发版单路径 = `docs/releases/<slug>/<slug>.md`（发版日期为独立字段，不拼入路径；无 notes/）  
+1. 版本身份 slug【推荐】= 发版分支名归一化，发版单路径 = `docs/releases/<slug>/<slug>.md`（发版日期为独立字段，不拼入路径）；归一化细则与目录包构成见 [conventions.md](conventions.md)  
 2. 上线内容摘要（【推荐】采纳 freeze `releaseSummaryLines`；1～5 项业务短句；写入元信息；可改）  
 3. 发版负责人  
 

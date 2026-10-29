@@ -9,13 +9,21 @@ import {
   migrationAliasSet,
   migrationCanonicalId,
   bundleSqlVolumeWarning,
+  isProdConfigPath,
+  normalizeNoteStatus,
+  stripBom,
 } from "./release-format.mjs";
+import { DEFAULT_REPO_PROFILE } from "./lib/repo-profile.mjs";
+
+// 兼容 re-export：enrich 历史上导出 isProdConfigPath；语义统一走 release-format 版（C3/D3）
+export { isProdConfigPath };
 
 const CONFIDENCE_ORDER = ["path", "key-diff", "catalog-hit", "docs-hit"];
 
 function readText(filePath) {
   try {
-    return fs.readFileSync(filePath, "utf8");
+    // 统一 stripBom：PowerShell 重定向 / 部分编辑器易引入 UTF-8 BOM（D8）
+    return stripBom(fs.readFileSync(filePath, "utf8"));
   } catch {
     return null;
   }
@@ -45,13 +53,12 @@ export function rankConfidence(...levels) {
 }
 
 /** 从 README / AGENTS 表格抽取 `key` → 说明 */
-export function loadConfigDescriptionCatalog(root) {
+export function loadConfigDescriptionCatalog(root, catalogFiles = DEFAULT_REPO_PROFILE.configCatalogFiles) {
   const map = new Map();
-  const files = [
-    path.join(root, "sms-ai", "README.md"),
-    path.join(root, "sms-ai", "AGENTS.md"),
-    path.join(root, "AGENTS.md"),
-  ];
+  const files = (Array.isArray(catalogFiles) && catalogFiles.length
+    ? catalogFiles
+    : DEFAULT_REPO_PROFILE.configCatalogFiles
+  ).map((rel) => path.join(root, rel));
   for (const f of files) {
     const text = readText(f);
     if (!text) continue;
@@ -355,14 +362,6 @@ export function resolveJobHit(keyOrCode, jobsCatalog, syncEnumMap) {
   return null;
 }
 
-export function isProdConfigPath(filePath) {
-  const n = normPath(filePath);
-  const b = baseName(n);
-  if (/^application-prod\.ya?ml$/i.test(b)) return true;
-  if (/^application\.ya?ml$/i.test(b)) return true;
-  return false;
-}
-
 /**
  * 为 configKeys / jobKeys / taskCodes / candidates 挂说明、jobs 真相、confidence；
  * 双源去重（线上已存在 ∪ 清单已收录）；产出变更对象 + AI 轨 stub。
@@ -373,7 +372,8 @@ export function isProdConfigPath(filePath) {
  * @param {{ sqlScripts?: string[], configKeys?: string[], jobIds?: string[] }} [options.baselinePresence]
  */
 export function enrichFreezePayload(root, payload, options = {}) {
-  const descCatalog = loadConfigDescriptionCatalog(root);
+  const profile = options.profile || DEFAULT_REPO_PROFILE;
+  const descCatalog = loadConfigDescriptionCatalog(root, profile.configCatalogFiles);
   const jobsCatalog = loadJobsCatalog(root);
   const syncEnumMap = loadSyncTaskCodeMap(root);
   const priorOpt = options.prior == null ? "auto" : options.prior;
@@ -516,7 +516,7 @@ export function enrichFreezePayload(root, payload, options = {}) {
   // —— 索引 ↔ 磁盘对账：releases.md 进行中表行指向的 note 须存在 ——
   const indexDrift = scanIndexDrift(root);
 
-  const priorBundle = resolvePriorArtifactsBundle(root, priorOpt, priorSince);
+  const priorBundle = resolvePriorArtifactsBundle(root, priorOpt, priorSince, profile);
   const priorArtifacts = priorBundle.artifacts;
 
   const marked = markDualSource(
@@ -714,7 +714,7 @@ function mergeArtifactSets(into, from) {
 }
 
 /** 从目录包 artifacts.json 或 md 启发式加载清单已收录 */
-export function loadArtifactsForNoteFile(root, mdFullPath) {
+export function loadArtifactsForNoteFile(root, mdFullPath, profile = DEFAULT_REPO_PROFILE) {
   const dir = path.dirname(mdFullPath);
   const jsonPath = path.join(dir, "artifacts.json");
   const jsonText = readText(jsonPath);
@@ -743,7 +743,7 @@ export function loadArtifactsForNoteFile(root, mdFullPath) {
     }
   }
   const text = readText(mdFullPath);
-  const artifacts = parseReleaseNoteArtifacts(text);
+  const artifacts = parseReleaseNoteArtifacts(text, profile?.artifactKeyPrefixes);
   return {
     artifacts,
     source: "md-heuristic",
@@ -799,9 +799,23 @@ function identityDatePrefix(identity) {
 }
 
 /**
- * prior: auto → archive 全量并集（可选 --prior-since）；none → 空；否则单路径
+ * 从发版单正文读取 发版日期（YYYY-MM-DD）：
+ * 表格行 `| 发版日期 | 2026-08-27 |` 或引语行 `> 发版日期：2026-08-27`；读不到返回 null。
+ * 供 prior-since 对无日期前缀的新式身份（release-Vxxxxxx）回退判期，及逾期扫描复用。
  */
-export function resolvePriorArtifactsBundle(root, priorOpt, priorSince) {
+export function noteReleaseDate(text) {
+  const s = String(text || "");
+  const m =
+    s.match(/\|\s*发版日期\s*\|\s*(\d{4}-\d{2}-\d{2})/) ||
+    s.match(/>\s*发版日期：\s*(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : null;
+}
+
+/**
+ * prior: auto → archive 全量并集（可选 --prior-since）；none → 空；否则单路径。
+ * profile：目标仓 repo-profile（artifactKeyPrefixes 注入 md 启发式；缺省 DEFAULT）。
+ */
+export function resolvePriorArtifactsBundle(root, priorOpt, priorSince, profile = DEFAULT_REPO_PROFILE) {
   const empty = { notes: [], artifacts: emptyArtifacts(), usedArtifactsJson: false };
   if (!priorOpt || priorOpt === "none") return empty;
 
@@ -810,7 +824,7 @@ export function resolvePriorArtifactsBundle(root, priorOpt, priorSince) {
   const union = emptyArtifacts();
 
   const ingest = (mdFull) => {
-    const loaded = loadArtifactsForNoteFile(root, mdFull);
+    const loaded = loadArtifactsForNoteFile(root, mdFull, profile);
     if (loaded.source === "artifacts.json") usedArtifactsJson = true;
     mergeArtifactSets(union, loaded.artifacts);
     notes.push({
@@ -833,11 +847,17 @@ export function resolvePriorArtifactsBundle(root, priorOpt, priorSince) {
   let listed = listReleaseNotesNewestFirst(archiveDir);
   if (priorSince) {
     const since = String(priorSince).trim();
+    const sinceDate = /^\d{4}-\d{2}-\d{2}/.test(since) ? since.slice(0, 10) : null;
     listed = listed.filter((n) => {
       const id = n.identity || n.file.replace(/\.md$/i, "");
-      const d = identityDatePrefix(id) || identityDatePrefix(since);
-      if (/^\d{4}-\d{2}-\d{2}/.test(since) && identityDatePrefix(id)) {
-        return identityDatePrefix(id) >= since.slice(0, 10);
+      const idDate = identityDatePrefix(id);
+      if (sinceDate) {
+        if (idDate) return idDate >= sinceDate;
+        // 新式身份（无日期前缀）：回退读 archive md 的 发版日期（C4/D4）；
+        // 读不到日期时保守并入（漏检优先，宁可多 prior 不可漏已上线）。
+        const mdDate = noteReleaseDate(readText(n.full));
+        if (mdDate) return mdDate >= sinceDate;
+        return true;
       }
       return id >= since || id.includes(since);
     });
@@ -860,12 +880,16 @@ export function resolvePriorReleaseNote(root, priorOpt) {
   };
 }
 
-/** 从发版单正文抽取已上线 SQL / 配置键 / 任务标识（无 artifacts.json 时回退） */
-export function parseReleaseNoteArtifacts(text) {
+/**
+ * 从发版单正文抽取已上线 SQL / 配置键 / 任务标识（无 artifacts.json 时回退）。
+ * prefixes：业务键前缀表（缺省 DEFAULT_REPO_PROFILE.artifactKeyPrefixes；目标仓 repo-profile.json 可覆盖）。
+ */
+export function parseReleaseNoteArtifacts(text, prefixes = DEFAULT_REPO_PROFILE.artifactKeyPrefixes) {
   const out = emptyArtifacts();
   if (!text) return out;
   const idM = text.match(/^#\s*发版单[：:]\s*(\S+)/m) || text.match(/\|\s*版本身份\s*\|\s*([^|]+)\|/);
   if (idM) out.identity = idM[1].trim();
+  const prefixList = Array.isArray(prefixes) ? prefixes : DEFAULT_REPO_PROFILE.artifactKeyPrefixes;
 
   for (const line of text.split(/\r?\n/)) {
     if (!line.includes("|")) continue;
@@ -875,7 +899,7 @@ export function parseReleaseNoteArtifacts(text) {
     for (const m of line.matchAll(/`([a-zA-Z][a-zA-Z0-9_.-]{2,})`/g)) {
       const k = m[1];
       if (k.includes(".") || k.includes(":")) {
-        if (k.includes(":") || /^[a-z]+:/.test(k) || k.startsWith("sms.") || k.startsWith("agent.") || k.startsWith("spring.")) {
+        if (k.includes(":") || /^[a-z]+:/.test(k) || prefixList.some((p) => k.startsWith(p))) {
           if (k.includes(":")) out.jobIds.add(k);
           else out.configKeys.add(k);
         }
@@ -1486,13 +1510,13 @@ export function scanOverdueNotes(root) {
     seen.add(n.identity);
     const text = readText(n.full);
     if (!text) continue;
-    const dateM = text.match(/\|\s*发版日期\s*\|\s*([^|]+)\|/) || text.match(/>\s*发版日期：\s*(\S+)/);
-    const releaseDate = dateM && /(\d{4}-\d{2}-\d{2})/.test(dateM[1]) ? dateM[1].match(/(\d{4}-\d{2}-\d{2})/)[1] : identityDatePrefix(n.identity);
+    const releaseDate = noteReleaseDate(text) || identityDatePrefix(n.identity);
     if (!releaseDate || releaseDate >= today) continue;
     const statusM = text.match(/>\s*状态：\s*([^\n]+)/) || text.match(/\|\s*状态\s*\|\s*([^|]+)\|/);
-    const status = statusM ? statusM[1].trim() : "";
-    if (status.includes("已取消") || status.includes("已上线")) continue;
-    const severity = status.includes("已定版") ? "hard" : "soft";
+    // 状态精确归一（normalizeNoteStatus）：占位/未知不再被 includes 误判（C5）
+    const status = normalizeNoteStatus(statusM ? statusM[1] : "");
+    if (status === "已取消" || status === "已上线") continue;
+    const severity = status === "已定版" ? "hard" : "soft";
     out.push({
       identity: n.identity,
       path: normPath(path.relative(root, n.full)),
@@ -1513,7 +1537,8 @@ function chinaToday() {
       day: "2-digit",
     }).format(new Date());
   } catch {
-    return new Date().toISOString().slice(0, 10);
+    // 兜底：UTC+8 偏移后取 ISO 日期（上海日，不再差一天）
+    return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
   }
 }
 
@@ -1580,6 +1605,8 @@ export function extractTaskCodesFromJavaDiff(diffText, syncEnumMap) {
 }
 
 const DRAFT_PREVIEW_MAX = 15;
+/** draft-md 配置项预览：全部叶子键合计超此行数则截断（O4；「说明待补」计数仍按全量） */
+const CONFIG_PREVIEW_MAX = 80;
 
 function escCell(v) {
   return String(v ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
@@ -1645,7 +1672,7 @@ export function toDraftPreviewMd(data) {
   }
   lines.push("");
 
-  // Config：yml 预览（叶子键全量展示，父级键不计；发版单需完整键）
+  // Config：yml 预览（叶子键展示前 CONFIG_PREVIEW_MAX 行，父级键不计；完整键值见 freeze --out JSON / 落单）
   lines.push("## 配置项（← draft.config · yml 格式）");
   {
     const allRows = (draft.config || []).filter((r) => r.isLeaf !== false);
@@ -1659,11 +1686,17 @@ export function toDraftPreviewMd(data) {
         if (!bySrc.has(src)) bySrc.set(src, []);
         bySrc.get(src).push(r);
       }
+      const totalKeys = allRows.length;
+      const shownMax = Math.min(totalKeys, CONFIG_PREVIEW_MAX);
+      let shown = 0;
       for (const [src, list] of bySrc) {
+        if (shown >= shownMax) break;
+        const slice = list.slice(0, shownMax - shown);
+        shown += slice.length;
         lines.push(`#### ${src}`);
         if (/\.ya?ml$/i.test(src)) {
           lines.push("```yaml");
-          for (const r of list) {
+          for (const r of slice) {
             const v = r.值 === "" || r.值 == null ? '""' : String(r.值);
             // 行尾注释透明化推荐来源：confidence · 采集源（问卷预填时须能追溯）
             const tag = [r.confidence, r.source].filter(Boolean).join(" · ");
@@ -1671,11 +1704,15 @@ export function toDraftPreviewMd(data) {
           }
           lines.push("```");
         } else {
-          for (const r of list) {
+          for (const r of slice) {
             const tag = [r.confidence, r.source].filter(Boolean).join(" · ");
             lines.push(`- \`${r.键}\` = ${escCell(r.值)} （${escCell(r.说明 || "待补")}）${tag ? ` — ${tag}` : ""}`);
           }
         }
+        lines.push("");
+      }
+      if (totalKeys > shownMax) {
+        lines.push(`> 另有 ${totalKeys - shownMax} 条未展示（完整键值见 freeze --out JSON / 落单）`);
         lines.push("");
       }
     }

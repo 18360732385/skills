@@ -5,6 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { createHash } from "crypto";
+import { DEFAULT_REPO_PROFILE } from "./lib/repo-profile.mjs";
 
 export const TZ_CHINA = "Asia/Shanghai";
 
@@ -190,36 +191,12 @@ export function releaseSummaryMarkdown(lines) {
   return lines.map((l) => `- ${l}`).join("\n");
 }
 
-/** 分支 slug → 中文业务短语 */
-const BRANCH_SLUG_CN = {
-  milvus: "Milvus 向量库同步",
-  neo4j: "Neo4j 图数据同步",
-  harness: "harness-eng 发版脚手架",
-  "harness-eng": "harness-eng 发版脚手架",
-  qianduan: "前端管理与对话 SPA",
-  xxl: "定时任务 / XXL-JOB",
-  file: "文件与附件能力",
-  mcp: "MCP 工具集成",
-  shenzhouwenxue: "问学 / 神州问学对接",
-  wenxue: "问学对接",
-  feedback: "用户反馈",
-  newmodel: "模型配置改造",
-  "模型改造": "模型配置改造",
-  ui: "前端 UI",
-  "code-scaffold": "代码脚手架基线合入",
-  scaffold: "代码脚手架",
-  release: "发版分支合入",
-  test: "测试分支合入",
-  s2: "S2 迭代合入",
-  ocr: "OCR 文本提取",
-  embedding: "Embedding / 向量检索",
-  speech: "语音转写",
-  supervisor: "Supervisor 智能路由",
-  safety: "安全报告填报",
-};
-
-/** 从分支名提炼中文功能短语 */
-export function featurePhraseFromBranch(source) {
+/**
+ * 从分支名提炼中文功能短语。
+ * slugCn：分支 slug → 中文短语表；缺省为 DEFAULT_REPO_PROFILE.branchSlugCn
+ * （目标仓可用 docs/releases/repo-profile.json 覆盖，经 freeze/note-merge 注入）。
+ */
+export function featurePhraseFromBranch(source, slugCn = DEFAULT_REPO_PROFILE.branchSlugCn) {
   const raw = String(source || "")
     .replace(/^refs\/remotes\/origin\//, "")
     .replace(/^origin\//, "")
@@ -229,14 +206,14 @@ export function featurePhraseFromBranch(source) {
   const last = parts[parts.length - 1] || raw;
   const slug = last.replace(/^\d{6}-/, "").replace(/^\d{4}-\d{2}-\d{2}-/, "");
   const key = slug.toLowerCase();
-  if (BRANCH_SLUG_CN[key]) return BRANCH_SLUG_CN[key];
-  if (BRANCH_SLUG_CN[slug]) return BRANCH_SLUG_CN[slug];
+  if (slugCn[key]) return slugCn[key];
+  if (slugCn[slug]) return slugCn[slug];
   // 含中文的 slug 直接可用
   if (/[\u4e00-\u9fff]/.test(slug)) return slug;
   // 英文连字符拆词查表
   for (const part of slug.split(/[-_]/)) {
     const p = part.toLowerCase();
-    if (BRANCH_SLUG_CN[p]) return BRANCH_SLUG_CN[p];
+    if (slugCn[p]) return slugCn[p];
   }
   return `${slug} 相关能力`;
 }
@@ -264,7 +241,11 @@ export function toBusinessPhrase(subject) {
  * 来源分支功能：1～3 项中文业务/修复描述，按出现顺序。
  * @returns {string[]}
  */
-export function branchFeaturesFromSubjects(source, subjects, { max = BRANCH_FEATURE_MAX } = {}) {
+export function branchFeaturesFromSubjects(
+  source,
+  subjects,
+  { max = BRANCH_FEATURE_MAX, slugCn = DEFAULT_REPO_PROFILE.branchSlugCn } = {}
+) {
   const features = [];
   const seen = new Set();
   for (const raw of subjects || []) {
@@ -275,7 +256,7 @@ export function branchFeaturesFromSubjects(source, subjects, { max = BRANCH_FEAT
     if (features.length >= max) break;
   }
   if (!features.length) {
-    features.push(featurePhraseFromBranch(source));
+    features.push(featurePhraseFromBranch(source, slugCn));
   }
   return features.slice(0, max);
 }
@@ -283,9 +264,14 @@ export function branchFeaturesFromSubjects(source, subjects, { max = BRANCH_FEAT
 /**
  * 来源分支功能一句话总结：
  * 分支名命中词表 → 直接用分支级中文短语；未识别 → 取首条可业务化提交说明；兜底给通用短语。
+ * slugCn：短语表注入（缺省 DEFAULT_REPO_PROFILE.branchSlugCn）。
  */
-export function branchOneLineSummary(source, subjects) {
-  const phrase = featurePhraseFromBranch(source);
+export function branchOneLineSummary(
+  source,
+  subjects,
+  { slugCn = DEFAULT_REPO_PROFILE.branchSlugCn } = {}
+) {
+  const phrase = featurePhraseFromBranch(source, slugCn);
   const generic = phrase === "未识别来源分支" || /相关能力$/.test(phrase);
   if (!generic) return phrase;
   for (const raw of subjects || []) {
@@ -314,8 +300,11 @@ export function normalizeSourceBranch(source) {
     .replace(/^origin\//, "");
 }
 
-/** 按推测来源分支去重（origin/ 前缀归一）；产出 branchSummary=一句话 + branchFeatures[] + noise（JSON 兼容） */
-export function buildMergeSources(merges) {
+/**
+ * 按推测来源分支去重（origin/ 前缀归一）；产出 branchSummary=一句话 + branchFeatures[] + noise（JSON 兼容）
+ * slugCn：分支短语表注入（缺省 DEFAULT_REPO_PROFILE.branchSlugCn；目标仓 repo-profile.json 可覆盖）。
+ */
+export function buildMergeSources(merges, { slugCn = DEFAULT_REPO_PROFILE.branchSlugCn } = {}) {
   const map = new Map();
   for (const m of merges || []) {
     const norm = normalizeSourceBranch(m.source);
@@ -331,8 +320,8 @@ export function buildMergeSources(merges) {
   }
   return [...map.values()]
     .map((row) => {
-      const branchFeatures = branchFeaturesFromSubjects(row.source, row.subjects);
-      const branchSummary = branchOneLineSummary(row.source, row.subjects);
+      const branchFeatures = branchFeaturesFromSubjects(row.source, row.subjects, { slugCn });
+      const branchSummary = branchOneLineSummary(row.source, row.subjects, { slugCn });
       const noise = isMergeSourceNoise(row.source);
       return {
         source: row.source,
@@ -505,8 +494,9 @@ export function formatConfigAsYamlMd(configRows) {
 /**
  * 从 AGENTS.md / README 抽一句话模块说明。
  * moduleKey 为目录名或「其它」；优先读该模块下文档，否则仓根。
+ * moduleBlurbs：兜底文案表注入（缺省 DEFAULT_REPO_PROFILE.moduleBlurbs；目标仓 repo-profile.json 可覆盖）。
  */
-export function loadModuleBlurb(root, moduleKey) {
+export function loadModuleBlurb(root, moduleKey, moduleBlurbs = DEFAULT_REPO_PROFILE.moduleBlurbs) {
   const key = String(moduleKey || "").replace(/\/$/, "");
   const candidates = [];
   if (key && key !== "其它" && key !== "docs") {
@@ -529,9 +519,9 @@ export function loadModuleBlurb(root, moduleKey) {
     const first = text.match(/^#\s+.+\n+>\s*(.+)$/m) || text.match(/^#\s+.+\n\n([^\n#]+)/m);
     if (first) return oneSentence(first[1]);
   }
-  if (key === "sms-ai") return "后端 AI Agent 脚手架服务";
-  if (key === "sms-ai-web") return "前端管理与对话 SPA";
-  if (key === "其它" || !key) return "仓库其它路径（文档、脚手架、配置等）";
+  const blurbs = moduleBlurbs || DEFAULT_REPO_PROFILE.moduleBlurbs;
+  if (key && blurbs[key]) return blurbs[key];
+  if (key === "其它" || !key) return blurbs["其它"] || "仓库其它路径（文档、脚手架、配置等）";
   return `${key} 模块`;
 }
 
@@ -758,13 +748,24 @@ export function detectMixedDdlDml(src) {
   return { hasDdl, hasDml, mixed: hasDdl && hasDml };
 }
 
-/** 上线配置路径：application-prod.yml 或 nacos prod overlay */
+/** 上线配置路径：application-prod.yml 或 nacos prod overlay（路径段或包内拍平 basename 均放行） */
 export function isProdConfigPath(filePath) {
   const n = normMigrationPath(filePath);
   const base = migrationBaseName(n);
   if (/^application-prod\.ya?ml$/i.test(base)) return true;
+  if (/^application-prod-nacos\.ya?ml$/i.test(base)) return true;
   if (/config\/nacos\//i.test(n) && /^application-prod-nacos\.ya?ml$/i.test(base)) return true;
   return false;
+}
+
+/**
+ * 发版单状态归一：trim 后**精确等于** 准备中/已定版/已上线/已取消 之一才返回该值，否则 ""。
+ * 模板占位行（如「准备中 | 已定版 | 已上线 | 已取消」）不再被 includes 误判。
+ */
+export function normalizeNoteStatus(status) {
+  const s = String(status ?? "").trim();
+  if (s === "准备中" || s === "已定版" || s === "已上线" || s === "已取消") return s;
+  return "";
 }
 
 /** 从 origin web URL 识别宿主：gitlab | github | other */
@@ -1112,8 +1113,10 @@ export function enrichFirstReleaseLayerObservability(
   const keys = Array.isArray(configKeys) ? configKeys : [];
   const jobs = Array.isArray(jobKeys) ? jobKeys : [];
   const codes = Array.isArray(taskCodes) ? taskCodes : [];
-  const prodConfigKeyCount = keys.filter((k) => k?.source === "application-prod").length;
-  const nacosOverlayKeyCount = keys.filter((k) => k?.source === "nacos-overlay").length;
+  // config 与 jobs/cron 键合并统计：jobs/cron 键也是 prod 层配置（防 prod yml 仅 cron 键时误报「prod 层 0 键」）
+  const allConfigKeys = [...keys, ...jobs];
+  const prodConfigKeyCount = allConfigKeys.filter((k) => k?.source === "application-prod").length;
+  const nacosOverlayKeyCount = allConfigKeys.filter((k) => k?.source === "nacos-overlay").length;
   const syncTaskCodeCount = codes.length;
   const layerEmpty = [];
   if (prodConfigKeyCount + nacosOverlayKeyCount === 0) layerEmpty.push("config");

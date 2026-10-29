@@ -118,7 +118,9 @@ function patchNoteOnline(text, { onlineDate, executor }) {
 
 function metaFromNote(text) {
   const branch = (text.match(/> 发版分支：\s*([^\n·]+)/) || [])[1]?.trim() || "";
-  const baseline = (text.match(/基线分支：\s*([^\n]+)/) || [])[1]?.trim() || "";
+  // 基线捕获后剥尾部（…）说明性尾注（如旧稿「（首次发版填「无」）」），避免污染 ARCHIVE 分支对
+  const baseline =
+    (text.match(/基线分支：\s*([^\n]+)/) || [])[1]?.trim().replace(/（[^（）]*）\s*$/, "").trim() || "";
   const date = (text.match(/> 发版日期：\s*(\d{4}-\d{2}-\d{2})/) || [])[1] || "";
   const owner = (text.match(/> 负责人：\s*([^\n]+)/) || [])[1]?.trim() || "";
   const identity =
@@ -250,14 +252,14 @@ function main() {
     process.exit(0);
   }
 
-  // --apply
-  fs.writeFileSync(bundle.notePath, patched, "utf8");
-
+  // --apply：先整夹迁移，成功后再把 patched 写到归档侧（D6——mv 失败时单子保持原状，无「已上线」中间态）
   const mv = gitMv(args.root, bundle.srcDir, bundle.destDir);
   if (!mv.ok) {
     console.log(JSON.stringify({ ok: false, error: "mv failed", detail: mv, plan }, null, 2));
     process.exit(1);
   }
+
+  fs.writeFileSync(path.join(bundle.destDir, path.basename(bundle.notePath)), patched, "utf8");
 
   const indexPath = path.join(args.root, "docs", "releases", "releases.md");
   const archivePath = path.join(args.root, "docs", "releases", "ARCHIVE.md");

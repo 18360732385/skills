@@ -21,6 +21,7 @@ import {
   migrationSortKey,
   releaseSqlBundleName,
   sha256Hex,
+  stripBom,
 } from "./release-format.mjs";
 import {
   buildClassifyPromptMd,
@@ -63,7 +64,7 @@ function baseName(p) {
 
 function loadJson(p) {
   if (!p || !fs.existsSync(p)) return null;
-  return JSON.parse(fs.readFileSync(p, "utf8"));
+  return JSON.parse(stripBom(fs.readFileSync(p, "utf8")));
 }
 
 function loadPriorBySha(artifactsPath) {
@@ -97,7 +98,9 @@ function draftMigrationBasenames(freeze) {
   for (const r of freeze?.draft?.sql || []) {
     const p = r.路径 || r.path || r.脚本 || "";
     if (p && isMigrationSql(p)) set.add(baseName(p));
-    else if (r.脚本 && /\.sql$/i.test(r.脚本)) set.add(baseName(r.脚本));
+    // 兜底分支：仅收 migration 命名 SQL；_change.sql 为变更清单附件，非 refs 待整理项（C1/D1）
+    else if (r.脚本 && /\.sql$/i.test(r.脚本) && !/_change\.sql$/i.test(r.脚本))
+      set.add(baseName(r.脚本));
   }
   return set;
 }
@@ -246,7 +249,7 @@ export function runSqlBundle({
   }
 
   if (errors.length) {
-    removeStaleBundles(sqlDir);
+    // 失败路径不清理旧整理文件：保留 stale bundle，避免 artifacts 悬空引用（D7）；成功路径才清理+重建
     return {
       ok: false,
       errors,

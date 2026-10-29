@@ -58,7 +58,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 
 ## `逾期未归档`
 
-进行中目录包（`docs/releases/<slug>/`，兼容旧 `notes/`）发版日期 < 运行日（Asia/Shanghai）：`已定版` → 硬闸（freeze `ok=false` / exit 1）；`准备中` → soft warning。须先 seal 或书面跳过。 
+进行中目录包（`docs/releases/<slug>/`，兼容旧 `notes/`）发版日期 < 运行日（Asia/Shanghai）：`已定版` → 硬闸（freeze `ok=false` / exit 1）；`准备中` → soft warning。须先 seal，或用户**书面跳过**：落盘时 note-merge 须带 `--overdue-waived "<书面说明>"`（跳过记录写入 `artifacts.json.overdueWaived{reason,date}`；freeze JSON 含 `overdueHardGate` 而未传该参数 → note-merge 拒绝写盘、exit 1）。约定见 [conventions.md](conventions.md)。
 
 ## 候选规则（增量）
 
@@ -69,7 +69,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 | **jobs** | `docs/jobs`、`*Scheduler.java`、`SyncTaskCode`、`SyncTaskMetadataRegistry`；或 yml 键名含 `cron`/`scheduling`；Java diff 抽 `taskCodes`；**交叉** `docs/jobs/tasks` → `jobsHits` |
 | **third-party** | feign / 问学 / 乐享 / dashscope / mcp 路径关键词 |
 
-同一文件可同时 `config`+`jobs`（`kinds` 数组；兼容字段 `kind`=首个）。
+同一文件可同时 `config`+`jobs`（`kinds` 数组；兼容字段 `kind`=首个）。目标 profile=prod、配置白名单等约定见 [conventions.md](conventions.md)。
 
 ## `draft`（写盘预填）
 
@@ -97,22 +97,14 @@ audit【推荐】：`--format audit-json`。一屏摘要：`--format summary`。
 
 ## `截断5`（提交列表写入发版单时强制）
 
-对 **提交列表**：
-
-| 条数 | 展示 |
-|---|---|
-| ≤ 5 | 全量 |
-| > 5 | 前 3 行 + 一行 `…`（省略 N 条）+ 后 2 行 |
-
-**hash 列展示前 8 位**（截断自 `git %H`，如 `0afa1ab7`）。  
-省略行下方：`完整记录请登录 GitLab|GitHub|远端仓库 查看：<url>`（按 freeze `remoteHost` / origin；字段名仍可能叫 `gitlabUrl`）。  
+提交列表按 **`截断5`**（≤5 全量；>5 前 3 + 一行 `…`（省略 N 条）+ 后 2；hash 列前 8 位）；省略行下方补远端完整记录链接（按 freeze `remoteHost` / origin；字段名仍可能叫 `gitlabUrl`）。形与示例见 [conventions.md](conventions.md)。  
 JSON 可保留全量 hash；写入发版单用 `commitsDisplay` 或 md。
 
 ## `mergeSources`（合并来源去重全量）
 
-按 `guessSourceBranch` 推测来源分支去重，**`origin/`、`refs/remotes/`、`refs/heads/` 前缀归一**（如 `code-scaffold` 与 `origin/code-scaffold` 视为同一分支，计数合并）；空归「无/未识别」。  
+按 `guessSourceBranch` 推测来源分支去重、`origin/` 等前缀归一（去重/归一细则见 [conventions.md](conventions.md)）；空归「无/未识别」。  
 产出 `mergeSources: [{ source, count, branchFeatures[], branchSummary, noise }]`（`branchSummary` 为一句话中文总结；`noise`=环境支/未识别/`merge/*`）。JSON **全量保留**；发版单表优先业务支，噪声折叠为「环境支/未识别（合计）」一行；`releaseSummaryLines` 跳过 noise。  
-表列：推测来源分支 | 出现次数 | **来源分支功能**（一句话中文，≤28 字；优先中文关键词映射分支名，其次样例提交主题收成业务短句）。
+表列：推测来源分支 | 出现次数 | **来源分支功能**（一句话中文；映射与收句细则见 [conventions.md](conventions.md)）。
 
 ## `上线内容摘要`（← 分支级聚合；并入元信息）
 
@@ -121,7 +113,7 @@ note-merge 写入元信息章内 `### 上线内容摘要` 的 `<!-- auto:summary
 
 ## 时区
 
-定版时间与提交 `date` 列均用 **Asia/Shanghai**（`TZ` + `format-local` / `nowChinaTime`）。
+定版时间与提交 `date` 列均用 **Asia/Shanghai**（`TZ` + `format-local` / `nowChinaTime`；约定见 [conventions.md](conventions.md)）。
 
 ## `SQL序`（候选与落单）
 
@@ -129,7 +121,8 @@ sql 候选按 migration **版本号数字升序**。
 无版本号的 `_change.sql` 置后，问卷确认是否仅对照、是否需执行。  
 落单「数据库与 SQL」按同一顺序填 **执行序** 1..N，目标 profile=`prod`。
 
-定版落盘后（note-merge）：原件进 `sql/refs/`；按文件名双轨（`__DDL__`/`__DML__` 或新轨 `V{ts}_{0|1}__`）归类，失败则 AI JSON（`--sql-ai-json`，不问用户）生成 `sql/release-V{yyMMdd}-DDL|DML.sql`（缺侧不落盘）。**prod 执行：先 DDL 整理文件，再 DML**（各类内部仍 SQL序）。`_change.sql` 不进 refs/整理。
+定版落盘后（note-merge）：原件进 `sql/refs/`；按文件名双轨（`__DDL__`/`__DML__` 或新轨 `V{ts}_{0|1}__`）归类，失败则 AI JSON（`--sql-ai-json`，不问用户）生成 `sql/release-V{yyMMdd}-DDL|DML.sql`。`_change.sql` 仅对照、不进 refs 与整理文件；整理文件缺侧不落盘；**prod 执行先 DDL 整理文件再 DML**（各类内部仍 SQL序）——约定全文见 [conventions.md](conventions.md)。  
+> **警示**：note-merge 刷新会**先清空包内 `sql/` / `config/` / `jobs/` 三个目录再重建**（← `draft`）；手工放入这三个目录的文件会被清除。
 
 ## 回退（脚本不可用时）
 

@@ -45,6 +45,10 @@
 
 | 日期 | 事项及说明 | 状态 |
 |---|---|---|
+| 2026-10-29 | release-eng **0.3.32**：修复轮：_change.sql/nacos prod 判定、prior-since、状态精确匹配、seal 事务性、BOM、--overdue-waived、repo-profile 外置、conventions SSOT | 已生效 |
+| 2026-10-28 | release-eng **0.3.31**：N14 收口：docs-hit fixedDelay/非 cron 不误报 cron 缺口 | 已生效 |
+| 2026-10-28 | release-eng **0.3.30**：N11 值变更不 suppress、N12 完整记录入 auto:git、N7 top-level 桶、N13/N14/N1 父级注释 | 已生效 |
+| 2026-10-28 | release-eng **0.3.29**：注释采集、SyncTaskCode 可发现、draft 剔父级、seal 一键、BOM、首次问卷 | 已生效 |
 | 2026-10-28 | release-eng **0.3.28**：`sql/refs` + `release-V*-DDL\|DML` 整理与静态校验 | 已生效 |
 | 2026-10-28 | release-eng **0.3.27**：去掉 `notes/`；进行中目录包直接挂在 `docs/releases/<slug>/` | 已生效 |
 | 2026-08-21 | release-eng **0.3.9**：Asia/Shanghai；摘要←提交；一/1 编号；来源分支功能；路径+贡献者；yml YAML；包内 md 链接 | 已生效 |

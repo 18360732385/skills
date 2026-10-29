@@ -3,7 +3,7 @@
  * release-note-merge — 将 freeze draft / Git 定版 写入发版单自动段
  *
  * Usage:
- *   node release-note-merge.mjs --root <REPO> --note <path> --freeze-json <file> [--dry-run]
+ *   node release-note-merge.mjs --root <REPO> --note <path> --freeze-json <file> [--overdue-waived <书面说明>] [--dry-run]
  *   node release-note-merge.mjs --root <REPO> --note <path> --base <ref> --head <ref> [--prior auto] [--dry-run]
  *   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
  *
@@ -45,6 +45,7 @@ import {
 } from "./release-format.mjs";
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
 import { runSqlBundle } from "./release-sql-bundle.mjs";
+import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -69,6 +70,7 @@ function parseArgs(argv) {
     updateIndex: true,
     sqlAiJson: null,
     skipAiClassify: false,
+    overdueWaived: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -94,6 +96,7 @@ function parseArgs(argv) {
     else if (a === "--update-index") out.updateIndex = true;
     else if (a === "--sql-ai-json") out.sqlAiJson = argv[++i] || null;
     else if (a === "--skip-ai-classify") out.skipAiClassify = true;
+    else if (a === "--overdue-waived") out.overdueWaived = argv[++i] || null;
     else if (a === "--help" || a === "-h") out.help = true;
   }
   if (out.base && ["none", "无", "-", "null"].includes(String(out.base).toLowerCase())) {
@@ -125,7 +128,11 @@ function loadFreeze(args) {
   }
   if (!args.head) throw new Error("require --freeze-json or --head (+ --base|--first-release)");
   const script = path.join(__dirname, "release-freeze.mjs");
-  const cmd = ["--root", args.root, "--head", args.head, "--prior", args.prior, "--format", "json"];
+  // O6：spawn freeze 改 --out 落盘中转（scripts/.gitignore 已含 _freeze*.json），stdout 不再承载大 JSON
+  const outPath = path.join(__dirname, "_freeze-merge.json");
+  const cmd = [
+    "--root", args.root, "--head", args.head, "--prior", args.prior, "--format", "json", "--out", outPath,
+  ];
   if (args.priorSince) cmd.push("--prior-since", args.priorSince);
   if (args.firstRelease) cmd.push("--first-release");
   else {
@@ -136,10 +143,26 @@ function loadFreeze(args) {
     encoding: "utf8",
     maxBuffer: 80 * 1024 * 1024,
   });
-  if (r.status !== 0) {
-    throw new Error(r.stderr || r.stdout || "release-freeze.mjs failed");
+  try {
+    if (r.status !== 0) {
+      // freeze exit 1（如逾期硬闸）：读落盘 JSON，仅当 overdueHardGate=true 且已书面 waive 时容忍（D15）
+      const text = readText(outPath);
+      const data = text ? JSON.parse(text) : null;
+      if (data && data.overdueHardGate === true && args.overdueWaived) {
+        return data;
+      }
+      throw new Error(r.stderr || r.stdout || "release-freeze.mjs failed");
+    }
+    const text = readText(outPath);
+    if (!text) throw new Error(`release-freeze.mjs 未写出 ${outPath}`);
+    return JSON.parse(text);
+  } finally {
+    try {
+      fs.rmSync(outPath, { force: true });
+    } catch {
+      /* ignore */
+    }
   }
-  return JSON.parse(r.stdout);
 }
 
 function displayRows(payload) {
@@ -149,7 +172,7 @@ function displayRows(payload) {
   return [];
 }
 
-export function buildGitSection(freeze) {
+export function buildGitSection(freeze, { slugCn = DEFAULT_REPO_PROFILE.branchSlugCn } = {}) {
   const lines = [];
   const url = freeze.gitlabUrl || "";
   const host = freeze.remoteHost || detectRemoteHost(url);
@@ -191,7 +214,7 @@ export function buildGitSection(freeze) {
   const mergeRaw =
     (freeze.mergeSources?.length ? freeze.mergeSources : null) ||
     (freeze.mergesDisplay?.rows?.length ? freeze.mergesDisplay.rows : null) ||
-    buildMergeSources(freeze.merges);
+    buildMergeSources(freeze.merges, { slugCn });
   const mergeRows = formatMergeSourcesTableRows(mergeRaw);
   if (!mergeRows.length) lines.push("| — | 0 | 无 |");
   for (const m of mergeRows) {
@@ -475,12 +498,12 @@ function replaceHeadingSection(text, headingLine, newSection) {
   return next.join("\n");
 }
 
-export function applySections(text, freeze) {
+export function applySections(text, freeze, opts = {}) {
   let out = ensureSummaryInMeta(text);
   out = normalizeSectionHeadings(out);
   const draft = freeze.draft || { sql: [], config: [], jobs: [] };
 
-  const gitFull = buildGitSection(freeze);
+  const gitFull = buildGitSection(freeze, { slugCn: opts.slugCn });
   const sqlFull = buildSqlSection(draft);
   const configFull = buildConfigSection(freeze);
   const jobsFull = buildJobsSection(freeze);
@@ -563,7 +586,7 @@ function skeletonNote(meta) {
 
 > 状态：${meta.status}
 > 发版日期：${date}
-> 发版分支：${meta.releaseBranch || "release"} · 基线分支：${baseline === "无" ? "无" : baseline}（首次发版填「无」）
+> 发版分支：${meta.releaseBranch || "release"} · 基线分支：${baseline === "无" ? "无" : baseline}
 > 定版引用：${range}
 > 定版时间：${meta.freezeTime}（Asia/Shanghai）
 > 负责人：${meta.owner || ""}
@@ -723,15 +746,18 @@ function dirExists(root, name) {
   }
 }
 
-export function inferServices(root, freeze) {
+export function inferServices(root, freeze, profile = DEFAULT_REPO_PROFILE) {
   const stats = freeze.pathStats || {};
-  const known = ["sms-ai", "sms-ai-web"];
+  const known = Array.isArray(profile?.knownServices) && profile.knownServices.length
+    ? profile.knownServices
+    : DEFAULT_REPO_PROFILE.knownServices;
+  const blurbs = profile?.moduleBlurbs || DEFAULT_REPO_PROFILE.moduleBlurbs;
   const rows = [];
   for (const mod of known) {
     const hit = (stats[`${mod}/`] || 0) > 0;
     const exists = dirExists(root, mod);
     if (!hit && !exists) continue;
-    rows.push([mod, hit ? "是" : "否", loadModuleBlurb(root, mod)]);
+    rows.push([mod, hit ? "是" : "否", loadModuleBlurb(root, mod, blurbs)]);
   }
   // pathStats 其它一级桶（如 custom-svc/）
   for (const [bucket, n] of Object.entries(stats)) {
@@ -740,12 +766,12 @@ export function inferServices(root, freeze) {
     if (known.includes(name)) continue;
     if (!/^[a-zA-Z0-9._-]+$/.test(name)) continue;
     if (rows.some((r) => r[0] === name)) continue;
-    rows.push([name, "是", loadModuleBlurb(root, name)]);
+    rows.push([name, "是", loadModuleBlurb(root, name, blurbs)]);
   }
   const otherHit =
     (stats["其它"] || 0) > 0 || (stats["docs/"] || 0) > 0 || rows.length === 0;
   if (otherHit) {
-    rows.push(["其它", rows.length === 0 ? "是" : (stats["其它"] || stats["docs/"] ? "是" : "否"), loadModuleBlurb(root, "其它")]);
+    rows.push(["其它", rows.length === 0 ? "是" : (stats["其它"] || stats["docs/"] ? "是" : "否"), loadModuleBlurb(root, "其它", blurbs)]);
   }
   const block = [
     `## ${H2.services}`,
@@ -1065,10 +1091,11 @@ function main() {
   node release-note-merge.mjs --root <REPO> --note <path> --freeze-json <file> [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --base <ref> --head <ref> [--prior auto] [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
-Options: --identity --release-branch --baseline --release-date --owner --status --no-bundle-files --no-update-index
+Options: --identity --release-branch --baseline --release-date --owner --status --overdue-waived <书面说明> --no-bundle-files --no-update-index
 默认回写 docs/releases/releases.md 进行中表（--no-update-index 关闭）
 Note path: docs/releases/{identity}/{identity}.md（进行中目录包直接挂在 releases/；兼容旧 notes/）
-identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 release-V260827；发版日期经 --release-date 传入`);
+identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 release-V260827；发版日期经 --release-date 传入
+--overdue-waived：freeze 报逾期硬闸（存在已定版且发版日期已过的进行中发版单）时的书面跳过说明；落盘 artifacts.json.overdueWaived{reason,date}`);
     process.exit(0);
   }
   if (!args.note) {
@@ -1076,7 +1103,14 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
     process.exit(1);
   }
 
+  const profile = loadRepoProfile(args.root);
   const freeze = loadFreeze(args);
+  if (freeze.overdueHardGate && !args.overdueWaived) {
+    console.error(
+      "freeze 报逾期硬闸：存在已定版且发版日期已过的进行中发版单，须先 seal 或书面跳过后再定版；\n书面跳过请加 --overdue-waived \"<书面说明>\"（将记入 artifacts.json.overdueWaived）"
+    );
+    process.exit(1);
+  }
   const noteBase = path.basename(String(args.note).replace(/[/\\]$/, "")).replace(/\.md$/i, "");
   // 版本身份：显式 --identity 优先；note 路径占位于语义名（release/含日期前缀的旧约定）时按发版分支派生
   const identityHint =
@@ -1121,9 +1155,9 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
   }
 
   text = patchMeta(text, meta);
-  text = applySections(text, freeze);
+  text = applySections(text, freeze, { slugCn: profile.branchSlugCn });
 
-  const svc = inferServices(args.root, freeze);
+  const svc = inferServices(args.root, freeze, profile);
   const svcReplaced = replaceHeadingSection(text, "涉及服务与模块", svc);
   if (svcReplaced != null) text = svcReplaced;
 
@@ -1226,6 +1260,9 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
 
   // artifacts.json SSOT（允许密文值；不做密文拦截）
   const artifacts = buildArtifactsJson(identity, freeze);
+  if (args.overdueWaived) {
+    artifacts.overdueWaived = { reason: args.overdueWaived, date: nowChinaTime().slice(0, 10) };
+  }
   if (sqlBundleResult?.sqlBundles) {
     artifacts.sqlBundles = sqlBundleResult.sqlBundles;
   } else if (!artifacts.sqlBundles) {

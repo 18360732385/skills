@@ -71,12 +71,6 @@ function syncDoc(text, from, to, kind) {
       new RegExp(`当前 \\*\\*${fromRe}\\*\\*`),
       `当前 **${to}**`
     );
-  } else if (kind === "repo-root") {
-    // Replace whatever pin is on the release-eng README row (may lag SSOT badly).
-    out = out.replace(
-      /(release-eng\/README\.md[^\n]*当前 )\S+/,
-      `$1${to}`
-    );
   }
   return out;
 }
@@ -107,8 +101,16 @@ function planUpdates(skillRoot, version) {
   queue("VERIFY.md", path.join(skillRoot, "VERIFY.md"), (t) =>
     syncDoc(t, prev, version, "verify")
   );
+  // Repo-root row pin may lag SSOT badly (even when in-skill docs are synced,
+  // because syncDoc short-circuits when prev === version). Replace whatever
+  // semver is on the row directly — semver(-with-prerelease) only, NOT \S+,
+  // so the full-width closing paren after the pin survives the rewrite even
+  // when the row still carries a `-dev` suffix.
   queue("../README.md", path.join(REPO_ROOT, "README.md"), (t) =>
-    syncDoc(t, prev, version, "repo-root")
+    t.replace(
+      /(release-eng\/README\.md[^\n]*当前 )\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?/,
+      `$1${version}`
+    )
   );
 
   return { version, prev, updates };

@@ -1,11 +1,34 @@
-# release-eng 验收记录（0.3.31）
+# release-eng 验收记录（0.3.32）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。
 
 ## 版本
 
-当前 **0.3.31**（N11/N12/N7/N13/N14/N1 父级注释）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+当前 **0.3.32**（修复轮：`_change.sql` 剔除/nacos prod 判定、prior-since 新式身份、状态精确匹配、seal 事务性与尾注、BOM 统一、`--overdue-waived` 落点、repo-profile 外置、conventions SSOT）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。变更见 [CHANGELOG.md](CHANGELOG.md)（明细 [`../_log/release-eng/`](../_log/release-eng/)）。
+
+## 0.3.32 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0（367/367） | 有 |
+| manifest / 文档钉头 **0.3.32**；`sync-skill-version --check` | 有 |
+| 新增 selfcheck 断言组 ①–⑪（sql-bundle `_change.sql`+D7 保旧 · nacos prod 判定 · enrich prodPath · prior-since 新式身份 · seal `--apply` 事务性 · 状态精确匹配 · BOM · `--overdue-waived` · repo-profile · prodConfigKeyCount · conventions SSOT） | 有（selfcheck） |
+| conventions.md 约定 SSOT + 入口索引去重（SKILL/AGENT-INDEX/QUICKSTART/README 引用不复述） | 有 |
+| repo-profile 外置（`scripts/lib/repo-profile.mjs`：深合并覆盖 + 纯函数可选参注入；坏 JSON 回退 DEFAULT） | 有（selfcheck） |
+| seal `--apply` 事务顺序（先 gitMv 后写 patched；sql-bundle 失败路径保留旧整理文件） | 有（selfcheck） |
+| note-merge `--overdue-waived`（硬闸未 waived 拒绝写盘；waived 落 `artifacts.json.overdueWaived{reason,date}`） | 有（selfcheck） |
+| 仍标明非 harness land | 有 |
+
+## 0.3.31 增量验收（历史补录）
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0（历史 298/298） | 烟测（历史补录） |
+| N14 收口 docs-hit fixedDelay / 非 cron（`scheduleType` + `intervalKeys`，不误报 cron 缺口） | 有（selfcheck N14 实仓形状夹具） |
+| selfcheck 实仓形状夹具（`cronKey=null` + taskCode 回退路径） | 有（selfcheck） |
+| manifest / 文档钉头 **0.3.31**（历史钉；现行见 0.3.32）；当时 `sync-skill-version --check` | 有（历史补录） |
+| 仍标明非 harness land | 有 |
 
 ## 0.3.30 增量验收
 

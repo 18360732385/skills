@@ -51,10 +51,11 @@ freeze: --format draft-md（本轮预览来源）
 【推荐】：
 
 ```bash
-node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<slug>/<slug>.md --base <baseRef> --head <headRef> --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
+node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<slug>/<slug>.md --base <baseRef> --head <headRef> --baseline <基线分支|无> --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
 ```
 
-`--dry-run` 只报告将写字节与 draft/bundle 行数。手工落单须与 `draft-md` 预览一致。
+`--dry-run` 只报告将写字节与 draft/bundle 行数。手工落单须与 `draft-md` 预览一致。  
+**逾期硬闸书面跳过**：freeze JSON 含 `overdueHardGate` 且用户已书面跳过时，须加 `--overdue-waived "<书面说明>"` 才能写盘（跳过记录写入 `artifacts.json.overdueWaived{reason,date}`）；未传该参数 → note-merge 拒绝写盘（exit 1）。约定见 [conventions.md](conventions.md)。
 
 ### `draft` 预览（强制 · prepare/resume）
 
