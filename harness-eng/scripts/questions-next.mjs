@@ -5,6 +5,7 @@
  * Usage:
  *   node scripts/questions-next.mjs --answers answers.json
  *   node scripts/questions-next.mjs --answers '{"type":"NEW_CODE_NO_HARNESS","mode":"land","ladder":"L2"}'
+ *   node scripts/questions-next.mjs --root <TARGET>   # 0.7.58: 从 harness-meta 种子 ladder/domains/mode
  *
  * answers.json fields (all optional except driving ones as available):
  *   type, mode, ladder, multi_workspace, large_repo,
@@ -12,6 +13,7 @@
  *   domains: ["api","func"] (for domains_has_*)
  *
  * 0.7.25: remaining/truncated; S_* + domains_has_* in evalWhen; question-level recommended_when
+ * 0.7.58: --root 可与 --answers 并用；answers 字段优先覆盖 meta 种子
  */
 import fs from "fs";
 import path from "path";
@@ -19,15 +21,18 @@ import { fileURLToPath } from "url";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { isCliMain } from "./lib/cli-main.mjs";
 import { parseJsonText, readJsonFile } from "./lib/json-read.mjs";
+import { findHarnessMetaFile } from "./lib/harness-meta.mjs";
+import { parseMetaDomains } from "./lib/domains.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const YAML_PATH = path.join(__dirname, "..", "questions.yaml");
 
 function parseArgs(argv) {
-  const out = { answers: null, help: false };
+  const out = { answers: null, root: null, help: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--answers") out.answers = argv[++i];
+    else if (a === "--root") out.root = argv[++i];
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -39,6 +44,27 @@ function loadAnswers(raw) {
   const stripped = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
   if (stripped.trim().startsWith("{")) return parseJsonText(stripped, "--answers");
   return readJsonFile(path.resolve(raw), "--answers");
+}
+
+/** Seed answers from target harness-meta (ladder / domains / last_mode). */
+function seedAnswersFromRoot(root) {
+  if (!root) return {};
+  const found = findHarnessMetaFile(path.resolve(root));
+  if (!found) return {};
+  let text = "";
+  try {
+    text = fs.readFileSync(found.abs, "utf8");
+  } catch {
+    return {};
+  }
+  const out = {};
+  const ladder = (text.match(/^ladder:\s*["']?(L[0-5])["']?\s*$/m) || [])[1];
+  if (ladder) out.ladder = ladder;
+  const mode = (text.match(/^last_mode:\s*["']?([a-z0-9_-]+)["']?\s*$/mi) || [])[1];
+  if (mode) out.mode = mode;
+  const domains = parseMetaDomains(text);
+  if (domains.length) out.domains = domains;
+  return out;
 }
 
 function ladderOrd(l) {
@@ -186,10 +212,24 @@ function resolveNextBatchId(doc, ctx, answeredBatchIds) {
 function main() {
   const args = parseArgs(process.argv);
   if (args.help) {
-    console.log(`Usage: node scripts/questions-next.mjs --answers <json|path>`);
+    console.log(
+      `Usage: node scripts/questions-next.mjs [--root <TARGET>] [--answers <json|path>]`
+    );
     return;
   }
-  const ctx = loadAnswers(args.answers || "{}");
+  if (!args.answers && !args.root) {
+    console.log(
+      `Usage: node scripts/questions-next.mjs [--root <TARGET>] [--answers <json|path>]`
+    );
+    process.exitCode = 1;
+    return;
+  }
+  const fromRoot = seedAnswersFromRoot(args.root);
+  const fromAnswers = loadAnswers(args.answers || "{}");
+  // answers 优先覆盖 meta 种子
+  const ctx = { ...fromRoot, ...fromAnswers };
+  if (Array.isArray(fromAnswers.domains)) ctx.domains = fromAnswers.domains;
+  else if (Array.isArray(fromRoot.domains)) ctx.domains = fromRoot.domains;
   const answered = new Set(ctx.answered || []);
   const answeredBatches = ctx.answered_batches || [];
 

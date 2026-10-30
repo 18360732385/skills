@@ -1,6 +1,6 @@
 # harness-eng install metadata — do not put secrets here
 skill: harness-eng
-skill_version: "0.7.56"
+skill_version: "0.7.58"
 # skill_root: land/upgrade 回写（仓内相对 / 仓外绝对）；refresh-score 优先 HARNESS_ENG_ROOT（0.7.39）
 # skill_root: "/path/to/harness-eng"
 # agent_config: true = L5 配置 SSOT 管线已启用（docs/agent-config/ + scripts/agent-config/sync.mjs）；生成物勿手改
@@ -16,6 +16,7 @@ glob_profile: "{{GLOB_PROFILE}}"
 last_mode: "{{LAST_MODE}}"
 ai_tools: {{AI_TOOLS_YAML}}
 installed_at: "{{DATE}}"
+upgraded_at: "{{DATE}}"
 # 开干档（与 docs/harness-eng/score-policy.yaml 的 gate_profile 对齐；裁决以 score-policy 为准）
 gate_profile: "{{GATE_PROFILE}}"
 # 开干轴（≠ domain_caps / formula_ceiling）

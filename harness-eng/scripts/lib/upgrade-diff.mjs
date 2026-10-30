@@ -106,6 +106,61 @@ export function buildDocTodos(addedBlockers) {
   return todos;
 }
 
+/**
+ * 0.7.58: 开干 YES→NO / 新增 blocker 的人话归因（3～6 行）。
+ * @param {{ ready_before?: boolean|null, ready_after?: boolean|null, ready_regressed?: boolean, added?: string[] }} payload
+ * @returns {string[]}
+ */
+export function buildReadyRegressionSummaryZh(payload) {
+  const lines = [];
+  const added = (payload.added || []).map(String);
+  const regressed = !!payload.ready_regressed;
+  const before = payload.ready_before;
+  const after = payload.ready_after;
+  if (regressed) {
+    lines.push(
+      `开干 ${before === true ? "YES" : before === false ? "NO" : "?"} → ${
+        after === true ? "YES" : after === false ? "NO" : "?"
+      }（升严后未达 ai_coding_ready）`
+    );
+  } else if (added.length) {
+    lines.push(`开干态未回归，但新增 ${added.length} 个 blocker 需处理`);
+  } else {
+    return lines;
+  }
+
+  const cats = [];
+  const pushCat = (label, test) => {
+    const hits = added.filter(test);
+    if (hits.length) cats.push({ label, hits });
+  };
+  pushCat("morph_floor / 形态分", (b) => /morph_floor/.test(b));
+  pushCat("template_completeness", (b) => /template_completeness/.test(b));
+  pushCat("acceptance", (b) => /acceptance_/.test(b));
+  pushCat("coverage", (b) => b === "coverage_ready" || /covered_gt|inventory_undercount/.test(b));
+  pushCat("doc drift", (b) => /doc_(field|path|key|method|schedule|task)_drift/.test(b));
+  pushCat("semantic / 其它闸", (b) =>
+    /semantic_ready|skeleton_ready|fill_plan|entry_todo|harness_todo/.test(b)
+  );
+
+  const top = cats.slice(0, 4);
+  if (top.length) {
+    lines.push("主因分类：");
+    for (const c of top) {
+      const sample = c.hits.slice(0, 2).join(" · ");
+      lines.push(
+        `  - ${c.label}（${c.hits.length}）：${sample}${c.hits.length > 2 ? "…" : ""}`
+      );
+    }
+  } else if (added.length) {
+    lines.push(`新增 blockers：${added.slice(0, 4).join(" · ")}${added.length > 4 ? "…" : ""}`);
+  }
+  lines.push(
+    "下一步：按 doc_todos / migrate-docs 预览补真相 → 重跑 fill-score；开干只看 ai_coding_ready"
+  );
+  return lines.slice(0, 8);
+}
+
 function loadScoreLatest(root) {
   const p = path.join(root, SCORE_REL);
   if (!fs.existsSync(p)) return null;
@@ -345,6 +400,7 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
         : "ready YES→NO：结构化 migrate-docs 未能消尽 blockers；对照 upgrade-diff.json / migrate-docs-report.json 手改残留后重跑 fill-score",
     ];
   }
+  payload.summary_zh = buildReadyRegressionSummaryZh(payload);
 
   try {
     const outAbs = path.join(absRoot, DIFF_REL);
@@ -378,6 +434,10 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
           ? "（migrate-docs dry-run，未写真相文档）"
           : "（--no-migrate-docs，不自动改用户文档）"),
   ];
+  if ((payload.summary_zh || []).length) {
+    line.push("  【开干归因】");
+    for (const s of payload.summary_zh) line.push(`    ${s}`);
+  }
   if (payload.ready_regressed || payload.added.length) {
     line.push(
       migrateMode === "off"
@@ -399,6 +459,23 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     );
   } else {
     line.push(`  hooks_fix_policy=${payload.hooks_fix_policy}`);
+  }
+  // 0.7.57: skip / capability_lost 人话（避免只见机器字段）
+  const skipped = payload.hooks_skipped_custom || [];
+  const lost = payload.capability_lost || [];
+  if (skipped.length || lost.includes("hooks_behavior_patch_skipped")) {
+    line.push("  【hooks 人话】结构定制 hook 已 skip，mature 占位补丁未写入本仓：");
+    for (const p of skipped) line.push(`    - 保留定制：${p}`);
+    const delta = payload.hooks_placeholder_delta || {};
+    for (const k of Object.keys(delta)) {
+      const after = delta[k]?.after;
+      line.push(
+        `    - 未落地旋钮 ${k} → ${after == null || after === "" ? "(空)" : String(after)}`
+      );
+    }
+    line.push(
+      "    若要吃模板占位：upgrade_fix_hooks=replace（会备份后覆盖）；或手改上述 hook / params。"
+    );
   }
   console.error(line.join("\n"));
   console.error(JSON.stringify(payload));

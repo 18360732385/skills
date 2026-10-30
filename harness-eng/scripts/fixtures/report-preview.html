@@ -1889,11 +1889,15 @@
       );
     }).join("");
 
-    var ready = score.ready || {};
+    var aiReady = score.ai_coding_ready || {};
+    var readyCompat = score.ready || {};
     $("tech-ready").innerHTML =
-      '<span class="chip">ready: <strong>' + (ready.ok ? "YES" : "NO") + "</strong></span>" +
+      '<span class="chip">ai_coding_ready: <strong>' + (aiReady.ok ? "YES" : "NO") + "</strong></span>" +
       (score.pass != null ? '<span class="chip">pass: <strong>' + (score.pass ? "true" : "false") + "</strong></span>" : "") +
-      (ready.rule ? '<span class="chip mono">' + esc(ready.rule) + "</span>" : "") +
+      (aiReady.rule ? '<span class="chip mono">' + esc(aiReady.rule) + "</span>" : "") +
+      (readyCompat.ok != null
+        ? '<span class="chip mono">ready(deprecated): ' + (readyCompat.ok ? "YES" : "NO") + "</span>"
+        : "") +
       (ui.suggest_raw ? '<span class="chip">' + esc(ui.suggest_raw) + "</span>" : "");
 
     var miss = ui.miss_top || [];

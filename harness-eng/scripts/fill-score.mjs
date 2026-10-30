@@ -74,24 +74,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DOMAIN_REGISTRY = loadDomainRegistry();
 const KNOWN_DOMAINS = knownContractDomainIds(DOMAIN_REGISTRY);
 
+/** 0.7.58: 与 acceptance-check CLI 默认 --domain all 对齐（不再仅 api）。 */
 function runGoldAcceptance(root) {
-  const apiMods = path.join(root, "docs", "api", "modules");
-  if (!fs.existsSync(apiMods)) {
-    return {
-      gold_pass_ratio: null,
-      blockers: null,
-      warnings: null,
-      status: null,
-      warning_shards: [],
-      blocker_shards: [],
-    };
-  }
-  const parsed = runAcceptanceJson(root, { domain: "api" });
+  const parsed = runAcceptanceJson(root, {});
   return {
     gold_pass_ratio: parsed.gold_pass_ratio,
     blockers: parsed.blockers.length,
     warnings: parsed.warnings.length,
     status: parsed.status,
+    scope: "all",
     warning_shards: shardsFromAcceptanceItems(parsed.warnings, root),
     blocker_shards: shardsFromAcceptanceItems(parsed.blockers, root),
     blocker_items: parsed.blockers,
@@ -1443,6 +1434,7 @@ function main() {
     blockers: gold.blockers,
     warnings: gold.warnings,
     status: gold.status,
+    scope: gold.scope || "all",
   };
   report.warning_shards = gold.warning_shards || [];
   report.blocker_shards = gold.blocker_shards || [];
@@ -1622,7 +1614,7 @@ function main() {
   progress.done(
     `ai_coding=${report.ai_coding_ready.ok ? "YES" : "NO"} ready_compat=${report.ready.ok ? "YES" : "NO"} gold_ratio=${
       report.gold_ratio == null ? "n/a" : report.gold_ratio
-    }`
+    } acceptance.scope=${report.acceptance?.scope || "all"}`
   );
 
   // 0.7.30 ID-8/NEW-14: persist relative root so clone/refresh is zero-diff (gate already ran with abs)
@@ -1710,6 +1702,11 @@ function main() {
     );
   }
   if (report.focus === "full") {
+    console.log(
+      `acceptance: blockers=${report.acceptance?.blockers ?? "—"} warnings=${report.acceptance?.warnings ?? "—"} gold_ratio=${
+        report.gold_ratio == null ? "n/a" : report.gold_ratio
+      } scope=${report.acceptance?.scope || "all"}（与 acceptance-check --domain all 对齐）`
+    );
     console.log(
       `说明: 开干只看 ai_coding_ready；形态（overall/domain_caps/formula_ceiling）勿当开干；覆盖看 coverage_ready（score-policy）`
     );

@@ -102,6 +102,7 @@ import { readGitHead } from "./lib/git-head.mjs";
 import {
   diffBlockers,
   buildDocTodos,
+  buildReadyRegressionSummaryZh,
   emitUpgradeStrictnessDiff,
   resolveMigrateDocsMode,
   resolveCoverageMode,
@@ -5780,6 +5781,135 @@ module.exports = { hello };
   assert(/0\.7\.56/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.56 upgrade.md");
   assert(/0\.7\.56/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.56 VERIFY.md");
   assert(logExists("0.7.56"), "0.7.56 _log note exists");
+}
+
+// --- 0.7.57: P0-2～P0-5 热修 ---
+{
+  const renderSrc57 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(
+    /0\.7\.57: dry-run 与真写共用 decideFixHookAction/.test(renderSrc57) &&
+      /if \(dryRun\) \{[\s\S]*decideFixHookAction\(/.test(renderSrc57),
+    "0.7.57 dry-run 调用 decideFixHookAction"
+  );
+  assert(
+    /mature 占位补丁未写入/.test(renderSrc57),
+    "0.7.57 render skip 人话"
+  );
+  const upDiff57 = fs.readFileSync(path.join(skillRoot, "scripts/lib/upgrade-diff.mjs"), "utf8");
+  assert(
+    /【hooks 人话】/.test(upDiff57) && /未落地旋钮/.test(upDiff57),
+    "0.7.57 upgrade-diff hooks 人话"
+  );
+  const luaBody =
+    "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+  assert(isNoisePattern(luaBody), "0.7.57 redis Lua 体噪音");
+  assert(!isNoisePattern("sms-ai:authToken"), "0.7.57 真实 redis key 保留");
+  assert(!isNoisePattern("SMS:login:token:"), "0.7.57 SMS key 仍保留");
+  const reportTmpl57 = fs.readFileSync(
+    path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
+    "utf8"
+  );
+  assert(
+    /ai_coding_ready: <strong>' \+ \(aiReady\.ok \? "YES" : "NO"\)/.test(reportTmpl57),
+    "0.7.57 report 主 chip=ai_coding_ready"
+  );
+  assert(
+    !/<span class="chip">ready: <strong>' \+ \(ready\.ok \? "YES" : "NO"\)/.test(reportTmpl57),
+    "0.7.57 report 无裸 ready 主 chip"
+  );
+  assert(/ready\(deprecated\)/.test(reportTmpl57), "0.7.57 report ready deprecated 副标");
+  const fillHtml57 = fs.readFileSync(
+    path.join(skillRoot, "scripts/fill-report-html.mjs"),
+    "utf8"
+  );
+  assert(
+    /ai_coding_ready: \$\{result\.ai_coding_ready \? "YES" : "NO"\}/.test(fillHtml57),
+    "0.7.57 fill-report-html 摘要打 ai_coding_ready"
+  );
+  assert(/0\.7\.57/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.57 upgrade.md");
+  assert(/0\.7\.57/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.57 VERIFY.md");
+  assert(/\| 0\.7\.57 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.7.57 CHANGELOG");
+  assert(logExists("0.7.57"), "0.7.57 _log note exists");
+}
+
+// --- 0.7.58: P1 + P2-14 ---
+{
+  const renderSrc58 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(
+    /"upgraded_at"/.test(renderSrc58) && !/"installed_at"/.test(renderSrc58.match(/YAML_MANAGED_KEYS[\s\S]*?\];/)?.[0] || ""),
+    "0.7.58 YAML_MANAGED_KEYS upgraded_at not installed_at"
+  );
+  assert(/hooks_reviewed|hooks_not_in_write_set/.test(renderSrc58), "0.7.58 hooks_reviewed sidecar");
+  const metaTmpl58 = fs.readFileSync(
+    path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
+    "utf8"
+  );
+  assert(
+    /installed_at:\s*"\{\{DATE\}\}"/.test(metaTmpl58) && /upgraded_at:\s*"\{\{DATE\}\}"/.test(metaTmpl58),
+    "0.7.58 meta tmpl installed+upgraded"
+  );
+  const baseInst = [
+    "skill: harness-eng",
+    'skill_version: "0.7.57"',
+    "last_mode: land",
+    "installed_at: 2026-01-01",
+    "upgraded_at: 2026-01-01",
+    "",
+  ].join("\n");
+  const incomingUp58 = [
+    "skill: harness-eng",
+    'skill_version: "0.7.58"',
+    "last_mode: upgrade",
+    "installed_at: 2026-10-30",
+    "upgraded_at: 2026-10-30",
+    "",
+  ].join("\n");
+  const merged58 = mergeYamlMaps(baseInst, incomingUp58);
+  assert(/installed_at:\s*2026-01-01/.test(merged58), "0.7.58 upgrade 保留 installed_at");
+  // formatYamlValue quotes ISO-ish dates that start with digits
+  assert(/upgraded_at:\s*"?2026-10-30"?/.test(merged58), "0.7.58 upgrade 回写 upgraded_at");
+  assert(/skill_version:\s*"0\.7\.58"/.test(merged58), "0.7.58 upgrade skill_version");
+  assert(!/installed_at:\s*"?2026-10-30"?/.test(merged58), "0.7.58 installed_at 未被升版日覆盖");
+
+  assert(
+    fs.existsSync(path.join(skillRoot, "scripts/calibrate-live.mjs")),
+    "0.7.58 calibrate-live alias"
+  );
+  const calSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-calibrate-live.mjs"), "utf8");
+  assert(/Windows PowerShell/.test(calSrc), "0.7.58 calibrate Win 驱动提示");
+
+  const qnSrc = fs.readFileSync(path.join(skillRoot, "scripts/questions-next.mjs"), "utf8");
+  assert(/--root/.test(qnSrc) && /seedAnswersFromRoot/.test(qnSrc), "0.7.58 questions-next --root");
+  const bumpSrc = fs.readFileSync(path.join(skillRoot, "scripts/bump-run-round.mjs"), "utf8");
+  assert(/--dry-run/.test(bumpSrc) && /dry_run:\s*true/.test(bumpSrc), "0.7.58 bump-run-round --dry-run");
+
+  const sumZh = buildReadyRegressionSummaryZh({
+    ready_before: true,
+    ready_after: false,
+    ready_regressed: true,
+    added: [
+      "morph_floor:func:87<95",
+      "acceptance_blockers:10>max0",
+      "doc_key_drift:redis:x",
+      "coverage_ready",
+    ],
+  });
+  assert(sumZh.length >= 3 && sumZh.some((l) => /开干/.test(l)), "0.7.58 summary_zh 开干");
+  assert(sumZh.some((l) => /morph_floor|主因/.test(l)), "0.7.58 summary_zh 分类");
+  const upDiff58 = fs.readFileSync(path.join(skillRoot, "scripts/lib/upgrade-diff.mjs"), "utf8");
+  assert(/【开干归因】/.test(upDiff58) && /summary_zh/.test(upDiff58), "0.7.58 upgrade-diff 开干归因");
+
+  const scoreSrc58 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(
+    /runAcceptanceJson\(root,\s*\{\s*\}\)/.test(scoreSrc58) && /scope:\s*"all"/.test(scoreSrc58),
+    "0.7.58 fill-score acceptance 全域"
+  );
+  assert(/acceptance\.scope=all|scope=\$\{report\.acceptance/.test(scoreSrc58), "0.7.58 score 摘要 scope");
+
+  assert(/0\.7\.58/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.58 upgrade.md");
+  assert(/0\.7\.58/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.58 VERIFY.md");
+  assert(/\| 0\.7\.58 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.7.58 CHANGELOG");
+  assert(logExists("0.7.58"), "0.7.58 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

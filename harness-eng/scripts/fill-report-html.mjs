@@ -360,7 +360,8 @@ function main() {
     dry_run: args.dryRun,
     history: null,
     overall: scoreForUi.overall ?? null,
-    ready: scoreForUi.ready?.ok ?? null,
+    ready: scoreForUi.ready?.ok ?? null, // deprecated compat; 开干看 ai_coding_ready
+    ai_coding_ready: scoreForUi.ai_coding_ready?.ok ?? null,
     formula_ceiling: scoreForUi.formula_ceiling ?? null,
     headline: ui.headline,
     report_schema: ui.report_schema || ui.version || null,
@@ -414,7 +415,7 @@ function main() {
   if (result.history_jsonl) console.log(`history-jsonl: ${result.history_jsonl}`);
   if (result.history) console.log(`history: ${result.history}`);
   console.log(
-    `overall: ${result.overall}%  ready: ${result.ready ? "YES" : "NO"}  formula_ceiling: ~${result.formula_ceiling}%`
+    `overall: ${result.overall}%  ai_coding_ready: ${result.ai_coding_ready ? "YES" : "NO"}  formula_ceiling: ~${result.formula_ceiling}%`
   );
   if (ui.headline) console.log(`摘要: ${ui.headline}`);
   if (ui.lagging_domain?.story) {

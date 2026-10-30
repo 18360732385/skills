@@ -45,6 +45,7 @@ import {
   isUpgradeFixHookTarget,
   shouldReplaceFixHook,
   decideFixHookAction,
+  UPGRADE_FIX_HOOK_SCRIPTS,
 } from "./lib/upgrade-fix-hooks.mjs";
 import { mavenCmdsForModule as mavenCmdsForModuleLib, listPomModules } from "./lib/maven-cmds.mjs";
 import {
@@ -116,7 +117,8 @@ const YAML_MANAGED_KEYS = new Set([
   "glob_profile",
   "last_mode",
   "ai_tools",
-  "installed_at",
+  // 0.7.58: installed_at 不 managed（upgrade 保留首次安装日）；upgraded_at 每次升版回写
+  "upgraded_at",
   "agent_config",
   "rulehook",
 ]);
@@ -1548,7 +1550,80 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   }
   const unresolvedPlaceholders = findUnresolvedPlaceholders(rendered);
 
+  // 0.7.57: dry-run 与真写共用 decideFixHookAction，预告 hooks_skipped_custom
+  const isUpgradeMode =
+    opts.params &&
+    (opts.params.mode === "upgrade" || opts.params.last_mode === "upgrade");
+  const isFixHook =
+    action === "replace" && isUpgradeMode && isUpgradeFixHookTarget(targetRel);
+  let disk = "";
+  if (exists && (isFixHook || action === "replace")) {
+    try {
+      disk = fs.readFileSync(abs, "utf8");
+    } catch {
+      disk = "";
+    }
+  }
+  const recordSkippedCustomHook = (rel) => {
+    if (!opts.params) return;
+    if (!Array.isArray(opts.params._hooks_skipped_custom)) {
+      opts.params._hooks_skipped_custom = [];
+    }
+    const relNorm = String(rel).replace(/\\/g, "/");
+    if (!opts.params._hooks_skipped_custom.includes(relNorm)) {
+      opts.params._hooks_skipped_custom.push(relNorm);
+    }
+  };
+  // 0.7.58: 本轮 fix-hook 写入路径的审计（skip|replace|unchanged）
+  const recordHooksReviewed = (rel, actionName) => {
+    if (!opts.params || !isFixHook) return;
+    if (!Array.isArray(opts.params._hooks_reviewed)) {
+      opts.params._hooks_reviewed = [];
+    }
+    const relNorm = String(rel).replace(/\\/g, "/");
+    if (opts.params._hooks_reviewed.some((x) => x && x.path === relNorm)) return;
+    opts.params._hooks_reviewed.push({ path: relNorm, action: actionName });
+  };
+  const skipCustomHookMessage = (rel) =>
+    `harness upgrade: skip ${rel}（检测到模板外定制；结构定制保留，mature 占位补丁未写入；upgrade_fix_hooks=replace 可强制覆盖，或手改旋钮；旋钮亦可靠 params/inventory 回填）`;
+
   if (dryRun) {
+    if (isFixHook && exists) {
+      const fixMode = normalizeUpgradeFixHooks(opts.params?.upgrade_fix_hooks);
+      const decided = decideFixHookAction({
+        mode: fixMode,
+        targetRel,
+        diskText: disk,
+        renderedText: rendered,
+        exists: true,
+      });
+      if (decided === "skip") {
+        console.error(skipCustomHookMessage(targetRel));
+        recordSkippedCustomHook(targetRel);
+        recordHooksReviewed(targetRel, "skip");
+        log.push({
+          target: targetRel,
+          action: "skip",
+          status: "custom-hooks",
+          note: "structural customization; upgrade_fix_hooks:replace to force",
+          dryRun: true,
+          exists,
+          bytes: Buffer.byteLength(rendered, "utf8"),
+          id: item.id || undefined,
+          unresolvedPlaceholders,
+        });
+        return;
+      }
+      // dry-run 将 replace（或内容 unchanged 亦记 replace 预告；真写再分 unchanged）
+      if (
+        disk &&
+        normalizeRenderedForCompare(disk) === normalizeRenderedForCompare(rendered)
+      ) {
+        recordHooksReviewed(targetRel, "unchanged");
+      } else {
+        recordHooksReviewed(targetRel, "replace");
+      }
+    }
     const entry = {
       target: targetRel,
       action,
@@ -1585,18 +1660,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
     // 0.7.32 NEW-17: upgrade fix-hook replace → backup first + stderr tip
     // 0.7.35 HK-2: identical content → skip backup and write (no .bak churn)
     // 0.7.54: auto 下结构定制 → skip（不写盘）
-    const isUpgradeMode =
-      opts.params &&
-      (opts.params.mode === "upgrade" || opts.params.last_mode === "upgrade");
-    const isFixHook = isUpgradeMode && isUpgradeFixHookTarget(targetRel);
-    let disk = "";
-    if (exists) {
-      try {
-        disk = fs.readFileSync(abs, "utf8");
-      } catch {
-        disk = "";
-      }
-    }
+    // 0.7.57: skip 人话与 dry-run 共用 decideFixHookAction
     if (isFixHook && exists) {
       const fixMode = normalizeUpgradeFixHooks(opts.params?.upgrade_fix_hooks);
       const decided = decideFixHookAction({
@@ -1607,18 +1671,9 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
         exists: true,
       });
       if (decided === "skip") {
-        console.error(
-          `harness upgrade: skip ${targetRel}（检测到模板外定制；upgrade_fix_hooks:replace 可强制；旋钮请靠 params/inventory 回填）`
-        );
-        if (opts.params) {
-          if (!Array.isArray(opts.params._hooks_skipped_custom)) {
-            opts.params._hooks_skipped_custom = [];
-          }
-          const relNorm = String(targetRel).replace(/\\/g, "/");
-          if (!opts.params._hooks_skipped_custom.includes(relNorm)) {
-            opts.params._hooks_skipped_custom.push(relNorm);
-          }
-        }
+        console.error(skipCustomHookMessage(targetRel));
+        recordSkippedCustomHook(targetRel);
+        recordHooksReviewed(targetRel, "skip");
         log.push({
           target: targetRel,
           action: "skip",
@@ -1634,6 +1689,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
         normalizeRenderedForCompare(disk) === normalizeRenderedForCompare(rendered)
       ) {
         maybeChmodExecutable(abs, targetRel);
+        recordHooksReviewed(targetRel, "unchanged");
         log.push({
           target: targetRel,
           action: "replace",
@@ -1661,6 +1717,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
     }
     ensureDir(abs);
     writeRenderedFile(abs, rendered, targetRel);
+    recordHooksReviewed(targetRel, "replace");
     log.push({
       target: targetRel,
       action: "replace",
@@ -1908,6 +1965,16 @@ function main() {
   const hooksSkippedCustom = Array.isArray(params._hooks_skipped_custom)
     ? params._hooks_skipped_custom
     : [];
+  const hooksReviewed = Array.isArray(params._hooks_reviewed)
+    ? params._hooks_reviewed
+    : [];
+  // 0.7.58: 相对 UPGRADE_FIX_HOOK_SCRIPTS，本轮未进入写入集的文件名
+  const reviewedBases = new Set(
+    hooksReviewed.map((x) => path.basename(String(x.path || "").replace(/\\/g, "/")))
+  );
+  const hooksNotInWriteSet = [...UPGRADE_FIX_HOOK_SCRIPTS]
+    .filter((b) => !reviewedBases.has(b))
+    .sort();
   // 0.7.54: sidecar for parent harness / upgrade-diff (child process cannot mutate params file)
   if (
     !args.dryRun &&
@@ -1916,18 +1983,26 @@ function main() {
     try {
       const skipDir = path.join(root, "docs", "harness-eng");
       fs.mkdirSync(skipDir, { recursive: true });
+      const side = {
+        skill_version: readSkillVersion(SKILL_ROOT),
+        upgrade_fix_hooks: normalizeUpgradeFixHooks(params.upgrade_fix_hooks),
+        hooks_skipped_custom: hooksSkippedCustom,
+        hooks_reviewed: hooksReviewed,
+        hooks_not_in_write_set: hooksNotInWriteSet,
+      };
       fs.writeFileSync(
         path.join(skipDir, "hooks-fix-skip.json"),
-        JSON.stringify(
-          {
-            skill_version: readSkillVersion(SKILL_ROOT),
-            upgrade_fix_hooks: normalizeUpgradeFixHooks(params.upgrade_fix_hooks),
-            hooks_skipped_custom: hooksSkippedCustom,
-          },
-          null,
-          2
-        ),
+        JSON.stringify(side, null, 2),
         "utf8"
+      );
+      const nSkip = hooksReviewed.filter((x) => x.action === "skip").length;
+      const nRep = hooksReviewed.filter((x) => x.action === "replace").length;
+      const nUn = hooksReviewed.filter((x) => x.action === "unchanged").length;
+      console.error(
+        `harness upgrade: hooks reviewed=${hooksReviewed.length} skip=${nSkip} replace=${nRep} unchanged=${nUn}` +
+          (hooksNotInWriteSet.length
+            ? `；not_in_write_set=${hooksNotInWriteSet.join(",")}`
+            : "")
       );
     } catch {
       /* ignore */
@@ -1944,6 +2019,8 @@ function main() {
         manifest: expandedFromManifest ? manifestPath : undefined,
         warnings: unresolved.length ? { unresolved } : undefined,
         hooks_skipped_custom: hooksSkippedCustom,
+        hooks_reviewed: hooksReviewed,
+        hooks_not_in_write_set: hooksNotInWriteSet,
         results: log,
       },
       null,

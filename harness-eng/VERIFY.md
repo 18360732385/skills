@@ -1,10 +1,36 @@
-﻿# harness-eng 验收记录（0.7.56）
+﻿# harness-eng 验收记录（0.7.58）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.56**（sms-ai P0/P1/#9 回流；其下 0.7.55 ARCHIVE 路径 · 0.7.54 upgrade_fix_hooks=auto · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.7.58**（P1+P2-14：meta 时间戳 · hooks 审计 · CLI · 开干归因 · acceptance 全域；其下 0.7.57 P0 热修 · 0.7.56 sms-ai 回流 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.7.58 增量验收（P1 + P2-14）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.58` | 有 |
+| meta：upgrade 保留 `installed_at`；回写 `upgraded_at`；tmpl 含两字段 | 有 |
+| hooks-fix-skip：`hooks_reviewed` + `hooks_not_in_write_set`；stderr 摘要 | 有 |
+| `calibrate-live.mjs` 别名转发；缺驱动含 PowerShell 安装示例 | 有 |
+| `questions-next --root`；`bump-run-round --dry-run` | 有 |
+| upgrade-diff：`summary_zh` + stderr `【开干归因】` | 有 |
+| fill-score `acceptance.scope=all`；`gold_ratio` 与 CLI `--domain all` 同口径 | 有 |
+| upgrade `## 0.7.57 → 0.7.58`；CHANGELOG 0.7.58；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
+
+## 0.7.57 增量验收（P0-2～P0-5 热修）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.57` | 有 |
+| dry-run upgrade 对结构定制 fix-hook 预告 `hooks_skipped_custom`（与真写同判定） | 有 |
+| upgrade-diff / render skip stderr 含中文人话（结构定制保留 · 占位未落地 · replace/手改） | 有 |
+| 报告 tmpl / fill-report-html 主展示 `ai_coding_ready`；`ready` 仅 deprecated 副标 | 有 |
+| `isNoisePattern` 过滤 `redis.call` / KEYS+ARGV Lua 体；真实 key 保留 | 有 |
+| upgrade `## 0.7.56 → 0.7.57`；CHANGELOG 0.7.57；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.56 增量验收（sms-ai P0/P1/#9）
 

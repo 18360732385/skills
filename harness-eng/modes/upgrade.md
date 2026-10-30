@@ -71,6 +71,24 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.57 → 0.7.58 迁移要点
+
+1. **meta**：`skill_version` → `0.7.58`；upgrade **保留** `installed_at`，回写 `upgraded_at`（tmpl 新增该键）
+2. **hooks 审计**：`hooks-fix-skip.json` 含 `hooks_reviewed` / `hooks_not_in_write_set`（解释相对旧版 skip 变窄）
+3. **CLI**：`questions-next --root`；`bump-run-round --dry-run`；`calibrate-live` → `fill-calibrate-live` 别名
+4. **开干归因**：upgrade-diff `summary_zh` + stderr `【开干归因】`
+5. **acceptance 口径**：fill-score `gold_ratio` / blockers 改为全域（同 CLI `--domain all`）；gold 闸可能变严
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.58`）后再 sync
+
+## 0.7.56 → 0.7.57 迁移要点
+
+1. **meta**：`skill_version` → `0.7.57`
+2. **dry-run hooks**：`--dry-run` 与真写共用 `decideFixHookAction`；结构定制预告进 `hooks_skipped_custom`（勿再误信 dry-run 必 replace）
+3. **人话审计**：skip / `capability_lost: hooks_behavior_patch_skipped` 时 stderr 列未落地占位与 replace/手改建议
+4. **报告口径**：HTML / fill-report-html 主 chip 与摘要只看 `ai_coding_ready`；旧 `ready.ok` 降为 deprecated 副标
+5. **redis inventory**：Lua 脚本体（`redis.call` / KEYS+ARGV）不再进 `doc_key_drift` / migrate-docs 预览
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.57`）后再 sync
+
 ## 0.7.55 → 0.7.56 迁移要点
 
 1. **meta**：`skill_version` → `0.7.56`

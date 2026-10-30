@@ -1,11 +1,13 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.56**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.7.58**。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.7.58 | 2026-10-30 | P1+P2-14：meta installed/upgraded 语义 · hooks_reviewed · calibrate 别名 · CLI --root/--dry-run · 开干归因人话 · acceptance 全域对齐 gold_ratio |
+| 0.7.57 | 2026-10-30 | P0 热修：dry-run hooks 预告与真写一致 · capability_lost/skip 人话 · 报告主 chip=ai_coding_ready · redis Lua 体噪音过滤 |
 | 0.7.56 | 2026-10-29 | sms-ai P0/P1/#9：superpowers 约定 · plans/specs README · 00 薄片 · rule18 判断表 · Planning corpus · pitfalls 路径速查 · hook tip 真相粒度 |
 | 0.7.55 | 2026-10-29 | sms-ai 对标：ARCHIVE 权威路径迁入 archive/ · 用户列对齐 · 禁根级 stub · migrateSuperpowersArchiveIfNeeded · theme-table 认用户列 |
 | 0.7.54 | 2026-10-29 | upgrade_fix_hooks 默认 auto：结构定制 skip · 适配器仍 replace · 显式 replace/skip · hooks-fix-skip sidecar · upgrade-diff 审计 |

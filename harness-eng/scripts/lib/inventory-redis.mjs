@@ -132,6 +132,16 @@ export function isNoisePattern(val) {
   if (/https?:\/\//i.test(val)) return true;
   // 0.7.48: Chinese error / message strings, lua scripts, Bearer tokens
   if (/\.lua\b/i.test(val)) return true;
+  // 0.7.57: Lua script bodies (not path) — e.g. unlock scripts mistaken as key patterns
+  if (/\bredis\.(?:p?call)\s*\(/i.test(val)) return true;
+  if (/\bKEYS\s*\[\d+\]/.test(val) && /\bARGV\s*\[\d+\]/.test(val)) return true;
+  if (
+    val.length > 40 &&
+    /\bthen\s+return\b/i.test(val) &&
+    /\belse\s+return\b/i.test(val)
+  ) {
+    return true;
+  }
   if (/Bearer\s+/i.test(val)) return true;
   if (/[\u4e00-\u9fff]{2,}/.test(val) && !/[:/]/.test(val)) return true;
   if (/会话不存在|不存在或已过期|请重新登录|操作失败|系统错误/.test(val)) return true;

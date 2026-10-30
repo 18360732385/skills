@@ -257,9 +257,10 @@ function loadDrivers() {
     }
   }
   throw new Error(
-    `mysql2/ioredis not found. Run once:\n` +
-      `  mkdir -p "$TMPDIR/harness-mcp-calibrate" && cd "$TMPDIR/harness-mcp-calibrate" && npm init -y && npm i mysql2 ioredis\n` +
-      `  (Windows: %TEMP%\\harness-mcp-calibrate)`
+    `mysql2/ioredis not found. Run once under a TEMP calibrate dir:\n` +
+      `  Unix: mkdir -p "$TMPDIR/harness-mcp-calibrate" && cd "$TMPDIR/harness-mcp-calibrate" && npm init -y && npm i mysql2 ioredis\n` +
+      `  Windows PowerShell:\n` +
+      `    $d = Join-Path $env:TEMP harness-mcp-calibrate; New-Item -ItemType Directory -Force $d | Out-Null; Set-Location $d; npm init -y; npm i mysql2 ioredis`
   );
 }
 
