@@ -716,14 +716,14 @@ const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
 if (fs.existsSync(fixture)) {
   const scoreObj = JSON.parse(fs.readFileSync(fixture, "utf8"));
   const ui = buildReportUi(scoreObj);
-  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0"].includes(ui.version), "ui.version compatible");
+  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0","0.4.1"].includes(ui.version), "ui.version compatible");
   assert(Array.isArray(ui.decision_kpis) && ui.decision_kpis.length >= 1, "ui.decision_kpis");
   assert(Array.isArray(ui.morph_strip), "ui.morph_strip");
   assert(ui.show_domain_cards === false, "domain cards default off");
   assert(ui.verdict.ready_label === "建议可以开干" || ui.verdict.ready_label === "建议暂缓", "verdict binary");
   assert(ui.composite_score && typeof ui.composite_score.value === "number", "ui.composite_score");
   assert(ui.pipeline_progress && Array.isArray(ui.pipeline_progress.steps), "ui.pipeline_progress");
-  assert(ui.report_schema === "0.4.0", "report_schema 0.4.0");
+  assert(ui.report_schema === "0.4.1", "report_schema 0.4.1");
   assert(ui.go_nogo && typeof ui.go_nogo.ok === "boolean", "ui.go_nogo");
   assert(Array.isArray(ui.tasks), "ui.tasks");
   assert(ui.ladder_progress && Array.isArray(ui.ladder_progress.steps), "ui.ladder_progress");
@@ -1905,20 +1905,24 @@ if (fs.existsSync(fixture)) {
 
 assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs")), "lib/selfcheck/checks-0.5.mjs exists");
 
-// --- 0.7.14 / report_schema 0.4.0 ---
+// --- 0.7.14 / report_schema 0.4.x ---
 {
-  assert(CURRENT_REPORT_SCHEMA === "0.4.0", "score-history CURRENT_REPORT_SCHEMA 0.4.0");
+  assert(CURRENT_REPORT_SCHEMA === "0.4.1", "score-history CURRENT_REPORT_SCHEMA 0.4.1");
   assert(
     isIncomparablePoint({ report_schema: "0.3.0", morph_scale: "0.7" }),
     "history 0.3.0 incomparable"
   );
   assert(
     !isIncomparablePoint({ report_schema: "0.4.0", morph_scale: "0.7" }),
-    "history 0.4.0 comparable"
+    "history 0.4.0 same family comparable"
+  );
+  assert(
+    !isIncomparablePoint({ report_schema: "0.4.1", morph_scale: "0.7" }),
+    "history 0.4.1 comparable"
   );
   const series = buildTrendSeries(
     [{ at: "2026-01-01", overall: 50, report_schema: "0.3.0", morph_scale: "0.7" }],
-    { at: "2026-09-26", overall: 70, report_schema: "0.4.0", morph_scale: "0.7" },
+    { at: "2026-09-26", overall: 70, report_schema: "0.4.1", morph_scale: "0.7" },
     20
   );
   assert(
@@ -1934,9 +1938,14 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
     fs.writeFileSync(path.join(tmpHs, ".cursor", "rules", "x.mdc"), "# r\n", "utf8");
     const hs = buildHostSurface(tmpHs, { meta: { ladder: "L4", ai_tools: ["cursor"] } });
     assert(hs && hs.status, "host_surface builds");
+    assert(hs.status === "disk_only", "capsule disk_only when rules present, no live");
     assert(
       (hs.hosts || []).some((h) => h.id === "cursor" && h.disk?.rules === "present"),
       "host_surface disk rules present"
+    );
+    assert(
+      (hs.hosts || []).some((h) => h.id === "cursor" && h.status_zh === "已落地·待自证"),
+      "host status_zh 已落地·待自证"
     );
     assert(
       (hs.hosts || []).every((h) => h.disk?.rules !== "pass"),
@@ -1949,7 +1958,15 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
       {
         overall: 60,
         morph_scale: "0.7",
-        ai_coding_ready: { ok: false, blockers: ["semantic_ready"], rule: "test" },
+        ai_coding_ready: {
+          ok: false,
+          blockers: [
+            "semantic_ready",
+            "doc_path_drift:api:FOO:/api/v1/x",
+            "morph_floor:func:87<95,api:89<95",
+          ],
+          rule: "test",
+        },
         skeleton_ready: { ok: true, ladder: "L4" },
         coverage_ready: { ok: true },
         semantic_ready: { ok: false },
@@ -1958,12 +1975,34 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
       },
       { meta: { ladder: "L4" }, root: tmpHs, host_surface: hs }
     );
-    assert(uiHs.report_schema === "0.4.0", "ui 0.4.0 with host");
+    assert(uiHs.report_schema === "0.4.1", "ui 0.4.1 with host");
     assert(uiHs.host_surface && uiHs.host_surface.status, "ui carries host_surface");
     assert(uiHs.go_nogo.ok === false, "go_nogo from ai_coding_ready");
     assert(uiHs.ladder_progress.current === "L4", "ladder_progress from meta");
+    assert(
+      !/\/api\//.test(uiHs.gap_to_ready.summary) && !/doc_path_drift:/.test(uiHs.gap_to_ready.summary),
+      "gap summary humanized no raw path/drift dump"
+    );
+    assert(
+      Array.isArray(uiHs.gap_to_ready.blockers_grouped) &&
+        uiHs.gap_to_ready.blockers_grouped.length >= 1,
+      "gap blockers_grouped present"
+    );
+    assert(!/morph_floor:func:/.test(uiHs.headline), "headline no raw morph_floor dump");
   } finally {
     fs.rmSync(tmpHs, { recursive: true, force: true });
+  }
+
+  const tmpGh = fs.mkdtempSync(path.join(os.tmpdir(), "harness-gh-"));
+  try {
+    fs.mkdirSync(path.join(tmpGh, ".githooks"), { recursive: true });
+    fs.writeFileSync(path.join(tmpGh, ".githooks", "pre-commit"), "#!/bin/sh\n", "utf8");
+    const hsGh = buildHostSurface(tmpGh, { meta: { ladder: "L4", ai_tools: ["cursor"] } });
+    const cur = (hsGh.hosts || []).find((h) => h.id === "cursor");
+    assert(cur && cur.status === "absent" && !cur.disk_any, "githooks alone not disk_only");
+    assert(hsGh.status === "absent", "capsule absent when only githooks");
+  } finally {
+    fs.rmSync(tmpGh, { recursive: true, force: true });
   }
 
   const sessionDashSrc = fs.readFileSync(
@@ -1980,8 +2019,8 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   const handbookMd0714 = fs.readFileSync(path.join(skillRoot, "guide/使用手册.md"), "utf8");
   assert(/仪表盘五台|宿主台/.test(handbookMd0714), "handbook §6 five panels");
   assert(
-    /0\.4\.0/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
-    "glossary report_schema 0.4.0"
+    /0\.4\.1/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
+    "glossary report_schema 0.4.1"
   );
 }
 
@@ -5955,6 +5994,43 @@ module.exports = { hello };
   assert(
     fs.existsSync(path.join(codex59, ".agents/skills/contract-sync/SKILL.md")),
     "0.7.59 codex fixture keeps .agents/skills"
+  );
+}
+
+// --- 0.7.60: report first-screen humanize + host three-state ---
+{
+  const reportTmpl60 = fs.readFileSync(
+    path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
+    "utf8"
+  );
+  assert(/host-capsule\.disk_only/.test(reportTmpl60), "0.7.60 tmpl disk_only capsule");
+  assert(/status_zh|已落地/.test(reportTmpl60), "0.7.60 tmpl status_zh / 已落地");
+  assert(/gap-expand|展开机器码详情/.test(reportTmpl60), "0.7.60 tmpl gap expand");
+  assert(/下一步建议/.test(reportTmpl60), "0.7.60 tmpl 下一步建议");
+  assert(/已落地●|未落地○/.test(reportTmpl60), "0.7.60 tmpl disk cell 中文");
+
+  const reportUi60 = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/report-ui.mjs"),
+    "utf8"
+  );
+  assert(/humanizeBlockers/.test(reportUi60), "0.7.60 humanizeBlockers");
+  assert(/REPORT_SCHEMA = "0\.4\.1"/.test(reportUi60), "0.7.60 REPORT_SCHEMA 0.4.1");
+
+  const hostSurf60 = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/host-surface.mjs"),
+    "utf8"
+  );
+  assert(/diskAnyHost|status_zh|SURFACE_LABEL_ZH/.test(hostSurf60), "0.7.60 host-surface 三态");
+
+  assert(/0\.7\.59 → 0\.7\.60/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.60 upgrade.md");
+  assert(/0\.7\.60 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.60 VERIFY.md");
+  assert(/\| 0\.7\.60 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.7.60 CHANGELOG");
+  assert(logExists("0.7.60"), "0.7.60 _log note exists");
+  assert(
+    /实心\/暖色=磁盘已落地|已落地·待自证/.test(
+      fs.readFileSync(path.join(skillRoot, "guide/使用手册.md"), "utf8")
+    ),
+    "0.7.60 handbook 宿主台读法"
   );
 }
 

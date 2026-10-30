@@ -288,8 +288,13 @@
       background: var(--muted);
     }
     .host-capsule.live .dot { background: var(--ok, #2ecc71); }
+    .host-capsule.disk_only .dot { background: var(--accent); }
     .host-capsule.unproven .dot { background: var(--warn); }
     .host-capsule.absent .dot { background: var(--muted); }
+    .host-capsule.disk_only {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
 
     .host-matrix {
       width: 100%;
@@ -304,14 +309,40 @@
     .host-matrix th { background: var(--panel); font-weight: 700; }
     .host-matrix td.host-id { text-align: left; font-family: var(--mono); }
     .host-matrix .cell-disk { color: var(--muted); }
+    .host-matrix .cell-disk.present { color: var(--accent); font-weight: 600; }
     .host-matrix .cell-live.pass { color: var(--ok, #2ecc71); font-weight: 700; }
     .host-matrix .cell-live.fail { color: var(--danger, #e74c3c); font-weight: 700; }
     .host-matrix .cell-live.unproven { color: var(--warn); }
     .host-matrix tr.current td { outline: 1px solid var(--accent); }
+    .host-matrix tr.dim td { opacity: 0.55; }
+    .host-matrix .status-zh { font-size: 0.78rem; white-space: nowrap; }
     .host-legend {
       margin: 10px 0 0;
       font-size: 0.75rem;
       color: var(--muted);
+    }
+    .host-pending-hint {
+      margin: 8px 0 0;
+      font-size: 0.78rem;
+      color: var(--warn);
+    }
+    .gap-expand {
+      margin-top: 6px;
+      font-size: 0.78rem;
+    }
+    .gap-expand summary {
+      cursor: pointer;
+      color: var(--accent);
+      list-style: none;
+    }
+    .gap-expand summary::-webkit-details-marker { display: none; }
+    .gap-expand ul {
+      margin: 6px 0 0;
+      padding-left: 1.1em;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      word-break: break-all;
     }
     .trend-banner {
       margin: 0 0 10px;
@@ -1442,6 +1473,7 @@
           </div>
         </div>
         <div class="kpis" id="kpis"></div>
+        <h3 class="actions-title" id="actions-title" style="margin:16px 0 0;font-size:0.88rem;font-weight:700;color:var(--accent)">下一步建议</h3>
         <ol class="actions" id="actions"></ol>
       </section>
 
@@ -1506,8 +1538,9 @@
 
       <section class="panel" id="panel-host" data-panel="host" role="tabpanel">
         <h2>宿主台</h2>
-        <p class="lead" id="host-lead">各 AI 工具 hooks / rules / MCP 磁盘齐套与会话自证（磁盘≠生效）。</p>
+        <p class="lead" id="host-lead">各 AI 工具的规则 / 钩子 / MCP 是否已落地，以及会话是否已自证（落地≠生效）。</p>
         <div id="host-matrix-wrap"></div>
+        <p class="host-pending-hint hidden" id="host-pending"></p>
         <p class="host-legend" id="host-legend"></p>
         <div class="empty hidden" id="host-empty"></div>
       </section>
@@ -1819,22 +1852,29 @@
       pathFor(cLink, "var(--warn)") +
       dots +
       ticks +
-      '<text x="' + (w - padR) + '" y="12" text-anchor="end" fill="var(--accent)" font-size="10">overall</text>' +
-      '<text x="' + (w - padR) + '" y="24" text-anchor="end" fill="var(--warn)" font-size="10">coverage</text>' +
+      '<text x="' + (w - padR) + '" y="12" text-anchor="end" fill="var(--accent)" font-size="10">总分</text>' +
+      '<text x="' + (w - padR) + '" y="24" text-anchor="end" fill="var(--warn)" font-size="10">覆盖</text>' +
       "</svg>"
     );
   }
 
+  var SURFACE_ZH = {
+    rules: "规则", hooks: "钩子", mcp: "MCP",
+    githooks: "Git 钩子", human_gates: "人工闸"
+  };
+
   function hostCell(disk, live) {
-    var d = disk === "present" ? "磁盘●" : "磁盘○";
+    var present = disk === "present";
+    var d = present ? "已落地●" : "未落地○";
+    var diskCls = present ? "cell-disk present" : "cell-disk";
     var liveLab = "—";
     var liveCls = "";
-    if (live === "pass") { liveLab = "live✓"; liveCls = "pass"; }
-    else if (live === "fail") { liveLab = "live✗"; liveCls = "fail"; }
-    else if (live === "unproven") { liveLab = "未证"; liveCls = "unproven"; }
+    if (live === "pass") { liveLab = "已自证✓"; liveCls = "pass"; }
+    else if (live === "fail") { liveLab = "自证失败✗"; liveCls = "fail"; }
+    else if (live === "unproven") { liveLab = "待自证"; liveCls = "unproven"; }
     else if (live && String(live).indexOf("skipped") === 0) { liveLab = "跳过"; liveCls = "unproven"; }
     return (
-      '<span class="cell-disk">' + d + '</span><br>' +
+      '<span class="' + diskCls + '">' + d + '</span><br>' +
       '<span class="cell-live ' + liveCls + '">' + liveLab + "</span>"
     );
   }
@@ -1843,10 +1883,12 @@
     var wrap = $("host-matrix-wrap");
     var empty = $("host-empty");
     var legend = $("host-legend");
+    var pending = $("host-pending");
+    if (pending) { pending.textContent = ""; hide(pending); }
     if (!hs || !hs.hosts || !hs.hosts.length) {
       if (wrap) wrap.innerHTML = "";
       if (empty) {
-        empty.textContent = (hs && hs.empty_hint) || "尚未 session-live；磁盘有文件也不等于生效。";
+        empty.textContent = (hs && hs.empty_hint) || "尚未落地宿主资产；落地后仍须会话自证才算生效。";
         show(empty);
       }
       if (legend) legend.textContent = "";
@@ -1854,21 +1896,27 @@
     }
     hide(empty);
     var surfaces = hs.surfaces || ["rules", "hooks", "mcp", "githooks"];
+    var labels = hs.surface_labels || SURFACE_ZH;
     var head =
       "<tr><th>宿主</th>" +
-      surfaces.map(function (s) { return "<th>" + esc(s) + "</th>"; }).join("") +
+      surfaces.map(function (s) {
+        return "<th>" + esc((labels && labels[s]) || SURFACE_ZH[s] || s) + "</th>";
+      }).join("") +
       "<th>状态</th></tr>";
     var rows = hs.hosts.map(function (h) {
       var cls = h.current ? " current" : "";
+      if (h.in_ai_tools === false) cls += " dim";
       var cells = surfaces.map(function (s) {
         var disk = (h.disk && h.disk[s]) || "absent";
         var live = h.live ? h.live[s] : null;
         return "<td>" + hostCell(disk, live) + "</td>";
       }).join("");
+      var name = h.label_zh || h.id;
+      var st = h.status_zh || h.status || "—";
       return (
         '<tr class="' + cls.trim() + '"><td class="host-id">' +
-        esc(h.id) + (h.current ? " · 当前" : "") +
-        "</td>" + cells + "<td>" + esc(h.status || "—") + "</td></tr>"
+        esc(name) + (h.current ? " · 当前" : "") +
+        '</td>' + cells + '<td class="status-zh">' + esc(st) + "</td></tr>"
       );
     }).join("");
     wrap.innerHTML = '<table class="host-matrix"><thead>' + head + "</thead><tbody>" + rows + "</tbody></table>";
@@ -1876,7 +1924,11 @@
       legend.textContent =
         (hs.legend && hs.legend.disk ? hs.legend.disk + " · " : "") +
         (hs.legend && hs.legend.live ? hs.legend.live : "") +
-        (hs.hint_command ? " · 提示：" + hs.hint_command : "");
+        (hs.hint_command ? " · 自证命令：" + hs.hint_command : "");
+    }
+    if (pending && hs.pending_live_hint && hs.status !== "absent") {
+      pending.textContent = hs.pending_live_hint;
+      show(pending);
     }
     if (hs.empty_hint && hs.status === "absent") {
       empty.textContent = hs.empty_hint;
@@ -2013,11 +2065,31 @@
     badge.className = "verdict-badge " + (readyOk ? "ok" : "no");
 
     $("headline").innerHTML = linkTerms(ui.headline || score.suggest_next || "（无摘要）", termIndex);
-    $("verdict-hint").innerHTML = linkTerms(verdict.ready_hint || go.rule || "", termIndex);
+    var hintText = verdict.ready_hint || "";
+    if (!hintText && go.rule) {
+      hintText = "开干条件：" + String(go.rule)
+        .replace(/skeleton_ready/g, "骨架就绪")
+        .replace(/coverage_ready/g, "覆盖就绪")
+        .replace(/semantic_ready/g, "语义闸")
+        .replace(/fill_plan\.all_closed/g, "Plan 批次已关")
+        .replace(/gate\(gold\)/g, "金标闸");
+    }
+    $("verdict-hint").innerHTML = linkTerms(hintText, termIndex);
     var gap = ui.gap_to_ready || {};
-    $("gap-line").innerHTML =
-      "<strong>距门槛：</strong>" + linkTerms(gap.summary || "—", termIndex) +
+    var gapHtml =
+      "<strong>距门槛：</strong>" + linkTerms(gap.summary_zh || gap.summary || "—", termIndex) +
       (gap.at_ceiling ? " · <strong>已贴公式上限</strong>" : "");
+    var rawBlockers = gap.ai_coding_blockers || go.blockers || [];
+    var grouped = gap.blockers_grouped || [];
+    if (rawBlockers.length > 3 || (grouped && grouped.length)) {
+      var items = rawBlockers.map(function (b) {
+        return "<li>" + esc(b) + "</li>";
+      }).join("");
+      gapHtml +=
+        '<details class="gap-expand"><summary>展开机器码详情（' +
+        rawBlockers.length + " 项）</summary><ul>" + items + "</ul></details>";
+    }
+    $("gap-line").innerHTML = gapHtml;
     var up = ui.suggest_upgrade || score.suggest_upgrade;
     if (up && (up.next_ladder || up.reason)) {
       $("upgrade-line").innerHTML =
@@ -2043,7 +2115,9 @@
     }
 
     var actions = ui.next_actions || [];
+    var actTitle = $("actions-title");
     if (actions.length) {
+      if (actTitle) show(actTitle);
       $("actions").innerHTML = actions.map(function (a, i) {
         return (
           "<li><strong>" + (i + 1) + ". " + linkTerms(a.title, termIndex) + "</strong><span>" +
@@ -2052,6 +2126,8 @@
           "</li>"
         );
       }).join("");
+    } else if (actTitle) {
+      hide(actTitle);
     }
 
     var diagStory = (ui.diagnose && ui.diagnose.story) || [];

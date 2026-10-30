@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.59"
+version: "0.7.60"
 source_repo: ""
 description: "De-domainized Agent Harness templates for cross-repo landing. Write entry: scripts/harness.mjs; hot path: AGENT-INDEX.md."
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).

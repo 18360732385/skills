@@ -72,7 +72,7 @@
 | `morph_scale` | 形态尺度（`0.7`）；与旧 history 不可比 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
 | `skill_version` | 技能号（manifest / meta；当前列车见 CHANGELOG） |
-| `report_schema` | **报告壳**投影 schema（现 **0.4.0**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；开干只看 `ai_coding_ready` |
+| `report_schema` | **报告壳**投影 schema（现 **0.4.1**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；0.4.1 首屏人话化 + 宿主 `status_zh`；开干只看 `ai_coding_ready` |
 
 ## 常用词
 

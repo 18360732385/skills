@@ -1,7 +1,8 @@
 /**
  * score-history.jsonl — append-only score snapshots for Dashboard trend (0.2.14+).
  * Path: docs/harness-eng/score-history.jsonl
- * 0.4.0: entries carry report_schema + morph_scale; incomparable points greyed / not linked.
+ * 0.4.0+: entries carry report_schema + morph_scale; incomparable points greyed / not linked.
+ * 0.4.1: same major.minor family as 0.4.0 remains comparable (additive UI fields).
  */
 
 import fs from "fs";
@@ -9,7 +10,7 @@ import path from "path";
 
 export const HISTORY_REL = "docs/harness-eng/score-history.jsonl";
 export const DEFAULT_LIMIT = 20;
-export const CURRENT_REPORT_SCHEMA = "0.4.0";
+export const CURRENT_REPORT_SCHEMA = "0.4.1";
 
 /**
  * Compare dotted version strings (e.g. 0.3.0 vs 0.4.0).
@@ -31,6 +32,12 @@ export function cmpSchema(a, b) {
   return 0;
 }
 
+/** major.minor family — patch bumps within 0.4.x stay trend-linkable */
+export function schemaFamily(v) {
+  const p = String(v || "0").split(".");
+  return `${parseInt(p[0], 10) || 0}.${parseInt(p[1], 10) || 0}`;
+}
+
 /**
  * @param {object} entry
  * @param {object} [ctx]
@@ -41,7 +48,9 @@ export function isIncomparablePoint(entry, ctx = {}) {
   const wantSchema = ctx.currentSchema || CURRENT_REPORT_SCHEMA;
   const wantMorph = ctx.currentMorphScale || "0.7";
   const schema = entry?.report_schema;
-  if (!schema || cmpSchema(schema, wantSchema) < 0) return true;
+  if (!schema) return true;
+  // Additive 0.4.x patches stay comparable; different major.minor → grey
+  if (schemaFamily(schema) !== schemaFamily(wantSchema)) return true;
   const morph = entry?.morph_scale;
   if (morph != null && String(morph) !== String(wantMorph)) return true;
   return false;

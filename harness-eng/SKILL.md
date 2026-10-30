@@ -34,7 +34,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（0.7.2 起无 `land.mjs`）。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](modes/recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
-6. 会话仪表盘：先按 [session-dashboard.md](modes/session-dashboard.md) 判定 **SHOW|HIDE**，**仅 SHOW 时**附四边框块（【阶段】【现状】【工作】【下一步建议】；现状仅 AI coding 可否）。可观察 SHOW 例：本轮完整出示 WritePlan（闸门决策点，**不必等确认/写盘**）；实质产出结论；用户显式读数。有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。判定按**本轮**里程碑，不按「会话曾点名」。HTML 五台（`report_schema` 0.4.0）另见手册。
+6. 会话仪表盘：先按 [session-dashboard.md](modes/session-dashboard.md) 判定 **SHOW|HIDE**，**仅 SHOW 时**附四边框块（【阶段】【现状】【工作】【下一步建议】；现状仅 AI coding 可否）。可观察 SHOW 例：本轮完整出示 WritePlan（闸门决策点，**不必等确认/写盘**）；实质产出结论；用户显式读数。有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。判定按**本轮**里程碑，不按「会话曾点名」。HTML 五台（`report_schema` 0.4.1）另见手册。
 
 ## 模式分流（对外四支）
 

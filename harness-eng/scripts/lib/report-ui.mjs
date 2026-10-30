@@ -1,9 +1,10 @@
 /**
  * Build human-facing `ui` projection from fill-score JSON.
- * 报告壳主键：`ui.report_schema`（现 0.4.0）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.4.1）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
+ * 0.4.1：首屏 gap/headline 人话化；blockers_grouped；宿主三态 status_zh。
  * 0.4.0：go_nogo · tasks[] · diagnose.story · ladder_progress · host_surface；趋势 incomparable。
  * 0.3.0 / skill 0.7.0：形态满分 100（探针+深度）；ready.ok 对外废弃；morph_scale。
  * 0.2.26：CJK 正文 · 减动 · 命令一键复制 · Escape/键盘切台 · 尊重 #hash · 参考分降权 · 残差分层。
@@ -14,7 +15,7 @@ import {
   defaultContractDomains,
 } from "./domains.mjs";
 
-export const REPORT_SCHEMA = "0.4.0";
+export const REPORT_SCHEMA = "0.4.1";
 const LADDER_STEPS = ["L0", "L1", "L2", "L3", "L4", "L5"];
 
 /** 施工阶梯悬停说明（与 glossary 一句话对齐） */
@@ -310,6 +311,124 @@ function domainStatus(score, d) {
   return { tone: "warn", label: "建议继续补文档" };
 }
 
+/** Short domain id → display for morph_floor / coverage tips. */
+const DOMAIN_SHORT_ZH = {
+  api: "接口",
+  func: "功能域",
+  db: "库表",
+  redis: "缓存",
+  jobs: "定时任务",
+};
+
+/**
+ * Group machine blocker IDs into human-readable buckets for first-screen UI.
+ * Raw IDs stay in `ids`; never dump path/method strings into summary.
+ * @param {string[]} blockers
+ * @returns {{ groups: Array<{id:string,label_zh:string,count:number,ids:string[]}>, summary_zh: string, headline_bits: string[] }}
+ */
+export function humanizeBlockers(blockers) {
+  const list = Array.isArray(blockers) ? blockers.map(String) : [];
+  const buckets = {
+    skeleton: { id: "skeleton", label_zh: "骨架未就绪", ids: [] },
+    coverage: { id: "coverage", label_zh: "覆盖未达标", ids: [] },
+    semantic: { id: "semantic", label_zh: "语义闸", ids: [] },
+    fill_plan: { id: "fill_plan", label_zh: "填充计划", ids: [] },
+    drift: { id: "drift", label_zh: "文档漂移", ids: [] },
+    morph: { id: "morph", label_zh: "形态闸", ids: [] },
+    acceptance: { id: "acceptance", label_zh: "金标/acceptance", ids: [] },
+    other: { id: "other", label_zh: "其他缺口", ids: [] },
+  };
+
+  for (const b of list) {
+    if (b === "skeleton_ready") buckets.skeleton.ids.push(b);
+    else if (b === "coverage_ready") buckets.coverage.ids.push(b);
+    else if (b === "semantic_ready") buckets.semantic.ids.push(b);
+    else if (b.startsWith("fill_plan_")) buckets.fill_plan.ids.push(b);
+    else if (/^doc_\w+_drift:/.test(b)) buckets.drift.ids.push(b);
+    else if (
+      /^(morph_floor|template_completeness|harness_todo):/.test(b)
+    ) {
+      buckets.morph.ids.push(b);
+    } else if (
+      /^(acceptance_blockers|acceptance_warnings|gold_ratio):/.test(b)
+    ) {
+      buckets.acceptance.ids.push(b);
+    } else {
+      buckets.other.ids.push(b);
+    }
+  }
+
+  const order = [
+    "skeleton",
+    "coverage",
+    "semantic",
+    "fill_plan",
+    "drift",
+    "morph",
+    "acceptance",
+    "other",
+  ];
+  const groups = [];
+  const summaryParts = [];
+  const headlineBits = [];
+
+  for (const key of order) {
+    const buck = buckets[key];
+    if (!buck.ids.length) continue;
+    const count = buck.ids.length;
+    let label = buck.label_zh;
+    if (key === "drift") label = `文档漂移×${count}`;
+    else if (key === "morph") {
+      const mf = buck.ids.find((x) => x.startsWith("morph_floor:"));
+      const domains = mf
+        ? String(mf)
+            .replace(/^morph_floor:/, "")
+            .split(",")
+            .map((p) => p.split(":")[0])
+            .filter(Boolean)
+        : [];
+      const domTip = domains.length
+        ? domains.map((d) => DOMAIN_SHORT_ZH[d] || d).join("/")
+        : "";
+      label = domTip ? `形态闸未过（${domTip}）` : "形态闸未过";
+    } else if (key === "acceptance") {
+      const hasBlock = buck.ids.some((x) => x.startsWith("acceptance_blockers:"));
+      const hasWarn = buck.ids.some((x) => x.startsWith("acceptance_warnings:"));
+      if (hasBlock && hasWarn) label = "acceptance 有 blocker/warning";
+      else if (hasBlock) label = "acceptance 有 blocker";
+      else if (hasWarn) label = "acceptance 有 warning";
+      else label = "金标未过";
+    } else if (key === "fill_plan") {
+      if (buck.ids.includes("fill_plan_missing")) label = "缺 fill-plan";
+      else if (buck.ids.includes("fill_plan_open_batches")) label = "Plan 批次未关";
+    } else if (key === "other" && count > 1) {
+      label = `其他缺口×${count}`;
+    }
+    groups.push({ id: buck.id, label_zh: label, count, ids: buck.ids });
+    summaryParts.push(label);
+    if (headlineBits.length < 3) headlineBits.push(label);
+  }
+
+  const summary_zh = summaryParts.length
+    ? "距开干：" + summaryParts.join("、")
+    : "距开干：仍有缺口（见诊断台）";
+
+  return { groups, summary_zh, headline_bits: headlineBits };
+}
+
+/** Humanize morph_floor:func:87<95,api:89<95 → 功能域 87<95、接口 89<95 */
+function formatMorphFloorDetail(raw) {
+  const body = String(raw).replace(/^morph_floor:/, "");
+  const parts = body.split(",").map((p) => p.trim()).filter(Boolean);
+  if (!parts.length) return "形态分未过阈，按拖后腿域补模板章/列密度，再 fill-score。";
+  const bits = parts.map((p) => {
+    const [dom, rest] = p.split(":");
+    const name = DOMAIN_SHORT_ZH[dom] || dom;
+    return rest ? `${name} ${rest}` : name;
+  });
+  return `${bits.join("、")}。按拖后腿域补模板章/列密度，再 fill-score。`;
+}
+
 function buildHeadline(score) {
   const aiOk = !!score.ai_coding_ready?.ok;
   const overall = score.overall;
@@ -325,21 +444,24 @@ function buildHeadline(score) {
   if (aiOk) {
     return "开干=YES：建议可以开干；仍须人工审契约与代码。";
   }
-  const gateBlockers = blockers.filter(
-    (b) =>
-      /^(morph_floor|harness_todo|acceptance_blockers|acceptance_warnings|gold_ratio|template_completeness):/.test(
-        String(b)
-      )
+
+  const gateBlockers = blockers.filter((b) =>
+    /^(morph_floor|harness_todo|acceptance_blockers|acceptance_warnings|gold_ratio|template_completeness):/.test(
+      String(b)
+    )
   );
   if (gateBlockers.length) {
-    return `开干=NO · gate：${gateBlockers.join("、")}。见任务台对应 fill 建议。`;
+    const { headline_bits } = humanizeBlockers(gateBlockers);
+    const tip = headline_bits.length ? headline_bits.join(" · ") : "形态/金标闸未过";
+    const line = `开干=NO · ${tip}。见任务台对应 fill 建议。`;
+    return line.length > 80 ? line.slice(0, 77) + "…" : line;
   }
   if (
     typeof score.gold_ratio === "number" &&
     score.gold_ratio < 0.6 &&
     (score.acceptance?.blockers > 0 || score.acceptance?.status === 1)
   ) {
-    return `金标达标率 gold_ratio=${score.gold_ratio} 偏低且有 acceptance blocker；先按 truth-quality 精修。`;
+    return "开干=NO · 金标达标率偏低且有 acceptance blocker；先按 truth-quality 精修。";
   }
   if (blockers.includes("fill_plan_missing")) {
     return "开干=NO：缺 fill-plan → 先 --init，再按批次 fill-truths-agents。";
@@ -348,13 +470,19 @@ function buildHeadline(score) {
     return `开干=NO：fill-plan 仍有开放批次≈${openBatches ?? "?"}；继续 agents。`;
   }
   if (blockers.includes("semantic_ready") || score.semantic_ready?.ok === false) {
-    return "开干=NO：semantic_ready=false（通用逻辑模板 / DTO 错挂）；按接口重填后再打分。";
+    return "开干=NO：语义闸未过（通用逻辑模板 / DTO 错挂）；按接口重填后再打分。";
   }
   if (blockers.includes("skeleton_ready") || score.skeleton_ready?.ok === false) {
-    return "开干=NO：skeleton_ready=false → upgrade/resume 到 L4。";
+    return "开干=NO：骨架未就绪 → upgrade/resume 到 L4。";
   }
   if (blockers.includes("coverage_ready")) {
-    return "开干=NO：coverage_ready=false（见分域 coverage_gaps）；按域补 inventory/批次。";
+    return "开干=NO：覆盖未达标（见分域 coverage_gaps）；按域补 inventory/批次。";
+  }
+  if (blockers.length) {
+    const { headline_bits } = humanizeBlockers(blockers);
+    const tip = headline_bits.length ? headline_bits.join(" · ") : "仍有缺口";
+    const line = `开干=NO · ${tip}。见任务台。`;
+    return line.length > 80 ? line.slice(0, 77) + "…" : line;
   }
   if (score.ready?.coverage_incomplete) {
     return "缺 inventory，覆盖率不完整；先 inventory → fill-plan → agents。";
@@ -372,14 +500,14 @@ function buildVerdict(score) {
       ready_ok: true,
       ai_coding_ready: true,
       ready_label: "建议可以开干",
-      ready_hint: "ai_coding_ready=true；可用 AI 协助改业务，仍须人工审契约与代码。",
+      ready_hint: "可 AI coding 已达标；可用 AI 协助改业务，仍须人工审契约与代码。",
     };
   }
   return {
     ready_ok: false,
     ai_coding_ready: false,
     ready_label: "建议暂缓",
-    ready_hint: "先 fill-plan + agents 过语义闸；开干只看 ai_coding_ready（ready.ok 已废弃）。",
+    ready_hint: "先补填充计划并过语义闸；开干只看「可 AI coding」灯。",
   };
 }
 
@@ -390,8 +518,8 @@ function buildDecisionKpis(score) {
     {
       id: "ai_coding_ready",
       label_zh: "可 AI coding",
-      value: aiOk ? "YES" : "NO",
-      sub: score.ai_coding_ready?.rule || "开干只看此项",
+      value: aiOk ? "是" : "否",
+      sub: "开干只看此项",
       tone: aiOk ? "ok" : "no",
     },
   ];
@@ -402,8 +530,8 @@ function buildDecisionKpis(score) {
       value: Math.round(score.gold_ratio * 1000) / 10 + "%",
       sub:
         score.gold_ratio < 0.6
-          ? "偏低 · 清 acceptance blocker"
-          : "acceptance · 不替代 ai_coding_ready",
+          ? "偏低 · 请清验收阻断项"
+          : "验收参考 · 不替代开干灯",
       tone: score.gold_ratio < 0.6 ? "warn" : "ok",
     });
   }
@@ -411,7 +539,7 @@ function buildDecisionKpis(score) {
   kpis.push({
     id: "skeleton_ready",
     label_zh: "骨架",
-    value: skOk === true ? "YES" : skOk === false ? "NO" : "—",
+    value: skOk === true ? "是" : skOk === false ? "否" : "—",
     sub: "只读灯 · 非开干",
     tone: skOk === true ? "ok" : skOk === false ? "warn" : "",
   });
@@ -419,7 +547,7 @@ function buildDecisionKpis(score) {
   kpis.push({
     id: "coverage_ready",
     label_zh: "覆盖",
-    value: covOk === true ? "YES" : covOk === false ? "NO" : "—",
+    value: covOk === true ? "是" : covOk === false ? "否" : "—",
     sub: "只读灯 · 非开干",
     tone: covOk === true ? "ok" : covOk === false ? "warn" : "",
   });
@@ -427,7 +555,7 @@ function buildDecisionKpis(score) {
   kpis.push({
     id: "semantic_ready",
     label_zh: "语义",
-    value: semOk === true ? "YES" : semOk === false ? "NO" : "—",
+    value: semOk === true ? "是" : semOk === false ? "否" : "—",
     sub: "只读灯 · 非开干",
     tone: semOk === true ? "ok" : semOk === false ? "warn" : "",
   });
@@ -540,11 +668,12 @@ function buildGapToReady(score) {
   const blockers = Array.isArray(score.ai_coding_ready?.blockers)
     ? score.ai_coding_ready.blockers
     : [];
+  const grouped = humanizeBlockers(blockers);
   let summary = "";
   if (score.ai_coding_ready?.ok) {
     summary = "已达 ai_coding_ready。";
   } else if (blockers.length) {
-    summary = "距 ai_coding_ready：" + blockers.join("、");
+    summary = grouped.summary_zh;
   } else if (score.ready?.coverage_incomplete) {
     summary = "缺 inventory，覆盖门槛无法完整判定。";
   } else if (score.ready?.ok) {
@@ -565,6 +694,8 @@ function buildGapToReady(score) {
     coverage_gap: coverageGap,
     coverage_gap_percent: coverageGapPct,
     ai_coding_blockers: blockers,
+    blockers_grouped: grouped.groups,
+    summary_zh: summary,
     at_ceiling:
       typeof overall === "number" &&
       typeof score.formula_ceiling === "number" &&
@@ -734,20 +865,20 @@ function buildNextActions(score, opts = {}) {
     if (String(b).startsWith("morph_floor:")) {
       actions.push({
         title: "抬域形态分（过 morph_floor）",
-        detail: `${b}。按拖后腿域补模板章/列密度，再 fill-score。`,
+        detail: formatMorphFloorDetail(b),
         command: null,
       });
     } else if (String(b).startsWith("harness_todo:")) {
       actions.push({
         title: "清 harness TODO(harness-eng)",
-        detail: `${b}。扫面见 gate.todo_scan（gold=harness_docs：真相+索引+AGENTS+agent-kb+rules）。`,
+        detail: "扫面见 gate.todo_scan（gold=harness_docs：真相+索引+AGENTS+agent-kb+rules）。",
         command: `node scripts/fill-plan.mjs --root ${R} --status`,
       });
     } else if (String(b).startsWith("acceptance_warnings:")) {
       if (!hasResidualHint(score) || warningShardCount(score) === 0) {
         actions.push({
           title: "清 acceptance warnings（gold）",
-          detail: `${b}。按 truth-quality 精修 ${accDomain} 真相至 warnings=0。`,
+          detail: `按 truth-quality 精修 ${accDomain} 真相至 warnings=0。`,
           command: `node scripts/acceptance-check.mjs --root ${R} --domain ${accDomain} --gold`,
         });
       }
@@ -757,13 +888,15 @@ function buildNextActions(score, opts = {}) {
     ) {
       actions.push({
         title: "清 acceptance blocker / 抬金标",
-        detail: `${b}。对 .fill-work 或 SSOT 跑 acceptance-check，过闸再 merge。`,
+        detail: "对 .fill-work 或 SSOT 跑 acceptance-check，过闸再 merge。",
         command: `node scripts/acceptance-check.mjs --root ${R} --domain ${accDomain} --gold`,
       });
     } else if (String(b).startsWith("template_completeness:")) {
+      const m = String(b).match(/^template_completeness:(\d+)<(\d+)/);
+      const tip = m ? `模板完整度 ${m[1]}<${m[2]}。` : "";
       actions.push({
         title: "补模板完整度",
-        detail: `${b}。对照 api/func/db/redis/jobs 模板补必填章与示例列。`,
+        detail: `${tip}对照 api/func/db/redis/jobs 模板补必填章与示例列。`,
         command: null,
       });
     }

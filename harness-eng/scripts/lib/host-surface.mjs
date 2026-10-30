@@ -18,6 +18,25 @@ import {
 const STALE_MS = 7 * 24 * 60 * 60 * 1000;
 const SURFACES = ["rules", "hooks", "mcp", "githooks", "human_gates"];
 
+/** 宿主展示名（报告 UI 优先用中文） */
+const HOST_LABEL_ZH = {
+  cursor: "Cursor",
+  claude: "Claude Code",
+  qoder: "Qoder",
+  trae: "Trae",
+  workbuddy: "WorkBuddy",
+  codex: "Codex",
+};
+
+/** 面列中文（矩阵表头） */
+const SURFACE_LABEL_ZH = {
+  rules: "规则",
+  hooks: "钩子",
+  mcp: "MCP",
+  githooks: "Git 钩子",
+  human_gates: "人工闸",
+};
+
 function pathExistsNonEmpty(root, rel) {
   if (!rel) return false;
   const abs = path.join(root, ...String(rel).replace(/\\/g, "/").split("/"));
@@ -152,14 +171,28 @@ function isStale(atIso, now = Date.now()) {
   return now - t > STALE_MS;
 }
 
+/** Host-specific assets only — shared .githooks must not alone mark a host as landed. */
+function diskAnyHost(disk) {
+  if (!disk || typeof disk !== "object") return false;
+  return disk.rules === "present" || disk.hooks === "present" || disk.mcp === "present";
+}
+
+function hostStatusZh(h) {
+  if (h.status === "live") return "已自证";
+  if (h.status === "disk_only" || h.status === "unproven") return "已落地·待自证";
+  if (!h.in_ai_tools && !h.disk_any) return "非本仓工具";
+  return "未落地";
+}
+
 function capsuleStatus(hosts, livePresent, stale) {
-  if (!livePresent) return "absent";
-  if (stale) return "unproven";
-  const liveHosts = hosts.filter((h) => h.live && h.live.status);
-  if (!liveHosts.length) return "unproven";
+  const anyDisk = (hosts || []).some((h) => h.disk_any);
+  if (!livePresent) return anyDisk ? "disk_only" : "absent";
+  if (stale) return anyDisk ? "disk_only" : "unproven";
+  const liveHosts = hosts.filter((h) => h.live && (h.live.status || Object.keys(h.live).length));
+  if (!liveHosts.length) return anyDisk ? "disk_only" : "unproven";
   if (liveHosts.some((h) => h.claims?.behavior_pass_claim)) return "live";
   if (liveHosts.some((h) => Object.values(h.live).includes("pass"))) return "live";
-  return "unproven";
+  return anyDisk ? "disk_only" : "unproven";
 }
 
 /**
@@ -275,10 +308,17 @@ export function buildHostSurface(root, opts = {}) {
       };
     }
 
-    const diskAny = SURFACES.some((s) => disk[s] === "present");
-    return {
+    const diskAny = diskAnyHost(disk);
+    const status = liveEntry
+      ? liveEntry.claims?.behavior_pass_claim
+        ? "live"
+        : "unproven"
+      : diskAny
+        ? "disk_only"
+        : "absent";
+    const row = {
       id,
-      label_zh: id,
+      label_zh: HOST_LABEL_ZH[id] || id,
       current: current === id,
       in_ai_tools: !aiTools.length || aiTools.includes(id),
       disk,
@@ -286,24 +326,23 @@ export function buildHostSurface(root, opts = {}) {
       claims: liveEntry?.claims || null,
       live_at: liveEntry?.at || null,
       disk_any: diskAny,
-      status: liveEntry
-        ? liveEntry.claims?.behavior_pass_claim
-          ? "live"
-          : "unproven"
-        : diskAny
-          ? "disk_only"
-          : "absent",
+      status,
     };
+    row.status_zh = hostStatusZh(row);
+    return row;
   });
 
   const status = capsuleStatus(hosts, livePresent, stale);
   const hintCmd =
     "node scripts/session-live.mjs --root <TARGET> --emit-playbook";
 
-  let summary_zh = "未自证";
-  if (status === "live") summary_zh = current ? `${current} live` : "已自证";
+  const landedCount = hosts.filter((h) => h.disk_any).length;
+  let summary_zh = "未落地";
+  if (status === "live") summary_zh = current ? `${current} 已自证` : "已自证";
   else if (status === "unproven" && livePresent) summary_zh = "自证不完整/过期";
-  else if (hosts.some((h) => h.disk_any)) summary_zh = "仅磁盘齐套（≠生效）";
+  else if (status === "disk_only" || landedCount > 0) {
+    summary_zh = `${landedCount} 已落地·待自证（≠生效）`;
+  }
 
   return {
     status,
@@ -314,13 +353,19 @@ export function buildHostSurface(root, opts = {}) {
     claims: latest?.claims || metaLive || null,
     hosts,
     surfaces: SURFACES,
+    surfaces_zh: SURFACES.map((s) => SURFACE_LABEL_ZH[s] || s),
+    surface_labels: SURFACE_LABEL_ZH,
     legend: {
-      disk: "灰灯=磁盘存在（present/absent），≠生效",
-      live: "彩灯=session-live（pass/fail/unproven/skipped）",
+      disk: "实心/暖色=磁盘已落地（≠生效）；空心灰=未落地",
+      live: "绿色=会话已自证；黄=未证；跳过=非本宿主",
     },
     empty_hint:
       status === "absent"
-        ? "尚未 session-live；磁盘有文件也不等于 hooks/MCP/rules 生效。"
+        ? "尚未落地宿主资产（规则/钩子/MCP）；落地后仍须会话自证才算生效。"
+        : null,
+    pending_live_hint:
+      status === "disk_only" || (landedCount > 0 && status !== "live")
+        ? "磁盘已落地 ≠ 规则/钩子/MCP 已生效；请跑会话自证（session-live）。"
         : null,
     hint_command: hintCmd,
   };
@@ -339,18 +384,18 @@ export function formatHostSurfaceLine(hs) {
   const focus = hosts.filter((h) => h.current || h.live || (h.in_ai_tools && h.disk_any));
   const list = (focus.length ? focus : hosts.filter((h) => h.disk_any || h.live)).slice(0, 4);
   for (const h of list) {
-    const bits = [h.id];
-    if (h.status === "live") bits.push("live");
-    else if (h.live) bits.push("未自证");
-    else if (h.disk_any) bits.push("磁盘");
-    else bits.push("无");
-    if (h.live?.hooks === "pass") bits.push("hooks✓");
-    if (h.live?.mcp === "pass") bits.push("mcp✓");
-    if (h.live?.rules === "pass") bits.push("rules✓");
+    const bits = [h.label_zh || h.id];
+    if (h.status === "live") bits.push("已自证");
+    else if (h.status === "disk_only" || h.status === "unproven") bits.push("已落地·待自证");
+    else if (h.disk_any) bits.push("已落地");
+    else bits.push("未落地");
+    if (h.live?.hooks === "pass") bits.push("钩子✓");
+    if (h.live?.mcp === "pass") bits.push("MCP✓");
+    if (h.live?.rules === "pass") bits.push("规则✓");
     parts.push(bits.join(" "));
   }
   if (!parts.length) return `宿主面：${hs.summary_zh || "未自证"}`;
   return `宿主面：${parts.join(" · ")}`;
 }
 
-export { SURFACES, STALE_MS };
+export { SURFACES, STALE_MS, HOST_LABEL_ZH, SURFACE_LABEL_ZH };
