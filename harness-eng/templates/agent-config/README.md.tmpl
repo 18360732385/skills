@@ -20,7 +20,7 @@
 | `mcp/servers.example.json` | 无密示例 → `.cursor/mcp.json.example` / 根 `.mcp.json.example` / `.trae/mcp.json.example` / `.codex/config.toml.example` |
 | `mcp/policy.json` | Codex MCP **启用策略**（`enabled` / `approval_mode`；无密钥）；sync 写入 `config.toml.example` |
 | `settings.json` | （可选）`.cursor/settings.json` 与 qoder settings 非 hooks 键的 SSOT |
-| `skills/` | （可选）vendored skills，分发到各工具 `skills/` 与 Codex `.agents/skills/` |
+| `skills/` | （可选）契约种子 SSOT；**仅**投影到 Codex `.agents/skills/`（Cursor 族契约纪律走 rules，不镜像到 `*/skills/`） |
 | `codex/rules/*.rules` | Codex Starlark 命令策略 → `.codex/rules/`（**不是** `.mdc` 镜像） |
 
 ### sync 分发摘要（0.5.1+ / Codex 0.6.9）

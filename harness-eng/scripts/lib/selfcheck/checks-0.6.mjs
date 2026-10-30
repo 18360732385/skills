@@ -1621,7 +1621,12 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     /config\.toml\.example/.test(syncTmpl069) && /env_vars|jsonServersToCodexToml/.test(syncTmpl069),
     "sync emits codex toml from mcp"
   );
-  assert(/\.agents\/skills/.test(syncTmpl069) && !/P0 \*\*不\*\*从/.test(syncTmpl069), "skills full distribute, not P0 pointer-only prose");
+  assert(
+    /\.agents\/skills/.test(syncTmpl069) &&
+      /LEGACY_SKILLS_PRUNE_DIRS/.test(syncTmpl069) &&
+      !/P0 \*\*不\*\*从/.test(syncTmpl069),
+    "skills Codex-only to .agents/skills + legacy prune, not P0 pointer-only prose"
+  );
   assert(/MANAGED_DIRS[\s\S]*\.codex\/rules/.test(syncTmpl069), "managed .codex/rules");
 
   const codexFx = path.join(skillRoot, "scripts/fixtures/l5-sync-codex");

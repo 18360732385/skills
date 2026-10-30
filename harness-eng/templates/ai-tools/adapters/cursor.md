@@ -9,5 +9,5 @@
   - 脚本：Cursor 协议 stdin/stdout（无需 adapter）
   - **stop / stop-checklist**：观察向；**不**返回 `followup_message`（避免自动续一轮）
 - **MCP**: `.cursor/mcp.json`（example: `.cursor/mcp.json.example`）
-- **Skills**: `.cursor/skills/`
+- **Skills**: `.cursor/skills/`（用户/项目 skills；**L5 契约种子不投影**——契约纪律走 rules；Codex 才写 `.agents/skills/`）
 - **禁止**: 无

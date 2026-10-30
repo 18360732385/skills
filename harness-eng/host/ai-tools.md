@@ -124,7 +124,7 @@ Q_AI_TOOL — 本仓要用哪些 AI 编程工具？（可多选）
 
 ## L5 配置 SSOT 管线
 
-- 生成物：各 Claude 族目录含 rules/hooks/skills；CodeBuddy 含 hooks/settings/skills；根 `.mcp.json`（claude/qoder/workbuddy）；`.trae/mcp.json`；Codex：`.codex/{hooks,rules,config.toml.example}` + `.agents/skills/` 全量分发
+- 生成物：各 Claude 族目录含 rules/hooks；CodeBuddy 含 hooks/settings；根 `.mcp.json`（claude/qoder/workbuddy）；`.trae/mcp.json`；Codex：`.codex/{hooks,rules,config.toml.example}` + `.agents/skills/`（契约 skills **仅**此路径；不再镜像到 Cursor 族 `*/skills/`）
 - 默认生成器：`sync.mjs`；可选 Agent 生成见 [sync-hosts.md](sync-hosts.md)
 
 ## 与 fill 并行

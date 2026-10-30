@@ -2006,9 +2006,19 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
 
   const syncTmplB = fs.readFileSync(path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"), "utf8");
   assert(/SKILLS_DIRS/.test(syncTmplB), "sync tmpl has SKILLS_DIRS");
-  assert(/harness-managed\.json/.test(syncTmplB), "sync tmpl writes harness-managed.json");
+  assert(/LEGACY_SKILLS_PRUNE_DIRS/.test(syncTmplB), "sync tmpl has LEGACY_SKILLS_PRUNE_DIRS");
+  assert(/harness-managed\.json/.test(syncTmplB), "sync tmpl references harness-managed.json");
   assert(/unmanaged/.test(syncTmplB), "sync tmpl reports unmanaged");
   assert(new RegExp(`HARNESS_ENG_VERSION = "${VER_RE}"`).test(syncTmplB), `sync tmpl version ${EXPECTED}`);
+  assert(
+    /function planSkills[\s\S]*?if\s*\(\s*!has\("codex"\)\s*\)\s*return/.test(syncTmplB),
+    "planSkills early-returns without codex"
+  );
+  assert(
+    /put\(`\.agents\/skills\/\$\{rel\}`/.test(syncTmplB) &&
+      !/put\(`\$\{dir\}\/skills\/\$\{rel\}`/.test(syncTmplB),
+    "skills project only to .agents/skills, not host */skills/"
+  );
 
   const invApi = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-api.mjs"), "utf8");
   assert(/scanApiInventoryMemory/.test(invApi), "inventory-api exports scanApiInventoryMemory");
@@ -5910,6 +5920,42 @@ module.exports = { hello };
   assert(/0\.7\.58/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.58 VERIFY.md");
   assert(/\| 0\.7\.58 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.7.58 CHANGELOG");
   assert(logExists("0.7.58"), "0.7.58 _log note exists");
+}
+
+// --- 0.7.59: L5 skills Codex-only ---
+{
+  const syncTmpl59 = fs.readFileSync(
+    path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"),
+    "utf8"
+  );
+  assert(/LEGACY_SKILLS_PRUNE_DIRS/.test(syncTmpl59), "0.7.59 LEGACY_SKILLS_PRUNE_DIRS");
+  assert(
+    /function planSkills[\s\S]*?if\s*\(\s*!has\("codex"\)\s*\)\s*return/.test(syncTmpl59),
+    "0.7.59 planSkills codex-only"
+  );
+  assert(
+    !/put\(`\$\{dir\}\/skills\/\$\{rel\}`/.test(syncTmpl59),
+    "0.7.59 no host */skills/ put"
+  );
+  assert(/0\.7\.58 → 0\.7\.59/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.59 upgrade.md");
+  assert(/0\.7\.59 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.59 VERIFY.md");
+  assert(/\| 0\.7\.59 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.7.59 CHANGELOG");
+  assert(logExists("0.7.59"), "0.7.59 _log note exists");
+
+  const golden59 = path.join(skillRoot, "scripts/fixtures/l5-sync-golden");
+  assert(
+    !fs.existsSync(path.join(golden59, ".cursor/skills/.harness-managed.json")),
+    "0.7.59 golden pruned .cursor/skills managed"
+  );
+  assert(
+    !fs.existsSync(path.join(golden59, ".claude/skills/.harness-managed.json")),
+    "0.7.59 golden pruned .claude/skills managed"
+  );
+  const codex59 = path.join(skillRoot, "scripts/fixtures/l5-sync-codex");
+  assert(
+    fs.existsSync(path.join(codex59, ".agents/skills/contract-sync/SKILL.md")),
+    "0.7.59 codex fixture keeps .agents/skills"
+  );
 }
 
 console.log(`ok: ${ok.length}`);

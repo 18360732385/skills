@@ -9,5 +9,5 @@
   - 路径可用 `${CLAUDE_PROJECT_DIR}/.claude/hooks/...`
   - **Stop / stop-checklist**：观察向；`stop-check` 恒 `{}`，**禁止** `decision: "block"`
 - **MCP**: 根 `.mcp.json`（与 Qoder/CodeBuddy 共享）
-- **Skills**: `.claude/skills/`
+- **Skills**: `.claude/skills/`（用户/项目；**L5 契约种子不投影**——契约纪律走 rules）
 - **禁止**: 勿写 Cursor 式 `.claude/hooks.json` / `beforeShellExecution`

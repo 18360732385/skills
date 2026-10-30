@@ -14,7 +14,7 @@ Qoder 属 **Claude 族**宿主（与 claude / trae / workbuddy 同协议族）�
 | hooks | `.qoder/settings.json`（hooks 段） | Claude 系嵌套：`PreToolUse` / `PostToolUse` / `Stop` + matcher |
 | hook 脚本 | `.qoder/hooks/*.js` | 统一 Cursor 协议脚本 + `claude-adapter.js` 双向翻译（与 `.claude/hooks/` 同族） |
 | MCP 真密 / example | 根 `.mcp.json` / `.mcp.json.example` | Claude 族共享根路径；vendored_shared 仓真密入 git（团队约定） |
-| skills | `.qoder/skills/` | vendored skills 分发；`GENERATED.md` 标记生成物 |
+| skills | `.qoder/skills/` | 宿主可发现用户/项目 skills；**harness 契约种子不投影**（0.7.59+；契约纪律走 rules；Codex 才写 `.agents/skills/`） |
 
 ## 真人验收（磁盘有文件 ≠ 会话已生效）
 

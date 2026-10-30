@@ -9,5 +9,5 @@
   - 脚本：`.qoder/hooks/*.js` + `claude-adapter.js`
   - **Stop / stop-checklist**：观察向；`stop-check` 恒 `{}`，**禁止**强制续聊
 - **MCP**: 根 `.mcp.json`
-- **Skills**: `.qoder/skills/`
+- **Skills**: `.qoder/skills/`（用户/项目；**L5 契约种子不投影**——契约纪律走 rules）
 - **禁止**: 勿生成 Cursor 事件名进 `.qoder/hooks.json`；勿写 `.qoder/mcp.json` 作主路径

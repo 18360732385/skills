@@ -23,7 +23,7 @@ harness-eng 将 Codex 标为矩阵 **高**：分轨 SSOT（共享 mcp/hooks/skil
 | **Command policy** | `.codex/rules/*.rules` 种子（含 force-push / clean -xfd） | experimental；≠ 自然语言规范 | **PASS** |
 | **Config / MCP example** | `config.toml.example` + `mcp/policy.json`（脱敏；写库默认关） | 须 trust + 本机 `config.toml` + `/mcp`；policy 可建议开安全工具；**calibrate** 可读 toml/`env_vars` | 脚手架 **PASS** / 会话 **PARTIAL** |
 | **Hooks** | `^Bash$` + `mcp__mysql` + `Stop` + `commandWindows`（`codex-hook.cmd`）+ adapter；可选 rulehook 合并 | 须 `/hooks` trust；fail-open；Stop/mcp 写 stderr；Win 上部分 `unified_exec` 可能绕过 PreToolUse（见 MANUAL） | **PASS**（人验；Win shell 覆盖 **PARTIAL**） |
-| **Skills** | L5 → `.agents/skills/` | `/skills` 可发现 | **PASS** |
+| **Skills** | L5 → `.agents/skills/`（**仅**此路径；不镜像 Cursor 族 `*/skills/`） | `/skills` 可发现 | **PASS** |
 | **L4 rulehook（可选）** | `.rulehook/rulehook.toml` 种子（≤10 deny）；`Q_RULEHOOK` / 探测才落盘；sync 合并 | 须本机 `rulehook` CLI + trust；**不**默认依赖 | 脚手架 **PASS** / 行为 **PARTIAL**（人验） |
 
 ## 自然语言规则：分层（优于「只靠 AGENTS」或「只靠 hook 裁判」）

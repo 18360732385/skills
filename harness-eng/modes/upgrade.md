@@ -71,6 +71,14 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.58 → 0.7.59 迁移要点
+
+1. **meta**：`skill_version` → `0.7.59`
+2. **L5 skills 投影**：契约种子 **仅** 写入 Codex `.agents/skills/`；不再镜像到 `.cursor|.qoder|.claude|.trae|.codebuddy/skills`
+3. **legacy prune**：刷新 `sync.mjs` 后跑 sync，按各目录 `.harness-managed.json` 清理曾托管的契约 skills（用户自建 skill 保留）
+4. **Cursor 族**：契约纪律继续走 rules（`.mdc`/`.md`）；宿主 `*/skills/` 留给用户/项目 skills
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.59`）后再 sync
+
 ## 0.7.57 → 0.7.58 迁移要点
 
 1. **meta**：`skill_version` → `0.7.58`；upgrade **保留** `installed_at`，回写 `upgraded_at`（tmpl 新增该键）

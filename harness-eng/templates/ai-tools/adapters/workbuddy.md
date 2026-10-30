@@ -12,6 +12,6 @@
   - **热加载**：改 `settings.json` 后须在 IDE **`/hooks` 面板**确认/应用（仅保存文件 ≠ 会话已生效）
 - **MCP**: 根 `.mcp.json`（官方推荐项目级）。首次连接需审批；范围优先级 **local > project > user**；local 可填，密钥优先 `${VAR}`，**勿把真密写进可提交 SSOT**
 - **permissions / settings 优先级**: CLI > `.codebuddy/settings.local.json` > `.codebuddy/settings.json` > `~/.codebuddy/settings.json`。sync 仅在缺省时合并最小 `permissions`（不 wipe）。**不**生成 `settings.local.json`
-- **Skills**: `.codebuddy/skills/`
+- **Skills**: `.codebuddy/skills/`（用户/项目；**L5 契约种子不投影**——契约纪律走 rules）
 - **非目标**: `.codebuddy/agents/`（不由 harness 生成）
 - **禁止**: 勿停在仅基础 commit 门禁（除非用户显式只要 `commit-gate`）；勿再写 RULE.mdc 目录布局
