@@ -25,7 +25,7 @@ alwaysApply: true
 
 | 场景 | 先读 |
 |---|---|
-| **定向**（新会话 / 边界不清） | 根 AGENTS →（若存在 `docs/runs/active/` → 对应 `progress.yaml`）→ `docs/agent-kb/architecture-overview.md` → 相关 pitfalls **按域** |
+| **定向**（新会话 / 边界不清） | 根 AGENTS →（若存在 `docs/runs/active/` → 对应 `progress.yaml`）→ `docs/agent-kb/architecture-overview.md` → 相关 pitfalls（先**路径速查** / Grep 路径关键词） |
 | **改业务 / 契约** | 分册 AGENTS → `docs/func\|api\|db\|redis\|jobs` 索引+真相 → 代码 |
 | **改 Cron / 定时任务** | `docs/jobs/jobs.md` → `tasks/NN-*.md` → Scheduler / Registry / yml（rule `20`） |
 | **发版 / 上线清单** | 用户点名 `release-eng`（若本仓启用） |
@@ -42,11 +42,14 @@ alwaysApply: true
 | ID | 一句 |
 |---|---|
 | （通用） | 冲突以磁盘最新为准，勿沿用会话早期摘要 |
-| （通用） | 规划语料 / 过期 plan 不是契约 SSOT |
+| （通用） | 规划语料 / 过期 plan 不是契约 SSOT；勿按 archive checkbox 改生产（rule `18`） |
+| （收口） | 宣称交付后漏收口禁止：徽章 + `git mv` archive + README→`archive/ARCHIVE.md`（[`delivery-checklist`](docs/agent-kb/delivery-checklist.md)） |
+| （迁移） | 下一迁移号以 `db/migration/` 目录为准，勿把「当前最高 Vn」写死进 AGENTS / db.md |
+| （契约） | 改代码侧契约相关路径：先真相子目录（`modules`/`table`/`keys`/`tasks`），索引不算同步 |
 | （Jobs） | 改 Cron 须四件套：任务码 / Scheduler / yml / Registry + `docs/jobs` |
 | （日志/注释） | 改 Java/yml：Service/Tool/Infra 打步骤日志 + 增量中文注释；`catch`/硬失败须 Throwable 最后一参（若装 rule `21`） |
 
-TODO(harness-eng): 将本仓稳定高频翻车压缩为 3～7 行薄片，回链 pitfalls `Pn`。
+落地后可将上表稳定翻车压缩为回链本仓 `Pn` 的短句（勿在本 rule 维护 pitfalls 正文）。
 
 ## 提交门禁
 

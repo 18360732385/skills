@@ -286,9 +286,10 @@ function collectContractReminders(root, staged) {
   const contractLines = [];
   for (const check of CONTRACT_CHECKS) {
     const codeHit = staged.some(check.code);
+    // docsHit 仅真相子目录（modules/table/keys/tasks）；索引与 archive 不算（见文件头注释）
     const docsHit = staged.some(check.docs);
     if (codeHit && !docsHit) {
-      contractLines.push(`  - [${check.id}] 暂存含代码侧变更，未含对应文档：${check.tip}`);
+      contractLines.push(`  - [${check.id}] 暂存含代码侧变更，未含对应真相文档：${check.tip}`);
     }
   }
 
@@ -300,7 +301,7 @@ function collectContractReminders(root, staged) {
       .some((f) => ymlDiffTouchesJobs(root, f));
     if (ymlJobsHit) {
       contractLines.push(
-        "  - [jobs] 暂存 yml 含 cron/task_code 相关新增配置，未含 docs/jobs/tasks：rule 20：同步 docs/jobs/tasks + 四件套"
+        "  - [jobs] 暂存 yml 含 cron/task_code 相关新增配置，未含 docs/jobs/tasks 任务真相：rule 20：同步 docs/jobs/tasks + 四件套（索引/archive 不算）"
       );
     }
   }
@@ -381,7 +382,7 @@ function collectSuperpowersReminders(root, staged) {
   const shown = activePlans.slice(0, 3).join("、");
   const more = activePlans.length > 3 ? ` 等 ${activePlans.length} 个` : "";
   return [
-    `- superpowers：仍有进行中 plan（${shown}${more}）；若本提交**宣称交付**其主功能，先按 rule 18 收口（README→ARCHIVE）；进行中主题勿假收口；纯 fix/chore 可忽略`,
+    `- superpowers：仍有进行中 plan（${shown}${more}）；若本提交**宣称交付**其主功能，先按 rule 18 收口（README→archive/ARCHIVE.md）；进行中主题勿假收口；非每次 commit 须收口；纯 fix/chore 可忽略`,
   ];
 }
 
@@ -502,7 +503,11 @@ function buildAgentMessageParts(root, staged) {
   const contractLines = collectContractReminders(root, staged);
   if (contractLines.length) {
     parts.push(
-      ["【契约同步】暂存疑似漏同步文档：", ...contractLines, "纯无关改动可忽略。"].join("\n")
+      [
+        "【契约同步】暂存疑似漏同步真相（仅认 modules/table/keys/tasks；索引与 archive 不算）：",
+        ...contractLines,
+        "纯无关改动可忽略。",
+      ].join("\n")
     );
   }
 

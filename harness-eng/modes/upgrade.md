@@ -71,6 +71,14 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.55 → 0.7.56 迁移要点
+
+1. **meta**：`skill_version` → `0.7.56`
+2. **superpowers**：README 增「约定」薄段；活跃 `plans/`、`specs/` 落地短 README（替代仅 `.gitkeep`）
+3. **rules / AGENTS**：00 高频避坑薄片落地；rule 18「AI 提交门禁」判断表；根 AGENTS 补 Planning corpus；rule 19 一行一错 + 双速查同步
+4. **hooks tip**：契约提醒强调只认真相子目录（`modules|table|keys|tasks`）；domains `hook_tip` 同口径
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.56`）后再 sync
+
 ## 0.7.54 → 0.7.55 迁移要点
 
 1. **meta**：`skill_version` → `0.7.55`

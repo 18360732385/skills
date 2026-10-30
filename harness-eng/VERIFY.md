@@ -1,10 +1,22 @@
-﻿# harness-eng 验收记录（0.7.55）
+﻿# harness-eng 验收记录（0.7.56）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.55**（sms-ai ARCHIVE 路径对标；其下 0.7.54 upgrade_fix_hooks=auto · 0.7.53 厚仓 hooks 加固 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.7.56**（sms-ai P0/P1/#9 回流；其下 0.7.55 ARCHIVE 路径 · 0.7.54 upgrade_fix_hooks=auto · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.0**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.7.56 增量验收（sms-ai P0/P1/#9）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.56` | 有 |
+| superpowers README 含「约定」；plans/specs 有 README.tmpl；manifest `sp-readme-active-*` | 有 |
+| 00 无薄片 TODO；高频避坑 ≥5 行；agent-kb README 路径速查优先 | 有 |
+| rule 18 含判断表（进行中/宣称交付）；AGENTS.root 含 Planning corpus | 有 |
+| rule 19 一行一错 + 双速查；domains/soft-gate tip 含「真相」口径 | 有 |
+| upgrade `## 0.7.55 → 0.7.56`；CHANGELOG 0.7.56；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.55 增量验收（sms-ai ARCHIVE 对标）
 

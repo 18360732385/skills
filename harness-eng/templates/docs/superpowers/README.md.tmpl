@@ -22,6 +22,14 @@
 
 已交付 / 废弃主题索引 → [`ARCHIVE.md`](./archive/ARCHIVE.md)（**默认勿打开**）。
 
+## 约定（与 rule 18 对齐）
+
+- **先搜再写**：相关主题先查本页进行中表，再查 [`ARCHIVE.md`](./archive/ARCHIVE.md)；勿遍历 `archive/` 当任务清单
+- **索引同步**：新建 / 改状态须回写本页或 ARCHIVE，并更新 Spec/Plan 文首徽章（细则见 `.cursor/rules/18-superpowers-corpus.mdc`）
+- **交付收口**：仅在**宣称交付 / 主题收口 / 合并前**时将文件 `git mv` 入 `archive/`，并从本页移到 ARCHIVE；进行中主题允许中途 commit，勿假收口（正文见 [`delivery-checklist.md`](../agent-kb/delivery-checklist.md)）
+- **迁移取号**：plan 正文「当前最高 Vn」是起草快照；下一迁移版本号以仓内 `db/migration/`（或等价）**目录**为准，勿写死进 AGENTS / `docs/db`
+- **表列**：`日期 | 用户 | 主题 | Spec | Plan | Commit`（日期倒序；Spec/Plan 链接文案 = 文件名；用户 / Commit 释义见 rule 18）
+
 ## 软门禁（L3）
 
 - 按 `ai_tools`：Cursor / Claude / WorkBuddy / Codex 各自 hooks（见 ai-tools.md）

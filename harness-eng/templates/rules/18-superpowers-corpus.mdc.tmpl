@@ -48,10 +48,16 @@ alwaysApply: false
 
 ## AI 提交门禁（强制）
 
-1. Read 进行中表；若存在 `docs/runs/active/<slug>/`，可读该主题 `progress.yaml` 的 `stage`
-2. **进行中**（有 `docs/runs/active/<slug>/` 且 `stage ≠ done`，且用户未要求交付 / close）：**允许**按用户授权中途 commit；**禁止**因本 rule 强制 Spec/Plan archive 或改徽章为「已交付」
-3. **宣称交付**（用户要求交付 / 完成主题主功能 / 主题收口）：执行 [`delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)（含 superpowers + runs 双归档；写入 `archive/ARCHIVE.md`）；正文不在本 rule 复述
-4. 纯 fix/chore、无进行中主题：可不改索引
+用户要求 `git commit` / 交付收口时，即使本会话未编辑 `docs/superpowers/**`，也必须按表判断（不可凭记忆跳过 Read）：
+
+| 判断 | 动作 |
+|---|---|
+| **必做** | Read `docs/superpowers/README.md`「进行中」表；若存在 `docs/runs/active/<slug>/`，可读该主题 `progress.yaml` 的 `stage` |
+| **进行中**（有 active run 且 `stage ≠ done`，且用户未要求交付 / close） | **允许**中途 commit；**禁止**强制 Spec/Plan archive 或改徽章为「已交付」 |
+| **宣称交付**（用户要求交付 / 完成主题主功能 / 主题收口） | 执行 [`delivery-checklist.md`](docs/agent-kb/delivery-checklist.md)（含 superpowers + runs 双归档；写入 `archive/ARCHIVE.md`）；正文不在本 rule 复述 |
+| **纯 fix/chore**、无进行中主题 | 可不改索引 |
+
+收口与实现可同一 commit，或紧随的 `docs(superpowers): …收口` commit；**宣称交付后不可省略**。
 
 ## 禁止
 

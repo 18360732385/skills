@@ -21,7 +21,7 @@ domains:
     scan_fill_work: true
     hook_code: ["/\/controllers?\//", "/\/dto\//", "/packages\/api-client\//", "/packages\/types\//", "/packages\/queries\//"]
     hook_docs: "docs/api/modules/"
-    hook_tip: "rule 12：先同步 docs/api/modules；前端契约包（api-client/types/queries）与 dto/ 变更亦须先真相后代码"
+    hook_tip: "rule 12：先同步 docs/api/modules 模块真相（索引/archive 不算）；前端契约包（api-client/types/queries）与 dto/ 亦须先真相后代码"
   func:
     kind: contract
     ladder: L1
@@ -36,7 +36,7 @@ domains:
     # 0.7.37: narrow /service/ (avoid clinic-service module path + entity under service/)
     hook_code: ["/Service(Impl)?\\.java$/", "/\/plugin\/tools\//"]
     hook_docs: "docs/func/modules/"
-    hook_tip: "rule 11：同步 docs/func/modules"
+    hook_tip: "rule 11：同步 docs/func/modules 模块真相（索引/archive 不算）"
   db:
     kind: contract
     ladder: L1
@@ -51,7 +51,7 @@ domains:
     migration_modes: [flyway, manual_sql, none]
     hook_code: ["/db\/migration\//", "/\/domain\/entity\//"]
     hook_docs: "docs/db/table/"
-    hook_tip: "rule 13：同步 docs/db/table + _change.sql"
+    hook_tip: "rule 13：同步 docs/db/table 表真相 + _change.sql（索引/archive 不算）"
     hook_migration_dir: "db/migration/"
     # 0.7.49 可选（空=禁用）：dev 账本自动 status 命令；例 "python scripts/apply_env_migrations.py --env dev --status"
     hook_env_status_cmd: ""
@@ -74,7 +74,7 @@ domains:
     pack: redis
     hook_code: ["/\/cache\//", "/\/redis\//"]
     hook_docs: "docs/redis/keys/"
-    hook_tip: "rule 16：同步 docs/redis/keys"
+    hook_tip: "rule 16：同步 docs/redis/keys 键真相（索引/archive 不算）"
   jobs:
     kind: contract
     ladder: L1
@@ -91,7 +91,7 @@ domains:
     scan_fill_work: true
     hook_code: ["/\/scheduler\//", "/\/jobs?\//"]
     hook_docs: "docs/jobs/tasks/"
-    hook_tip: "rule 20：同步 docs/jobs/tasks + 四件套"
+    hook_tip: "rule 20：同步 docs/jobs/tasks 任务真相 + 四件套（索引/archive 不算）"
     hook_yml_re: "(application[^/]*\\.ya?ml|config/.*\\.ya?ml)$"
     note: "Cron / Scheduler / Registry 调度契约；非 OpenAPI 字段表"
 

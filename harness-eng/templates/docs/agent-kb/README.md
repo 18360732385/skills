@@ -7,7 +7,7 @@
 ## 怎么选（三问）
 
 1. **产品/研发明确接受、当前不修？** → [accepted-gaps.md](./accepted-gaps.md)（`Gn`）
-2. **智能体不该再犯的错误做法？** → [pitfalls.md](./pitfalls.md)（`Pn`；先按**域**筛）
+2. **智能体不该再犯的错误做法？** → [pitfalls.md](./pitfalls.md)（`Pn`；**先看文首路径速查**或 Grep 路径/关键词，域仅兜底；勿整表 Read）
 3. **分层 / 模块边界 / 环境指针变了？** → [architecture-overview.md](./architecture-overview.md)
 
 都不像 → 只改契约 SSOT 或分册 AGENTS；**不要**往本目录堆契约正文。  
@@ -16,8 +16,9 @@
 | 你要… | 读 |
 |---|---|
 | 分层 / 模块边界 / 环境指针 | [architecture-overview.md](./architecture-overview.md) |
-| 智能体高频翻车 | [pitfalls.md](./pitfalls.md) |
+| 智能体高频翻车（先路径速查） | [pitfalls.md](./pitfalls.md) |
 | 明确接受的行为缺口 | [accepted-gaps.md](./accepted-gaps.md) |
 | 打分报告 / 施工进度 | [`../harness-eng/`](../harness-eng/README.md) |
 
-规划语料（若启用）见 `docs/superpowers/README.md`（非 SSOT）。
+规划语料（若启用）：进行中见 [`../superpowers/README.md`](../superpowers/README.md)；已交付见 [`../superpowers/archive/ARCHIVE.md`](../superpowers/archive/ARCHIVE.md)（默认勿打开；rule `18`）。  
+红线与高频翻车：根 `AGENTS.md`「Never do」+ [pitfalls.md](./pitfalls.md)（勿另建 alwaysApply 红线 rule）。

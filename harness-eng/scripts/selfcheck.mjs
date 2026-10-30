@@ -5705,6 +5705,83 @@ module.exports = { hello };
   );
 }
 
+// --- 0.7.56: sms-ai P0/P1/#9 ---
+{
+  const spReadme56 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/superpowers/README.md.tmpl"),
+    "utf8"
+  );
+  assert(/## 约定/.test(spReadme56) && /db\/migration/.test(spReadme56), "0.7.56 superpowers 约定段");
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/docs/superpowers/plans/README.md.tmpl")),
+    "0.7.56 plans README.tmpl"
+  );
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/docs/superpowers/specs/README.md.tmpl")),
+    "0.7.56 specs README.tmpl"
+  );
+  const man56 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  assert(
+    /id:\s*sp-readme-active-plans/.test(man56) && /id:\s*sp-readme-active-specs/.test(man56),
+    "0.7.56 manifest sp-readme-active-*"
+  );
+  assert(
+    !/id:\s*sp-gitkeep-active-plans/.test(man56),
+    "0.7.56 no sp-gitkeep-active-plans"
+  );
+  const rule00 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/00-project-docs-overview.mdc.tmpl"),
+    "utf8"
+  );
+  assert(!/TODO\(harness-eng\):\s*将本仓稳定高频翻车/.test(rule00), "0.7.56 00 无薄片 TODO");
+  assert(/漏收口|宣称交付后漏收口/.test(rule00), "0.7.56 00 含收口薄片");
+  const kbReadme = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/agent-kb/README.md"),
+    "utf8"
+  );
+  assert(/路径速查/.test(kbReadme) && /archive\/ARCHIVE\.md/.test(kbReadme), "0.7.56 agent-kb README");
+  const rule18 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/18-superpowers-corpus.mdc.tmpl"),
+    "utf8"
+  );
+  assert(
+    /\| \*\*进行中\*\*/.test(rule18) && /\| \*\*宣称交付\*\*/.test(rule18),
+    "0.7.56 rule18 判断表"
+  );
+  const agentsRoot = fs.readFileSync(
+    path.join(skillRoot, "templates/agents/AGENTS.root.md.tmpl"),
+    "utf8"
+  );
+  const agentsSolo = fs.readFileSync(
+    path.join(skillRoot, "templates/agents/AGENTS.root.solo.md.tmpl"),
+    "utf8"
+  );
+  assert(/## Planning corpus/.test(agentsRoot), "0.7.56 AGENTS.root Planning corpus");
+  assert(/## Planning corpus/.test(agentsSolo), "0.7.56 AGENTS.solo Planning corpus");
+  const rule19 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/19-agent-kb.mdc.tmpl"),
+    "utf8"
+  );
+  assert(/一行只记一个错误做法/.test(rule19) && /路径速查/.test(rule19), "0.7.56 rule19 一行一错");
+  const domTips = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domains.yaml"),
+    "utf8"
+  );
+  assert(/索引\/archive 不算/.test(domTips), "0.7.56 domains tip 真相口径");
+  const softGate = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    /仅认 modules\/table\/keys\/tasks/.test(softGate) ||
+      /docsHit 仅真相子目录/.test(softGate),
+    "0.7.56 soft-gate docsHit 前缀"
+  );
+  assert(/0\.7\.56/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.7.56 upgrade.md");
+  assert(/0\.7\.56/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.7.56 VERIFY.md");
+  assert(logExists("0.7.56"), "0.7.56 _log note exists");
+}
+
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);
 if (fail.length) {

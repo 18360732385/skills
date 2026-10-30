@@ -166,7 +166,7 @@ function evaluate(root) {
   return [
     "【superpowers 软提醒】暂存含业务代码，且仍有进行中 plan：",
     ...activePlans.map((p) => `  - ${p}`),
-    "若本提交**宣称交付**某主题主功能：先按 rule 18 收口再 commit；进行中勿假收口。",
+    "若本提交**宣称交付**某主题主功能：先按 rule 18 收口（README→archive/ARCHIVE.md）再 commit；进行中勿假收口；非每次 commit 须收口。",
     "纯 fix/chore 可忽略本提醒。",
   ].join("\n");
 }

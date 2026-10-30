@@ -10,14 +10,14 @@
 
 ## 路径速查
 
-> 骨架行：落地后用本仓真实 `Pn` 替换「（待补）」；有活跃 Pn 时勿长期留空。
+> 骨架行：落地后用本仓真实 `Pn` 替换「（待补：…）」；有活跃 Pn 时勿长期留空。一行一路径族，只列 ID。
 
 | 将要触碰的路径 / 关键词 | 相关坑 |
 |---|---|
 | `db/migration`、`*.sql` | P1 |
-| `docs/api`、`controller`、`packages/api-client`、`packages/types`、`packages/queries` | （待补） |
-| `docs/superpowers`、交付收口 | （待补） |
-| `docs/agent-config`、`scripts/agent-config`、各宿主生成物 | （待补） |
+| `docs/api/modules`、`controller`、`packages/api-client`、`packages/types`、`packages/queries` | （待补：契约漏同步 / OpenAPI → 落地后填 Pn） |
+| `docs/superpowers`、交付收口、`archive/ARCHIVE` | （待补：漏收口 / 勿按 archive checkbox 改生产 → 落地后填 Pn） |
+| `docs/agent-config`、`scripts/agent-config`、各宿主生成物 | （待补：生成物勿手改 / 须 sync → 落地后填 Pn） |
 | （按本仓实际补充：一行一路径族，只列 `Pn`） | |
 
 ## 域速查
@@ -46,7 +46,9 @@
 
 ## 书写要求
 
+- **一行一个错误做法**；复合行拆分（原 ID 留主片段）
 - **触发路径/关键词必填**：写会被 Grep 到的路径片段或关键词，供路径速查 / Grep 命中
+- **新/改 `Pn` 必须同步**「路径速查」与「域速查」
 - 「正确约束落点」只回链 AGENTS / rule / 契约真相文档，**不抄正文**（避免两处漂移）
 - 「现象 / 错误做法」写可检索的事实，不写感想
 - **根 AGENTS Never do**：新增红线必须带 `→ Pn`，且该 `Pn` 须出现在本台账 **与**「路径速查」（lint 会 warn 缺回链）

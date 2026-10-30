@@ -47,6 +47,13 @@ TODO(harness-eng): 写明本仓最易踩的构建/运行命令红线（例：必
 
 > **冲突裁决**：本文件 / 契约真相以**磁盘最新文件**为准；动手前 Read 重读，勿沿用会话早期摘要。
 
+## Planning corpus（摘要）
+
+- 活跃索引：[`docs/superpowers/README.md`](docs/superpowers/README.md)（**仅进行中**；表列：日期 / 用户 / 主题 / Spec / Plan / **Commit**；日期倒序）
+- 已交付归档：[`archive/ARCHIVE.md`](docs/superpowers/archive/ARCHIVE.md) + `docs/superpowers/archive/`（默认只读；未点名勿打开）
+- 管控：`.cursor/rules/18-superpowers-corpus.mdc`（触碰该目录时注入；提交时先判断是否宣称交付，见该 rule「AI 提交门禁」）
+- **漏收口**：实现已合入但 README 仍列「进行中」→ 须先按 [`delivery-checklist.md`](docs/agent-kb/delivery-checklist.md) 收口（徽章 + `git mv` archive + 写入 ARCHIVE）再或随 commit
+
 ## 改动路径速查（solo 厚节）
 
 | 需求 | 优先改动 |
