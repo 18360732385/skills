@@ -6034,6 +6034,87 @@ module.exports = { hello };
   );
 }
 
+// --- 0.7.61: multi-host path neutralization (shared prose) ---
+{
+  const rule00_61 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/00-project-docs-overview.mdc.tmpl"),
+    "utf8"
+  );
+  assert(
+    !/path-scoped\s+`\.cursor\/rules\/`/.test(rule00_61),
+    "0.7.61 00 tmpl no path-scoped `.cursor/rules/`"
+  );
+  assert(
+    /各工具.*rules|docs\/agent-config\/rules/.test(rule00_61),
+    "0.7.61 00 tmpl points host-neutral rules / SSOT"
+  );
+
+  const softGate61 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    !/暂存 \.cursor\/|一并暂存 \.cursor\/|\.cursor\/ 等生成物|\.cursor\/ 等工具目录生成物/.test(
+      softGate61
+    ),
+    "0.7.61 soft-gate reminders not Cursor-only"
+  );
+  assert(/各工具生成物目录|各工具目录生成物/.test(softGate61), "0.7.61 soft-gate host-neutral tips");
+
+  for (const name of ["AGENTS.root.md.tmpl", "AGENTS.root.solo.md.tmpl"]) {
+    const ag = fs.readFileSync(path.join(skillRoot, "templates/agents", name), "utf8");
+    assert(
+      !/\.cursor\/rules\/18-superpowers/.test(ag),
+      `0.7.61 ${name}管控 not Cursor-path-only`
+    );
+    assert(/rule `18`/.test(ag), `0.7.61 ${name} uses rule id 18`);
+  }
+
+  const kbReadme61 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/agent-kb/README.md"),
+    "utf8"
+  );
+  assert(!/\.cursor\/rules\/19-agent-kb/.test(kbReadme61), "0.7.61 agent-kb README not Cursor-path-only");
+  assert(/rule `19`/.test(kbReadme61), "0.7.61 agent-kb README uses rule id 19");
+
+  const spReadme61 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/superpowers/README.md.tmpl"),
+    "utf8"
+  );
+  assert(
+    !/\.cursor\/rules\/18-superpowers/.test(spReadme61),
+    "0.7.61 superpowers README not Cursor-path-only"
+  );
+  assert(/rule `18`/.test(spReadme61), "0.7.61 superpowers README uses rule id 18");
+
+  const ssot61 = fs.readFileSync(
+    path.join(skillRoot, "templates/ai-tools/cursor-harness-ssot.mdc.tmpl"),
+    "utf8"
+  );
+  assert(
+    !/本地 `\.cursor\/mcp\.json`|真实 `\.cursor\/mcp\.json`/.test(ssot61),
+    "0.7.61 harness-ssot not Cursor-mcp-only"
+  );
+  assert(
+    /各工具 MCP|docs\/agent-config\/mcp/.test(ssot61),
+    "0.7.61 harness-ssot host-neutral MCP tip"
+  );
+
+  assert(
+    /0\.7\.60 → 0\.7\.61/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.61 upgrade.md"
+  );
+  assert(
+    /0\.7\.61 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.7.61 VERIFY.md"
+  );
+  assert(
+    /\| 0\.7\.61 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")),
+    "0.7.61 CHANGELOG"
+  );
+  assert(logExists("0.7.61"), "0.7.61 _log note exists");
+}
+
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);
 if (fail.length) {

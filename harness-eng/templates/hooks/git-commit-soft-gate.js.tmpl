@@ -465,7 +465,7 @@ function collectAgentConfigReminders(root, staged) {
           windowsHide: true,
         });
         return [
-          "- agent-config：SSOT 已变更；sync.mjs --check 已通过，请一并暂存 .cursor/ 等生成物",
+          "- agent-config：SSOT 已变更；sync.mjs --check 已通过，请一并暂存各工具生成物目录",
         ];
       } catch (e) {
         const out = String((e && (e.stderr || e.stdout)) || e.message || "").trim();
@@ -476,12 +476,12 @@ function collectAgentConfigReminders(root, staged) {
       }
     }
     return [
-      "- agent-config：SSOT 已变更但生成物未暂存，请执行 node scripts/agent-config/sync.mjs 并一并暂存 .cursor/ 等生成物",
+      "- agent-config：SSOT 已变更但生成物未暂存，请执行 node scripts/agent-config/sync.mjs 并一并暂存各工具生成物目录",
     ];
   }
   if (!ssotTouched && generatedTouched) {
     return [
-      "- agent-config：暂存含 .cursor/ 等工具目录生成物；若为手改请改到 SSOT docs/agent-config/ 后跑 sync（跑过 sync 属正常，可忽略）",
+      "- agent-config：暂存含各工具目录生成物；若为手改请改到 SSOT docs/agent-config/ 后跑 sync（跑过 sync 属正常，可忽略）",
     ];
   }
   return [];

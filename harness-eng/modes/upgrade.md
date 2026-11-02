@@ -71,6 +71,13 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.60 → 0.7.61 迁移要点
+
+1. **meta**：`skill_version` → `0.7.61`
+2. **路径中性化**：共享 alwaysApply / AGENTS / agent-kb / superpowers / soft-gate 提醒不再把 `.cursor/rules|hooks|mcp` 写成唯一权威；改用 rule id + `docs/agent-config/` +「各工具目录」
+3. **L5**：`check-freshness` → 刷新 SSOT 规则/钩子正文与 `sync.mjs`（tmpl id `0.7.61`）后再 sync，使各宿主生成物同步中性措辞
+4. **已本地中性化的仓**（如 sms-ai）：对照本版模板，避免 upgrade 把旧 Cursor 硬编码打回
+
 ## 0.7.59 → 0.7.60 迁移要点
 
 1. **meta**：`skill_version` → `0.7.60`

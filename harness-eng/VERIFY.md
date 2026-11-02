@@ -1,10 +1,21 @@
-﻿# harness-eng 验收记录（0.7.60）
+﻿# harness-eng 验收记录（0.7.61）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.60**（报告首屏人话化 + 宿主台三态；其下 0.7.59 L5 skills Codex-only · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.7.61**（多宿主路径中性化；其下 0.7.60 报告首屏人话化 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.7.61 增量验收（多宿主路径中性化）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.61` | 有 |
+| `00-project-docs-overview` 不含 `path-scoped \`.cursor/rules/\``；指向各工具 `rules/` / `docs/agent-config/rules` | 有 |
+| soft-gate 提醒不含「暂存 `.cursor/`」「`.cursor/` 等生成物」 | 有 |
+| AGENTS 管控 / agent-kb / superpowers / `00-harness-ssot` 不以 `.cursor/rules|mcp` 为唯一权威 | 有 |
+| upgrade `## 0.7.60 → 0.7.61`；CHANGELOG 0.7.61；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.60 增量验收（报告首屏人话化 · 宿主台三态）
 
