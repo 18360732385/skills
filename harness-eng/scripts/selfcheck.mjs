@@ -6115,6 +6115,100 @@ module.exports = { hello };
   assert(logExists("0.7.61"), "0.7.61 _log note exists");
 }
 
+// --- 0.7.62: changelog v{ts} + pitfalls P{ts} (sms-ai reflux) ---
+{
+  const man62 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/manifest.yaml"),
+    "utf8"
+  );
+  for (const id of [
+    "doc-versioning-lib",
+    "new-changelog-version-py",
+    "reverse-changelog-tables",
+    "new-pitfall-id",
+  ]) {
+    assert(new RegExp(`id:\\s*${id}`).test(man62), `0.7.62 manifest has ${id}`);
+  }
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/scripts/doc_versioning.py")),
+    "0.7.62 doc_versioning.py"
+  );
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/scripts/new_changelog_version.py")),
+    "0.7.62 new_changelog_version.py"
+  );
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/scripts/reverse_changelog_tables.py")),
+    "0.7.62 reverse_changelog_tables.py"
+  );
+  assert(
+    fs.existsSync(path.join(skillRoot, "templates/scripts/new-pitfall-id.mjs")),
+    "0.7.62 new-pitfall-id.mjs"
+  );
+
+  const lint62 = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/lint-pitfalls.mjs.tmpl"),
+    "utf8"
+  );
+  assert(/NEW_ID/.test(lint62) && /assertDualTrackOrder/.test(lint62), "0.7.62 lint dual-track");
+  assert(!/ID 未按递增顺序排列/.test(lint62), "0.7.62 lint no ascending-ID enforce");
+
+  for (const rel of [
+    "templates/rules/11-func-sync.mdc.tmpl",
+    "templates/rules/12-api-doc-sync.mdc.tmpl",
+    "templates/rules/13-db-doc-sync.mdc.tmpl",
+    "templates/rules/16-redis-doc-sync.mdc.tmpl",
+    "templates/rules/20-jobs-doc-sync.mdc.tmpl",
+  ]) {
+    const body = fs.readFileSync(path.join(skillRoot, rel), "utf8");
+    assert(
+      /v\{yyMMddHHmmssSSS\}/.test(body) && /new_changelog_version\.py/.test(body),
+      `0.7.62 ${rel} changelog v{ts}`
+    );
+    assert(/文件名前缀.*递增号|仍用递增号/.test(body), `0.7.62 ${rel} NN still sequential`);
+  }
+
+  const r19_62 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/19-agent-kb.mdc.tmpl"),
+    "utf8"
+  );
+  assert(/P\{yyMMddHHmmssSSS\}/.test(r19_62) && /new-pitfall-id/.test(r19_62), "0.7.62 rule19 P{ts}");
+  assert(/不.*改为时间戳|本规则\*\*不\*\*改为时间戳/.test(r19_62), "0.7.62 Gn not timestamped");
+
+  const apiDoc62 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/api/templates/api-doc-template.md"),
+    "utf8"
+  );
+  assert(/插入表顶/.test(apiDoc62) && /v\{yyMMddHHmmssSSS\}/.test(apiDoc62), "0.7.62 api-doc changelog note");
+
+  const apifox62 = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/apifox/upgrade-field-tables-to-7col.mjs"),
+    "utf8"
+  );
+  assert(/changelogTs/.test(apifox62) && !/v-auto/.test(apifox62), "0.7.62 apifox changelog v{ts}");
+
+  const rev62 = fs.readFileSync(
+    path.join(skillRoot, "templates/scripts/reverse_changelog_tables.py"),
+    "utf8"
+  );
+  assert(/\*\/AGENTS\.md/.test(rev62) || /glob\("\*\/AGENTS\.md"\)/.test(rev62), "0.7.62 reverse AGENTS de-domainized");
+  assert(!/sms-ai\/AGENTS\.md/.test(rev62), "0.7.62 reverse no sms-ai hardcode");
+
+  assert(
+    /0\.7\.61 → 0\.7\.62/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.62 upgrade.md"
+  );
+  assert(
+    /0\.7\.62 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.7.62 VERIFY.md"
+  );
+  assert(
+    /\| 0\.7\.62 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")),
+    "0.7.62 CHANGELOG"
+  );
+  assert(logExists("0.7.62"), "0.7.62 _log note exists");
+}
+
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);
 if (fail.length) {

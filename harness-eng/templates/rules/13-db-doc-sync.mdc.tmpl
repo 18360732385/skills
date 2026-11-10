@@ -16,7 +16,13 @@ alwaysApply: false
 ## 文件命名（强制）
 
 - 表真相：`NN-{table_name}.md`；变更 SQL：`NN-{table_name}_change.sql`（同序号）。
-- 新建表取最大序号 +1，并更新 `db.md`、`table/README.md`。
+- 新建表取最大序号 +1，并更新 `db.md`、`table/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+- 契约见 `scripts/doc_versioning.py`（与下方 `db/migration` 文件名时间戳是两套主键，勿混用）。
 
 ## 强制检查流程
 
@@ -42,7 +48,7 @@ alwaysApply: false
 
 | 文件 | 操作 |
 |---|---|
-| `NN-{table}.md` | 更新变更记录；建表语句换成**变更后完整 CREATE TABLE** |
+| `NN-{table}.md` | 变更记录**表顶**插入一行（版本 `v{ts}`）；建表语句换成**变更后完整 CREATE TABLE** |
 | `NN-{table}_change.sql` | 末尾追加本次 SQL（含注释：时间 / 撰写 / 目的 / 类型；与 `MIGRATION_HEADER_KEYS` 一致） |
 | `db.md` | 新建/删表或导航变更时更新 |
 

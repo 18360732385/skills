@@ -305,15 +305,47 @@ function upgradeFile(filePath) {
   return upgraded;
 }
 
-/** 若文档自带「| 版本 | 类型 | 内容 | 操作人 | 更新时间 |」变更记录表则补一行；无该表则跳过（不造表）。 */
+/** Asia/Shanghai → yyMMddHHmmssSSS（与 scripts/doc_versioning.py 对齐）。 */
+function changelogTs(date = new Date()) {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+  const parts = Object.fromEntries(
+    fmt.formatToParts(date).map((p) => [p.type, p.value])
+  );
+  return (
+    parts.year +
+    parts.month +
+    parts.day +
+    parts.hour +
+    parts.minute +
+    parts.second +
+    String(date.getMilliseconds()).padStart(3, "0")
+  );
+}
+
+/** 若文档自带「| 版本 | 类型 | 内容 | 操作人 | 更新时间 |」变更记录表则补一行；无该表则跳过（不造表）。新条插表顶，版本 v{ts}。 */
 function appendChangelog(filePath, note) {
   const md = fs.readFileSync(filePath, "utf8");
   if (/说明\/枚举\/备注分列|字段表升级新 7 列|枚举与备注列/.test(md)) return;
   const re =
     /(\| 版本 \| 类型 \| 内容 \| 操作人 \| 更新时间 \|\r?\n\|---\|---\|---\|---\|---\|\r?\n)/;
   if (!re.test(md)) return;
-  const today = new Date().toISOString().slice(0, 10);
-  const row = `| v-auto | 规范 | ${note} | harness-eng | ${today} |\n`;
+  const now = new Date();
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const row = `| v${changelogTs(now)} | 规范 | ${note} | harness-eng | ${today} |\n`;
   const next = md.replace(re, `$1${row}`);
   fs.writeFileSync(filePath, next, "utf8");
 }

@@ -17,9 +17,15 @@ alwaysApply: false
 ## 文件命名（强制）
 
 - 模块真相文件名：`NN-{domain}.md`（两位序号与 `func.md`「模块文档」表顺序一致）。
-- 新增模块：取当前最大序号 +1，新建文件并同步更新 `func.md`、`modules/README.md`。
+- 新增模块：取当前最大序号 +1，新建文件并同步更新 `func.md`、`modules/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
 - 正文子标题统一 `###`；正文标题**不加** `N.` 序号。
 - **禁止**新建或更新模块真相时省略序号前缀。
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+- 契约见 `scripts/doc_versioning.py`（与 `db/migration` 文件名时间戳是两套主键，勿混用）。
 
 ## 强制检查流程
 
@@ -41,4 +47,4 @@ alwaysApply: false
 
 - 文档不同步视为交付不完整
 - 变更说明须包含：`功能资产已同步（modules/NN-xxx.md）`
-- 若修了智能体高频翻车，须在 `docs/agent-kb/pitfalls.md` 追加或核对 `Pn`（rule `19`）
+- 若修了智能体高频翻车，须在 `docs/agent-kb/pitfalls.md` 台账**表顶**插入或核对 `P{ts}`（rule `19`）

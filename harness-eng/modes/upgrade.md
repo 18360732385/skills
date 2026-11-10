@@ -71,6 +71,15 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.61 → 0.7.62 迁移要点
+
+1. **meta**：`skill_version` → `0.7.62`
+2. **L1 脚本**：刷新 `scripts/doc_versioning.py`、`new_changelog_version.py`、`reverse_changelog_tables.py`；rules `11`/`12`/`13`/`16`/`20` 与五域变更记录模板改 `v{ts}` 表顶插入（存量 `vX.Y` 双轨）
+3. **L2**：刷新 `lint-pitfalls.mjs`（双轨倒序）+ 新增 `scripts/agent-kb/new-pitfall-id.mjs`；rule `19`/`00` / pitfalls 骨架 / delivery-checklist 对齐 `P{ts}`
+4. **存量仓**：可跑 `python scripts/reverse_changelog_tables.py --dry-run` 再 apply，将变更记录表倒排为新→旧
+5. **不动**：`NN-*` 文件名前缀、`Gn`、SQL 迁移发号（已时间戳）
+6. **L5**：`check-freshness` → 刷新 SSOT 规则与 `sync.mjs`（tmpl id `0.7.62`）后再 sync
+
 ## 0.7.60 → 0.7.61 迁移要点
 
 1. **meta**：`skill_version` → `0.7.61`

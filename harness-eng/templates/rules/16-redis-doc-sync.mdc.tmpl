@@ -15,7 +15,13 @@ alwaysApply: false
 
 ## 文件命名（强制）
 
-- Key 真相：`NN-{family}.md`；新建取最大序号 +1，更新 `redis.md`、`keys/README.md`。
+- Key 真相：`NN-{family}.md`；新建取最大序号 +1，更新 `redis.md`、`keys/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+- 契约见 `scripts/doc_versioning.py`。
 
 ## 强制检查流程
 
