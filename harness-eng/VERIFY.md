@@ -1,10 +1,21 @@
-﻿# harness-eng 验收记录（0.7.62）
+﻿# harness-eng 验收记录（0.7.63）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.62**（变更记录/Pn 时间戳发号；其下 0.7.61 多宿主路径中性化 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.7.63**（superpowers 提交软提醒按本人主题；其下 0.7.62 变更记录/Pn 时间戳发号 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.7.63 增量验收（superpowers 本人主题软提醒）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.7.63` | 有 |
+| `templates/hooks/superpowers-theme-gate.js` + soft/basic/stop/codex-stop 用 `listOwnActivePlanThemes` | 有 |
+| soft-gate 保留 `listActiveTopicRuns`；不再以 `readdirSync(plans/)` 为唯一信号 | 有 |
+| sync.tmpl / expandHooksFamily / upgrade ALWAYS_REPLACE 含 theme-gate companion | 有 |
+| upgrade `## 0.7.62 → 0.7.63`；CHANGELOG 0.7.63；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.62 增量验收（变更记录 / Pn 时间戳发号）
 

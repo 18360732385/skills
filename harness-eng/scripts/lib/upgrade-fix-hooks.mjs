@@ -10,6 +10,7 @@ export const UPGRADE_FIX_HOOK_SCRIPTS = new Set([
   "git-commit-soft-gate.js",
   "after-edit-reminder.js",
   "superpowers-commit-gate.js",
+  "superpowers-theme-gate.js",
   "mcp-mysql-guard.js",
   "stop-delivery-checklist.js",
   "codex-stop-checklist.js",
@@ -18,11 +19,12 @@ export const UPGRADE_FIX_HOOK_SCRIPTS = new Set([
   "codex-hook.cmd",
 ]);
 
-/** Adapters / cmd: always replace under auto (rarely customized). */
+/** Adapters / cmd / theme-gate helper: always replace under auto (rarely customized). */
 export const UPGRADE_FIX_HOOK_ALWAYS_REPLACE = new Set([
   "codex-adapter.js",
   "claude-adapter.js",
   "codex-hook.cmd",
+  "superpowers-theme-gate.js",
 ]);
 
 const CONST_NAME_RE =

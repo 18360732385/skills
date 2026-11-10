@@ -71,6 +71,13 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.62 → 0.7.63 迁移要点
+
+1. **meta**：`skill_version` → `0.7.63`
+2. **hooks**：刷新 `superpowers-theme-gate.js` + soft-gate / basic commit-gate / stop / codex-stop；提醒改为 README「进行中」表按本机 git 身份筛本人主题，交给 AI 对照 plan/代码判定收口（保留 `docs/runs/active` 分支）
+3. **L5**：`check-freshness` → 刷新 SSOT hooks 与 `sync.mjs`（tmpl id `0.7.63`；sync 会 attach theme-gate companion）后再 sync
+4. **upgrade_fix_hooks**：`superpowers-theme-gate.js` 默认 always-replace
+
 ## 0.7.61 → 0.7.62 迁移要点
 
 1. **meta**：`skill_version` → `0.7.62`

@@ -757,5 +757,42 @@ export function expandHooksFamily(params, agentConfig, actionForTarget, root, mc
     push("hookfam-codex-cmd", "hooks/codex-hook.cmd", "docs/agent-config/hooks/codex-hook.cmd");
     // 0.7.33 LD-1: mysql-guard SSOT already from hookfam-mysql-guard (no second push)
   }
+
+  // 0.7.63: superpowers-theme-gate companion（require 同目录；不在 hooks.config script 字段）
+  const needsThemeGate =
+    selection.some(
+      (k) =>
+        k === "commit-gate" || k === "commit-gate-extended" || k === "stop-checklist"
+    ) ||
+    (agentConfig && has("codex"));
+  if (needsThemeGate) {
+    const tmpl = "hooks/superpowers-theme-gate.js";
+    const script = "superpowers-theme-gate.js";
+    if (agentConfig) {
+      push("hookfam-theme-gate", tmpl, `docs/agent-config/hooks/${script}`);
+    } else {
+      if (has("cursor")) {
+        push("hookfam-theme-gate-cursor", tmpl, `.cursor/hooks/${script}`);
+      }
+      if (has("claude")) {
+        push("hookfam-theme-gate-claude", tmpl, `.claude/hooks/${script}`);
+      }
+      if (has("qoder")) {
+        push("hookfam-theme-gate-qoder", tmpl, `.qoder/hooks/${script}`);
+      }
+      if (has("trae")) {
+        push("hookfam-theme-gate-trae", tmpl, `.trae/hooks/${script}`);
+      }
+      if (has("workbuddy")) {
+        push("hookfam-theme-gate-codebuddy", tmpl, `.codebuddy/hooks/${script}`);
+      }
+      if (has("codex")) {
+        push("hookfam-theme-gate-codex", tmpl, `.codex/hooks/${script}`);
+      }
+      if (selection.some((k) => HOOK_DEFS[k] && HOOK_DEFS[k].gate)) {
+        push("hookfam-theme-gate-githooks", tmpl, `.githooks/${script}`);
+      }
+    }
+  }
   return out;
 }

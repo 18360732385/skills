@@ -2,8 +2,8 @@
 /**
  * AI 工具配置生成器（SSOT：docs/agent-config/ → 各工具目录）。
  *
- * HARNESS_SYNC_TMPL_ID: 0.7.62
- * HARNESS_ENG_VERSION: 0.7.62
+ * HARNESS_SYNC_TMPL_ID: 0.7.63
+ * HARNESS_ENG_VERSION: 0.7.63
  *
  * 用法：
  *   node scripts/agent-config/sync.mjs          # 生成/刷新所有工具目录（幂等）
@@ -43,8 +43,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const SSOT = path.join(ROOT, "docs", "agent-config");
 const CHECK_ONLY = process.argv.includes("--check");
-const HARNESS_SYNC_TMPL_ID = "0.7.62";
-const HARNESS_ENG_VERSION = "0.7.62";
+const HARNESS_SYNC_TMPL_ID = "0.7.63";
+const HARNESS_ENG_VERSION = "0.7.63";
 
 /** 本仓启用的 AI 工具（land/upgrade 时按 Q_AI_TOOL 渲染；手改请改这里再跑 sync） */
 const AI_TOOLS = ["cursor","claude"];
@@ -190,12 +190,21 @@ function planHooks() {
   const cfg = JSON.parse(readSsot("hooks", "hooks.config.json"));
 
   const copy = (toolDir, ids, needAdapter) => {
+    let copiedAny = false;
     for (const s of allScripts) {
       const isAdapter = s === "claude-adapter.js";
       const used = cfg.hooks.some((h) => h.script === s && ids.includes(h.id));
       if ((isAdapter && needAdapter) || (!isAdapter && used)) {
         put(`${toolDir}/hooks/${s}`, fs.readFileSync(path.join(scriptsDir, s)));
+        copiedAny = true;
       }
+    }
+    // soft-gate / stop-checklist 的 require 依赖；不在 hooks.config 的 script 字段里
+    if (copiedAny && allScripts.includes("superpowers-theme-gate.js")) {
+      put(
+        `${toolDir}/hooks/superpowers-theme-gate.js`,
+        fs.readFileSync(path.join(scriptsDir, "superpowers-theme-gate.js"))
+      );
     }
   };
 

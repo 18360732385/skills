@@ -5470,6 +5470,11 @@ runChecks06({ skillRoot, docPath, readDoc, assert, runNode });
       .replace(/\{\{OPENAPI_BRIDGE_TIP\}\}/g, "");
     const hookPath = path.join(dualTmp, "soft-gate.js");
     fs.writeFileSync(hookPath, hookBody, "utf8");
+    // soft-gate require("./superpowers-theme-gate.js") — companion must sit beside rendered hook
+    fs.copyFileSync(
+      path.join(skillRoot, "templates/hooks/superpowers-theme-gate.js"),
+      path.join(dualTmp, "superpowers-theme-gate.js")
+    );
     const req = createRequire(import.meta.url);
     const { isMigrationSql } = req(hookPath);
     assert(
@@ -6207,6 +6212,154 @@ module.exports = { hello };
     "0.7.62 CHANGELOG"
   );
   assert(logExists("0.7.62"), "0.7.62 _log note exists");
+}
+
+// --- 0.7.63: superpowers soft-gate by own README themes (sms-ai reflux) ---
+{
+  const themeGate = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/superpowers-theme-gate.js"),
+    "utf8"
+  );
+  assert(
+    /listOwnActivePlanThemes|parseInProgressThemes|resolveGitIdentity/.test(themeGate),
+    "0.7.63 theme-gate helper exports"
+  );
+  assert(/用户/.test(themeGate) && /Plan/.test(themeGate), "0.7.63 theme-gate parses 用户+Plan");
+
+  const soft63 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/git-commit-soft-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    /require\("\.\/superpowers-theme-gate\.js"\)/.test(soft63),
+    "0.7.63 soft-gate requires theme-gate"
+  );
+  assert(/listOwnActivePlanThemes/.test(soft63), "0.7.63 soft-gate uses listOwnActivePlanThemes");
+  assert(/listActiveTopicRuns/.test(soft63), "0.7.63 soft-gate keeps listActiveTopicRuns");
+  assert(
+    !/readdirSync\(plansDir\)/.test(soft63),
+    "0.7.63 soft-gate dropped plansDir readdir"
+  );
+  assert(
+    /请对照下列 plan\.md/.test(soft63),
+    "0.7.63 soft-gate AI-judgment wording"
+  );
+
+  const basic63 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/superpowers-commit-gate.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    /require\("\.\/superpowers-theme-gate\.js"\)/.test(basic63) &&
+      /listOwnActivePlanThemes/.test(basic63) &&
+      !/readdirSync\(plansDir\)/.test(basic63),
+    "0.7.63 basic commit-gate identity filter"
+  );
+
+  const stop63 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/stop-delivery-checklist.js.tmpl"),
+    "utf8"
+  );
+  const codexStop63 = fs.readFileSync(
+    path.join(skillRoot, "templates/hooks/codex-stop-checklist.js.tmpl"),
+    "utf8"
+  );
+  assert(
+    /listOwnActivePlanThemes/.test(stop63) && !/plansUntracked/.test(stop63),
+    "0.7.63 stop-delivery uses own themes"
+  );
+  assert(
+    /listOwnActivePlanThemes/.test(codexStop63) && !/plansUntracked/.test(codexStop63),
+    "0.7.63 codex-stop uses own themes"
+  );
+
+  const hooksChk63 = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/hooks-checks.mjs"),
+    "utf8"
+  );
+  assert(
+    /hookfam-theme-gate|superpowers-theme-gate\.js/.test(hooksChk63),
+    "0.7.63 expandHooksFamily theme-gate companion"
+  );
+
+  const sync63 = fs.readFileSync(
+    path.join(skillRoot, "templates/agent-config/sync.mjs.tmpl"),
+    "utf8"
+  );
+  assert(
+    /copiedAny && allScripts\.includes\("superpowers-theme-gate\.js"\)/.test(sync63),
+    "0.7.63 sync attaches theme-gate"
+  );
+
+  const upFix63 = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/upgrade-fix-hooks.mjs"),
+    "utf8"
+  );
+  assert(
+    /superpowers-theme-gate\.js/.test(upFix63) &&
+      /UPGRADE_FIX_HOOK_ALWAYS_REPLACE[\s\S]*superpowers-theme-gate\.js/.test(upFix63),
+    "0.7.63 upgrade always-replace theme-gate"
+  );
+
+  assert(
+    fs.existsSync(
+      path.join(
+        skillRoot,
+        "scripts/fixtures/l5-sync-codex/docs/agent-config/hooks/superpowers-theme-gate.js"
+      )
+    ) &&
+      fs.existsSync(
+        path.join(
+          skillRoot,
+          "scripts/fixtures/l5-sync-codex/.codex/hooks/superpowers-theme-gate.js"
+        )
+      ),
+    "0.7.63 l5-sync-codex has theme-gate"
+  );
+
+  // helper smoke: 用户表 + Plan 链接 / Plan=— / 无用户列
+  const helperPath = path.join(skillRoot, "templates/hooks/superpowers-theme-gate.js");
+  const smoke = spawnSync(
+    process.execPath,
+    [
+      "-e",
+      `
+const m = require(${JSON.stringify(helperPath)});
+const withUser = [
+  "| 日期 | 用户 | 主题 | Spec | Plan | Commit |",
+  "|---|---|---|---|---|---|",
+  "| 2026-01-01 | alice | t1 | — | [p](./plans/a.md) | — |",
+  "| 2026-01-02 | bob | t2 | — | — | — |",
+].join("\\n");
+const parsed = m.parseInProgressThemes(withUser);
+if (parsed.length !== 1 || parsed[0].user !== "alice") throw new Error("parse own+plan");
+if (!m.isOwnTheme("alice", { name: "alice", emailLocal: "" })) throw new Error("own");
+if (m.isOwnTheme("bob", { name: "alice", emailLocal: "" })) throw new Error("other");
+const noUser = "| 日期 | 主题 | Plan |\\n|---|---|---|\\n| 1 | t | [p](./plans/a.md) |";
+if (m.parseInProgressThemes(noUser).length !== 0) throw new Error("no-user table");
+console.log("theme-gate-smoke-ok");
+`,
+    ],
+    { encoding: "utf8", windowsHide: true }
+  );
+  assert(
+    smoke.status === 0 && /theme-gate-smoke-ok/.test(smoke.stdout || ""),
+    "0.7.63 theme-gate smoke" + (smoke.stderr ? `: ${smoke.stderr}` : "")
+  );
+
+  assert(
+    /0\.7\.62 → 0\.7\.63/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.7.63 upgrade.md"
+  );
+  assert(
+    /0\.7\.63 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.7.63 VERIFY.md"
+  );
+  assert(
+    /\| 0\.7\.63 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")),
+    "0.7.63 CHANGELOG"
+  );
+  assert(logExists("0.7.63"), "0.7.63 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);
