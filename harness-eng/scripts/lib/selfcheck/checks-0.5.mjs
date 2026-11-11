@@ -221,12 +221,17 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
   );
   assert(/\{\{PITFALL_DOMAINS\}\}/.test(lintTmpl), "lint tmpl domains placeholder");
   assert(!/"Maven"/.test(lintTmpl), "lint tmpl default vocab de-domainized");
+  assert(/NEW_ID|assertDualTrackOrder/.test(lintTmpl), "lint tmpl dual-track / reverse order");
+  assert(!/ID 未按递增顺序排列/.test(lintTmpl), "lint tmpl dropped ascending-ID rule");
   const r19 = fs.readFileSync(
     path.join(skillRoot, "templates/rules/19-agent-kb.mdc.tmpl"),
     "utf8"
   );
   assert(/lint-pitfalls\.mjs/.test(r19), "rule19 requires lint run");
   assert(/三问/.test(r19), "rule19 has 三问 timing");
+  assert(/P\{yyMMddHHmmssSSS\}|new-pitfall-id/.test(r19), "rule19 timestamp Pn + issuer CLI");
+  assert(/双轨|倒序|表顶/.test(r19), "rule19 dual-track top-insert wording");
+  assert(/双轨/.test(pitTmpl) && /new-pitfall-id/.test(pitTmpl), "pitfalls tmpl dual-track header");
   const r00050 = fs.readFileSync(
     path.join(skillRoot, "templates/rules/00-project-docs-overview.mdc.tmpl"),
     "utf8"

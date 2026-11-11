@@ -65,6 +65,8 @@
 
 ## 变更记录
 
+> 新条版本号 `v{yyMMddHHmmssSSS}`（`python scripts/new_changelog_version.py --file <本文件>`），**插入表顶**；存量 `vX.Y` 不改写。
+
 | 版本 | 类型 | 内容 | 操作人 | 更新时间 |
 |---|---|---|---|---|
 | v0.1 | 创建 | 初始化本 Key 族真相 | {{REPO_NAME}} | YYYY-MM-DD |

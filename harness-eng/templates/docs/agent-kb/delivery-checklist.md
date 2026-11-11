@@ -26,7 +26,7 @@
 
 ## 4. pitfalls 三问 + lint
 
-- [ ] 三问：本轮是否修了智能体易再犯错误做法？有则追加/核对 `Pn`（rule `19`）
+- [ ] 三问：本轮是否修了智能体易再犯错误做法？有则台账**表顶**插入/核对 `P{ts}`（rule `19`；发号 `node scripts/agent-kb/new-pitfall-id.mjs`）
 - [ ] 若存在 `scripts/agent-kb/lint-pitfalls.mjs`：改台账后跑通（不过不许宣称交付）
 - [ ] 无台账：三问结论写入 runs 小结并注明「无 L2 pitfalls」
 

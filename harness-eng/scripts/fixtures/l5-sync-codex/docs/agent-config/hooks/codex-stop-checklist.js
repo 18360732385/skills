@@ -4,12 +4,23 @@
  * Aligns with stop-delivery-checklist.js.tmpl (stderr reminders; never block).
  * Codex stdout must stay `{}` (adapter / Stop contract).
  *
- * 渲染占位：DB_MIGRATION_DIR、MIGRATION_ENVS（空串=关闭）、CODE_PREFIXES。
+ * 渲染占位：DB_MIGRATION_DIR、MIGRATION_ENVS（空串=关闭）、CODE_PREFIXES、HOOK_PROFILE。
+ * 0.7.53 mature：status/loop_count 门闩 + .git 指纹去重。
  */
 const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const {
+  listOwnActivePlanThemes,
+  formatThemeBulletLines,
+} = require("./superpowers-theme-gate.js");
 
 const MIGRATION_PREFIX = "";
 const MIGRATION_ENVS = "";
+const MIGRATION_SEG_RE = /(?:^|\/)db\/migration\/[^/]+\.sql$/i;
+const HOOK_PROFILE = "thin" === "mature" ? "mature" : "thin";
+const FINGERPRINT_FILE = ".git/harness-stop-fingerprint";
 
 const CODE_PREFIXES = ""
   .split(",")
@@ -53,9 +64,47 @@ function git(cmd, cwd) {
   });
 }
 
+function isMigrationPath(f) {
+  if (!f.endsWith(".sql")) return false;
+  if (MIGRATION_PREFIX && f.startsWith(MIGRATION_PREFIX)) return true;
+  return MIGRATION_SEG_RE.test(f);
+}
+
+function shouldSkipByPayload(payload) {
+  if (HOOK_PROFILE !== "mature") return false;
+  const status = payload && payload.status;
+  const loop = Number(payload && payload.loop_count);
+  if (status != null && status !== "completed") return true;
+  if (Number.isFinite(loop) && loop > 0) return true;
+  return false;
+}
+
+function fingerprintOf(files) {
+  return crypto.createHash("sha1").update(files.slice().sort().join("\n")).digest("hex");
+}
+
+function shouldSkipByFingerprint(root, fp) {
+  if (HOOK_PROFILE !== "mature") return false;
+  try {
+    const p = path.join(root, FINGERPRINT_FILE);
+    if (fs.existsSync(p) && fs.readFileSync(p, "utf8").trim() === fp) return true;
+    fs.writeFileSync(p, fp + "\n", "utf8");
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 (async () => {
   try {
-    await readStdin();
+    const raw = await readStdin();
+    let payload = {};
+    try {
+      payload = JSON.parse(raw || "{}");
+    } catch {
+      payload = {};
+    }
+    if (shouldSkipByPayload(payload)) outEmpty();
 
     let root;
     try {
@@ -77,33 +126,54 @@ function git(cmd, cwd) {
       .filter(Boolean);
     if (files.length === 0) outEmpty();
 
+    const fp = fingerprintOf(files);
+    if (shouldSkipByFingerprint(root, fp)) outEmpty();
+
     const lines = [];
-    const migrations = files.filter(
-      (f) => MIGRATION_PREFIX && f.startsWith(MIGRATION_PREFIX) && f.endsWith(".sql")
-    );
+    const migrations = files.filter(isMigrationPath);
     if (MIGRATION_ENVS && migrations.length) {
       lines.push(
         `未提交的 migration：${migrations.join("、")} —— 交付前人工同步到 ${MIGRATION_ENVS}，勿只合代码`
       );
     }
-    const plansUntracked = files.filter((f) => f.startsWith("docs/superpowers/plans/"));
     const indexTouched = files.some(
       (f) =>
         f === "docs/superpowers/README.md" ||
         f === "docs/superpowers/ARCHIVE.md" ||
         f.startsWith("docs/superpowers/archive/")
     );
-    if (plansUntracked.length && !indexTouched) {
-      lines.push("superpowers 有未收口 plan：宣称交付时须徽章 + git mv archive + 写入 ARCHIVE（rule 18）；进行中主题可中途 commit");
-    }
-
     const prefixes =
       CODE_PREFIXES.length > 0
         ? CODE_PREFIXES
         : ["src/", "backend/", "frontend/", "apps/", "packages/"];
     const codeChanged = files.some((f) => prefixes.some((p) => f.startsWith(p)));
+
+    let ownThemes = [];
+    try {
+      ownThemes = listOwnActivePlanThemes(root);
+    } catch {
+      ownThemes = [];
+    }
+    if (codeChanged && ownThemes.length > 0 && !indexTouched) {
+      const who = ownThemes[0].user || "你";
+      const { lines: themeLines, total } = formatThemeBulletLines(ownThemes, 5);
+      const more = total > 5 ? `（另有 ${total - 5} 个未列出）` : "";
+      lines.push(
+        [
+          `README 进行中表中有你的主题 ${total} 个（${who}）${more}。请对照下列 plan.md 与当前代码判断主功能是否已完成；若已完成但未归档，先按 rule 18 收口（徽章 + git mv archive + README→ARCHIVE）；仍进行中的增量 / 纯 fix/chore 可忽略`,
+          ...themeLines,
+        ].join("\n")
+      );
+    }
+
     if (codeChanged) {
-      lines.push("业务代码有改动：按 agent-kb 三问自检 pitfalls 回流；核对契约同步");
+      if (HOOK_PROFILE === "mature") {
+        if (!ownThemes.length) {
+          lines.push("业务代码有改动：按 agent-kb 三问自检 pitfalls 回流；核对契约同步");
+        }
+      } else {
+        lines.push("业务代码有改动：按 agent-kb 三问自检 pitfalls 回流；核对契约同步");
+      }
     }
 
     if (lines.length) {

@@ -14,6 +14,10 @@
 const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const {
+  listOwnActivePlanThemes,
+  formatThemeBulletLines,
+} = require("./superpowers-theme-gate.js");
 
 const STDIN_TIMEOUT_MS = 2000;
 const CODE_PREFIXES = "{{CODE_PREFIXES}}"
@@ -100,16 +104,6 @@ function isGitCommitCommand(cmd) {
 }
 
 function evaluate(root) {
-  const plansDir = path.join(root, "docs", "superpowers", "plans");
-  let activePlans = [];
-  try {
-    activePlans = fs
-      .readdirSync(plansDir)
-      .filter((f) => f.endsWith(".md") && f !== "README.md");
-  } catch {
-    return null;
-  }
-
   let stagedFiles = [];
   try {
     stagedFiles = git("git diff --cached --name-only", root)
@@ -133,7 +127,7 @@ function evaluate(root) {
       f.startsWith("docs/superpowers/archive/")
   );
 
-  if (activePlans.length === 0 || !codeTouched || indexTouched) {
+  if (!codeTouched || indexTouched) {
     return null;
   }
 
@@ -163,11 +157,22 @@ function evaluate(root) {
     ].join("\n");
   }
 
+  let themes = [];
+  try {
+    themes = listOwnActivePlanThemes(root);
+  } catch {
+    return null;
+  }
+  if (themes.length === 0) {
+    return null;
+  }
+  const who = themes[0].user || "你";
+  const { lines, total } = formatThemeBulletLines(themes, 5);
+  const more = total > 5 ? `（另有 ${total - 5} 个未列出）` : "";
   return [
-    "【superpowers 软提醒】暂存含业务代码，且仍有进行中 plan：",
-    ...activePlans.map((p) => `  - ${p}`),
-    "若本提交**宣称交付**某主题主功能：先按 rule 18 收口（README→archive/ARCHIVE.md）再 commit；进行中勿假收口；非每次 commit 须收口。",
-    "纯 fix/chore 可忽略本提醒。",
+    `【superpowers 软提醒】README 进行中表中有你的主题 ${total} 个（${who}）${more}：`,
+    ...lines,
+    "请对照 plan.md 与当前代码判断主功能是否已完成；若已完成但未归档，先按 rule 18 收口（徽章 + git mv archive + README→ARCHIVE）再提交；仍进行中的增量 / 纯 fix/chore 可忽略。",
   ].join("\n");
 }
 

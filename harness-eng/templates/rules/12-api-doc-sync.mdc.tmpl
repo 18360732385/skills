@@ -17,9 +17,15 @@ alwaysApply: false
 ## 文件命名与接口标题编号（强制）
 
 - 模块真相文件名：`NN-{service}-{domain}.md`（两位序号与 `api.md` 表顺序一致）。
-- 新增模块：取当前最大序号 +1，并同步更新 `api.md`、`modules/README.md`。
+- 新增模块：取当前最大序号 +1，并同步更新 `api.md`、`modules/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
 - 接口章节标题：`## N. 标题`；子标题统一 `###`（功能逻辑 / 请求参数 / 响应参数）。
 - **仅**对含接口地址的章节编号；变更记录等不编号。
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+- 契约见 `scripts/doc_versioning.py`。
 
 ## 强制检查流程
 
@@ -52,4 +58,4 @@ alwaysApply: false
 - 变更说明须含「API 文档已同步」与「功能资产已同步」
 - `docs/api/modules/` 变更须与代码同行提交；禁止只改索引漏更真相
 - **前端消费层**（`packages/api-client` / `types` / `queries` 或仓内等价路径）变更：须先读 `docs/api/modules` 真相，再改类型与请求封装（与 rule `17` 对齐）
-- 若修了契约双源类翻车，追加或核对 `docs/agent-kb/pitfalls.md` 的 `Pn`
+- 若修了契约双源类翻车，台账**表顶**插入或核对 `docs/agent-kb/pitfalls.md` 的 `P{ts}`

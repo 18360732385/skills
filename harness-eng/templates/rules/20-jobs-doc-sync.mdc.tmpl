@@ -18,9 +18,15 @@ alwaysApply: false
 ## 文件命名（强制）
 
 - 任务真相文件名：`NN-{slug}.md`（`slug` = cron 配置短键；与 `jobs.md`「任务文档」表顺序一致）。
-- 新建任务：取当前最大序号 +1，并同步更新 `jobs.md`、`tasks/README.md`。
+- 新建任务：取当前最大序号 +1，并同步更新 `jobs.md`、`tasks/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
 - 正文章节标题不加 `N.`。
 - **禁止**新建真相时省略序号前缀；**禁止**用含 `:` 的 `task_code` 做文件名。
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+- 契约见 `scripts/doc_versioning.py`。
 
 ## 强制检查流程
 

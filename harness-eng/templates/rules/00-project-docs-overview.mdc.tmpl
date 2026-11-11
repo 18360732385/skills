@@ -11,7 +11,7 @@ alwaysApply: true
 
 1. 根 `AGENTS.md`（命令、红线、rules 索引）
 2. 分册 AGENTS（按改动路径）
-3. path-scoped `.cursor/rules/`（同步门禁）
+3. path-scoped rules（各工具目录 `rules/`；L5 SSOT：`docs/agent-config/rules/`；同步门禁）
 4. `docs/func|api|db|redis|jobs`：先索引再真相（按已启用契约域；rules `11`–`13`、`16`、`20`）
 5. `docs/agent-kb/`（architecture / pitfalls / accepted-gaps；非契约 SSOT）
 6. `docs/superpowers/README.md`：仅「进行中」；已交付见 `archive/ARCHIVE.md`（若启用；非 SSOT；rule `18`）
@@ -58,7 +58,10 @@ alwaysApply: true
 - **契约同步**（若装 hooks 家族 `commit-gate-extended`）：commit 时按暂存路径软提醒漏同步 `docs/func|api|db|redis|jobs` 真相（domains.yaml `hook:` 段驱动）。
 - **Apifox / OpenAPI 桥**（若装 `scripts/apifox/`）：commit 含 API 契约相关变更（`docs/api/**` 或 controller / 前端契约包）时软提醒执行 `node scripts/apifox/sync-to-apifox.mjs`（不自动 import；契约 SSOT 仍是 `docs/api`）。
 - **SQL/环境**（同上）：暂存含 `db/migration/*.sql` 时软提醒按迁移模式人工同步到各环境（不自动执行）。
-- **agent-kb**：本轮修了智能体高频翻车模式 → 清单 §4 / rule `19` 三问；改过 `pitfalls.md` 须跑 `node scripts/agent-kb/lint-pitfalls.mjs`。
+- **agent-kb**（跨路径时机；写法细则见 rule `19`）：
+  1. 本轮是否修了/确认了智能体易再犯的**错误做法**？否 → 不必改 `pitfalls.md`
+  2. 已有对应 `Pn` → 核对「正确约束落点」是否仍准；若根因已消除 → 改 `已根治` 移入留档区
+  3. 无 → 台账**表顶**插入一行（`P{ts}`，发号：`node scripts/agent-kb/new-pitfall-id.mjs`）；改完跑 `node scripts/agent-kb/lint-pitfalls.mjs`
 - **agent-config**（仅 L5 配置 SSOT 管线仓）：改 `docs/agent-config/` 后必跑 `node scripts/agent-config/sync.mjs` 并一并提交生成物；提交前可 `--check` 校验漂移；**生成物勿手改**。
 
 ## 红线（不另建 rule）

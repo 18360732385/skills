@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.60"
+version: "0.7.63"
 source_repo: ""
 description: "De-domainized Agent Harness templates for cross-repo landing. Write entry: scripts/harness.mjs; hot path: AGENT-INDEX.md."
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -203,6 +203,21 @@ files:
     target: scripts/new_migration.py
     optional: true
     note: 迁移骨架生成 CLI（--type DDL|DML / --pair 同毫秒双轨；依赖 migration-naming-lib；soft-gate hook_new_script 可指 scripts/new_migration.py）
+  - id: doc-versioning-lib
+    ladder: L1
+    template: scripts/doc_versioning.py
+    target: scripts/doc_versioning.py
+    note: 变更记录 v{ts} / pitfalls P{ts} 时间戳发号契约（Asia/Shanghai；存量 vX.Y、P1–P999 双轨）
+  - id: new-changelog-version-py
+    ladder: L1
+    template: scripts/new_changelog_version.py
+    target: scripts/new_changelog_version.py
+    note: 变更记录发号 CLI（print-only；新条插表顶；依赖 doc-versioning-lib）
+  - id: reverse-changelog-tables
+    ladder: L1
+    template: scripts/reverse_changelog_tables.py
+    target: scripts/reverse_changelog_tables.py
+    note: 存量变更记录按版本键降序（幂等；升级旧仓用）
 
   # L2
   - id: kb-readme
@@ -241,6 +256,11 @@ files:
     template: scripts/lint-pitfalls.mjs.tmpl
     target: scripts/agent-kb/lint-pitfalls.mjs
     placeholders: [PITFALL_DOMAINS]
+  - id: new-pitfall-id
+    ladder: L2
+    template: scripts/new-pitfall-id.mjs
+    target: scripts/agent-kb/new-pitfall-id.mjs
+    note: pitfalls P{ts} 发号 CLI（print-only；新条插台账表顶）
   - id: harness-eng-readme
     ladder: L2
     template: docs/harness-eng/README.md

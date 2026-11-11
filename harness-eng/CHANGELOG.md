@@ -1,11 +1,14 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.60**。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.7.63**。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.7.63 | 2026-11-10 | sms-ai 回流：superpowers 提交软提醒按本人进行中主题（README 用户列）交给 AI 判定收口 |
+| 0.7.62 | 2026-11-10 | sms-ai 回流：变更记录 `v{ts}` + pitfalls `P{ts}` 时间戳发号（双轨倒序置顶；NN/Gn 不动） |
+| 0.7.61 | 2026-11-02 | 多宿主路径中性化：共享模板/AGENTS/hook 提醒不再把 `.cursor/` 写成唯一权威 |
 | 0.7.60 | 2026-10-30 | 报告壳 0.4.1：首屏 blocker 人话化 + 宿主台三态（已落地·待自证）；可视化多用中文 |
 | 0.7.59 | 2026-10-30 | L5 契约 skills 仅投影 Codex `.agents/skills/`；Cursor 族不再写入 `*/skills/`；legacy harness-managed prune |
 | 0.7.58 | 2026-10-30 | P1+P2-14：meta installed/upgraded 语义 · hooks_reviewed · calibrate 别名 · CLI --root/--dry-run · 开干归因人话 · acceptance 全域对齐 gold_ratio |

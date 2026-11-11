@@ -11,6 +11,10 @@ const { execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const {
+  listOwnActivePlanThemes,
+  formatThemeBulletLines,
+} = require("./superpowers-theme-gate.js");
 
 const MIGRATION_PREFIX = "{{DB_MIGRATION_DIR}}";
 const MIGRATION_ENVS = "{{MIGRATION_ENVS}}";
@@ -133,28 +137,40 @@ function shouldSkipByFingerprint(root, fp) {
         `未提交的 migration：${migrations.join("、")} —— 交付前人工同步到 ${MIGRATION_ENVS}，勿只合代码`
       );
     }
-    const plansUntracked = files.filter((f) => f.startsWith("docs/superpowers/plans/"));
     const indexTouched = files.some(
       (f) =>
         f === "docs/superpowers/README.md" ||
         f === "docs/superpowers/ARCHIVE.md" ||
         f.startsWith("docs/superpowers/archive/")
     );
-    if (plansUntracked.length && !indexTouched) {
-      lines.push(
-        "superpowers 有未收口 plan：宣称交付时按 docs/agent-kb/delivery-checklist.md（rule 18）；进行中主题可中途 commit，勿假收口"
-      );
-    }
-
     const prefixes =
       CODE_PREFIXES.length > 0
         ? CODE_PREFIXES
         : ["src/", "backend/", "frontend/", "apps/", "packages/"];
     const codeChanged = files.some((f) => prefixes.some((p) => f.startsWith(p)));
-    // 0.7.53: mature — only nudge pitfalls when code changed AND no open plan signal
+
+    let ownThemes = [];
+    try {
+      ownThemes = listOwnActivePlanThemes(root);
+    } catch {
+      ownThemes = [];
+    }
+    if (codeChanged && ownThemes.length > 0 && !indexTouched) {
+      const who = ownThemes[0].user || "你";
+      const { lines: themeLines, total } = formatThemeBulletLines(ownThemes, 5);
+      const more = total > 5 ? `（另有 ${total - 5} 个未列出）` : "";
+      lines.push(
+        [
+          `README 进行中表中有你的主题 ${total} 个（${who}）${more}。请对照下列 plan.md 与当前代码判断主功能是否已完成；若已完成但未归档，先按 rule 18 收口（徽章 + git mv archive + README→ARCHIVE）；仍进行中的增量 / 纯 fix/chore 可忽略`,
+          ...themeLines,
+        ].join("\n")
+      );
+    }
+
+    // 0.7.53: mature — only nudge pitfalls when code changed AND no own-theme signal
     if (codeChanged) {
       if (HOOK_PROFILE === "mature") {
-        if (!plansUntracked.length) {
+        if (!ownThemes.length) {
           lines.push(
             "业务代码有改动：按 rule 19 三问自检 pitfalls 回流；按 rule 11–16 核对契约同步"
           );

@@ -17,6 +17,10 @@
 const { execSync, execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const {
+  listOwnActivePlanThemes,
+  formatThemeBulletLines,
+} = require("./superpowers-theme-gate.js");
 
 const STDIN_TIMEOUT_MS = 2000;
 const MIGRATION_PREFIX = "{{DB_MIGRATION_DIR}}";
@@ -349,23 +353,18 @@ function listActiveTopicRuns(root) {
   return out;
 }
 
+/**
+ * 本人进行中主题（README 含用户列 + 有 Plan）→ 请 AI 对照 plan/代码判断是否漏收口。
+ * 若 docs/runs/active 有进行中主题：只提醒中途 commit 允许、勿假收口（不扫 plans/）。
+ */
 function collectSuperpowersReminders(root, staged) {
-  const plansDir = path.join(root, "docs", "superpowers", "plans");
-  let activePlans = [];
-  try {
-    activePlans = fs
-      .readdirSync(plansDir)
-      .filter((f) => f.endsWith(".md") && f !== "README.md");
-  } catch {
-    activePlans = [];
-  }
   const indexTouched = staged.some(
     (f) =>
       f === "docs/superpowers/README.md" ||
       f === "docs/superpowers/ARCHIVE.md" ||
       f.startsWith("docs/superpowers/archive/")
   );
-  if (activePlans.length === 0 || !codeTouchedByPrefixes(staged) || indexTouched) {
+  if (!codeTouchedByPrefixes(staged) || indexTouched) {
     return [];
   }
   const topicRuns = listActiveTopicRuns(root);
@@ -379,10 +378,24 @@ function collectSuperpowersReminders(root, staged) {
       `- 主题进行中（${shown}${more}）；中途 commit 允许，收口在宣称交付或主题收口时（见 rule 18）；纯 fix/chore 可忽略`,
     ];
   }
-  const shown = activePlans.slice(0, 3).join("、");
-  const more = activePlans.length > 3 ? ` 等 ${activePlans.length} 个` : "";
+
+  let themes = [];
+  try {
+    themes = listOwnActivePlanThemes(root);
+  } catch {
+    return [];
+  }
+  if (themes.length === 0) {
+    return [];
+  }
+  const who = themes[0].user || "你";
+  const { lines, total } = formatThemeBulletLines(themes, 5);
+  const more = total > 5 ? `（另有 ${total - 5} 个未列出）` : "";
   return [
-    `- superpowers：仍有进行中 plan（${shown}${more}）；若本提交**宣称交付**其主功能，先按 rule 18 收口（README→archive/ARCHIVE.md）；进行中主题勿假收口；非每次 commit 须收口；纯 fix/chore 可忽略`,
+    [
+      `- superpowers：README 进行中表中有你的主题 ${total} 个（${who}）${more}。请对照下列 plan.md 与当前代码判断主功能是否已完成；若已完成但未归档，先按 rule 18 收口（徽章 + git mv archive + README→ARCHIVE）再提交；仍进行中的增量 / 纯 fix/chore 可忽略`,
+      ...lines,
+    ].join("\n"),
   ];
 }
 
@@ -465,7 +478,7 @@ function collectAgentConfigReminders(root, staged) {
           windowsHide: true,
         });
         return [
-          "- agent-config：SSOT 已变更；sync.mjs --check 已通过，请一并暂存 .cursor/ 等生成物",
+          "- agent-config：SSOT 已变更；sync.mjs --check 已通过，请一并暂存各工具生成物目录",
         ];
       } catch (e) {
         const out = String((e && (e.stderr || e.stdout)) || e.message || "").trim();
@@ -476,12 +489,12 @@ function collectAgentConfigReminders(root, staged) {
       }
     }
     return [
-      "- agent-config：SSOT 已变更但生成物未暂存，请执行 node scripts/agent-config/sync.mjs 并一并暂存 .cursor/ 等生成物",
+      "- agent-config：SSOT 已变更但生成物未暂存，请执行 node scripts/agent-config/sync.mjs 并一并暂存各工具生成物目录",
     ];
   }
   if (!ssotTouched && generatedTouched) {
     return [
-      "- agent-config：暂存含 .cursor/ 等工具目录生成物；若为手改请改到 SSOT docs/agent-config/ 后跑 sync（跑过 sync 属正常，可忽略）",
+      "- agent-config：暂存含各工具目录生成物；若为手改请改到 SSOT docs/agent-config/ 后跑 sync（跑过 sync 属正常，可忽略）",
     ];
   }
   return [];
