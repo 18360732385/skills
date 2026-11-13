@@ -283,6 +283,21 @@ assert(/selfcheck\.mjs/.test(readme), "README mentions selfcheck.mjs");
 assert(readme.includes(PIN), `README pins ${PIN}`);
 assert(/QUICKSTART\.md/.test(readme), "README links QUICKSTART");
 
+// --- guide/ 人读手册三件套（md / html / 摘要）---
+assert(exists("guide/使用手册.md"), "guide/使用手册.md exists");
+assert(exists("guide/使用手册.html"), "guide/使用手册.html exists");
+assert(exists("guide/使用手册-摘要.md"), "guide/使用手册-摘要.md exists");
+const handbookMd = read("guide/使用手册.md") || "";
+const handbookHtml = read("guide/使用手册.html") || "";
+const handbookDigest = read("guide/使用手册-摘要.md") || "";
+assert(handbookMd.includes(PIN), `guide/使用手册.md pins ${PIN}`);
+assert(handbookDigest.includes(PIN), `guide/使用手册-摘要.md pins ${PIN}`);
+assert(handbookHtml.includes(PIN), `guide/使用手册.html pins ${PIN}`);
+assert(/双维护/.test(handbookMd), "guide/使用手册.md states md/html 双维护");
+assert(/id="s6"/.test(handbookHtml), "guide/使用手册.html has #s6 anchor");
+assert(/data-ha-style="document"/.test(handbookHtml), "guide/使用手册.html declares data-ha-style");
+assert(/调度员不进厨房/.test(handbookMd), "guide/使用手册.md keeps core rule wording");
+
 // P0：仓根 README 钉号 + VERIFY 继承不冒充现行钉 + sync 条件化
 const repoRootReadmePath = path.join(skillRoot, "..", "README.md");
 const repoRootReadme = fs.existsSync(repoRootReadmePath)

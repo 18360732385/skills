@@ -122,8 +122,14 @@ _log/
 | [feature-eng/SKILL.md](feature-eng/SKILL.md) | 开发流程入口：init / rebind / start / resume / status / advance / close |
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
 | [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.28）；须点名加载 |
+| [feature-eng/guide/使用手册.md](feature-eng/guide/使用手册.md) | feature-eng 完整使用手册（8 章：定位 / 绑定 / 主流程 / 11 环 / 闸门 / 过程态 / 专项 / FAQ） |
+| [feature-eng/guide/使用手册.html](feature-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
+| [feature-eng/guide/使用手册-摘要.md](feature-eng/guide/使用手册-摘要.md) | feature-eng 一分钟导读 |
 | [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / resume / audit / seal |
 | [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.3.33） |
+| [release-eng/guide/使用手册.md](release-eng/guide/使用手册.md) | release-eng 完整使用手册（8 章：定位 / 安装骨架 / 主流程 / 四模式 / 约定 SSOT / 发版单 / 硬闸 / FAQ） |
+| [release-eng/guide/使用手册.html](release-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
+| [release-eng/guide/使用手册-摘要.md](release-eng/guide/使用手册-摘要.md) | release-eng 一分钟导读 |
 | [ip-peitu-tietie/SKILL.md](ip-peitu-tietie/SKILL.md) | 帖帖配图入口：策略 shot list / 单张生成 / QA |
 | [ip-peitu-tietie/CONTEXT.md](ip-peitu-tietie/CONTEXT.md) | 帖帖配图上下文与资产索引 |
 

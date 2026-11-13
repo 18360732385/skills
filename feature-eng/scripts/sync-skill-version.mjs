@@ -113,6 +113,13 @@ function planUpdates(skillRoot, version) {
   queue("VERIFY.md", path.join(skillRoot, "VERIFY.md"), (t) =>
     syncDoc(t, prev, version, "verify")
   );
+  // guide/ 人读手册与摘要：钉号形态同 QUICKSTART（`版本：**X**`）
+  queue("guide/使用手册.md", path.join(skillRoot, "guide", "使用手册.md"), (t) =>
+    syncDoc(t, prev, version, "quickstart")
+  );
+  queue("guide/使用手册-摘要.md", path.join(skillRoot, "guide", "使用手册-摘要.md"), (t) =>
+    syncDoc(t, prev, version, "quickstart")
+  );
   queue("../README.md", path.join(REPO_ROOT, "README.md"), (t) =>
     syncDoc(t, prev, version, "repo-root")
   );

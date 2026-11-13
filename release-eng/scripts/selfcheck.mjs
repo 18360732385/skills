@@ -195,6 +195,21 @@ assert(
   "README no longer claims missing VERIFY/selfcheck"
 );
 
+// --- guide/ 人读手册三件套（md / html / 摘要）---
+assert(exists("guide/使用手册.md"), "guide/使用手册.md exists");
+assert(exists("guide/使用手册.html"), "guide/使用手册.html exists");
+assert(exists("guide/使用手册-摘要.md"), "guide/使用手册-摘要.md exists");
+const handbookMd = read("guide/使用手册.md") || "";
+const handbookHtml = read("guide/使用手册.html") || "";
+const handbookDigest = read("guide/使用手册-摘要.md") || "";
+assert(handbookMd.includes(PIN), `guide/使用手册.md pins ${PIN}`);
+assert(handbookDigest.includes(PIN), `guide/使用手册-摘要.md pins ${PIN}`);
+assert(handbookHtml.includes(PIN), `guide/使用手册.html pins ${PIN}`);
+assert(/双维护/.test(handbookMd), "guide/使用手册.md states md/html 双维护");
+assert(/id="s6"/.test(handbookHtml), "guide/使用手册.html has #s6 anchor");
+assert(/data-ha-style="document"/.test(handbookHtml), "guide/使用手册.html declares data-ha-style");
+assert(/首问/.test(handbookMd) && /push-gate/.test(handbookMd), "guide/使用手册.md keeps 首问/push-gate wording");
+
 const logRoot = path.resolve(skillRoot, "..", "_log", "release-eng");
 const repoRootReadmePath = path.join(skillRoot, "..", "README.md");
 /** monorepo：仓根 README + _log 齐；孤立拷贝 skill 目录时仓外钉 skip */
