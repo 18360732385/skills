@@ -915,13 +915,28 @@ function parseJobTruthText(text) {
 }
 
 /**
+ * 汇总清单里的真相链接：相对 `jobs/README.md` 所在目录精确计算，
+ * 标准目录包为 3 层（docs/releases/{id}/jobs → docs/jobs），旧 notes/ 目录包自动为 4 层。
+ */
+function jobTruthLink(jobsDirAbs, root, truth) {
+  if (!truth) return "（待补）";
+  let rel = jobsDirAbs
+    ? path.relative(jobsDirAbs, path.resolve(root, truth))
+    : `../../../${truth.replace(/^docs\//, "")}`;
+  rel = rel.replace(/\\/g, "/");
+  if (!rel.startsWith(".")) rel = `./${rel}`;
+  return `[${path.basename(truth)}](${rel})`;
+}
+
+/**
  * 定时任务汇总清单（单文件）：覆盖本版 draft.jobs 全部任务。
  * 列：code / 名称 / cron 表达式 / 默认参数 / 引用文件（相对链接，指向 docs/jobs 真相 SSOT）。
  * 数据优先级：head 树真相文档 → 磁盘 docs/jobs 目录 → draft 行自有字段。
  */
-function buildJobsSummaryMd(root, freeze, head) {
+export function buildJobsSummaryMd(root, freeze, head, bundleDir = null) {
   const rows = freeze.draft?.jobs || [];
   if (!rows.length) return null;
+  const jobsDirAbs = bundleDir ? path.join(bundleDir, "jobs") : null;
   const diskCatalog = loadJobsCatalog(root);
   const seen = new Set();
   const table = [];
@@ -944,9 +959,7 @@ function buildJobsSummaryMd(root, freeze, head) {
     const name = info?.displayName || r.说明 || disk?.displayName || "—";
     const cron = info?.defaultCron || disk?.defaultCron || "—";
     const params = info?.defaultParams || "—";
-    const link = truth
-      ? `[${path.basename(truth)}](../../../../${truth.replace(/^docs\//, "")})`
-      : "（待补）";
+    const link = jobTruthLink(jobsDirAbs, root, truth);
     table.push({ code, name, cron, params, link });
   }
   if (!table.length) return null;
@@ -1019,7 +1032,7 @@ function copyBundleFiles(root, bundleDir, freeze, head) {
     }
   }
 
-  const jobsSummary = buildJobsSummaryMd(root, freeze, head);
+  const jobsSummary = buildJobsSummaryMd(root, freeze, head, bundleDir);
   if (jobsSummary) {
     const destDir = path.join(bundleDir, "jobs");
     fs.mkdirSync(destDir, { recursive: true });
