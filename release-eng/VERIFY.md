@@ -1,4 +1,4 @@
-# release-eng 验收记录（0.3.34）
+# release-eng 验收记录（0.3.35）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。  
@@ -6,18 +6,18 @@
 
 ## 版本
 
-当前 **0.3.34**（本版新增：SQL 统计文档 `sql/README.md`——DDL/DML 文件数与语句数、按提交人分组、文件名链接到整理文件对应行）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.3.35**（本版修复：`db/migration` 中文名 SQL 漏检——git 路径列举改 `-z`，绕开 `core.quotepath` 转义；发版单抽取统一支持新轨 `_0/_1` + 中文描述）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
 
-## 0.3.34 增量验收
+## 0.3.35 增量验收
 
 | 检查 | 结果 |
 |---|---|
-| `node scripts/selfcheck.mjs` exit 0（423/423 整仓） | 有 |
-| manifest / 文档钉头 **0.3.34**；monorepo 下 `sync-skill-version --check` | 有 |
-| `countSqlStatements`：多语句计数、纯注释 0 条、字符串内分号不切断 | 有（selfcheck 034 A） |
-| `buildSqlStatsMarkdown`：总览文件/语句数、按提交人分组、`#L` 锚点与行号文字兜底 | 有（selfcheck 034 B） |
-| `runSqlBundle` 落地 `sql/README.md`；锚点行号与整理文件 `-- >>> begin:` 一致；无 git 记「未识别」 | 有（selfcheck 034 C） |
-| note-merge 将 `sql/README.md` 登记进「包内附属文件」并输出 `sqlStats` | 有 |
+| `node scripts/selfcheck.mjs` exit 0（432/432 整仓） | 有 |
+| manifest / 文档钉头 **0.3.35**；monorepo 下 `sync-skill-version --check` | 有 |
+| `isMigrationSql` / `classifyMigrationKindByFilename` 识别中文新轨名 `V{ts}_{0|1}__{作者}__{中文}.sql` | 有（selfcheck 035） |
+| `extractMigrationNames` 从发版单表格抽取中文新轨名；prior md 启发式命中 | 有（selfcheck 035） |
+| 临时 git 仓：首次发版（`ls-tree`）与增量（`diff --name-only`）均发现中文名 migration 并进 `draft.sql` | 有（selfcheck 035） |
+| 实仓 `c-be-sms-ai`：`8bc7bde0~1..8bc7bde0` 收录 `V261106100154556_1__chenpeng5__危险源填写模型订正.sql` | 有（手工回归） |
 | 仍标明非 harness land | 有 |
 
 ## 继承基线（摘要）

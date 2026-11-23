@@ -2526,6 +2526,83 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   }
 }
 
+// --- 0.3.35：中文 / 新轨 SQL 名不得漏检（core.quotepath 回归）---
+{
+  const fmt = await import(pathToFileURL(path.join(skillRoot, "scripts/release-format.mjs")).href);
+  const cnName = "V261106100154556_1__chenpeng5__危险源填写模型订正.sql";
+  assert(fmt.isMigrationSql(`db/migration/${cnName}`), "035 isMigrationSql 中文新轨名");
+  assert(fmt.classifyMigrationKindByFilename(cnName) === "DML", "035 中文 _1 归 DML");
+  assert(
+    fmt.extractMigrationNames(`| 1 | \`db/migration/${cnName}\` | 新增 |`).includes(cnName),
+    "035 发版单抽取中文新轨名"
+  );
+
+  const enrich = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href
+  );
+  const parsed = enrich.parseReleaseNoteArtifacts(`| 1 | ${cnName} | 新增/变更 |`);
+  assert(parsed.sqlScripts.has(cnName), "035 prior md 启发式收中文新轨名");
+
+  // 真 git：freeze 路径列举走 -z，默认 quotepath 下也不漏中文名
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0335-cn-"));
+  try {
+    const g = (args) => spawnSync("git", ["-C", work, ...args], { encoding: "utf8" });
+    g(["init", "-q"]);
+    g(["config", "user.email", "a@b.c"]);
+    g(["config", "user.name", "tester"]);
+    fs.mkdirSync(path.join(work, "db", "migration"), { recursive: true });
+    fs.writeFileSync(path.join(work, "db", "migration", cnName), "UPDATE t SET c = 1;\n", "utf8");
+    g(["add", "-A"]);
+    const commit = g(["commit", "-q", "-m", "init"]);
+    assert(commit.status === 0, "035 临时仓 commit");
+    if (commit.status === 0) {
+      const out = path.join(work, "freeze.json");
+      const r = spawnSync(
+        process.execPath,
+        [
+          path.join(skillRoot, "scripts", "release-freeze.mjs"),
+          "--root", work, "--first-release", "--head", "HEAD",
+          "--prior", "none", "--format", "json", "--out", out,
+        ],
+        { encoding: "utf8" }
+      );
+      const data = r.status === 0 ? JSON.parse(fs.readFileSync(out, "utf8")) : null;
+      assert(data?.inventory?.migrationCount === 1, "035 first-release 发现中文 migration");
+      assert(
+        Boolean(data?.draft?.sql?.some((x) => (x.脚本 || x.path || "").includes(cnName))),
+        "035 中文 migration 进 draft.sql"
+      );
+
+      // 增量：`git diff --name-only -z` 同样不得漏中文名
+      const cnName2 = "V261107120000000_1__yangyi6__增量中文订正.sql";
+      fs.rmSync(out, { force: true });
+      fs.writeFileSync(path.join(work, "db", "migration", cnName2), "UPDATE t SET c = 2;\n", "utf8");
+      g(["add", "-A"]);
+      const commit2 = g(["commit", "-q", "-m", "feat: second"]);
+      assert(commit2.status === 0, "035 临时仓第二次 commit");
+      if (commit2.status === 0) {
+        const out2 = path.join(work, "freeze2.json");
+        const r2 = spawnSync(
+          process.execPath,
+          [
+            path.join(skillRoot, "scripts", "release-freeze.mjs"),
+            "--root", work, "--base", "HEAD~1", "--head", "HEAD",
+            "--prior", "none", "--format", "json", "--out", out2,
+          ],
+          { encoding: "utf8" }
+        );
+        const data2 = r2.status === 0 ? JSON.parse(fs.readFileSync(out2, "utf8")) : null;
+        assert(
+          Boolean(data2?.draft?.sql?.some((x) => (x.脚本 || x.path || "").includes(cnName2))),
+          "035 增量 diff 发现中文 migration"
+        );
+      }
+    }
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
 // --- report ---
 const total = ok.length + fail.length;
 if (fail.length) {

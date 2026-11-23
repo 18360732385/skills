@@ -99,6 +99,24 @@ function git(root, args) {
   };
 }
 
+/**
+ * 路径列举专走 `-z`：git 默认 core.quotepath=true 会把中文/非 ASCII 路径输出成
+ * 带引号的八进制转义（"db/…/\345\215…sql"），导致 isMigrationSql 全部漏检。
+ * -z 以 NUL 分隔原样输出，不做转义，也不 trim 路径首尾空白。
+ */
+function gitPaths(root, args) {
+  const r = spawnSync("git", ["-C", root, ...args, "-z"], {
+    encoding: "utf8",
+    maxBuffer: 40 * 1024 * 1024,
+    env: gitEnvChina(),
+  });
+  return {
+    ok: r.status === 0,
+    paths: r.status === 0 ? String(r.stdout || "").split("\0").filter(Boolean) : [],
+    stderr: (r.stderr || "").trim(),
+  };
+}
+
 function gitShow(root, ref, filePath) {
   const norm = filePath.replace(/\\/g, "/");
   const r = git(root, ["show", `${ref}:${norm}`]);
@@ -750,12 +768,9 @@ function buildFirstReleaseLayeredCandidates(root, head, files) {
 /** 列出 base ref 上全部 migration 路径（供 rename alias 命中） */
 function listMigrationsOnRef(root, ref) {
   if (!ref) return [];
-  const r = git(root, ["ls-tree", "-r", "--name-only", ref]);
-  if (!r.ok || !r.stdout) return [];
-  return r.stdout
-    .split(/\r?\n/)
-    .map((p) => p.trim())
-    .filter((p) => p && isMigrationSql(p));
+  const r = gitPaths(root, ["ls-tree", "-r", "--name-only", ref]);
+  if (!r.ok || !r.paths.length) return [];
+  return r.paths.filter((p) => p && isMigrationSql(p));
 }
 
 /** 增量：基线树上是否已有该 migration/键/task（含 Vn__ ≡ Vn_0__ alias） */
@@ -1044,16 +1059,14 @@ function main() {
   });
 
   const names = firstRelease
-    ? git(args.root, ["ls-tree", "-r", "--name-only", head])
-    : git(args.root, ["diff", "--name-only", range]);
+    ? gitPaths(args.root, ["ls-tree", "-r", "--name-only", head])
+    : gitPaths(args.root, ["diff", "--name-only", range]);
   if (!names.ok) {
     console.error(names.stderr || "git path listing failed");
     process.exit(1);
   }
   // 跳过 docs/releases/**：发版包内 sql/config 拷贝不得再进 draft（半成品污染链）
-  const files = excludeReleasePackageFiles(
-    names.stdout ? names.stdout.split(/\r?\n/).filter(Boolean) : []
-  );
+  const files = excludeReleasePackageFiles(names.paths);
   const pathStats = {};
   for (const f of files) {
     const bucket = pathBucket(f);

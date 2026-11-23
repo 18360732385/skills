@@ -621,6 +621,17 @@ export function classifyMigrationKindByFilename(nameOrPath) {
   return null;
 }
 
+/**
+ * 从文本抽取 migration 文件名：旧轨 `Vdddd__…` 与新轨 `V{ts}_{0|1}__{作者}__{描述}.sql`。
+ * 描述常为中文，字符类排除空白 / 表格分隔符 / 引号 / 反斜杠即可。
+ */
+export function extractMigrationNames(text) {
+  const out = [];
+  const re = /\b(V\d+(?:_\d+)?__[^\s|`"'\\]+?\.sql)\b/gi;
+  for (const m of String(text || "").matchAll(re)) out.push(m[1]);
+  return out;
+}
+
 /** 发版日期 YYYY-MM-DD → yyMMdd；非法则 null */
 export function releaseDateToYyMmDd(releaseDate) {
   const m = String(releaseDate || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
