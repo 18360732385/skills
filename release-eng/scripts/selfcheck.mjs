@@ -79,6 +79,7 @@ const SCRIPTS = [
   "scripts/release-ai-track.mjs",
   "scripts/release-sql-classify.mjs",
   "scripts/release-sql-bundle.mjs",
+  "scripts/release-sql-stats.mjs",
   "scripts/release-note-merge.mjs",
   "scripts/release-seal-check.mjs",
   "scripts/release-seal.mjs",
@@ -2389,6 +2390,136 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     assert(
       !/非 prod 文件:\s*application-prod__ab12cd\.yml/.test(errText),
       "033 H seal-check 不因 prod__hash 报非 prod"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// =====================================================================
+// 0.3.34：sql/README.md 本版 SQL 统计文档
+// =====================================================================
+
+// --- 0.3.34 A：countSqlStatements 口径 ---
+{
+  const { countSqlStatements } = format;
+  assert(
+    countSqlStatements("CREATE TABLE a(id INT);\nALTER TABLE a ADD COLUMN x INT;") === 2,
+    "034 A 2 条 DDL 语句"
+  );
+  assert(countSqlStatements("-- only comment\n") === 0, "034 A 纯注释 0 条");
+  assert(
+    countSqlStatements("INSERT INTO a VALUES(';');\nINSERT INTO a VALUES(2);") === 2,
+    "034 A 字符串内分号不切断"
+  );
+}
+
+// --- 0.3.34 B：buildSqlStatsMarkdown 总览 / 分组 / #L 锚点 ---
+{
+  const statsMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-sql-stats.mjs")).href
+  );
+  const md = statsMod.buildSqlStatsMarkdown({
+    identity: "release-V261119",
+    releaseDate: "2026-11-19",
+    bundles: [
+      {
+        kind: "DDL",
+        fileName: "release-V261119-DDL.sql",
+        sources: [
+          {
+            basename: "V0001_0__DDL__a.sql",
+            order: 1,
+            globalOrder: 1,
+            author: "张三",
+            srcPath: "db/migration/V0001_0__DDL__a.sql",
+            lineNo: 1,
+            statements: 2,
+          },
+          {
+            basename: "V0002_0__DDL__b.sql",
+            order: 2,
+            globalOrder: 2,
+            author: "李四",
+            srcPath: "db/migration/V0002_0__DDL__b.sql",
+            lineNo: 9,
+            statements: 1,
+          },
+        ],
+      },
+      {
+        kind: "DML",
+        fileName: "release-V261119-DML.sql",
+        sources: [
+          {
+            basename: "V0003_0__DML__c.sql",
+            order: 1,
+            globalOrder: 3,
+            author: "张三",
+            srcPath: "db/migration/V0003_0__DML__c.sql",
+            lineNo: 1,
+            statements: 1,
+          },
+        ],
+      },
+    ],
+  });
+  assert(/本版 SQL 统计/.test(md), "034 B 标题");
+  assert(/\|\s*DDL\s*\|\s*2\s*\|\s*3\s*\|/.test(md), "034 B DDL 文件2/语句3");
+  assert(/\|\s*DML\s*\|\s*1\s*\|\s*1\s*\|/.test(md), "034 B DML 文件1/语句1");
+  assert(
+    /### 张三（2 个文件）/.test(md) && /### 李四（1 个文件）/.test(md),
+    "034 B 按提交人分组"
+  );
+  assert(
+    /\[V0001_0__DDL__a\.sql\]\(\.\/release-V261119-DDL\.sql#L1\)/.test(md),
+    "034 B DDL #L 链接"
+  );
+  assert(
+    /\[V0003_0__DML__c\.sql\]\(\.\/release-V261119-DML\.sql#L1\)/.test(md),
+    "034 B DML #L 链接"
+  );
+  assert(/DDL 第 9 行/.test(md), "034 B 行号文字兜底");
+  assert(/先执行 DDL 整理文件，再执行 DML 整理文件/.test(md), "034 B 执行顺序说明");
+}
+
+// --- 0.3.34 C：runSqlBundle 落地 sql/README.md（锚点行号与整理文件一致）---
+{
+  const bundleMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-sql-bundle.mjs")).href
+  );
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0334-sqlstats-"));
+  try {
+    const refs = path.join(work, "sql", "refs");
+    fs.mkdirSync(refs, { recursive: true });
+    fs.writeFileSync(path.join(refs, "V0001_0__DDL__a.sql"), "CREATE TABLE a (id INT);\n", "utf8");
+    fs.writeFileSync(
+      path.join(refs, "V0002_0__DML__b.sql"),
+      "INSERT INTO a VALUES (1);\nINSERT INTO a VALUES (2);\n",
+      "utf8"
+    );
+    const r = bundleMod.runSqlBundle({ bundleDir: work, releaseDate: "2026-11-19" });
+    assert(r.ok, "034 C runSqlBundle ok");
+    assert(r.statsPath === "sql/README.md", "034 C 返回 statsPath");
+    assert(r.stats?.ddl?.files === 1 && r.stats?.dml?.files === 1, "034 C stats 文件数");
+    assert(r.stats?.dml?.statements === 2, "034 C stats DML 语句数");
+
+    const statsAbs = path.join(work, "sql", "README.md");
+    assert(fs.existsSync(statsAbs), "034 C sql/README.md 落盘");
+    const md = fs.readFileSync(statsAbs, "utf8");
+    assert(/未识别/.test(md), "034 C 无 git 时提交人=未识别");
+
+    const ddl = fs.readFileSync(path.join(work, "sql", "release-V261119-DDL.sql"), "utf8").split("\n");
+    const ddlLine = ddl.indexOf("-- >>> begin: V0001_0__DDL__a.sql") + 1;
+    assert(
+      ddlLine > 0 && md.includes(`./release-V261119-DDL.sql#L${ddlLine}`),
+      "034 C DDL 锚点行号与整理文件一致"
+    );
+    const dml = fs.readFileSync(path.join(work, "sql", "release-V261119-DML.sql"), "utf8").split("\n");
+    const dmlLine = dml.indexOf("-- >>> begin: V0002_0__DML__b.sql") + 1;
+    assert(
+      dmlLine > 0 && md.includes(`./release-V261119-DML.sql#L${dmlLine}`),
+      "034 C DML 锚点行号一致"
     );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });

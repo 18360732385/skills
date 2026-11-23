@@ -10,6 +10,7 @@
  * 刷新：Git 定版两表（提交截断5·hash 前 8 位 / 合并来源 origin 归一·一句话）、上线摘要（分支级聚合）、
  * 数据库与 SQL、配置项（yml→YAML，注释在键上一行）、定时任务（← draft，不含 draftSuppressed）；
  * 目录包 jobs/ 生成单文件汇总清单（code/名称/cron/默认参数/引用链接），不再逐任务拷贝真相。
+ * SQL 目录包生成 sql/release-V{yyMMdd}-DDL|DML.sql 与统计文档 sql/README.md（条数 + 提交人执行序 + 行内跳转）。
  * 保留：manual 段人工正文。
  * Exit 0=ok 1=error
  */
@@ -1041,7 +1042,7 @@ function buildBundleSection(copied) {
   lines.push(`## ${H2.bundle}`);
   lines.push("");
   lines.push(
-    "> 定版时拷贝本版 **新增** 原件到 `sql/refs/` / `config/`（← draft；**不含** candidates）；并生成整理文件 `sql/release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘；prod **先 DDL 后 DML**）。`jobs/` 为单文件汇总清单 `README.md`。包内路径为相对本发版单的 Markdown 链接。"
+    "> 定版时拷贝本版 **新增** 原件到 `sql/refs/` / `config/`（← draft；**不含** candidates）；并生成整理文件 `sql/release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘；prod **先 DDL 后 DML**）与统计文档 `sql/README.md`（DDL/DML 条数 + 按提交人执行序 + 行内跳转）。`jobs/` 为单文件汇总清单 `README.md`。包内路径为相对本发版单的 Markdown 链接。"
   );
   lines.push("");
   lines.push("<!-- auto:bundle:start -->");
@@ -1255,6 +1256,13 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
           sourcePath: `← sql/refs/ × ${b.sourceCount}（${b.kind}）`,
         });
       }
+      if (sqlBundleResult.statsPath) {
+        bundleResult.copied.push({
+          kind: "sql-stats",
+          bundlePath: sqlBundleResult.statsPath,
+          sourcePath: "← 本版 SQL 统计（DDL/DML 条数 + 提交人执行序）",
+        });
+      }
     }
 
     text = applyBundleSection(text, bundleResult.copied);
@@ -1306,6 +1314,7 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
         changeObjects: freeze.changeObjects?.length || 0,
         bundleFiles: bundleResult.copied.length,
         sqlBundles: sqlBundleResult?.sqlBundles?.map((b) => b.path) || [],
+        sqlStats: sqlBundleResult?.statsPath || null,
         warnings: bundleResult.warnings,
         prior: freeze.priorRelease?.path || null,
         todoPlaceholders: freeze.todoPlaceholders?.length || 0,

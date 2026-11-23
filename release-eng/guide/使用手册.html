@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>release-eng 使用手册 · v0.3.33</title>
+  <title>release-eng 使用手册 · v0.3.34</title>
   <meta name="description" content="release-eng：把一次上线做成带 Git 证据的发版单（prepare / resume / audit / seal）的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -746,7 +746,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.3.33</div>
+    <div class="ver">v0.3.34</div>
   </header>
 
   <div class="shell document-shell">
@@ -1150,7 +1150,7 @@ node release-eng/scripts/release.mjs ai-track -- --root . --freeze-json /tmp/fre
   --freeze-json /tmp/freeze-with-ai.json \
   --baseline main --identity &lt;slug&gt; \
   --release-date 2026-11-19 --release-branch release --owner &lt;负责人&gt;</code></pre>
-        <p>它做四件事：写发版单<strong>自动段</strong>、生成 <strong><code>artifacts.json</code></strong>、把本版新增原件拷进 <code>sql/refs/</code> <code>config/</code> <code>jobs/</code>、按需生成 <code>sql/release-V{yyMMdd}-DDL|DML.sql</code>，并默认回写 <code>releases.md</code>（<code>--no-update-index</code> 可关）。<code>--dry-run</code> 只看「将写多少字节、draft/bundle 各几行」。</p>
+        <p>它做四件事：写发版单<strong>自动段</strong>、生成 <strong><code>artifacts.json</code></strong>、把本版新增原件拷进 <code>sql/refs/</code> <code>config/</code> <code>jobs/</code>、按需生成 <code>sql/release-V{yyMMdd}-DDL|DML.sql</code> 与统计文档 <code>sql/README.md</code>（DDL/DML 条数 + 按提交人执行序 + 行内跳转），并默认回写 <code>releases.md</code>（<code>--no-update-index</code> 可关）。<code>--dry-run</code> 只看「将写多少字节、draft/bundle 各几行」。</p>
         <div class="callout warn caveat-box">
           <div class="label">警示</div>
           note-merge 刷新会<strong>先清空包内 <code>sql/</code> / <code>config/</code> / <code>jobs/</code> 三个目录再重建</strong>（内容来自 <code>draft</code>）。手工放进这三个目录的文件会被清掉——别往里存手工产物。
@@ -1280,6 +1280,7 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
     refs/                      # 本版新增 SQL 原件
     release-V261119-DDL.sql    # 整理文件（按侧生成）
     release-V261119-DML.sql
+    README.md                  # 本版 SQL 统计（条数 + 提交人执行序 + 行内跳转）
   config/                      # 本版新增配置原件
   jobs/README.md               # 任务汇总清单（不逐份拷贝真相）</code></pre>
         <p>包内附属文件在发版单里一律用<strong>相对 md 链接</strong>引用；<code>artifacts.json</code> 是同一份清单的机读版本。</p>
@@ -1384,7 +1385,8 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
               <tr><td><code>enrich</code></td><td><code>release-freeze-enrich.mjs</code></td><td>补说明 / artifacts / 逾期信息</td></tr>
               <tr><td><code>ai-track</code></td><td><code>release-ai-track.mjs</code></td><td>双轨研判 prompt 与合并</td></tr>
               <tr><td><code>sql-classify</code></td><td><code>release-sql-classify.mjs</code></td><td>SQL 归类（DDL / DML）</td></tr>
-              <tr><td><code>sql-bundle</code></td><td><code>release-sql-bundle.mjs</code></td><td>生成 <code>release-V*-DDL|DML.sql</code> 整理文件</td></tr>
+              <tr><td><code>sql-bundle</code></td><td><code>release-sql-bundle.mjs</code></td><td>生成 <code>release-V*-DDL|DML.sql</code> 整理文件与 <code>sql/README.md</code> 统计</td></tr>
+              <tr><td><code>sql-stats</code></td><td><code>release-sql-stats.mjs</code></td><td>统计 Markdown 纯函数（总数 / 提交人执行序 / 行内跳转）</td></tr>
               <tr><td><code>note-merge</code></td><td><code>release-note-merge.mjs</code></td><td>写自动段 + artifacts.json + 目录包</td></tr>
               <tr><td><code>seal-check</code></td><td><code>release-seal-check.mjs</code></td><td>归档前体检（artifacts / sqlBundles / 状态）</td></tr>
               <tr><td><code>seal</code></td><td><code>release-seal.mjs</code></td><td>归档：状态 + 整夹 mv + 双索引</td></tr>
@@ -1473,7 +1475,7 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
 
         <div class="footer">
           本手册描述仪式用法；具体清单以当次 <code>docs/releases/&lt;slug&gt;/&lt;slug&gt;.md</code> 与 <code>artifacts.json</code> 为准。<br />
-          HTML 与 Markdown 双维护，改内容须同步 · release-eng v0.3.33
+          HTML 与 Markdown 双维护，改内容须同步 · release-eng v0.3.34
         </div>
       </section>
     </main>

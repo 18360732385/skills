@@ -45,6 +45,7 @@ SQL / 配置 / 定时任务**一律目标 `prod`**。配置仅 `application-prod
 - `docs/db/table/*_change.sql` **仅作对照**，不进 `sql/refs/` 与整理文件。
 - 整理文件 `sql/release-V{yyMMdd}-DDL|DML.sql` 按 `__DDL__`/`__DML__`（或新轨 `V{ts}_{0|1}__`）双轨归类，**缺侧不落盘**。
 - **prod 执行顺序：先 DDL 整理文件，再 DML**（各类内部仍按 SQL序）。
+- 同时生成 `sql/README.md` 统计文档：DDL/DML **文件数与语句数**、按提交人分组的执行序；SQL 文件名链接到整理文件起始行 `#L<行号>`（随整理文件同步重建，勿手改）。
 
 ## ⑥ 密文策略
 

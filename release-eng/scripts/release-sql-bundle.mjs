@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * release-sql-bundle — 将 sql/refs/ 整理为 release-V{yyMMdd}-DDL|DML.sql
+ *   并生成 sql/README.md（本版 SQL 统计：DDL/DML 条数 + 按提交人执行序 + 行内跳转）
  *
  * Usage:
  *   node release-sql-bundle.mjs --bundle-dir <dir> --release-date YYYY-MM-DD
@@ -16,6 +17,7 @@ import { execFileSync } from "child_process";
 import {
   assertStatementsEndWithSemicolon,
   buildSqlBundleContent,
+  countSqlStatements,
   detectMixedDdlDml,
   isMigrationSql,
   migrationSortKey,
@@ -28,6 +30,7 @@ import {
   classifyRefs,
   listRefsDir,
 } from "./release-sql-classify.mjs";
+import { buildSqlStatsMarkdown } from "./release-sql-stats.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -115,6 +118,21 @@ function gitCommitTime(root, sourcePath) {
     ).trim();
     const n = Number(out);
     return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 该源文件最后一次 Git 改动的作者（%an）；取不到返回 null */
+function gitLastAuthor(root, sourcePath) {
+  if (!root || !sourcePath) return null;
+  try {
+    const out = execFileSync(
+      "git",
+      ["-C", root, "log", "-1", "--format=%an", "--", sourcePath],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
+    ).trim();
+    return out || null;
   } catch {
     return null;
   }
@@ -232,6 +250,9 @@ export function runSqlBundle({
     byKind[r.kind].push({
       ...r,
       content,
+      srcPath,
+      author: gitLastAuthor(root, srcPath),
+      statements: countSqlStatements(content),
       commitTime: commitTime ?? null,
       mtimeMs,
       sortKey: migrationSortKey(r.basename),
@@ -268,6 +289,8 @@ export function runSqlBundle({
 
   const sqlBundles = [];
   const written = [];
+  const statsBundles = [];
+  let globalOrder = 0;
 
   for (const kind of ["DDL", "DML"]) {
     const ordered = byKind[kind];
@@ -295,6 +318,52 @@ export function runSqlBundle({
         classifySource: o.classifySource,
       })),
     });
+
+    const contentLines = content.split("\n");
+    statsBundles.push({
+      kind,
+      fileName: name,
+      sources: ordered.map((o, idx) => {
+        globalOrder += 1;
+        const lineIdx = contentLines.indexOf(`-- >>> begin: ${o.basename}`);
+        return {
+          basename: o.basename,
+          order: idx + 1,
+          globalOrder,
+          author: o.author,
+          srcPath: o.srcPath,
+          lineNo: lineIdx >= 0 ? lineIdx + 1 : null,
+          statements: o.statements,
+        };
+      }),
+    });
+  }
+
+  // 本版 SQL 统计文档（sql/README.md）：总览 + 执行序 + 按提交人；文件名链接到整理文件起始行
+  let statsPath = null;
+  let stats = null;
+  if (statsBundles.length) {
+    const md = buildSqlStatsMarkdown({
+      identity: path.basename(bundleDir),
+      releaseDate: String(releaseDate).slice(0, 10),
+      bundles: statsBundles,
+    });
+    const dest = path.join(sqlDir, "README.md");
+    const tmp = dest + ".tmp";
+    fs.writeFileSync(tmp, md, "utf8");
+    fs.renameSync(tmp, dest);
+    statsPath = "sql/README.md";
+    stats = {
+      path: statsPath,
+      ddl: {
+        files: byKind.DDL.length,
+        statements: byKind.DDL.reduce((n, o) => n + (o.statements || 0), 0),
+      },
+      dml: {
+        files: byKind.DML.length,
+        statements: byKind.DML.reduce((n, o) => n + (o.statements || 0), 0),
+      },
+    };
   }
 
   if (classify.resolved.some((r) => r.classifySource === "ai")) {
@@ -308,6 +377,8 @@ export function runSqlBundle({
     errors: [],
     warnings,
     sqlBundles,
+    statsPath,
+    stats,
     classify,
     incomplete: Boolean(skipAiClassify),
     written,
@@ -407,6 +478,8 @@ function main() {
       errors: result.errors,
       warnings: result.warnings,
       sqlBundles: result.sqlBundles,
+      statsPath: result.statsPath || null,
+      stats: result.stats || null,
       incomplete: result.incomplete,
       needsAi: result.classify?.needsAi?.map((n) => n.basename) || [],
     },
