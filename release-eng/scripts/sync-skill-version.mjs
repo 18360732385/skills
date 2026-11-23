@@ -71,6 +71,11 @@ function syncDoc(text, from, to, kind) {
       new RegExp(`当前 \\*\\*${fromRe}\\*\\*`),
       `当前 **${to}**`
     );
+  } else if (kind === "guide") {
+    out = out.replace(
+      new RegExp(`版本：\\*\\*${fromRe}\\*\\*`),
+      `版本：**${to}**`
+    );
   }
   return out;
 }
@@ -100,6 +105,13 @@ function planUpdates(skillRoot, version) {
   );
   queue("VERIFY.md", path.join(skillRoot, "VERIFY.md"), (t) =>
     syncDoc(t, prev, version, "verify")
+  );
+  // guide/ 人读手册与摘要：钉号形态为 `版本：**X**`
+  queue("guide/使用手册.md", path.join(skillRoot, "guide", "使用手册.md"), (t) =>
+    syncDoc(t, prev, version, "guide")
+  );
+  queue("guide/使用手册-摘要.md", path.join(skillRoot, "guide", "使用手册-摘要.md"), (t) =>
+    syncDoc(t, prev, version, "guide")
   );
   // Repo-root row pin may lag SSOT badly (even when in-skill docs are synced,
   // because syncDoc short-circuits when prev === version). Replace whatever

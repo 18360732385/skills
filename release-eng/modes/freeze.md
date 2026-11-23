@@ -121,7 +121,7 @@ sql 候选按 migration **版本号数字升序**。
 无版本号的 `_change.sql` 置后，问卷确认是否仅对照、是否需执行。  
 落单「数据库与 SQL」按同一顺序填 **执行序** 1..N，目标 profile=`prod`。
 
-定版落盘后（note-merge）：原件进 `sql/refs/`；按文件名双轨（`__DDL__`/`__DML__` 或新轨 `V{ts}_{0|1}__`）归类，失败则 AI JSON（`--sql-ai-json`，不问用户）生成 `sql/release-V{yyMMdd}-DDL|DML.sql`。`_change.sql` 仅对照、不进 refs 与整理文件；整理文件缺侧不落盘；**prod 执行先 DDL 整理文件再 DML**（各类内部仍 SQL序）——约定全文见 [conventions.md](conventions.md)。  
+定版落盘后（note-merge）：原件进 `sql/refs/`；按文件名双轨（`__DDL__`/`__DML__` 或新轨 `V{ts}_{0|1}__`）归类，失败则 AI JSON（`--sql-ai-json`，不问用户）生成 `sql/release-V{yyMMdd}-DDL|DML.sql`。`_change.sql` 仅对照、不进 refs 与整理文件；整理文件缺侧不落盘；**prod 执行先 DDL 整理文件再 DML**（各类内部仍 SQL序）——约定全文见 [conventions.md](conventions.md)。同时生成 `sql/README.md`（本版 SQL 统计：DDL/DML 条数、按提交人执行序、文件名跳转整理文件对应行）。  
 > **警示**：note-merge 刷新会**先清空包内 `sql/` / `config/` / `jobs/` 三个目录再重建**（← `draft`）；手工放入这三个目录的文件会被清除。
 
 ## 回退（脚本不可用时）

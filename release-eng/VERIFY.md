@@ -1,4 +1,4 @@
-# release-eng 验收记录（0.3.33）
+# release-eng 验收记录（0.3.34）
 
 > 静态对照 + `scripts/selfcheck.mjs` 烟测。真实 prepare/resume/audit/seal 仍须在目标仓由 Agent 执行并遵守硬闸。  
 > **非 harness land**——本包只提供门禁/索引/selfcheck，不宣称可自动 land。  
@@ -6,25 +6,23 @@
 
 ## 版本
 
-当前 **0.3.33**（EVAL 实战缺口：`ON UPDATE`/`ON DELETE` 误杀、note-merge 失败回滚、freeze 排除 `docs/releases/`、prod `__hash` 放行、增量父键 isLeaf、docs/jobs seed、孤立安装 selfcheck 双态）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.3.34**（本版新增：SQL 统计文档 `sql/README.md`——DDL/DML 文件数与语句数、按提交人分组、文件名链接到整理文件对应行）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
 
-## 0.3.33 增量验收
+## 0.3.34 增量验收
 
 | 检查 | 结果 |
 |---|---|
-| `node scripts/selfcheck.mjs` exit 0（393/393 整仓；孤立安装仓外钉 skip 仍 exit 0） | 有 |
-| manifest / 文档钉头 **0.3.33**；monorepo 下 `sync-skill-version --check` | 有 |
-| `detectMixedDdlDml`：`ON UPDATE`/`ON DELETE` 非 mixed；真 CREATE+INSERT 仍 mixed | 有（selfcheck A） |
-| note-merge sql-bundle 失败 → `resetBundleKindDirs` 回滚附属 | 有（selfcheck F） |
-| freeze `excludeReleasePackageFiles` 跳过 `docs/releases/**` | 有（selfcheck C） |
-| `isProdConfigPath` 放行 `application-prod__<hex>.yml`；seal-check 不误报 | 有（selfcheck B/H） |
-| 增量父键 `isLeaf:false` 不进 draft.config；docs/jobs 无 SyncTaskCode 可进 draft.jobs | 有（selfcheck D/E） |
-| fixtures 无 `.cursor/skills` 断链；QUICKSTART bare/无 web URL 预期 | 有（selfcheck G） |
+| `node scripts/selfcheck.mjs` exit 0（423/423 整仓） | 有 |
+| manifest / 文档钉头 **0.3.34**；monorepo 下 `sync-skill-version --check` | 有 |
+| `countSqlStatements`：多语句计数、纯注释 0 条、字符串内分号不切断 | 有（selfcheck 034 A） |
+| `buildSqlStatsMarkdown`：总览文件/语句数、按提交人分组、`#L` 锚点与行号文字兜底 | 有（selfcheck 034 B） |
+| `runSqlBundle` 落地 `sql/README.md`；锚点行号与整理文件 `-- >>> begin:` 一致；无 git 记「未识别」 | 有（selfcheck 034 C） |
+| note-merge 将 `sql/README.md` 登记进「包内附属文件」并输出 `sqlStats` | 有 |
 | 仍标明非 harness land | 有 |
 
 ## 继承基线（摘要）
 
-行为断言由 `scripts/selfcheck.mjs` 覆盖（不在此复述历史表）：`identityFromBranch` · `截断5` · `artifacts.json` 形 · `release.mjs` modes/转发 · push-gate 临时仓 · seal-check · note-merge / sql-bundle · 0.3.32 ①–⑪ 等。明细见 `_log` 各版与 CHANGELOG。
+行为断言由 `scripts/selfcheck.mjs` 覆盖（不在此复述历史表）：`identityFromBranch` · `截断5` · `artifacts.json` 形 · `release.mjs` modes/转发 · push-gate 临时仓 · seal-check · note-merge / sql-bundle / sql-stats · 0.3.33 A–H 等。明细见 `_log` 各版与 CHANGELOG。
 
 ## 烟测命令
 

@@ -26,7 +26,7 @@ node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note d
 
 - [ ] `docs/releases/<slug>/<slug>.md` 存在且含完整「Git 定版」二表（提交 `截断5` 前3后2 + hash 前 8 位；合并来源按分支去重、来源分支功能一句话中文 + GitLab|GitHub 提示（按 origin）；Asia/Shanghai）  
 - [ ] 元信息内上线内容摘要 1～5 项（← 分支级聚合业务短句）  
-- [ ] 同目录含 `sql/refs/` 原件 +（按侧）`sql/release-V*-DDL|DML.sql`、`config/`、任务汇总 `jobs/README.md`、**`artifacts.json`**（含 `sqlBundles`）与「包内附属文件」章（相对 md 链接）  
+- [ ] 同目录含 `sql/refs/` 原件 +（按侧）`sql/release-V*-DDL|DML.sql` + `sql/README.md`（统计）、`config/`、任务汇总 `jobs/README.md`、**`artifacts.json`**（含 `sqlBundles`）与「包内附属文件」章（相对 md 链接）  
 - [ ] 元信息含已确认的 `发版日期`；目录/文件名 = 发版分支名归一化（去 `origin/`、`/` → `-`）；定版时间为中国时区  
 - [ ] `releases.md` 进行中表有对应行（版本身份、分支对、状态、路径、负责人；通常由 note-merge 默认回写，Agent 核对）  
 - [ ] 【推荐】已用 `release-note-merge.mjs` 写入自动段与 artifacts（或等价手工且与 `draft` 一致）  

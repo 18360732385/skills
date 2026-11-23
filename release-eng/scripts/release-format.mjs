@@ -720,6 +720,18 @@ export function assertStatementsEndWithSemicolon(src) {
 }
 
 /**
+ * 语句数：去注释/字符串后以 `;` 切分的非空段（字符串/注释内的分号不计）。
+ * @param {string} src
+ * @returns {number}
+ */
+export function countSqlStatements(src) {
+  return stripSqlCommentsAndStrings(src)
+    .split(";")
+    .map((p) => p.trim())
+    .filter(Boolean).length;
+}
+
+/**
  * 按序拼接整理文件内容。
  * @param {{ basename: string, content: string }[]} orderedFiles
  */
