@@ -12,6 +12,7 @@ import {
   isProdConfigPath,
   normalizeNoteStatus,
   stripBom,
+  extractMigrationNames,
 } from "./release-format.mjs";
 import { DEFAULT_REPO_PROFILE } from "./lib/repo-profile.mjs";
 
@@ -926,9 +927,8 @@ export function parseReleaseNoteArtifacts(text, prefixes = DEFAULT_REPO_PROFILE.
 
   for (const line of text.split(/\r?\n/)) {
     if (!line.includes("|")) continue;
-    for (const m of line.matchAll(/\b(V\d+__[A-Za-z0-9_.-]+\.sql)\b/gi)) {
-      out.sqlScripts.add(m[1]);
-    }
+    // 旧轨与新轨（含中文描述）统一抽取，见 extractMigrationNames
+    for (const name of extractMigrationNames(line)) out.sqlScripts.add(name);
     for (const m of line.matchAll(/`([a-zA-Z][a-zA-Z0-9_.-]{2,})`/g)) {
       const k = m[1];
       if (k.includes(".") || k.includes(":")) {

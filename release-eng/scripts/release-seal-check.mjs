@@ -20,6 +20,7 @@ import {
   BUNDLE_SQL_ALERT_COUNT,
   normalizeNoteStatus,
   stripBom,
+  extractMigrationNames,
 } from "./release-format.mjs";
 import { verifySqlBundlesOnDisk } from "./release-sql-bundle.mjs";
 
@@ -187,9 +188,9 @@ function main() {
           warnings.push(`artifacts.sql 含 ${id} 但 Markdown「数据库与 SQL」未出现该脚本名`);
         }
       }
-      for (const m of (sqlSec || "").matchAll(/\b(V\d+(?:_\d+)?__[A-Za-z0-9_.-]+\.sql)\b/gi)) {
-        if (sqlIds.size && !sqlIds.has(m[1])) {
-          warnings.push(`Markdown 含 ${m[1]} 但 artifacts.json sql[] 无对应 stableId`);
+      for (const name of extractMigrationNames(sqlSec || "")) {
+        if (sqlIds.size && !sqlIds.has(name)) {
+          warnings.push(`Markdown 含 ${name} 但 artifacts.json sql[] 无对应 stableId`);
         }
       }
       for (const row of artifacts.config || []) {
