@@ -2603,6 +2603,67 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   }
 }
 
+// --- 0.3.36：jobs/README.md 真相链接层级（标准目录包 3 层 / 旧 notes 4 层）---
+{
+  const merge = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-note-merge.mjs")).href
+  );
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-0336-jobs-link-"));
+  try {
+    const truth = "docs/jobs/tasks/01-order-timeout-cancel.md";
+    fs.mkdirSync(path.join(work, "docs", "jobs", "tasks"), { recursive: true });
+    fs.writeFileSync(
+      path.join(work, truth),
+      [
+        "| task_code | `order-timeout-cancel` |",
+        "| 显示名 | 未支付订单超时取消 |",
+        "| 默认表达式 | `0 0/10 * * * ?` |",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const freeze = {
+      draft: {
+        jobs: [
+          {
+            taskCode: "order-timeout-cancel",
+            "task / cron 键": "order.timeout.cron",
+            真相: truth,
+          },
+        ],
+      },
+    };
+
+    const standard = merge.buildJobsSummaryMd(
+      work,
+      freeze,
+      null,
+      path.join(work, "docs", "releases", "release-V261123")
+    );
+    assert(
+      Boolean(standard && standard.includes("](../../../jobs/tasks/01-order-timeout-cancel.md)")),
+      "036 标准目录包 jobs 链接 3 层"
+    );
+    assert(
+      Boolean(standard && !standard.includes("](../../../../jobs/")),
+      "036 标准目录包不再出现 4 层"
+    );
+
+    const legacy = merge.buildJobsSummaryMd(
+      work,
+      freeze,
+      null,
+      path.join(work, "docs", "releases", "notes", "release-V261123")
+    );
+    assert(
+      Boolean(legacy && legacy.includes("](../../../../jobs/tasks/01-order-timeout-cancel.md)")),
+      "036 旧 notes 目录包 jobs 链接 4 层"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
 // --- report ---
 const total = ok.length + fail.length;
 if (fail.length) {

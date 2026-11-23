@@ -7,6 +7,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.3.36](../_log/release-eng/0.3/0.3.36.md) | 2026-11-23 | 修复 `jobs/README.md` 引用链接多一层 `../`：按真实包目录 `path.relative` 计算（标准 3 层 / 旧 notes 4 层） |
 | [0.3.35](../_log/release-eng/0.3/0.3.35.md) | 2026-11-23 | 修复 `db/migration` 中文名 SQL 漏检：git 路径列举改 `-z`（core.quotepath 转义回归）；发版单抽取统一支持新轨 `_0/_1` + 中文 |
 | [0.3.34](../_log/release-eng/0.3/0.3.34.md) | 2026-11-23 | SQL 统计文档 `sql/README.md`：DDL/DML 文件数与语句数、按提交人分组展示执行序、文件名链接到整理文件对应行 |
 | [0.3.33](../_log/release-eng/0.3/0.3.33.md) | 2026-10-29 | EVAL：ON UPDATE/DELETE 误杀、note-merge 失败回滚、freeze 排除 releases、prod__hash、isLeaf、docs/jobs seed、孤立 selfcheck 双态 |
