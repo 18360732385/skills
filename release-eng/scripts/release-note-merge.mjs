@@ -8,10 +8,10 @@
  *   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
  *
  * 刷新：Git 定版两表（提交截断5·hash 前 8 位 / 合并来源 origin 归一·一句话）、上线摘要（分支级聚合）、
- * 数据库与 SQL、配置项（yml→YAML，注释在键上一行）、定时任务（← draft，不含 draftSuppressed）；
+ * 数据库与 SQL（正文精简：条数 + 链到 sql/README.md）、配置项（yml→YAML，注释在键上一行）、定时任务（← draft，不含 draftSuppressed）；
  * 目录包 jobs/ 生成单文件汇总清单（code/名称/cron/默认参数/引用链接），不再逐任务拷贝真相。
  * SQL 目录包生成 sql/release-V{yyMMdd}-DDL|DML.sql 与统计文档 sql/README.md（条数 + 提交人执行序 + 行内跳转）。
- * 保留：manual 段人工正文。
+ * 新骨架 10 章（不再生成「附录：关联契约与规划」）。保留：manual 段人工正文。
  * Exit 0=ok 1=error
  */
 import { spawnSync } from "child_process";
@@ -239,27 +239,23 @@ function truncateCommits(rows) {
   return truncateDisplay(rows, COMMIT_DISPLAY_MAX, COMMIT_DISPLAY_HEAD, COMMIT_DISPLAY_TAIL);
 }
 
-function buildSqlSection(draft) {
+export function buildSqlSection(draft) {
   const rows = draft?.sql || [];
   const lines = [];
   lines.push(`## ${H2.sql}`);
   lines.push("");
-  lines.push("> 按 **SQL序**（`Vn` 数字升序；无版本号置后并注明依赖）填写执行序；目标 profile = `prod`。");
   lines.push(
-    "> 包内整理文件：原件在 `sql/refs/`；根下 `release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘）。**prod 先执行 DDL 整理文件，再执行 DML 整理文件**（各类内部仍按 SQL序）。"
+    "> 目标 profile = `prod`。**prod 先 DDL 后 DML**（各类内部按 **SQL序**）。执行序、按提交人统计与行内跳转见包内 [sql/README.md](./sql/README.md)（定版有 SQL 时生成；无 SQL 则本段注明「无」）。"
   );
   lines.push("");
   lines.push("<!-- auto:sql:start -->");
   lines.push("");
-  lines.push("| 执行序 | 脚本/版本 | 动作 | 目标 profile | 已确认 |");
-  lines.push("|---|---|---|---|---|");
-  if (!rows.length) lines.push("| — | 无 | 无 | prod | |");
-  else {
-    rows.forEach((r, i) => {
-      lines.push(
-        `| ${r.执行序 ?? i + 1} | ${esc(r.脚本)} | ${esc(r.动作 || "新增/变更")} | prod | ${esc(r.已确认 || "")} |`
-      );
-    });
+  if (!rows.length) {
+    lines.push("本版无新增 SQL。");
+  } else {
+    lines.push(
+      `本版 SQL：**${rows.length}** 条 → 明细见 [sql/README.md](./sql/README.md)（含 DDL/DML 条数、执行序、按提交人分组）。`
+    );
   }
   lines.push("");
   lines.push("<!-- auto:sql:end -->");
@@ -631,9 +627,11 @@ function skeletonNote(meta) {
 
 ## ${H2.sql}
 
-> 按 **SQL序**；目标 profile = \`prod\`。
+> 目标 profile = \`prod\`。明细见 [sql/README.md](./sql/README.md)。
 
 <!-- auto:sql:start -->
+
+本版无新增 SQL。
 
 <!-- auto:sql:end -->
 
@@ -696,13 +694,6 @@ function skeletonNote(meta) {
 - [ ] …
 
 <!-- manual:end -->
-
-## ${H2.appendix}
-
-| 类型 | 路径 |
-|---|---|
-| func/api/db/jobs | |
-| superpowers | |
 `;
 }
 

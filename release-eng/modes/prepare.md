@@ -31,7 +31,7 @@ node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note d
 - [ ] `releases.md` 进行中表有对应行（版本身份、分支对、状态、路径、负责人；通常由 note-merge 默认回写，Agent 核对）  
 - [ ] 【推荐】已用 `release-note-merge.mjs` 写入自动段与 artifacts（或等价手工且与 `draft` 一致）  
 - [ ] WritePlan 已含 **`draft-md` 预览**（或等价三章表）；落单与 `draft` 一致；yml 配置为 YAML 展示  
-- [ ] 数据库与 SQL：增量按 `SQL序` / `draft.sql`；首次已确认起迁（或「无」）；目标 profile=`prod`；整理文件 prod **先 DDL 后 DML**  
+- [ ] 数据库与 SQL：发版单引导至 `sql/README.md`（执行序不在正文展开）；增量按 `SQL序` / `draft.sql`；首次已确认起迁（或「无」）；目标 profile=`prod`；整理文件 prod **先 DDL 后 DML**  
 - [ ] 配置项章：← `draft.config`（yml 按 YAML；说明注释在键上一行；**允许密文**）；目标 profile=`prod`；有密文则键名已在白话摘要列出  
 - [ ] 定时任务：← `draft.jobs` / `jobsHits`；有变更时目标 profile=`prod`  
 - [ ] 涉及服务与模块说明来自 AGENTS/README 一句话  

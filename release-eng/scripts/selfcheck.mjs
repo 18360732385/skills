@@ -2664,6 +2664,42 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   }
 }
 
+// --- 0.3.37：发版单 SQL 章精简 + 取消附录章 ---
+{
+  const mergeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-note-merge.mjs")).href;
+  const fmtUrl = pathToFileURL(path.join(skillRoot, "scripts/release-format.mjs")).href;
+  const merge = await import(mergeUrl);
+  const fmt = await import(fmtUrl);
+
+  assert(typeof merge.buildSqlSection === "function", "037 export buildSqlSection");
+  const emptySql = merge.buildSqlSection({ sql: [] });
+  assert(/本版无新增 SQL/.test(emptySql), "037 无 SQL 写「本版无新增 SQL」");
+  assert(!/\|\s*执行序\s*\|/.test(emptySql), "037 无 SQL 不写执行序表");
+
+  const withSql = merge.buildSqlSection({
+    sql: [
+      { 脚本: "V0001__a.sql", 动作: "新增" },
+      { 脚本: "V0002__b.sql", 动作: "变更" },
+    ],
+  });
+  assert(/本版 SQL：\*\*2\*\* 条/.test(withSql), "037 有 SQL 写条数");
+  assert(/\[sql\/README\.md\]\(\.\/sql\/README\.md\)/.test(withSql), "037 有 SQL 链到 sql/README.md");
+  assert(!/\|\s*执行序\s*\|/.test(withSql), "037 有 SQL 不写执行序表");
+
+  const tpl = fs.readFileSync(
+    path.join(skillRoot, "fixtures/docs/releases/templates/release-note-template.md"),
+    "utf8"
+  );
+  assert(/10 章/.test(tpl), "037 模板标明 10 章");
+  assert(!/## 十一、附录/.test(tpl), "037 模板无附录章");
+  assert(/sql\/README\.md/.test(tpl), "037 模板 SQL 章引导 README");
+
+  assert(
+    /附录：关联契约与规划/.test(fmt.H2.appendix || ""),
+    "037 H2.appendix 保留供旧稿匹配"
+  );
+}
+
 // --- report ---
 const total = ok.length + fail.length;
 if (fail.length) {
