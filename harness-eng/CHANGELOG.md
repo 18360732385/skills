@@ -1,11 +1,12 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.7.63**。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.8.0**。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.0 | 2026-11-24 | 仓型三分 `repo_kind`（frontend\|backend\|fullstack + monorepo）· 前端五域 `design/prototype/pages/components/client-api`（0.8.0 起 design·prototype 进计分，其余索引壳 0.8.1+ 升严）· 前端 rules **101 族**（17→101 迁移 + 102–106 随域包）· 非运行设计文档/原型经确认归档仓根 `docs/<domain>/` |
 | 0.7.63 | 2026-11-10 | sms-ai 回流：superpowers 提交软提醒按本人进行中主题（README 用户列）交给 AI 判定收口 |
 | 0.7.62 | 2026-11-10 | sms-ai 回流：变更记录 `v{ts}` + pitfalls `P{ts}` 时间戳发号（双轨倒序置顶；NN/Gn 不动） |
 | 0.7.61 | 2026-11-02 | 多宿主路径中性化：共享模板/AGENTS/hook 提醒不再把 `.cursor/` 写成唯一权威 |

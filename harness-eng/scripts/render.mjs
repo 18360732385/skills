@@ -28,6 +28,7 @@ import { fileURLToPath } from "url";
 import { isCliMain } from "./lib/cli-main.mjs";
 import { parse as parseYaml, stringify as stringifyYaml } from "./lib/yaml.mjs";
 import { expandDomainPackEntries } from "./lib/domains.mjs";
+import { inferRepoKind } from "./lib/detect-signals.mjs";
 import {
   BASIC_GATE_IDS,
   buildHookPlaceholders,
@@ -275,14 +276,18 @@ function normalizeIncludeOptional(v) {
   return [];
 }
 
-/** rule-17 (thin) and rule-17-full share the same target — never both. */
-function assertRule17Mutex(includeOptional) {
+/** rule-101 (thin) and rule-101-full share the same target — never both. */
+function assertRule101Mutex(includeOptional) {
   const set = includeOptional instanceof Set ? includeOptional : new Set(includeOptional || []);
-  if (set.has("rule-17") && set.has("rule-17-full")) {
+  if (set.has("rule-101") && set.has("rule-101-full")) {
     throw new Error(
-      "include_optional cannot contain both rule-17 and rule-17-full (same target .cursor/rules/17-frontend-web.mdc; pick one)"
+      "include_optional cannot contain both rule-101 and rule-101-full (same target .cursor/rules/101-frontend-web.mdc; pick one)"
     );
   }
+  // 0.8.0 迁移兼容：旧 id（0.7.x rule-17/rule-17-full）等价映射，防旧 params 直接崩
+  if (set.has("rule-17")) set.add("rule-101");
+  if (set.has("rule-17-full")) set.add("rule-101-full");
+  return set;
 }
 
 /** Scan Maven <module> entries from root pom.xml (fs only, UTF-8). */
@@ -474,6 +479,36 @@ function ensureStandardPlaceholders(params, placeholders, root) {
   set("GLOB_AI_TOOLS", ".cursor/**");
   set("GLOB_OBSERVABILITY", "**/src/**");
   set("GLOB_FRONTEND", "**/frontend/**,**/src/**");
+  // 0.8.0 前端域 rules（102–106）globs
+  set("GLOB_DESIGN", "**/theme/**,**/tokens.*,docs/design/**");
+  set("GLOB_PROTOTYPE", "docs/prototype/**,**/ui-prototypes/**,**/prototype/**");
+  set("GLOB_COMPONENTS", "**/components/**,**/packages/ui/**");
+  set("GLOB_PAGES", "**/pages/**,**/views/**,**/routes/**");
+  set("GLOB_CLIENT_API", "**/api-client/**,**/packages/types/**,**/packages/queries/**");
+  // 0.8.0: 仓型三分占位（params 显式值优先；缺省用 detect 启发式兜底）
+  let inferredKind = null;
+  try {
+    inferredKind = root ? inferRepoKind(root) : null;
+  } catch {
+    inferredKind = null;
+  }
+  set(
+    "REPO_KIND",
+    String(
+      params.repo_kind ||
+        params.REPO_KIND ||
+        (inferredKind && inferredKind.repo_kind) ||
+        "backend"
+    )
+  );
+  set(
+    "MONOREPO",
+    (params.monorepo ??
+      params.MONOREPO ??
+      (inferredKind ? inferredKind.monorepo : false))
+      ? "true"
+      : "false"
+  );
   set("STACK_BADGES", "");
   set("OPENAPI_BRIDGE_TIP", "");
   // 0.7.50: Python 生成器包（migration_naming.py.tmpl）占位默认
@@ -488,7 +523,18 @@ function ensureStandardPlaceholders(params, placeholders, root) {
   const domainList = Array.isArray(params.domains)
     ? params.domains.map((d) => String(d).toLowerCase())
     : [];
-  const contractOrder = ["func", "api", "db", "redis", "jobs"];
+  const contractOrder = [
+    "func",
+    "api",
+    "db",
+    "redis",
+    "jobs",
+    "design",
+    "prototype",
+    "pages",
+    "components",
+    "client-api",
+  ];
   const enabledContract = contractOrder.filter((d) => domainList.includes(d));
   const docsPipe =
     enabledContract.length > 0 ? enabledContract.join("|") : "func|api|db";
@@ -921,8 +967,9 @@ function expandFromManifest(manifestPath, params, root) {
   );
   const mcpEngines = resolveMcpEngines(params);
   const variant = params.agents_variant || "solo";
-  const includeOptional = new Set(normalizeIncludeOptional(params.include_optional));
-  assertRule17Mutex(includeOptional);
+  const includeOptional = assertRule101Mutex(
+    new Set(normalizeIncludeOptional(params.include_optional))
+  );
   let moduleDirs = params.module_dirs || [];
   if (params.all_modules === true || params.all_modules === "true") {
     const scanned = scanPomModules(root);

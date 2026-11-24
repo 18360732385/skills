@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.7.63"
+version: "0.8.0"
 source_repo: ""
 description: "De-domainized Agent Harness templates for cross-repo landing. Write entry: scripts/harness.mjs; hot path: AGENT-INDEX.md."
 # 0.7.0: Codex → 高 (Starlark/TOML/hooks/skills; discipline B).
@@ -32,7 +32,14 @@ placeholders:
   - GLOB_JOBS
   - GLOB_OBSERVABILITY
   - GLOB_FRONTEND
+  - GLOB_DESIGN
+  - GLOB_PROTOTYPE
+  - GLOB_COMPONENTS
+  - GLOB_PAGES
+  - GLOB_CLIENT_API
   - FRONTEND_DIR
+  - REPO_KIND
+  - MONOREPO
   - DB_MIGRATION_MODE
   - CODE_PREFIXES
   - BASE_PACKAGE
@@ -102,7 +109,7 @@ files:
     ladder: L0
     template: meta/harness-meta.yaml.tmpl
     target: docs/harness-eng/harness-meta.yaml
-    placeholders: [LADDER_TARGET, DOMAINS_YAML, AGENTS_VARIANT, GLOB_PROFILE, DATE, LAST_MODE, AI_TOOLS_YAML, GATE_PROFILE]
+    placeholders: [LADDER_TARGET, DOMAINS_YAML, AGENTS_VARIANT, GLOB_PROFILE, DATE, LAST_MODE, AI_TOOLS_YAML, GATE_PROFILE, REPO_KIND, MONOREPO]
     note: "0.5.6+ SSOT under docs/harness-eng/; readers fall back to legacy .cursor/harness-meta.yaml(.yml)"
   - id: score-policy
     ladder: L1
@@ -130,20 +137,20 @@ files:
     placeholders: [GLOB_OBSERVABILITY]
     optional: true
     note: 行为包（非契约域）；Include when Q_RULE21=yes（detect S_SLF4J 推荐）
-  - id: rule-17
+  - id: rule-101
     ladder: L0
-    template: rules/17-frontend-web.mdc.tmpl
-    target: .cursor/rules/17-frontend-web.mdc
+    template: rules/101-frontend-web.mdc.tmpl
+    target: .cursor/rules/101-frontend-web.mdc
     placeholders: [GLOB_FRONTEND, FRONTEND_DIR]
     optional: true
-    note: 前端协作包（非契约域）；薄指针版（正文 SSOT=前端分册 AGENTS）；Include when Q_FRONTEND_RULE=yes（detect S_FRONTEND 推荐）
-  - id: rule-17-full
+    note: 前端总触发（0.7.x 曾用 17 号；upgrade 生成 101 后退役旧 17 文件，防双规则）；薄指针版（正文 SSOT=前端分册 AGENTS）；Include when Q_FRONTEND_RULE=yes（detect S_FRONTEND 推荐）
+  - id: rule-101-full
     ladder: L0
-    template: rules/17-frontend-web.full.mdc.tmpl
-    target: .cursor/rules/17-frontend-web.mdc
+    template: rules/101-frontend-web.full.mdc.tmpl
+    target: .cursor/rules/101-frontend-web.mdc
     placeholders: [GLOB_FRONTEND, FRONTEND_DIR]
     optional: true
-    note: 厚正文回退变体；仅当 Q_FRONTEND_RULE=yes 且本仓**无**前端分册 AGENTS 时以此代替 rule-17（二选一，勿同装）
+    note: 厚正文回退变体；仅当 Q_FRONTEND_RULE=yes 且本仓**无**前端分册 AGENTS 时以此代替 rule-101（二选一，勿同装）
 
   # L1 contract domains → templates/_meta/domain-packs.yaml (render expandDomainPackEntries)
 

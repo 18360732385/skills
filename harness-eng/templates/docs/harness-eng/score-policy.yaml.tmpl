@@ -14,17 +14,23 @@ version: "0.7.0"
 # overall | all_domains | weighted
 # - overall：沿用全局 ready_coverage（旧默认）
 # - all_domains：凡 inventory 有数据的域，均须 ≥ coverage_targets[域]【大仓推荐】
-# - weighted：按 api0.35/func0.25/db0.25/redis0.15 对域覆盖率加权，≥ ready_coverage
+# - weighted：按注册表权重（api0.35/func0.25/db0.25/redis0.15；前端 design0.30/prototype0.20/components0.20/pages0.15/client-api0.15，按启用集归一）对域覆盖率加权，≥ ready_coverage
 coverage_mode: all_domains
 
 # 分域覆盖目标（相对 inventory）；缺省回退 ready_coverage
 # gold 运行时强制各契约域 1.0（仅 code>0 的域计入 coverage_ready）
+# 0.8.0：前端域入表（design/prototype 计分；pages/components/client-api 0.8.1+ 启用后即生效）
 coverage_targets:
   api: 0.8
   func: 0.8
   db: 0.8
   redis: 0.8
   jobs: 0.8
+  design: 0.8
+  prototype: 0.8
+  pages: 0.8
+  components: 0.8
+  client-api: 0.8
 
 # 列密度（计入 template_completeness；gold 另用 template_completeness_min）
 density:

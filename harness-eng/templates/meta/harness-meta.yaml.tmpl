@@ -1,6 +1,6 @@
 # harness-eng install metadata — do not put secrets here
 skill: harness-eng
-skill_version: "0.7.63"
+skill_version: "0.8.0"
 # skill_root: land/upgrade 回写（仓内相对 / 仓外绝对）；refresh-score 优先 HARNESS_ENG_ROOT（0.7.39）
 # skill_root: "/path/to/harness-eng"
 # agent_config: true = L5 配置 SSOT 管线已启用（docs/agent-config/ + scripts/agent-config/sync.mjs）；生成物勿手改
@@ -9,6 +9,9 @@ agent_config: {{AGENT_CONFIG}}
 rulehook: {{RULEHOOK}}
 # mcp_tracking: example_only | vendored_shared（见 conflict-policy；缺省 example_only）
 # mcp_tracking: example_only
+# 仓型（0.8.0+；detect 回填：代码成分为主、README/AGENTS 补盲；不确定时经 Q_REPO_KIND 确认）
+repo_kind: "{{REPO_KIND}}"
+monorepo: {{MONOREPO}}
 ladder: "{{LADDER_TARGET}}"
 domains: {{DOMAINS_YAML}}
 agents_variant: "{{AGENTS_VARIANT}}"

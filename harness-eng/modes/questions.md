@@ -39,7 +39,7 @@ Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘�
 大仓 / pipeline 默认 `Q_LADDER=L4`（见 [recommended-profile.md](recommended-profile.md)）。  
 `Q_MODULES` → manifest：`solo`→`agents-root-solo`；`few`/`all`→`agents-root`+`agents-module`。  
 `Q_MODULE_AGENTS`：`auto`【前后端 monorepo 推荐】/ `default` / `spring` / `frontend` → `params.module_agents_template`；render **按目录探测**（pom→spring、package.json→frontend），全局 spring 不会盖住 frontend 分册。`questions-next` 截断时带 `remaining`/`truncated`。  
-`Q_FRONTEND_RULE` / `S_FRONTEND`+域含 `api` → 【推荐】`placeholders.GLOB_API` 追加前端契约包 globs（见 [recommended-profile.md](recommended-profile.md) / [detect.md](detect.md)）；与 rule 17、api `hook_code` regex 同剖面。  
+`Q_FRONTEND_RULE` / `S_FRONTEND`+域含 `api` → 【推荐】`placeholders.GLOB_API` 追加前端契约包 globs（见 [recommended-profile.md](recommended-profile.md) / [detect.md](detect.md)）；与 rule 101、api `hook_code` regex 同剖面。  
 `Q_RULE14=true` → params `include_optional` 含 `"rule-14"`（**数组**，勿写布尔进 render params）。  
 `Q_APIFOX=true` → `include_optional` 追加 `openapi-md-to-openapi` / `openapi-sync` / `openapi-import` / `openapi-readme` / `openapi-env-example` / `openapi-generated-readme`，且 `openapi_bridge: true`（soft-gate 注入 `OPENAPI_BRIDGE_TIP`）。  
 resume 写盘：`on_exists=skip`（见 [resume.md](resume.md)）。  

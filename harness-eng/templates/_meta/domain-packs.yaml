@@ -153,3 +153,105 @@ jobs:
     template: rules/20-jobs-doc-sync.mdc.tmpl
     target: .cursor/rules/20-jobs-doc-sync.mdc
     placeholders: [GLOB_JOBS]
+
+# 0.8.0 前端域（design/prototype 全链路计分；pages/components/client-api 索引壳）
+design:
+  - id: design-index
+    ladder: L1
+    domain: design
+    template: docs/design/design.md.tmpl
+    target: docs/design/design.md
+    placeholders: [REPO_NAME]
+  - id: design-modules-readme
+    ladder: L1
+    domain: design
+    template: docs/design/modules/README.md
+    target: docs/design/modules/README.md
+  - id: design-asset-tmpl
+    ladder: L1
+    domain: design
+    template: docs/design/templates/design-asset-template.md
+    target: docs/design/templates/design-asset-template.md
+  - id: rule-102
+    ladder: L1
+    domain: design
+    template: rules/102-design-system.mdc.tmpl
+    target: .cursor/rules/102-design-system.mdc
+    placeholders: [GLOB_DESIGN]
+prototype:
+  - id: prototype-index
+    ladder: L1
+    domain: prototype
+    template: docs/prototype/prototype.md.tmpl
+    target: docs/prototype/prototype.md
+    placeholders: [REPO_NAME]
+  - id: prototype-modules-readme
+    ladder: L1
+    domain: prototype
+    template: docs/prototype/modules/README.md
+    target: docs/prototype/modules/README.md
+  - id: prototype-asset-tmpl
+    ladder: L1
+    domain: prototype
+    template: docs/prototype/templates/prototype-asset-template.md
+    target: docs/prototype/templates/prototype-asset-template.md
+  - id: rule-103
+    ladder: L1
+    domain: prototype
+    template: rules/103-prototype.mdc.tmpl
+    target: .cursor/rules/103-prototype.mdc
+    placeholders: [GLOB_PROTOTYPE]
+pages:
+  - id: pages-index
+    ladder: L1
+    domain: pages
+    template: docs/pages/pages.md.tmpl
+    target: docs/pages/pages.md
+    placeholders: [REPO_NAME]
+  - id: pages-modules-readme
+    ladder: L1
+    domain: pages
+    template: docs/pages/modules/README.md
+    target: docs/pages/modules/README.md
+  - id: rule-105
+    ladder: L1
+    domain: pages
+    template: rules/105-pages.mdc.tmpl
+    target: .cursor/rules/105-pages.mdc
+    placeholders: [GLOB_PAGES]
+components:
+  - id: components-index
+    ladder: L1
+    domain: components
+    template: docs/components/components.md.tmpl
+    target: docs/components/components.md
+    placeholders: [REPO_NAME]
+  - id: components-modules-readme
+    ladder: L1
+    domain: components
+    template: docs/components/modules/README.md
+    target: docs/components/modules/README.md
+  - id: rule-104
+    ladder: L1
+    domain: components
+    template: rules/104-components.mdc.tmpl
+    target: .cursor/rules/104-components.mdc
+    placeholders: [GLOB_COMPONENTS]
+client-api:
+  - id: client-api-index
+    ladder: L1
+    domain: client-api
+    template: docs/client-api/client-api.md.tmpl
+    target: docs/client-api/client-api.md
+    placeholders: [REPO_NAME]
+  - id: client-api-modules-readme
+    ladder: L1
+    domain: client-api
+    template: docs/client-api/modules/README.md
+    target: docs/client-api/modules/README.md
+  - id: rule-106
+    ladder: L1
+    domain: client-api
+    template: rules/106-client-api.mdc.tmpl
+    target: .cursor/rules/106-client-api.mdc
+    placeholders: [GLOB_CLIENT_API]

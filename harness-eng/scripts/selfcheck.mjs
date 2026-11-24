@@ -1756,17 +1756,19 @@ if (fs.existsSync(fixture)) {
   assert(/行为包/.test(gloss), "glossary has 行为包");
 }
 
-// --- 0.4.0 package model: rule 17 / spring module variant / merge preview / manual_sql ---
+// --- 0.4.0 package model: rule 101 (0.7.x 曾用 17 号) / spring module variant / merge preview / manual_sql ---
 {
-  const r17 = fs.readFileSync(
-    path.join(skillRoot, "templates/rules/17-frontend-web.mdc.tmpl"),
+  const r101 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/101-frontend-web.mdc.tmpl"),
     "utf8"
   );
-  assert(/\{\{GLOB_FRONTEND\}\}/.test(r17), "rule17 tmpl has GLOB_FRONTEND placeholder");
-  assert(/协作包/.test(r17), "rule17 tmpl marks collab pack");
-  assert(!/sms-ai-web|Clinical Calm|antd/.test(r17), "rule17 tmpl de-domainized");
+  assert(/\{\{GLOB_FRONTEND\}\}/.test(r101), "rule101 tmpl has GLOB_FRONTEND placeholder");
+  assert(/总触发|协作/.test(r101), "rule101 tmpl marks frontend pack");
+  assert(!/sms-ai-web|Clinical Calm|antd/.test(r101), "rule101 tmpl de-domainized");
+  assert(!fs.existsSync(path.join(skillRoot, "templates/rules/17-frontend-web.mdc.tmpl")), "old 17 tmpl retired");
   const man = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
-  assert(/id:\s*rule-17/.test(man), "manifest has rule-17");
+  assert(/id:\s*rule-101/.test(man), "manifest has rule-101");
+  assert(!/id:\s*rule-17\b/.test(man), "manifest drops rule-17 id");
   assert(/GLOB_FRONTEND/.test(man) && /FRONTEND_DIR/.test(man) && /DB_MIGRATION_MODE/.test(man), "manifest new placeholders");
   assert(/module_agents_template=spring\|frontend|module_agents_template=spring/.test(man), "manifest notes spring|frontend variant");
   assert(
@@ -1823,15 +1825,15 @@ if (fs.existsSync(fixture)) {
   assert(/migration_modes/.test(domYaml), "domains db migration_modes");
   assert(/S_FRONTEND/.test(domYaml) && !/sms-ai-web/.test(domYaml), "domains frontend pack generic + detect");
   const rp = readDoc("recommended-profile.md");
-  assert(/rule17/.test(rp) && /module_agents_template/.test(rp), "recommended-profile new rows");
+  assert(/rule101/.test(rp) && /module_agents_template/.test(rp), "recommended-profile new rows");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/manual_sql/.test(gloss) && /分册变体/.test(gloss), "glossary manual_sql + 分册变体");
   const resume = readDoc("resume.md");
   assert(/mergePreview/.test(resume), "resume documents mergePreview");
   const ladder = readDoc("ladder.md");
-  assert(/17-frontend-web/.test(ladder), "ladder L0 frontend collab pack");
+  assert(/101-frontend-web/.test(ladder), "ladder L0 frontend pack (101)");
   const audit = readDoc("audit-report.md");
-  assert(/rule 17/.test(audit), "audit L0 rule 17");
+  assert(/rule 101/.test(audit), "audit L0 rule 101");
 }
 
 // --- 0.4.0 runtime: spring variant + mergePreview dry-run ---
@@ -6360,6 +6362,109 @@ console.log("theme-gate-smoke-ok");
     "0.7.63 CHANGELOG"
   );
   assert(logExists("0.7.63"), "0.7.63 _log note exists");
+}
+
+// --- 0.8.0: 仓型三分 · 前端五域 · rules 101 族 ---
+{
+  const domYaml80 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domains.yaml"),
+    "utf8"
+  );
+  for (const d of ["design", "prototype", "pages", "components", "client-api"]) {
+    assert(new RegExp(`^  ${d}:`, "m").test(domYaml80), `0.8.0 domains has ${d}`);
+  }
+  for (const rid of ["102", "103", "104", "105", "106"]) {
+    assert(new RegExp(`rule_id: "${rid}"`).test(domYaml80), `0.8.0 domains rule_id ${rid}`);
+  }
+  assert(/design:/.test(domYaml80) && /fill-inventory\.mjs --domain design/.test(domYaml80), "0.8.0 design inventory CLI");
+  assert(/fill-inventory\.mjs --domain prototype/.test(domYaml80), "0.8.0 prototype inventory CLI");
+
+  const packsYaml80 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domain-packs.yaml"),
+    "utf8"
+  );
+  for (const rid of ["rule-102", "rule-103", "rule-104", "rule-105", "rule-106"]) {
+    assert(new RegExp(`id: ${rid}`).test(packsYaml80), `0.8.0 packs has ${rid}`);
+  }
+
+  const man80 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  assert(/REPO_KIND/.test(man80) && /MONOREPO/.test(man80), "0.8.0 manifest repo_kind placeholders");
+  assert(/GLOB_DESIGN/.test(man80) && /GLOB_PROTOTYPE/.test(man80) && /GLOB_CLIENT_API/.test(man80), "0.8.0 manifest frontend GLOB placeholders");
+
+  const metaTmpl80 = fs.readFileSync(
+    path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
+    "utf8"
+  );
+  assert(/repo_kind: "\{\{REPO_KIND\}\}"/.test(metaTmpl80) && /monorepo: \{\{MONOREPO\}\}/.test(metaTmpl80), "0.8.0 meta tmpl repo_kind/monorepo");
+
+  const det80 = fs.readFileSync(path.join(skillRoot, "modes/detect.md"), "utf8");
+  assert(/S_BACKEND/.test(det80) && /S_MONOREPO/.test(det80), "0.8.0 detect signals");
+  assert(/仓型三分/.test(det80) && /Q_REPO_KIND/.test(det80), "0.8.0 detect repo_kind spec");
+  const rp80 = fs.readFileSync(path.join(skillRoot, "modes/recommended-profile.md"), "utf8");
+  assert(/repo_kind/.test(rp80) && /design,prototype/.test(rp80), "0.8.0 recommended-profile repo_kind split");
+
+  const dsSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/detect-signals.mjs"), "utf8");
+  assert(/export function inferRepoKind/.test(dsSrc) && /function hasBackend/.test(dsSrc) && /function detectMonorepo/.test(dsSrc), "0.8.0 inferRepoKind exports");
+  assert(/S_BACKEND/.test(dsSrc) && /S_MONOREPO/.test(dsSrc), "0.8.0 scanSignals new keys");
+
+  const renderSrc80 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/REPO_KIND/.test(renderSrc80) && /MONOREPO/.test(renderSrc80), "0.8.0 render repo placeholders");
+  assert(/"client-api"/.test(renderSrc80), "0.8.0 render contractOrder frontend domains");
+  assert(/assertRule101Mutex/.test(renderSrc80) && !/assertRule17Mutex/.test(renderSrc80), "0.8.0 render rule-101 mutex");
+
+  const gateSrc80 = fs.readFileSync(path.join(skillRoot, "scripts/lib/ai-coding-gate.mjs"), "utf8");
+  assert(/measured_by_domain/.test(gateSrc80) && !/domainKeys\.includes\("frontend"\)/.test(gateSrc80), "0.8.0 gate frontend_coverage measured");
+
+  const mergeSrc80 = fs.readFileSync(path.join(skillRoot, "scripts/lib/merge-domain.mjs"), "utf8");
+  assert(/inv\.assets/.test(mergeSrc80) && /truthsSubdir/.test(mergeSrc80), "0.8.0 merge assets + truthsSubdir");
+
+  for (const lib of ["inventory-design", "inventory-prototype"]) {
+    assert(
+      fs.existsSync(path.join(skillRoot, `scripts/lib/${lib}.mjs`)),
+      `0.8.0 ${lib} exists`
+    );
+  }
+  const invHelp80 = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts/fill-inventory.mjs"), "--domain", "design", "--help"],
+    { encoding: "utf8", windowsHide: true }
+  );
+  assert(invHelp80.status === 0 && /--root/.test(invHelp80.stdout + invHelp80.stderr), "0.8.0 fill-inventory --domain design --help");
+
+  const q80 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(/Q_REPO_KIND/.test(q80) && /101-frontend-web/.test(q80), "0.8.0 questions Q_REPO_KIND + rule 101");
+
+  const morphReq80 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/morph-required.yaml"),
+    "utf8"
+  );
+  assert(/design:/.test(morphReq80) && /prototype:/.test(morphReq80), "0.8.0 morph-required frontend domains");
+
+  const sp80 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/harness-eng/score-policy.yaml.tmpl"),
+    "utf8"
+  );
+  assert(/design: 0\.8/.test(sp80) && /client-api: 0\.8/.test(sp80), "0.8.0 score-policy frontend targets");
+
+  assert(
+    /0\.7\.63 → 0\.8\.0/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.8.0 upgrade.md"
+  );
+  assert(
+    /0\.8\.0 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.8.0 VERIFY.md"
+  );
+  assert(
+    /\| 0\.8\.0 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")),
+    "0.8.0 CHANGELOG"
+  );
+  assert(logExists("0.8.0"), "0.8.0 _log note exists");
+
+  // 现行正文禁再以 17 号指称前端规则（历史小节/实证档案除外）
+  const ladder80 = fs.readFileSync(path.join(skillRoot, "modes/ladder.md"), "utf8");
+  assert(!/17-frontend-web/.test(ladder80), "0.8.0 ladder drops 17-frontend");
+  const rpDoc80 = fs.readFileSync(path.join(skillRoot, "modes/recommended-profile.md"), "utf8");
+  assert(!/\| `rule17` \|/.test(rpDoc80), "0.8.0 recommended-profile drops rule17 row");
 }
 
 console.log(`ok: ${ok.length}`);

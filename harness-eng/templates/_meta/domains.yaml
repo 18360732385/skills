@@ -94,6 +94,90 @@ domains:
     hook_tip: "rule 20：同步 docs/jobs/tasks 任务真相 + 四件套（索引/archive 不算）"
     hook_yml_re: "(application[^/]*\\.ya?ml|config/.*\\.ya?ml)$"
     note: "Cron / Scheduler / Registry 调度契约；非 OpenAPI 字段表"
+  design:
+    kind: contract
+    ladder: L1
+    label: Design System
+    index: design.md
+    truths_dir: modules
+    rule_id: "102"
+    weight: 0.30
+    morph_cap: 100
+    optional: false
+    detect: [S_FRONTEND]
+    pack: design
+    inventory: fill-inventory.mjs --domain design
+    scan_fill_work: true
+    hook_code: ["/(theme|tokens|styles)\//", "/tailwind\.(config|theme)\./", "/unocss\.config\./", "/\.(style|design)-system\./"]
+    hook_docs: "docs/design/modules/"
+    hook_tip: "rule 102：改视觉/主题/token 前先同步 docs/design/modules 设计真相（索引/archive 不算）；运行代码（tokens.css 等）留原地，非运行文档经确认归档 docs/design/"
+    note: "0.8.0 前端域：token/主题/风格/禁库；repo_kind=frontend|fullstack 时默认启用"
+  prototype:
+    kind: contract
+    ladder: L1
+    label: UI Prototype
+    index: prototype.md
+    truths_dir: modules
+    rule_id: "103"
+    weight: 0.20
+    morph_cap: 100
+    optional: false
+    detect: [S_FRONTEND]
+    pack: prototype
+    inventory: fill-inventory.mjs --domain prototype
+    scan_fill_work: true
+    hook_code: ["/ui-prototypes\//", "/docs\/prototype\//", "/(prototypes?|mockups?|wireframes?)\//"]
+    hook_docs: "docs/prototype/modules/"
+    hook_tip: "rule 103：原型/高保真变更须回写 docs/prototype/modules 索引与页面映射（索引/archive 不算）；非运行原型资产经确认归档 docs/prototype/"
+    note: "0.8.0 前端域：原型图/高保真 HTML/外链索引（非运行时）；多根扫描归一 SSOT"
+  pages:
+    kind: contract
+    ladder: L1
+    label: Page Route
+    index: pages.md
+    truths_dir: modules
+    rule_id: "105"
+    weight: 0.15
+    morph_cap: 100
+    optional: true
+    detect: [S_FRONTEND]
+    pack: pages
+    hook_code: ["/(pages?|views?|routes?|screens?)\//"]
+    hook_docs: "docs/pages/modules/"
+    hook_tip: "rule 105：页面/路由职责或原型映射变更须同步 docs/pages/modules（0.8.0 索引壳）"
+    note: "0.8.0 索引壳：先落索引与 rule；精填 inventory 与升严计分 0.8.1+"
+  components:
+    kind: contract
+    ladder: L1
+    label: UI Component
+    index: components.md
+    truths_dir: modules
+    rule_id: "104"
+    weight: 0.20
+    morph_cap: 100
+    optional: true
+    detect: [S_FRONTEND]
+    pack: components
+    hook_code: ["/components?\//", "/widgets?\//"]
+    hook_docs: "docs/components/modules/"
+    hook_tip: "rule 104：组件/控件库/变体变更须同步 docs/components/modules（0.8.0 索引壳）"
+    note: "0.8.0 索引壳：先落索引与 rule；精填 inventory 与升严计分 0.8.1+"
+  client-api:
+    kind: contract
+    ladder: L1
+    label: Client API
+    index: client-api.md
+    truths_dir: modules
+    rule_id: "106"
+    weight: 0.15
+    morph_cap: 100
+    optional: true
+    detect: [S_FRONTEND]
+    pack: client-api
+    hook_code: ["/api-client\//", "/queries\//", "/packages\/types\//", "/services\/api\//"]
+    hook_docs: "docs/client-api/modules/"
+    hook_tip: "rule 106：前端契约消费层（api-client/types/queries）变更须同步 docs/client-api/modules（0.8.0 索引壳；提供侧契约走 rule 12）"
+    note: "0.8.0 索引壳：fullstack 与 api 域分工见 glossary（消费侧 vs 提供侧）；精填 0.8.1+"
 
 # Non-scored packs (detect / audit footnotes only)
 packs:
@@ -104,9 +188,9 @@ packs:
   frontend:
     kind: collab
     paths: ["**/apps/**", "**/packages/**", "**/*-web/**"]
-    rule_hint: "17-frontend-*"
+    rule_hint: "101-frontend-*"
     detect: [S_FRONTEND]
-    note: "前端协作约束（rule 17 模板 0.4.0+）；非契约域，不进 fill-score 权重"
+    note: "前端总触发协作包（rule 101，0.7.x 曾用 17 号）；契约域走 design/prototype/pages/components/client-api（0.8.0+）"
   behavior:
     kind: behavior
     rule_hint: "21-observability-*"

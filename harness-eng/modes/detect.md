@@ -29,7 +29,9 @@ git rev-parse --show-toplevel
 | `S_REDIS` | `docs/redis/` **且至少 1 个非空文件** |
 | `S_JOBS` | `docs/jobs/` **且至少 1 个非空文件**；或源码命中 `@Scheduled` / `*Scheduler.java` / `SyncTaskCode` / `SyncTaskMetadataRegistry`（调度指纹） |
 | `S_RELEASES` | `docs/releases/` 存在（过程域脚注；非契约） |
-| `S_FRONTEND` | 平铺 `frontend/package.json`，或 `apps/*`+`package.json`，或根/一层子目录 `package.json` 含 React/Vite/Vue/Next/workspace（协作包脚注；**不要求**已有 rule 17） |
+| `S_FRONTEND` | 平铺 `frontend/package.json`，或 `apps/*`+`package.json`，或根/一层子目录 `package.json` 含 React/Vite/Vue/Next/workspace（协作包脚注；**不要求**已有 rule 101） |
+| `S_BACKEND` | 根/一层子目录命中后端栈：`pom.xml`（JVM）/ `go.mod` / `Cargo.toml` / Python 后端框架（fastapi·django·flask）pyproject / Java 源码树 `src/main/java` / Node 服务端依赖（express·@nestjs·fastify·koa·hono）。README/AGENTS 后端关键词仅补盲，见 **仓型三分** |
+| `S_MONOREPO` | workspace 清单（`pnpm-workspace.yaml` / `lerna.json` / `turbo.json` / `nx.json` / `package.json.workspaces`）或 `backend/`+`frontend/` 目录或 ≥2 种栈清单并存 |
 | `S_KB` | `docs/agent-kb/` **且至少 1 个非空文件** |
 | `S_SP` | `docs/superpowers/` **且至少 1 个非空文件**（**外部流程产物**；见类型判定） |
 | `S_RUNS` | `docs/runs/` 存在（主题过程态；外部控制器可选；**外部流程产物**；见类型判定） |
@@ -93,6 +95,22 @@ git rev-parse --show-toplevel
 抽不出连接信息的「profile × 引擎」→ 记入 `matrix_gap: no_creds`（不纳入应有集合；Fingerprint 备注列出）。  
 Fingerprint 摘要须打印：**应有 MCP 矩阵**（列表）+ **已有 mcp.json server 名**（若 `S_MCP`）+ 覆盖缺口。
 
+## 仓型三分（repo_kind · 0.8.0+）
+
+Fingerprint 之后按 **代码成分为主、README/AGENTS 文档补盲** 判定仓型（实现：`scripts/lib/detect-signals.mjs` → `inferRepoKind(root)`）：
+
+| repo_kind | 条件 |
+|---|---|
+| `frontend` | `S_FRONTEND` 且无 `S_BACKEND` |
+| `backend` | `S_BACKEND` 且无 `S_FRONTEND` |
+| `fullstack` | `S_FRONTEND` 且 `S_BACKEND`（含 monorepo `backend/`+`frontend/`） |
+| `null`（不确定） | 代码无信号且文档无提示，或信号冲突 → **必须单题问 `Q_REPO_KIND`**，勿沉默默认 |
+
+- 代码无信号时才采纳 README/AGENTS 关键词提示（`inferRepoKind` 内 `docsRepoHints`）；文档与代码冲突时以代码为准，冲突程度大（文档双肯定、代码单边）→ 归 `fullstack`。
+- `monorepo` 独立布尔（workspace / 双栈清单 / backend+frontend 目录）；多包时子包形态记入 Fingerprint 备注，`repo_kind` 取整仓主导交付面。
+- 语言中立：**不**绑定 React/pnpm/antd；任意栈（Vue/Angular/Svelte/Flutter/SCSS/Tailwind…）按目录名与依赖启发式命中。
+- 产出：`repo_kind` / `monorepo` 写入 `harness-meta`；`recommended-profile` 契约域推荐按此分流。
+
 ## 类型判定（优先序）
 
 1. **FOREIGN**：有 `S_CLAUDE` 且无本 harness 形态（无 `S_00`+契约索引+真相结构）→ 先问并存策略（[foreign-playbook.md](foreign-playbook.md)）
@@ -115,7 +133,7 @@ Fingerprint 摘要须打印：**应有 MCP 矩阵**（列表）+ **已有 mcp.js
 Redis：`docs/redis/**` + 探测到的 cache/redis 目录。  
 Jobs：`docs/jobs/**` + `**/scheduler/**/*.java` + 任务码枚举 / Metadata Registry + `**/application*.yml`（`{{GLOB_JOBS}}`）。  
 行为包（rule 21，`{{GLOB_OBSERVABILITY}}`）：Maven/Java 默认 `**/src/main/java/**/*.java,**/src/main/resources/application*.yml,**/src/main/resources/config/**/*.yml`；非 Java 栈不装。  
-前端协作包（rule 17，`{{GLOB_FRONTEND}}`）：默认 `**/apps/**/*.ts,**/apps/**/*.tsx,**/packages/**`；focused 时收窄到前端目录前缀。  
+前端协作包（rule 101，`{{GLOB_FRONTEND}}`）：默认 `**/apps/**/*.ts,**/apps/**/*.tsx,**/packages/**`；focused 时收窄到前端目录前缀。  
 db 迁移模式：`S_NO_FLYWAY` / `S_SQL_DIR` → 推荐 `Q_DB_MIGRATION=manual_sql`，并写入 `docs/db/db.md`「迁移模式」声明。
 
 Fingerprint 若 `S_RELEASES` / `S_FRONTEND`：备注「过程/协作包已存在；非 L1 契约域，见 glossary」。

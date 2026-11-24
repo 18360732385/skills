@@ -5,7 +5,7 @@
 import fs from "fs";
 import path from "path";
 import { spawnSync } from "child_process";
-import { domainLabel as registryDomainLabel } from "./domains.mjs";
+import { domainLabel as registryDomainLabel, truthsSubdir } from "./domains.mjs";
 
 /** Walk directory for .md files recursively. */
 export function walkMd(dir, acc = []) {
@@ -126,6 +126,22 @@ export function extractInventoryEvidence(inv, domain) {
       out.push({
         evidence: t.evidence || t.task_code || t.id,
         label: t.task_code || t.slug || t.id,
+      });
+    }
+  } else if ((domain === "design" || domain === "prototype") && Array.isArray(inv.assets)) {
+    // 0.8.0 前端域：inventory assets（tokens/文档/原型文件/外链）→ evidence = path|url
+    for (const a of inv.assets) {
+      out.push({
+        evidence: a.path || a.url || a.id,
+        label: a.id || a.path || a.url,
+      });
+    }
+  } else if (Array.isArray(inv.assets)) {
+    // 0.8.0 通用 assets 兜底（pages/components/client-api 索引壳域 0.8.1+ 复用）
+    for (const a of inv.assets) {
+      out.push({
+        evidence: a.path || a.url || a.id,
+        label: a.id || a.path || a.url,
       });
     }
   }
@@ -520,7 +536,7 @@ export function updateDomainIndex(opts) {
   const dir =
     targetDir ||
     (target ? path.dirname(path.resolve(target)) : null) ||
-    path.join(path.dirname(indexPath), domain === "db" ? "table" : domain === "func" || domain === "api" ? "modules" : "keys");
+    path.join(path.dirname(indexPath), truthsSubdir(domain));
   const absDir = path.resolve(dir);
   if (!fs.existsSync(absDir)) return { updated: false, path: indexPath, reason: "target_dir_missing" };
 
@@ -554,6 +570,12 @@ export function updateDomainIndex(opts) {
       } else if (Array.isArray(inv.tasks)) {
         for (const t of inv.tasks) {
           const lab = String(t.task_code || t.slug || t.id || "").toLowerCase();
+          if (lab) labels.push(lab);
+        }
+      } else if (Array.isArray(inv.assets)) {
+        // 0.8.0 前端域：assets 发现序排序
+        for (const a of inv.assets) {
+          const lab = String(a.id || a.path || "").toLowerCase();
           if (lab) labels.push(lab);
         }
       }

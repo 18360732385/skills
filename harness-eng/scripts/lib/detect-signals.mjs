@@ -173,6 +173,172 @@ function hasFrontend(root) {
   return false;
 }
 
+/**
+ * 0.8.0 repo_kind: cheap backend stack probe (language-agnostic).
+ * JVM(pom) / Go / Rust / Python-WSGI / Node-server deps / java source tree.
+ */
+const NODE_BACKEND_DEP = /^(express|fastify|koa|@nestjs\/.*|@hono\/.*|hapi|fastify.*)$/;
+
+function packageJsonLooksBackend(pkgPath) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    if (pkg.workspaces) return false; // workspace root → 由子包判定
+    const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+    for (const dep of Object.keys(deps)) {
+      if (NODE_BACKEND_DEP.test(dep)) return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+function pyProjectLooksBackend(p) {
+  try {
+    const text = fs.readFileSync(p, "utf8");
+    if (/fastapi|django|flask|uvicorn|gunicorn|starlette|sqlalchemy|tornado/i.test(text))
+      return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+function listOneLevelDirs(root) {
+  let names = [];
+  try {
+    names = fs.readdirSync(root);
+  } catch {
+    return [];
+  }
+  return names
+    .filter((n) => !n.startsWith(".") && n !== "node_modules" && n !== "target")
+    .map((n) => path.join(root, n))
+    .filter(isDir);
+}
+
+function hasBackend(root) {
+  // JVM（pom 即后端信号；Spring 细分见 S_SPRING）
+  if (listPomFiles(root).length > 0) return true;
+  // Go / Rust 栈清单
+  if (isFile(path.join(root, "go.mod")) || isFile(path.join(root, "Cargo.toml")))
+    return true;
+  for (const dir of listOneLevelDirs(root)) {
+    if (isFile(path.join(dir, "go.mod")) || isFile(path.join(dir, "Cargo.toml")))
+      return true;
+    if (isFile(path.join(dir, "pom.xml"))) return true;
+  }
+  // Java 源码树（无 pom 的极端仓）
+  if (hasNonEmptyIn(path.join(root, "src", "main", "java"))) return true;
+  for (const dir of listOneLevelDirs(root)) {
+    if (hasNonEmptyIn(path.join(dir, "src", "main", "java"))) return true;
+  }
+  // Python 后端框架
+  const pyRoot = path.join(root, "pyproject.toml");
+  if (isFile(pyRoot) && pyProjectLooksBackend(pyRoot)) return true;
+  for (const dir of listOneLevelDirs(root)) {
+    const p = path.join(dir, "pyproject.toml");
+    if (isFile(p) && pyProjectLooksBackend(p)) return true;
+  }
+  // Node 服务端依赖（root/一层；工作区根跳过）
+  const rootPkg = path.join(root, "package.json");
+  if (isFile(rootPkg) && packageJsonLooksBackend(rootPkg)) return true;
+  for (const dir of listOneLevelDirs(root)) {
+    const pkg = path.join(dir, "package.json");
+    if (isFile(pkg) && packageJsonLooksBackend(pkg)) return true;
+  }
+  return false;
+}
+
+/** 0.8.0: workspace / 双栈清单 / backend+frontend 目录 → monorepo。 */
+function detectMonorepo(root) {
+  if (
+    isFile(path.join(root, "pnpm-workspace.yaml")) ||
+    isFile(path.join(root, "lerna.json")) ||
+    isFile(path.join(root, "turbo.json")) ||
+    isFile(path.join(root, "nx.json"))
+  )
+    return true;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+    if (pkg && pkg.workspaces) return true;
+  } catch {
+    /* ignore */
+  }
+  if (isDir(path.join(root, "backend")) && isDir(path.join(root, "frontend"))) return true;
+  // 多种栈清单并存（如 sms-ai/pom.xml + sms-ai-web/package.json）
+  const kinds = new Set();
+  if (listPomFiles(root).length > 0) kinds.add("jvm");
+  if (isFile(path.join(root, "go.mod"))) kinds.add("go");
+  if (isFile(path.join(root, "Cargo.toml"))) kinds.add("rust");
+  if (isFile(path.join(root, "package.json"))) kinds.add("node");
+  if (isFile(path.join(root, "pyproject.toml"))) kinds.add("py");
+  for (const dir of listOneLevelDirs(root)) {
+    if (isFile(path.join(dir, "pom.xml"))) kinds.add("jvm");
+    if (isFile(path.join(dir, "go.mod"))) kinds.add("go");
+    if (isFile(path.join(dir, "Cargo.toml"))) kinds.add("rust");
+    if (isFile(path.join(dir, "package.json"))) kinds.add("node");
+    if (isFile(path.join(dir, "pyproject.toml"))) kinds.add("py");
+  }
+  return kinds.size >= 2;
+}
+
+/** 0.8.0: README/AGENTS 文档成分提示（仅补代码信号盲区；不单独定论）。 */
+function docsRepoHints(root) {
+  const hints = { fe: false, be: false };
+  for (const name of ["README.md", "AGENTS.md", "readme.md", "Readme.md"]) {
+    const p = path.join(root, name);
+    if (!isFile(p)) continue;
+    try {
+      const text = fs.readFileSync(p, "utf8");
+      if (/react|vue|vite|@angular|svelte|前端|frontend|ui\s*kit|design\s*system/i.test(text))
+        hints.fe = true;
+      if (
+        /spring|springboot|spring-boot|django|flask|fastapi|gin|gorm|后端|backend|controller|mysql|jdbc/i.test(
+          text
+        )
+      )
+        hints.be = true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return hints;
+}
+
+/**
+ * 0.8.0 repo_kind 三分（detect.md 规格）。
+ * 代码成分为主、README/AGENTS 文档补盲；冲突或全无 → repo_kind=null（Agent 须问 Q_REPO_KIND）。
+ * @returns {{ repo_kind: string|null, monorepo: boolean, code_fe: boolean, code_be: boolean, docs_fe: boolean, docs_be: boolean }}
+ */
+export function inferRepoKind(root) {
+  const code_fe = hasFrontend(root);
+  const code_be = hasBackend(root);
+  const docs = docsRepoHints(root);
+  const monorepo = detectMonorepo(root);
+  let fe = code_fe;
+  let be = code_be;
+  if (!fe && !be) {
+    // 代码无信号 → 采纳文档提示
+    fe = docs.fe;
+    be = docs.be;
+  }
+  let repo_kind;
+  if (fe && be) repo_kind = "fullstack";
+  else if (fe) repo_kind = "frontend";
+  else if (be) repo_kind = "backend";
+  else repo_kind = null;
+  return {
+    repo_kind,
+    monorepo,
+    code_fe,
+    code_be,
+    docs_fe: docs.fe,
+    docs_be: docs.be,
+  };
+}
+
+
 /** Cheap Java source fingerprint scan (depth-capped). 0.7.34 LD-4. */
 function scanJavaCodeFingerprints(root) {
   const out = {
@@ -274,6 +440,9 @@ export function scanSignals(root) {
   const S_STACK = hasStack(root);
   const S_SPRING = hasSpring(root);
   const S_FRONTEND = hasFrontend(root);
+  // 0.8.0: 仓型三分信号（repo_kind = fe/be 组合，见 inferRepoKind；docs 补盲在 inferRepoKind 内）
+  const S_BACKEND = hasBackend(root);
+  const S_MONOREPO = detectMonorepo(root);
   const S_SP = hasNonEmptyIn(path.join(root, "docs", "superpowers"));
   const S_RUNS =
     isDir(path.join(root, "docs", "runs")) ||
@@ -300,6 +469,8 @@ export function scanSignals(root) {
     S_STACK,
     S_SPRING,
     S_FRONTEND,
+    S_BACKEND,
+    S_MONOREPO,
     S_SP,
     S_RUNS,
     S_RULEHOOK,
@@ -312,4 +483,4 @@ export function scanSignals(root) {
   };
 }
 
-export default { scanSignals };
+export default { scanSignals, inferRepoKind };

@@ -71,6 +71,16 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.7.63 → 0.8.0 迁移要点
+
+1. **meta**：`skill_version` → `0.8.0`；回填 `repo_kind`（frontend|backend|fullstack）与 `monorepo`（判定：README/AGENTS + 代码成分启发式；**不确定时提问 `Q_REPO_KIND`**，勿沉默默认）
+2. **仓型分流**：`repo_kind=frontend` 时默认契约域改前端五域（`design,prototype` 计分 + `pages,components,client-api` 索引壳）；`fullstack` = 后端域 ∪ 前端域；`backend` 维持 0.7.x 推荐
+3. **前端域包**：L1 随域下发 `docs/{design,prototype}/` 索引 + `102-design-system` / `103-prototype`（及 `104-components` / `105-pages` / `106-client-api` 索引壳规则）；inventory 走 `fill-inventory.mjs --domain design|prototype`
+4. **rules 101 族**：`17-frontend-web(.full)` → `101-frontend-web(.full)`（同 target 改名；upgrade 生成 101 后**退役旧 17 文件**，防双规则并存）；分册 AGENTS / L5 skill `frontend-web` 指针同步 101
+5. **归档纪律**：非运行文件（`DESIGN*.md`、原型 HTML 等）经确认**归档到仓根 `docs/<domain>/`**；运行代码（`tokens.css` 等）**留原地**，仅索引 + 回链
+6. **评分**：`frontend_coverage` 不再恒 `not_measured`——`design`/`prototype` 入 `coverage_by_domain`；缺启用域与缺 `api` 同级 blocker；`ready_coverage` 仍 0.8
+7. **L5**：`check-freshness` → 刷新 SSOT 规则/域包与 `sync.mjs`（tmpl id `0.8.0`）后再 sync
+
 ## 0.7.62 → 0.7.63 迁移要点
 
 1. **meta**：`skill_version` → `0.7.63`

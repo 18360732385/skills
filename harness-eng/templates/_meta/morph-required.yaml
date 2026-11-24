@@ -101,3 +101,29 @@ domains:
     - id: forbid-openapi-dump
       kind: named
       name: forbid-openapi-dump
+
+  # 0.8.0 前端域（design/prototype 计分；truths = docs/<domain>/modules/NN-*.md）
+  design:
+    - id: req-asset-loc
+      kind: re
+      pattern: '##\s*资产定位|资产定位'
+    - id: req-content
+      kind: re
+      pattern: '##\s*内容|token|主题|风格|禁用'
+      flags: i
+    - id: req-change-trigger
+      kind: re
+      pattern: '##\s*变更触发|变更触发'
+
+  prototype:
+    - id: req-asset-loc
+      kind: re
+      pattern: '##\s*资产定位|资产定位'
+    - id: req-variants
+      kind: re
+      pattern: '##\s*变体|变体与演进|页面映射|原型'
+      flags: i
+    - id: req-change-trigger
+      kind: re
+      pattern: '##\s*变更触发|变更触发'
+

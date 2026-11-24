@@ -1,0 +1,45 @@
+---
+description: 设计系统同步规则（theme/tokens/风格）
+globs: {{GLOB_DESIGN}}
+alwaysApply: false
+---
+
+# 设计系统同步规则（rule 102）
+
+## 权威来源说明
+
+- **设计真相（SSOT）**：`docs/design/modules/` 下资产文档（token / 主题 / 风格指南 / 禁库）。
+- **索引（非 SSOT）**：`docs/design/design.md`；**禁止**在索引展开 token 值表。
+- 冲突裁决：`docs/design/modules/*.md` > `design.md`。
+- 写真相前查看 `docs/design/templates/design-asset-template.md`。
+
+## 归档纪律（0.8.0）
+
+- **非运行**设计文档（如 `DESIGN*.md`）经确认归档 `docs/design/`；**运行代码（`tokens.css` / theme 源码）留原地**，只索引 + 回链。
+- 禁止把密码 / Token 样例写入契约文档。
+
+## 文件命名（强制）
+
+- 设计真相：`NN-{asset}.md`；新建取最大序号 +1，更新 `design.md`、`modules/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+- 契约见 `scripts/doc_versioning.py`。
+
+## 强制检查流程
+
+1. 先读 `docs/design/design.md`。
+2. 再读 `docs/design/modules/NN-{asset}.md`。
+3. **禁止**只读索引就改视觉 / 主题 / token 相关代码或文档。
+
+## 变更触发条件
+
+token 值 / 主题（明暗）/ 字体 / 间距 / 禁用 UI 库 / 设计源路径变更 → 同步 design 文档。
+
+## 门禁要求
+
+- 变更说明含「design 文档已同步（modules/…）」
+- 改视觉只动主题 token / 设计文档；勿引入新 UI 框架（禁库以真相为准）
+- 相关翻车回流 `docs/agent-kb/pitfalls.md`

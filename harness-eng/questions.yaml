@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.7.63"
+version: "0.8.0"
 
 all_recommend_phrases:
   - 全部推荐
@@ -48,6 +48,15 @@ batches:
           - { value: L3, label: L3 规划与软门禁 }
           - { value: L4, label: L4 工具连接样例, recommended_when: "large_repo || mode == pipeline || mode == land" }
           - { value: L5, label: L5 配置 SSOT 管线（多工具仓推荐；含 Codex 为高·纪律 B）, recommended_when: "S_MULTI_TOOL" }
+      - id: Q_REPO_KIND
+        text: 仓型判定？（README/AGENTS + 代码成分推断；写入 meta.repo_kind，契约域推荐按此分流）
+        type: choice
+        when_mode: [land, resume, upgrade]
+        options:
+          - { value: frontend, label: 前端仓（默认启用 design,prototype 计分 + pages,components,client-api 索引壳）, recommended_when: "S_FRONTEND && !S_BACKEND" }
+          - { value: backend, label: 后端仓（维持后端契约域推荐）, recommended_when: "S_BACKEND && !S_FRONTEND" }
+          - { value: fullstack, label: 前后端仓（后端域 ∪ 前端域）, recommended_when: "S_FRONTEND && S_BACKEND" }
+        note: 探测不确定（无代码信号或文档冲突）时必须单题确认，勿沉默默认
 
   - id: batch-1-new
     when: "type == NEW_EMPTY || type == NEW_CODE_NO_HARNESS"
@@ -115,10 +124,10 @@ batches:
         type: boolean
         recommended_when: "S_SLF4J"
       - id: Q_FRONTEND_RULE
-        text: 是否安装前端协作规则 17-frontend-web？（探测到前端工程时推荐）
+        text: 是否安装前端总触发规则 101-frontend-web？（探测到前端工程时推荐；0.7.x 曾用 17 号）
         type: boolean
         recommended_when: "S_FRONTEND"
-        note: 有前端分册 AGENTS → rule-17 薄指针版（默认）；无分册 → include_optional 加 rule-17-full（厚正文）；二选一勿同装
+        note: 有前端分册 AGENTS → rule-101 薄指针版（默认）；无分册 → include_optional 加 rule-101-full（厚正文）；二选一勿同装；design/prototype 契约规则 102/103 随域包下发
       - id: Q_DB_MIGRATION
         text: db 域迁移模式？（无 Flyway 依赖、人工执行 SQL 选 manual_sql）
         type: choice
@@ -213,7 +222,7 @@ batches:
         type: boolean
         recommended_when: "S_SLF4J"
       - id: Q_FRONTEND_RULE
-        text: 安装 rule 17 前端协作包？
+        text: 安装 rule 101 前端总触发（0.7.x 曾用 17 号）？
         type: boolean
         recommended_when: "S_FRONTEND"
       - id: Q_AGENT_CONFIG

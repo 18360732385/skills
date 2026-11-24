@@ -1,10 +1,24 @@
-﻿# harness-eng 验收记录（0.7.63）
+﻿# harness-eng 验收记录（0.8.0）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.63**（superpowers 提交软提醒按本人主题；其下 0.7.62 变更记录/Pn 时间戳发号 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.0**（仓型三分 + 前端五域 + rules 101 族；其下 0.7.63 superpowers 本人主题软提醒 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.0 增量验收（仓型三分 · 前端五域 · rules 101 族）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.0` | 有 |
+| `harness-meta` tmpl 含 `repo_kind` / `monorepo`；detect 规格含三分判定（不确定 → `Q_REPO_KIND`） | 有 |
+| `domains.yaml` 五域注册：`design`/`prototype`（计分）+ `pages`/`components`/`client-api`（索引壳）；`domain-packs.yaml` 五包 + rules 102–106 | 有 |
+| `lib/inventory-design.mjs` / `lib/inventory-prototype.mjs`；`fill-merge` 认 design/prototype 分支 | 有 |
+| rules 101 族：`101-frontend-web(.full)` 改名自 17；render 互斥 rule-101/rule-101-full；正文无残留现行 `17-frontend-web` id | 有 |
+| `recommended-profile` 按 `repo_kind` 分流 domains（frontend→前端域；fullstack→并集；backend→现状） | 有 |
+| `ai-coding-gate`：`frontend_coverage` 按 design/prototype 实计（不再恒 `not_measured`） | 有 |
+| upgrade `## 0.7.63 → 0.8.0`；CHANGELOG 0.8.0；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.63 增量验收（superpowers 本人主题软提醒）
 

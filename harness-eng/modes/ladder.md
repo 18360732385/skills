@@ -21,7 +21,7 @@
 - [ ] `.cursor/rules/karpathy-guidelines.mdc` 且 `alwaysApply: true`
 - [ ] `.cursor/rules/00-project-docs-overview.mdc` 且 `alwaysApply: true`
 - [ ] （可选，行为包）`21-observability-comments.mdc` 存在（`Q_RULE21=yes` 且 `S_SLF4J` 时推荐）
-- [ ] （可选，前端协作包）`17-frontend-web.mdc` 存在（`Q_FRONTEND_RULE=yes` 且 `S_FRONTEND` 时推荐）
+- [ ] （可选，前端总触发）`101-frontend-web.mdc` 存在（`Q_FRONTEND_RULE=yes` 且 `S_FRONTEND` 时推荐；0.7.x 曾用 17 号）
 
 ### L1（按所选域）
 
