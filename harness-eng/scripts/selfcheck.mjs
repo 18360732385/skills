@@ -6467,6 +6467,106 @@ console.log("theme-gate-smoke-ok");
   assert(!/\| `rule17` \|/.test(rpDoc80), "0.8.0 recommended-profile drops rule17 row");
 }
 
+// --- 0.8.1: pages/components/client-api 三域满配计分 ---
+{
+  const domYaml81 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domains.yaml"),
+    "utf8"
+  );
+  for (const d of ["pages", "components", "client-api"]) {
+    assert(
+      new RegExp(`${d}:[\\s\\S]{0,700}?optional: false`).test(domYaml81),
+      `0.8.1 ${d} optional flipped to false`
+    );
+    assert(
+      new RegExp(`inventory: fill-inventory\\.mjs --domain ${d}`).test(domYaml81),
+      `0.8.1 ${d} inventory CLI registered`
+    );
+  }
+  assert(!/索引壳/.test(domYaml81), "0.8.1 domains drops 索引壳 wording");
+
+  const packs81 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domain-packs.yaml"),
+    "utf8"
+  );
+  for (const t of ["pages-asset-tmpl", "components-asset-tmpl", "client-api-asset-tmpl"]) {
+    assert(new RegExp(`id: ${t}`).test(packs81), `0.8.1 packs has ${t}`);
+  }
+
+  const morph81 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/morph-required.yaml"),
+    "utf8"
+  );
+  for (const d of ["pages", "components", "client-api"]) {
+    assert(new RegExp(`^  ${d}:`, "m").test(morph81), `0.8.1 morph-required has ${d}`);
+  }
+  assert(/req-page-loc/.test(morph81) && /req-proto-map/.test(morph81), "0.8.1 pages chapters");
+  assert(/req-comp-loc/.test(morph81) && /req-token-dep/.test(morph81), "0.8.1 components chapters");
+  assert(/req-consume-table/.test(morph81) && /req-contract-link/.test(morph81), "0.8.1 client-api chapters");
+
+  for (const t of [
+    "templates/docs/pages/templates/page-asset-template.md",
+    "templates/docs/components/templates/component-asset-template.md",
+    "templates/docs/client-api/templates/client-api-asset-template.md",
+  ]) {
+    assert(fs.existsSync(path.join(skillRoot, t)), `0.8.1 truth template exists: ${t}`);
+  }
+  const caTmpl81 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/client-api/templates/client-api-asset-template.md"),
+    "utf8"
+  );
+  assert(/态 A — fullstack/.test(caTmpl81) && /态 B — 纯前端/.test(caTmpl81), "0.8.1 client-api dual-state template");
+
+  for (const lib of ["inventory-pages", "inventory-components", "inventory-client-api"]) {
+    assert(
+      fs.existsSync(path.join(skillRoot, `scripts/lib/${lib}.mjs`)),
+      `0.8.1 ${lib} exists`
+    );
+  }
+  for (const d of ["pages", "components", "client-api"]) {
+    const h81 = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/fill-inventory.mjs"), "--domain", d, "--help"],
+      { encoding: "utf8", windowsHide: true }
+    );
+    assert(h81.status === 0 && /--root/.test(h81.stdout + h81.stderr), `0.8.1 fill-inventory --domain ${d} --help`);
+  }
+
+  const rp81 = fs.readFileSync(path.join(skillRoot, "modes/recommended-profile.md"), "utf8");
+  assert(
+    /design,prototype,pages,components,client-api/.test(rp81),
+    "0.8.1 recommended-profile frontend five domains"
+  );
+  const q81 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(
+    /value: design, label: design（设计系统）/.test(q81) &&
+      /value: client-api, label: client-api（契约消费层）/.test(q81),
+    "0.8.1 Q_CONTRACT frontend domain options"
+  );
+
+  for (const r of ["104-components", "105-pages", "106-client-api"]) {
+    const rTmpl = fs.readFileSync(
+      path.join(skillRoot, `templates/rules/${r}.mdc.tmpl`),
+      "utf8"
+    );
+    assert(/0\.8\.1 起计分/.test(rTmpl), `0.8.1 ${r} scored wording`);
+  }
+
+  assert(
+    /0\.8\.0 → 0\.8\.1/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.8.1 upgrade.md"
+  );
+  assert(
+    /0\.8\.1 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.8.1 VERIFY.md"
+  );
+  assert(
+    /\| 0\.8\.1 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")),
+    "0.8.1 CHANGELOG"
+  );
+  assert(logExists("0.8.1"), "0.8.1 _log note exists");
+}
+
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);
 if (fail.length) {

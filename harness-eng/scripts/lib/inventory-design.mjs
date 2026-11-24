@@ -94,9 +94,9 @@ function slugId(root, p, kind) {
   return slug || kind;
 }
 
-/** Depth-capped walk; pred(fileRel, base) → truthy 收录。 */
+/** Depth-capped walk; pred(fileRel, base) → truthy 收录。配额只计命中候选（0.8.1：大仓 Java 区不耗配额）。 */
 function walkFiles(root, dir, acc, pred, depth = 0, filesSeen = { n: 0 }) {
-  if (depth > 8 || filesSeen.n > 2000) return acc;
+  if (depth > 8) return acc;
   let names = [];
   try {
     names = fs.readdirSync(dir);
@@ -116,9 +116,11 @@ function walkFiles(root, dir, acc, pred, depth = 0, filesSeen = { n: 0 }) {
       walkFiles(root, p, acc, pred, depth + 1, filesSeen);
       continue;
     }
-    filesSeen.n++;
     const item = pred(rel(root, p), name);
-    if (item) acc.push(item);
+    if (item) {
+      filesSeen.n++;
+      acc.push(item);
+    }
   }
   return acc;
 }

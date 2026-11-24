@@ -34,7 +34,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 - [ ] docs/jobs + rule 20（若域含 jobs / `S_JOBS`）
 - [ ] docs/design + rule 102（若域含 design；0.8.0）
 - [ ] docs/prototype + rule 103（若域含 prototype；0.8.0）
-- [ ] docs/components + rule 104 / docs/pages + rule 105 / docs/client-api + rule 106（索引壳域；0.8.1+ 精填）
+- [ ] docs/components + rule 104 / docs/pages + rule 105 / docs/client-api + rule 106（0.8.1 满配计分）
 
 ### L1 超集 / 过程包（脚注，不计入 L1 契约齐套）
 - [ ] docs/releases（过程域；skill `release-eng`）

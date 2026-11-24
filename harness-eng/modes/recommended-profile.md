@@ -11,7 +11,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 | `mode` | `MATURE`→`audit`（`MATURE` 判定见 [detect.md](detect.md)：`S_RULES`/`S_HOOKS` 按**任一宿主**，非仅 Cursor）；`PARTIAL` 或已有 `S_HARNESS_META` 但未满目标阶→`resume`；有代码无 harness→`land`；用户已说「落地/升到 Ln」→尊从；大仓首次→【推荐】**pipeline** |
 | `ladder` | 大仓（多模块或 Controller≥50）或 pipeline → 默认 **L4**；小仓默认 L4（骨架一次到位）；用户书面「只要 L2 / 不要 hooks·MCP」才推荐 L2 |
 | `repo_kind` | detect 三分（`inferRepoKind`）：`S_FRONTEND∧¬S_BACKEND`→frontend；`S_BACKEND∧¬S_FRONTEND`→backend；双命中→fullstack；不确定→单题 `Q_REPO_KIND`（勿沉默默认） |
-| `domains` | **backend**：Java/Maven 默认 `func,api,db`；探测到 redis 目录/依赖再加 `redis`；`S_JOBS` 或 Scheduler 指纹再加 `jobs`【0.3.4】；手写 SQL→务必含 `db`。**frontend**：默认 `design,prototype`（0.8.0 计分）+ `pages,components,client-api` 索引壳；**不**默认开后端域。**fullstack**：后端推荐 ∪ 前端五域（`client-api` 与 `api` 并存时分工见 glossary）。域注册表见 `templates/_meta/domains.yaml` |
+| `domains` | **backend**：Java/Maven 默认 `func,api,db`；探测到 redis 目录/依赖再加 `redis`；`S_JOBS` 或 Scheduler 指纹再加 `jobs`【0.3.4】；手写 SQL→务必含 `db`。**frontend**：默认**五域全开** `design,prototype,pages,components,client-api`（0.8.1 起五域全部计分）；**不**默认开后端域。**fullstack**：后端推荐 ∪ 前端五域（`client-api` 与 `api` 并存时分工见 glossary）。域注册表见 `templates/_meta/domains.yaml` |
 | `agents_variant` | 模块≥5 → `modules`+`few`（入口+核心业务模块）；否则 `solo`；`S_FRONTEND` 时脚注前端分册 |
 | `glob_profile` | 大仓 → `focused`；小仓 → `wide` |
 | `rule14` | 默认 **是** |
@@ -43,7 +43,7 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 - 模式: 流水线 (pipeline) — 理由：大仓首次，L4 骨架+MCP+Plan 填充一次串联
 - 仓型: fullstack（frontend+backend 信号双命中；monorepo=true）— 理由：…
 - 目标阶梯: L4 工具连接样例 — 理由：大仓默认直达 hooks/MCP example，再开展真相填充
-- 契约域: func, api, db, redis, jobs, design, prototype, pages, components, client-api — 理由：…（frontend 仓：design, prototype 计分 + 三域索引壳）
+- 契约域: func, api, db, redis, jobs, design, prototype, pages, components, client-api — 理由：…（frontend 仓：五域全开计分）
 - 分册: few（sms-entrance, …）
 - glob: focused
 - Rule14 / Rule21 / Rule101 / 安全预填: 是 / 是(S_SLF4J) / 是(S_FRONTEND) / 是

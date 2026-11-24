@@ -71,6 +71,15 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.8.0 → 0.8.1 迁移要点
+
+1. **meta**：`skill_version` → `0.8.1`（`repo_kind` 沿用；纯前端仓 `client-api` 真相用**字段级态**、fullstack 用**回链态**，模板见 `docs/client-api/templates/`）
+2. **三域满配**：`pages` / `components` / `client-api` 从索引壳升为计分域——inventory：`fill-inventory.mjs --domain pages|components|client-api`；morph 必填章入 `morph-required.yaml`
+3. **0.8.0 已 land 的前端仓补启三域**：`meta.domains` 追加三域 → `harness --mode upgrade` 补渲 L1 域包（索引/README/rule 104–106 已在则 `on_exists=skip`）→ 跑三域 inventory
+4. **推荐包**：`frontend` 仓默认域 = 五域全开（design,prototype,pages,components,client-api）；`fullstack` = 后端域 ∪ 五域
+5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
+6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
+
 ## 0.7.63 → 0.8.0 迁移要点
 
 1. **meta**：`skill_version` → `0.8.0`；回填 `repo_kind`（frontend|backend|fullstack）与 `monorepo`（判定：README/AGENTS + 代码成分启发式；**不确定时提问 `Q_REPO_KIND`**，勿沉默默认）

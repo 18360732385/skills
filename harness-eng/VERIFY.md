@@ -1,10 +1,24 @@
-﻿# harness-eng 验收记录（0.8.0）
+﻿# harness-eng 验收记录（0.8.1）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.0**（仓型三分 + 前端五域 + rules 101 族；其下 0.7.63 superpowers 本人主题软提醒 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.1**（三域满配：pages 路由面 · components 组件盘点 · client-api 双态消费契约；其下 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.1 增量验收（三域满配计分）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.1` | 有 |
+| `lib/inventory-pages.mjs`（路由声明 + 目录约定）· `inventory-components.mjs`（组件盘点）· `inventory-client-api.mjs`（导出方法 + hooks 清单） | 有 |
+| `morph-required.yaml` 补 pages（4 章）/ components（5 章）/ client-api（3 章）必填 | 有 |
+| 三份真相模板落 `templates/docs/{pages,components,client-api}/templates/`；client-api **双态**（回链态 / 字段级态） | 有 |
+| `domains.yaml`：三域 `optional: false` + `inventory` CLI + `scan_fill_work`；hook_tip 升「0.8.1 起计分」 | 有 |
+| `recommended-profile`：frontend 仓五域全开；fullstack 后端域 ∪ 五域 | 有 |
+| upgrade `## 0.8.0 → 0.8.1`；CHANGELOG 0.8.1；仓库级 `_log` | 有 |
+| sms-ai-web 五域实仓烟测（`.fill-work`）结果随会话归档 | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.8.0 增量验收（仓型三分 · 前端五域 · rules 101 族）
 

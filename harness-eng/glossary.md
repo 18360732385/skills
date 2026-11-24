@@ -80,7 +80,7 @@
 |---|---|
 | **契约域** | 注册表 `domains.yaml` 中 `kind: contract` 的域（后端 func/api/db/redis/jobs + 前端 design/prototype/pages/components/client-api，0.8.0+）。名单 / 路径 / CLI 默认由 registry 驱动（0.3.7+）；morph 必填章见 `morph-required.yaml`（0.3.8+）；L1 文件靠 **packs** 展开。见 [domain-extend.md](modes/domain-extend.md) |
 | **仓型三分** | meta `repo_kind`：`frontend` / `backend` / `fullstack`（+ `monorepo` 布尔）。判定 = 代码成分为主、README/AGENTS 补盲（[detect.md](modes/detect.md)；`inferRepoKind`）；不确定单题 `Q_REPO_KIND`。契约域推荐按此分流；0.8.0 |
-| **前端五域** | `design`（token/主题/禁库）· `prototype`（原型/高保真，非运行时）· `pages`（路由/页面）· `components`（组件库）· `client-api`（契约消费侧）。0.8.0 起 design/prototype 全链路计分；pages/components/client-api 索引壳，0.8.1+ 精填升严；0.8.0 |
+| **前端五域** | `design`（token/主题/禁库）· `prototype`（原型/高保真，非运行时）· `pages`（路由/页面）· `components`（组件库）· `client-api`（契约消费侧）。0.8.0 起 design/prototype 计分；**0.8.1 起五域全部满配计分**（inventory + morph 必填章） |
 | **api ↔ client-api** | fullstack 分工：`docs/api` = **提供侧**真相（rule 12）；`docs/client-api` = **消费侧**（types/api-client/queries；rule 106）。改接口须两侧同步 |
 | **packs** | `domain-packs.yaml` 里某域的 L1 文件清单；`render` 按 `params.domains` 展开，不是「零代码加域」 |
 | **scheduler_link** | jobs inventory：`exact` \| `heuristic` \| `none`。heuristic 须 fragment 标 `quality: heuristic`，且不得 promote 进 `docs/jobs/tasks/` |

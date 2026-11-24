@@ -137,7 +137,7 @@ export function extractInventoryEvidence(inv, domain) {
       });
     }
   } else if (Array.isArray(inv.assets)) {
-    // 0.8.0 通用 assets 兜底（pages/components/client-api 索引壳域 0.8.1+ 复用）
+    // 0.8.0 通用 assets 兜底（0.8.1 起 pages/components/client-api 三域消费同一形态）
     for (const a of inv.assets) {
       out.push({
         evidence: a.path || a.url || a.id,

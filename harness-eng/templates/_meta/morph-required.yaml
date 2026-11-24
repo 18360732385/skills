@@ -127,3 +127,53 @@ domains:
       kind: re
       pattern: '##\s*变更触发|变更触发'
 
+  # 0.8.1 三域满配（pages 4 章 / components 5 章 / client-api 3 章）
+  pages:
+    - id: req-page-loc
+      kind: re
+      pattern: '##\s*页面定位|路由|入口'
+      flags: i
+    - id: req-responsibility
+      kind: re
+      pattern: '##\s*职责|页面职责'
+    - id: req-proto-map
+      kind: re
+      pattern: '原型映射|docs/prototype|无原型'
+      flags: i
+    - id: req-change-trigger
+      kind: re
+      pattern: '##\s*变更触发|变更触发'
+
+  components:
+    - id: req-comp-loc
+      kind: re
+      pattern: '##\s*组件定位|归属'
+      flags: i
+    - id: req-purpose
+      kind: re
+      pattern: '##\s*用途'
+    - id: req-props
+      kind: re
+      pattern: 'props|变体'
+      flags: i
+    - id: req-token-dep
+      kind: re
+      pattern: 'token 依赖|docs/design|无 token'
+      flags: i
+    - id: req-change-trigger
+      kind: re
+      pattern: '##\s*变更触发|变更触发'
+
+  client-api:
+    - id: req-consume-table
+      kind: re
+      pattern: '端点消费|消费表'
+      flags: i
+    - id: req-contract-link
+      kind: re
+      pattern: '契约回链|docs/api|外部仓|生成物'
+      flags: i
+    - id: req-change-trigger
+      kind: re
+      pattern: '##\s*变更触发|变更触发'
+

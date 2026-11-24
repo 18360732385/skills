@@ -139,13 +139,15 @@ domains:
     rule_id: "105"
     weight: 0.15
     morph_cap: 100
-    optional: true
+    optional: false
     detect: [S_FRONTEND]
     pack: pages
+    inventory: fill-inventory.mjs --domain pages
+    scan_fill_work: true
     hook_code: ["/(pages?|views?|routes?|screens?)\//"]
     hook_docs: "docs/pages/modules/"
-    hook_tip: "rule 105：页面/路由职责或原型映射变更须同步 docs/pages/modules（0.8.0 索引壳）"
-    note: "0.8.0 索引壳：先落索引与 rule；精填 inventory 与升严计分 0.8.1+"
+    hook_tip: "rule 105：页面/路由职责或原型映射变更须同步 docs/pages/modules（0.8.1 起计分）"
+    note: "0.8.1 满配：路由声明 + 目录约定 inventory；morph 必填 4 章（定位/职责/原型映射/变更触发）"
   components:
     kind: contract
     ladder: L1
@@ -155,13 +157,15 @@ domains:
     rule_id: "104"
     weight: 0.20
     morph_cap: 100
-    optional: true
+    optional: false
     detect: [S_FRONTEND]
     pack: components
+    inventory: fill-inventory.mjs --domain components
+    scan_fill_work: true
     hook_code: ["/components?\//", "/widgets?\//"]
     hook_docs: "docs/components/modules/"
-    hook_tip: "rule 104：组件/控件库/变体变更须同步 docs/components/modules（0.8.0 索引壳）"
-    note: "0.8.0 索引壳：先落索引与 rule；精填 inventory 与升严计分 0.8.1+"
+    hook_tip: "rule 104：组件/控件库/变体变更须同步 docs/components/modules（0.8.1 起计分）"
+    note: "0.8.1 满配：组件盘点 inventory（props 表交 agents 精填）；morph 必填 5 章（定位/用途/props 变体/token 依赖/变更触发）"
   client-api:
     kind: contract
     ladder: L1
@@ -171,13 +175,15 @@ domains:
     rule_id: "106"
     weight: 0.15
     morph_cap: 100
-    optional: true
+    optional: false
     detect: [S_FRONTEND]
     pack: client-api
+    inventory: fill-inventory.mjs --domain client-api
+    scan_fill_work: true
     hook_code: ["/api-client\//", "/queries\//", "/packages\/types\//", "/services\/api\//"]
     hook_docs: "docs/client-api/modules/"
-    hook_tip: "rule 106：前端契约消费层（api-client/types/queries）变更须同步 docs/client-api/modules（0.8.0 索引壳；提供侧契约走 rule 12）"
-    note: "0.8.0 索引壳：fullstack 与 api 域分工见 glossary（消费侧 vs 提供侧）；精填 0.8.1+"
+    hook_tip: "rule 106：前端契约消费层（api-client/types/queries）变更须同步 docs/client-api/modules（0.8.1 起计分；提供侧契约走 rule 12）"
+    note: "0.8.1 满配：消费层导出/hooks inventory；真相双态（fullstack 回链 / 纯前端字段级，按 meta.repo_kind）；morph 必填 3 章"
 
 # Non-scored packs (detect / audit footnotes only)
 packs:
