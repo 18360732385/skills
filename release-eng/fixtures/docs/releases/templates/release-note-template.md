@@ -2,8 +2,8 @@
 
 > 路径：`docs/releases/<slug>/<slug>.md`（同名目录包，直接挂在 `docs/releases/` 下，**无 notes/ 中间层**；`<slug>` = **发版分支名归一化**：去 `origin/`、`/` → `-`；`发版日期` = gates-common 首问，【推荐】≥提问日+2 的第一个周四，为独立元信息字段、不拼入目录名）  
 > 同目录可含本版新增的 `sql/` / `config/`（定版时自 draft 拷贝；不含扫描涉及文件）与任务汇总 `jobs/README.md`。  
-> 由 `release-eng` 按此骨架生成/合并。一级标题用「一、二、三…」；子节用「1、2、3…」。  
-> 时间一律 **Asia/Shanghai**。上线内容摘要（1～5 项，**分支级聚合**）并入元信息；提交列表 **`截断5`**（前 3 后 2，hash 前 8 位）；合并来源按分支去重全量（`origin/` 归一；「来源分支功能」一句话中文）；SQL / 配置 / 定时任务目标 profile = **`prod`**；yml 配置按 YAML 且注释在键上一行 `#`；SQL 按 **`SQL序`**。  
+> 由 `release-eng` 按此骨架生成/合并（**10 章**；已取消「附录：关联契约与规划」）。一级标题用「一、二、三…」；子节用「1、2、3…」。  
+> 时间一律 **Asia/Shanghai**。上线内容摘要（1～5 项，**分支级聚合**）并入元信息；提交列表 **`截断5`**（前 3 后 2，hash 前 8 位）；合并来源按分支去重全量（`origin/` 归一；「来源分支功能」一句话中文）；SQL / 配置 / 定时任务目标 profile = **`prod`**；yml 配置按 YAML 且注释在键上一行 `#`；SQL 明细引导至包内 `sql/README.md`（按 **`SQL序`**）。  
 > 自动段可由 `release-note-merge.mjs` 刷新（`<!-- auto:* -->` 标记内）；`manual` 段保留。
 
 ```markdown
@@ -69,14 +69,11 @@
 
 ## 四、数据库与 SQL
 
-> 按 **SQL序**（`Vn` 数字升序；无版本号置后并注明依赖）填写执行序；目标 profile = `prod`。
-> 包内整理文件：原件在 `sql/refs/`；根下 `release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘）。**prod 先执行 DDL 整理文件，再执行 DML 整理文件**。
+> 目标 profile = `prod`。**prod 先 DDL 后 DML**（各类内部按 **SQL序**）。执行序与统计明细见包内 [sql/README.md](./sql/README.md)（定版有 SQL 时生成）。
 
 <!-- auto:sql:start -->
 
-| 执行序 | 脚本/版本 | 动作 | 目标 profile | 已确认 |
-|---|---|---|---|---|
-| 1 | | 新增/变更/无 | prod | |
+本版无新增 SQL。
 
 <!-- auto:sql:end -->
 
@@ -99,26 +96,21 @@ sms:
 
 ## 六、定时任务
 
-> 目标 profile = `prod`。本版任务汇总清单（code / 名称 / cron 表达式 / 默认参数 / 引用链接）见包内 [jobs/README.md](./jobs/README.md)。
+> 目标 profile = `prod`。明细见包内 [jobs/README.md](./jobs/README.md)。
 
 <!-- auto:jobs:start -->
 
-| task / cron 键 | 变更类型 | 说明 | 目标 profile | 已确认 |
-|---|---|---|---|---|
-| | 新建/改 Cron/开关/无 | | prod | |
+本版无定时任务变更。
 
 <!-- auto:jobs:end -->
 
 ## 七、包内附属文件
 
-> 定版时拷贝本版新增原件到 `sql/refs/` / `config/`（← draft；不含 candidates）；并生成 `sql/release-V{yyMMdd}-DDL|DML.sql`（缺侧不落盘；prod 先 DDL 后 DML）。`jobs/` 为单文件汇总清单 `jobs/README.md`。包内路径为相对本发版单的 Markdown 链接。
+> 定版拷贝 `sql/refs/` / `config/`；整理文件 `[库名]-V{yyMMdd}-DDL|DML.sql`（无库名回落 `release-V*`）；统计见 [sql/README.md](./sql/README.md)；任务见 [jobs/README.md](./jobs/README.md)。
 
 <!-- auto:bundle:start -->
 
-| 类别 | 包内路径 | 仓库源路径 |
-|---|---|---|
-| sql | [V00001__….sql](./sql/refs/V00001__….sql) | `sms-ai/...` |
-| sql-bundle | [release-V261029-DDL.sql](./sql/release-V261029-DDL.sql) | `← sql/refs/ × N（DDL）` |
+本版无包内附属文件。
 
 <!-- auto:bundle:end -->
 
@@ -155,11 +147,4 @@ sms:
 - [ ] …
 
 <!-- manual:end -->
-
-## 十一、附录：关联契约与规划（可选）
-
-| 类型 | 路径 |
-|---|---|
-| func/api/db/jobs | |
-| superpowers | |
 ```

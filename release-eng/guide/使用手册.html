@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>release-eng 使用手册 · v0.3.36</title>
+  <title>release-eng 使用手册 · v0.3.38</title>
   <meta name="description" content="release-eng：把一次上线做成带 Git 证据的发版单（prepare / resume / audit / seal）的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -746,7 +746,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.3.36</div>
+    <div class="ver">v0.3.38</div>
   </header>
 
   <div class="shell document-shell">
@@ -972,7 +972,7 @@ https://github.com/18360732385/skills/tree/main/release-eng
             </thead>
             <tbody>
               <tr><td><code>docs/releases/releases.md</code></td><td>进行中索引（导航 + 状态）</td></tr>
-              <tr><td><code>docs/releases/templates/release-note-template.md</code></td><td>发版单模板（11 章）</td></tr>
+              <tr><td><code>docs/releases/templates/release-note-template.md</code></td><td>发版单模板（10 章）</td></tr>
               <tr><td><code>docs/releases/archive/</code></td><td>已上线归档目录</td></tr>
               <tr><td><code>docs/releases/ARCHIVE.md</code></td><td>已上线索引（按日期倒序）</td></tr>
             </tbody>
@@ -1249,7 +1249,7 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
       <section id="s6" class="body-section">
         <h2>6. 发版单与目录包长什么样</h2>
 
-        <h3>6.1 发版单 11 章</h3>
+        <h3>6.1 发版单 10 章</h3>
         <div class="table-wrap fact-table">
           <table>
             <thead>
@@ -1259,14 +1259,13 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
               <tr><td>一、元信息</td><td>版本身份 / 分支对 / 发版日期 / 定版时间 / 负责人 / <strong>上线内容摘要（1～5 项）</strong></td><td>自动 + 人工</td></tr>
               <tr><td>二、Git 定版</td><td>① 提交列表（截断5）② 合并来源（去重全量 + 来源分支功能）</td><td><strong>自动</strong></td></tr>
               <tr><td>三、涉及服务与模块</td><td>来自 AGENTS / README 的一句话</td><td>自动 + 人工</td></tr>
-              <tr><td>四、数据库与 SQL</td><td>执行序 1..N，目标 profile=<code>prod</code></td><td><strong>自动</strong></td></tr>
+              <tr><td>四、数据库与 SQL</td><td>条数摘要 + 链到 <code>sql/README.md</code>（执行序不在正文展开），目标 profile=<code>prod</code></td><td><strong>自动</strong></td></tr>
               <tr><td>五、配置项</td><td>yml 键 + 说明（写键上一行 <code>#</code>），允许密文</td><td><strong>自动</strong></td></tr>
-              <tr><td>六、定时任务</td><td>code / 名称 / cron / 默认参数</td><td><strong>自动</strong></td></tr>
-              <tr><td>七、包内附属文件</td><td>相对 md 链接</td><td><strong>自动</strong></td></tr>
+              <tr><td>六、定时任务</td><td>条数摘要 + 链到 <code>jobs/README.md</code></td><td><strong>自动</strong></td></tr>
+              <tr><td>七、包内附属文件</td><td>一行摘要（sql×N · config×M · 整理文件…）</td><td><strong>自动</strong></td></tr>
               <tr><td>八、第三方与外部依赖</td><td>feign / dashscope / mcp 等</td><td>自动 + 人工</td></tr>
               <tr><td>九、上线步骤与回滚</td><td>步骤 / 回滚</td><td><strong>人工</strong></td></tr>
               <tr><td>十、风险与验收</td><td>风险 / 验收</td><td><strong>人工</strong></td></tr>
-              <tr><td>十一、附录：关联契约与规划</td><td>可选</td><td>人工</td></tr>
             </tbody>
           </table>
         </div>
@@ -1274,13 +1273,13 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
 
         <h3>6.2 目录包</h3>
         <pre><code>docs/releases/&lt;slug&gt;/
-  &lt;slug&gt;.md                    # 发版单（11 章）
+  &lt;slug&gt;.md                    # 发版单（10 章）
   artifacts.json               # 制品清单 SSOT（sqlBundles / aiTrack / overdueWaived）
   sql/
     refs/                      # 本版新增 SQL 原件
-    release-V261119-DDL.sql    # 整理文件（按侧生成）
-    release-V261119-DML.sql
-    README.md                  # 本版 SQL 统计（条数 + 提交人执行序 + 行内跳转）
+    [sms_db_prod]-V261119-DDL.sql  # 整理文件（库名 + 按侧；无库名回落 release-V*）
+    [sms_db_prod]-V261119-DML.sql
+    README.md                  # 本版 SQL 统计（执行库 + 条数 + 提交人执行序 + 行内跳转）
   config/                      # 本版新增配置原件
   jobs/README.md               # 任务汇总清单（不逐份拷贝真相）</code></pre>
         <p>包内附属文件在发版单里一律用<strong>相对 md 链接</strong>引用；<code>artifacts.json</code> 是同一份清单的机读版本。</p>
@@ -1466,7 +1465,7 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
               <tr><td><a href="../modes/write-plan.md">write-plan.md</a></td><td>WritePlan 五段 · 确认词表 · 预授权</td></tr>
               <tr><td><a href="../modes/prepare.md">prepare.md</a> · <a href="../modes/resume.md">resume.md</a> · <a href="../modes/audit.md">audit.md</a> · <a href="../modes/seal.md">seal.md</a></td><td>四个模式</td></tr>
               <tr><td><a href="../modes/idempotency.md">idempotency.md</a> · <a href="../modes/bootstrap.md">bootstrap.md</a></td><td>幂等 · 骨架种子</td></tr>
-              <tr><td><a href="../fixtures/docs/releases/templates/release-note-template.md">fixtures/.../release-note-template.md</a></td><td>发版单模板（11 章）</td></tr>
+              <tr><td><a href="../fixtures/docs/releases/templates/release-note-template.md">fixtures/.../release-note-template.md</a></td><td>发版单模板（10 章）</td></tr>
               <tr><td><a href="../VERIFY.md">VERIFY.md</a></td><td><strong>维护者验收</strong>（非上手教程）</td></tr>
               <tr><td><a href="../CHANGELOG.md">CHANGELOG.md</a></td><td>版本变更</td></tr>
             </tbody>

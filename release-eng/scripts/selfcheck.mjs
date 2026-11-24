@@ -850,7 +850,10 @@ assert(/截断5/.test(tmpl), "release-note-template mentions 截断5");
 assert(/版本身份/.test(tmpl), "release-note-template mentions 版本身份");
 assert(/Asia\/Shanghai/.test(tmpl), "release-note-template mentions Asia/Shanghai");
 assert(/sql\/refs/.test(tmpl), "release-note-template mentions sql/refs");
-assert(/release-V\{yyMMdd\}-DDL|release-V\d+-DDL/.test(tmpl), "release-note-template mentions DDL bundle");
+assert(
+  /\[库名\]-V\{yyMMdd\}|release-V\{yyMMdd\}-DDL|release-V\d+-DDL/.test(tmpl),
+  "release-note-template mentions DDL bundle"
+);
 
 // seal-check / push-gate dry CLI（--help，无写盘）
 function spawnHelp(scriptRel) {
@@ -2465,6 +2468,7 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     ],
   });
   assert(/本版 SQL 统计/.test(md), "034 B 标题");
+  assert(/执行库/.test(md), "034 B 总览含执行库");
   assert(/\|\s*DDL\s*\|\s*2\s*\|\s*3\s*\|/.test(md), "034 B DDL 文件2/语句3");
   assert(/\|\s*DML\s*\|\s*1\s*\|\s*1\s*\|/.test(md), "034 B DML 文件1/语句1");
   assert(
@@ -2658,6 +2662,160 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     assert(
       Boolean(legacy && legacy.includes("](../../../../jobs/tasks/01-order-timeout-cancel.md)")),
       "036 旧 notes 目录包 jobs 链接 4 层"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.3.37：发版单 SQL 章精简 + 取消附录章 ---
+{
+  const mergeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-note-merge.mjs")).href;
+  const fmtUrl = pathToFileURL(path.join(skillRoot, "scripts/release-format.mjs")).href;
+  const merge = await import(mergeUrl);
+  const fmt = await import(fmtUrl);
+
+  assert(typeof merge.buildSqlSection === "function", "037 export buildSqlSection");
+  const emptySql = merge.buildSqlSection({ sql: [] });
+  assert(/本版无新增 SQL/.test(emptySql), "037 无 SQL 写「本版无新增 SQL」");
+  assert(!/\|\s*执行序\s*\|/.test(emptySql), "037 无 SQL 不写执行序表");
+
+  const withSql = merge.buildSqlSection({
+    sql: [
+      { 脚本: "V0001__a.sql", 动作: "新增" },
+      { 脚本: "V0002__b.sql", 动作: "变更" },
+    ],
+  });
+  assert(/本版 SQL：\*\*2\*\* 条/.test(withSql), "037 有 SQL 写条数");
+  assert(/\[sql\/README\.md\]\(\.\/sql\/README\.md\)/.test(withSql), "037 有 SQL 链到 sql/README.md");
+  assert(!/\|\s*执行序\s*\|/.test(withSql), "037 有 SQL 不写执行序表");
+
+  const tpl = fs.readFileSync(
+    path.join(skillRoot, "fixtures/docs/releases/templates/release-note-template.md"),
+    "utf8"
+  );
+  assert(/10 章/.test(tpl), "037 模板标明 10 章");
+  assert(!/## 十一、附录/.test(tpl), "037 模板无附录章");
+  assert(/sql\/README\.md/.test(tpl), "037 模板 SQL 章引导 README");
+
+  assert(
+    /附录：关联契约与规划/.test(fmt.H2.appendix || ""),
+    "037 H2.appendix 保留供旧稿匹配"
+  );
+}
+
+// --- 0.3.38：jobs/附属精简 + 库名整理文件 + README 执行库 ---
+{
+  const fmtUrl = pathToFileURL(path.join(skillRoot, "scripts/release-format.mjs")).href;
+  const mergeUrl = pathToFileURL(path.join(skillRoot, "scripts/release-note-merge.mjs")).href;
+  const statsUrl = pathToFileURL(path.join(skillRoot, "scripts/release-sql-stats.mjs")).href;
+  const bundleUrl = pathToFileURL(path.join(skillRoot, "scripts/release-sql-bundle.mjs")).href;
+  const fmt = await import(fmtUrl);
+  const merge = await import(mergeUrl);
+  const statsMod = await import(statsUrl);
+  const bundleMod = await import(bundleUrl);
+
+  assert(
+    fmt.parseJdbcDatabaseName(
+      "jdbc:mysql://user:secret@db.example:3306/sms_db_prod?useSSL=false"
+    ) === "sms_db_prod",
+    "038 parseJdbcDatabaseName"
+  );
+  assert(
+    fmt.sanitizeJdbcUrl("jdbc:mysql://user:secret@db.example:3306/sms_db_prod?password=x") ===
+      "jdbc:mysql://db.example:3306/sms_db_prod",
+    "038 sanitizeJdbcUrl 去凭据与 query"
+  );
+  assert(
+    fmt.releaseSqlBundleName("2026-11-26", "DDL", "sms_db_prod") ===
+      "[sms_db_prod]-V261126-DDL.sql",
+    "038 bundle name with db"
+  );
+  assert(
+    fmt.releaseSqlBundleName("2026-11-26", "DML") === "release-V261126-DML.sql",
+    "038 bundle name fallback"
+  );
+  assert(fmt.isSqlBundleFileName("[sms_db_prod]-V261126-DDL.sql"), "038 isSqlBundleFileName new");
+  assert(fmt.isSqlBundleFileName("release-V261126-DDL.sql"), "038 isSqlBundleFileName legacy");
+
+  const ds = fmt.resolveProdDatasource({
+    draft: {
+      config: [
+        {
+          键: "spring.datasource.url",
+          值: "jdbc:mysql://host:3306/sms_db_prod",
+        },
+      ],
+    },
+  });
+  assert(ds?.dbName === "sms_db_prod", "038 resolveProdDatasource from draft");
+
+  const jobsMd = merge.buildJobsSection({
+    draft: { jobs: [{ taskCode: "a", "task / cron 键": "a.cron" }] },
+  });
+  assert(/本版定时任务：\*\*1\*\* 条/.test(jobsMd), "038 jobs 条数摘要");
+  assert(/jobs\/README\.md/.test(jobsMd), "038 jobs 链 README");
+  assert(!/\|\s*task \/ cron 键\s*\|/.test(jobsMd), "038 jobs 无变更表");
+
+  const bundleMd = merge.buildBundleSection([
+    { kind: "sql", bundlePath: "sql/refs/a.sql", sourcePath: "x" },
+    { kind: "config", bundlePath: "config/a.yml", sourcePath: "y" },
+    { kind: "sql-bundle", bundlePath: "sql/[sms_db_prod]-V261126-DDL.sql", sourcePath: "←" },
+    { kind: "sql-stats", bundlePath: "sql/README.md", sourcePath: "←" },
+    { kind: "jobs", bundlePath: "jobs/README.md", sourcePath: "←" },
+  ]);
+  assert(/本版附属：/.test(bundleMd), "038 bundle 一行摘要");
+  assert(/sql×1/.test(bundleMd) && /config×1/.test(bundleMd), "038 bundle 计数");
+  assert(!/\|\s*类别\s*\|\s*包内路径/.test(bundleMd), "038 bundle 无文件表");
+
+  const statsMd = statsMod.buildSqlStatsMarkdown({
+    identity: "release-V261126",
+    releaseDate: "2026-11-26",
+    dbName: "sms_db_prod",
+    datasourceUrl: "jdbc:mysql://host:3306/sms_db_prod",
+    bundles: [
+      {
+        kind: "DDL",
+        fileName: "[sms_db_prod]-V261126-DDL.sql",
+        sources: [
+          {
+            basename: "V1.sql",
+            order: 1,
+            globalOrder: 1,
+            author: "u",
+            lineNo: 1,
+            statements: 1,
+          },
+        ],
+      },
+    ],
+  });
+  assert(/执行库[\s\S]*sms_db_prod/.test(statsMd), "038 stats 执行库");
+  assert(/连接串[\s\S]*jdbc:mysql:\/\/host:3306\/sms_db_prod/.test(statsMd), "038 stats 连接串");
+
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-038-db-"));
+  try {
+    const refs = path.join(work, "sql", "refs");
+    fs.mkdirSync(refs, { recursive: true });
+    fs.writeFileSync(path.join(refs, "V0001_0__DDL__a.sql"), "CREATE TABLE a (id INT);\n", "utf8");
+    const r = bundleMod.runSqlBundle({
+      bundleDir: work,
+      releaseDate: "2026-11-26",
+      dbName: "sms_db_prod",
+      datasourceUrl: "jdbc:mysql://u:p@host:3306/sms_db_prod?x=1",
+    });
+    assert(r.ok, "038 runSqlBundle with db ok");
+    assert(
+      fs.existsSync(path.join(work, "sql", "[sms_db_prod]-V261126-DDL.sql")),
+      "038 ddl named with db"
+    );
+    assert(!fs.existsSync(path.join(work, "sql", "release-V261126-DDL.sql")), "038 no legacy name");
+    const readme = fs.readFileSync(path.join(work, "sql", "README.md"), "utf8");
+    assert(/sms_db_prod/.test(readme), "038 readme has db");
+    assert(!/u:p@/.test(readme), "038 readme 无凭据");
+    assert(
+      bundleMod.verifySqlBundlesOnDisk(work, r.sqlBundles, "2026-11-26").length === 0,
+      "038 verify with dbName"
     );
   } finally {
     fs.rmSync(work, { recursive: true, force: true });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * release-sql-bundle — 将 sql/refs/ 整理为 release-V{yyMMdd}-DDL|DML.sql
- *   并生成 sql/README.md（本版 SQL 统计：DDL/DML 条数 + 按提交人执行序 + 行内跳转）
+ * release-sql-bundle — 将 sql/refs/ 整理为 [库名]-V{yyMMdd}-DDL|DML.sql（无库名回落 release-V…）
+ *   并生成 sql/README.md（本版 SQL 统计：执行库 + DDL/DML 条数 + 按提交人执行序 + 行内跳转）
  *
  * Usage:
  *   node release-sql-bundle.mjs --bundle-dir <dir> --release-date YYYY-MM-DD
@@ -22,6 +22,11 @@ import {
   isMigrationSql,
   migrationSortKey,
   releaseSqlBundleName,
+  isSqlBundleFileName,
+  parseJdbcDatabaseName,
+  resolveProdDatasource,
+  sanitizeJdbcUrl,
+  sanitizeDbNameForFile,
   sha256Hex,
   stripBom,
 } from "./release-format.mjs";
@@ -141,10 +146,78 @@ function gitLastAuthor(root, sourcePath) {
 function removeStaleBundles(sqlDir) {
   if (!fs.existsSync(sqlDir)) return;
   for (const n of fs.readdirSync(sqlDir)) {
-    if (/^release-V\d+-DDL\.sql$/i.test(n) || /^release-V\d+-DML\.sql$/i.test(n)) {
+    if (isSqlBundleFileName(n)) {
       fs.rmSync(path.join(sqlDir, n), { force: true });
     }
   }
+}
+
+function collectProdYmlTexts(root, freeze, bundleDir) {
+  const out = [];
+  const seen = new Set();
+  const pushFile = (abs, source) => {
+    const key = path.resolve(abs);
+    if (seen.has(key) || !fs.existsSync(key)) return;
+    seen.add(key);
+    try {
+      out.push({ text: stripBom(fs.readFileSync(key, "utf8")), source });
+    } catch {
+      /* skip */
+    }
+  };
+  for (const r of freeze?.draft?.config || []) {
+    const p = r.路径 || r.path || r.来源 || "";
+    if (!p || !/\.ya?ml$/i.test(p)) continue;
+    const abs = path.isAbsolute(p) ? p : path.join(root || "", p);
+    pushFile(abs, p);
+  }
+  if (bundleDir) {
+    const cfgDir = path.join(bundleDir, "config");
+    if (fs.existsSync(cfgDir)) {
+      for (const n of fs.readdirSync(cfgDir)) {
+        if (!/\.ya?ml$/i.test(n)) continue;
+        pushFile(path.join(cfgDir, n), `config/${n}`);
+      }
+    }
+  }
+  if (root && fs.existsSync(root)) {
+    // 浅扫常见 prod 配置（避免全仓 walk）
+    const candidates = [
+      "sms-ai/src/main/resources/application-prod.yml",
+      "sms-ai/src/main/resources/config/nacos/application-prod-nacos.yml",
+      "src/main/resources/application-prod.yml",
+      "application-prod.yml",
+    ];
+    for (const rel of candidates) pushFile(path.join(root, rel), rel);
+  }
+  return out;
+}
+
+function resolveBundleDatasource({ freeze, root, bundleDir, datasourceUrl, dbName }) {
+  if (datasourceUrl || dbName) {
+    const url = datasourceUrl ? String(datasourceUrl) : "";
+    const name =
+      sanitizeDbNameForFile(dbName) ||
+      (url ? sanitizeDbNameForFile(parseJdbcDatabaseName(url)) : null);
+    return {
+      url: url || null,
+      displayUrl: url ? sanitizeJdbcUrl(url) : null,
+      dbName: name,
+      source: "explicit",
+    };
+  }
+  const hit = resolveProdDatasource(freeze, {
+    texts: collectProdYmlTexts(root, freeze, bundleDir),
+  });
+  if (!hit) {
+    return { url: null, displayUrl: null, dbName: null, source: null };
+  }
+  return {
+    url: hit.url,
+    displayUrl: sanitizeJdbcUrl(hit.url),
+    dbName: sanitizeDbNameForFile(hit.dbName),
+    source: hit.source,
+  };
 }
 
 /**
@@ -160,6 +233,8 @@ export function runSqlBundle({
   skipAiClassify = false,
   classifyFn = null,
   sourcePathByBasename = null,
+  datasourceUrl = null,
+  dbName = null,
 } = {}) {
   const errors = [];
   const warnings = [];
@@ -287,6 +362,19 @@ export function runSqlBundle({
   removeStaleBundles(sqlDir);
   fs.mkdirSync(sqlDir, { recursive: true });
 
+  const ds = resolveBundleDatasource({
+    freeze,
+    root,
+    bundleDir,
+    datasourceUrl,
+    dbName,
+  });
+  if (!ds.dbName) {
+    warnings.push(
+      "未解析到生产库名：整理文件回落为 release-V{yyMMdd}-*.sql；sql/README 执行库写「待填」"
+    );
+  }
+
   const sqlBundles = [];
   const written = [];
   const statsBundles = [];
@@ -295,7 +383,7 @@ export function runSqlBundle({
   for (const kind of ["DDL", "DML"]) {
     const ordered = byKind[kind];
     if (!ordered.length) continue;
-    const name = releaseSqlBundleName(releaseDate, kind);
+    const name = releaseSqlBundleName(releaseDate, kind, ds.dbName);
     const content = buildSqlBundleContent(
       ordered.map((o) => ({ basename: o.basename, content: o.content }))
     );
@@ -308,6 +396,8 @@ export function runSqlBundle({
     sqlBundles.push({
       kind,
       path: `sql/${name}`,
+      dbName: ds.dbName || null,
+      datasourceUrl: ds.displayUrl || null,
       sourceCount: ordered.length,
       contentSha256,
       incomplete: Boolean(skipAiClassify),
@@ -347,6 +437,8 @@ export function runSqlBundle({
       identity: path.basename(bundleDir),
       releaseDate: String(releaseDate).slice(0, 10),
       bundles: statsBundles,
+      datasourceUrl: ds.displayUrl || null,
+      dbName: ds.dbName || null,
     });
     const dest = path.join(sqlDir, "README.md");
     const tmp = dest + ".tmp";
@@ -355,6 +447,8 @@ export function runSqlBundle({
     statsPath = "sql/README.md";
     stats = {
       path: statsPath,
+      dbName: ds.dbName || null,
+      datasourceUrl: ds.displayUrl || null,
       ddl: {
         files: byKind.DDL.length,
         statements: byKind.DDL.reduce((n, o) => n + (o.statements || 0), 0),
@@ -417,9 +511,9 @@ export function verifySqlBundlesOnDisk(bundleDir, sqlBundles, releaseDate) {
     }
     if (releaseDate) {
       try {
-        const expectName = releaseSqlBundleName(releaseDate, b.kind);
+        const expectName = releaseSqlBundleName(releaseDate, b.kind, b.dbName || null);
         if (!b.path.endsWith(expectName)) {
-          errors.push(`${b.path}: 文件名与发版日期/kind 不符（期望 ${expectName}）`);
+          errors.push(`${b.path}: 文件名与发版日期/kind/库名 不符（期望 ${expectName}）`);
         }
       } catch (e) {
         errors.push(String(e.message || e));

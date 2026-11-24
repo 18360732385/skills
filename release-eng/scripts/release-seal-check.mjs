@@ -183,14 +183,30 @@ function main() {
     if (artifacts) {
       const sqlIds = new Set((artifacts.sql || []).map((r) => r.stableId).filter(Boolean));
       const sqlSec = section(text, "数据库与 SQL");
+      // 0.3.37+：SQL 章精简为引导链接；脚本名以 sql/README.md（或 artifacts）为准
+      const sqlReadmePath = path.join(bundleDir, "sql", "README.md");
+      let sqlNameCorpus = sqlSec || "";
+      if (fs.existsSync(sqlReadmePath)) {
+        try {
+          sqlNameCorpus = stripBom(fs.readFileSync(sqlReadmePath, "utf8"));
+        } catch {
+          /* keep sqlSec */
+        }
+      } else if (sqlIds.size && sqlSec && !/sql\/README\.md/.test(sqlSec) && !/本版无新增 SQL/.test(sqlSec)) {
+        warnings.push("有 SQL 制品但缺少 sql/README.md，且「数据库与 SQL」未引导至该文件（请用 note-merge 重写）");
+      }
       for (const id of sqlIds) {
-        if (sqlSec && !sqlSec.includes(id)) {
-          warnings.push(`artifacts.sql 含 ${id} 但 Markdown「数据库与 SQL」未出现该脚本名`);
+        if (sqlNameCorpus && !sqlNameCorpus.includes(id)) {
+          warnings.push(
+            `artifacts.sql 含 ${id} 但 ${fs.existsSync(sqlReadmePath) ? "sql/README.md" : "Markdown「数据库与 SQL」"}未出现该脚本名`
+          );
         }
       }
-      for (const name of extractMigrationNames(sqlSec || "")) {
+      for (const name of extractMigrationNames(sqlNameCorpus || "")) {
         if (sqlIds.size && !sqlIds.has(name)) {
-          warnings.push(`Markdown 含 ${name} 但 artifacts.json sql[] 无对应 stableId`);
+          warnings.push(
+            `${fs.existsSync(sqlReadmePath) ? "sql/README.md" : "Markdown"} 含 ${name} 但 artifacts.json sql[] 无对应 stableId`
+          );
         }
       }
       for (const row of artifacts.config || []) {
@@ -254,7 +270,12 @@ function main() {
         if (
           !bundleSection.includes(`| ${sub} |`) &&
           !bundleSection.includes(`|${sub}|`) &&
-          !(sub === "sql" && /sql\/refs|sql-bundle|release-V\d+-(DDL|DML)/i.test(bundleSection))
+          !(
+            sub === "sql" &&
+            /sql\/refs|sql-bundle|release-V\d+-(DDL|DML)|\[[^\]]+\]-V\d+-(DDL|DML)/i.test(
+              bundleSection
+            )
+          )
         ) {
           continue;
         }

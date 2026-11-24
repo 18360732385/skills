@@ -19,6 +19,6 @@
 
 ## 段
 
-- **自动**：Git 定版二表（提交 `截断5`；合并来源 `mergeSources` 按分支去重全量）、元信息内上线内容摘要（← 分支级聚合，≤5）、数据库与 SQL / 配置项 / 定时任务（← freeze `draft`；可用 `release-note-merge.mjs` 刷新 `<!-- auto:* -->`）、包内附属文件（相对 md 链接；jobs 为单文件 `jobs/README.md` 汇总清单）、元信息中的定版时间（Asia/Shanghai）/引用/`发版日期`、涉及服务说明（← AGENTS）；展示与格式细则（截断5 形、hash 位、yml 注释位置、来源分支功能一句话）见 [conventions.md](conventions.md)
+- **自动**：Git 定版二表（提交 `截断5`；合并来源 `mergeSources` 按分支去重全量）、元信息内上线内容摘要（← 分支级聚合，≤5）、数据库与 SQL（条数 + 链到 `sql/README.md`）/ 配置项（YAML 仍展开）/ 定时任务（条数 + 链 `jobs/README.md`）、包内附属（一行摘要）、元信息中的定版时间（Asia/Shanghai）/引用/`发版日期`、涉及服务说明（← AGENTS）；**不**再生成「附录：关联契约与规划」；展示与格式细则见 [conventions.md](conventions.md)
 - **人工**：`<!-- manual:start -->`…`<!-- manual:end -->` 内正文；无标记时「上线步骤与回滚 / 风险与验收」已有非空正文默认保留
 - **不自动写入**：`draftSuppressed`（prior 已上线项）除非用户明示拉回  

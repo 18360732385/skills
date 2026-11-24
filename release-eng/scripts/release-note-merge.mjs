@@ -8,10 +8,10 @@
  *   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
  *
  * 刷新：Git 定版两表（提交截断5·hash 前 8 位 / 合并来源 origin 归一·一句话）、上线摘要（分支级聚合）、
- * 数据库与 SQL、配置项（yml→YAML，注释在键上一行）、定时任务（← draft，不含 draftSuppressed）；
+ * 数据库与 SQL（正文精简：条数 + 链到 sql/README.md）、配置项（yml→YAML，注释在键上一行）、定时任务（← draft，不含 draftSuppressed）；
  * 目录包 jobs/ 生成单文件汇总清单（code/名称/cron/默认参数/引用链接），不再逐任务拷贝真相。
- * SQL 目录包生成 sql/release-V{yyMMdd}-DDL|DML.sql 与统计文档 sql/README.md（条数 + 提交人执行序 + 行内跳转）。
- * 保留：manual 段人工正文。
+ * SQL 目录包生成 [库名]-V{yyMMdd}-DDL|DML.sql（无库名回落 release-V*）与 sql/README.md（执行库 + 条数 + 提交人执行序）。
+ * 定时任务 / 包内附属正文精简为摘要+链接。新骨架 10 章。保留：manual 段人工正文。
  * Exit 0=ok 1=error
  */
 import { spawnSync } from "child_process";
@@ -239,27 +239,23 @@ function truncateCommits(rows) {
   return truncateDisplay(rows, COMMIT_DISPLAY_MAX, COMMIT_DISPLAY_HEAD, COMMIT_DISPLAY_TAIL);
 }
 
-function buildSqlSection(draft) {
+export function buildSqlSection(draft) {
   const rows = draft?.sql || [];
   const lines = [];
   lines.push(`## ${H2.sql}`);
   lines.push("");
-  lines.push("> 按 **SQL序**（`Vn` 数字升序；无版本号置后并注明依赖）填写执行序；目标 profile = `prod`。");
   lines.push(
-    "> 包内整理文件：原件在 `sql/refs/`；根下 `release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘）。**prod 先执行 DDL 整理文件，再执行 DML 整理文件**（各类内部仍按 SQL序）。"
+    "> 目标 profile = `prod`。**prod 先 DDL 后 DML**（各类内部按 **SQL序**）。执行序、按提交人统计与行内跳转见包内 [sql/README.md](./sql/README.md)（定版有 SQL 时生成；无 SQL 则本段注明「无」）。"
   );
   lines.push("");
   lines.push("<!-- auto:sql:start -->");
   lines.push("");
-  lines.push("| 执行序 | 脚本/版本 | 动作 | 目标 profile | 已确认 |");
-  lines.push("|---|---|---|---|---|");
-  if (!rows.length) lines.push("| — | 无 | 无 | prod | |");
-  else {
-    rows.forEach((r, i) => {
-      lines.push(
-        `| ${r.执行序 ?? i + 1} | ${esc(r.脚本)} | ${esc(r.动作 || "新增/变更")} | prod | ${esc(r.已确认 || "")} |`
-      );
-    });
+  if (!rows.length) {
+    lines.push("本版无新增 SQL。");
+  } else {
+    lines.push(
+      `本版 SQL：**${rows.length}** 条 → 明细见 [sql/README.md](./sql/README.md)（含 DDL/DML 条数、执行序、按提交人分组）。`
+    );
   }
   lines.push("");
   lines.push("<!-- auto:sql:end -->");
@@ -293,49 +289,46 @@ function buildConfigSection(freeze) {
   return lines.join("\n");
 }
 
-function buildJobsSection(freeze) {
+export function buildJobsSection(freeze) {
   const rows = freeze.draft?.jobs || [];
   const lines = [];
   lines.push(`## ${H2.jobs}`);
   lines.push("");
-  lines.push("> 目标 profile = `prod`。");
+  lines.push(
+    "> 目标 profile = `prod`。明细（code / 名称 / cron / 默认参数 / 引用）见包内 [jobs/README.md](./jobs/README.md)。"
+  );
   lines.push("");
   lines.push("<!-- auto:jobs:start -->");
   lines.push("");
-  lines.push("| task / cron 键 | 变更类型 | 说明 | 目标 profile | 已确认 |");
-  lines.push("|---|---|---|---|---|");
-  if (!rows.length) lines.push("| 无 | 无 | — | prod | |");
-  else {
-    for (const r of rows) {
-      const key = r["task / cron 键"] || r.taskCode || "";
-      const desc = [r.说明, r.taskCode && r.taskCode !== key ? `taskCode=${r.taskCode}` : "", r.真相]
-        .filter(Boolean)
-        .join(" · ");
-      lines.push(
-        `| ${esc(key)} | ${esc(r.变更类型 || "涉及")} | ${esc(desc)} | prod | ${esc(r.已确认 || "")} |`
-      );
-    }
+  if (!rows.length) {
+    lines.push("本版无定时任务变更。");
+  } else {
+    lines.push(
+      `本版定时任务：**${rows.length}** 条 → 明细见 [jobs/README.md](./jobs/README.md)。`
+    );
   }
   lines.push("");
-  if (rows.length) {
-    lines.push("> 本版任务汇总清单（code / 名称 / cron 表达式 / 默认参数 / 引用链接）：[jobs/README.md](./jobs/README.md)");
-    lines.push("");
-  }
   // jobs ↔ config 交叉：仅本版 draft 任务；全库附录不落正文
   const gaps = freeze.jobsConfigGaps || [];
   if (gaps.length) {
-    lines.push(`> **jobs ↔ config 交叉（本版 draft：${gaps.length} 个任务缺 cron 表达式键）**：下列任务的 cron 表达式键未在 prod 配置（application-prod.yml / Nacos overlay）中找到，可能由 Nacos DataId 提供，或本次未随 prod yml 上线；请勿手工编造键值。`);
+    lines.push(
+      `> **jobs ↔ config 交叉（本版 draft：${gaps.length} 个任务缺 cron 表达式键）**：下列任务的 cron 表达式键未在 prod 配置（application-prod.yml / Nacos overlay）中找到，可能由 Nacos DataId 提供，或本次未随 prod yml 上线；请勿手工编造键值。`
+    );
     lines.push("");
     lines.push("| taskCode | cron 键 | 真相 | 说明 |");
     lines.push("|---|---|---|---|");
     for (const g of gaps) {
-      lines.push(`| ${esc(g.taskCode || "—")} | \`${esc(g.cronKey)}\` | ${esc(g.truthPath || "—")} | ${esc(g.displayName || "—")} |`);
+      lines.push(
+        `| ${esc(g.taskCode || "—")} | \`${esc(g.cronKey)}\` | ${esc(g.truthPath || "—")} | ${esc(g.displayName || "—")} |`
+      );
     }
     lines.push("");
   }
   const appendixN = (freeze.jobsConfigGapsAppendix || []).length;
   if (appendixN) {
-    lines.push(`> 另有 ${appendixN} 条全库 catalog 缺 cron 键附录（见 freeze JSON \`jobsConfigGapsAppendix\`；不展开）。`);
+    lines.push(
+      `> 另有 ${appendixN} 条全库 catalog 缺 cron 键附录（见 freeze JSON \`jobsConfigGapsAppendix\`；不展开）。`
+    );
     lines.push("");
   }
   lines.push("<!-- auto:jobs:end -->");
@@ -631,9 +624,11 @@ function skeletonNote(meta) {
 
 ## ${H2.sql}
 
-> 按 **SQL序**；目标 profile = \`prod\`。
+> 目标 profile = \`prod\`。明细见 [sql/README.md](./sql/README.md)。
 
 <!-- auto:sql:start -->
+
+本版无新增 SQL。
 
 <!-- auto:sql:end -->
 
@@ -647,19 +642,21 @@ function skeletonNote(meta) {
 
 ## ${H2.jobs}
 
-> 目标 profile = \`prod\`。
+> 目标 profile = \`prod\`。明细见 [jobs/README.md](./jobs/README.md)。
 
 <!-- auto:jobs:start -->
+
+本版无定时任务变更。
 
 <!-- auto:jobs:end -->
 
 ## ${H2.bundle}
 
+> 整理文件 \`[库名]-V{yyMMdd}-DDL|DML.sql\`；统计见 [sql/README.md](./sql/README.md)。
+
 <!-- auto:bundle:start -->
 
-| 类别 | 包内路径 | 仓库源路径 |
-|---|---|---|
-| — | 无 | — |
+本版无包内附属文件。
 
 <!-- auto:bundle:end -->
 
@@ -696,13 +693,6 @@ function skeletonNote(meta) {
 - [ ] …
 
 <!-- manual:end -->
-
-## ${H2.appendix}
-
-| 类型 | 路径 |
-|---|---|
-| func/api/db/jobs | |
-| superpowers | |
 `;
 }
 
@@ -1050,23 +1040,37 @@ function copyBundleFiles(root, bundleDir, freeze, head) {
   return { copied, warnings };
 }
 
-function buildBundleSection(copied) {
+export function buildBundleSection(copied) {
   const lines = [];
   lines.push(`## ${H2.bundle}`);
   lines.push("");
   lines.push(
-    "> 定版时拷贝本版 **新增** 原件到 `sql/refs/` / `config/`（← draft；**不含** candidates）；并生成整理文件 `sql/release-V{yyMMdd}-DDL.sql` / `-DML.sql`（缺侧不落盘；prod **先 DDL 后 DML**）与统计文档 `sql/README.md`（DDL/DML 条数 + 按提交人执行序 + 行内跳转）。`jobs/` 为单文件汇总清单 `README.md`。包内路径为相对本发版单的 Markdown 链接。"
+    "> 定版拷贝 `sql/refs/` / `config/`；整理文件 `[库名]-V{yyMMdd}-DDL|DML.sql`（缺侧不落盘；无库名回落 `release-V*`；prod 先 DDL 后 DML）；统计见 [sql/README.md](./sql/README.md)；任务汇总见 [jobs/README.md](./jobs/README.md)。"
   );
   lines.push("");
   lines.push("<!-- auto:bundle:start -->");
   lines.push("");
-  lines.push("| 类别 | 包内路径 | 仓库源路径 |");
-  lines.push("|---|---|---|");
-  if (!copied.length) lines.push("| — | 无 | — |");
-  else {
-    for (const c of copied) {
-      lines.push(`| ${esc(c.kind)} | ${bundleLinkCell(c.bundlePath)} | \`${esc(c.sourcePath)}\` |`);
-    }
+  if (!copied.length) {
+    lines.push("本版无包内附属文件。");
+  } else {
+    const sqlN = copied.filter((c) => c.kind === "sql").length;
+    const configN = copied.filter((c) => c.kind === "config").length;
+    const hasJobs = copied.some(
+      (c) => c.kind === "jobs" || /jobs\/README\.md/i.test(c.bundlePath || "")
+    );
+    const bundles = copied.filter((c) => c.kind === "sql-bundle");
+    const hasStats = copied.some((c) => c.kind === "sql-stats");
+    const bundleLinks = bundles.length
+      ? bundles.map((c) => bundleLinkCell(c.bundlePath)).join(" · ")
+      : "无";
+    const parts = [
+      `sql×${sqlN}`,
+      `config×${configN}`,
+      hasJobs ? "jobs 见 [jobs/README.md](./jobs/README.md)" : "jobs 无",
+      `整理 ${bundleLinks}`,
+      hasStats ? "统计见 [sql/README.md](./sql/README.md)" : null,
+    ].filter(Boolean);
+    lines.push(`本版附属：${parts.join(" · ")}`);
   }
   lines.push("");
   lines.push("<!-- auto:bundle:end -->");
