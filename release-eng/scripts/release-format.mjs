@@ -641,16 +641,109 @@ export function releaseDateToYyMmDd(releaseDate) {
 }
 
 /**
- * 整理文件名：`release-V{yyMMdd}-DDL.sql` / `-DML.sql`
+ * 生产库名写入文件名时的安全化：仅保留字母数字 `_` `-`；非法则 null。
+ * @param {string|null|undefined} dbName
+ */
+export function sanitizeDbNameForFile(dbName) {
+  const s = String(dbName || "").trim();
+  if (!s) return null;
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(s)) return null;
+  return s;
+}
+
+/**
+ * 从 JDBC URL 解析库名（path 末段）。无法解析则 null。
+ * 例：`jdbc:mysql://host:3306/sms_db_prod?useSSL=false` → `sms_db_prod`
+ */
+export function parseJdbcDatabaseName(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return null;
+  // strip credentials form: jdbc:mysql://user:pass@host:3306/db
+  const noCred = raw.replace(/^(jdbc:[a-z0-9+]+:\/\/)([^/@]+)@/i, "$1");
+  const m = noCred.match(/^jdbc:[a-z0-9+]+:\/\/[^/]+\/([^?;\s"'#]+)/i);
+  if (!m) return null;
+  try {
+    return decodeURIComponent(m[1]) || null;
+  } catch {
+    return m[1] || null;
+  }
+}
+
+/**
+ * README 展示用：去掉 user:pass@ 与查询串中的 password/pwd（只留可公开的连接串）。
+ */
+export function sanitizeJdbcUrl(url) {
+  let s = String(url || "").trim();
+  if (!s) return "";
+  s = s.replace(/^(jdbc:[a-z0-9+]+:\/\/)([^/@]+)@/i, "$1");
+  // drop query/fragment that may carry secrets
+  const q = s.indexOf("?");
+  if (q >= 0) s = s.slice(0, q);
+  const hash = s.indexOf("#");
+  if (hash >= 0) s = s.slice(0, hash);
+  return s;
+}
+
+const DATASOURCE_URL_KEY_RE =
+  /(^|\.)((jdbc[_-]?url)|(datasource|data-source)\.(url|jdbc-url))$/i;
+
+/**
+ * 从 freeze.draft.config 或文本中抽取 prod 数据源 JDBC URL。
+ * @returns {{ url: string, dbName: string|null, source: string }|null}
+ */
+export function resolveProdDatasource(freeze, { texts = [] } = {}) {
+  const candidates = [];
+  for (const r of freeze?.draft?.config || []) {
+    const key = String(r.键 || r.key || r.stableId || "");
+    const val = String(r.值 || r.value || "").trim();
+    if (!val.toLowerCase().startsWith("jdbc:")) continue;
+    if (DATASOURCE_URL_KEY_RE.test(key) || /datasource/i.test(key)) {
+      candidates.push({ url: val, source: `draft.config:${key || "jdbc"}` });
+    }
+  }
+  for (const t of texts) {
+    const text = String(t?.text || t || "");
+    const src = t?.source || "yml";
+    const re = /(?:^|\n)\s*(?:jdbc[_-]?url|url)\s*:\s*["']?(jdbc:[^\s"'#]+)/gi;
+    let m;
+    while ((m = re.exec(text))) {
+      candidates.push({ url: m[1], source: src });
+    }
+  }
+  const hit = candidates.find((c) => parseJdbcDatabaseName(c.url)) || candidates[0];
+  if (!hit) return null;
+  return {
+    url: hit.url,
+    dbName: parseJdbcDatabaseName(hit.url),
+    source: hit.source,
+  };
+}
+
+/**
+ * 整理文件名：
+ * - 有库名：`[sms_db_prod]-V{yyMMdd}-DDL.sql` / `-DML.sql`
+ * - 无库名（回落）：`release-V{yyMMdd}-DDL.sql` / `-DML.sql`
  * @param {string} releaseDate YYYY-MM-DD
  * @param {"DDL"|"DML"} kind
+ * @param {string|null} [dbName]
  */
-export function releaseSqlBundleName(releaseDate, kind) {
+export function releaseSqlBundleName(releaseDate, kind, dbName = null) {
   const ymd = releaseDateToYyMmDd(releaseDate);
   if (!ymd) throw new Error(`invalid releaseDate for sql bundle: ${releaseDate}`);
   const k = String(kind || "").toUpperCase();
   if (k !== "DDL" && k !== "DML") throw new Error(`invalid sql bundle kind: ${kind}`);
+  const safe = sanitizeDbNameForFile(dbName);
+  if (safe) return `[${safe}]-V${ymd}-${k}.sql`;
   return `release-V${ymd}-${k}.sql`;
+}
+
+/** 是否为本 skill 生成的 SQL 整理文件名（含旧式与带库名式） */
+export function isSqlBundleFileName(name) {
+  const n = String(name || "");
+  return (
+    /^release-V\d+-(DDL|DML)\.sql$/i.test(n) ||
+    /^\[[A-Za-z0-9][A-Za-z0-9_-]{0,63}\]-V\d+-(DDL|DML)\.sql$/i.test(n)
+  );
 }
 
 /** 拼接分隔注释（不改源 SQL 正文） */

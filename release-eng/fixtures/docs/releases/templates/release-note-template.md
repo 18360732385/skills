@@ -96,26 +96,21 @@ sms:
 
 ## 六、定时任务
 
-> 目标 profile = `prod`。本版任务汇总清单（code / 名称 / cron 表达式 / 默认参数 / 引用链接）见包内 [jobs/README.md](./jobs/README.md)。
+> 目标 profile = `prod`。明细见包内 [jobs/README.md](./jobs/README.md)。
 
 <!-- auto:jobs:start -->
 
-| task / cron 键 | 变更类型 | 说明 | 目标 profile | 已确认 |
-|---|---|---|---|---|
-| | 新建/改 Cron/开关/无 | | prod | |
+本版无定时任务变更。
 
 <!-- auto:jobs:end -->
 
 ## 七、包内附属文件
 
-> 定版时拷贝本版新增原件到 `sql/refs/` / `config/`（← draft；不含 candidates）；并生成 `sql/release-V{yyMMdd}-DDL|DML.sql`（缺侧不落盘；prod 先 DDL 后 DML）。`jobs/` 为单文件汇总清单 `jobs/README.md`。包内路径为相对本发版单的 Markdown 链接。
+> 定版拷贝 `sql/refs/` / `config/`；整理文件 `[库名]-V{yyMMdd}-DDL|DML.sql`（无库名回落 `release-V*`）；统计见 [sql/README.md](./sql/README.md)；任务见 [jobs/README.md](./jobs/README.md)。
 
 <!-- auto:bundle:start -->
 
-| 类别 | 包内路径 | 仓库源路径 |
-|---|---|---|
-| sql | [V00001__….sql](./sql/refs/V00001__….sql) | `sms-ai/...` |
-| sql-bundle | [release-V261029-DDL.sql](./sql/release-V261029-DDL.sql) | `← sql/refs/ × N（DDL）` |
+本版无包内附属文件。
 
 <!-- auto:bundle:end -->
 

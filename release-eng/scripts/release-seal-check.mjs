@@ -270,7 +270,12 @@ function main() {
         if (
           !bundleSection.includes(`| ${sub} |`) &&
           !bundleSection.includes(`|${sub}|`) &&
-          !(sub === "sql" && /sql\/refs|sql-bundle|release-V\d+-(DDL|DML)/i.test(bundleSection))
+          !(
+            sub === "sql" &&
+            /sql\/refs|sql-bundle|release-V\d+-(DDL|DML)|\[[^\]]+\]-V\d+-(DDL|DML)/i.test(
+              bundleSection
+            )
+          )
         ) {
           continue;
         }

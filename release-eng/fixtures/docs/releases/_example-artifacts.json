@@ -33,7 +33,9 @@
   "sqlBundles": [
     {
       "kind": "DDL",
-      "path": "sql/release-V260821-DDL.sql",
+      "path": "sql/[sms_db_prod]-V260821-DDL.sql",
+      "dbName": "sms_db_prod",
+      "datasourceUrl": "jdbc:mysql://db.example:3306/sms_db_prod",
       "sourceCount": 1,
       "contentSha256": "example",
       "sources": [

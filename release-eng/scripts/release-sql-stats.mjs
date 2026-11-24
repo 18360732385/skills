@@ -32,11 +32,19 @@ function entryHref(entry) {
  * @param {object} opts
  * @param {string} [opts.releaseDate] YYYY-MM-DD
  * @param {string} [opts.identity] 发版身份（目录名）；缺省用 releaseDate
+ * @param {string|null} [opts.datasourceUrl] 已脱敏 JDBC URL（仅展示，不含账号密码）
+ * @param {string|null} [opts.dbName] 生产库名（写入总览与整理文件名前缀）
  * @param {{kind: "DDL"|"DML", fileName: string, sources: Array}[]} [opts.bundles]
  *   sources: { basename, order, globalOrder, author, srcPath, lineNo, statements }
  * @returns {string}
  */
-export function buildSqlStatsMarkdown({ releaseDate = "", identity = "", bundles = [] } = {}) {
+export function buildSqlStatsMarkdown({
+  releaseDate = "",
+  identity = "",
+  bundles = [],
+  datasourceUrl = null,
+  dbName = null,
+} = {}) {
   const label = identity || (releaseDate ? `release-${releaseDate}` : "本版");
   const lines = [];
   lines.push(`# 本版 SQL 统计（${label}）`);
@@ -56,6 +64,14 @@ export function buildSqlStatsMarkdown({ releaseDate = "", identity = "", bundles
 
   // 一、总览
   lines.push("## 一、总览");
+  lines.push("");
+  const dbLabel = dbName ? `\`${dbName}\`` : "（待填：执行库）";
+  const urlLabel = datasourceUrl
+    ? `\`${datasourceUrl}\``
+    : "（待填：从 prod `spring.datasource.url` 抽取）";
+  lines.push(`- **执行库**：${dbLabel}`);
+  lines.push(`- **连接串**：${urlLabel}`);
+  lines.push("- 说明：连接串已脱敏（无账号密码）；整理文件名带 `[库名]-V{yyMMdd}-*` 前缀（抽不到库名时回落 `release-V*`）。");
   lines.push("");
   lines.push("| 类别 | 文件数 | 语句数 | 整理文件 |");
   lines.push("|---|---|---|---|");
