@@ -23,7 +23,7 @@
 ## 分支约定
 
 - 每次运行 skill **首问**：`发版日期`（【推荐】≥提问日+2 的第一个周四；独立元信息字段）+ 发版分支 / 基线分支（默认 `release` / `main`）  
-- 发版单路径：`<slug>/<slug>.md`（同名目录包，直接位于 `docs/releases/`；`<slug>` = 发版分支名归一化：去 `origin/`、`/` → `-`；含本版新增 `sql/`/`config/` 附属拷贝与任务汇总 `jobs/README.md`（不含 candidates））  
+- 发版单路径：`<slug>/<slug>.md`（同名目录包，直接位于 `docs/releases/`；`<slug>` = 发版分支名归一化：去 `origin/`、`/` → `-`；含本版新增 `sql/`/`config/` 附属拷贝与任务汇总 `jobs/README.md`（不含 candidates）；定版/归档另生成同名 `<slug>.html` 只读渲染——md 为唯一 SSOT，html 勿手改）  
 - **无 `notes/` 中间层**：进行中版本与 `archive/`、`templates/`、本索引并列  
 - **`首次发版`**：基线可为 **`无`**；定版内容取自发版分支全量（提交历史 + 树路径），push-gate 只验发版分支未推送  
 - 定版前：`git fetch`；本地相对 `origin/<分支>` **有未推送提交则 push-gate 失败并中止定版**  

@@ -3,3 +3,4 @@ _freeze*.json
 _ai-track*
 _draft-md*
 .tmp-push-gate-*
+_tmp*

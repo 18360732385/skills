@@ -60,6 +60,10 @@ _Avoid_: 每轮必跑 AI, 双源去重（那是 freeze 规则轨）
 对未 seal 的进行中目录包做正式撤销（删包并清索引）；不是 seal，不进 archive。
 _Avoid_: 手工删文件夹, 当 archive 用
 
+**发版单 HTML**:
+目录包内与发版单同名的 `.html` 只读渲染（note-merge 定版/seal 自动重建，`note-html` 可补渲）；md 为唯一 SSOT，勾选/折叠不入档。
+_Avoid_: 发版单网页版（非镜像整站）, 手改 html
+
 **逾期未归档**:
 进行中目录包已定版且发版日期已过仍未 seal 的状态；对新 prepare 为硬闸。
 _Avoid_: 过期发版单, 忘了 archive

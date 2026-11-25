@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 # release-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.4.2**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.4.3**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。  
 CLI：`node scripts/release.mjs`（`prepare` 半自动编排 · `modes` · 脚本转发）。  
 命令前缀：文档示例统一写 `.cursor/skills/release-eng/scripts/`；在本仓自测时替换为 `release-eng/scripts/`，装到 `.agents/skills/` 等其它位置时按实际安装路径替换前缀。

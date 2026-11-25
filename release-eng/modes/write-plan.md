@@ -40,6 +40,7 @@ freeze: --format draft-md（本轮预览来源）
 | 目标路径 | 动作 | 说明 |
 |---|---|---|
 | `docs/releases/{id}/{id}.md` | create / merge | 【推荐】`release-note-merge.mjs`（← `draft` + Git 定版 + 附属拷贝） |
+| `docs/releases/{id}/{id}.html` | create / refresh | 发版单只读渲染（note-merge 自动生成；md 为 SSOT，约定 ⑩） |
 | `docs/releases/{id}/artifacts.json` | create / refresh | 发版制品清单 SSOT（含 aiTrack；允许密文） |
 | `docs/releases/{id}/sql/refs/` + `release-V*-DDL|DML.sql` + `README.md`（统计） / `config/` | create / refresh | 自 head 拷贝本版 **新增** 原件到 refs，并整理 DDL/DML 与统计文档（← draft；不含 candidates） |
 | `docs/releases/{id}/jobs/README.md` | create / refresh | 任务汇总清单（code/名称/cron/默认参数/引用链接；不再逐份拷贝真相） |
@@ -54,7 +55,8 @@ freeze: --format draft-md（本轮预览来源）
 node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<slug>/<slug>.md --base <baseRef> --head <headRef> --baseline <基线分支|无> --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
 ```
 
-`--dry-run` 只报告将写字节与 draft/bundle 行数。手工落单须与 `draft-md` 预览一致。  
+`--dry-run` 只报告将写字节与 draft/bundle 行数（含将写的同名 `.html` 渲染路径）。手工落单须与 `draft-md` 预览一致。  
+定版/刷新会同步生成目录包内同名只读渲染 `{identity}.html`（`--no-html` 关闭；md 为 SSOT，见 [conventions.md](conventions.md) ⑩）。  
 **逾期硬闸书面跳过**：freeze JSON 含 `overdueHardGate` 且用户已书面跳过时，须加 `--overdue-waived "<书面说明>"` 才能写盘（跳过记录写入 `artifacts.json.overdueWaived{reason,date}`）；未传该参数 → note-merge 拒绝写盘（exit 1）。约定见 [conventions.md](conventions.md)。
 
 ### `draft` 预览（强制 · prepare/resume）

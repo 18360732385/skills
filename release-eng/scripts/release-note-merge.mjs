@@ -12,6 +12,7 @@
  * 目录包 jobs/ 生成单文件汇总清单（code/名称/cron/默认参数/引用链接），不再逐任务拷贝真相。
  * SQL 目录包生成 [库名]-V{yyMMdd}-DDL|DML.sql（无库名回落 release-V*）与 sql/README.md（执行库 + 条数 + 提交人执行序）。
  * 定时任务 / 包内附属正文精简为摘要+链接。新骨架 10 章。保留：manual 段人工正文。
+ * 定版同时生成同名只读渲染 {identity}.html（release-note-html；--no-html 关闭；md 为 SSOT）。
  * Exit 0=ok 1=error
  */
 import { spawnSync } from "child_process";
@@ -48,6 +49,7 @@ import {
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
 import { runSqlBundle } from "./release-sql-bundle.mjs";
 import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
+import { writeNoteHtmlForNote, deriveHtmlPath } from "./release-note-html.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -73,6 +75,7 @@ function parseArgs(argv) {
     sqlAiJson: null,
     skipAiClassify: false,
     overdueWaived: null,
+    html: true,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -99,6 +102,8 @@ function parseArgs(argv) {
     else if (a === "--sql-ai-json") out.sqlAiJson = argv[++i] || null;
     else if (a === "--skip-ai-classify") out.skipAiClassify = true;
     else if (a === "--overdue-waived") out.overdueWaived = argv[++i] || null;
+    else if (a === "--no-html") out.html = false;
+    else if (a === "--html") out.html = true;
     else if (a === "--help" || a === "-h") out.help = true;
   }
   if (out.base && ["none", "无", "-", "null"].includes(String(out.base).toLowerCase())) {
@@ -1107,9 +1112,10 @@ function main() {
   node release-note-merge.mjs --root <REPO> --note <path> --freeze-json <file> [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --base <ref> --head <ref> [--prior auto] [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
-Options: --identity --release-branch --baseline --release-date --owner --status --overdue-waived <书面说明> --no-bundle-files --no-update-index
+Options: --identity --release-branch --baseline --release-date --owner --status --overdue-waived <书面说明> --no-bundle-files --no-update-index --no-html
 默认回写 docs/releases/releases.md 进行中表（--no-update-index 关闭）
 Note path: docs/releases/{identity}/{identity}.md（无 notes/；旧仓先 migrate-notes）
+定版同时生成同名只读渲染 {identity}.html（--no-html 关闭；md 为 SSOT，勿手改 html）
 identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支名当路径
 --overdue-waived：freeze 报逾期硬闸（存在已定版且发版日期已过的进行中发版单）时的书面跳过说明；落盘 artifacts.json.overdueWaived{reason,date}`);
     process.exit(0);
@@ -1225,6 +1231,9 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
           indexDrift: freeze.indexDrift?.length || 0,
           indexUpdated: Boolean(indexPlan),
           indexRow,
+          html: args.html
+            ? path.relative(args.root, deriveHtmlPath(notePath)).replace(/\\/g, "/")
+            : null,
           bytes: Buffer.byteLength(text, "utf8"),
         },
         null,
@@ -1313,6 +1322,18 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
   fs.mkdirSync(path.dirname(notePath), { recursive: true });
   fs.writeFileSync(notePath, text, "utf8");
 
+  // 同名只读渲染 {identity}.html（约定⑩；失败不阻断定版，降级为 warning）
+  let htmlInfo = null;
+  if (args.html) {
+    try {
+      htmlInfo = writeNoteHtmlForNote({ notePath, root: args.root });
+    } catch (e) {
+      bundleResult.warnings.push(
+        `发版单 HTML 渲染失败（不影响 md / artifacts）：${e?.message || e}`
+      );
+    }
+  }
+
   let indexUpdated = false;
   let indexRow = null;
   if (indexPlan) {
@@ -1350,6 +1371,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
         indexDrift: freeze.indexDrift?.length || 0,
         indexUpdated,
         indexRow,
+        html: htmlInfo ? htmlInfo.rel : null,
       },
       null,
       2

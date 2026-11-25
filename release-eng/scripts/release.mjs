@@ -27,7 +27,7 @@ const MODES = [
     name: "prepare",
     doc: "modes/prepare.md",
     desc: "半自动：首问后 → push-gate → freeze → WritePlan 预览（同身份=刷新）",
-    scripts: ["prepare", "push-gate", "freeze", "note-merge"],
+    scripts: ["prepare", "push-gate", "freeze", "note-merge", "note-html"],
     runnable: true,
   },
   {
@@ -68,6 +68,7 @@ const DISPATCH = {
   "sql-bundle": "release-sql-bundle.mjs",
   "sql-stats": "release-sql-stats.mjs",
   "note-merge": "release-note-merge.mjs",
+  "note-html": "release-note-html.mjs",
   "seal-check": "release-seal-check.mjs",
   seal: "release-seal.mjs",
   "seal-apply": "release-seal.mjs",
@@ -95,7 +96,7 @@ Usage:
   migrate-notes  notes/ → docs/releases/<id>/
 
 可转发脚本:
-  push-gate | freeze | enrich | ai-track | note-merge | seal-check | seal | sql-bundle | …
+  push-gate | freeze | enrich | ai-track | note-merge | note-html | seal-check | seal | sql-bundle | …
 
 边界：确认词 / 问卷高风险打断仍由 Agent；note-merge / seal --apply / cancel --apply 仅确认词后。
 热路径：AGENT-INDEX.md · 烟测：node scripts/selfcheck.mjs

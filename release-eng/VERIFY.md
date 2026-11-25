@@ -1,10 +1,23 @@
-# release-eng 验收记录（0.4.2）
+# release-eng 验收记录（0.4.3）
 
 > 静态对照 + `scripts/selfcheck.mjs`。**非 harness land**。历史见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/release-eng/`](../_log/release-eng/)。
 
 ## 版本
 
-当前 **0.4.2**（enrich → lib/freeze 模块化）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.4.3**（发版单同名 `.html` 只读渲染）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+
+## 0.4.3 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+| `--layer unit` / `--layer contract` exit 0 | 有 |
+| `scripts/release-note-html.mjs` 存在且可 CLI 渲染样张 | 有（selfcheck 043） |
+| note-merge 定版自动生成 `<identity>.html`；`--no-html` 关闭 | 有 |
+| seal `--apply` 归档侧按「已上线」重渲 html | 有（source 断言 + 结果 `html` 字段） |
+| `release.mjs note-html` 别名转发 | 有 |
+| fixtures 样张 `templates/release-note-sample.{md,html}` | 有 |
+| md 为 SSOT：colophon 声明 / 勾选不入档 | 有（渲染落款） |
 
 ## 0.4.2 增量验收
 

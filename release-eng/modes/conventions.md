@@ -1,6 +1,6 @@
 # 约定 SSOT（release-eng conventions）
 
-本文件是 release-eng 全部「约定」的**唯一权威 SSOT**：发版日期算法、版本身份、目录包构成、Git 定版展示、目标 profile、SQL 序与整理、密文、repo-profile、逾期硬闸书面跳过。  
+本文件是 release-eng 全部「约定」的**唯一权威 SSOT**：发版日期算法、版本身份、目录包构成、Git 定版展示、目标 profile、SQL 序与整理、密文、repo-profile、逾期硬闸书面跳过、发版单 HTML 渲染。  
 skill 侧其它文档（SKILL / README / QUICKSTART / AGENT-INDEX / modes/*）遇到上述约定**只引用本文件、不复述**；行为性内容（硬闸、Red Flags、借口表、步骤、出口、Done、确认词表、问卷题面、AskQuestion 形态）仍在各 mode 规格原位。  
 **例外**：fixtures 种子（`fixtures/docs/releases/templates/` 模板、`fixtures/docs/releases/releases.md`）随骨架落到目标仓后没有 skill 文档可引用，必须**自包含**，允许复述本文件约定；改约定时须同步改 fixtures 种子。
 
@@ -24,6 +24,7 @@ skill 侧其它文档（SKILL / README / QUICKSTART / AGENT-INDEX / modes/*）�
 - **同日一包**：同一 `yyMMdd` 进行中至多一包；冲突时先 seal / **取消发版** / 改日期。  
 - **目录包** `docs/releases/<identity>/`（与 `archive/`、`templates/`、索引 `releases.md` 并列，**无 notes/ 中间层**）构成：
   - 同名发版单 `docs/releases/<identity>/<identity>.md`
+  - 同名只读渲染 `docs/releases/<identity>/<identity>.html`（见 ⑩）
   - `sql/refs/`：本版新增 SQL 原件
   - `sql/[库名]-V{yyMMdd}-DDL|DML.sql`（或回落 `release-V{yyMMdd}-*`）：整理文件
   - `config/`：本版新增配置原件
@@ -74,7 +75,16 @@ SQL / 配置 / 定时任务**一律目标 `prod`**。配置仅 `application-prod
 
 freeze `overdueHardGate=true`（进行中目录包已定版且发版日期已过）时：仅用户**书面说明** + note-merge 带 **`--overdue-waived "<书面说明>"`** 才能写盘；跳过记录写入 `artifacts.json.overdueWaived{reason,date}`。未传该参数时 note-merge **拒绝写盘**（exit 1）。口头豁免一律无效（硬闸语义见 [gates-common.md](gates-common.md)）。
 
+## ⑩ 发版单 HTML 渲染
+
+- **md 是发版单唯一 SSOT**；目录包内同名 `<identity>.html` 是**只读渲染产物**（工单样式，自包含单文件，离线可读可打印），**勿手改**；以 md + `release-note-html.mjs` 重建为准。
+- **生成时机**：note-merge 定版/刷新后自动重建（`--no-html` 关闭）；seal `--apply` 在归档侧按「已上线」状态重渲；也可手动 `node scripts/release.mjs note-html -- --root . --note <path>` 补渲（audit 亦可只报告缺失）。
+- **降级语义**：html 渲染失败**不阻断**定版/归档（降级为 warning）；缺 html 不影响 seal-check。
+- **会话级辅助不入档**：html 中的勾选（步骤/验收）与 YAML 折叠状态均为浏览器会话态，不写回 md / artifacts。
+- fixtures 样张：`templates/release-note-sample.md` → `release-note-sample.html`（视觉样例；不参与 bootstrap 种子复制）。
+
 ## 变更记录
 
+- 0.4.3 新增 ⑩（HTML 只读渲染；目录包含同名 `<identity>.html`）。
 - 0.4.0 版本身份改为 `release-V{yyMMdd}`；删除 notes/ 兼容读；仓内快照对账；取消发版命令。
 - 0.3.32 建立本 SSOT（复述自 SKILL / gates-common / README / QUICKSTART / freeze / idempotency / questions，收敛于此）。

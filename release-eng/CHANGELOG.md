@@ -7,6 +7,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.4.3](../_log/release-eng/0.4/0.4.3.md) | 2026-11-25 | 发版单同名 `.html` 只读渲染：`release-note-html.mjs` · note-merge/seal 自动重建 · `note-html` 别名 · fixtures 样张 |
 | [0.4.2](../_log/release-eng/0.4/0.4.2.md) | 2026-11-25 | enrich 外提 catalog/prior/change-objects；编排层 ~718 行 |
 | [0.4.1](../_log/release-eng/0.4/0.4.1.md) | 2026-11-25 | P3：lib/freeze 拆分 · Win32 safe-out · selfcheck `--layer unit|contract|e2e` |
 | [0.4.0](../_log/release-eng/0.4/0.4.0.md) | 2026-11-25 | 半自动 prepare；身份 `release-V{yyMMdd}`；resume→prepare；cancel；快照对账；删 notes/ 兼容；ai-track 默认跳过 |

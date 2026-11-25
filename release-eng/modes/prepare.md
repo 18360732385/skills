@@ -28,6 +28,8 @@ node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . \
   --baseline <基线|无> --owner <负责人>
 ```
 
+   落盘同时生成目录包内同名只读渲染 `<identity>.html`（工单样式，可打印；`--no-html` 关闭；约定见 [conventions.md](conventions.md) ⑩）。
+
 ### 取消发版
 
 未 seal 的进行中包：

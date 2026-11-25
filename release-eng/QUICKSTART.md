@@ -8,8 +8,8 @@
 ```text
 prepare（首问发版日期 + 分支 + 基线/首次发版）
   → release.mjs prepare（push-gate → freeze → WritePlan 预览）
-      → 确认词 → note-merge 写盘
-        → seal（seal-check → 归档）
+      → 确认词 → note-merge 写盘（md + artifacts + 同名 .html 只读渲染）
+        → seal（seal-check → 归档，html 随包并按已上线重渲）
 ```
 
 同身份目录已存在 = prepare **刷新**（无独立 resume）。
