@@ -6,16 +6,16 @@
 |---|---|
 | **merge**（默认） | 刷新自动段；保留人工段；刷新包内附属拷贝（仅本版新增；不含 candidates） |
 | **skip** | 已存在则只报告路径 |
-| **fail** | 已存在则中止，要求新 slug |
+| **fail** | 已存在则中止，要求新 identity |
 
-未指定则 merge。
+未指定则 merge。同身份已存在时 prepare 默认 merge（刷新）。
 
 > **警示**：`merge` 刷新会**先清空包内 `sql/` / `config/` / `jobs/` 三个目录再重建**（← `draft`）；手工放入这三个目录的文件会被清除——勿在其中存放手工产物。
 
 ## 键
 
-`docs/releases/<slug>/<slug>.md`（同目录包）= 同一发版单；`<slug>` = 发版分支名归一化、目录包构成见 [conventions.md](conventions.md)。  
-`发版日期` 来自 gates-common 首问（【推荐】≥提问日+2 的第一个周四，算法见 [conventions.md](conventions.md)），**不是**定版当天的日历日（除非用户把发版日期改成当天）；日期为独立元信息字段，不参与目录命名。
+`docs/releases/<identity>/<identity>.md`（同目录包）= 同一发版单；`<identity>` = `release-V{yyMMdd}` ← 发版日期，见 [conventions.md](conventions.md)。  
+`发版日期` 来自 gates-common 首问（【推荐】≥提问日+2 的第一个周四）；**进入版本身份**；改日期即改路径。
 
 ## 段
 

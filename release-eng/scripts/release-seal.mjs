@@ -84,11 +84,13 @@ function resolveBundle(root, noteArg) {
   const dir = path.dirname(notePath);
   const base = path.basename(notePath, ".md");
   let identity = base;
-  const m =
-    rel.match(/^docs\/releases\/notes\/([^/]+)\//i) ||
-    rel.match(/^docs\/releases\/([^/]+)\//i);
+  if (/docs\/releases\/notes\//i.test(rel) || /\/notes\//.test(rel)) {
+    throw new Error(
+      `0.4 已移除 notes/：请先 migrate-notes --apply，当前: ${rel}`
+    );
+  }
+  const m = rel.match(/^docs\/releases\/([^/]+)\//i);
   if (m) identity = m[1];
-  const fromNotes = /\/notes\//.test(rel);
   const srcDir = dir;
   const destDir = path.join(root, "docs", "releases", "archive", identity);
   const destNoteRel = `docs/releases/archive/${identity}/${identity}.md`;
@@ -99,7 +101,7 @@ function resolveBundle(root, noteArg) {
     srcDir,
     destDir,
     destNoteRel,
-    fromNotes,
+    fromNotes: false,
   };
 }
 
@@ -201,7 +203,13 @@ function main() {
     process.exit(2);
   }
 
-  const bundle = resolveBundle(args.root, args.note);
+  let bundle;
+  try {
+    bundle = resolveBundle(args.root, args.note);
+  } catch (e) {
+    console.error(String(e.message || e));
+    process.exit(1);
+  }
   const text = readText(bundle.notePath);
   if (!text) {
     console.error(`cannot read note ${bundle.relNote}`);

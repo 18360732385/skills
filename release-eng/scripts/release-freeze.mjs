@@ -51,6 +51,10 @@ import {
   isProdConfigPath,
 } from "./release-format.mjs";
 import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
+import { pathBucket, excludeReleasePackageFiles } from "./lib/freeze/paths.mjs";
+import { resolveSafeOut, emitText } from "./lib/safe-out.mjs";
+
+export { pathBucket, excludeReleasePackageFiles } from "./lib/freeze/paths.mjs";
 
 function isNoneBase(v) {
   if (v == null) return false;
@@ -173,24 +177,8 @@ function guessSourceBranch(subject) {
   return m ? m[1] : null;
 }
 
-/** 路径一级桶：docs / db/migration 特例；其余取 top-level 目录名（可移植 monorepo） */
-export function pathBucket(p) {
-  const n = p.replace(/\\/g, "/");
-  if (n.includes("db/migration") || /\/V\d+__/.test(n)) return "db/migration";
-  if (n.startsWith("docs/") || n.startsWith("docs\\")) return "docs/";
-  if (!n.includes("/")) return "其它";
-  const top = n.split("/")[0];
-  if (top && /^[a-zA-Z0-9._-]+$/.test(top)) return `${top}/`;
-  return "其它";
-}
-
 function normPath(p) {
   return p.replace(/\\/g, "/");
-}
-
-/** 发版过程域路径：采集候选时排除，避免包内 sql/config 再进 draft */
-export function excludeReleasePackageFiles(files) {
-  return (files || []).filter((f) => !normPath(f).startsWith("docs/releases/"));
 }
 
 function baseName(p) {
@@ -1015,7 +1003,7 @@ function main() {
   --prior        清单已收录：默认 auto（archive 全量并集，优先 artifacts.json）；none 关闭；或显式路径
   --prior-since  仅并入 identity/日期 ≥ 该前缀的 archive（与 --prior auto 合用）
   --format       json（默认）| md | draft-md（WritePlan 三章预览）| audit-json（audit 短摘要）| summary（一屏摘要，WritePlan 白话摘要主输入）
-  --out <file>   落盘到文件（避免大 JSON 打 stdout；PowerShell 必用，规避 UTF-16 BOM）`);
+  --out <file>   落盘到文件；Win32 下 json/audit-json 未指定时默认写临时文件（规避 PowerShell > UTF-16）`);
     process.exit(0);
   }
   if (!args.head) {
@@ -1165,27 +1153,20 @@ function main() {
     profile,
   });
 
-  if (args.format === "md") {
-    const out = toMd(data);
-    if (args.out) fs.writeFileSync(args.out, out + "\n", "utf8"), console.log(`written ${args.out}`);
-    else console.log(out);
-  } else if (args.format === "draft-md") {
-    const out = toDraftPreviewMd(data);
-    if (args.out) fs.writeFileSync(args.out, out + "\n", "utf8"), console.log(`written ${args.out}`);
-    else console.log(out);
-  } else if (args.format === "audit-json") {
-    const out = JSON.stringify(toAuditFreezeSummary(data), null, 2);
-    if (args.out) fs.writeFileSync(args.out, out + "\n", "utf8"), console.log(`written ${args.out}`);
-    else console.log(out);
-  } else if (args.format === "summary") {
-    const out = toFreezeSummary(data);
-    if (args.out) fs.writeFileSync(args.out, out + "\n", "utf8"), console.log(`written ${args.out}`);
-    else console.log(out);
-  } else {
-    const out = JSON.stringify(data, null, 2);
-    if (args.out) fs.writeFileSync(args.out, out + "\n", "utf8"), console.log(`written ${args.out}`);
-    else console.log(out);
-  }
+  let text;
+  if (args.format === "md") text = toMd(data);
+  else if (args.format === "draft-md") text = toDraftPreviewMd(data);
+  else if (args.format === "audit-json")
+    text = JSON.stringify(toAuditFreezeSummary(data), null, 2);
+  else if (args.format === "summary") text = toFreezeSummary(data);
+  else text = JSON.stringify(data, null, 2);
+
+  const resolved = resolveSafeOut({
+    format: args.format,
+    out: args.out,
+    prefix: "release-freeze",
+  });
+  emitText(text, { ...resolved, label: "written" });
   if (data.overdueHardGate) process.exit(1);
 }
 

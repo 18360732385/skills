@@ -17,7 +17,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --base <base
 node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-release --head <headRef> --format json
 ```
 
-> **PowerShell 落盘**：避免 `> file` 写成 UTF-16 LE BOM 导致 JSON 解析失败，**优先用 `--out <file>`**：
+> **PowerShell 落盘**：避免 `> file` 写成 UTF-16 LE BOM。Win32 下 `json|audit-json` 未指定 `--out` 时**默认写临时文件**（stderr 提示路径）；仍推荐显式 `--out`：
 > ```powershell
 > node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-release --head HEAD --format json --out .cursor/skills/release-eng/scripts/_freeze.json
 > # 一屏摘要（WritePlan 白话摘要主输入）

@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { stripBom } from "./release-format.mjs";
+import { resolveSafeOut, emitText } from "./lib/safe-out.mjs";
 
 const NEED_AI_CONF = new Set(["path"]);
 
@@ -313,7 +314,7 @@ function main() {
     console.log(`Usage:
   node release-ai-track.mjs --freeze-json <file> --format prompt-md|prompt-json [--out <file>]
   node release-ai-track.mjs --freeze-json <file> --ai-json <file> --format json [--out <file>]
-  --out <file>  落盘到文件（PowerShell 必用，规避 > 重定向写 UTF-16 BOM）`);
+  --out <file>  落盘；Win32 下 json 未指定时默认写临时文件（规避 PowerShell > UTF-16）`);
     process.exit(0);
   }
   if (!args.freezeJson) {
@@ -327,13 +328,14 @@ function main() {
   const freeze = readJsonFile(freezePath);
   const items = collectAiCandidates(freeze);
 
-  const emit = (text) => {
-    if (args.out) {
-      fs.writeFileSync(args.out, text + "\n", "utf8");
-      console.log(`written ${args.out}`);
-    } else {
-      console.log(text);
-    }
+  const emit = (text, format = args.format) => {
+    const resolved = resolveSafeOut({
+      format,
+      out: args.out,
+      prefix: "release-ai-track",
+      forceTemp: format === "json" || format === "prompt-json" ? undefined : false,
+    });
+    emitText(text, { ...resolved, label: "written" });
   };
 
   if (args.format === "prompt-md") {

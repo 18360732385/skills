@@ -1,9 +1,17 @@
 # release-eng CHANGELOG
 
-版本策略：对外权威号**只认** [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`。自 `0.3.x` 起补丁序递增（勿跳升次版本号 unless 明确要求）。  
+版本策略：对外权威号**只认** [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`。  
 版本明细见 [`../_log/release-eng/`](../_log/release-eng/)（按 `major.minor` 分目录；`-dev` / RED 压测在 [`archive/`](../_log/release-eng/archive/)）。本表为索引。
 
-## 现行（0.3.23+）
+## 现行（0.4+）
+
+| 版本 | 日期 | 说明 |
+|---|---|---|
+| [0.4.2](../_log/release-eng/0.4/0.4.2.md) | 2026-11-25 | enrich 外提 catalog/prior/change-objects；编排层 ~718 行 |
+| [0.4.1](../_log/release-eng/0.4/0.4.1.md) | 2026-11-25 | P3：lib/freeze 拆分 · Win32 safe-out · selfcheck `--layer unit|contract|e2e` |
+| [0.4.0](../_log/release-eng/0.4/0.4.0.md) | 2026-11-25 | 半自动 prepare；身份 `release-V{yyMMdd}`；resume→prepare；cancel；快照对账；删 notes/ 兼容；ai-track 默认跳过 |
+
+## 0.3.x（归档索引）
 
 | 版本 | 日期 | 说明 |
 |---|---|---|

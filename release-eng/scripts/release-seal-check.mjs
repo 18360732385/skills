@@ -5,7 +5,7 @@
  * Usage:
  *   node release-seal-check.mjs --root <REPO> --note <path> [--force] [--format json|md]
  *
- * 检查：位于 docs/releases/{id}/（进行中；兼容旧 notes/）、状态已定版（或 --force）、
+ * 检查：位于 docs/releases/{id}/（进行中；0.4 不接受 notes/）、状态已定版（或 --force）、
  * 元信息/发版日期、Git 定版、SQL·配置·任务目标 profile=prod（或显式无）、
  * 目录包 artifacts.json SSOT、索引进行中表有对应行（警告级可缺）。
  * 密文：配置项章 / artifacts.json **允许**含密文，本脚本不做密文拦截。
@@ -98,32 +98,24 @@ function main() {
     errors.push("发版单已在 archive/，勿重复 seal");
   }
 
-  const reservedTop = new Set(["archive", "templates"]);
-  const legacyBundle = rel.match(/^docs\/releases\/notes\/([^/]+)\/([^/]+)\.md$/i);
-  const legacyFlat = rel.match(/^docs\/releases\/notes\/([^/]+)\.md$/i);
+  const reservedTop = new Set(["archive", "templates", "notes"]);
+  if (/docs\/releases\/notes\//i.test(rel)) {
+    errors.push(
+      `0.4 已移除 notes/：请先 node scripts/release.mjs migrate-notes -- --root . --apply，当前: ${rel}`
+    );
+  }
   const rootBundle = rel.match(/^docs\/releases\/([^/]+)\/([^/]+)\.md$/i);
   const rootFlat = rel.match(/^docs\/releases\/([^/]+)\.md$/i);
-  const isLegacy = Boolean(legacyBundle || legacyFlat);
   const isRootBundle =
-    rootBundle && !reservedTop.has(rootBundle[1].toLowerCase()) && rootBundle[1].toLowerCase() !== "notes";
+    rootBundle && !reservedTop.has(rootBundle[1].toLowerCase());
   const isRootFlat =
     rootFlat &&
     !reservedTop.has(rootFlat[1].replace(/\.md$/i, "").toLowerCase()) &&
     rootFlat[1].toLowerCase() !== "notes.md";
 
-  if (!isLegacy && !isRootBundle && !isRootFlat) {
+  if (!isRootBundle && !isRootFlat) {
     errors.push(
-      `seal 源路径须为 docs/releases/{identity}/{identity}.md（或兼容旧 notes/），当前: ${rel}`
-    );
-  }
-  if (isLegacy) {
-    warnings.push(
-      `发版单仍在旧路径 notes/；推荐迁至 docs/releases/${(legacyBundle || legacyFlat)[1]}/ 后再 seal`
-    );
-  }
-  if (legacyFlat && !legacyBundle) {
-    warnings.push(
-      `发版单仍为扁平路径 notes/${legacyFlat[1]}.md；推荐目录包 ${(legacyFlat[1])}/${legacyFlat[1]}.md`
+      `seal 源路径须为 docs/releases/{identity}/{identity}.md，当前: ${rel}`
     );
   }
   if (isRootFlat && !isRootBundle) {
@@ -131,7 +123,7 @@ function main() {
       `发版单仍为扁平路径 ${rootFlat[1]}；推荐目录包 ${rootFlat[1].replace(/\.md$/i, "")}/${rootFlat[1]}`
     );
   }
-  const bundleMatch = legacyBundle || (isRootBundle ? rootBundle : null);
+  const bundleMatch = isRootBundle ? rootBundle : null;
   if (bundleMatch && bundleMatch[1] !== bundleMatch[2]) {
     warnings.push(`目录名 ${bundleMatch[1]} 与 md 名 ${bundleMatch[2]} 不一致`);
   }

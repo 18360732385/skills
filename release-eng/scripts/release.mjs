@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 /**
- * release-eng 统一薄入口（0.3.19-dev）。
+ * release-eng 统一入口（0.4+）
  *
- * 只做：模式/子命令帮助 + 转发到既有 scripts/*。
- * 不写盘、不代答确认词、不跑完整 prepare 仪式（Agent 仍按模式 md 调度）。
+ * - prepare：半自动编排到 WritePlan 预览（转发 release-prepare.mjs）
+ * - audit / seal / cancel / sync-scripts / migrate-notes
+ * - 脚本别名转发
  *
  * Usage:
- *   node scripts/release.mjs --help | help
- *   node scripts/release.mjs modes
- *   node scripts/release.mjs prepare|resume|audit|seal [--help]
- *   node scripts/release.mjs push-gate|freeze|enrich|ai-track|note-merge|seal-check -- <args...>
+ *   node scripts/release.mjs --help | modes
+ *   node scripts/release.mjs prepare -- --root . --release-date YYYY-MM-DD --release-branch BR --baseline main
+ *   node scripts/release.mjs cancel -- --root . --identity release-V261126 --dry-run
+ *   node scripts/release.mjs sync-scripts -- --root . --check
+ *   node scripts/release.mjs migrate-notes -- --root . --dry-run
+ *   node scripts/release.mjs freeze -- --root . --base … --head … --format draft-md
  */
 import fs from "fs";
 import path from "path";
@@ -23,14 +26,9 @@ const MODES = [
   {
     name: "prepare",
     doc: "modes/prepare.md",
-    desc: "新建发版单：首问 → push-gate → freeze → 问卷 → WritePlan",
-    scripts: ["push-gate", "freeze", "note-merge"],
-  },
-  {
-    name: "resume",
-    doc: "modes/resume.md",
-    desc: "同版本身份续跑（刷新 draft / 补问卷 / 再定版）",
-    scripts: ["freeze", "note-merge"],
+    desc: "半自动：首问后 → push-gate → freeze → WritePlan 预览（同身份=刷新）",
+    scripts: ["prepare", "push-gate", "freeze", "note-merge"],
+    runnable: true,
   },
   {
     name: "audit",
@@ -45,10 +43,22 @@ const MODES = [
     desc: "已上线：seal-check 通过后 进行中目录→archive",
     scripts: ["seal-check", "seal"],
     hint: "确认词后 release.mjs seal -- --apply …",
+    runnable: true,
+  },
+  {
+    name: "cancel",
+    doc: "modes/prepare.md",
+    desc: "取消未 seal 的进行中目录包（删包+清索引）",
+    scripts: ["cancel"],
+    runnable: true,
   },
 ];
 
 const DISPATCH = {
+  prepare: "release-prepare.mjs",
+  cancel: "release-cancel.mjs",
+  "sync-scripts": "release-sync-scripts.mjs",
+  "migrate-notes": "release-migrate-notes.mjs",
   "push-gate": "release-push-gate.mjs",
   freeze: "release-freeze.mjs",
   enrich: "release-freeze-enrich.mjs",
@@ -56,6 +66,7 @@ const DISPATCH = {
   "ai-track": "release-ai-track.mjs",
   "sql-classify": "release-sql-classify.mjs",
   "sql-bundle": "release-sql-bundle.mjs",
+  "sql-stats": "release-sql-stats.mjs",
   "note-merge": "release-note-merge.mjs",
   "seal-check": "release-seal-check.mjs",
   seal: "release-seal.mjs",
@@ -63,32 +74,30 @@ const DISPATCH = {
 };
 
 function printHelp() {
-  console.log(`release-eng 薄 CLI — 统一入口（非 harness land）
+  console.log(`release-eng CLI 0.4+ — 半自动发版仪式入口（非 harness land）
 
 Usage:
   node scripts/release.mjs --help | help
   node scripts/release.mjs modes
-  node scripts/release.mjs prepare|resume|audit|seal [--help]
+  node scripts/release.mjs prepare -- --root . --release-date YYYY-MM-DD --release-branch BR --baseline main
+  node scripts/release.mjs audit|seal|cancel [--help]
+  node scripts/release.mjs sync-scripts|migrate-notes -- <args...>
   node scripts/release.mjs <script> -- <args...>
 
-模式（仪式规格，Agent Read 对应 md；本 CLI 只打印指引）:
-  prepare   新建发版单
-  resume    同版本身份续跑
+模式:
+  prepare   半自动到 WritePlan 预览（同身份目录存在=刷新；原 resume 已并入）
   audit     只读检查（永不写盘）
-  seal      已上线上归档
+  seal      已上线归档
+  cancel    取消进行中包
 
-可转发脚本子命令:
-  push-gate | freeze | enrich | ai-track | sql-classify | sql-bundle | note-merge | seal-check | seal
+辅助:
+  sync-scripts   仓内 scripts/release-eng VERSION 对账 / --apply
+  migrate-notes  notes/ → docs/releases/<id>/
 
-示例:
-  node scripts/release.mjs modes
-  node scripts/release.mjs audit --help
-  node scripts/release.mjs freeze -- --root . --base main --head HEAD --format audit-json
-  node scripts/release.mjs seal-check -- --root . --note docs/releases/<slug>/<slug>.md
-  node scripts/release.mjs seal -- --root . --note docs/releases/<slug>/<slug>.md --online-date YYYY-MM-DD --executor NAME --dry-run
-  node scripts/release.mjs seal -- --root . --note … --online-date … --executor … --apply
+可转发脚本:
+  push-gate | freeze | enrich | ai-track | note-merge | seal-check | seal | sql-bundle | …
 
-边界：确认词 / WritePlan / 问卷仍由 Agent 按模式 md 执行；seal --apply 仅在确认词后调用。
+边界：确认词 / 问卷高风险打断仍由 Agent；note-merge / seal --apply / cancel --apply 仅确认词后。
 热路径：AGENT-INDEX.md · 烟测：node scripts/selfcheck.mjs
 `);
 }
@@ -105,11 +114,11 @@ function listModes() {
   }
   console.log("\n脚本别名 → 文件");
   for (const [alias, file] of Object.entries(DISPATCH)) {
-    if (alias === "freeze-enrich") continue;
+    if (alias === "freeze-enrich" || alias === "seal-apply") continue;
     const ok = fs.existsSync(path.join(__dirname, file)) ? "✓" : "✗";
     console.log(`  ${alias}\tscripts/${file} ${ok}`);
   }
-  console.log("\n详情：modes/README.md · SKILL.md 模式分流 · QUICKSTART.md");
+  console.log("\n详情：modes/README.md · SKILL.md · QUICKSTART.md");
 }
 
 function printModeHelp(modeName) {
@@ -122,8 +131,9 @@ function printModeHelp(modeName) {
 ${m.hint ? `提示：${m.hint}\n` : ""}
 硬闸提醒：
   - 首问齐（发版日期 + 分支 + 基线/首次发版）后才 push-gate
-  - 确认词才写盘；audit 永不写盘
-  - seal 前先 seal-check
+  - 版本身份 = release-V{yyMMdd}（← 发版日期）
+  - 确认词才写盘；audit 永不写盘；预览仅会话
+  - seal 前先 seal-check；cancel ≠ seal
 
 转发示例：
 ${m.scripts
@@ -162,16 +172,28 @@ if (cmd === "modes" || cmd === "list-modes") {
   process.exit(0);
 }
 
-// mode help / guide
-if (["prepare", "resume", "audit", "seal"].includes(cmd)) {
+// resume → prepare 指引
+if (cmd === "resume") {
+  console.error(
+    "0.4 已移除对外 resume：同身份目录存在时直接 prepare（刷新）。\n见：node scripts/release.mjs prepare --help"
+  );
+  process.exit(1);
+}
+
+// mode help / runnable
+if (["prepare", "audit", "seal", "cancel"].includes(cmd)) {
   const rest = args.slice(1);
-  // allow `audit -- --format ...` to mean freeze with those args for convenience
   if (cmd === "audit" && rest[0] === "--") {
     dispatch("freeze", rest.slice(1));
   }
   if (cmd === "seal" && rest[0] === "--") {
-    // 转发 release-seal.mjs（默认 dry-run；含 --apply 才写盘）
     dispatch("seal", rest.slice(1));
+  }
+  if (cmd === "prepare" && rest[0] === "--") {
+    dispatch("prepare", rest.slice(1));
+  }
+  if (cmd === "cancel" && rest[0] === "--") {
+    dispatch("cancel", rest.slice(1));
   }
   if (
     rest.length === 0 ||
@@ -183,12 +205,12 @@ if (["prepare", "resume", "audit", "seal"].includes(cmd)) {
     process.exit(0);
   }
   console.error(
-    `模式 ${cmd} 无直接子参数（仪式由 Agent 按 modes/${cmd}.md 执行）。\n查看指引：node scripts/release.mjs ${cmd} --help\n或转发脚本：node scripts/release.mjs <script> -- <args...>`
+    `模式 ${cmd}：需要 \`--\` 转发参数，或 \`--help\`。\n例：node scripts/release.mjs ${cmd} -- --help`
   );
   process.exit(1);
 }
 
-// script dispatch: `freeze -- --root ...` or `freeze --root ...`
+// script dispatch
 if (DISPATCH[cmd]) {
   let forwarded = args.slice(1);
   if (forwarded[0] === "--") forwarded = forwarded.slice(1);
@@ -197,7 +219,6 @@ if (DISPATCH[cmd]) {
     forwarded[0] === "--help" ||
     forwarded[0] === "-h"
   ) {
-    // prefer underlying --help when available
     dispatch(cmd, ["--help"]);
   }
   dispatch(cmd, forwarded);

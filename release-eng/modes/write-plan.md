@@ -13,11 +13,11 @@
 - 模式: prepare | resume | seal
 - 发版日期: YYYY-MM-DD（首问确认；独立日期字段，不拼入目录名）
 - 分支对: <发版> vs <基线|无（首次发版）>（origin 优先）
-- 版本身份: <slug>（= 发版分支名归一化：去 origin/ 前缀、/ → -）
-- 本轮: 新建 | 合并刷新自动段 | 归档
+- 版本身份: <identity>（= release-V{yyMMdd} ← 发版日期）
+- 本轮: 新建 | 合并刷新自动段 | 归档 | 取消
 - Git 表: 提交截断5（前3后2、hash 前 8 位）；合并来源按分支去重（origin/ 归一）、来源分支功能一句话（完整见 GitLab|GitHub 链接，按 origin）；时区 Asia/Shanghai
 - 摘要: 元信息内 1～5 项（分支级聚合）；配置 yml 键上一行 `#`（采集亦可来自行尾）
-- 目录包: docs/releases/{identity}/（md + sql/refs 原件 + release-V*-DDL|DML 整理 + config + jobs/README.md；附属为相对 md 链接；无 notes/）
+- 目录包: docs/releases/{identity}/（md + sql/refs 原件 + [库名]-V*-DDL|DML 整理 + config + jobs/README.md；附属为相对 md 链接；无 notes/）
 - 目标 profile: prod（SQL / 配置 / 定时任务）；yml 配置按 YAML
 - draft: sql/config/jobs（未上线）；suppressed 行数（baseline/layer）；aiTrack: stub|ready|filled|skipped；aiNoise 默认不勾数
 - 上线摘要: ← 分支级聚合（可人工补）
@@ -31,7 +31,7 @@
 ```text
 目标根: …
 on_exists: merge | skip | fail
-发版单路径: docs/releases/<slug>/<slug>.md（slug = 发版分支名归一化；无 notes/）
+发版单路径: docs/releases/<identity>/<identity>.md（identity = release-V{yyMMdd}；无 notes/）
 索引: docs/releases/releases.md
 预授权: 是|否
 freeze: --format draft-md（本轮预览来源）

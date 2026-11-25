@@ -29,7 +29,48 @@ export function stripBom(text) {
 }
 
 /**
- * 版本身份/目录包名派生：发版分支名（去 refs 与 origin/ 前缀，`/` → `-`）。
+ * 版本身份/目录包名派生（0.4+ SSOT）：由发版日期导出 `release-V{yyMMdd}`。
+ * @param {string} releaseDate YYYY-MM-DD
+ * @returns {string} 如 `2026-11-26` → `release-V261126`；非法则 `""`
+ */
+export function identityFromReleaseDate(releaseDate) {
+  const ymd = releaseDateToYyMmDd(releaseDate);
+  return ymd ? `release-V${ymd}` : "";
+}
+
+/**
+ * 【推荐】发版日期：第一个满足 `日期 ≥ 提问日 + 2 天` 的周四（Asia/Shanghai 日历日）。
+ * @param {Date} [askDate]
+ * @returns {string} YYYY-MM-DD
+ */
+export function recommendedReleaseThursday(askDate = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ_CHINA,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(askDate);
+  const get = (t) => parts.find((p) => p.type === t)?.value || "00";
+  const y = Number(get("year"));
+  const m = Number(get("month"));
+  const d = Number(get("day"));
+  // 用 UTC 正午推算，避免 DST；仅作日历算术
+  const ask = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+  const min = new Date(ask);
+  min.setUTCDate(min.getUTCDate() + 2);
+  const out = new Date(min);
+  while (out.getUTCDay() !== 4) {
+    out.setUTCDate(out.getUTCDate() + 1);
+  }
+  const yy = out.getUTCFullYear();
+  const mm = String(out.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(out.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+/**
+ * 旧约定：发版分支名归一化（去 refs 与 origin/ 前缀，`/` → `-`）。
+ * 0.4+ 不再用作目录包身份；仅兼容读旧路径 / 分支对展示。
  * 例：`origin/release/V260827` → `release-V260827`。
  */
 export function identityFromBranch(branch) {
