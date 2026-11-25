@@ -72,7 +72,7 @@
 | `morph_scale` | 形态尺度（`0.7`）；与旧 history 不可比 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
 | `skill_version` | 技能号（manifest / meta；当前列车见 CHANGELOG） |
-| `report_schema` | **报告壳**投影 schema（现 **0.4.1**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；0.4.1 首屏人话化 + 宿主 `status_zh`；开干只看 `ai_coding_ready` |
+| `report_schema` | **报告壳**投影 schema（现 **0.4.2**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；0.4.1 首屏人话化 + 宿主 `status_zh`；0.4.2 术语人话化 + 决策台总评模块；开干只看 `ai_coding_ready` |
 
 ## 常用词
 
@@ -114,8 +114,8 @@
 | **live 校准** | MCP 未挂载时用 `fill-calibrate-live`；见 fill-mcp |
 | **会话自证** | 当前宿主自证 MCP（强）/ hooks（强）/ rules（弱·中）/ githooks（中）/ **human_gates**（gate→unproven+reason_code）/ Codex skills·Starlark；`behavior_pass_claim` 仅 MCP+hooks；playbook+matrix 多宿主；`content-shell-scan` 管分册空壳 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
-| **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
-| **会话仪表盘** | 本轮里程碑时附四句块（阶段/现状/工作/下一步建议）；SHOW/HIDE SSOT：[session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs`；宿主面细节进 HTML 宿主台，不进会话脚注 |
+| **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势/落地检查台，旧称宿主台）；旧路径仅兼容 |
+| **会话仪表盘** | 本轮里程碑时附四句块（阶段/现状/工作/下一步建议）；SHOW/HIDE SSOT：[session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs`；宿主面细节进 HTML 落地检查台（旧称宿主台），不进会话脚注 |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |
 | **score-history** | `docs/harness-eng/score-history.jsonl`：历次 overall/coverage/ready 追加日志 |
 | **progress.yaml** | `docs/harness-eng/progress.yaml`：填充进度状态（`--write-progress`） |

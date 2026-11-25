@@ -80,6 +80,14 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.1 → 0.8.2 迁移要点
+
+1. **meta**：`skill_version` → `0.8.2`
+2. **报告壳**：`report_schema` **0.4.2**（术语人话化 + 决策台总评模块；0.4.x 族内，趋势仍可比）
+3. **重渲报告**：`node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json`
+4. **读法变化**：首屏改为**总评横幅**（Verdict 徽章 + 总评分 0–100 + 等级 + 一句话结论 + 分项；**仅参考 ≠开干**；替代原施工阶梯位）；**施工阶梯移入决策台**与「开干清单」同组；趋势台「仪表参考分」块移除；KPI 灯组并入清单；10 秒结论区精简；「宿主台」更名「落地检查台」（旧名在名词解释留档）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.2`）后再 sync
+
 ## 0.7.63 → 0.8.0 迁移要点
 
 1. **meta**：`skill_version` → `0.8.0`；回填 `repo_kind`（frontend|backend|fullstack）与 `monorepo`（判定：README/AGENTS + 代码成分启发式；**不确定时提问 `Q_REPO_KIND`**，勿沉默默认）

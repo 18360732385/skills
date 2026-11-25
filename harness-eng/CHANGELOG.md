@@ -1,11 +1,12 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.8.1**。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.8.2**。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.2 | 2026-11-25 | 报告页人话化（report_schema 0.4.2）：术语大白话（形态分→文档质量分 · 金标达标率→验收通过率 · 语义闸→语义抽检 · 残差→验收遗留项 · 宿主台→落地检查台）· **首屏总评横幅**（Verdict 徽章 + 总评分 0–100 + 等级 + 一句话结论 + 分项；沿用原仪表参考分公式；替代原施工阶梯位）· 施工阶梯并入决策台与开干清单同组 · 10 秒结论区精简 · 开干清单收编进决策台（KPI 灯组并入）· 诊断台缺口/低分明细折叠 · 赛博朋克装饰降噪（扫描线/glitch/Orbitron 移除）· 趋势台参考分块移除 · 视觉精修：工程图纸/夜班表盘双主题色板 · 验收印章式 Verdict 徽章 · 等宽字体仅作仪表读数 · 去 ALL-CAPS/辉光/箭头装饰 · 横幅分数纵排仪表面 + 方格纸底纹 · 「盖章时刻」入场编排（印章缩压/冲击环/分数滚动/进度条生长，reduced-motion 全闸）· 阶梯/清单宽屏双列并排 · 暗色表盘磷光微光 |
 | 0.8.1 | 2026-11-24 | pages/components/client-api 三域满配：路由/组件/契约消费层 inventory 扫描器 · morph 必填章 + 真相模板（client-api 双态）· `optional:false` 翻位计分 · 推荐包五域全开 |
 | 0.8.0 | 2026-11-24 | 仓型三分 `repo_kind`（frontend\|backend\|fullstack + monorepo）· 前端五域 `design/prototype/pages/components/client-api`（0.8.0 起 design·prototype 进计分，其余索引壳 0.8.1+ 升严）· 前端 rules **101 族**（17→101 迁移 + 102–106 随域包）· 非运行设计文档/原型经确认归档仓根 `docs/<domain>/` |
 | 0.7.63 | 2026-11-10 | sms-ai 回流：superpowers 提交软提醒按本人进行中主题（README 用户列）交给 AI 判定收口 |

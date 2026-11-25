@@ -2,6 +2,7 @@
  * score-history.jsonl — append-only score snapshots for Dashboard trend (0.2.14+).
  * Path: docs/harness-eng/score-history.jsonl
  * 0.4.0+: entries carry report_schema + morph_scale; incomparable points greyed / not linked.
+ * 0.4.2: 术语人话化 + 决策台总评模块（additive；仍属 0.4 族，趋势可比）。
  * 0.4.1: same major.minor family as 0.4.0 remains comparable (additive UI fields).
  */
 
@@ -10,7 +11,7 @@ import path from "path";
 
 export const HISTORY_REL = "docs/harness-eng/score-history.jsonl";
 export const DEFAULT_LIMIT = 20;
-export const CURRENT_REPORT_SCHEMA = "0.4.1";
+export const CURRENT_REPORT_SCHEMA = "0.4.2";
 
 /**
  * Compare dotted version strings (e.g. 0.3.0 vs 0.4.0).

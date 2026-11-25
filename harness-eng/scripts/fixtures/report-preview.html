@@ -3,119 +3,91 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Harness 施工指挥台 // CYBERPUNK TERMINAL</title>
+  <title>施工指挥台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* ============================================================
-       CYBERPUNK TERMINAL THEME  —  Harness 施工指挥台
-       双主题变量系统：:root/light + html[data-theme="dark"]
-       0.2.26：CJK 正文 · 减动 · 命令复制 · hash/键盘 · 残差分层
+       HARNESS 施工指挥台 — 双主题（0.8.2 降噪 + 图纸视觉）
+       母题：工程图纸 × 夜班表盘。亮色=草图纸/墨绿油墨；暗色=蓝绿黑/荧光表盘。
+       等宽字体只做「仪表读数」；唯一的装饰性元素是横幅里的验收印章 Verdict。
        ============================================================ */
 
-    /* ---- 亮色主题（终端纸张感） ---- */
+    /* ---- 亮色主题（工程图纸：草图纸 + 墨绿油墨） ---- */
     :root, html[data-theme="light"] {
-      --bg: #e8edf2;
-      --panel: #f7f9fb;
-      --panel2: #eef2f7;
-      --border: #b8c5d4;
-      --border-glow: rgba(0, 135, 90, 0.25);
-      --text: #1a2332;
-      --muted: #4a5d72;
-      --accent: #00875a;
-      --accent-soft: rgba(0, 135, 90, 0.08);
-      --accent-glow: rgba(0, 135, 90, 0.3);
-      --warn: #b88200;
-      --warn-soft: rgba(184, 130, 0, 0.1);
-      --danger: #c81e5a;
-      --danger-soft: rgba(200, 30, 90, 0.08);
-      --ok: #00875a;
-      --info: #0284c7;
-      --bar-track: #d3dce6;
-      --cap: #b88200;
-      --radius: 3px;
+      --bg: #edf0e9;
+      --panel: #f7f9f4;
+      --panel2: #eff2ea;
+      --border: #c3ccbc;
+      --border-glow: rgba(14, 122, 78, 0.18);
+      --text: #212a22;
+      --muted: #5b6b5c;
+      --accent: #0e7a4e;
+      --accent-soft: rgba(14, 122, 78, 0.08);
+      --accent-glow: rgba(14, 122, 78, 0.22);
+      --warn: #a37200;
+      --warn-soft: rgba(163, 114, 0, 0.1);
+      --danger: #bc3f2b;
+      --danger-soft: rgba(188, 63, 43, 0.08);
+      --ok: #0e7a4e;
+      --info: #2b6fa3;
+      --bar-track: #dee3d8;
+      --cap: #a37200;
+      --radius: 2px;
       --font: "IBM Plex Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-      --display: "Orbitron", "JetBrains Mono", monospace;
+      --display: "IBM Plex Sans SC", "Noto Sans SC", "PingFang SC", sans-serif;
       --mono: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
-      --shadow: 0 1px 3px rgba(26, 35, 50, 0.08);
-      --term-bg: rgba(0, 135, 90, 0.06);
-      --overlay: rgba(26, 35, 50, 0.5);
-      --grid-line: rgba(0, 135, 90, 0.04);
-      --scanline: rgba(0, 0, 0, 0.025);
-      --neon-text: 0 0 6px var(--accent-glow);
-      --neon-strong: 0 0 8px var(--accent-glow), 0 0 16px var(--accent-glow);
+      --shadow: 0 1px 2px rgba(33, 42, 34, 0.07);
+      --term-bg: rgba(14, 122, 78, 0.06);
+      --overlay: rgba(33, 42, 34, 0.45);
+      --grid-line: rgba(14, 122, 78, 0.045);
+      --scanline: none;
+      --neon-text: none;
+      --neon-strong: none;
     }
 
-    /* ---- 暗色主题（赛博朋克终端，默认） ---- */
+    /* ---- 暗色主题（夜班表盘：蓝绿黑 + 荧光绿），默认 ---- */
     html[data-theme="dark"] {
-      --bg: #0a0e14;
-      --panel: #0d1117;
-      --panel2: #131922;
-      --border: #1f2937;
-      --border-glow: rgba(0, 255, 156, 0.3);
-      --text: #c9d1d9;
-      --muted: #8b9cb3;
-      --accent: #00ff9c;
-      --accent-soft: rgba(0, 255, 156, 0.08);
-      --accent-glow: rgba(0, 255, 156, 0.5);
-      --warn: #ffb800;
-      --warn-soft: rgba(255, 184, 0, 0.08);
-      --danger: #ff2d6f;
-      --danger-soft: rgba(255, 45, 111, 0.08);
-      --ok: #00ff9c;
-      --info: #0ea5e9;
-      --bar-track: #1a2332;
-      --cap: #ffb800;
+      --bg: #0e1418;
+      --panel: #121a20;
+      --panel2: #17222a;
+      --border: #25333d;
+      --border-glow: rgba(70, 209, 142, 0.2);
+      --text: #d6ded8;
+      --muted: #8fa096;
+      --accent: #46d18e;
+      --accent-soft: rgba(70, 209, 142, 0.09);
+      --accent-glow: rgba(70, 209, 142, 0.32);
+      --warn: #d9a441;
+      --warn-soft: rgba(217, 164, 65, 0.1);
+      --danger: #e87a6c;
+      --danger-soft: rgba(232, 122, 108, 0.1);
+      --ok: #46d18e;
+      --info: #6cb1dc;
+      --bar-track: #1e2a32;
+      --cap: #d9a441;
       --shadow: none;
-      --term-bg: rgba(0, 255, 156, 0.06);
-      --overlay: rgba(0, 0, 0, 0.75);
-      --grid-line: rgba(0, 255, 156, 0.025);
-      --scanline: rgba(0, 0, 0, 0.15);
-      --neon-text: 0 0 6px var(--accent-glow);
-      --neon-strong: 0 0 8px var(--accent-glow), 0 0 20px var(--accent-glow);
+      --term-bg: rgba(70, 209, 142, 0.07);
+      --overlay: rgba(6, 10, 12, 0.72);
+      --grid-line: rgba(70, 209, 142, 0.03);
+      --scanline: none;
+      --neon-text: none;
+      --neon-strong: none;
     }
 
     * { box-sizing: border-box; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     body {
       margin: 0;
       font-family: var(--font);
       background: var(--bg);
       color: var(--text);
-      line-height: 1.55;
+      line-height: 1.6;
       min-height: 100vh;
       font-size: 14px;
       -webkit-font-smoothing: antialiased;
-    }
-
-    /* ---- CRT 扫描线覆盖层 ---- */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 9998;
-      background: repeating-linear-gradient(
-        0deg,
-        var(--scanline),
-        var(--scanline) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-    }
-
-    /* ---- 网格纹理背景 ---- */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background-image:
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-      background-size: 36px 36px;
     }
 
     .wrap {
@@ -141,31 +113,16 @@
     .topbar h1 {
       margin: 0 0 6px;
       font-family: var(--display);
-      font-size: 1.5rem;
-      font-weight: 900;
-      letter-spacing: 0.02em;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
       color: var(--accent);
-      text-shadow: var(--neon-strong);
-      text-transform: uppercase;
     }
-    /* 闪烁光标 */
-    .topbar h1::after {
-      content: '_';
-      animation: blink 1.1s step-end infinite;
-      color: var(--accent);
-      margin-left: 2px;
-    }
-    @keyframes blink { 50% { opacity: 0; } }
 
     .topbar .sub {
       color: var(--muted);
       font-size: 0.78rem;
       letter-spacing: 0.02em;
-    }
-    .topbar .sub::before {
-      content: '// ';
-      color: var(--accent);
-      opacity: 0.6;
     }
     .topbar-actions {
       display: flex;
@@ -174,54 +131,36 @@
       align-items: center;
     }
 
-    /* ---- 按钮：终端按键风 ---- */
+    /* ---- 按钮：图签键 ---- */
     .btn {
       appearance: none;
       border: 1px solid var(--border);
       background: var(--panel);
       color: var(--text);
       border-radius: var(--radius);
-      padding: 7px 14px;
-      font-size: 0.76rem;
+      padding: 6px 13px;
+      font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
       font-family: var(--font);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      transition: all 0.15s ease;
+      letter-spacing: 0.01em;
+      transition: border-color 0.15s ease, color 0.15s ease;
       position: relative;
-    }
-    .btn::before {
-      content: '[';
-      color: var(--muted);
-      margin-right: 4px;
-      transition: color 0.15s;
-    }
-    .btn::after {
-      content: ']';
-      color: var(--muted);
-      margin-left: 4px;
-      transition: color 0.15s;
     }
     .btn:hover {
       border-color: var(--accent);
       color: var(--accent);
-      text-shadow: var(--neon-text);
-      box-shadow: 0 0 12px var(--border-glow);
     }
-    .btn:hover::before, .btn:hover::after { color: var(--accent); }
     .btn:active { transform: scale(0.97); }
     .btn.theme { min-width: 80px; }
 
     /* ============================================================
-       角标装饰 mixin —— 通过 ::before / ::after 做 L 形角标
+       角标 mixin —— L 形制图角标，只用于 deck 与首屏横幅
        ============================================================ */
-    .deck, .progress-card, .chart-box, .kpi, .story, .task, .modal {
+    .deck, .banner-card {
       position: relative;
     }
-    /* 左上 + 右下 双角标 */
-    .deck::before, .progress-card::before,
-    .chart-box::before, .modal::before {
+    .deck::before, .banner-card::before {
       content: '';
       position: absolute;
       top: -1px; left: -1px;
@@ -231,8 +170,7 @@
       pointer-events: none;
       z-index: 2;
     }
-    .deck::after, .progress-card::after,
-    .chart-box::after, .modal::after {
+    .deck::after, .banner-card::after {
       content: '';
       position: absolute;
       bottom: -1px; right: -1px;
@@ -244,89 +182,245 @@
     }
 
     /* ============================================================
-       PROGRESS CARD（流水线；仪表参考分在趋势台次区）
+       BANNER CARD（首屏总评横幅：Verdict 徽章 + 总评分 + 结论 + 分项）
        ============================================================ */
-    .progress-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 18px;
+    .banner-card {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 26px;
+      align-items: center;
       margin-bottom: 14px;
+      padding: 16px 20px;
+      background:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+        var(--panel);
+      background-size: 24px 24px, 24px 24px, auto;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
-      display: block;
     }
-    @media (max-width: 720px) { .progress-card { grid-template-columns: 1fr; } }
-
-    .composite .lab {
+    .banner-score {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 172px;
+    }
+    .banner-score .lab {
       color: var(--muted);
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-family: var(--mono);
-    }
-    .composite .lab::before { content: '// '; color: var(--muted); opacity: 0.7; }
-    .composite .val {
-      font-family: var(--display);
-      font-size: 2.2rem;
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
-      line-height: 1.1;
-      margin: 4px 0;
-      color: var(--accent);
-      text-shadow: var(--neon-strong);
-    }
-    .composite .tip {
-      color: var(--warn);
-      font-size: 0.72rem;
+      font-size: 0.78rem;
       font-weight: 600;
       letter-spacing: 0.02em;
     }
-    .composite-secondary {
-      margin: 0 0 14px;
-      padding: 8px 12px;
+    .banner-score .score-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .banner-score .val {
+      font-family: var(--mono);
+      font-size: 2.6rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      color: var(--accent);
+    }
+    .banner-score .grade {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .banner-score .grade.ok { color: var(--ok); border-color: var(--accent); background: var(--accent-soft); }
+    .banner-score .grade.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+    .banner-score .grade.no { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+    .banner-score .ref-tip {
+      font-size: 0.68rem;
+      color: var(--muted);
       border: 1px dashed var(--border);
-      border-radius: var(--radius);
-      max-width: 220px;
-      background: transparent;
+      padding: 2px 8px;
+      border-radius: 2px;
+      white-space: nowrap;
+      cursor: help;
+      align-self: flex-start;
+    }
+    .banner-side { flex: 1 1 280px; min-width: 0; padding-left: 26px; border-left: 1px dashed var(--border); }
+    @media (max-width: 720px) {
+      .banner-side { padding-left: 0; border-left: none; }
+    }
+    .banner-side .one-line {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+    .banner-side .parts {
       display: flex;
       flex-wrap: wrap;
-      align-items: baseline;
-      gap: 6px 12px;
+      gap: 6px;
     }
-    .composite-secondary .lab { flex: 1 1 100%; }
-    .composite-secondary .val {
-      font-size: 1.05rem;
-      font-weight: 700;
-      text-shadow: none;
+    .banner-side .part {
+      font-size: 0.7rem;
       color: var(--muted);
-      margin: 0;
-    }
-    .composite-secondary .tip {
-      font-size: 0.68rem;
-      padding: 2px 6px;
-      border: 1px solid var(--warn);
+      background: var(--panel);
+      border: 1px solid var(--border);
       border-radius: 2px;
+      padding: 3px 8px;
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+    .banner-side .part b { color: var(--text); font-weight: 700; }
+
+    /* ---- 施工阶梯 + 开干清单 同组（决策台内，宽屏双列并排） ---- */
+    .pipe-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 0;
+      margin-bottom: 14px;
+      padding: 14px 18px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .pipe-group .pipe-axis { display: block; min-width: 0; }
+    .pipe-group .pipe-axis + .pipe-axis {
+      padding-left: 22px;
+      border-left: 1px dashed var(--border);
+    }
+    @media (max-width: 860px) {
+      .pipe-group { grid-template-columns: 1fr; }
+      .pipe-group .pipe-axis + .pipe-axis {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 14px;
+        border-top: 1px dashed var(--border);
+      }
+    }
+    .pipe-group .axis-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-bottom: 4px;
+    }
+
+    .host-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      cursor: pointer;
+      background: transparent;
+      color: var(--text);
+    }
+    .host-capsule:hover { border-color: var(--accent); color: var(--accent); }
+    .host-capsule .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--muted);
+    }
+    .host-capsule.live .dot { background: var(--ok, #2ecc71); }
+    .host-capsule.disk_only .dot { background: var(--accent); }
+    .host-capsule.unproven .dot { background: var(--warn); }
+    .host-capsule.absent .dot { background: var(--muted); }
+    .host-capsule.disk_only {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .host-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .host-matrix th, .host-matrix td {
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      text-align: center;
+    }
+    .host-matrix th { background: var(--panel); font-weight: 700; }
+    .host-matrix td.host-id { text-align: left; font-family: var(--mono); }
+    .host-matrix .cell-disk { color: var(--muted); }
+    .host-matrix .cell-disk.present { color: var(--accent); font-weight: 600; }
+    .host-matrix .cell-live.pass { color: var(--ok, #2ecc71); font-weight: 700; }
+    .host-matrix .cell-live.fail { color: var(--danger, #e74c3c); font-weight: 700; }
+    .host-matrix .cell-live.unproven { color: var(--warn); }
+    .host-matrix tr.current td { outline: 1px solid var(--accent); }
+    .host-matrix tr.dim td { opacity: 0.55; }
+    .host-matrix .status-zh { font-size: 0.78rem; white-space: nowrap; }
+    .host-legend {
+      margin: 10px 0 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .host-pending-hint {
+      margin: 8px 0 0;
+      font-size: 0.78rem;
+      color: var(--warn);
+    }
+    .gap-expand {
+      margin-top: 6px;
+      font-size: 0.78rem;
+    }
+    .gap-expand summary {
+      cursor: pointer;
+      color: var(--accent);
+      list-style: none;
+    }
+    .gap-expand summary::-webkit-details-marker { display: none; }
+    .gap-expand ul {
+      margin: 6px 0 0;
+      padding-left: 1.1em;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      word-break: break-all;
+    }
+    .trend-banner {
+      margin: 0 0 10px;
+      padding: 8px 10px;
+      border: 1px dashed var(--warn);
+      border-radius: var(--radius);
+      font-size: 0.78rem;
+      color: var(--warn);
       background: var(--warn-soft);
     }
+    .diagnose-story {
+      margin: 0 0 12px;
+      padding: 0;
+      list-style: none;
+    }
+    .diagnose-story li {
+      margin: 0 0 6px;
+      padding: 6px 10px;
+      border-left: 3px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .diagnose-story li.warn { border-left-color: var(--warn); }
+    .diagnose-story li.ok { border-left-color: var(--ok, #2ecc71); }
 
     .pipe .lab {
       display: flex;
       justify-content: space-between;
       gap: 8px;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       margin-bottom: 8px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
     .pipe .lab span:first-child {
       color: var(--text);
       font-weight: 600;
     }
-    .pipe .lab span:first-child::before { content: '> '; color: var(--accent); }
     .pipe .lab span:last-child {
       color: var(--accent);
       font-weight: 700;
       font-variant-numeric: tabular-nums;
-      text-shadow: var(--neon-text);
     }
 
     .pipe-track {
@@ -343,20 +437,7 @@
       background: linear-gradient(90deg, var(--accent), var(--info));
       border-radius: 2px;
       position: relative;
-      box-shadow: 0 0 10px var(--accent-glow);
       transition: width 0.6s ease;
-    }
-    /* 进度条扫描动画 */
-    .pipe-fill::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
-      animation: scan-shine 2.5s linear infinite;
-    }
-    @keyframes scan-shine {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(200%); }
     }
 
     .pipe-steps {
@@ -365,20 +446,44 @@
       gap: 6px;
     }
     .pipe-step {
-      font-size: 0.68rem;
+      position: relative;
+      font-size: 0.7rem;
       padding: 3px 9px;
       border-radius: 2px;
       border: 1px solid var(--border);
       color: var(--muted);
-      background: var(--panel2);
+      background: var(--panel);
       font-family: var(--mono);
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
+    }
+    .pipe-step[data-tip] { cursor: help; }
+    .pipe-step[data-tip]:hover::after,
+    .pipe-step[data-tip]:focus-visible::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 8px);
+      z-index: 40;
+      min-width: 160px;
+      max-width: 280px;
+      padding: 8px 10px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.45;
+      white-space: normal;
+      box-shadow: var(--shadow);
+      pointer-events: none;
     }
     .pipe-step.done {
       color: var(--ok);
       background: var(--accent-soft);
       border-color: var(--accent);
-      text-shadow: var(--neon-text);
     }
     .pipe-step.done::before { content: '\2713 '; }
     .pipe-step.current {
@@ -386,14 +491,8 @@
       background: var(--warn-soft);
       border-color: var(--warn);
       font-weight: 700;
-      text-shadow: 0 0 6px rgba(255,184,0,0.4);
-      animation: pulse-warn 1.8s ease-in-out infinite;
     }
-    .pipe-step.current::before { content: '> '; }
-    @keyframes pulse-warn {
-      0%, 100% { box-shadow: 0 0 4px rgba(255,184,0,0.2); }
-      50% { box-shadow: 0 0 12px rgba(255,184,0,0.5); }
-    }
+    .pipe-step.current::before { content: '\25B8 '; }
 
     /* ============================================================
        DECK + TABS
@@ -418,32 +517,26 @@
       border: 0;
       background: transparent;
       color: var(--muted);
-      padding: 12px 18px;
-      font-size: 0.8rem;
+      padding: 11px 18px;
+      font-size: 0.84rem;
       font-weight: 600;
       cursor: pointer;
       font-family: var(--font);
       border-bottom: 2px solid transparent;
       margin-bottom: -1px;
-      letter-spacing: 0.04em;
-      transition: all 0.15s ease;
+      letter-spacing: 0.01em;
+      transition: color 0.15s ease, background 0.15s ease;
       position: relative;
     }
-    .tab::before { content: '  '; opacity: 0; transition: opacity 0.15s; }
     .tab:hover {
       color: var(--text);
-      background: rgba(0,255,156,0.03);
+      background: var(--accent-soft);
     }
     .tab.active {
       color: var(--accent);
       border-bottom-color: var(--accent);
       background: var(--panel);
-      text-shadow: var(--neon-text);
-    }
-    .tab.active::before {
-      content: '> ';
-      opacity: 1;
-      color: var(--accent);
+      font-weight: 700;
     }
     .tab-nav {
       margin-left: auto;
@@ -452,89 +545,82 @@
       padding: 0 10px;
     }
     .tab-nav .btn { padding: 5px 10px; }
-    .tab-nav .btn::before, .tab-nav .btn::after { display: none; }
 
-    /* ---- Tab 切换 glitch 动画 ---- */
     .panel { display: none; padding: 18px 20px 20px; min-height: 320px; }
     .panel.active {
       display: block;
-      animation: glitch-in 0.4s ease-out;
+      animation: panel-in 0.18s ease-out;
     }
-    @keyframes glitch-in {
-      0%   { opacity: 0; transform: translateX(-4px); filter: hue-rotate(90deg) brightness(1.4); }
-      15%  { opacity: 1; transform: translateX(4px); filter: hue-rotate(-90deg) brightness(0.8); clip-path: inset(0 0 60% 0); }
-      30%  { transform: translateX(-2px); clip-path: inset(40% 0 0 0); }
-      45%  { transform: translateX(2px); clip-path: inset(0 0 0 0); filter: none; }
-      60%  { transform: translateX(-1px); }
-      100% { opacity: 1; transform: translateX(0); }
+    @keyframes panel-in {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .panel > h2 {
       margin: 0 0 4px;
       font-family: var(--display);
-      font-size: 1.05rem;
+      font-size: 1.02rem;
       font-weight: 700;
-      color: var(--accent);
-      text-shadow: var(--neon-text);
-      letter-spacing: 0.04em;
+      color: var(--text);
+      letter-spacing: 0.01em;
     }
-    .panel > h2::before { content: '\25B6 '; font-size: 0.7em; opacity: 0.7; }
     .panel > .lead {
       margin: 0 0 16px;
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: 0.84rem;
     }
-    .panel > .lead::before { content: '// '; color: var(--accent); opacity: 0.5; }
 
     /* ============================================================
-       VERDICT（决策台结论）
+       VERDICT（验收印章 —— 横幅内唯一装饰性元素）
+       双环边框 + 微旋转，像盖在验收单上的章。
        ============================================================ */
-    .verdict {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px 16px;
-      align-items: flex-start;
-      margin-bottom: 14px;
-    }
     .verdict-badge {
-      font-family: var(--display);
-      font-size: 0.9rem;
+      font-family: var(--font);
+      font-size: 0.86rem;
       font-weight: 700;
-      padding: 8px 16px;
-      border-radius: 2px;
-      border: 1px solid var(--border);
+      padding: 7px 13px;
+      border: 2px solid currentColor;
+      border-radius: 3px;
       white-space: nowrap;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      text-indent: 0.14em;
+      display: inline-block;
+      position: relative;
+      transform: rotate(-2deg);
+      box-shadow:
+        inset 0 0 0 3px var(--panel),
+        inset 0 0 0 4px currentColor;
+      animation: stamp-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both;
+    }
+    .verdict-badge::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border: 2px solid currentColor;
+      border-radius: 5px;
+      opacity: 0;
+      pointer-events: none;
+      animation: stamp-ring 0.8s ease-out 0.6s;
+    }
+    @keyframes stamp-in {
+      0% { opacity: 0; transform: rotate(-2deg) scale(1.7); }
+      55% { opacity: 1; transform: rotate(-2deg) scale(0.95); }
+      100% { opacity: 1; transform: rotate(-2deg) scale(1); }
+    }
+    @keyframes stamp-ring {
+      0% { opacity: 0.45; transform: scale(0.96); }
+      100% { opacity: 0; transform: scale(1.3); }
     }
     .verdict-badge.ok {
-      background: var(--accent-soft);
       color: var(--ok);
-      border-color: var(--accent);
-      text-shadow: var(--neon-text);
-      box-shadow: 0 0 14px var(--border-glow);
+      background: transparent;
     }
     .verdict-badge.ok::before { content: '\2713 '; }
     .verdict-badge.no {
-      background: var(--danger-soft);
       color: var(--danger);
-      border-color: var(--danger);
-      text-shadow: 0 0 6px rgba(255,45,111,0.4);
-      box-shadow: 0 0 14px rgba(255,45,111,0.15);
+      background: transparent;
     }
     .verdict-badge.no::before { content: '\2717 '; }
-    .verdict-body { flex: 1; min-width: 220px; }
-    .verdict-body .headline {
-      font-size: 1rem;
-      font-weight: 600;
-      margin: 0 0 6px;
-      line-height: 1.5;
-    }
-    .verdict-body .hint {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.86rem;
-    }
     .gap-line {
       margin-top: 10px;
       padding: 10px 12px;
@@ -547,61 +633,51 @@
     .gap-line:empty { display: none; }
 
     /* ============================================================
-       KPIs
+       明细折叠（details）
        ============================================================ */
-    .kpis {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(140px, 220px));
-      gap: 12px;
-    }
-    @media (max-width: 520px) { .kpis { grid-template-columns: 1fr; } }
-    .kpi {
-      background: var(--panel2);
+    .fold {
+      margin-top: 10px;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 12px 14px;
-      transition: all 0.2s ease;
+      background: var(--panel2);
+      padding: 0;
     }
-    .kpi::before {
-      content: '';
-      position: absolute;
-      top: -1px; left: -1px;
-      width: 8px; height: 8px;
-      border-top: 1px solid var(--accent);
-      border-left: 1px solid var(--accent);
-      opacity: 0.6;
-    }
-    .kpi:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 14px var(--border-glow);
-    }
-    .kpi.ok { border-color: var(--accent); background: var(--accent-soft); }
-    .kpi.no { border-color: var(--danger); background: var(--danger-soft); }
-    .kpi.warn { border-color: var(--warn); background: var(--warn-soft); }
-    .kpi .k {
-      color: var(--muted);
-      font-size: 0.7rem;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-    .kpi .k::before { content: '> '; color: var(--accent); opacity: 0.5; }
-    .kpi .v {
-      font-family: var(--display);
-      font-size: 1.6rem;
+    .fold > summary {
+      cursor: pointer;
+      padding: 8px 12px;
+      font-size: 0.8rem;
       font-weight: 700;
-      font-variant-numeric: tabular-nums;
       color: var(--text);
-      text-shadow: var(--neon-text);
+      list-style: none;
+      user-select: none;
     }
-    .kpi.ok .v { color: var(--ok); }
-    .kpi.no .v { color: var(--danger); text-shadow: 0 0 6px rgba(255,45,111,0.4); }
-    .kpi.warn .v { color: var(--warn); text-shadow: 0 0 6px rgba(255,184,0,0.4); }
-    .kpi .s { color: var(--muted); font-size: 0.72rem; margin-top: 4px; }
+    .fold > summary::-webkit-details-marker { display: none; }
+    .fold > summary::before { content: '\25B8 '; color: var(--accent); }
+    .fold[open] > summary::before { content: '\25BE '; }
+    .fold > .fold-body { padding: 4px 12px 12px; }
+    .fold.hidden { display: none; }
 
     /* ============================================================
-       MORPH STRIP
+       COVERAGE + MORPH STRIP（同一行）
        ============================================================ */
+    .diag-strips {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .diag-strips .coverage-strip,
+    .diag-strips .morph-strip {
+      flex: 1 1 0;
+      margin-bottom: 0;
+      min-width: 0;
+    }
+    @media (max-width: 720px) {
+      .diag-strips { flex-wrap: wrap; }
+      .diag-strips .coverage-strip,
+      .diag-strips .morph-strip { flex: 1 1 100%; }
+    }
     .morph-strip {
       display: flex;
       flex-wrap: wrap;
@@ -617,16 +693,14 @@
     .morph-strip .item { min-width: 0; }
     .morph-strip .k {
       color: var(--muted);
-      font-size: 0.66rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
     }
     .morph-strip .v {
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       margin-right: 4px;
       color: var(--accent);
-      text-shadow: var(--neon-text);
     }
     .morph-strip .s { color: var(--muted); font-size: 0.72rem; }
     .coverage-strip {
@@ -644,9 +718,8 @@
     .coverage-strip .item { min-width: 0; }
     .coverage-strip .k {
       color: var(--muted);
-      font-size: 0.66rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
     }
     .coverage-strip .v {
       font-weight: 700;
@@ -657,19 +730,43 @@
     .coverage-strip .s { color: var(--muted); font-size: 0.72rem; }
 
     /* ============================================================
-       DOMAIN SUMMARY
+       DOMAIN SUMMARY（两域一行；不达标域名红字）
        ============================================================ */
     .domain-summary {
       margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
       font-size: 0.82rem;
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.5;
     }
-    .domain-summary strong {
+    @media (max-width: 640px) {
+      .domain-summary { grid-template-columns: 1fr; }
+    }
+    .domain-summary .dom-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px 8px;
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--border);
+      min-width: 0;
+    }
+    .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: none; }
+    @media (max-width: 640px) {
+      .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: 1px dashed var(--border); }
+      .domain-summary .dom-row:last-child { border-bottom: none; }
+    }
+    .domain-summary .dom-name {
       color: var(--accent);
       font-weight: 700;
-      text-shadow: var(--neon-text);
+      min-width: 4.5em;
     }
+    .domain-summary .dom-name.warn {
+      color: var(--danger);
+    }
+    .domain-summary .dom-bits { color: var(--muted); }
 
     /* ============================================================
        ACTIONS
@@ -687,11 +784,10 @@
       position: absolute;
       left: 0;
       top: 12px;
-      font-family: var(--display);
+      font-family: var(--mono);
       font-size: 0.78rem;
       font-weight: 700;
       color: var(--accent);
-      text-shadow: var(--neon-text);
     }
     .actions strong {
       display: block;
@@ -718,7 +814,6 @@
       white-space: pre-wrap;
       word-break: break-all;
       position: relative;
-      text-shadow: var(--neon-text);
     }
     .cmd::before {
       content: '$';
@@ -738,7 +833,6 @@
       min-width: 0;
       letter-spacing: 0.02em;
     }
-    .cmd-copy::before, .cmd-copy::after { display: none !important; }
     .cmd-copy.ok {
       border-color: var(--accent);
       color: var(--accent);
@@ -762,17 +856,15 @@
     }
     .chart-box h3 {
       margin: 0 0 10px;
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       font-weight: 700;
       color: var(--text);
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
-    .chart-box h3::before { content: '\25C6 '; color: var(--accent); font-size: 0.7em; opacity: 0.7; }
     .chart-svg {
       width: 100%;
       height: auto;
       display: block;
-      filter: drop-shadow(0 0 4px var(--accent-glow));
     }
 
     .hbar-row {
@@ -794,7 +886,6 @@
       height: 100%;
       background: linear-gradient(90deg, var(--warn), var(--danger));
       border-radius: 2px;
-      box-shadow: 0 0 6px rgba(255,184,0,0.3);
       transition: width 0.5s ease;
     }
 
@@ -813,54 +904,40 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
-      transition: all 0.2s ease;
-    }
-    .story::before {
-      content: '';
-      position: absolute;
-      top: -1px; left: -1px;
-      width: 8px; height: 8px;
-      border-top: 1px solid var(--accent);
-      border-left: 1px solid var(--accent);
-      opacity: 0.6;
+      transition: border-color 0.2s ease;
     }
     .story:hover {
       border-color: var(--accent);
-      box-shadow: 0 0 14px var(--border-glow);
     }
     .story h3 { margin: 0 0 4px; font-size: 0.88rem; font-weight: 700; }
     .story .score {
-      font-family: var(--display);
+      font-family: var(--mono);
       font-size: 1.5rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       color: var(--accent);
-      text-shadow: var(--neon-text);
     }
     .story .meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; line-height: 1.5; }
 
     .status {
       display: inline-block;
       margin-top: 8px;
-      font-size: 0.66rem;
+      font-size: 0.68rem;
       font-weight: 700;
       padding: 2px 10px;
       border-radius: 2px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      letter-spacing: 0.02em;
       font-family: var(--mono);
     }
     .status.ok {
       background: var(--accent-soft);
       color: var(--ok);
       border: 1px solid var(--accent);
-      text-shadow: var(--neon-text);
     }
     .status.warn {
       background: var(--warn-soft);
       color: var(--warn);
       border: 1px solid var(--warn);
-      text-shadow: 0 0 6px rgba(255,184,0,0.4);
     }
 
     /* ============================================================
@@ -869,14 +946,11 @@
     table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
     th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
     th {
-      color: var(--accent);
-      font-weight: 700;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      text-shadow: var(--neon-text);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
     }
-    th::before { content: '> '; opacity: 0.5; }
     tbody tr:hover { background: var(--accent-soft); }
     tbody tr:hover td { color: var(--text); }
 
@@ -893,32 +967,20 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: border-color 0.2s ease;
       position: relative;
-    }
-    .task::before {
-      content: '';
-      position: absolute;
-      top: -1px; left: -1px;
-      width: 8px; height: 8px;
-      border-top: 1px solid var(--info);
-      border-left: 1px solid var(--info);
-      opacity: 0.7;
     }
     .task:hover {
       border-color: var(--info);
-      box-shadow: 0 0 14px rgba(14,165,233,0.2);
     }
     .task h3 { margin: 0 0 4px; font-size: 0.88rem; font-weight: 700; }
-    .task h3::before { content: '\25B8 '; color: var(--info); }
     .task .meta { color: var(--muted); font-size: 0.76rem; margin-bottom: 8px; }
     .task .kind-badge {
       display: inline-block;
       font-family: var(--mono);
-      font-size: 0.62rem;
+      font-size: 0.64rem;
       font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
       padding: 2px 6px;
       margin-bottom: 8px;
       border-radius: 2px;
@@ -940,14 +1002,6 @@
         ),
         var(--panel2);
     }
-    .task.residual::before {
-      border-top-color: var(--warn);
-      border-left-color: var(--warn);
-      width: 10px;
-      height: 10px;
-      opacity: 1;
-    }
-    .task.residual h3::before { color: var(--warn); content: '\25A0 '; }
     .task.residual .kind-badge {
       border-color: var(--warn);
       color: var(--warn);
@@ -955,7 +1009,6 @@
     }
     .task.residual:hover {
       border-color: var(--warn);
-      box-shadow: 0 0 14px rgba(255, 184, 0, 0.25);
     }
 
     /* ============================================================
@@ -970,18 +1023,12 @@
       font-size: 0.86rem;
     }
     .timeline li:last-child { border-bottom: 0; }
-    .timeline li::before {
-      content: '\25CB';
-      color: var(--accent);
-      opacity: 0.5;
-    }
     .timeline .lab {
       color: var(--accent);
       min-width: 48px;
       font-weight: 700;
       font-family: var(--mono);
       font-size: 0.78rem;
-      text-shadow: var(--neon-text);
     }
 
     .diff-chip {
@@ -993,8 +1040,6 @@
       border-radius: 2px;
       font-size: 0.84rem;
       color: var(--accent);
-      text-shadow: var(--neon-text);
-      box-shadow: 0 0 10px var(--border-glow);
     }
     .diff-chip::before { content: '\0394 '; font-weight: 700; }
 
@@ -1005,7 +1050,6 @@
       text-align: center;
       font-family: var(--mono);
     }
-    .empty::before { content: '// '; color: var(--danger); opacity: 0.6; }
 
     /* ============================================================
        TERM（术语悬停提示）
@@ -1018,12 +1062,10 @@
       cursor: help;
       position: relative;
       color: var(--accent);
-      text-shadow: var(--neon-text);
-      transition: all 0.15s;
+      transition: background 0.15s;
     }
     .term:hover {
       background: var(--accent-soft);
-      box-shadow: 0 0 8px var(--border-glow);
     }
     .term::after {
       content: attr(data-tip);
@@ -1046,7 +1088,7 @@
       pointer-events: none;
       transition: opacity 0.15s ease;
       z-index: 40;
-      box-shadow: 0 0 16px var(--border-glow);
+      box-shadow: var(--shadow);
       font-family: var(--mono);
     }
     .term:hover::after, .term:focus::after { opacity: 1; }
@@ -1074,9 +1116,9 @@
       overflow: auto;
       background: var(--panel);
       color: var(--text);
-      border: 1px solid var(--accent);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: 0 0 30px var(--border-glow), var(--shadow);
+      box-shadow: var(--shadow);
       padding: 18px 20px 20px;
       animation: modal-in 0.25s ease-out;
     }
@@ -1098,19 +1140,15 @@
       font-family: var(--display);
       font-size: 1rem;
       font-weight: 700;
-      color: var(--accent);
-      text-shadow: var(--neon-text);
-      letter-spacing: 0.04em;
+      color: var(--text);
+      letter-spacing: 0.01em;
     }
-    .modal-head h3::before { content: '\25B6 '; font-size: 0.7em; opacity: 0.7; }
 
     .glossary dt {
       font-weight: 700;
       margin-top: 12px;
       color: var(--accent);
-      text-shadow: var(--neon-text);
     }
-    .glossary dt::before { content: '\00BB '; opacity: 0.6; }
     .glossary dd {
       margin: 4px 0 0;
       color: var(--muted);
@@ -1129,8 +1167,8 @@
       font-family: var(--mono);
       transition: all 0.15s;
     }
-    .chip:hover { border-color: var(--accent); box-shadow: 0 0 8px var(--border-glow); }
-    .chip strong { color: var(--accent); text-shadow: var(--neon-text); }
+    .chip:hover { border-color: var(--accent); }
+    .chip strong { color: var(--accent); }
     .chip code { color: var(--warn); }
 
     .mono { font-family: var(--mono); font-size: 0.8rem; }
@@ -1147,19 +1185,19 @@
       font-family: var(--mono);
       letter-spacing: 0.02em;
     }
-    footer::before {
-      content: '\2014\2014\2014\2014[ EOF ]\2014\2014\2014\2014';
-      display: block;
-      color: var(--accent);
-      opacity: 0.4;
-      margin-bottom: 6px;
-      letter-spacing: 0.1em;
-    }
 
     /* ============================================================
        MISC
        ============================================================ */
     .hidden { display: none !important; }
+    /* ---- 光效：仅暗色主题（表盘磷光） ---- */
+    html[data-theme="dark"] .banner-score .val {
+      text-shadow: 0 0 24px var(--accent-glow);
+    }
+    html[data-theme="dark"] .pipe-fill {
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
     .err {
       background: var(--danger-soft);
       border: 1px solid var(--danger);
@@ -1169,8 +1207,6 @@
       margin-bottom: 14px;
       font-family: var(--mono);
       font-size: 0.86rem;
-      text-shadow: 0 0 6px rgba(255,45,111,0.3);
-      box-shadow: 0 0 14px rgba(255,45,111,0.15);
     }
     .err::before { content: '[ ERROR ] '; font-weight: 700; }
 
@@ -1201,10 +1237,7 @@
         transition: none !important;
         scroll-behavior: auto !important;
       }
-      body::after { display: none; }
       .panel.active { animation: none; }
-      .pipe-fill::after { display: none; }
-      .topbar h1::after { animation: none; opacity: 1; }
     }
   </style>
 </head>
@@ -1218,20 +1251,29 @@
         <div class="sub" id="subtitle"></div>
       </div>
       <div class="topbar-actions">
+        <button type="button" class="host-capsule absent hidden" id="host-capsule" title="打开落地检查台">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="host-capsule-text">落地检查</span>
+        </button>
         <button type="button" class="btn" id="btn-glossary">名词解释</button>
         <button type="button" class="btn" id="btn-tech">技术细节</button>
         <button type="button" class="btn theme" id="btn-theme" aria-label="切换明暗模式">浅色</button>
       </div>
     </div>
 
-    <section class="progress-card hidden" id="sec-progress">
-      <div class="pipe">
-        <div class="lab">
-          <span id="pipe-summary">流水线进度</span>
-          <span id="pipe-pct"></span>
-        </div>
-        <div class="pipe-track"><div class="pipe-fill" id="pipe-fill" style="width:0%"></div></div>
-        <div class="pipe-steps" id="pipe-steps"></div>
+    <section class="banner-card hidden" id="sec-banner">
+      <div class="verdict-badge" id="verdict-badge">—</div>
+      <div class="banner-score">
+        <span class="lab" id="overall-lab">总评分</span>
+        <span class="score-row">
+          <span class="val" id="overall-val">—</span>
+          <span class="grade" id="overall-grade"></span>
+        </span>
+        <span class="ref-tip" id="overall-ref" title="">仅参考 · ≠开干</span>
+      </div>
+      <div class="banner-side">
+        <p class="one-line" id="headline"></p>
+        <div class="parts" id="overall-parts"></div>
       </div>
     </section>
 
@@ -1241,6 +1283,7 @@
         <button type="button" class="tab" data-tab="diagnose" role="tab">诊断台</button>
         <button type="button" class="tab" data-tab="tasks" role="tab">任务台</button>
         <button type="button" class="tab" data-tab="trend" role="tab">趋势台</button>
+        <button type="button" class="tab" data-tab="host" role="tab">落地检查台</button>
         <div class="tab-nav" title="键盘 ← → 或 [ ] 切台 · Esc 关闭弹层">
           <button type="button" class="btn" id="tab-prev" aria-label="上一台">‹</button>
           <button type="button" class="btn" id="tab-next" aria-label="下一台">›</button>
@@ -1249,64 +1292,78 @@
 
       <section class="panel active" id="panel-decision" data-panel="decision" role="tabpanel">
         <h2>决策台</h2>
-        <p class="lead">10 秒结论：能否开干、差什么、下一步做什么。</p>
-        <div class="verdict">
-          <div class="verdict-badge" id="verdict-badge">—</div>
-          <div class="verdict-body">
-            <p class="headline" id="headline"></p>
-            <p class="hint" id="verdict-hint"></p>
-            <div class="gap-line" id="gap-line"></div>
-            <div class="gap-line" id="upgrade-line"></div>
+        <p class="lead">还差什么、下一步做什么；施工阶梯与开干清单在此。</p>
+        <div class="gap-line" id="gap-line"></div>
+        <div class="gap-line" id="upgrade-line"></div>
+        <div class="pipe-group">
+          <div class="pipe pipe-axis" id="ladder-axis">
+            <div class="axis-label">施工阶梯（L0–L5 成熟度）</div>
+            <div class="lab">
+              <span id="ladder-summary">施工阶梯</span>
+              <span id="ladder-pct"></span>
+            </div>
+            <div class="pipe-track"><div class="pipe-fill" id="ladder-fill" style="width:0%"></div></div>
+            <div class="pipe-steps" id="ladder-steps"></div>
+          </div>
+          <div class="pipe pipe-axis" id="pipe-axis">
+            <div class="axis-label">开干清单</div>
+            <div class="lab">
+              <span id="pipe-summary">开干清单</span>
+              <span id="pipe-pct"></span>
+            </div>
+            <div class="pipe-track"><div class="pipe-fill" id="pipe-fill" style="width:0%"></div></div>
+            <div class="pipe-steps" id="pipe-steps"></div>
           </div>
         </div>
-        <div class="kpis" id="kpis"></div>
+        <h3 class="actions-title" id="actions-title" style="margin:16px 0 0;font-size:0.88rem;font-weight:700;color:var(--accent)">下一步建议</h3>
         <ol class="actions" id="actions"></ol>
       </section>
 
       <section class="panel" id="panel-diagnose" data-panel="diagnose" role="tabpanel">
         <h2>诊断台</h2>
-        <p class="lead" id="lagging-lead">哪域拖后腿、常见缺口、低分真相。</p>
-        <div class="coverage-strip hidden" id="coverage-strip"></div>
-        <div class="morph-strip hidden" id="morph-strip"></div>
+        <p class="lead" id="lagging-lead">哪一域拖后腿、缺口在哪、低分原因。</p>
+        <ul class="diagnose-story" id="diagnose-story"></ul>
+        <div class="diag-strips" id="diag-strips">
+          <div class="coverage-strip hidden" id="coverage-strip"></div>
+          <div class="morph-strip hidden" id="morph-strip"></div>
+        </div>
         <div class="diag-grid">
           <div class="chart-box">
-            <h3>分域形态分 vs 分域上限</h3>
+            <h3>各域文档质量分 vs 上限</h3>
             <div id="chart-domains"></div>
           </div>
-          <div class="chart-box">
-            <h3>常见缺口（miss）</h3>
-            <div id="chart-miss"></div>
-          </div>
+          <details class="fold" id="miss-fold" style="margin-top:0">
+            <summary>常见缺口分布（明细）</summary>
+            <div class="fold-body" id="chart-miss"></div>
+          </details>
         </div>
         <div class="domain-summary" id="domain-summary"></div>
         <div class="stories hidden" id="stories"></div>
-        <div id="gaps-block" class="hidden" style="margin-top:14px">
-          <h3 style="margin:0 0 8px;font-size:0.88rem;font-weight:700;color:var(--accent);text-shadow:var(--neon-text)">低分真相 Top</h3>
-          <table>
-            <thead><tr><th>域</th><th>路径</th><th>分</th><th>问题</th></tr></thead>
-            <tbody id="gaps-body"></tbody>
-          </table>
-        </div>
+        <details id="gaps-block" class="fold hidden">
+          <summary>低分原因 Top（明细）</summary>
+          <div class="fold-body">
+            <table>
+              <thead><tr><th>域</th><th>路径</th><th>分</th><th>问题</th></tr></thead>
+              <tbody id="gaps-body"></tbody>
+            </table>
+          </div>
+        </details>
       </section>
 
       <section class="panel" id="panel-tasks" data-panel="tasks" role="tabpanel">
         <h2>任务台</h2>
-        <p class="lead">下一批可执行补文档分片（对齐 fill-plan / agents）。</p>
+        <p class="lead">下一批可执行的补文档任务（来自 fill-plan / agents 流水线）。</p>
         <div class="task-grid" id="tasks"></div>
         <div class="empty hidden" id="tasks-empty">暂无分片任务。先完成 fill-plan / inventory 后再看本台。</div>
       </section>
 
       <section class="panel" id="panel-trend" data-panel="trend" role="tabpanel">
         <h2>趋势台</h2>
-        <p class="lead" id="trend-lead">历次 overall / coverage；相对上次 diff；pipeline 轮次。</p>
-        <div class="composite composite-secondary" id="composite-block">
-          <div class="lab" id="composite-lab">仪表参考分</div>
-          <div class="val" id="composite-val">—</div>
-          <div class="tip" id="composite-tip">≠开干</div>
-        </div>
+        <p class="lead" id="trend-lead">历次评分走势 · 与上次对比 · 本轮流水线概况。</p>
+        <div class="trend-banner hidden" id="trend-banner"></div>
         <div class="diag-grid" id="trend-grid">
           <div class="chart-box">
-            <h3>评分趋势（overall / coverage）</h3>
+            <h3>评分趋势（文档质量分 / 代码覆盖率）</h3>
             <div id="chart-trend"></div>
           </div>
           <div class="chart-box">
@@ -1315,7 +1372,16 @@
             <ul class="timeline" id="run-timeline"></ul>
           </div>
         </div>
-        <div class="empty hidden" id="trend-empty">尚无评分历史与 diff。可用 fill-score --compare / 多次打分积累。</div>
+        <div class="empty hidden" id="trend-empty">尚无评分历史与对比。可用 fill-score --compare / 多次打分积累。</div>
+      </section>
+
+      <section class="panel" id="panel-host" data-panel="host" role="tabpanel">
+        <h2>落地检查台</h2>
+        <p class="lead" id="host-lead">各 AI 工具的规则 / 钩子 / MCP 是否已落地，以及会话是否已自证（落地≠生效）。</p>
+        <div id="host-matrix-wrap"></div>
+        <p class="host-pending-hint hidden" id="host-pending"></p>
+        <p class="host-legend" id="host-legend"></p>
+        <div class="empty hidden" id="host-empty"></div>
       </section>
     </div>
 
@@ -1344,10 +1410,10 @@
 
     <footer id="footer" class="hidden"></footer>
   </div>
-  <script type="application/json" id="report-data">{"generated_at":"2026-09-22T08:16:08.730Z","skill_version":"0.6.9","mode":null,"score_path":"D:\\workspace\\gitHub\\skills\\harness-eng\\scripts\\fixtures\\score-sample.json","report_dir":"docs/harness-eng","legacy_report":"docs/agent-kb/harness-report-latest.html","history_rel":"docs/harness-eng/score-history.jsonl","meta":{"repo_name":"harness-eng"},"ui":{"version":"0.2.26","report_schema":"0.2.26","headline":"金标达标率 gold_ratio=0.42 偏低且有 acceptance blocker；先按 truth-quality 精修。","verdict":{"ready_ok":false,"ai_coding_ready":false,"ready_label":"建议暂缓","ready_hint":"形态+覆盖已达阈，但仍差语义或 fill-plan；未达 ai_coding_ready，暂缓开业务改动。"},"gap_to_ready":{"ready_quality":70,"ready_coverage":0.6,"quality_gap":0,"coverage_gap":0,"coverage_gap_percent":0,"ai_coding_blockers":["semantic_ready","fill_plan_open_batches"],"at_ceiling":true,"summary":"距 ai_coding_ready：semantic_ready、fill_plan_open_batches"},"decision_kpis":[{"id":"ai_coding_ready","label_zh":"可 AI coding","value":"NO","sub":"skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed","tone":"no"},{"id":"gold_ratio","label_zh":"金标达标率","value":"42%","sub":"偏低 · 清 acceptance blocker","tone":"warn"},{"id":"skeleton_ready","label_zh":"骨架","value":"YES","sub":"只读灯 · 非开干","tone":"ok"},{"id":"coverage_ready","label_zh":"覆盖","value":"YES","sub":"只读灯 · 非开干","tone":"ok"},{"id":"semantic_ready","label_zh":"语义","value":"NO","sub":"只读灯 · 非开干","tone":"warn"},{"id":"fill_plan","label_zh":"Plan","value":"开3","sub":"只读灯 · 非开干","tone":"warn"}],"morph_strip":[{"id":"quality","label_zh":"形态分","value":"74%","sub":"上限约 75%"},{"id":"ceiling","label_zh":"公式上限","value":"~75%","sub":"贴顶后走 agents"},{"id":"template_completeness","label_zh":"模板完整度","value":"42%","sub":"必填章启发式"}],"coverage_strip":[{"id":"coverage","label_zh":"覆盖","value":"80%","sub":"80 / 100"}],"show_domain_cards":false,"composite_score":{"value":64.3,"label_zh":"仪表参考分","breakdown":{"overall":74,"coverage":80,"gold_ratio":42,"pipeline":50},"tip":"形态35%·覆盖25%·金标20%·流水线20% — 仅参考，开干只看 ai_coding_ready"},"pipeline_progress":{"percent":50,"done":3,"total":6,"current_id":"batches","current_label_zh":"批次关闭","ladder":"L4","steps":[{"id":"skeleton","label_zh":"骨架就绪","done":true},{"id":"coverage","label_zh":"覆盖就绪","done":true},{"id":"fill_plan","label_zh":"填充计划","done":true},{"id":"batches","label_zh":"批次关闭","done":false},{"id":"semantic","label_zh":"语义闸","done":false},{"id":"ai_coding","label_zh":"可 AI coding","done":false}],"summary":"进行中：批次关闭（3/6）"},"quality_overall":74,"formula_ceiling":75,"gold_ratio":0.42,"template_completeness":42,"template_completeness_by_domain":{"api":35,"func":40,"db":55,"redis":50},"coverage_percent":80,"coverage_covered":80,"coverage_code":100,"ready_rule":"skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed","ai_coding_ready":false,"skeleton_ready":true,"semantic_ready":false,"coverage_ready":true,"fill_plan":{"present":true,"all_closed":false,"open_total":3,"closed_total":1},"domains":[{"id":"api","name_zh":"接口文档","score":75,"cap":75,"truths":12,"shells":1,"coverage_percent":80,"coverage_covered":80,"coverage_code":100,"tone":"ok","status_label":"已贴形态上限"},{"id":"func","name_zh":"功能文档","score":70,"cap":70,"truths":8,"shells":0,"coverage_percent":65,"coverage_covered":13,"coverage_code":20,"tone":"ok","status_label":"已贴形态上限"},{"id":"db","name_zh":"库表文档","score":78,"cap":80,"truths":20,"shells":2,"coverage_percent":90,"coverage_covered":18,"coverage_code":20,"tone":"warn","status_label":"约 2 个空壳"},{"id":"redis","name_zh":"缓存文档","score":74,"cap":75,"truths":5,"shells":0,"coverage_percent":70,"coverage_covered":7,"coverage_code":10,"tone":"ok","status_label":"已贴形态上限"}],"domain_stories":[{"id":"db","name_zh":"库表文档","score":78,"cap":80,"room":2,"coverage_percent":90,"tone":"warn","status_label":"约 2 个空壳","story":"约 2 个空壳；距上限约 2 分；覆盖 90%；空壳 2"},{"id":"redis","name_zh":"缓存文档","score":74,"cap":75,"room":1,"coverage_percent":70,"tone":"ok","status_label":"已贴形态上限","story":"已贴形态上限；覆盖 70%"},{"id":"api","name_zh":"接口文档","score":75,"cap":75,"room":0,"coverage_percent":80,"tone":"ok","status_label":"已贴形态上限","story":"已贴形态上限；覆盖 80%；空壳 1"},{"id":"func","name_zh":"功能文档","score":70,"cap":70,"room":0,"coverage_percent":65,"tone":"ok","status_label":"已贴形态上限","story":"已贴形态上限；覆盖 65%"}],"lagging_domain":{"id":"db","name_zh":"库表文档","story":"约 2 个空壳；距上限约 2 分；覆盖 90%；空壳 2"},"chart_domains":{"labels":["api","func","db","redis"],"labels_zh":["接口文档","功能文档","库表文档","缓存文档"],"quality":[75,70,78,74],"caps":[75,70,80,75]},"miss_top":[{"id":"generic-logic-template","label_zh":"通用四步逻辑模板","count":12},{"id":"missing-req-section","label_zh":"缺模板必填章","count":8},{"id":"dto-unbound","label_zh":"DTO 错挂/未绑定","count":4},{"id":"has-field-comment","label_zh":"缺字段说明","count":3},{"id":"has-method-list","label_zh":"缺方法清单","count":2},{"id":"has-ttl","label_zh":"缺 TTL 章节","count":1}],"gaps_top":[{"domain":"func","domain_zh":"功能文档","path":"docs/func/modules/01-demo.md","score":55,"issues":["缺少方法清单"]},{"domain":"api","domain_zh":"接口文档","path":"docs/api/modules/01-demo.md","score":60,"issues":["缺字段说明"]}],"next_actions":[{"title":"按 Plan 批次继续多 Agent 精填","detail":"开放批次≈3。关批次前勿宣称可 AI coding。","command":"node scripts/fill-plan.mjs --root D:\\workspace\\gitHub\\skills\\harness-eng --status"},{"title":"清语义 miss（逻辑模板 / DTO 错挂）","detail":"generic_logic=12，dto_unbound=4","command":null},{"title":"按批次补覆盖（fill-truths-agents）","detail":"覆盖约 80%（80/100）。优先：com.demo.web≈24、com.demo.admin≈18、com.demo.service≈12","command":null}],"shards":[{"id":"shard-api-01","package":"com.demo.web","count":24,"kind":"fill","title":"shard-api-01","hint":"约 24 条","command":"node scripts/fill-plan.mjs --root D:\\workspace\\gitHub\\skills\\harness-eng --status"},{"id":"shard-api-02","package":"com.demo.admin","count":18,"kind":"fill","title":"shard-api-02","hint":"约 18 条","command":"node scripts/fill-plan.mjs --root D:\\workspace\\gitHub\\skills\\harness-eng --status"},{"id":"shard-func-01","package":"com.demo.service","count":12,"kind":"fill","title":"shard-func-01","hint":"约 12 条","command":"node scripts/fill-plan.mjs --root D:\\workspace\\gitHub\\skills\\harness-eng --status"}],"tasks_empty_hint":"暂无分片任务。先完成 fill-plan / inventory 后再看本台。","diff":{"overall":2,"domains":{"api":1},"summary":"相对上次 overall +2（api +1）"},"trend":{"labels":["r1"],"overall":[74],"coverage":[80],"ready":[true],"count":1,"delta_overall":null,"summary":"历史不足 2 次，暂无趋势"},"run_timeline":[{"id":"round","label_zh":"轮次","value":1},{"id":"note","label_zh":"备注","value":"fill-report-html"}],"suggest_upgrade":null,"glossary":[{"id":"gold_ratio","zh":"金标达标率","en":"gold_ratio","tip":"acceptance-check 通过节占比；大仓看局部金标，不替代 ai_coding_ready。"},{"id":"ai_coding_ready","zh":"可 AI coding","en":"ai_coding_ready","tip":"skeleton+coverage+semantic+fill-plan 全关才算；仪表盘「开干」只看此项。"},{"id":"ready","zh":"形态/覆盖就绪（兼容）","en":"ready","tip":"旧字段：形态分+覆盖达阈。不是开干闸；对用户正写用「覆盖/形态/开干」，开干只看 ai_coding_ready。"},{"id":"skeleton_ready","zh":"骨架就绪","en":"skeleton_ready","tip":"L4 阶梯与 hooks/MCP example 等必备文件齐。"},{"id":"semantic_ready","zh":"语义抽检通过","en":"semantic_ready","tip":"启发式：通用逻辑模板、DTO 错挂等 miss 低于阈。"},{"id":"fill_plan","zh":"填充计划","en":"fill_plan","tip":"docs/harness-eng/fill-plan.yaml：目标/批次/Done；早停看关闭率。"},{"id":"quality","zh":"文档形态分","en":"quality / overall","tip":"真相写得像不像模板，不是业务正确性分数。"},{"id":"coverage","zh":"相对代码覆盖","en":"coverage","tip":"已文档化条目 ÷ inventory 扫到的条目。"},{"id":"formula_ceiling","zh":"公式上限","en":"formula_ceiling","tip":"按当前打分规则，自动填充大致能摸到的顶；贴顶勿空追更高 overall。"},{"id":"domain_caps","zh":"分域上限","en":"domain_caps","tip":"各域形态分的理论顶。"},{"id":"miss_histogram","zh":"常见缺口分布","en":"miss_histogram","tip":"哪类检查项最常未通过（如缺字段说明）。"},{"id":"next_shards","zh":"下一批补文档任务","en":"next_shards","tip":"建议下一批要补的接口/模块分片。"},{"id":"warning_shards","zh":"acceptance 残项","en":"warning_shards","tip":"金标批次已关后仍可能剩 acceptance warnings；用 fill-plan --residual 清。"},{"id":"coverage_ready","zh":"覆盖就绪","en":"coverage_ready","tip":"相对 inventory 与 score-policy 的覆盖闸；不替代 ai_coding_ready。"},{"id":"gap_to_ready","zh":"距门槛差距","en":"gap_to_ready","tip":"相对 ready 质量/覆盖门槛还差多少。"},{"id":"score_history","zh":"评分历史","en":"score-history","tip":"docs/harness-eng/score-history.jsonl 追加的历次 overall/coverage/ready。"},{"id":"suggest_upgrade","zh":"建议升阶","en":"suggest_upgrade","tip":"根据 ready / 阶梯 meta，建议下一 harness 阶或继续补契约。"},{"id":"template_completeness","zh":"模板完整度","en":"template_completeness","tip":"真相是否含模板必填章（启发式）；贴 formula_ceiling 但此项低 → fill-truths-agents，勿空追 overall。"}],"suggest_raw":"gold_ratio=0.42 偏低 → acceptance-check 清 blocker，按 truth-quality 精修金标；勿空追 overall","disclaimer":"本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。"},"score":{"ok":true,"root":"D:/fixture/demo-repo","modules":[],"threshold":80,"formula_ceiling":75,"domain_caps":{"api":75,"func":70,"db":80,"redis":75},"overall":74,"domains":{"api":{"score":75,"index":true,"truths":12,"shells":1},"func":{"score":70,"index":true,"truths":8,"shells":0},"db":{"score":78,"index":true,"truths":20,"shells":2},"redis":{"score":74,"index":true,"truths":5,"shells":0}},"quality":{"overall":74,"domains":{"api":75,"func":70,"db":78,"redis":74}},"coverage":{"percent":80,"covered":80,"code":100,"ratio":0.8},"coverage_by_domain":{"api":{"percent":80,"covered":80,"code":100},"func":{"percent":65,"covered":13,"code":20},"db":{"percent":90,"covered":18,"code":20},"redis":{"percent":70,"covered":7,"code":10}},"ready":{"ok":true,"quality_ok":true,"coverage_ok":true,"coverage_incomplete":false,"rule":"quality>=70 && coverage>=0.6 (compat; see ai_coding_ready)","ready_quality":70,"ready_coverage":0.6},"skeleton_ready":{"ok":true,"ladder":"L4"},"coverage_ready":{"ok":true,"coverage_incomplete":false},"semantic_ready":{"ok":false,"generic_logic_template":12,"dto_unbound":4,"rule":"generic_logic\u003c=5 && dto_unbound\u003c=3 && template_completeness>=50"},"fill_plan":{"present":true,"all_closed":false,"open_total":3,"closed_total":1},"ai_coding_ready":{"ok":false,"rule":"skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed","blockers":["semantic_ready","fill_plan_open_batches"]},"gold_ratio":0.42,"acceptance":{"blockers":3,"warnings":1,"status":1},"draft_vs_ssot":"SSOT 须过 acceptance；heuristic draft 仅 .fill-work","pass":true,"miss_histogram":{"has-field-comment":3,"has-ttl":1,"has-method-list":2,"missing-req-section":8,"generic-logic-template":12,"dto-unbound":4},"template_completeness":{"overall":42,"by_domain":{"api":35,"func":40,"db":55,"redis":50}},"gaps":[{"domain":"func","path":"docs/func/modules/01-demo.md","score":55,"issues":["缺少方法清单"]},{"domain":"api","path":"docs/api/modules/01-demo.md","score":60,"issues":["缺字段说明"]}],"next_shards":[{"id":"shard-api-01","package":"com.demo.web","count":24},{"id":"shard-api-02","package":"com.demo.admin","count":18},{"id":"shard-func-01","package":"com.demo.service","count":12}],"diff":{"overall":2,"api":1},"suggest_next":"gold_ratio=0.42 偏低 → acceptance-check 清 blocker，按 truth-quality 精修金标；勿空追 overall"},"run":{"round":1,"note":"fill-report-html"}}</script>
+  <script type="application/json" id="report-data">{"generated_at":"2026-11-25T07:45:37.700Z","skill_version":"0.8.2","mode":null,"score_path":"D:\\workspace\\gitHub\\skills\\harness-eng\\scripts\\fixtures\\score-sample.json","report_dir":"docs/harness-eng","legacy_report":"docs/agent-kb/harness-report-latest.html","history_rel":"docs/harness-eng/score-history.jsonl","session_live_latest":"docs/harness-eng/session-live-latest.yaml","session_live_matrix":"docs/harness-eng/session-live-matrix.yaml","meta":{"repo_name":"harness-eng-fixture-preview-i"},"ui":{"version":"0.4.2","report_schema":"0.4.2","morph_scale":"0.7","headline":"开干=NO · 验收通过率偏低且有验收阻断项；先按 truth-quality 精修。","verdict":{"ready_ok":false,"ai_coding_ready":false,"ready_label":"建议暂缓","ready_hint":"先推进补文档计划并过语义抽检；能否开干只看「可 AI coding」。"},"go_nogo":{"ok":false,"label_zh":"建议暂缓","blockers":["semantic_ready","fill_plan_open_batches"],"next_commands":["node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status"],"rule":"skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed"},"gap_to_ready":{"ready_quality":70,"ready_coverage":0.6,"quality_gap":0,"coverage_gap":0,"coverage_gap_percent":0,"ai_coding_blockers":["semantic_ready","fill_plan_open_batches"],"blockers_grouped":[{"id":"semantic","label_zh":"语义抽检","count":1,"ids":["semantic_ready"]},{"id":"fill_plan","label_zh":"补文档计划批次未完成","count":1,"ids":["fill_plan_open_batches"]}],"summary_zh":"距开干：语义抽检、补文档计划批次未完成","at_ceiling":false,"summary":"距开干：语义抽检、补文档计划批次未完成"},"decision_kpis":[{"id":"ai_coding_ready","label_zh":"可 AI coding","value":"否","sub":"开干只看此项","tone":"no"},{"id":"gold_ratio","label_zh":"验收通过率","value":"42%","sub":"偏低 · 请清验收阻断项","tone":"warn"},{"id":"skeleton_ready","label_zh":"骨架","value":"是","sub":"参考灯 · 不决定开干","tone":"ok"},{"id":"coverage_ready","label_zh":"覆盖就绪","value":"是","sub":"参考灯 · 不决定开干","tone":"ok"},{"id":"semantic_ready","label_zh":"语义","value":"否","sub":"参考灯 · 不决定开干","tone":"warn"},{"id":"fill_plan","label_zh":"Plan","value":"开3","sub":"参考灯 · 不决定开干","tone":"warn"}],"morph_strip":[{"id":"quality","label_zh":"文档质量分","value":"88%","sub":"上限约 100%"},{"id":"ceiling","label_zh":"理论上限","value":"~100%","sub":"到顶后转 agents 精修"},{"id":"template_completeness","label_zh":"模板完整度","value":"42%","sub":"必填章启发式"}],"coverage_strip":[{"id":"coverage","label_zh":"代码覆盖率","value":"80%","sub":"80 / 100"}],"diagnose":{"story":[{"id":"gates","tone":"warn","text":"四态灯：骨架=YES · 覆盖=YES · 语义=NO · Plan=有（不替代开干）"},{"id":"lagging","tone":"warn","text":"拖后腿：接口文档 — 约 1 个空壳；距上限约 25 分；覆盖 80%；空壳 1"},{"id":"miss","tone":"warn","text":"常见缺口：通用四步逻辑模板×12、缺模板必填章×8、DTO 错挂/未绑定×4、缺字段说明×3"}],"gate_lamps":[{"id":"skeleton_ready","label_zh":"骨架","value":"是","sub":"参考灯 · 不决定开干","tone":"ok"},{"id":"coverage_ready","label_zh":"覆盖就绪","value":"是","sub":"参考灯 · 不决定开干","tone":"ok"},{"id":"semantic_ready","label_zh":"语义","value":"否","sub":"参考灯 · 不决定开干","tone":"warn"},{"id":"fill_plan","label_zh":"Plan","value":"开3","sub":"参考灯 · 不决定开干","tone":"warn"}],"lagging_domain":{"id":"api","name_zh":"接口文档","story":"约 1 个空壳；距上限约 25 分；覆盖 80%；空壳 1"}},"show_domain_cards":false,"composite_score":{"value":69.2,"label_zh":"总评分","grade_zh":"合格","grade_tone":"warn","parts":[{"id":"overall","label_zh":"文档质量分","value":88},{"id":"coverage","label_zh":"代码覆盖率","value":80},{"id":"gold_ratio","label_zh":"验收通过率","value":42},{"id":"pipeline","label_zh":"开干清单","value":50}],"breakdown":{"overall":88,"coverage":80,"gold_ratio":42,"pipeline":50},"one_line_zh":"主要短板：接口文档（约 1 个空壳；距上限约 25 分；覆盖 80%；空壳 1）；先做：按 Plan 批次继续多 Agent 精填","tip":"文档质量分35% · 代码覆盖率25% · 验收通过率20% · 开干清单20% 加权——仅供参考；能否开干只看「可 AI coding」"},"ladder_progress":{"current":"L4","next":"L5","percent":83,"done":5,"total":6,"steps":[{"id":"L0","label_zh":"L0","name_zh":"协作入口","tip_zh":"L0 协作入口 — 根/分册 AGENTS.md、总览规则、Karpathy、harness-meta","done":true,"current":false},{"id":"L1","label_zh":"L1","name_zh":"契约骨架","tip_zh":"L1 契约骨架 — docs/func|api|db|redis|jobs 索引 + templates + 同步 rules","done":true,"current":false},{"id":"L2","label_zh":"L2","name_zh":"知识回流","tip_zh":"L2 知识回流 — docs/agent-kb 四件套 + pitfalls「域」列 + rule 19","done":true,"current":false},{"id":"L3","label_zh":"L3","name_zh":"规划与软门禁","tip_zh":"L3 规划与软门禁 — docs/superpowers 进行中表 + commit 软提醒 hooks（不拦截）","done":true,"current":false},{"id":"L4","label_zh":"L4","name_zh":"工具连接样例","tip_zh":"L4 工具连接样例 — mcp.json.example + 说明 + gitignore 忽略真密 mcp.json","done":true,"current":true},{"id":"L5","label_zh":"L5","name_zh":"配置 SSOT 管线","tip_zh":"L5 配置 SSOT 管线 — docs/agent-config/ + sync.mjs --check；工具目录为生成物","done":false,"current":false}],"summary":"施工阶梯 L4（下一阶 L5）"},"pipeline_progress":{"percent":50,"done":3,"total":6,"current_id":"batches","current_label_zh":"批次完成","ladder":"L4","label_zh":"开干清单","steps":[{"id":"skeleton","label_zh":"骨架就绪","done":true},{"id":"coverage","label_zh":"覆盖就绪","done":true},{"id":"fill_plan","label_zh":"补文档计划","done":true},{"id":"batches","label_zh":"批次完成","done":false},{"id":"semantic","label_zh":"语义抽检","done":false},{"id":"ai_coding","label_zh":"可 AI coding","done":false}],"summary":"开干清单：批次完成（3/6）"},"quality_overall":88,"formula_ceiling":100,"gold_ratio":0.42,"template_completeness":42,"template_completeness_by_domain":{"api":35,"func":40,"db":55,"redis":50},"coverage_percent":80,"coverage_covered":80,"coverage_code":100,"ready_rule":"skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed","ready_deprecated":true,"ai_coding_ready":false,"skeleton_ready":true,"semantic_ready":false,"coverage_ready":true,"fill_plan":{"present":true,"all_closed":false,"open_total":3,"closed_total":1},"domains":[{"id":"api","name_zh":"接口文档","score":75,"cap":100,"truths":12,"shells":1,"coverage_percent":80,"coverage_covered":80,"coverage_code":100,"tone":"warn","status_label":"约 1 个空壳"},{"id":"func","name_zh":"功能文档","score":70,"cap":100,"truths":8,"shells":0,"coverage_percent":65,"coverage_covered":13,"coverage_code":20,"tone":"ok","status_label":"文档质量达标"},{"id":"db","name_zh":"库表文档","score":78,"cap":100,"truths":20,"shells":2,"coverage_percent":90,"coverage_covered":18,"coverage_code":20,"tone":"warn","status_label":"约 2 个空壳"},{"id":"redis","name_zh":"缓存文档","score":74,"cap":100,"truths":5,"shells":0,"coverage_percent":70,"coverage_covered":7,"coverage_code":10,"tone":"ok","status_label":"文档质量达标"}],"domain_stories":[{"id":"func","name_zh":"功能文档","score":70,"cap":100,"room":30,"coverage_percent":65,"tone":"ok","status_label":"文档质量达标","story":"文档质量达标；距上限约 30 分；覆盖 65%"},{"id":"redis","name_zh":"缓存文档","score":74,"cap":100,"room":26,"coverage_percent":70,"tone":"ok","status_label":"文档质量达标","story":"文档质量达标；距上限约 26 分；覆盖 70%"},{"id":"api","name_zh":"接口文档","score":75,"cap":100,"room":25,"coverage_percent":80,"tone":"warn","status_label":"约 1 个空壳","story":"约 1 个空壳；距上限约 25 分；覆盖 80%；空壳 1"},{"id":"db","name_zh":"库表文档","score":78,"cap":100,"room":22,"coverage_percent":90,"tone":"warn","status_label":"约 2 个空壳","story":"约 2 个空壳；距上限约 22 分；覆盖 90%；空壳 2"}],"lagging_domain":{"id":"api","name_zh":"接口文档","story":"约 1 个空壳；距上限约 25 分；覆盖 80%；空壳 1"},"chart_domains":{"labels":["api","func","db","redis"],"labels_zh":["接口文档","功能文档","库表文档","缓存文档"],"quality":[75,70,78,74],"caps":[100,100,100,100]},"miss_top":[{"id":"generic-logic-template","label_zh":"通用四步逻辑模板","count":12},{"id":"missing-req-section","label_zh":"缺模板必填章","count":8},{"id":"dto-unbound","label_zh":"DTO 错挂/未绑定","count":4},{"id":"has-field-comment","label_zh":"缺字段说明","count":3},{"id":"has-method-list","label_zh":"缺方法清单","count":2},{"id":"has-ttl","label_zh":"缺 TTL 章节","count":1}],"gaps_top":[{"domain":"func","domain_zh":"功能文档","path":"docs/func/modules/01-demo.md","score":55,"issues":["缺少方法清单"]},{"domain":"api","domain_zh":"接口文档","path":"docs/api/modules/01-demo.md","score":60,"issues":["缺字段说明"]}],"next_actions":[{"title":"按 Plan 批次继续多 Agent 精填","detail":"开放批次≈3。关批次前勿宣称可 AI coding。","command":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status"},{"title":"清语义 miss（逻辑模板 / DTO 错挂）","detail":"generic_logic=12，dto_unbound=4","command":null},{"title":"按批次补文档覆盖（fill-truths-agents）","detail":"覆盖约 80%（80/100）。优先：com.demo.web≈24、com.demo.admin≈18、com.demo.service≈12","command":null}],"shards":[{"id":"shard-api-01","package":"com.demo.web","count":24,"kind":"fill","title":"shard-api-01","hint":"约 24 条","command":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status"},{"id":"shard-api-02","package":"com.demo.admin","count":18,"kind":"fill","title":"shard-api-02","hint":"约 18 条","command":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status"},{"id":"shard-func-01","package":"com.demo.service","count":12,"kind":"fill","title":"shard-func-01","hint":"约 12 条","command":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status"}],"tasks":[{"id":"action-1","title":"按 Plan 批次继续多 Agent 精填","why":"开放批次≈3。关批次前勿宣称可 AI coding。","priority":1,"cmd":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status","kind":"action"},{"id":"action-2","title":"清语义 miss（逻辑模板 / DTO 错挂）","why":"generic_logic=12，dto_unbound=4","priority":2,"cmd":null,"kind":"action"},{"id":"action-3","title":"按批次补文档覆盖（fill-truths-agents）","why":"覆盖约 80%（80/100）。优先：com.demo.web≈24、com.demo.admin≈18、com.demo.service≈12","priority":3,"cmd":null,"kind":"action"},{"id":"shard-api-01","title":"shard-api-01","why":"约 24 条","priority":4,"cmd":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status","kind":"fill"},{"id":"shard-api-02","title":"shard-api-02","why":"约 18 条","priority":5,"cmd":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status","kind":"fill"},{"id":"shard-func-01","title":"shard-func-01","why":"约 12 条","priority":6,"cmd":"node scripts/fill-plan.mjs --root C:\\Users\\18360\\AppData\\Local\\Temp\\harness-eng-fixture-preview-i --status","kind":"fill"}],"tasks_empty_hint":"暂无任务。先完成 fill-plan / inventory 后再看本台。","host_surface":{"status":"absent","summary_zh":"未落地","current":null,"generated_at":null,"stale":true,"claims":null,"hosts":[{"id":"cursor","label_zh":"Cursor","current":false,"in_ai_tools":true,"disk":{"rules":"absent","hooks":"absent","mcp":"absent","githooks":"absent","human_gates":"absent"},"live":null,"claims":null,"live_at":null,"disk_any":false,"status":"absent","status_zh":"未落地"},{"id":"claude","label_zh":"Claude Code","current":false,"in_ai_tools":true,"disk":{"rules":"absent","hooks":"absent","mcp":"absent","githooks":"absent","human_gates":"absent"},"live":null,"claims":null,"live_at":null,"disk_any":false,"status":"absent","status_zh":"未落地"},{"id":"qoder","label_zh":"Qoder","current":false,"in_ai_tools":true,"disk":{"rules":"absent","hooks":"absent","mcp":"absent","githooks":"absent","human_gates":"absent"},"live":null,"claims":null,"live_at":null,"disk_any":false,"status":"absent","status_zh":"未落地"},{"id":"trae","label_zh":"Trae","current":false,"in_ai_tools":true,"disk":{"rules":"absent","hooks":"absent","mcp":"absent","githooks":"absent","human_gates":"absent"},"live":null,"claims":null,"live_at":null,"disk_any":false,"status":"absent","status_zh":"未落地"},{"id":"workbuddy","label_zh":"WorkBuddy","current":false,"in_ai_tools":true,"disk":{"rules":"absent","hooks":"absent","mcp":"absent","githooks":"absent","human_gates":"absent"},"live":null,"claims":null,"live_at":null,"disk_any":false,"status":"absent","status_zh":"未落地"},{"id":"codex","label_zh":"Codex","current":false,"in_ai_tools":true,"disk":{"rules":"absent","hooks":"absent","mcp":"absent","githooks":"absent","human_gates":"absent"},"live":null,"claims":null,"live_at":null,"disk_any":false,"status":"absent","status_zh":"未落地"}],"surfaces":["rules","hooks","mcp","githooks","human_gates"],"surfaces_zh":["规则","钩子","MCP","Git 钩子","人工闸"],"surface_labels":{"rules":"规则","hooks":"钩子","mcp":"MCP","githooks":"Git 钩子","human_gates":"人工闸"},"legend":{"disk":"实心/暖色=磁盘已落地（≠生效）；空心灰=未落地","live":"绿色=会话已自证；黄=未证；跳过=非本宿主"},"empty_hint":"尚未落地宿主资产（规则/钩子/MCP）；落地后仍须会话自证才算生效。","pending_live_hint":null,"hint_command":"node scripts/session-live.mjs --root \u003cTARGET> --emit-playbook"},"diff":{"overall":2,"domains":{"api":1},"summary":"相对上次 overall +2（api +1）"},"trend":{"labels":["r1"],"overall":[88],"coverage":[80],"overall_linkable":[88],"coverage_linkable":[80],"report_schema":["0.4.2"],"morph_scale":["0.7"],"incomparable":[false],"ready":[true],"count":1,"delta_overall":null,"summary":"历史不足 2 次，暂无趋势"},"run_timeline":[{"id":"round","label_zh":"轮次","value":1},{"id":"note","label_zh":"备注","value":"fill-report-html"}],"suggest_upgrade":null,"glossary":[{"id":"composite_score","zh":"总评分","en":"composite_score","tip":"文档质量分35% · 代码覆盖率25% · 验收通过率20% · 开干清单20% 加权；仅供参考，能否开干只看「可 AI coding」。"},{"id":"pipeline_progress","zh":"开干清单","en":"pipeline_progress","tip":"原「开干闸路径」：骨架 → 覆盖 → 补文档计划 → 批次完成 → 语义抽检 → 可 AI coding 六步。"},{"id":"host_surface","zh":"落地检查","en":"host_surface","tip":"原「宿主台/宿主面」：各 AI 工具的规则/钩子/MCP 是否真配置进仓库；落地≠生效，不否决开干。"},{"id":"gold_ratio","zh":"验收通过率","en":"gold_ratio","tip":"原「金标达标率」gold_ratio：acceptance-check 通过节占比；大仓看局部验收，不替代 ai_coding_ready。"},{"id":"ai_coding_ready","zh":"可 AI coding","en":"ai_coding_ready","tip":"skeleton+coverage+semantic+fill-plan 全关才算；仪表盘「开干」只看此项。"},{"id":"ready","zh":"形态/覆盖就绪（已废弃）","en":"ready","tip":"0.7.0 起对外废弃；JSON 仍保留 deprecated:true。开干只看 ai_coding_ready。"},{"id":"skeleton_ready","zh":"骨架就绪","en":"skeleton_ready","tip":"L4 阶梯与 hooks/MCP example 等必备文件齐。"},{"id":"semantic_ready","zh":"语义抽检","en":"semantic_ready","tip":"原「语义闸」semantic_ready：启发式抽检——通用逻辑模板、DTO 错挂等 miss 低于阈。"},{"id":"fill_plan","zh":"补文档计划","en":"fill_plan","tip":"原「填充计划」fill_plan：docs/harness-eng/fill-plan.yaml 目标/批次/Done；早停看关闭率。"},{"id":"quality","zh":"文档质量分","en":"quality / overall","tip":"原「形态分」quality/overall：真相写得像不像模板，不是业务正确性分数。"},{"id":"coverage","zh":"代码覆盖率","en":"coverage","tip":"原「覆盖」coverage：已文档化条目 ÷ inventory 扫到的条目。"},{"id":"formula_ceiling","zh":"理论上限","en":"formula_ceiling","tip":"原「公式上限」formula_ceiling：当前打分规则理论顶≈100；到顶后走 agents，勿空追。"},{"id":"domain_caps","zh":"各域上限","en":"domain_caps","tip":"原「分域上限」domain_caps：各域文档质量分理论顶（0.7 起均为 100）。"},{"id":"morph_scale","zh":"评分尺度","en":"morph_scale","tip":"原「形态尺度」morph_scale：0.7=探针≈75+深度≈25；与 0.6.x 历史 overall 不可比。"},{"id":"miss_histogram","zh":"常见缺口分布","en":"miss_histogram","tip":"哪类检查项最常未通过（如缺字段说明）。"},{"id":"next_shards","zh":"下一批补文档任务","en":"next_shards","tip":"建议下一批要补的接口/模块任务。"},{"id":"warning_shards","zh":"验收遗留项","en":"warning_shards","tip":"原「残差」warning_shards：验收批次已关后仍可能剩 acceptance warnings；用 fill-plan --residual 清。"},{"id":"coverage_ready","zh":"覆盖就绪","en":"coverage_ready","tip":"相对 inventory 与 score-policy 的覆盖闸；不替代 ai_coding_ready。"},{"id":"gap_to_ready","zh":"距门槛差距","en":"gap_to_ready","tip":"相对 ready 质量/覆盖门槛还差多少。"},{"id":"score_history","zh":"评分历史","en":"score-history","tip":"docs/harness-eng/score-history.jsonl 追加的历次 overall/coverage/ready。"},{"id":"suggest_upgrade","zh":"建议升阶","en":"suggest_upgrade","tip":"根据 ready / 阶梯 meta，建议下一 harness 阶或继续补契约。"},{"id":"template_completeness","zh":"模板完整度","en":"template_completeness","tip":"真相是否含模板必填章（启发式）；贴理论上限但此项低 → fill-truths-agents，勿空追文档质量分。"}],"suggest_raw":"gold_ratio=0.42 偏低 → acceptance-check 清 blocker，按 truth-quality 精修金标；勿空追 overall","disclaimer":"本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。开干只看 ai_coding_ready；落地检查不否决开干。"},"score":{"ok":true,"root":"D:/fixture/demo-repo","modules":[],"threshold":80,"formula_ceiling":100,"domain_caps":{"api":100,"func":100,"db":100,"redis":100},"overall":88,"domains":{"api":{"score":75,"index":true,"truths":12,"shells":1},"func":{"score":70,"index":true,"truths":8,"shells":0},"db":{"score":78,"index":true,"truths":20,"shells":2},"redis":{"score":74,"index":true,"truths":5,"shells":0}},"quality":{"overall":88,"domains":{"api":75,"func":70,"db":78,"redis":74}},"coverage":{"percent":80,"covered":80,"code":100,"ratio":0.8},"coverage_by_domain":{"api":{"percent":80,"covered":80,"code":100},"func":{"percent":65,"covered":13,"code":20},"db":{"percent":90,"covered":18,"code":20},"redis":{"percent":70,"covered":7,"code":10}},"ready":{"ok":true,"quality_ok":true,"coverage_ok":true,"coverage_incomplete":false,"rule":"quality>=70 && coverage>=0.6 (compat; see ai_coding_ready)","ready_quality":70,"ready_coverage":0.6,"deprecated":true},"skeleton_ready":{"ok":true,"ladder":"L4"},"coverage_ready":{"ok":true,"coverage_incomplete":false},"semantic_ready":{"ok":false,"generic_logic_template":12,"dto_unbound":4,"rule":"generic_logic\u003c=5 && dto_unbound\u003c=3 && template_completeness>=50"},"fill_plan":{"present":true,"all_closed":false,"open_total":3,"closed_total":1},"ai_coding_ready":{"ok":false,"rule":"skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed","blockers":["semantic_ready","fill_plan_open_batches"]},"gold_ratio":0.42,"acceptance":{"blockers":3,"warnings":1,"status":1},"draft_vs_ssot":"SSOT 须过 acceptance；heuristic draft 仅 .fill-work","pass":true,"miss_histogram":{"has-field-comment":3,"has-ttl":1,"has-method-list":2,"missing-req-section":8,"generic-logic-template":12,"dto-unbound":4},"template_completeness":{"overall":42,"by_domain":{"api":35,"func":40,"db":55,"redis":50}},"gaps":[{"domain":"func","path":"docs/func/modules/01-demo.md","score":55,"issues":["缺少方法清单"]},{"domain":"api","path":"docs/api/modules/01-demo.md","score":60,"issues":["缺字段说明"]}],"next_shards":[{"id":"shard-api-01","package":"com.demo.web","count":24},{"id":"shard-api-02","package":"com.demo.admin","count":18},{"id":"shard-func-01","package":"com.demo.service","count":12}],"diff":{"overall":2,"api":1},"suggest_next":"gold_ratio=0.42 偏低 → acceptance-check 清 blocker，按 truth-quality 精修金标；勿空追 overall","morph_scale":"0.7"},"run":{"round":1,"note":"fill-report-html"}}</script>
   <script>
 (function () {
-  var TAB_ORDER = ["decision", "diagnose", "tasks", "trend"];
+  var TAB_ORDER = ["decision", "diagnose", "tasks", "trend", "host"];
   var THEME_KEY = "harness-report-theme";
 
   function $(id) { return document.getElementById(id); }
@@ -1359,6 +1425,26 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+  function escAttr(s) { return esc(s); }
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  function countUp(el, target, dur) {
+    if (!el || typeof target !== "number") return;
+    if (prefersReducedMotion()) { el.textContent = target; return; }
+    var final = (Math.round(target * 10) / 10).toFixed(1);
+    var t0 = performance.now();
+    function tick(now) {
+      var p = Math.min(1, (now - t0) / dur);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = (Math.round(target * 10 * eased) / 10).toFixed(1);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    el.textContent = "0.0";
+    requestAnimationFrame(tick);
+    /* 兜底：后台标签页 rAF 暂停时，setTimeout 仍会触发，保证终值落定 */
+    setTimeout(function () { el.textContent = final; }, dur + 60);
   }
   function load() {
     var raw = $("report-data").textContent.trim();
@@ -1534,7 +1620,7 @@
     var labels = (chart && (chart.labels_zh && chart.labels_zh.length ? chart.labels_zh : chart.labels)) || [];
     var quality = (chart && chart.quality) || [];
     var caps = (chart && chart.caps) || [];
-    if (!labels.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">// 暂无分域数据</p>";
+    if (!labels.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无分域数据</p>";
     var w = 420, h = 28 + labels.length * 36, padL = 72, padR = 24, max = 100;
     var rows = labels.map(function (lab, i) {
       var y = 20 + i * 36;
@@ -1551,10 +1637,10 @@
         '<text x="' + (padL + qw + 6) + '" y="' + (y + 12) + '" fill="var(--muted)" font-size="11">' + q + "%</text>"
       );
     }).join("");
-    return '<svg class="chart-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="分域形态分">' + rows + "</svg>";
+    return '<svg class="chart-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="各域文档质量分">' + rows + "</svg>";
   }
   function missBars(missTop) {
-    if (!missTop || !missTop.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">// 无 MISS 项</p>";
+    if (!missTop || !missTop.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无常见缺口数据</p>";
     var max = Math.max.apply(null, missTop.map(function (m) { return m.count; })) || 1;
     return missTop.map(function (m) {
       var pct = Math.round((m.count / max) * 100);
@@ -1567,11 +1653,13 @@
   }
   function trendLines(trend) {
     if (!trend || !trend.labels || trend.labels.length < 1) {
-      return "<p style=\"color:var(--muted);font-size:0.82rem\">// 尚无 score-history</p>";
+      return "<p style=\"color:var(--muted);font-size:0.82rem\">尚无评分历史</p>";
     }
     var labels = trend.labels;
-    var o = trend.overall || [];
-    var c = trend.coverage || [];
+    var oLink = trend.overall_linkable || trend.overall || [];
+    var cLink = trend.coverage_linkable || trend.coverage || [];
+    var oRaw = trend.overall || [];
+    var incomp = trend.incomparable || [];
     var w = 440, h = 160, padL = 36, padR = 12, padT = 16, padB = 28;
     var n = labels.length;
     function xAt(i) {
@@ -1585,31 +1673,125 @@
     }
     function pathFor(arr, stroke) {
       var d = [];
+      var started = false;
       for (var i = 0; i < arr.length; i++) {
         var y = yAt(arr[i]);
-        if (y == null) continue;
-        d.push((d.length ? "L" : "M") + xAt(i) + " " + y);
+        if (y == null) {
+          started = false;
+          continue;
+        }
+        d.push((started ? "L" : "M") + xAt(i) + " " + y);
+        started = true;
       }
       if (!d.length) return "";
       return '<path d="' + d.join(" ") + '" fill="none" stroke="' + stroke + '" stroke-width="2"/>';
     }
-    var ticks = "";
+    var dots = "";
     for (var i = 0; i < labels.length; i++) {
+      var yRaw = yAt(oRaw[i]);
+      if (yRaw == null) continue;
+      var grey = !!incomp[i];
+      dots +=
+        '<circle cx="' + xAt(i) + '" cy="' + yRaw + '" r="' + (grey ? 4 : 3) +
+        '" fill="' + (grey ? "var(--muted)" : "var(--accent)") + '" opacity="' +
+        (grey ? "0.55" : "1") + '"/>';
+    }
+    var ticks = "";
+    for (var j = 0; j < labels.length; j++) {
       ticks +=
-        '<text x="' + xAt(i) + '" y="' + (h - 8) + '" text-anchor="middle" fill="var(--muted)" font-size="9">' +
-        esc(String(labels[i]).slice(0, 8)) + "</text>";
+        '<text x="' + xAt(j) + '" y="' + (h - 8) + '" text-anchor="middle" fill="var(--muted)" font-size="9">' +
+        esc(String(labels[j]).slice(0, 8)) + "</text>";
     }
     return (
       '<svg class="chart-svg" viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="评分趋势">' +
       '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (h - padB) + '" stroke="var(--border)"/>' +
       '<line x1="' + padL + '" y1="' + (h - padB) + '" x2="' + (w - padR) + '" y2="' + (h - padB) + '" stroke="var(--border)"/>' +
-      pathFor(o, "var(--accent)") +
-      pathFor(c, "var(--warn)") +
+      pathFor(oLink, "var(--accent)") +
+      pathFor(cLink, "var(--warn)") +
+      dots +
       ticks +
-      '<text x="' + (w - padR) + '" y="12" text-anchor="end" fill="var(--accent)" font-size="10">overall</text>' +
-      '<text x="' + (w - padR) + '" y="24" text-anchor="end" fill="var(--warn)" font-size="10">coverage</text>' +
+      '<text x="' + (w - padR) + '" y="12" text-anchor="end" fill="var(--accent)" font-size="10">文档质量分</text>' +
+      '<text x="' + (w - padR) + '" y="24" text-anchor="end" fill="var(--warn)" font-size="10">代码覆盖率</text>' +
       "</svg>"
     );
+  }
+
+  var SURFACE_ZH = {
+    rules: "规则", hooks: "钩子", mcp: "MCP",
+    githooks: "Git 钩子", human_gates: "人工闸"
+  };
+
+  function hostCell(disk, live) {
+    var present = disk === "present";
+    var d = present ? "已落地●" : "未落地○";
+    var diskCls = present ? "cell-disk present" : "cell-disk";
+    var liveLab = "—";
+    var liveCls = "";
+    if (live === "pass") { liveLab = "已自证✓"; liveCls = "pass"; }
+    else if (live === "fail") { liveLab = "自证失败✗"; liveCls = "fail"; }
+    else if (live === "unproven") { liveLab = "待自证"; liveCls = "unproven"; }
+    else if (live && String(live).indexOf("skipped") === 0) { liveLab = "跳过"; liveCls = "unproven"; }
+    return (
+      '<span class="' + diskCls + '">' + d + '</span><br>' +
+      '<span class="cell-live ' + liveCls + '">' + liveLab + "</span>"
+    );
+  }
+
+  function renderHostPanel(hs) {
+    var wrap = $("host-matrix-wrap");
+    var empty = $("host-empty");
+    var legend = $("host-legend");
+    var pending = $("host-pending");
+    if (pending) { pending.textContent = ""; hide(pending); }
+    if (!hs || !hs.hosts || !hs.hosts.length) {
+      if (wrap) wrap.innerHTML = "";
+      if (empty) {
+        empty.textContent = (hs && hs.empty_hint) || "尚未落地任何配置资产；落地后仍须会话自证才算生效。";
+        show(empty);
+      }
+      if (legend) legend.textContent = "";
+      return;
+    }
+    hide(empty);
+    var surfaces = hs.surfaces || ["rules", "hooks", "mcp", "githooks"];
+    var labels = hs.surface_labels || SURFACE_ZH;
+    var head =
+      "<tr><th>宿主</th>" +
+      surfaces.map(function (s) {
+        return "<th>" + esc((labels && labels[s]) || SURFACE_ZH[s] || s) + "</th>";
+      }).join("") +
+      "<th>状态</th></tr>";
+    var rows = hs.hosts.map(function (h) {
+      var cls = h.current ? " current" : "";
+      if (h.in_ai_tools === false) cls += " dim";
+      var cells = surfaces.map(function (s) {
+        var disk = (h.disk && h.disk[s]) || "absent";
+        var live = h.live ? h.live[s] : null;
+        return "<td>" + hostCell(disk, live) + "</td>";
+      }).join("");
+      var name = h.label_zh || h.id;
+      var st = h.status_zh || h.status || "—";
+      return (
+        '<tr class="' + cls.trim() + '"><td class="host-id">' +
+        esc(name) + (h.current ? " · 当前" : "") +
+        '</td>' + cells + '<td class="status-zh">' + esc(st) + "</td></tr>"
+      );
+    }).join("");
+    wrap.innerHTML = '<table class="host-matrix"><thead>' + head + "</thead><tbody>" + rows + "</tbody></table>";
+    if (legend) {
+      legend.textContent =
+        (hs.legend && hs.legend.disk ? hs.legend.disk + " · " : "") +
+        (hs.legend && hs.legend.live ? hs.legend.live : "") +
+        (hs.hint_command ? " · 自证命令：" + hs.hint_command : "");
+    }
+    if (pending && hs.pending_live_hint && hs.status !== "absent") {
+      pending.textContent = hs.pending_live_hint;
+      show(pending);
+    }
+    if (hs.empty_hint && hs.status === "absent") {
+      empty.textContent = hs.empty_hint;
+      show(empty);
+    }
   }
 
   initTheme();
@@ -1668,7 +1850,7 @@
     var repo = meta.repo_name || score.root || "目标仓";
     var repoShort = String(repo).replace(/\\\\/g, "/").split("/").pop();
     var mode = data.mode || meta.last_mode || "";
-    var ladder = meta.ladder || (ui.pipeline_progress && ui.pipeline_progress.ladder) || "";
+    var ladderMeta = meta.ladder || (ui.ladder_progress && ui.ladder_progress.current) || (ui.pipeline_progress && ui.pipeline_progress.ladder) || "";
     var skillVer = meta.skill_version || data.skill_version || "";
     var termIndex = buildTermIndex(ui.glossary || []);
 
@@ -1676,25 +1858,51 @@
     $("title").textContent = repoShort + " · 施工指挥台";
     var bits = [];
     if (mode) bits.push("模式 " + mode);
-    if (ladder) bits.push("阶梯 " + ladder);
-    if (skillVer) bits.push("skill_version " + skillVer);
-    var reportSchema = ui.report_schema || ui.version || "";
-    if (reportSchema) bits.push("report_schema " + reportSchema + "（报告壳 ≠ skill）");
+    if (ladderMeta) bits.push("阶梯 " + ladderMeta);
     if (generatedAt) bits.push(generatedAt);
     $("subtitle").textContent = bits.join(" · ");
     show($("hdr"));
 
     var composite = ui.composite_score || {};
     var pipe = ui.pipeline_progress || {};
-    $("composite-lab").textContent = composite.label_zh || "仪表参考分";
-    $("composite-val").textContent =
-      typeof composite.value === "number" ? composite.value : "—";
-    $("composite-tip").textContent = composite.tip || "≠开干 · 仅参考";
-    $("pipe-summary").textContent = pipe.summary || "流水线进度";
+    var ladderProg = ui.ladder_progress || {};
+    $("overall-lab").textContent = composite.label_zh || "总评分";
+    if (typeof composite.value === "number") {
+      countUp($("overall-val"), composite.value, 600);
+    } else {
+      $("overall-val").textContent = "—";
+    }
+    var gradeEl = $("overall-grade");
+    gradeEl.textContent = composite.grade_zh || "";
+    gradeEl.className = "grade " + (composite.grade_tone || "");
+    var refEl = $("overall-ref");
+    refEl.textContent = "仅参考 · ≠开干";
+    refEl.title = composite.tip || "";
+    $("overall-parts").innerHTML = (composite.parts || []).map(function (p) {
+      return '<span class="part">' + esc(p.label_zh || p.id) + " <b>" + esc(p.value) + "%</b></span>";
+    }).join("");
+
+    $("ladder-summary").textContent = ladderProg.summary || "施工阶梯";
+    $("ladder-pct").textContent =
+      typeof ladderProg.percent === "number" ? ladderProg.percent + "%" : "";
+    var ladderW = typeof ladderProg.percent === "number" ? Math.max(0, Math.min(100, ladderProg.percent)) : 0;
+    var ladderSteps = ladderProg.steps || [];
+    $("ladder-steps").innerHTML = ladderSteps.map(function (s) {
+      var cls = "pipe-step";
+      if (s.done) cls += " done";
+      if (s.current) cls += " current";
+      var tip = s.tip_zh || ((s.name_zh ? s.name_zh + " — " : "") + (s.label_zh || s.id));
+      return (
+        '<span class="' + cls + '" tabindex="0" data-tip="' + escAttr(tip) +
+        '" title="' + escAttr(tip) + '">' +
+        esc(s.label_zh || s.id) + "</span>"
+      );
+    }).join("");
+
+    $("pipe-summary").textContent = pipe.summary || pipe.label_zh || "开干清单";
     $("pipe-pct").textContent =
       typeof pipe.percent === "number" ? pipe.percent + "%" : "";
-    $("pipe-fill").style.width =
-      (typeof pipe.percent === "number" ? Math.max(0, Math.min(100, pipe.percent)) : 0) + "%";
+    var pipeW = typeof pipe.percent === "number" ? Math.max(0, Math.min(100, pipe.percent)) : 0;
     var steps = pipe.steps || [];
     $("pipe-steps").innerHTML = steps.map(function (s) {
       var cls = "pipe-step";
@@ -1702,20 +1910,44 @@
       else if (s.id === pipe.current_id) cls += " current";
       return '<span class="' + cls + '">' + esc(s.label_zh || s.id) + "</span>";
     }).join("");
-    show($("sec-progress"));
+    requestAnimationFrame(function () {
+      $("ladder-fill").style.width = ladderW + "%";
+      $("pipe-fill").style.width = pipeW + "%";
+    });
+    show($("sec-banner"));
 
+    var hs = ui.host_surface || null;
+    var cap = $("host-capsule");
+    if (cap && hs) {
+      cap.className = "host-capsule " + (hs.status || "absent");
+      $("host-capsule-text").textContent = "落地 · " + (hs.summary_zh || hs.status || "—");
+      show(cap);
+      cap.onclick = function () { setTab("host"); };
+    }
+
+    var go = ui.go_nogo || {};
     var verdict = ui.verdict || {};
-    var readyOk = !!verdict.ai_coding_ready || !!verdict.ready_ok;
+    var readyOk = go.ok != null ? !!go.ok : (!!verdict.ai_coding_ready || !!verdict.ready_ok);
     var badge = $("verdict-badge");
-    badge.textContent = verdict.ready_label || (readyOk ? "建议可以开干" : "建议暂缓");
+    badge.textContent = go.label_zh || verdict.ready_label || (readyOk ? "建议可以开干" : "建议暂缓");
     badge.className = "verdict-badge " + (readyOk ? "ok" : "no");
 
     $("headline").innerHTML = linkTerms(ui.headline || score.suggest_next || "（无摘要）", termIndex);
-    $("verdict-hint").innerHTML = linkTerms(verdict.ready_hint || "", termIndex);
     var gap = ui.gap_to_ready || {};
-    $("gap-line").innerHTML =
-      "<strong>距门槛：</strong>" + linkTerms(gap.summary || "—", termIndex) +
-      (gap.at_ceiling ? " · <strong>已贴公式上限</strong>" : "");
+    var gapHtml =
+      "<strong>还差什么：</strong>" + linkTerms(gap.summary_zh || gap.summary || "—", termIndex) +
+      (gap.at_ceiling ? " · <strong>已达理论上限</strong>" : "");
+    var rawBlockers = gap.ai_coding_blockers || go.blockers || [];
+    var grouped = gap.blockers_grouped || [];
+    if (rawBlockers.length > 3 || (grouped && grouped.length)) {
+      var items = rawBlockers.map(function (b) {
+        return "<li>" + esc(b) + "</li>";
+      }).join("");
+      gapHtml +=
+        '<details class="gap-expand"><summary>展开机器码详情（' +
+        rawBlockers.length + " 项）</summary><ul>" + items + "</ul></details>";
+    }
+    $("gap-line").innerHTML = gapHtml;
     var up = ui.suggest_upgrade || score.suggest_upgrade;
     if (up && (up.next_ladder || up.reason)) {
       $("upgrade-line").innerHTML =
@@ -1726,20 +1958,10 @@
       $("upgrade-line").textContent = "";
     }
 
-    var decisionKpis = ui.decision_kpis || [];
-    if (decisionKpis.length) {
-      $("kpis").innerHTML = decisionKpis.map(function (k) {
-        return (
-          '<div class="kpi ' + esc(k.tone || "") + '">' +
-          '<div class="k">' + linkTerms(k.label_zh || k.id, termIndex) + "</div>" +
-          '<div class="v">' + esc(k.value) + "</div>" +
-          '<div class="s">' + linkTerms(k.sub || "", termIndex) + "</div></div>"
-        );
-      }).join("");
-    }
-
     var actions = ui.next_actions || [];
+    var actTitle = $("actions-title");
     if (actions.length) {
+      if (actTitle) show(actTitle);
       $("actions").innerHTML = actions.map(function (a, i) {
         return (
           "<li><strong>" + (i + 1) + ". " + linkTerms(a.title, termIndex) + "</strong><span>" +
@@ -1747,6 +1969,15 @@
           (a.command ? cmdHtml(a.command) : "") +
           "</li>"
         );
+      }).join("");
+    } else if (actTitle) {
+      hide(actTitle);
+    }
+
+    var diagStory = (ui.diagnose && ui.diagnose.story) || [];
+    if (diagStory.length) {
+      $("diagnose-story").innerHTML = diagStory.map(function (s) {
+        return '<li class="' + esc(s.tone || "") + '">' + linkTerms(s.text || "", termIndex) + "</li>";
       }).join("");
     }
 
@@ -1792,12 +2023,15 @@
         if (d.room != null && d.room > 0) bits.push("距上限 " + d.room);
         if (typeof d.coverage_percent === "number") bits.push("覆盖 " + d.coverage_percent + "%");
         if (d.status_label) bits.push(d.status_label);
-        var mark = d.tone === "warn" ? "⚠ " : "";
+        var warn = d.tone === "warn";
+        var mark = warn ? "⚠ " : "";
         return (
-          "<strong>" + mark + esc(d.name_zh || d.id) + "</strong> " +
-          esc(bits.join(" · "))
+          '<div class="dom-row">' +
+          '<span class="dom-name' + (warn ? " warn" : "") + '">' +
+          mark + esc(d.name_zh || d.id) + "</span>" +
+          '<span class="dom-bits">' + esc(bits.join(" · ")) + "</span></div>"
         );
-      }).join(" · ");
+      }).join("");
     }
 
     if (ui.show_domain_cards && stories.length) {
@@ -1833,14 +2067,23 @@
       show($("gaps-block"));
     }
 
-    var shards = ui.shards || [];
+    var shards = ui.tasks && ui.tasks.length ? ui.tasks.map(function (t) {
+      return {
+        id: t.id,
+        title: t.title,
+        package: t.kind || "",
+        hint: t.why || "",
+        command: t.cmd,
+        kind: t.kind === "residual" ? "residual" : (t.kind === "action" ? "fill" : t.kind),
+      };
+    }) : (ui.shards || []);
     if (shards.length) {
       $("tasks").innerHTML = shards.map(function (s) {
         var isResidual = s.kind === "residual";
         var cls = "task" + (isResidual ? " residual" : "");
         var badge = isResidual
-          ? '<span class="kind-badge">残差</span>'
-          : '<span class="kind-badge">分片</span>';
+          ? '<span class="kind-badge">验收遗留</span>'
+          : '<span class="kind-badge">补文档</span>';
         return (
           '<div class="' + cls + '">' + badge +
           "<h3>" + esc(s.title || s.id) + "</h3>" +
@@ -1859,13 +2102,23 @@
     var hasTrend = trend && trend.labels && trend.labels.length;
     var hasDiff = ui.diff && ui.diff.summary;
     var timeline = ui.run_timeline || [];
+    var banner = $("trend-banner");
+    if (banner) {
+      var inc = (trend && trend.incomparable) ? trend.incomparable.filter(Boolean).length : 0;
+      if (inc > 0) {
+        banner.textContent = "有 " + inc + " 个历史点尺度不可比（report_schema / morph_scale），已灰显且不连线。";
+        show(banner);
+      } else {
+        hide(banner);
+      }
+    }
     if (hasTrend || hasDiff || timeline.length) {
       $("trend-lead").textContent =
         (trend && trend.summary) || "历次评分与本轮 run 对照。";
       $("chart-trend").innerHTML = trendLines(trend);
       $("diff-block").innerHTML = hasDiff
         ? '<div class="diff-chip">' + esc(ui.diff.summary) + "</div>"
-        : '<p style="color:var(--muted);font-size:0.82rem;margin:0">// 无 score.diff（可用 fill-score --compare）</p>';
+        : '<p style="color:var(--muted);font-size:0.82rem;margin:0">暂无对比数据（可用 fill-score --compare）</p>';
       if (timeline.length) {
         $("run-timeline").innerHTML = timeline
           .map(function (t) {
@@ -1880,6 +2133,8 @@
       hide($("trend-grid"));
       show($("trend-empty"));
     }
+
+    renderHostPanel(ui.host_surface);
 
     var gloss = ui.glossary || [];
     $("glossary").innerHTML = gloss.map(function (g) {

@@ -716,19 +716,19 @@ const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
 if (fs.existsSync(fixture)) {
   const scoreObj = JSON.parse(fs.readFileSync(fixture, "utf8"));
   const ui = buildReportUi(scoreObj);
-  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0","0.4.1"].includes(ui.version), "ui.version compatible");
+  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0","0.4.1","0.4.2"].includes(ui.version), "ui.version compatible");
   assert(Array.isArray(ui.decision_kpis) && ui.decision_kpis.length >= 1, "ui.decision_kpis");
   assert(Array.isArray(ui.morph_strip), "ui.morph_strip");
   assert(ui.show_domain_cards === false, "domain cards default off");
   assert(ui.verdict.ready_label === "建议可以开干" || ui.verdict.ready_label === "建议暂缓", "verdict binary");
   assert(ui.composite_score && typeof ui.composite_score.value === "number", "ui.composite_score");
   assert(ui.pipeline_progress && Array.isArray(ui.pipeline_progress.steps), "ui.pipeline_progress");
-  assert(ui.report_schema === "0.4.1", "report_schema 0.4.1");
+  assert(ui.report_schema === "0.4.2", "report_schema 0.4.2");
   assert(ui.go_nogo && typeof ui.go_nogo.ok === "boolean", "ui.go_nogo");
   assert(Array.isArray(ui.tasks), "ui.tasks");
   assert(ui.ladder_progress && Array.isArray(ui.ladder_progress.steps), "ui.ladder_progress");
   assert(ui.diagnose && Array.isArray(ui.diagnose.story), "ui.diagnose.story");
-  assert(ui.pipeline_progress.label_zh === "开干闸路径", "pipeline labeled 开干闸路径");
+  assert(ui.pipeline_progress.label_zh === "开干清单", "pipeline labeled 开干清单");
   assert(ui.morph_scale === "0.7" || scoreObj.morph_scale === "0.7" || ui.morph_scale == null, "morph_scale present or fixture lag ok");
   assert(ui.chart_domains && Array.isArray(ui.chart_domains.labels_zh), "chart_domains.labels_zh");
   assert(
@@ -776,7 +776,7 @@ if (fs.existsSync(fixture)) {
   assert(/IBM Plex Sans SC/.test(reportTmpl), "report tmpl CJK body font");
   assert(/kind-badge/.test(reportTmpl), "report tmpl residual badge");
   assert(/hashTab|location\.hash/.test(reportTmpl) && !/show\(\$\("deck"\)\);\s*setTab\("decision"\)/.test(reportTmpl), "report tmpl respects hash after paint");
-  assert(/data-tab="host"/.test(reportTmpl) && /宿主台/.test(reportTmpl), "report tmpl host tab");
+  assert(/data-tab="host"/.test(reportTmpl) && /落地检查台/.test(reportTmpl), "report tmpl host tab");
   assert(/ladder_progress|施工阶梯/.test(reportTmpl), "report tmpl ladder axis");
   assert(/host-capsule|host_surface/.test(reportTmpl), "report tmpl host capsule");
   assert(/overall_linkable|incomparable/.test(reportTmpl), "report tmpl history hard-cut");
@@ -1218,7 +1218,7 @@ if (fs.existsSync(fixture)) {
   assert(/ai-coding-gate/.test(scoreSrc), "fill-score imports ai-coding-gate");
   const reportUi = fs.readFileSync(path.join(skillRoot, "scripts/lib/report-ui.mjs"), "utf8");
   assert(/morph_floor:/.test(reportUi) && /harness_todo:/.test(reportUi), "report maps gate blockers to actions");
-  assert(/仪表参考分/.test(reportUi), "composite renamed 仪表参考分");
+  assert(/总评分/.test(reportUi), "composite renamed 总评分");
   const qYaml2 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(/Q_GATE_PROFILE/.test(qYaml2), "questions has Q_GATE_PROFILE");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
@@ -1240,7 +1240,7 @@ if (fs.existsSync(fixture)) {
     "utf8"
   );
   assert(!/综合评分/.test(tmpl), "report tmpl dropped 综合评分");
-  assert(/composite-secondary|panel-trend/.test(tmpl) && /仪表参考分/.test(tmpl), "composite in trend secondary");
+  assert(/sec-banner|panel-decision/.test(tmpl) && /总评分/.test(tmpl), "composite in top banner / decision");
   assert(/0\.3\.[12] 计分同构/.test(fs.readFileSync(path.join(skillRoot, "templates/docs/redis/templates/redis-key-template.md"), "utf8")), "redis tmpl note");
   assert(/0\.3\.[12] 计分同构/.test(fs.readFileSync(path.join(skillRoot, "templates/docs/db/templates/db-table-template.md"), "utf8")), "db tmpl note");
 }
@@ -1909,7 +1909,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
 
 // --- 0.7.14 / report_schema 0.4.x ---
 {
-  assert(CURRENT_REPORT_SCHEMA === "0.4.1", "score-history CURRENT_REPORT_SCHEMA 0.4.1");
+  assert(CURRENT_REPORT_SCHEMA === "0.4.2", "score-history CURRENT_REPORT_SCHEMA 0.4.2");
   assert(
     isIncomparablePoint({ report_schema: "0.3.0", morph_scale: "0.7" }),
     "history 0.3.0 incomparable"
@@ -1977,7 +1977,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
       },
       { meta: { ladder: "L4" }, root: tmpHs, host_surface: hs }
     );
-    assert(uiHs.report_schema === "0.4.1", "ui 0.4.1 with host");
+    assert(uiHs.report_schema === "0.4.2", "ui 0.4.2 with host");
     assert(uiHs.host_surface && uiHs.host_surface.status, "ui carries host_surface");
     assert(uiHs.go_nogo.ok === false, "go_nogo from ai_coding_ready");
     assert(uiHs.ladder_progress.current === "L4", "ladder_progress from meta");
@@ -2021,8 +2021,8 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   const handbookMd0714 = fs.readFileSync(path.join(skillRoot, "guide/使用手册.md"), "utf8");
   assert(/仪表盘五台|宿主台/.test(handbookMd0714), "handbook §6 five panels");
   assert(
-    /0\.4\.1/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
-    "glossary report_schema 0.4.1"
+    /0\.4\.2/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
+    "glossary report_schema 0.4.2"
   );
 }
 
@@ -6021,7 +6021,7 @@ module.exports = { hello };
     "utf8"
   );
   assert(/humanizeBlockers/.test(reportUi60), "0.7.60 humanizeBlockers");
-  assert(/REPORT_SCHEMA = "0\.4\.1"/.test(reportUi60), "0.7.60 REPORT_SCHEMA 0.4.1");
+  assert(/REPORT_SCHEMA = "0\.4\.2"/.test(reportUi60), "0.7.60 REPORT_SCHEMA 0.4.2");
 
   const hostSurf60 = fs.readFileSync(
     path.join(skillRoot, "scripts/lib/host-surface.mjs"),
@@ -6565,6 +6565,109 @@ console.log("theme-gate-smoke-ok");
     "0.8.1 CHANGELOG"
   );
   assert(logExists("0.8.1"), "0.8.1 _log note exists");
+}
+
+// --- 0.8.2: report 人话化 + 决策台总评模块 + 降噪（report_schema 0.4.2） ---
+{
+  const ui82 = buildReportUi({
+    overall: 72,
+    coverage: { percent: 55, covered: 55, code: 100 },
+    gold_ratio: 0.8,
+    formula_ceiling: 75,
+    template_completeness: { overall: 90 },
+    ai_coding_ready: { ok: false, blockers: ["coverage_ready"] },
+    skeleton_ready: { ok: true, ladder: "L4" },
+    coverage_ready: { ok: false },
+    semantic_ready: { ok: true },
+    fill_plan: { present: true, all_closed: false },
+    domains: { api: { score: 72 } },
+  });
+  assert(ui82.report_schema === "0.4.2", "0.8.2 ui report_schema 0.4.2");
+  assert(
+    ui82.composite_score &&
+      typeof ui82.composite_score.value === "number" &&
+      ui82.composite_score.label_zh === "总评分",
+    "0.8.2 composite labeled 总评分"
+  );
+  assert(
+    typeof ui82.composite_score.grade_zh === "string" &&
+      ["优秀", "良好", "合格", "待改进"].includes(ui82.composite_score.grade_zh),
+    "0.8.2 composite grade_zh band"
+  );
+  assert(
+    typeof ui82.composite_score.one_line_zh === "string" &&
+      /主要短板|先做/.test(ui82.composite_score.one_line_zh),
+    "0.8.2 composite one_line_zh"
+  );
+  assert(
+    Array.isArray(ui82.composite_score.parts) &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "文档质量分") &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "代码覆盖率") &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "验收通过率") &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "开干清单"),
+    "0.8.2 composite parts plain labels"
+  );
+  assert(ui82.pipeline_progress.label_zh === "开干清单", "0.8.2 pipeline labeled 开干清单");
+  assert(
+    ui82.pipeline_progress.steps.some((s) => s.id === "semantic" && s.label_zh === "语义抽检"),
+    "0.8.2 pipeline step 语义抽检"
+  );
+  assert(
+    !JSON.stringify(ui82.morph_strip).includes("形态分") &&
+      ui82.morph_strip.some((x) => x.label_zh === "文档质量分"),
+    "0.8.2 morph_strip plain label"
+  );
+  assert(ui82.coverage_strip.some((x) => x.label_zh === "代码覆盖率"), "0.8.2 coverage strip plain");
+  assert(
+    ui82.glossary.some((g) => g.zh === "总评分" && /仅供参考/.test(g.tip)),
+    "0.8.2 glossary 总评分 entry"
+  );
+
+  const tmpl82 = fs.readFileSync(
+    path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
+    "utf8"
+  );
+  assert(/sec-banner/.test(tmpl82) && /banner-card/.test(tmpl82) && /总评分/.test(tmpl82), "0.8.2 top banner 总评分+结论");
+  const decision82 = tmpl82.slice(
+    tmpl82.indexOf('id="panel-decision"'),
+    tmpl82.indexOf('id="panel-diagnose"')
+  );
+  assert(
+    /ladder-axis/.test(decision82) && /id="pipe-axis"/.test(decision82),
+    "0.8.2 ladder+开干清单 in decision panel"
+  );
+  assert(!/verdict-hint/.test(tmpl82) && !/overall-line/.test(tmpl82), "0.8.2 10s结论精简");
+  assert(/stamp-in/.test(tmpl82) && /stamp-ring/.test(tmpl82), "0.8.2 印章入场动效");
+  assert(/grid-template-columns: 1fr 1fr/.test(tmpl82), "0.8.2 阶梯/清单双列并排");
+  assert(/countUp/.test(tmpl82) && /prefersReducedMotion/.test(tmpl82), "0.8.2 countUp + reduced-motion 门");
+  assert(/data-theme="dark"\] \.banner-score \.val/.test(tmpl82), "0.8.2 暗色表盘磷光");
+  assert(/开干清单/.test(tmpl82) && /落地检查台/.test(tmpl82), "0.8.2 tmpl plain labels");
+  assert(!/CYBERPUNK/.test(tmpl82) && !/Orbitron/.test(tmpl82), "0.8.2 tmpl de-cyberpunk");
+  assert(!/scan-shine/.test(tmpl82) && !/glitch-in/.test(tmpl82) && !/keyframes blink/.test(tmpl82), "0.8.2 tmpl noise removed");
+  assert(!/id="kpis"/.test(tmpl82), "0.8.2 kpi strip folded into 开干清单");
+  assert(/常见缺口分布（明细）/.test(tmpl82) && /低分原因 Top（明细）/.test(tmpl82), "0.8.2 details folds");
+  assert(!/仪表参考分/.test(tmpl82) && !/综合评分/.test(tmpl82), "0.8.2 no stale composite name");
+  assert(/仅参考/.test(tmpl82), "0.8.2 仅参考 badge");
+
+  const reportUi82 = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/report-ui.mjs"),
+    "utf8"
+  );
+  assert(/REPORT_SCHEMA = "0\.4\.2"/.test(reportUi82), "0.8.2 report-ui REPORT_SCHEMA 0.4.2");
+  assert(/buildOverallOneLine/.test(reportUi82), "0.8.2 buildOverallOneLine helper");
+  assert(
+    /文档质量分/.test(reportUi82) && /验收通过率/.test(reportUi82) && /验收遗留/.test(reportUi82),
+    "0.8.2 report-ui plain vocabulary"
+  );
+  assert(
+    !/仪表参考分/.test(reportUi82) && !/金标达标率/.test(reportUi82.replace(/原「金标达标率」/g, "")),
+    "0.8.2 no stale composite/gold naming (alias mention ok)"
+  );
+
+  assert(/\| 0\.8\.2 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.2 CHANGELOG");
+  assert(/0\.8\.2 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.2 VERIFY.md");
+  assert(/0\.8\.1 → 0\.8\.2/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.2 upgrade.md");
+  assert(logExists("0.8.2"), "0.8.2 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

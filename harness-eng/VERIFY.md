@@ -1,10 +1,26 @@
-﻿# harness-eng 验收记录（0.8.1）
+﻿# harness-eng 验收记录（0.8.2）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.1**（三域满配：pages 路由面 · components 组件盘点 · client-api 双态消费契约；其下 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.2**（报告页人话化：总评模块 + 开干清单 + 落地检查台 + 降噪；其下 0.8.1 三域满配 pages·components·client-api；0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.2 增量验收（报告页人话化 · report_schema 0.4.2）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.2` | 有 |
+| `report_schema` 0.4.1 → **0.4.2**（`report-ui.mjs` / `score-history.mjs` 同步；0.4.x 族内趋势仍可比） | 有 |
+| 首屏**总评横幅**：Verdict 徽章 + 总评分（0–100 + 等级：≥90 优秀 / ≥75 良好 / ≥60 合格 / <60 待改进）+ 一句话结论 + 分项 chips +「仅参考 · ≠开干」角标；施工阶梯并入决策台与开干清单同组；10 秒结论区精简（留「还差什么/建议升阶」） | 有 |
+| 术语人话化：形态分→文档质量分 · 覆盖→代码覆盖率 · 金标达标率→验收通过率 · 语义闸→语义抽检 · 填充计划→补文档计划 · 残差→验收遗留项 · 开干闸路径→开干清单 · 宿主台→落地检查台；原文术语进名词解释 tooltip | 有 |
+| 结构简化：KPI 灯组并入开干清单（决策台）；诊断台「常见缺口分布」「低分原因 Top」折叠；趋势台仪表参考分块移除 | 有 |
+| 降噪：标题去 `CYBERPUNK TERMINAL`；移除扫描线/网格纹理/glitch/闪烁光标/扫描光/Orbitron；深浅双主题保留 | 有 |
+| 视觉精修（工程图纸 × 夜班表盘）：亮色=草图纸墨绿油墨、暗色=蓝绿黑荧光表盘（摆脱纯黑+酸性绿）；Verdict 徽章改**验收印章**（双环边框+微旋转）；等宽字体仅限仪表读数；去 ALL-CAPS/辉光/`>` `▶` `//` 装饰；阶梯与清单之间加图纸虚线分隔；`:focus-visible` 全局焦点环 | 有 |
+| 横幅与动效：分数纵排仪表面 + 方格纸底纹 + 虚线中缝；「盖章时刻」入场编排（stamp-in / stamp-ring / countUp 600ms + setTimeout 兜底 / 进度条 rAF 生长）；阶梯/清单 1fr 1fr 双列并排（<860px 回落纵叠）；光效仅暗色（数字磷光 + 进度条辉光）；`--force-prefers-reduced-motion` 无头验证终值 69.2 落定 | 有 |
+| `selfcheck` 0.8.2 块（总评分 grade/one_line/parts + 模板降噪断言）；`sync-skill-version --check` ok | 有 |
+| upgrade `## 0.8.1 → 0.8.2`；CHANGELOG 0.8.2；使用手册 §6 / glossary 读法同步 | 有 |
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.8.1 增量验收（三域满配计分）
 
