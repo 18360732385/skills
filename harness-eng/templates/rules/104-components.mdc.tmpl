@@ -1,0 +1,38 @@
+---
+description: 组件库同步规则（components/ui/widgets；0.8.1 起计分）
+globs: {{GLOB_COMPONENTS}}
+alwaysApply: false
+---
+
+# 组件库同步规则（rule 104）
+
+## 权威来源说明
+
+- **组件真相（SSOT）**：`docs/components/modules/` 下组件文档（目录 / 用途 / 变体 / token 依赖）。
+- **索引（非 SSOT）**：`docs/components/components.md`。
+- 冲突裁决：`docs/components/modules/*.md` > `components.md`。
+- 组件视觉依赖 token 时联动 `docs/design`（rule 102）。
+
+## 文件命名（强制）
+
+- 组件真相：`NN-{component}.md`；新建取最大序号 +1，更新 `components.md`、`modules/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+
+## 强制检查流程
+
+1. 先读 `docs/components/components.md`。
+2. 再读 `docs/components/modules/NN-{component}.md`。
+3. **禁止**只读索引就新增/改造共享组件。
+
+## 变更触发条件
+
+新增 / 下线 / 重构共享组件、组件变体、props 语义、token 依赖变更 → 同步 components 文档。
+
+## 门禁要求
+
+- 变更说明含「components 文档已同步（modules/…）」
+- 相关翻车回流 `docs/agent-kb/pitfalls.md`

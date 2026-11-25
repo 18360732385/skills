@@ -1,20 +1,21 @@
-# release-eng
+﻿# release-eng
 
 发版仪式 skill（**仅用户点名**；`disable-model-invocation: true`）。
 
 ## 版本
 
-权威号只认 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（当前 **0.3.38**）。  
+权威号只认 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（当前 **0.4.3**）。  
 [CHANGELOG.md](CHANGELOG.md) 为历史；[`docs/releases/releases.md`](../../../docs/releases/releases.md) 过程索引只**引用** manifest，不另钉号。  
-`0.3.x`：**补丁序**（权威号见 manifest），勿用本轮改动跳升 `0.4.0`。
+`0.4.x`：次版本起身份 `release-V{yyMMdd}`、半自动 prepare、取消 notes/ 兼容。
 
 ## 入口
 
 - 仪式入口：[SKILL.md](SKILL.md)
-- 薄 CLI：`node scripts/release.mjs`（modes / 脚本转发；不代写盘）
+- CLI：`node scripts/release.mjs`（prepare 半自动 / cancel / sync-scripts / migrate-notes）
 - 一页纸：[QUICKSTART.md](QUICKSTART.md)
 - Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)
 - 验收：[VERIFY.md](VERIFY.md)
+- 术语 / ADR：[GLOSSARY.md](GLOSSARY.md) · [docs/adr/](docs/adr/)
 - 模式规格：[modes/README.md](modes/README.md)
 
 ## 如何烟测
@@ -25,7 +26,7 @@ node scripts/release.mjs --help
 node scripts/release.mjs modes
 ```
 
-须 `PASS … (release-eng 0.3.38)` 且 exit 0（默认只打汇总；逐条用 `--verbose`）。覆盖：manifest 钉号 · `modes/` 模式 md · 关键脚本 · fixtures 种子 · `identityFromBranch` / 截断5 / artifacts 形 · seal-check `--help` · release.mjs modes。
+须 `PASS … (release-eng 0.4.3)` 且 exit 0。分层：`--layer unit|contract`（快）· 默认全量。覆盖：manifest · `identityFromReleaseDate` · prepare/cancel · safe-out · freeze/lib · 截断5 / artifacts · note-html 渲染。
 
 ## 可移植性
 
@@ -40,4 +41,4 @@ node scripts/release.mjs modes
 
 ## 约定
 
-全文唯一权威：[modes/conventions.md](modes/conventions.md)（发版日期算法、身份归一化、目录包、截断5、mergeSources、prod、SQL序、密文、notes/ 兼容、repo-profile、逾期书面跳过）。本文不复述。
+全文唯一权威：[modes/conventions.md](modes/conventions.md)（发版日期算法、身份归一化、目录包、截断5、mergeSources、prod、SQL序、密文、notes/ 兼容、repo-profile、逾期书面跳过、发版单 HTML 渲染）。本文不复述。

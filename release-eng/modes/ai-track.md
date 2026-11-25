@@ -5,7 +5,8 @@
 
 ## 何时跑
 
-- prepare / resume：freeze 之后、[questions.md](questions.md) 之前（【推荐】）  
+- **0.4 默认跳过**（半自动编排直达 WritePlan）  
+- 仅当用户点名、或显式 `release.mjs prepare -- --ai-track`、或 freeze 高噪声需研判时再跑  
 - 无低置信 / `priorOnly` 项时可跳过（脚本会报 `skipped`）  
 - AI 失败 / 超时 → **跳过**，纯规则继续（漏检底线）
 

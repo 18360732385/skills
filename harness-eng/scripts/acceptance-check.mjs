@@ -516,21 +516,92 @@ function checkJobsFile(file, text, gold) {
 }
 
 /** Register acceptance checker per domain id (add domain → add entry here). */
+
+function frontendRequired(file, text, rules) {
+  const blockers = [];
+  for (const r of rules) {
+    const ok = typeof r.test === "function" ? r.test(text) : r.re.test(text);
+    if (!ok) blockers.push({ id: r.id, file, title: "", detail: r.detail });
+  }
+  return {
+    blockers,
+    warnings: [],
+    sections: 1,
+    pass: blockers.length ? 0 : 1,
+  };
+}
+
+function checkDesignFile(file, text, _gold) {
+  return frontendRequired(file, text, [
+    { id: "design-no-loc", re: /##\s*资产定位|资产定位/, detail: "missing 资产定位" },
+    { id: "design-no-content", re: /##\s*内容|token|主题|风格|禁用/i, detail: "missing 内容/token/主题/风格" },
+    { id: "design-no-trigger", re: /##\s*变更触发|变更触发/, detail: "missing 变更触发" },
+  ]);
+}
+
+function checkPrototypeFile(file, text, _gold) {
+  return frontendRequired(file, text, [
+    { id: "prototype-no-loc", re: /##\s*资产定位|资产定位/, detail: "missing 资产定位" },
+    { id: "prototype-no-variants", re: /##\s*变体|变体与演进|页面映射|原型/i, detail: "missing 变体与演进/原型映射" },
+    { id: "prototype-no-trigger", re: /##\s*变更触发|变更触发/, detail: "missing 变更触发" },
+  ]);
+}
+
+function checkPagesFile(file, text, _gold) {
+  return frontendRequired(file, text, [
+    { id: "pages-no-loc", re: /##\s*页面定位|路由|入口/i, detail: "missing 页面定位/路由/入口" },
+    { id: "pages-no-responsibility", re: /##\s*职责|页面职责/, detail: "missing 职责" },
+    { id: "pages-no-proto", re: /原型映射|docs\/prototype|docs\/ui-prototypes|无原型/i, detail: "missing 原型映射" },
+    { id: "pages-no-trigger", re: /##\s*变更触发|变更触发/, detail: "missing 变更触发" },
+  ]);
+}
+
+function checkComponentsFile(file, text, _gold) {
+  return frontendRequired(file, text, [
+    { id: "components-no-loc", re: /##\s*组件定位|归属/i, detail: "missing 组件定位/归属" },
+    { id: "components-no-purpose", re: /##\s*用途/, detail: "missing 用途" },
+    { id: "components-no-props", re: /props|变体/i, detail: "missing props/变体" },
+    { id: "components-no-token", re: /token 依赖|docs\/design|无 token/i, detail: "missing token 依赖" },
+    { id: "components-no-trigger", re: /##\s*变更触发|变更触发/, detail: "missing 变更触发" },
+  ]);
+}
+
+function checkClientApiFile(file, text, _gold) {
+  return frontendRequired(file, text, [
+    { id: "client-api-no-consume", re: /端点消费|消费表/i, detail: "missing 端点消费表" },
+    { id: "client-api-no-link", re: /契约回链|docs\/api|外部仓|生成物/i, detail: "missing 契约回链" },
+    { id: "client-api-no-trigger", re: /##\s*变更触发|变更触发/, detail: "missing 变更触发" },
+  ]);
+}
+
 const ACCEPTANCE_BY_DOMAIN = {
   api: checkApiFile,
   func: checkFuncFile,
   db: checkDbFile,
   redis: checkRedisFile,
   jobs: checkJobsFile,
+  design: checkDesignFile,
+  prototype: checkPrototypeFile,
+  pages: checkPagesFile,
+  components: checkComponentsFile,
+  "client-api": checkClientApiFile,
 };
 
 export function runAcceptanceForDomain(domain, file, text, gold) {
-  const fn = ACCEPTANCE_BY_DOMAIN[domain] || checkApiFile;
+  const fn = ACCEPTANCE_BY_DOMAIN[domain];
+  // Known domains without a checker must not fall back to API semantics
+  // (0.8.1 frontend templates are not api-no-evidence / 功能逻辑 docs).
+  if (!fn) {
+    return { blockers: [], warnings: [], sections: 0, pass: 0 };
+  }
   return fn(file, text, gold);
 }
 
 function detectDomain(file, forced) {
   if (forced && forced !== "all") return forced;
+  // Undetected paths (CLI --files fixtures not under docs/<domain>/) stay api
+  // so existing gold fixtures keep working. Detected contract domains use
+  // their own checker or the skip above — never a silent API fallback.
   return detectDomainFromPath(file) || "api";
 }
 

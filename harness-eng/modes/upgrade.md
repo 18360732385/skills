@@ -71,6 +71,43 @@
 与 resume 相同骨架：`on_exists=skip`，`expandFromManifest: true`，`ladder` = 目标阶。示例见 [resume.md](resume.md)。
 **例外**：L5 `agent-config-sync`（`scripts/agent-config/sync.mjs`）即使 `on_exists=skip` 也从 skill tmpl **replace**，避免消费仓脚本静默过期。升级 L5 后须刷新 `sync.mjs`，再 `node scripts/agent-config/sync.mjs`。对照：`node scripts/harness.mjs --check-freshness --root <TARGET>`。
 
+## 0.8.0 → 0.8.1 迁移要点
+
+1. **meta**：`skill_version` → `0.8.1`（`repo_kind` 沿用；纯前端仓 `client-api` 真相用**字段级态**、fullstack 用**回链态**，模板见 `docs/client-api/templates/`）
+2. **三域满配**：`pages` / `components` / `client-api` 从索引壳升为计分域——inventory：`fill-inventory.mjs --domain pages|components|client-api`；morph 必填章入 `morph-required.yaml`
+3. **0.8.0 已 land 的前端仓补启三域**：`meta.domains` 追加三域 → `harness --mode upgrade` 补渲 L1 域包（索引/README/rule 104–106 已在则 `on_exists=skip`）→ 跑三域 inventory
+4. **推荐包**：`frontend` 仓默认域 = 五域全开（design,prototype,pages,components,client-api）；`fullstack` = 后端域 ∪ 五域
+5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
+6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
+
+## 0.8.2 → 0.8.3 迁移要点
+
+1. **meta**：`skill_version` → `0.8.3`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳；顶栏 coverage 改读门禁口径字段，旧 JSON 回退）
+3. **重跑打分/报告**（拿门禁口径覆盖率）：`node scripts/fill-score.mjs --root <TARGET> --json --output docs/harness-eng/score-latest.json` → `node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json`
+4. **upgrade 收尾**：若 `.cursor/rules/17-frontend-web.mdc` 与 `101-frontend-web.mdc` 并存，会警告 + 给出退役命令（**不自动删**；经确认后 `git mv` 到 `docs/harness-eng/archive/`）
+5. **可选**：非运行设计/原型归档用新 CLI `node scripts/archive-docs.mjs --root <TARGET> --archive <relPath> [--domain design|prototype]`（可 `--restore`）；变更记录占位残留由 refresh 非阻断提示
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.3`）后再 sync
+7. **勿盲跑**：`migrate-docs=auto` 虽已幂等治理，厚仓默认仍 dry-run；解禁前先看 `docs/harness-eng/migrate-docs-report.json`
+
+## 0.8.1 → 0.8.2 迁移要点
+
+1. **meta**：`skill_version` → `0.8.2`
+2. **报告壳**：`report_schema` **0.4.2**（术语人话化 + 决策台总评模块；0.4.x 族内，趋势仍可比）
+3. **重渲报告**：`node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json`
+4. **读法变化**：首屏改为**总评横幅**（Verdict 徽章 + 总评分 0–100 + 等级 + 一句话结论 + 分项；**仅参考 ≠开干**；替代原施工阶梯位）；**施工阶梯移入决策台**与「开干清单」同组；趋势台「仪表参考分」块移除；KPI 灯组并入清单；10 秒结论区精简；「宿主台」更名「落地检查台」（旧名在名词解释留档）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.2`）后再 sync
+
+## 0.7.63 → 0.8.0 迁移要点
+
+1. **meta**：`skill_version` → `0.8.0`；回填 `repo_kind`（frontend|backend|fullstack）与 `monorepo`（判定：README/AGENTS + 代码成分启发式；**不确定时提问 `Q_REPO_KIND`**，勿沉默默认）
+2. **仓型分流**：`repo_kind=frontend` 时默认契约域改前端五域（`design,prototype` 计分 + `pages,components,client-api` 索引壳）；`fullstack` = 后端域 ∪ 前端域；`backend` 维持 0.7.x 推荐
+3. **前端域包**：L1 随域下发 `docs/{design,prototype}/` 索引 + `102-design-system` / `103-prototype`（及 `104-components` / `105-pages` / `106-client-api` 索引壳规则）；inventory 走 `fill-inventory.mjs --domain design|prototype`
+4. **rules 101 族**：`17-frontend-web(.full)` → `101-frontend-web(.full)`（同 target 改名；upgrade 生成 101 后**退役旧 17 文件**，防双规则并存）；分册 AGENTS / L5 skill `frontend-web` 指针同步 101
+5. **归档纪律**：非运行文件（`DESIGN*.md`、原型 HTML 等）经确认**归档到仓根 `docs/<domain>/`**；运行代码（`tokens.css` 等）**留原地**，仅索引 + 回链
+6. **评分**：`frontend_coverage` 不再恒 `not_measured`——`design`/`prototype` 入 `coverage_by_domain`；缺启用域与缺 `api` 同级 blocker；`ready_coverage` 仍 0.8
+7. **L5**：`check-freshness` → 刷新 SSOT 规则/域包与 `sync.mjs`（tmpl id `0.8.0`）后再 sync
+
 ## 0.7.62 → 0.7.63 迁移要点
 
 1. **meta**：`skill_version` → `0.7.63`

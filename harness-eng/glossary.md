@@ -72,17 +72,20 @@
 | `morph_scale` | 形态尺度（`0.7`）；与旧 history 不可比 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
 | `skill_version` | 技能号（manifest / meta；当前列车见 CHANGELOG） |
-| `report_schema` | **报告壳**投影 schema（现 **0.4.1**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；0.4.1 首屏人话化 + 宿主 `status_zh`；开干只看 `ai_coding_ready` |
+| `report_schema` | **报告壳**投影 schema（现 **0.4.2**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；0.4.1 首屏人话化 + 宿主 `status_zh`；0.4.2 术语人话化 + 决策台总评模块；开干只看 `ai_coding_ready` |
 
 ## 常用词
 
 | 说法 | 含义 |
 |---|---|
-| **契约域** | 注册表 `domains.yaml` 中 `kind: contract` 的域（现含 func/api/db/redis/jobs…）。名单 / 路径 / CLI 默认由 registry 驱动（0.3.7+）；morph 必填章见 `morph-required.yaml`（0.3.8+）；L1 文件靠 **packs** 展开。见 [domain-extend.md](modes/domain-extend.md) |
+| **契约域** | 注册表 `domains.yaml` 中 `kind: contract` 的域（后端 func/api/db/redis/jobs + 前端 design/prototype/pages/components/client-api，0.8.0+）。名单 / 路径 / CLI 默认由 registry 驱动（0.3.7+）；morph 必填章见 `morph-required.yaml`（0.3.8+）；L1 文件靠 **packs** 展开。见 [domain-extend.md](modes/domain-extend.md) |
+| **仓型三分** | meta `repo_kind`：`frontend` / `backend` / `fullstack`（+ `monorepo` 布尔）。判定 = 代码成分为主、README/AGENTS 补盲（[detect.md](modes/detect.md)；`inferRepoKind`）；不确定单题 `Q_REPO_KIND`。契约域推荐按此分流；0.8.0 |
+| **前端五域** | `design`（token/主题/禁库）· `prototype`（原型/高保真，非运行时）· `pages`（路由/页面）· `components`（组件库）· `client-api`（契约消费侧）。0.8.0 起 design/prototype 计分；**0.8.1 起五域全部满配计分**（inventory + morph 必填章） |
+| **api ↔ client-api** | fullstack 分工：`docs/api` = **提供侧**真相（rule 12）；`docs/client-api` = **消费侧**（types/api-client/queries；rule 106）。改接口须两侧同步 |
 | **packs** | `domain-packs.yaml` 里某域的 L1 文件清单；`render` 按 `params.domains` 展开，不是「零代码加域」 |
 | **scheduler_link** | jobs inventory：`exact` \| `heuristic` \| `none`。heuristic 须 fragment 标 `quality: heuristic`，且不得 promote 进 `docs/jobs/tasks/` |
 | **过程包** | 如 `docs/releases`（发版过程域；非 fill-score）；detect 脚注，不进 L1 契约齐套 |
-| **协作包** | 如前端 rule 17（模板 0.4.0+）/ `*-web` 分册；非契约 morph 域 |
+| **协作包** | 如前端 rule 101 总触发（0.7.x 曾用 17 号；模板 0.4.0+）/ `*-web` 分册；非契约 morph 域（design/prototype 等前端**契约域**除外，0.8.0 起计分） |
 | **行为包** | 非契约的行为约束规则（如 rule 21 日志 / 中文注释）；`domains.yaml` packs `kind: behavior`；不进 fill-score 权重；detect `S_SLF4J` 推荐 |
 | **分册变体** | 模块 AGENTS 模板变体：`Q_MODULE_AGENTS=default\|spring\|frontend` → 对应厚分册 tmpl（定位 / 改动路径速查 / Never do↔Pn）；render 参数 `module_agents_template`；**根薄分册厚** |
 | **OpenAPI 桥** | L1 可选伴生（`Q_APIFOX`）：`scripts/apifox/` 将 `docs/api/modules` 导出 OpenAPI 并覆盖导入 Apifox；不进 L1 齐套；soft-gate `OPENAPI_BRIDGE_TIP` |
@@ -111,8 +114,8 @@
 | **live 校准** | MCP 未挂载时用 `fill-calibrate-live`；见 fill-mcp |
 | **会话自证** | 当前宿主自证 MCP（强）/ hooks（强）/ rules（弱·中）/ githooks（中）/ **human_gates**（gate→unproven+reason_code）/ Codex skills·Starlark；`behavior_pass_claim` 仅 MCP+hooks；playbook+matrix 多宿主；`content-shell-scan` 管分册空壳 |
 | **施工现场** | `docs/harness-eng/`：meta / MCP 说明 / 评分 / 报告 / 进度（契约与 agent-kb 之外） |
-| **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势台）；旧路径仅兼容 |
-| **会话仪表盘** | 本轮里程碑时附四句块（阶段/现状/工作/下一步建议）；SHOW/HIDE SSOT：[session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs`；宿主面细节进 HTML 宿主台，不进会话脚注 |
+| **harness-report** | `docs/harness-eng/report-latest.html`（决策/诊断/任务/趋势/落地检查台，旧称宿主台）；旧路径仅兼容 |
+| **会话仪表盘** | 本轮里程碑时附四句块（阶段/现状/工作/下一步建议）；SHOW/HIDE SSOT：[session-dashboard.md](modes/session-dashboard.md)；脚本 `session-dash.mjs`；宿主面细节进 HTML 落地检查台（旧称宿主台），不进会话脚注 |
 | **score-latest** | `docs/harness-eng/score-latest.json`：最近一次 fill-score 快照 |
 | **score-history** | `docs/harness-eng/score-history.jsonl`：历次 overall/coverage/ready 追加日志 |
 | **progress.yaml** | `docs/harness-eng/progress.yaml`：填充进度状态（`--write-progress`） |

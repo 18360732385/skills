@@ -10,12 +10,13 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 |---|---|
 | `mode` | `MATURE`→`audit`（`MATURE` 判定见 [detect.md](detect.md)：`S_RULES`/`S_HOOKS` 按**任一宿主**，非仅 Cursor）；`PARTIAL` 或已有 `S_HARNESS_META` 但未满目标阶→`resume`；有代码无 harness→`land`；用户已说「落地/升到 Ln」→尊从；大仓首次→【推荐】**pipeline** |
 | `ladder` | 大仓（多模块或 Controller≥50）或 pipeline → 默认 **L4**；小仓默认 L4（骨架一次到位）；用户书面「只要 L2 / 不要 hooks·MCP」才推荐 L2 |
-| `domains` | Java/Maven 默认 `func,api,db`；探测到 redis 目录/依赖再加 `redis`；**`S_JOBS` 或 Scheduler 指纹再加 `jobs`**【0.3.4】；手写 SQL→务必含 `db`。域注册表见 `templates/_meta/domains.yaml` |
+| `repo_kind` | detect 三分（`inferRepoKind`）：`S_FRONTEND∧¬S_BACKEND`→frontend；`S_BACKEND∧¬S_FRONTEND`→backend；双命中→fullstack；不确定→单题 `Q_REPO_KIND`（勿沉默默认） |
+| `domains` | **backend**：Java/Maven 默认 `func,api,db`；探测到 redis 目录/依赖再加 `redis`；`S_JOBS` 或 Scheduler 指纹再加 `jobs`【0.3.4】；手写 SQL→务必含 `db`。**frontend**：默认**五域全开** `design,prototype,pages,components,client-api`（0.8.1 起五域全部计分）；**不**默认开后端域。**fullstack**：后端推荐 ∪ 前端五域（`client-api` 与 `api` 并存时分工见 glossary）。域注册表见 `templates/_meta/domains.yaml` |
 | `agents_variant` | 模块≥5 → `modules`+`few`（入口+核心业务模块）；否则 `solo`；`S_FRONTEND` 时脚注前端分册 |
 | `glob_profile` | 大仓 → `focused`；小仓 → `wide` |
 | `rule14` | 默认 **是** |
 | `rule21` | 探测到 `S_SLF4J`（Java + SLF4J）→ 【推荐】**是**；非 Java 栈默认否（行为包，非契约域） |
-| `rule17` | 探测到 `S_FRONTEND` → 【推荐】**是**；否则默认否（前端协作包，非契约域） |
+| `rule101` | 探测到 `S_FRONTEND` → 【推荐】**是**（`101-frontend-web`，0.8.0 前称 rule 17）；否则默认否（前端总触发；design/prototype 契约规则 102/103 随域包下发） |
 | `GLOB_API`（placeholders） | 域含 `api` 且 `S_FRONTEND` → 【推荐】在栈默认 API globs 上 **追加** `**/packages/api-client/**,**/packages/types/**,**/packages/queries/**`（或探测到的等价路径）；写入 `placeholders.GLOB_API`；与 commit-gate `hook_code` regex 对齐 |
 | `module_agents_template` | 分册且探测到 `S_SPRING` → 【推荐】`spring`；分册且前端模块 / `S_FRONTEND` 选 frontend 分册时 → `frontend`；否则 `default` |
 | `db_migration` | db 域且 `S_NO_FLYWAY` / `S_SQL_DIR` → 【推荐】`manual_sql`；否则 `flyway` |
@@ -40,15 +41,16 @@ detect 结束后、提问开始前，必须向用户展示一块 **推荐包**�
 ```text
 ## 推荐包 RecommendedProfile
 - 模式: 流水线 (pipeline) — 理由：大仓首次，L4 骨架+MCP+Plan 填充一次串联
+- 仓型: fullstack（frontend+backend 信号双命中；monorepo=true）— 理由：…
 - 目标阶梯: L4 工具连接样例 — 理由：大仓默认直达 hooks/MCP example，再开展真相填充
-- 契约域: func, api, db, redis, jobs — 理由：…
+- 契约域: func, api, db, redis, jobs, design, prototype, pages, components, client-api — 理由：…（frontend 仓：五域全开计分）
 - 分册: few（sms-entrance, …）
 - glob: focused
-- Rule14 / Rule21 / 安全预填: 是 / 是(S_SLF4J) / 是
+- Rule14 / Rule21 / Rule101 / 安全预填: 是 / 是(S_SLF4J) / 是(S_FRONTEND) / 是
 - AI 工具面: cursor — 理由：探测到 .cursor（若含 Codex：脚注 **高 · 纪律 B**，不做 .mdc 镜像；未探测不进「全部推荐」）
 - MCP 跟踪策略: example_only（或 vendored_shared 脚注）
 - fill: MCP先行=是 · **主环境=test** · 深度=完整档 · **引擎=agents** · **fill-plan=是** · **金标+sample_n=是** · **ready_coverage=0.8** — 理由：多 Agent 按批次精填；acceptance 过闸才 SSOT；开干看覆盖率非形态上限
-- 旁注（若探测）: releases→release-eng；frontend→rule 17 协作包（非 fill-score 契约域）
+- 旁注（若探测）: releases→release-eng；design/prototype→前端契约域（0.8.0 起计分；rule 102/103 随域包）
 
 不确定请回复：全部推荐
 （或逐题选 A/B…；自定义工具请写「工具名=…; 入口路径=…」；写盘前仍需对 WritePlan 回复「确认」等）

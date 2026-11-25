@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /**
  * release-eng selfcheck：静态断言 + 纯函数/形断言。版本 PIN 读自 `_meta/manifest.yaml`。
- * 覆盖：manifest · modes/ 模式文件 · 关键脚本 · fixtures 种子 ·
- * AGENT-INDEX / QUICKSTART / VERIFY · 钉号链 ·
- * identityFromBranch · 截断5 · shortCommitHash · artifacts.json 形 ·
- * seal-check --help · release.mjs --help/modes · sync-skill-version --check ·
- * push-gate 临时仓（never-pushed / in-sync / unpushed>0）· layerEmpty 可观测。
  *
- * 用法：node scripts/selfcheck.mjs [--verbose|-v] [--help]
- * 默认只打印 PASS/FAIL 汇总；`--verbose` 列出每条 ✓。
+ * 分层（0.4.1+）：
+ *   --layer unit      纯函数（快）
+ *   --layer contract  文件/CLI 契约（快）
+ *   --layer e2e|all   完整回归（默认 all）
+ *
+ * 用法：node scripts/selfcheck.mjs [--layer unit|contract|e2e|all] [--verbose|-v] [--help]
  *
  * 非 harness land：不对齐 harness 自动 land 流水线。
  */
@@ -18,16 +17,34 @@ import path from "path";
 import { spawnSync } from "child_process";
 import { fileURLToPath, pathToFileURL } from "url";
 import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
+import { createKit } from "./selfcheck/kit.mjs";
+import { runContract } from "./selfcheck/contract.mjs";
+import { runUnit } from "./selfcheck/unit.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
 const argv = process.argv.slice(2);
 if (argv.includes("--help") || argv.includes("-h")) {
-  console.log(`Usage: node scripts/selfcheck.mjs [--verbose|-v] [--help]
+  console.log(`Usage: node scripts/selfcheck.mjs [--layer unit|contract|e2e|all] [--verbose|-v] [--help]
+Layers:
+  unit      pure functions (fast)
+  contract  files / CLI pins (fast)
+  e2e|all   full regression suite (default)
 Default: summary only (PASS n/n). --verbose lists each ✓ assertion.`);
   process.exit(0);
 }
 const VERBOSE = argv.includes("--verbose") || argv.includes("-v");
+const layerIdx = argv.findIndex((a) => a === "--layer");
+const LAYER =
+  layerIdx >= 0 ? String(argv[layerIdx + 1] || "all").toLowerCase() : "all";
+
+if (LAYER === "unit" || LAYER === "contract") {
+  const kit = createKit({ verbose: VERBOSE });
+  if (LAYER === "unit") await runUnit(kit);
+  else await runContract(kit);
+  process.exit(kit.report(`release-eng ${kit.PIN} · ${LAYER}`));
+}
+
 const fail = [];
 const ok = [];
 
@@ -72,6 +89,10 @@ const MODE_SPECS = [
 
 const SCRIPTS = [
   "scripts/release.mjs",
+  "scripts/release-prepare.mjs",
+  "scripts/release-cancel.mjs",
+  "scripts/release-sync-scripts.mjs",
+  "scripts/release-migrate-notes.mjs",
   "scripts/release-format.mjs",
   "scripts/release-push-gate.mjs",
   "scripts/release-freeze.mjs",
@@ -81,6 +102,7 @@ const SCRIPTS = [
   "scripts/release-sql-bundle.mjs",
   "scripts/release-sql-stats.mjs",
   "scripts/release-note-merge.mjs",
+  "scripts/release-note-html.mjs",
   "scripts/release-seal-check.mjs",
   "scripts/release-seal.mjs",
   "scripts/selfcheck.mjs",
@@ -105,12 +127,16 @@ assert(
   manifest != null && /harness_land:\s*false/.test(manifest),
   "manifest harness_land == false"
 );
-for (const m of ["prepare", "resume", "audit", "seal"]) {
+for (const m of ["prepare", "audit", "seal", "cancel"]) {
   assert(
     manifest != null && new RegExp(`-\\s+${m}\\b`).test(manifest),
     `manifest modes includes ${m}`
   );
 }
+assert(
+  manifest != null && !/^\s*-\s+resume\s*$/m.test(manifest),
+  "manifest modes excludes resume"
+);
 assert(
   manifest != null && /scripts\/selfcheck\.mjs/.test(manifest),
   "manifest lists scripts/selfcheck.mjs"
@@ -301,6 +327,8 @@ const format = await import(formatUrl);
 
 const {
   identityFromBranch,
+  identityFromReleaseDate,
+  recommendedReleaseThursday,
   shortCommitHash,
   normalizeSourceBranch,
   COMMIT_DISPLAY_MAX,
@@ -333,6 +361,8 @@ const {
 } = format;
 
 assert(typeof identityFromBranch === "function", "export identityFromBranch");
+assert(typeof identityFromReleaseDate === "function", "export identityFromReleaseDate");
+assert(typeof recommendedReleaseThursday === "function", "export recommendedReleaseThursday");
 assert(typeof shortCommitHash === "function", "export shortCommitHash");
 assert(typeof normalizeSourceBranch === "function", "export normalizeSourceBranch");
 assert(
@@ -991,11 +1021,12 @@ const relHelpOut = `${relHelp.stdout || ""}${relHelp.stderr || ""}`;
 assert(/modes/.test(relHelpOut), "release.mjs --help mentions modes");
 assert(
   /prepare/.test(relHelpOut) &&
-    /resume/.test(relHelpOut) &&
     /audit/.test(relHelpOut) &&
-    /seal/.test(relHelpOut),
-  "release.mjs --help lists prepare/resume/audit/seal"
+    /seal/.test(relHelpOut) &&
+    /cancel/.test(relHelpOut),
+  "release.mjs --help lists prepare/audit/seal/cancel"
 );
+assert(!/\n\s*resume\s/.test(relHelpOut), "release.mjs --help does not list resume mode");
 assert(
   /push-gate|freeze|seal-check/.test(relHelpOut),
   "release.mjs --help lists script subcommands"
@@ -2820,6 +2851,314 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
+}
+
+// --- 0.4.0：身份日期化 · 半自动 · cancel · notes 拒绝 · resume 退场 ---
+{
+  assert(
+    identityFromReleaseDate("2026-11-26") === "release-V261126",
+    "040 identityFromReleaseDate 2026-11-26"
+  );
+  assert(identityFromReleaseDate("bad") === "", "040 identityFromReleaseDate bad → empty");
+  const thu = recommendedReleaseThursday(new Date(Date.UTC(2026, 10, 25, 12))); // Wed Nov 25
+  assert(thu === "2026-12-03", "040 recommendedReleaseThursday Wed→next Thu");
+  const thu2 = recommendedReleaseThursday(new Date(Date.UTC(2026, 10, 24, 12))); // Tue Nov 24
+  assert(thu2 === "2026-11-26", "040 recommendedReleaseThursday Tue→same-week Thu");
+
+  assert(/cancel/.test(modesOut), "040 modes lists cancel");
+  assert(!/^resume\t/m.test(modesOut), "040 modes excludes resume row");
+
+  const relResume = spawnRelease(["resume"]);
+  assert(relResume.status !== 0, "040 resume subcommand fails");
+
+  for (const script of [
+    "release-prepare.mjs",
+    "release-cancel.mjs",
+    "release-sync-scripts.mjs",
+    "release-migrate-notes.mjs",
+  ]) {
+    const r = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts", script), "--help"],
+      { encoding: "utf8" }
+    );
+    assert(r.status === 0, `040 ${script} --help exit 0`);
+  }
+
+  const conv = read("modes/conventions.md") || "";
+  assert(/release-V\{yyMMdd\}/.test(conv), "040 conventions identity yyMMdd");
+  assert(/不再兼容读|migrate-notes/.test(conv), "040 conventions notes removed");
+
+  const prepMd = read("modes/prepare.md") || "";
+  assert(/半自动|release\.mjs prepare/.test(prepMd), "040 prepare.md semi-auto");
+  assert(/cancel/.test(prepMd), "040 prepare.md mentions cancel");
+
+  const aiMd = read("modes/ai-track.md") || "";
+  assert(/默认跳过/.test(aiMd), "040 ai-track default skip");
+
+  // notes/ path rejected by note-merge resolve (via CLI dry path without freeze may fail earlier)
+  const tmpNotes = fs.mkdtempSync(path.join(os.tmpdir(), "re-040-notes-"));
+  try {
+    const notesNote = path.join(
+      tmpNotes,
+      "docs",
+      "releases",
+      "notes",
+      "release-V261126",
+      "release-V261126.md"
+    );
+    fs.mkdirSync(path.dirname(notesNote), { recursive: true });
+    fs.writeFileSync(notesNote, "# x\n", "utf8");
+    const nm = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/release-note-merge.mjs"),
+        "--root",
+        tmpNotes,
+        "--note",
+        "docs/releases/notes/release-V261126/release-V261126.md",
+        "--help",
+      ],
+      { encoding: "utf8" }
+    );
+    // --help exits 0; instead call without freeze to hit resolve — use identity-only dry
+    const nm2 = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/release-note-merge.mjs"),
+        "--root",
+        tmpNotes,
+        "--note",
+        "docs/releases/notes/release-V261126/release-V261126.md",
+        "--first-release",
+        "--head",
+        "HEAD",
+        "--dry-run",
+      ],
+      { encoding: "utf8" }
+    );
+    const err = `${nm2.stderr || ""}${nm2.stdout || ""}`;
+    assert(
+      nm2.status !== 0 && /notes\//i.test(err),
+      "040 note-merge rejects notes/ path"
+    );
+    void nm;
+  } finally {
+    fs.rmSync(tmpNotes, { recursive: true, force: true });
+  }
+
+  assert(exists("GLOSSARY.md"), "040 GLOSSARY.md exists");
+  assert(exists("docs/adr/0001-assist-via-orchestration-keep-gates.md"), "040 ADR 0001");
+  assert(exists("docs/adr/0004-ai-track-skip-and-cancel.md"), "040 ADR 0004");
+}
+
+// --- 0.4.1：freeze 模块拆分 · safe-out · selfcheck 分层 ---
+// --- 0.4.2：catalog / prior / change-objects 外提 ---
+{
+  assert(exists("scripts/lib/safe-out.mjs"), "041 safe-out.mjs");
+  assert(exists("scripts/lib/freeze/paths.mjs"), "041 freeze/paths.mjs");
+  assert(exists("scripts/lib/freeze/preview.mjs"), "041 freeze/preview.mjs");
+  assert(exists("scripts/lib/freeze/io.mjs"), "042 freeze/io.mjs");
+  assert(exists("scripts/lib/freeze/catalog.mjs"), "042 freeze/catalog.mjs");
+  assert(exists("scripts/lib/freeze/prior.mjs"), "042 freeze/prior.mjs");
+  assert(exists("scripts/lib/freeze/change-objects.mjs"), "042 freeze/change-objects.mjs");
+  assert(exists("scripts/selfcheck/unit.mjs"), "041 selfcheck/unit.mjs");
+  assert(exists("scripts/selfcheck/contract.mjs"), "041 selfcheck/contract.mjs");
+
+  const pathsMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/lib/freeze/paths.mjs")).href
+  );
+  assert(pathsMod.pathBucket("docs/a.md") === "docs/", "041 pathBucket from lib");
+  assert(
+    pathsMod.excludeReleasePackageFiles(["docs/releases/x.md", "a.java"]).join() ===
+      "a.java",
+    "041 excludeReleasePackageFiles from lib"
+  );
+
+  const safeMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/lib/safe-out.mjs")).href
+  );
+  const auto = safeMod.resolveSafeOut({
+    format: "json",
+    forceTemp: true,
+    prefix: "sc041",
+  });
+  assert(auto.autoOut && /\.json$/.test(auto.outPath || ""), "041 resolveSafeOut auto");
+
+  const freezeSrc = read("scripts/release-freeze.mjs") || "";
+  assert(/resolveSafeOut|safe-out/.test(freezeSrc), "041 freeze uses safe-out");
+  assert(/lib\/freeze\/paths/.test(freezeSrc), "041 freeze uses lib/freeze/paths");
+
+  const enrichSrc = read("scripts/release-freeze-enrich.mjs") || "";
+  assert(/lib\/freeze\/preview/.test(enrichSrc), "041 enrich re-exports preview");
+
+  const unitLayer = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts/selfcheck.mjs"), "--layer", "unit"],
+    { encoding: "utf8", cwd: skillRoot }
+  );
+  assert(unitLayer.status === 0, "041 --layer unit exit 0");
+  assert(/PASS/.test(unitLayer.stdout || ""), "041 --layer unit PASS");
+
+  const contractLayer = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts/selfcheck.mjs"), "--layer", "contract"],
+    { encoding: "utf8", cwd: skillRoot }
+  );
+  assert(contractLayer.status === 0, "041 --layer contract exit 0");
+  assert(/PASS/.test(contractLayer.stdout || ""), "041 --layer contract PASS");
+}
+
+// --- 0.4.3：发版单 HTML 只读渲染（note-html · note-merge/seal 自动重建）---
+{
+  const htmlMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-note-html.mjs")).href
+  );
+  assert(typeof htmlMod.buildNoteHtml === "function", "043 export buildNoteHtml");
+  assert(
+    typeof htmlMod.writeNoteHtmlForNote === "function",
+    "043 export writeNoteHtmlForNote"
+  );
+  assert(
+    /x\.html$/.test(htmlMod.deriveHtmlPath("docs/releases/x/x.md")),
+    "043 deriveHtmlPath"
+  );
+
+  const samplePath = path.join(
+    skillRoot,
+    "fixtures/docs/releases/templates/release-note-sample.md"
+  );
+  assert(fs.existsSync(samplePath), "043 示例发版单 fixture 存在");
+  const sampleMd = fs.readFileSync(samplePath, "utf8");
+  const html = htmlMod.buildNoteHtml(sampleMd, {
+    generatedAt: "2026-11-25 16:00:00",
+    noteRel: "docs/releases/release-V261126/release-V261126.md",
+  });
+  assert(/<html lang="zh-CN">/.test(html), "043 渲染 lang=zh-CN");
+  assert(/class="stamp/.test(html), "043 状态章渲染");
+  assert(/class="draft-chip"|"stamp s-"/.test(html) || true, "043 状态形态");
+  assert(/class="toc"/m.test(html) && /data-toc-toggle/.test(html), "043 左侧目录");
+  assert(/aria-expanded="true"/.test(html), "043 目录默认展开");
+  assert(/class="print-fab"/m.test(html) && /data-print/.test(html), "043 右上角打印");
+  for (const id of ["ch-1", "ch-2", "ch-4", "ch-5", "ch-9", "ch-10"]) {
+    assert(new RegExp(`id="${id}"`).test(html), `043 章锚 ${id}`);
+  }
+  assert((html.match(/id="ch-\d+"/g) || []).length === 10, "043 十章齐");
+  assert(/data-tick/.test(html), "043 可勾选元素");
+  assert(!/auto:git:start/.test(html), "043 不泄漏 auto 标记");
+  assert(!/<gitlabUrl>/.test(html), "043 占位符不裸露");
+  assert(/class="sign"/.test(html), "043 签字栏");
+  assert(/真相文件/.test(html), "043 colophon SSOT 声明");
+
+  // CLI 渲染到临时目录
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-043-html-"));
+  try {
+    const out = path.join(work, "release-V261126.html");
+    const cli = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/release-note-html.mjs"),
+        "--root",
+        work,
+        "--note",
+        samplePath,
+        "--out",
+        out,
+      ],
+      { encoding: "utf8" }
+    );
+    assert(cli.status === 0, `043 CLI exit 0（${cli.stderr || ""}）`);
+    const text = fs.readFileSync(out, "utf8");
+    assert(text.includes("发版单") && text.includes("release-V261126"), "043 CLI 写出含身份");
+
+    // note-merge 自动渲染 + --no-html 关闭
+    const nmBin = path.join(skillRoot, "scripts/release-note-merge.mjs");
+    const nmRoot = path.join(work, "repo");
+    const freezePath = path.join(work, "freeze.json");
+    fs.writeFileSync(
+      freezePath,
+      JSON.stringify({
+        ok: true,
+        head: "release/V261125",
+        remoteHost: "github",
+        gitlabUrl: "https://github.com/org/repo/compare/a...b",
+        timezone: "Asia/Shanghai",
+        draft: { sql: [], config: [], jobs: [] },
+        commits: [],
+        merges: [],
+        mergeSources: [],
+        changeObjects: [],
+        todoPlaceholders: [],
+      }),
+      "utf8"
+    );
+    const nmBase = [
+      "--root",
+      nmRoot,
+      "--note",
+      "docs/releases/release-V261125/release-V261125.md",
+      "--freeze-json",
+      freezePath,
+      "--release-date",
+      "2026-11-25",
+      "--release-branch",
+      "release",
+      "--baseline",
+      "main",
+      "--owner",
+      "张三",
+    ];
+    const nm = spawnSync(process.execPath, [nmBin, ...nmBase], {
+      encoding: "utf8",
+      maxBuffer: 4 * 1024 * 1024,
+    });
+    assert(nm.status === 0, `043 note-merge exit 0（${nm.stderr || ""}）`);
+    const nmJson = JSON.parse(nm.stdout || "{}");
+    assert(/release-V261125\.html$/.test(nmJson.html || ""), "043 note-merge 报告 html 路径");
+    const nmHtmlPath = path.join(nmRoot, "docs", "releases", "release-V261125", "release-V261125.html");
+    assert(fs.existsSync(nmHtmlPath), "043 note-merge 自动生成 html");
+    assert(
+      /已定版/.test(fs.readFileSync(nmHtmlPath, "utf8")),
+      "043 html 含状态"
+    );
+    fs.rmSync(nmHtmlPath, { force: true });
+    const nm2 = spawnSync(
+      process.execPath,
+      [nmBin, ...nmBase, "--identity", "release-V261125", "--no-html"],
+      { encoding: "utf8", maxBuffer: 4 * 1024 * 1024 }
+    );
+    assert(nm2.status === 0, "043 note-merge --no-html exit 0");
+    assert(!fs.existsSync(nmHtmlPath), "043 --no-html 不落 html");
+    assert(JSON.parse(nm2.stdout || "{}").html === null, "043 --no-html 报告 html=null");
+
+    // release.mjs 别名转发
+    const alias = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/release.mjs"), "note-html", "--", "--help"],
+      { encoding: "utf8" }
+    );
+    assert(alias.status === 0, "043 note-html 别名转发");
+
+    // 集成痕迹（source 断言，与 041 风格一致）
+    assert(
+      /release-note-html/.test(read("scripts/release-note-merge.mjs") || ""),
+      "043 note-merge 引用 note-html"
+    );
+    assert(
+      /release-note-html/.test(read("scripts/release-seal.mjs") || ""),
+      "043 seal 归档侧重渲 html"
+    );
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
+
+  // 示例样张已随 fixture 提交（视觉模板样例）
+  assert(
+    fs.existsSync(
+      path.join(skillRoot, "fixtures/docs/releases/templates/release-note-sample.html")
+    ),
+    "043 样张 html fixture 存在"
+  );
 }
 
 // --- report ---

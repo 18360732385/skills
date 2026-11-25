@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 # skills
 
@@ -18,7 +18,7 @@
 |-------|------|
 | `harness-eng` | 施工仪式：把 AGENTS / rules / docs 落地到目标仓 |
 | `feature-eng` | 开发流程：分诊环节、调度子 skill、维护 runs 进度 |
-| `release-eng` | 发版仪式：发版单的准备、续跑、审计与归档 |
+| `release-eng` | 发版仪式：发版单的准备、审计、归档与取消 |
 | `ip-peitu-tietie` | 帖帖复古手帐：为中文正文生成 16:9 配图 |
 
 ## Quick Start
@@ -118,15 +118,15 @@ _log/
 |----------|-------------|
 | [harness-eng/SKILL.md](harness-eng/SKILL.md) | 施工仪式入口：落地 / 续跑 / 流水线 / 审计 / 填充 |
 | [harness-eng/QUICKSTART.md](harness-eng/QUICKSTART.md) | harness-eng 一页纸 |
-| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.7.63） |
+| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.8.3） |
 | [feature-eng/SKILL.md](feature-eng/SKILL.md) | 开发流程入口：init / rebind / start / resume / status / advance / close |
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
 | [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.28）；须点名加载 |
 | [feature-eng/guide/使用手册.md](feature-eng/guide/使用手册.md) | feature-eng 完整使用手册（8 章：定位 / 绑定 / 主流程 / 11 环 / 闸门 / 过程态 / 专项 / FAQ） |
 | [feature-eng/guide/使用手册.html](feature-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
 | [feature-eng/guide/使用手册-摘要.md](feature-eng/guide/使用手册-摘要.md) | feature-eng 一分钟导读 |
-| [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / resume / audit / seal |
-| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.3.38） |
+| [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / audit / seal / cancel |
+| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.4.3） |
 | [release-eng/guide/使用手册.md](release-eng/guide/使用手册.md) | release-eng 完整使用手册（8 章：定位 / 安装骨架 / 主流程 / 四模式 / 约定 SSOT / 发版单 / 硬闸 / FAQ） |
 | [release-eng/guide/使用手册.html](release-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
 | [release-eng/guide/使用手册-摘要.md](release-eng/guide/使用手册-摘要.md) | release-eng 一分钟导读 |

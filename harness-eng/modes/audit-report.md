@@ -24,7 +24,7 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 - [ ] 00 alwaysApply
 - [ ] harness-meta.yaml（推荐）
 - [ ] （可选，行为包）rule 21（`S_SLF4J` 仓推荐；非契约域）
-- [ ] （可选，前端协作包）rule 17（`S_FRONTEND` 仓推荐；非契约域）
+- [ ] （可选，前端总触发）rule 101（`S_FRONTEND` 仓推荐；0.7.x 曾用 17 号）
 
 ### L1（按 meta.domains ∪ 磁盘探测；注册表 `templates/_meta/domains.yaml`）
 - [ ] docs/func + rule 11（若域含 func）
@@ -32,10 +32,13 @@ meta: ladder=… domains=… agents_variant=… glob_profile=… skill_version=�
 - [ ] docs/db + rule 13（若域含 db）
 - [ ] docs/redis + rule 16（若域含 redis）
 - [ ] docs/jobs + rule 20（若域含 jobs / `S_JOBS`）
+- [ ] docs/design + rule 102（若域含 design；0.8.0）
+- [ ] docs/prototype + rule 103（若域含 prototype；0.8.0）
+- [ ] docs/components + rule 104 / docs/pages + rule 105 / docs/client-api + rule 106（0.8.1 满配计分）
 
 ### L1 超集 / 过程包（脚注，不计入 L1 契约齐套）
 - [ ] docs/releases（过程域；skill `release-eng`）
-- [ ] 前端协作包（如 rule 17 / `*-web` 分册）
+- [ ] `*-web` 前端分册（正文厚 SSOT；rule 101 只触发）
 
 ### 模板漂移（脚注，audit / freshness 必提一行）
 - **技能 API 模板**（`templates/docs/api/…`）vs **仓内厚模板**（`docs/api/templates` 或已填 modules）：列数/贴 Apifox 程度可能不同  

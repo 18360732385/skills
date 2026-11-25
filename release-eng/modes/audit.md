@@ -16,7 +16,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --base <base
 ```
 
    将 JSON 填入报告「freeze」与「prior」节（见下）。无分支对时写「未跑 freeze」。  
-5. 若用户指定发版单（或进行中仅一行）：对照模板 → 填「缺章」（截断5 / mergeSources / prod / 说明列 / SQL序 / 目录包附属 / 是否误含 suppressed）   
+5. 若用户指定发版单（或进行中仅一行）：对照模板 → 填「缺章」（截断5 / mergeSources / prod / 说明列 / SQL序 / 目录包附属 / 是否误含 suppressed / 同名 `.html` 渲染是否缺失或过期，缺失可建议 `release.mjs note-html` 补渲）   
 6. 若发版单有「配置项」：列出密文**键名**（及是否缺说明）→ 填「密文键」（只读）  
 
 ## 报告结构（强制标题）

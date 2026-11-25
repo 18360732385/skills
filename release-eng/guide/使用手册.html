@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" data-ha-style="document">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>release-eng 使用手册 · v0.3.38</title>
+  <title>release-eng 使用手册 · v0.4.3</title>
   <meta name="description" content="release-eng：把一次上线做成带 Git 证据的发版单（prepare / resume / audit / seal）的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -746,7 +746,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.3.38</div>
+    <div class="ver">v0.4.3</div>
   </header>
 
   <div class="shell document-shell">
@@ -1150,7 +1150,7 @@ node release-eng/scripts/release.mjs ai-track -- --root . --freeze-json /tmp/fre
   --freeze-json /tmp/freeze-with-ai.json \
   --baseline main --identity &lt;slug&gt; \
   --release-date 2026-11-19 --release-branch release --owner &lt;负责人&gt;</code></pre>
-        <p>它做四件事：写发版单<strong>自动段</strong>、生成 <strong><code>artifacts.json</code></strong>、把本版新增原件拷进 <code>sql/refs/</code> <code>config/</code> <code>jobs/</code>、按需生成 <code>sql/release-V{yyMMdd}-DDL|DML.sql</code> 与统计文档 <code>sql/README.md</code>（DDL/DML 条数 + 按提交人执行序 + 行内跳转），并默认回写 <code>releases.md</code>（<code>--no-update-index</code> 可关）。<code>--dry-run</code> 只看「将写多少字节、draft/bundle 各几行」。</p>
+        <p>它做五件事：写发版单<strong>自动段</strong>、生成 <strong><code>artifacts.json</code></strong>、把本版新增原件拷进 <code>sql/refs/</code> <code>config/</code> <code>jobs/</code>、按需生成 <code>sql/release-V{yyMMdd}-DDL|DML.sql</code> 与统计文档 <code>sql/README.md</code>（DDL/DML 条数 + 按提交人执行序 + 行内跳转），并默认回写 <code>releases.md</code>（<code>--no-update-index</code> 可关）；落盘同时生成目录包内<strong>同名 <code>&lt;slug&gt;.html</code> 只读渲染</strong>（工单样式、可打印勾选；<code>--no-html</code> 关闭；md 为唯一 SSOT，勾选/折叠不入档）。<code>--dry-run</code> 只看「将写多少字节、draft/bundle 各几行」。</p>
         <div class="callout warn caveat-box">
           <div class="label">警示</div>
           note-merge 刷新会<strong>先清空包内 <code>sql/</code> / <code>config/</code> / <code>jobs/</code> 三个目录再重建</strong>（内容来自 <code>draft</code>）。手工放进这三个目录的文件会被清掉——别往里存手工产物。
@@ -1191,11 +1191,11 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
 node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md \
   --online-date 2026-11-19 --executor 张三 --apply</code></pre>
         <p>seal-check 有 error 就<strong>中止</strong>（除非你明示强制并加 <code>--force</code>）；warning 可继续，但要在 WritePlan 白话摘要里列出。检查项包括：<code>artifacts.json</code> 与 md 的 SQL 主键是否对齐、<code>sql/refs/</code> 存在时是否带 <code>sqlBundles</code> 且与整理文件哈希一致、密文（<strong>不因密文失败</strong>）。</p>
-        <p><code>--apply</code> 一次做四件事：状态 → <code>已上线</code>、填上线日期 / 执行人、整夹 <code>mv</code> 到 <code>archive/&lt;identity&gt;/</code>、进行中表删行 + <code>ARCHIVE.md</code> 追加。脚本不可用时按同样四步手工做。</p>
+        <p><code>--apply</code> 一次做五件事：状态 → <code>已上线</code>、填上线日期 / 执行人、整夹 <code>mv</code> 到 <code>archive/&lt;identity&gt;/</code>、进行中表删行 + <code>ARCHIVE.md</code> 追加、归档侧按「已上线」重渲同名 <code>&lt;identity&gt;.html</code>。脚本不可用时按同样五步手工做。</p>
       </section>
 
       <section id="s5" class="body-section">
-        <h2>5. 约定 SSOT（九条）</h2>
+        <h2>5. 约定 SSOT（十条）</h2>
         <p>唯一权威在 <a href="../modes/conventions.md">modes/conventions.md</a>。其它文档只引用不复述；本节做摘要，冲突时以 conventions 为准。</p>
         <div class="table-wrap fact-table">
           <table>
@@ -1212,6 +1212,7 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
               <tr><td>⑦</td><td><strong>notes/ 兼容</strong></td><td>旧路径只读兼容，0.3.27 起不再新建</td></tr>
               <tr><td>⑧</td><td><strong>repo-profile</strong></td><td>见 §2.5，深合并、缺失回退</td></tr>
               <tr><td>⑨</td><td><strong>逾期书面跳过</strong></td><td>只有<strong>书面</strong>说明 + <code>--overdue-waived "&lt;说明&gt;"</code> 才放行；口头豁免无效</td></tr>
+              <tr><td>⑩</td><td><strong>发版单 HTML 渲染</strong></td><td>目录包含同名 <code>&lt;identity&gt;.html</code> 只读渲染（note-merge/seal 自动重建，<code>note-html</code> 补渲）；md 为唯一 SSOT，勾选/折叠不入档</td></tr>
             </tbody>
           </table>
         </div>
@@ -1274,6 +1275,7 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
         <h3>6.2 目录包</h3>
         <pre><code>docs/releases/&lt;slug&gt;/
   &lt;slug&gt;.md                    # 发版单（10 章）
+  &lt;slug&gt;.html                   # 同名只读渲染（工单样式；勿手改，md 为 SSOT）
   artifacts.json               # 制品清单 SSOT（sqlBundles / aiTrack / overdueWaived）
   sql/
     refs/                      # 本版新增 SQL 原件
@@ -1358,7 +1360,7 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
         <p>跳过记录会写进 <code>artifacts.json.overdueWaived{reason,date}</code>。<strong>不传这个参数 → 直接拒绝写盘（exit 1）</strong>。</p>
 
         <h3>7.5 机检命令</h3>
-        <pre><code>node release-eng/scripts/release.mjs modes          # 四个模式 + 九个脚本别名
+        <pre><code>node release-eng/scripts/release.mjs modes          # 四个模式 + 脚本别名表
 node release-eng/scripts/release.mjs push-gate -- --root . --release release --baseline main
 node release-eng/scripts/release.mjs seal-check -- --root . --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md
 node release-eng/scripts/selfcheck.mjs              # 技能包自身烟测</code></pre>
@@ -1386,7 +1388,8 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
               <tr><td><code>sql-classify</code></td><td><code>release-sql-classify.mjs</code></td><td>SQL 归类（DDL / DML）</td></tr>
               <tr><td><code>sql-bundle</code></td><td><code>release-sql-bundle.mjs</code></td><td>生成 <code>release-V*-DDL|DML.sql</code> 整理文件与 <code>sql/README.md</code> 统计</td></tr>
               <tr><td><code>sql-stats</code></td><td><code>release-sql-stats.mjs</code></td><td>统计 Markdown 纯函数（总数 / 提交人执行序 / 行内跳转）</td></tr>
-              <tr><td><code>note-merge</code></td><td><code>release-note-merge.mjs</code></td><td>写自动段 + artifacts.json + 目录包</td></tr>
+              <tr><td><code>note-merge</code></td><td><code>release-note-merge.mjs</code></td><td>写自动段 + artifacts.json + 目录包 + 同名 html 渲染</td></tr>
+              <tr><td><code>note-html</code></td><td><code>release-note-html.mjs</code></td><td>发版单 md → 同名 <code>.html</code> 只读渲染（补渲/重建）</td></tr>
               <tr><td><code>seal-check</code></td><td><code>release-seal-check.mjs</code></td><td>归档前体检（artifacts / sqlBundles / 状态）</td></tr>
               <tr><td><code>seal</code></td><td><code>release-seal.mjs</code></td><td>归档：状态 + 整夹 mv + 双索引</td></tr>
             </tbody>
@@ -1458,7 +1461,7 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
               <tr><td><a href="../AGENT-INDEX.md">AGENT-INDEX.md</a></td><td>Agent 热路径（必读 + 按需两张表）</td></tr>
               <tr><td><a href="../SKILL.md">SKILL.md</a></td><td>入口 · 模式分流 · 硬闸 · 红旗</td></tr>
               <tr><td><a href="../modes/README.md">modes/README.md</a></td><td>15 份规格索引</td></tr>
-              <tr><td><a href="../modes/conventions.md">modes/conventions.md</a></td><td><strong>约定 SSOT</strong>（九条）</td></tr>
+              <tr><td><a href="../modes/conventions.md">modes/conventions.md</a></td><td><strong>约定 SSOT</strong>（十条）</td></tr>
               <tr><td><a href="../modes/gates-common.md">gates-common.md</a> · <a href="../modes/git-gates.md">git-gates.md</a></td><td>共享前缀 · 首问 · push-gate</td></tr>
               <tr><td><a href="../modes/freeze.md">freeze.md</a> · <a href="../modes/ai-track.md">ai-track.md</a></td><td>定版采集 · 双轨研判</td></tr>
               <tr><td><a href="../modes/questions.md">questions.md</a> · <a href="../modes/recommended.md">recommended.md</a></td><td>问卷 · 全部推荐</td></tr>

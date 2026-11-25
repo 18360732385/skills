@@ -194,7 +194,9 @@ export function collectDocApiPaths(docText) {
   const paths = new Set();
   const methodsByNear = [];
   const text = String(docText || "");
-  for (const m of text.matchAll(/\*\*接口地址[：:]?\*\*[：:]?\s*`?([^\s`*]+)`?/gi)) {
+  // 0.8.1 patch: allow `*` / `**` in paths (e.g. /attachment/processed/**).
+  // Previous `[^\s\`*]+` stopped at the first wildcard and missed documented paths.
+  for (const m of text.matchAll(/\*\*接口地址[：:]?\*\*[：:]?\s*`?([^\s`]+)`?/gi)) {
     const p = m[1].trim();
     if (p.startsWith("/")) paths.add(p);
   }
@@ -208,12 +210,12 @@ export function collectDocApiPaths(docText) {
     paths.add(m[2]);
   }
   for (const m of text.matchAll(
-    /\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b\s+(\/[^\s`*|]+)/gi
+    /\b(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\b\s+(\/[^\s`|]+)/gi
   )) {
     paths.add(`${m[1].toUpperCase()}:${m[2]}`);
     paths.add(m[2]);
   }
-  for (const m of text.matchAll(/`(\/[a-zA-Z0-9_/{}.\-]+)`/g)) {
+  for (const m of text.matchAll(/`(\/[a-zA-Z0-9_/{}.\-*]+)`/g)) {
     if (m[1].length > 1) paths.add(m[1]);
   }
   return { paths, methodsByNear };
@@ -250,9 +252,16 @@ export function detectApiFieldDrift(root, apiInventory, opts = {}) {
 
   const codePaths = [];
   for (const ep of apiInventory.endpoints) {
-    const method = String(ep.method || ep.httpMethod || "").toUpperCase();
+    const rawMethod = String(ep.httpMethod || ep.http || "").toUpperCase();
+    const fallback = String(ep.method || "").toUpperCase();
+    const method = /^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)$/.test(rawMethod)
+      ? rawMethod
+      : /^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)$/.test(fallback)
+        ? fallback
+        : "";
     const p = String(ep.path || ep.url || "").trim();
     if (!p) continue;
+    // Do not prefix Java handler names (e.g. downloadProcessedFile) as HTTP methods.
     codePaths.push({ method, path: p, key: method ? `${method}:${p}` : p });
   }
   if (codePaths.length && docPaths.size) {

@@ -323,6 +323,31 @@ function readFillMcpProfile(root) {
 }
 
 /**
+ * 0.8.2 patch (D11): 存量仓升级后旧 rule 17 与新 rule 101 并存（同域双触发）。
+ * 只警告 + 给出退役命令（确认闸门纪律：不自动删；本检测对 .cursor/rules 落点）。
+ * @returns {{ warned: boolean, old17: boolean, new101: boolean }}
+ */
+export function warnRetiredRule17Coexistence(root, log = console) {
+  const rulesDir = path.join(path.resolve(root), ".cursor", "rules");
+  const old17 = path.join(rulesDir, "17-frontend-web.mdc");
+  const new101 = path.join(rulesDir, "101-frontend-web.mdc");
+  let has17 = false;
+  let has101 = false;
+  try {
+    has17 = fs.existsSync(old17);
+    has101 = fs.existsSync(new101);
+  } catch {
+    return { warned: false, old17: false, new101: false };
+  }
+  if (!(has17 && has101)) return { warned: false, old17: has17, new101: has101 };
+  log.error(
+    "harness: 旧前端规则 .cursor/rules/17-frontend-web.mdc 与 101-frontend-web.mdc 并存（同域双触发，D11）。" +
+      "建议经确认后退役旧规则：git mv .cursor/rules/17-frontend-web.mdc docs/harness-eng/archive/17-frontend-web.mdc"
+  );
+  return { warned: true, old17: true, new101: true };
+}
+
+/**
  * 0.7.40: warn example vs fill_mcp_profile vs live server names. Never rewrite secrets.
  * @returns {{ warned: boolean, example: string[], live: string[], profile: string|null }}
  */

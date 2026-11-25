@@ -8,6 +8,6 @@
 | 2 | `AI_TOOL_ADAPTERS` | `scripts/render.mjs` | 各宿主 SSOT / 入口文件（cursor/claude/codex/qoder/trae/workbuddy） |
 | 3 | `CONTRACT_SYNC_MIRRORS` + `shouldEmitContractSync` | `scripts/render.mjs` | L0–L2 / 非全量镜像宿主的 `1x-contract-sync` 薄指针 |
 | 4 | `SYNC_MANAGED_RULE_PREFIXES` + L5 `adaptTarget` | `scripts/render.mjs` | L5 拒直渲生成宿主 rules；改投 `docs/agent-config/` |
-| 5 | `include_optional` 可选包（含 `rule-17` / `rule-17-full` 互斥） | manifest `optional` + `assertRule17Mutex` | 可选模板；薄/厚 17 勿同装 |
+| 5 | `include_optional` 可选包（含 `rule-101` / `rule-101-full` 互斥；0.7.x 曾名 `rule-17*`） | manifest `optional` + `assertRule101Mutex` | 可选模板；薄/厚 101 勿同装 |
 
 Agent 热路径：[AGENT-INDEX.md](../../AGENT-INDEX.md)。发版后 selfcheck 断言本文件存在。

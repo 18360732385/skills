@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
  * Stable-name selfcheck (scripts/selfcheck.mjs): pins current skill_version.
  * 0.7.27: e2e P0 hotfix（NEW-1 buildSpringDbBlock · LT-1/HS-7 sync SSOT · passesWhenGates · HS-3 slash · SG-7 CJK · NEW-2 abs root）; 其上 0.7.26 e2e P2; 0.7.23 P3/P4; 0.7.22 中性 refresh-score; 0.7.20 批 E.
@@ -82,7 +82,7 @@ import {
   HOOK_DEFS,
 } from "./lib/hooks-checks.mjs";
 import { mavenCmdsForModule } from "./lib/maven-cmds.mjs";
-import { morphDepthBonus } from "./lib/morph-depth.mjs";
+import { morphDepthBonus, frontendProbeBonus, isFrontendMorphDomain } from "./lib/morph-depth.mjs";
 import { pickRecommended } from "./questions-next.mjs";
 import { isInventoryStale } from "./lib/git-head.mjs";
 import { createSelfcheckHelpers } from "./lib/selfcheck/helpers.mjs";
@@ -95,8 +95,17 @@ import {
   parseDocCreateFieldNames,
   normalizeScheduleToken,
   docCreateCoversColumns,
+  collectDocApiPaths,
 } from "./lib/field-drift.mjs";
-import { isNoisePattern } from "./lib/inventory-redis.mjs";
+import { isNoisePattern, shouldPromoteRedis } from "./lib/inventory-redis.mjs";
+import { extractAlterOps } from "./lib/inventory-db.mjs";
+import {
+  FRONTEND_COVERAGE_DOMAINS,
+  INVENTORY_SCAN_DOMAINS,
+  inventoryScanDomains,
+  buildFrontendCoverageRow,
+  countFrontendTruths,
+} from "./lib/frontend-coverage.mjs";
 import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
 import { readGitHead } from "./lib/git-head.mjs";
 import {
@@ -134,7 +143,7 @@ import {
 import { updateDomainIndex, extractInventoryEvidence } from "./lib/merge-domain.mjs";
 import { applyCommandsPrefill, collectCommandPrefill } from "./lib/prefill-commands.mjs";
 import { resolveInventoryOutPath, mergeApiInventories } from "./lib/inventory-paths.mjs";
-import { inventoryArgv } from "./lib/refresh.mjs";
+import { inventoryArgv, scanChangelogPlaceholders } from "./lib/refresh.mjs";
 import {
   writeInventoryMeta,
   readInventoryMeta,
@@ -161,6 +170,7 @@ import {
   detectDbMigrationMode,
   warnMcpExampleProfile,
   warnManualReplaceGaps,
+  warnRetiredRule17Coexistence,
 } from "./lib/sync-freshness.mjs";
 import {
   DOC_MOVES,
@@ -172,9 +182,71 @@ import {
 import { runChecks05 } from "./lib/selfcheck/checks-0.5.mjs";
 import { runChecks06 } from "./lib/selfcheck/checks-0.6.mjs";
 import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
+import { archiveOne, restoreOne } from "./archive-docs.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
+// 0.8.3 (D16): isolate this selfcheck run from an external
+// HARNESS_ENG_ROOT (e.g. a skills-manager junction pointing at another copy of
+// the skill). resolveSkillRoot prefers the env over in-repo meta, so a stale
+// env silently hijacked selfcheck into a different skill tree. Unit assertions
+// that explicitly set the env keep managing it themselves (prev/restore).
+const __externalHarnessRoot = process.env.HARNESS_ENG_ROOT;
+if (__externalHarnessRoot !== undefined) {
+  console.log(
+    `selfcheck: 外部 HARNESS_ENG_ROOT 已隔离（${__externalHarnessRoot}）；本跑以 ${skillRoot} 为准`
+  );
+  delete process.env.HARNESS_ENG_ROOT;
+}
+/** 0.8.3 (D16): restore the isolated env at exit. */
+function __restoreExternalHarnessRoot() {
+  if (__externalHarnessRoot !== undefined) {
+    process.env.HARNESS_ENG_ROOT = __externalHarnessRoot;
+  }
+}
+
+/**
+ * 0.8.3 (D9): junction 落点健康检查（skills-manager 挖空防御）。
+ * skillRoot 若是 junction/symlink，目标必须可达且非空；挖空形态给出人话。
+ * @returns {string|null} issue message, or null when the install surface is healthy
+ */
+export function __installSurfaceIssue(rootDir) {
+  let st;
+  try {
+    st = fs.lstatSync(rootDir);
+  } catch {
+    return null; // plain ENOENT 交给原生报错；本检查只管 junction 形态
+  }
+  if (!st.isSymbolicLink()) return null;
+  let real;
+  try {
+    real = fs.realpathSync(rootDir);
+  } catch {
+    return `skillRoot 是 junction 但目标不可达（D9 挖空形态）：${rootDir}`;
+  }
+  let entries;
+  try {
+    entries = fs.readdirSync(real);
+  } catch {
+    return `skillRoot junction 目标不可读（D9 挖空形态）：${real}`;
+  }
+  if (entries.length === 0) {
+    return `skillRoot junction 目标为空目录（D9 挖空形态）：${real}`;
+  }
+  return null;
+}
+const __surfaceIssue = __installSurfaceIssue(skillRoot);
+if (__surfaceIssue) {
+  console.error(
+    `selfcheck: 安装落点异常——${__surfaceIssue}。` +
+      `这是 skills-manager 落点被挖空的典型形态：先修复落点（重建 junction / 恢复实体目录）再跑 selfcheck。`
+  );
+  process.exit(1);
+} else if (fs.lstatSync(skillRoot).isSymbolicLink()) {
+  console.log(
+    `selfcheck: skillRoot 为 junction → ${fs.realpathSync(skillRoot)}（若断言大面积异常，先查落点挖空/错位——D9）`
+  );
+}
 const EXPECTED = readSkillVersion(skillRoot);
 const VER_RE = escapeSemverRe(EXPECTED);
 const fail = [];
@@ -716,19 +788,19 @@ const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
 if (fs.existsSync(fixture)) {
   const scoreObj = JSON.parse(fs.readFileSync(fixture, "utf8"));
   const ui = buildReportUi(scoreObj);
-  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0","0.4.1"].includes(ui.version), "ui.version compatible");
+  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0","0.4.1","0.4.2"].includes(ui.version), "ui.version compatible");
   assert(Array.isArray(ui.decision_kpis) && ui.decision_kpis.length >= 1, "ui.decision_kpis");
   assert(Array.isArray(ui.morph_strip), "ui.morph_strip");
   assert(ui.show_domain_cards === false, "domain cards default off");
   assert(ui.verdict.ready_label === "建议可以开干" || ui.verdict.ready_label === "建议暂缓", "verdict binary");
   assert(ui.composite_score && typeof ui.composite_score.value === "number", "ui.composite_score");
   assert(ui.pipeline_progress && Array.isArray(ui.pipeline_progress.steps), "ui.pipeline_progress");
-  assert(ui.report_schema === "0.4.1", "report_schema 0.4.1");
+  assert(ui.report_schema === "0.4.2", "report_schema 0.4.2");
   assert(ui.go_nogo && typeof ui.go_nogo.ok === "boolean", "ui.go_nogo");
   assert(Array.isArray(ui.tasks), "ui.tasks");
   assert(ui.ladder_progress && Array.isArray(ui.ladder_progress.steps), "ui.ladder_progress");
   assert(ui.diagnose && Array.isArray(ui.diagnose.story), "ui.diagnose.story");
-  assert(ui.pipeline_progress.label_zh === "开干闸路径", "pipeline labeled 开干闸路径");
+  assert(ui.pipeline_progress.label_zh === "开干清单", "pipeline labeled 开干清单");
   assert(ui.morph_scale === "0.7" || scoreObj.morph_scale === "0.7" || ui.morph_scale == null, "morph_scale present or fixture lag ok");
   assert(ui.chart_domains && Array.isArray(ui.chart_domains.labels_zh), "chart_domains.labels_zh");
   assert(
@@ -776,7 +848,7 @@ if (fs.existsSync(fixture)) {
   assert(/IBM Plex Sans SC/.test(reportTmpl), "report tmpl CJK body font");
   assert(/kind-badge/.test(reportTmpl), "report tmpl residual badge");
   assert(/hashTab|location\.hash/.test(reportTmpl) && !/show\(\$\("deck"\)\);\s*setTab\("decision"\)/.test(reportTmpl), "report tmpl respects hash after paint");
-  assert(/data-tab="host"/.test(reportTmpl) && /宿主台/.test(reportTmpl), "report tmpl host tab");
+  assert(/data-tab="host"/.test(reportTmpl) && /落地检查台/.test(reportTmpl), "report tmpl host tab");
   assert(/ladder_progress|施工阶梯/.test(reportTmpl), "report tmpl ladder axis");
   assert(/host-capsule|host_surface/.test(reportTmpl), "report tmpl host capsule");
   assert(/overall_linkable|incomparable/.test(reportTmpl), "report tmpl history hard-cut");
@@ -811,6 +883,237 @@ if (fs.existsSync(fixture)) {
     } catch {
       /* ignore */
     }
+  }
+}
+
+
+// --- 0.8.1 frontend probe/depth + acceptance (no API fallback) ---
+{
+  assert(isFrontendMorphDomain("pages"), "pages is frontend morph domain");
+  assert(isFrontendMorphDomain("design"), "design is frontend morph domain");
+  assert(isFrontendMorphDomain("client-api"), "client-api is frontend morph domain");
+  assert(!isFrontendMorphDomain("api"), "api is not a frontend morph domain");
+
+  const acceptSrc = fs.readFileSync(
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "utf8"
+  );
+  assert(/checkPagesFile/.test(acceptSrc), "acceptance has checkPagesFile");
+  assert(/checkDesignFile/.test(acceptSrc), "acceptance has checkDesignFile");
+  assert(/checkPrototypeFile/.test(acceptSrc), "acceptance has checkPrototypeFile");
+  assert(/checkComponentsFile/.test(acceptSrc), "acceptance has checkComponentsFile");
+  assert(/checkClientApiFile/.test(acceptSrc), "acceptance has checkClientApiFile");
+  assert(
+    !/ACCEPTANCE_BY_DOMAIN\[domain\]\s*\|\|\s*checkApiFile/.test(acceptSrc),
+    "known/unknown domains must not fall back to checkApiFile"
+  );
+
+  const goodPagesPath = path.join(skillRoot, "scripts/fixtures/acceptance-pages-good.md");
+  const thinPagesPath = path.join(skillRoot, "scripts/fixtures/acceptance-pages-thin.md");
+  const goodPages = fs.readFileSync(goodPagesPath, "utf8");
+  const thinPages = fs.readFileSync(thinPagesPath, "utf8");
+  const probe = frontendProbeBonus(goodPages, "pages");
+  assert(probe.points >= 50, "pages good fixture earns probe bonus, got " + probe.points);
+  const depth = morphDepthBonus(goodPages, "pages");
+  assert(depth.points > 0, "pages good fixture earns depth bonus, got " + depth.points);
+  const thinProbe = frontendProbeBonus(thinPages, "pages");
+  assert(thinProbe.points === 0, "thin pages fixture must not earn probe bonus, got " + thinProbe.points);
+
+  const goodTmp = path.join(skillRoot, "scripts/fixtures/.tmp-accept-pages-good.json");
+  const goodRun = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    goodPagesPath,
+    "--domain",
+    "pages",
+    "--gold",
+    "--json-out",
+    goodTmp,
+  ]);
+  assert(goodRun.status === 0, "pages good fixture gold pass");
+  if (fs.existsSync(goodTmp)) {
+    try {
+      fs.unlinkSync(goodTmp);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const thinTmp = path.join(skillRoot, "scripts/fixtures/.tmp-accept-pages-thin.json");
+  const thinRun = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    thinPagesPath,
+    "--domain",
+    "pages",
+    "--gold",
+    "--json-out",
+    thinTmp,
+  ]);
+  assert(thinRun.status === 1, "pages thin fixture gold blocks");
+  if (fs.existsSync(thinTmp)) {
+    const thinJson = JSON.parse(fs.readFileSync(thinTmp, "utf8"));
+    const ids = (thinJson.blockers || []).map((b) => b.id);
+    assert(ids.includes("pages-no-responsibility"), "thin pages triggers pages-no-responsibility, got " + ids.join(","));
+    assert(!ids.includes("api-no-evidence"), "thin pages must not be scored as API");
+    try {
+      fs.unlinkSync(thinTmp);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Path-detected frontend domain (no --domain) must use pages checker, not API
+  const tmpPage = path.join(
+    skillRoot,
+    "scripts/fixtures/.tmp-front-docs/docs/pages/modules/01-login.md"
+  );
+  fs.mkdirSync(path.dirname(tmpPage), { recursive: true });
+  fs.copyFileSync(goodPagesPath, tmpPage);
+  const pathTmp = path.join(skillRoot, "scripts/fixtures/.tmp-accept-pages-path.json");
+  const pathRun = runNode([
+    path.join(skillRoot, "scripts/acceptance-check.mjs"),
+    "--files",
+    tmpPage,
+    "--gold",
+    "--json-out",
+    pathTmp,
+  ]);
+  assert(pathRun.status === 0, "path-detected pages fixture gold pass (not API fallback)");
+  try {
+    fs.unlinkSync(tmpPage);
+    fs.unlinkSync(pathTmp);
+  } catch {
+    /* ignore */
+  }
+}
+
+
+// --- 0.8.1 coverage/drift口径: func backticks, ThreadLocal redis, path globs, CHANGE COLUMN ---
+{
+  const scoreSrc = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/collectFuncDocClassNames/.test(scoreSrc), "fill-score has collectFuncDocClassNames");
+  assert(
+    !/const secs = text\.match\(\/\^##\\s\+\\d\+/.test(scoreSrc),
+    "fill-score no longer counts ## N. headings as func services"
+  );
+
+  const { paths: globPaths } = collectDocApiPaths(
+    "**接口地址：** `/api/v1/safety-report/attachment/processed/**`\n**请求方式：** GET\n"
+  );
+  assert(
+    globPaths.has("/api/v1/safety-report/attachment/processed/**"),
+    "collectDocApiPaths keeps trailing /**, got " + JSON.stringify([...globPaths])
+  );
+
+  assert(
+    shouldPromoteRedis({
+      pattern: "sms-ai:orchestrationBudget",
+      evidence: "sms-ai/src/main/java/com/juneyaoair/msp/sms/ai/plugin/tools/bug/orchestrate/OrchestrationBudgetThreadLocalAccessor.java#CONTEXT_KEY",
+      note: "const CONTEXT_KEY",
+    }) === false,
+    "shouldPromoteRedis must not promote ThreadLocal CONTEXT_KEY"
+  );
+  assert(
+    shouldPromoteRedis({
+      pattern: "login_tokens:",
+      evidence: "SmsAuthConstants.java#LOGIN_TOKEN_KEY",
+      note: "const LOGIN_TOKEN_KEY",
+    }) === true,
+    "shouldPromoteRedis still promotes real token key constants"
+  );
+
+  const alterSql = "ALTER TABLE `ai_risk_task_hazard_recommend`\n    CHANGE COLUMN `risk_task_id` `risk_task_deal_id` VARCHAR(64) NOT NULL,\n    DROP INDEX `idx_task_deleted`,\n    ADD INDEX `idx_deal_deleted` (`risk_task_deal_id`);";
+  const ops = extractAlterOps(alterSql, "V0118_0.sql");
+  const renames = (ops[0] && ops[0].rename) || [];
+  assert(
+    ops.length === 1 && renames.some((r) => r.from === "risk_task_id" && r.to === "risk_task_deal_id"),
+    "extractAlterOps CHANGE COLUMN, got " + JSON.stringify(ops)
+  );
+}
+
+// --- 0.8.1 official frontend coverage_by_domain + func enum skip ---
+{
+  const documented = buildFrontendCoverageRow({ truths: 4, assets: 80 });
+  assert(documented && documented.unit === "domain" && documented.ratio === 1, "documented frontend domain ratio is 1");
+  assert(documented.inventory_assets === 80 && documented.truths === 4, "frontend row keeps asset/truth counts");
+  assert(documented.asset_ratio === 0.05, "frontend asset_ratio is truths/assets, got " + documented.asset_ratio);
+  const missing = buildFrontendCoverageRow({ truths: 0, assets: 79 });
+  assert(missing && missing.ratio === 0 && missing.percent === 0, "undocumented frontend domain ratio is 0");
+  assert(buildFrontendCoverageRow({ truths: 1, assets: 0 }) == null, "frontend row omitted when no assets");
+  assert(countFrontendTruths(["docs/pages/modules/01-login.md", "docs/pages/modules/README.md"]) === 1, "countFrontendTruths skips README");
+  assert(inventoryScanDomains(["api", "design", "unknown"]).join(",") === "api,design", "inventoryScanDomains filters known scanners");
+  assert(FRONTEND_COVERAGE_DOMAINS.length === 5 && INVENTORY_SCAN_DOMAINS.length === 10, "frontend five + backend five");
+
+  const scoreSrc10 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
+  assert(/buildFrontendCoverageRow/.test(scoreSrc10), "fill-score uses buildFrontendCoverageRow");
+  assert(/FRONTEND_COVERAGE_DOMAINS/.test(scoreSrc10), "fill-score iterates FRONTEND_COVERAGE_DOMAINS");
+  assert(!/if \(!\["api", "func", "db", "redis", "jobs"\]\.includes\(d\)\) continue;/.test(scoreSrc10), "fill-score live loop is not hardcoded to backend five");
+  const refreshSrc10 = fs.readFileSync(path.join(skillRoot, "scripts/lib/refresh.mjs"), "utf8");
+  assert(/inventoryScanDomains/.test(refreshSrc10), "refresh uses inventoryScanDomains");
+  assert(!/\["api", "func", "db", "redis", "jobs"\]\.includes\(d\)/.test(refreshSrc10), "refresh inventoryDomains is not hardcoded to backend five");
+
+  const funcSrc10 = fs.readFileSync(path.join(skillRoot, "scripts/lib/inventory-func.mjs"), "utf8");
+  assert(/isJavaTypeEnum/.test(funcSrc10), "inventory-func exports isJavaTypeEnum");
+  assert(/entity\|mapper\|job\|jobs\|properties\|enums/.test(funcSrc10), "inventory-func path filter includes enums");
+
+  const funcTmp10 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-081-func-enum-"));
+  try {
+    const javaBase = path.join(funcTmp10, "backend", "demo", "src", "main", "java", "com", "x");
+    fs.mkdirSync(path.join(javaBase, "domain", "enums"), { recursive: true });
+    fs.mkdirSync(path.join(javaBase, "service"), { recursive: true });
+    fs.writeFileSync(path.join(funcTmp10, "backend", "pom.xml"), "<project><modules><module>demo</module></modules></project>\n", "utf8");
+    fs.writeFileSync(path.join(funcTmp10, "backend", "demo", "pom.xml"), "<project/>\n", "utf8");
+    fs.writeFileSync(
+      path.join(javaBase, "domain", "enums", "HealthComponent.java"),
+      "package com.x.domain.enums;\nimport lombok.Getter;\n@Getter\npublic enum HealthComponent { MYSQL(\"mysql\"); }\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(javaBase, "service", "ShellComponent.java"),
+      "package com.x.service;\nimport org.springframework.stereotype.Component;\n@Component\npublic class ShellComponent { public void ping() {} }\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(javaBase, "service", "AppointmentService.java"),
+      "package com.x.service;\nimport org.springframework.stereotype.Service;\n@Service\npublic class AppointmentService {}\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(javaBase, "service", "NestedEnumService.java"),
+      "package com.x.service;\nimport org.springframework.stereotype.Service;\n@Service\npublic class NestedEnumService { private enum Scene { A, B } }\n",
+      "utf8"
+    );
+    const invOut = spawnSync(
+      process.execPath,
+      [
+        path.join(skillRoot, "scripts/fill-inventory.mjs"),
+        "--domain",
+        "func",
+        "--root",
+        funcTmp10,
+        "--modules",
+        "backend/demo",
+        "--no-write",
+      ],
+      { encoding: "utf8", cwd: skillRoot, windowsHide: true }
+    );
+    assert(invOut.status === 0 || invOut.status === 2, `0.8.1 func enum inventory exit (got ${invOut.status}): ${invOut.stderr}`);
+    const out = String(invOut.stdout || "");
+    const i = out.indexOf("{");
+    const j = out.lastIndexOf("}");
+    const report = JSON.parse(out.slice(i, j + 1));
+    const services = (report.modules || []).flatMap((m) => m.services || []);
+    const names = services.map((s) => s.class);
+    assert(
+      names.includes("AppointmentService") &&
+        names.includes("NestedEnumService") &&
+        names.includes("ShellComponent") &&
+        !names.includes("HealthComponent"),
+      `0.8.1 func inventory skips enum HealthComponent (got ${JSON.stringify(names)})`
+    );
+  } finally {
+    fs.rmSync(funcTmp10, { recursive: true, force: true });
   }
 }
 
@@ -1218,7 +1521,7 @@ if (fs.existsSync(fixture)) {
   assert(/ai-coding-gate/.test(scoreSrc), "fill-score imports ai-coding-gate");
   const reportUi = fs.readFileSync(path.join(skillRoot, "scripts/lib/report-ui.mjs"), "utf8");
   assert(/morph_floor:/.test(reportUi) && /harness_todo:/.test(reportUi), "report maps gate blockers to actions");
-  assert(/仪表参考分/.test(reportUi), "composite renamed 仪表参考分");
+  assert(/总评分/.test(reportUi), "composite renamed 总评分");
   const qYaml2 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
   assert(/Q_GATE_PROFILE/.test(qYaml2), "questions has Q_GATE_PROFILE");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
@@ -1240,7 +1543,7 @@ if (fs.existsSync(fixture)) {
     "utf8"
   );
   assert(!/综合评分/.test(tmpl), "report tmpl dropped 综合评分");
-  assert(/composite-secondary|panel-trend/.test(tmpl) && /仪表参考分/.test(tmpl), "composite in trend secondary");
+  assert(/sec-banner|panel-decision/.test(tmpl) && /总评分/.test(tmpl), "composite in top banner / decision");
   assert(/0\.3\.[12] 计分同构/.test(fs.readFileSync(path.join(skillRoot, "templates/docs/redis/templates/redis-key-template.md"), "utf8")), "redis tmpl note");
   assert(/0\.3\.[12] 计分同构/.test(fs.readFileSync(path.join(skillRoot, "templates/docs/db/templates/db-table-template.md"), "utf8")), "db tmpl note");
 }
@@ -1756,17 +2059,19 @@ if (fs.existsSync(fixture)) {
   assert(/行为包/.test(gloss), "glossary has 行为包");
 }
 
-// --- 0.4.0 package model: rule 17 / spring module variant / merge preview / manual_sql ---
+// --- 0.4.0 package model: rule 101 (0.7.x 曾用 17 号) / spring module variant / merge preview / manual_sql ---
 {
-  const r17 = fs.readFileSync(
-    path.join(skillRoot, "templates/rules/17-frontend-web.mdc.tmpl"),
+  const r101 = fs.readFileSync(
+    path.join(skillRoot, "templates/rules/101-frontend-web.mdc.tmpl"),
     "utf8"
   );
-  assert(/\{\{GLOB_FRONTEND\}\}/.test(r17), "rule17 tmpl has GLOB_FRONTEND placeholder");
-  assert(/协作包/.test(r17), "rule17 tmpl marks collab pack");
-  assert(!/sms-ai-web|Clinical Calm|antd/.test(r17), "rule17 tmpl de-domainized");
+  assert(/\{\{GLOB_FRONTEND\}\}/.test(r101), "rule101 tmpl has GLOB_FRONTEND placeholder");
+  assert(/总触发|协作/.test(r101), "rule101 tmpl marks frontend pack");
+  assert(!/sms-ai-web|Clinical Calm|antd/.test(r101), "rule101 tmpl de-domainized");
+  assert(!fs.existsSync(path.join(skillRoot, "templates/rules/17-frontend-web.mdc.tmpl")), "old 17 tmpl retired");
   const man = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
-  assert(/id:\s*rule-17/.test(man), "manifest has rule-17");
+  assert(/id:\s*rule-101/.test(man), "manifest has rule-101");
+  assert(!/id:\s*rule-17\b/.test(man), "manifest drops rule-17 id");
   assert(/GLOB_FRONTEND/.test(man) && /FRONTEND_DIR/.test(man) && /DB_MIGRATION_MODE/.test(man), "manifest new placeholders");
   assert(/module_agents_template=spring\|frontend|module_agents_template=spring/.test(man), "manifest notes spring|frontend variant");
   assert(
@@ -1823,15 +2128,15 @@ if (fs.existsSync(fixture)) {
   assert(/migration_modes/.test(domYaml), "domains db migration_modes");
   assert(/S_FRONTEND/.test(domYaml) && !/sms-ai-web/.test(domYaml), "domains frontend pack generic + detect");
   const rp = readDoc("recommended-profile.md");
-  assert(/rule17/.test(rp) && /module_agents_template/.test(rp), "recommended-profile new rows");
+  assert(/rule101/.test(rp) && /module_agents_template/.test(rp), "recommended-profile new rows");
   const gloss = fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8");
   assert(/manual_sql/.test(gloss) && /分册变体/.test(gloss), "glossary manual_sql + 分册变体");
   const resume = readDoc("resume.md");
   assert(/mergePreview/.test(resume), "resume documents mergePreview");
   const ladder = readDoc("ladder.md");
-  assert(/17-frontend-web/.test(ladder), "ladder L0 frontend collab pack");
+  assert(/101-frontend-web/.test(ladder), "ladder L0 frontend pack (101)");
   const audit = readDoc("audit-report.md");
-  assert(/rule 17/.test(audit), "audit L0 rule 17");
+  assert(/rule 101/.test(audit), "audit L0 rule 101");
 }
 
 // --- 0.4.0 runtime: spring variant + mergePreview dry-run ---
@@ -1907,7 +2212,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
 
 // --- 0.7.14 / report_schema 0.4.x ---
 {
-  assert(CURRENT_REPORT_SCHEMA === "0.4.1", "score-history CURRENT_REPORT_SCHEMA 0.4.1");
+  assert(CURRENT_REPORT_SCHEMA === "0.4.2", "score-history CURRENT_REPORT_SCHEMA 0.4.2");
   assert(
     isIncomparablePoint({ report_schema: "0.3.0", morph_scale: "0.7" }),
     "history 0.3.0 incomparable"
@@ -1975,7 +2280,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
       },
       { meta: { ladder: "L4" }, root: tmpHs, host_surface: hs }
     );
-    assert(uiHs.report_schema === "0.4.1", "ui 0.4.1 with host");
+    assert(uiHs.report_schema === "0.4.2", "ui 0.4.2 with host");
     assert(uiHs.host_surface && uiHs.host_surface.status, "ui carries host_surface");
     assert(uiHs.go_nogo.ok === false, "go_nogo from ai_coding_ready");
     assert(uiHs.ladder_progress.current === "L4", "ladder_progress from meta");
@@ -2019,8 +2324,8 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
   const handbookMd0714 = fs.readFileSync(path.join(skillRoot, "guide/使用手册.md"), "utf8");
   assert(/仪表盘五台|宿主台/.test(handbookMd0714), "handbook §6 five panels");
   assert(
-    /0\.4\.1/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
-    "glossary report_schema 0.4.1"
+    /0\.4\.2/.test(fs.readFileSync(path.join(skillRoot, "glossary.md"), "utf8")),
+    "glossary report_schema 0.4.2"
   );
 }
 
@@ -6019,7 +6324,7 @@ module.exports = { hello };
     "utf8"
   );
   assert(/humanizeBlockers/.test(reportUi60), "0.7.60 humanizeBlockers");
-  assert(/REPORT_SCHEMA = "0\.4\.1"/.test(reportUi60), "0.7.60 REPORT_SCHEMA 0.4.1");
+  assert(/REPORT_SCHEMA = "0\.4\.2"/.test(reportUi60), "0.7.60 REPORT_SCHEMA 0.4.2");
 
   const hostSurf60 = fs.readFileSync(
     path.join(skillRoot, "scripts/lib/host-surface.mjs"),
@@ -6362,12 +6667,886 @@ console.log("theme-gate-smoke-ok");
   assert(logExists("0.7.63"), "0.7.63 _log note exists");
 }
 
+// --- 0.8.0: 仓型三分 · 前端五域 · rules 101 族 ---
+{
+  const domYaml80 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domains.yaml"),
+    "utf8"
+  );
+  for (const d of ["design", "prototype", "pages", "components", "client-api"]) {
+    assert(new RegExp(`^  ${d}:`, "m").test(domYaml80), `0.8.0 domains has ${d}`);
+  }
+  for (const rid of ["102", "103", "104", "105", "106"]) {
+    assert(new RegExp(`rule_id: "${rid}"`).test(domYaml80), `0.8.0 domains rule_id ${rid}`);
+  }
+  assert(/design:/.test(domYaml80) && /fill-inventory\.mjs --domain design/.test(domYaml80), "0.8.0 design inventory CLI");
+  assert(/fill-inventory\.mjs --domain prototype/.test(domYaml80), "0.8.0 prototype inventory CLI");
+
+  const packsYaml80 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domain-packs.yaml"),
+    "utf8"
+  );
+  for (const rid of ["rule-102", "rule-103", "rule-104", "rule-105", "rule-106"]) {
+    assert(new RegExp(`id: ${rid}`).test(packsYaml80), `0.8.0 packs has ${rid}`);
+  }
+
+  const man80 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  assert(/REPO_KIND/.test(man80) && /MONOREPO/.test(man80), "0.8.0 manifest repo_kind placeholders");
+  assert(/GLOB_DESIGN/.test(man80) && /GLOB_PROTOTYPE/.test(man80) && /GLOB_CLIENT_API/.test(man80), "0.8.0 manifest frontend GLOB placeholders");
+
+  const metaTmpl80 = fs.readFileSync(
+    path.join(skillRoot, "templates/meta/harness-meta.yaml.tmpl"),
+    "utf8"
+  );
+  assert(/repo_kind: "\{\{REPO_KIND\}\}"/.test(metaTmpl80) && /monorepo: \{\{MONOREPO\}\}/.test(metaTmpl80), "0.8.0 meta tmpl repo_kind/monorepo");
+
+  const det80 = fs.readFileSync(path.join(skillRoot, "modes/detect.md"), "utf8");
+  assert(/S_BACKEND/.test(det80) && /S_MONOREPO/.test(det80), "0.8.0 detect signals");
+  assert(/仓型三分/.test(det80) && /Q_REPO_KIND/.test(det80), "0.8.0 detect repo_kind spec");
+  const rp80 = fs.readFileSync(path.join(skillRoot, "modes/recommended-profile.md"), "utf8");
+  assert(/repo_kind/.test(rp80) && /design,prototype/.test(rp80), "0.8.0 recommended-profile repo_kind split");
+
+  const dsSrc = fs.readFileSync(path.join(skillRoot, "scripts/lib/detect-signals.mjs"), "utf8");
+  assert(/export function inferRepoKind/.test(dsSrc) && /function hasBackend/.test(dsSrc) && /function detectMonorepo/.test(dsSrc), "0.8.0 inferRepoKind exports");
+  assert(/S_BACKEND/.test(dsSrc) && /S_MONOREPO/.test(dsSrc), "0.8.0 scanSignals new keys");
+
+  const renderSrc80 = fs.readFileSync(path.join(skillRoot, "scripts/render.mjs"), "utf8");
+  assert(/REPO_KIND/.test(renderSrc80) && /MONOREPO/.test(renderSrc80), "0.8.0 render repo placeholders");
+  assert(/"client-api"/.test(renderSrc80), "0.8.0 render contractOrder frontend domains");
+  assert(/assertRule101Mutex/.test(renderSrc80) && !/assertRule17Mutex/.test(renderSrc80), "0.8.0 render rule-101 mutex");
+
+  const gateSrc80 = fs.readFileSync(path.join(skillRoot, "scripts/lib/ai-coding-gate.mjs"), "utf8");
+  assert(/measured_by_domain/.test(gateSrc80) && !/domainKeys\.includes\("frontend"\)/.test(gateSrc80), "0.8.0 gate frontend_coverage measured");
+
+  const mergeSrc80 = fs.readFileSync(path.join(skillRoot, "scripts/lib/merge-domain.mjs"), "utf8");
+  assert(/inv\.assets/.test(mergeSrc80) && /truthsSubdir/.test(mergeSrc80), "0.8.0 merge assets + truthsSubdir");
+
+  for (const lib of ["inventory-design", "inventory-prototype"]) {
+    assert(
+      fs.existsSync(path.join(skillRoot, `scripts/lib/${lib}.mjs`)),
+      `0.8.0 ${lib} exists`
+    );
+  }
+  const invHelp80 = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts/fill-inventory.mjs"), "--domain", "design", "--help"],
+    { encoding: "utf8", windowsHide: true }
+  );
+  assert(invHelp80.status === 0 && /--root/.test(invHelp80.stdout + invHelp80.stderr), "0.8.0 fill-inventory --domain design --help");
+
+  const q80 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(/Q_REPO_KIND/.test(q80) && /101-frontend-web/.test(q80), "0.8.0 questions Q_REPO_KIND + rule 101");
+
+  const morphReq80 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/morph-required.yaml"),
+    "utf8"
+  );
+  assert(/design:/.test(morphReq80) && /prototype:/.test(morphReq80), "0.8.0 morph-required frontend domains");
+
+  const sp80 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/harness-eng/score-policy.yaml.tmpl"),
+    "utf8"
+  );
+  assert(/design: 0\.8/.test(sp80) && /client-api: 0\.8/.test(sp80), "0.8.0 score-policy frontend targets");
+
+  assert(
+    /0\.7\.63 → 0\.8\.0/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.8.0 upgrade.md"
+  );
+  assert(
+    /0\.8\.0 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.8.0 VERIFY.md"
+  );
+  assert(
+    /\| 0\.8\.0 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")),
+    "0.8.0 CHANGELOG"
+  );
+  assert(logExists("0.8.0"), "0.8.0 _log note exists");
+
+  // 现行正文禁再以 17 号指称前端规则（历史小节/实证档案除外）
+  const ladder80 = fs.readFileSync(path.join(skillRoot, "modes/ladder.md"), "utf8");
+  assert(!/17-frontend-web/.test(ladder80), "0.8.0 ladder drops 17-frontend");
+  const rpDoc80 = fs.readFileSync(path.join(skillRoot, "modes/recommended-profile.md"), "utf8");
+  assert(!/\| `rule17` \|/.test(rpDoc80), "0.8.0 recommended-profile drops rule17 row");
+}
+
+// --- 0.8.1: pages/components/client-api 三域满配计分 ---
+{
+  const domYaml81 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domains.yaml"),
+    "utf8"
+  );
+  for (const d of ["pages", "components", "client-api"]) {
+    assert(
+      new RegExp(`${d}:[\\s\\S]{0,700}?optional: false`).test(domYaml81),
+      `0.8.1 ${d} optional flipped to false`
+    );
+    assert(
+      new RegExp(`inventory: fill-inventory\\.mjs --domain ${d}`).test(domYaml81),
+      `0.8.1 ${d} inventory CLI registered`
+    );
+  }
+  assert(!/索引壳/.test(domYaml81), "0.8.1 domains drops 索引壳 wording");
+
+  const packs81 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/domain-packs.yaml"),
+    "utf8"
+  );
+  for (const t of ["pages-asset-tmpl", "components-asset-tmpl", "client-api-asset-tmpl"]) {
+    assert(new RegExp(`id: ${t}`).test(packs81), `0.8.1 packs has ${t}`);
+  }
+
+  const morph81 = fs.readFileSync(
+    path.join(skillRoot, "templates/_meta/morph-required.yaml"),
+    "utf8"
+  );
+  for (const d of ["pages", "components", "client-api"]) {
+    assert(new RegExp(`^  ${d}:`, "m").test(morph81), `0.8.1 morph-required has ${d}`);
+  }
+  assert(/req-page-loc/.test(morph81) && /req-proto-map/.test(morph81), "0.8.1 pages chapters");
+  assert(/req-comp-loc/.test(morph81) && /req-token-dep/.test(morph81), "0.8.1 components chapters");
+  assert(/req-consume-table/.test(morph81) && /req-contract-link/.test(morph81), "0.8.1 client-api chapters");
+
+  for (const t of [
+    "templates/docs/pages/templates/page-asset-template.md",
+    "templates/docs/components/templates/component-asset-template.md",
+    "templates/docs/client-api/templates/client-api-asset-template.md",
+  ]) {
+    assert(fs.existsSync(path.join(skillRoot, t)), `0.8.1 truth template exists: ${t}`);
+  }
+  const caTmpl81 = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/client-api/templates/client-api-asset-template.md"),
+    "utf8"
+  );
+  assert(/态 A — fullstack/.test(caTmpl81) && /态 B — 纯前端/.test(caTmpl81), "0.8.1 client-api dual-state template");
+
+  for (const lib of ["inventory-pages", "inventory-components", "inventory-client-api"]) {
+    assert(
+      fs.existsSync(path.join(skillRoot, `scripts/lib/${lib}.mjs`)),
+      `0.8.1 ${lib} exists`
+    );
+  }
+  for (const d of ["pages", "components", "client-api"]) {
+    const h81 = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/fill-inventory.mjs"), "--domain", d, "--help"],
+      { encoding: "utf8", windowsHide: true }
+    );
+    assert(h81.status === 0 && /--root/.test(h81.stdout + h81.stderr), `0.8.1 fill-inventory --domain ${d} --help`);
+  }
+
+  const rp81 = fs.readFileSync(path.join(skillRoot, "modes/recommended-profile.md"), "utf8");
+  assert(
+    /design,prototype,pages,components,client-api/.test(rp81),
+    "0.8.1 recommended-profile frontend five domains"
+  );
+  const q81 = fs.readFileSync(path.join(skillRoot, "questions.yaml"), "utf8");
+  assert(
+    /value: design, label: design（设计系统）/.test(q81) &&
+      /value: client-api, label: client-api（契约消费层）/.test(q81),
+    "0.8.1 Q_CONTRACT frontend domain options"
+  );
+
+  for (const r of ["104-components", "105-pages", "106-client-api"]) {
+    const rTmpl = fs.readFileSync(
+      path.join(skillRoot, `templates/rules/${r}.mdc.tmpl`),
+      "utf8"
+    );
+    assert(/0\.8\.1 起计分/.test(rTmpl), `0.8.1 ${r} scored wording`);
+  }
+
+  assert(
+    /0\.8\.0 → 0\.8\.1/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")),
+    "0.8.1 upgrade.md"
+  );
+  assert(
+    /0\.8\.1 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")),
+    "0.8.1 VERIFY.md"
+  );
+  assert(
+    /\| 0\.8\.1 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")),
+    "0.8.1 CHANGELOG"
+  );
+  assert(logExists("0.8.1"), "0.8.1 _log note exists");
+}
+
+// --- 0.8.2: report 人话化 + 决策台总评模块 + 降噪（report_schema 0.4.2） ---
+{
+  const ui82 = buildReportUi({
+    overall: 72,
+    coverage: { percent: 55, covered: 55, code: 100 },
+    gold_ratio: 0.8,
+    formula_ceiling: 75,
+    template_completeness: { overall: 90 },
+    ai_coding_ready: { ok: false, blockers: ["coverage_ready"] },
+    skeleton_ready: { ok: true, ladder: "L4" },
+    coverage_ready: { ok: false },
+    semantic_ready: { ok: true },
+    fill_plan: { present: true, all_closed: false },
+    domains: { api: { score: 72 } },
+  });
+  assert(ui82.report_schema === "0.4.2", "0.8.2 ui report_schema 0.4.2");
+  assert(
+    ui82.composite_score &&
+      typeof ui82.composite_score.value === "number" &&
+      ui82.composite_score.label_zh === "总评分",
+    "0.8.2 composite labeled 总评分"
+  );
+  assert(
+    typeof ui82.composite_score.grade_zh === "string" &&
+      ["优秀", "良好", "合格", "待改进"].includes(ui82.composite_score.grade_zh),
+    "0.8.2 composite grade_zh band"
+  );
+  assert(
+    typeof ui82.composite_score.one_line_zh === "string" &&
+      /主要短板|先做/.test(ui82.composite_score.one_line_zh),
+    "0.8.2 composite one_line_zh"
+  );
+  assert(
+    Array.isArray(ui82.composite_score.parts) &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "文档质量分") &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "代码覆盖率") &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "验收通过率") &&
+      ui82.composite_score.parts.some((p) => p.label_zh === "开干清单"),
+    "0.8.2 composite parts plain labels"
+  );
+  assert(ui82.pipeline_progress.label_zh === "开干清单", "0.8.2 pipeline labeled 开干清单");
+  assert(
+    ui82.pipeline_progress.steps.some((s) => s.id === "semantic" && s.label_zh === "语义抽检"),
+    "0.8.2 pipeline step 语义抽检"
+  );
+  assert(
+    !JSON.stringify(ui82.morph_strip).includes("形态分") &&
+      ui82.morph_strip.some((x) => x.label_zh === "文档质量分"),
+    "0.8.2 morph_strip plain label"
+  );
+  assert(ui82.coverage_strip.some((x) => x.label_zh === "代码覆盖率"), "0.8.2 coverage strip plain");
+  assert(
+    ui82.glossary.some((g) => g.zh === "总评分" && /仅供参考/.test(g.tip)),
+    "0.8.2 glossary 总评分 entry"
+  );
+
+  const tmpl82 = fs.readFileSync(
+    path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
+    "utf8"
+  );
+  assert(/sec-banner/.test(tmpl82) && /banner-card/.test(tmpl82) && /总评分/.test(tmpl82), "0.8.2 top banner 总评分+结论");
+  const decision82 = tmpl82.slice(
+    tmpl82.indexOf('id="panel-decision"'),
+    tmpl82.indexOf('id="panel-diagnose"')
+  );
+  assert(
+    /ladder-axis/.test(decision82) && /id="pipe-axis"/.test(decision82),
+    "0.8.2 ladder+开干清单 in decision panel"
+  );
+  assert(!/verdict-hint/.test(tmpl82) && !/overall-line/.test(tmpl82), "0.8.2 10s结论精简");
+  assert(/stamp-in/.test(tmpl82) && /stamp-ring/.test(tmpl82), "0.8.2 印章入场动效");
+  assert(/grid-template-columns: 1fr 1fr/.test(tmpl82), "0.8.2 阶梯/清单双列并排");
+  assert(/countUp/.test(tmpl82) && /prefersReducedMotion/.test(tmpl82), "0.8.2 countUp + reduced-motion 门");
+  assert(/data-theme="dark"\] \.banner-score \.val/.test(tmpl82), "0.8.2 暗色表盘磷光");
+  assert(/开干清单/.test(tmpl82) && /落地检查台/.test(tmpl82), "0.8.2 tmpl plain labels");
+  assert(!/CYBERPUNK/.test(tmpl82) && !/Orbitron/.test(tmpl82), "0.8.2 tmpl de-cyberpunk");
+  assert(!/scan-shine/.test(tmpl82) && !/glitch-in/.test(tmpl82) && !/keyframes blink/.test(tmpl82), "0.8.2 tmpl noise removed");
+  assert(!/id="kpis"/.test(tmpl82), "0.8.2 kpi strip folded into 开干清单");
+  assert(/常见缺口分布（明细）/.test(tmpl82) && /低分原因 Top（明细）/.test(tmpl82), "0.8.3 Details folds");
+  assert(!/仪表参考分/.test(tmpl82) && !/综合评分/.test(tmpl82), "0.8.2 no stale composite name");
+  assert(/仅参考/.test(tmpl82), "0.8.2 仅参考 badge");
+
+  const reportUi82 = fs.readFileSync(
+    path.join(skillRoot, "scripts/lib/report-ui.mjs"),
+    "utf8"
+  );
+  assert(/REPORT_SCHEMA = "0\.4\.2"/.test(reportUi82), "0.8.2 report-ui REPORT_SCHEMA 0.4.2");
+  assert(/buildOverallOneLine/.test(reportUi82), "0.8.2 buildOverallOneLine helper");
+  assert(
+    /文档质量分/.test(reportUi82) && /验收通过率/.test(reportUi82) && /验收遗留/.test(reportUi82),
+    "0.8.2 report-ui plain vocabulary"
+  );
+  assert(
+    !/仪表参考分/.test(reportUi82) && !/金标达标率/.test(reportUi82.replace(/原「金标达标率」/g, "")),
+    "0.8.2 no stale composite/gold naming (alias mention ok)"
+  );
+
+  assert(/\| 0\.8\.2 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.2 CHANGELOG");
+  assert(/0\.8\.2 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.2 VERIFY.md");
+  assert(/0\.8\.1 → 0\.8\.2/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.2 upgrade.md");
+  assert(logExists("0.8.2"), "0.8.2 _log note exists");
+
+  // --- 0.8.3: 报告缺陷修复列车钉版（D8–D16） ---
+  assert(/\| 0\.8\.3 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.3 CHANGELOG");
+  assert(/0\.8\.3 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.3 VERIFY.md");
+  assert(/0\.8\.2 → 0\.8\.3/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.3 upgrade.md");
+  assert(logExists("0.8.3"), "0.8.3 _log note exists");
+  assert(
+    /当前 \*\*0\.8\.3\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
+    "0.8.3 SKILL.md version pin"
+  );
+
+  // --- 0.8.3 defect fixes (D8–D16; was workspace patch under 0.8.2) ---
+
+  // D12: migrate-docs idempotency — rerunning auto on a migrated page must be a
+  // full noop; a missed regex replace must report noop, never a fake "patched".
+  {
+    const d12Root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d12-"));
+    try {
+      const rwFile = path.join(d12Root, "docs", "api", "01-rw.md");
+      fs.mkdirSync(path.dirname(rwFile), { recursive: true });
+      fs.writeFileSync(
+        rwFile,
+        "# rw\n\n**接口地址**：`/old`\n\n**请求方式**：`GET`\n",
+        "utf8"
+      );
+      const rwOp = {
+        kind: "api_rewrite_path",
+        file: "docs/api/01-rw.md",
+        path: "/new",
+        method: "GET",
+      };
+      const rw1 = applyMigrateDocs(d12Root, { ops: [rwOp] });
+      assert(rw1.applied[0].action === "patched", "0.8.3 D12 rewrite hit → patched");
+      const rw2 = applyMigrateDocs(d12Root, { ops: [rwOp] });
+      assert(rw2.applied[0].action === "noop", "0.8.3 D12 rewrite rerun → noop");
+      const missFile = path.join(d12Root, "docs", "api", "02-miss.md");
+      fs.writeFileSync(missFile, "# miss\n\n无标签正文\n", "utf8");
+      const missOp = {
+        kind: "api_rewrite_path",
+        file: "docs/api/02-miss.md",
+        path: "/new",
+        method: "GET",
+      };
+      const miss = applyMigrateDocs(d12Root, { ops: [missOp] });
+      assert(
+        miss.applied[0].action === "noop",
+        "0.8.3 D12 rewrite miss → noop (not fake patched)"
+      );
+      assert(
+        fs.readFileSync(missFile, "utf8") === "# miss\n\n无标签正文\n",
+        "0.8.3 D12 rewrite miss leaves file untouched"
+      );
+      const epFile = path.join(d12Root, "docs", "api", "03-ep.md");
+      fs.writeFileSync(
+        epFile,
+        "# ep\n\n**接口地址**：`/api/known`\n\n**请求方式**：`POST`\n",
+        "utf8"
+      );
+      const epOp = {
+        kind: "api_append_endpoints",
+        file: "docs/api/03-ep.md",
+        endpoints: [
+          { method: "POST", path: "/api/known" },
+          { method: "GET", path: "/api/fresh" },
+        ],
+      };
+      const ep1 = applyMigrateDocs(d12Root, { ops: [epOp] });
+      assert(
+        ep1.applied[0].action === "appended" && ep1.applied[0].count === 1,
+        "0.8.3 D12 append dedupes known endpoint, appends only missing"
+      );
+      const ep2 = applyMigrateDocs(d12Root, { ops: [epOp] });
+      assert(ep2.applied[0].action === "noop", "0.8.3 D12 append rerun → noop");
+      const fOp = {
+        kind: "api_append_fields",
+        file: "docs/api/04-f.md",
+        fields: ["risk_task_id"],
+      };
+      const f1 = applyMigrateDocs(d12Root, { ops: [fOp] });
+      assert(
+        f1.applied[0].action === "patched" || f1.applied[0].action === "created",
+        "0.8.3 D12 fields first run writes"
+      );
+      const f2 = applyMigrateDocs(d12Root, { ops: [fOp] });
+      assert(f2.applied[0].action === "noop", "0.8.3 D12 fields rerun → noop");
+      const migSrc = fs.readFileSync(
+        path.join(skillRoot, "scripts", "lib", "migrate-docs.mjs"),
+        "utf8"
+      );
+      assert(
+        /resolved_from:\s*"existing-page"/.test(migSrc) &&
+          /resolved_from:\s*"new-page"/.test(migSrc),
+        "0.8.3 D12 jobs ops carry resolved_from audit field"
+      );
+    } finally {
+      fs.rmSync(d12Root, { recursive: true, force: true });
+    }
+  }
+
+  // D10: params.rule101 quick boolean wires rule-101 into the write set
+  // (true → thin, "full" → thick variant, off → excluded); CLI --rule101 works too.
+  {
+    const d10Root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d10-"));
+    const d10Params = path.join(d10Root, "params.json");
+    try {
+      const basePlaceholders = {
+        REPO_NAME: "fixture",
+        REPO_DESC: "test",
+        MODULE_DIRS: "app",
+        LADDER_TARGET: "L0",
+        DOMAINS_YAML: "[]",
+        AGENTS_VARIANT: "solo",
+        GLOB_PROFILE: "wide",
+        DATE: "2026-11-25",
+        LAST_MODE: "land",
+        AI_TOOLS_YAML: "[cursor]",
+        GLOB_FRONTEND: "apps/**/*.ts,apps/**/*.tsx,**/packages/**",
+        FRONTEND_DIR: "apps/web",
+        DB_MIGRATION_MODE: "manual_sql",
+      };
+      const runDryRender = (overlay, extraArgs = []) => {
+        fs.writeFileSync(
+          d10Params,
+          JSON.stringify({ placeholders: basePlaceholders, ...overlay }),
+          "utf8"
+        );
+        const r = spawnSync(
+          process.execPath,
+          [
+            path.join(skillRoot, "scripts", "render.mjs"),
+            "--root",
+            d10Root,
+            "--params",
+            d10Params,
+            "--dry-run",
+            ...extraArgs,
+          ],
+          { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 }
+        );
+        assert(
+          r.status === 0,
+          `0.8.3 D10 render dry-run exit 0 (stderr: ${(r.stderr || "").slice(-300)})`
+        );
+        return JSON.parse(r.stdout);
+      };
+      const targets101 = (out) =>
+        (out.results || []).filter((x) =>
+          /101-frontend-web\.mdc$/.test(String(x.target || ""))
+        );
+      const t0 = runDryRender({});
+      assert(targets101(t0).length === 0, "0.8.3 D10 baseline without rule101 → not in write set");
+      const t1 = runDryRender({ rule101: true });
+      assert(targets101(t1).length === 1, "0.8.3 D10 params.rule101=true → rule-101 in write set");
+      const t2 = runDryRender({ rule101: "full" });
+      assert(targets101(t2).length === 1, "0.8.3 D10 params.rule101=full → rule-101-full target in write set");
+      const t3 = runDryRender({ rule101: "off" });
+      assert(targets101(t3).length === 0, "0.8.3 D10 params.rule101=off → excluded from write set");
+      const t4 = runDryRender({}, ["--rule101"]);
+      assert(targets101(t4).length === 1, "0.8.3 D10 CLI --rule101 → rule-101 in write set");
+      const t5 = runDryRender({ include_optional: ["rule-101-full"], rule101: true });
+      assert(
+        targets101(t5).length === 1,
+        "0.8.3 D10 rule101=true overrides rule-101-full, single target (mutex safe)"
+      );
+      const h = spawnSync(
+        process.execPath,
+        [path.join(skillRoot, "scripts", "harness.mjs"), "--help"],
+        { encoding: "utf8" }
+      );
+      assert(
+        /--rule101\[=full\|off\]/.test(h.stdout || ""),
+        "0.8.3 D10 harness help documents --rule101"
+      );
+    } finally {
+      fs.rmSync(d10Root, { recursive: true, force: true });
+    }
+  }
+
+  // D8: top-bar coverage_percent must be gate-aligned (coverage_ready scope);
+  // the report's exact failure mode was "top bar 233/233=100% but gate NO".
+  {
+    // gate scope: API 100% but all_domains aggregate is 60 → bar shows 60.
+    const uiGate = buildReportUi({
+      overall: 60,
+      coverage: { percent: 100, ratio: 1, covered: 233, code: 233 },
+      coverage_ready: {
+        ok: false,
+        mode: "all_domains",
+        effective_ratio: 0.6,
+        all_percent: 60,
+        gaps: [{ domain: "pages", ratio: 0.063, target: 0.9 }],
+      },
+      coverage_by_domain: {
+        api: { ratio: 1, percent: 100 },
+        pages: { ratio: 0.063, percent: 6 },
+      },
+      ai_coding_ready: { ok: false, blockers: ["coverage_ready"] },
+      domains: {},
+    });
+    assert(
+      uiGate.coverage_percent === 60 && uiGate.coverage_percent_source === "gate",
+      `0.8.3 D8 gate scope → top-bar 60 (got ${uiGate.coverage_percent}/${uiGate.coverage_percent_source})`
+    );
+    assert(
+      (uiGate.coverage_strip || []).some((x) => x.value === "60%"),
+      "0.8.3 D8 coverage_strip shows gate-aligned 60%"
+    );
+    assert(
+      (uiGate.composite_score?.parts || []).some(
+        (p) => p.id === "coverage" && p.value === 60
+      ),
+      "0.8.3 D8 composite coverage part uses gate percent"
+    );
+    // legacy score JSON (no all_percent) → legacy fallback, still renders.
+    const uiLegacy = buildReportUi({
+      overall: 60,
+      coverage: { percent: 100, ratio: 1, covered: 233, code: 233 },
+      coverage_ready: { ok: true, mode: "overall", effective_ratio: 1 },
+      domains: {},
+    });
+    assert(
+      uiLegacy.coverage_percent === 100 && uiLegacy.coverage_percent_source === "legacy",
+      "0.8.3 D8 legacy JSON falls back to API-scoped percent"
+    );
+    // fill-score persists the mirror + diff field; report html history diff knows it.
+    const fsSrc = fs.readFileSync(path.join(skillRoot, "scripts", "fill-score.mjs"), "utf8");
+    assert(
+      /report\.coverage_all_percent = report\.coverage_ready\.all_percent/.test(fsSrc) &&
+        /all_percent:/.test(fsSrc),
+      "0.8.3 D8 fill-score persists coverage_ready.all_percent + top-level mirror"
+    );
+    assert(
+      /coverage_all_percent/.test(fsSrc) &&
+        /diff\.coverage_all_percent|coverage_all_percent:/.test(fsSrc),
+      "0.8.3 D8 fill-score diff carries coverage_all_percent"
+    );
+    const rhSrc = fs.readFileSync(path.join(skillRoot, "scripts", "fill-report-html.mjs"), "utf8");
+    assert(
+      /diff\.coverage_all_percent/.test(rhSrc),
+      "0.8.3 D8 report-html history diff computes coverage_all_percent"
+    );
+  }
+
+  // D15: --help must state the real migrate-docs default (厚仓 dry-run / 薄仓 auto),
+  // not the stale single "默认 auto" that misled thick-repo operators.
+  {
+    const h15 = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts", "harness.mjs"), "--help"],
+      { encoding: "utf8" }
+    );
+    assert(
+      /默认：厚仓 dry-run \/ 薄仓 auto/.test(h15.stdout || ""),
+      "0.8.3 D15 help states thick/thin migrate-docs default"
+    );
+    const hs15 = fs.readFileSync(path.join(skillRoot, "scripts", "harness.mjs"), "utf8");
+    assert(
+      !/（默认 auto）/.test(hs15),
+      "0.8.3 D15 no stale single 默认 auto in help text"
+    );
+  }
+
+  // D16: entry isolation — external HARNESS_ENG_ROOT is deleted at entry and
+  // restored at exit; mid-run env stays clean (unit tests manage their own).
+  {
+    assert(
+      process.env.HARNESS_ENG_ROOT === undefined,
+      "0.8.3 D16 mid-run env stays clean (entry isolation active)"
+    );
+    const scSrc = fs.readFileSync(path.join(skillRoot, "scripts", "selfcheck.mjs"), "utf8");
+    assert(
+      /外部 HARNESS_ENG_ROOT 已隔离/.test(scSrc) &&
+        /delete process\.env\.HARNESS_ENG_ROOT/.test(scSrc) &&
+        /__restoreExternalHarnessRoot/.test(scSrc),
+      "0.8.3 D16 selfcheck entry isolates + exit restores HARNESS_ENG_ROOT"
+    );
+  }
+
+  // D13: design-side archive_hint must not flag docs already inside
+  // docs/design/ (aligns with prototype); archive-docs.mjs gives the
+  // missing reversible archive CLI (move + ledger + restore).
+  {
+    const d13Root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d13-"));
+    try {
+      // (a) inventory-design: root-level doc → move hint; SSOT doc → already-in hint
+      fs.mkdirSync(path.join(d13Root, "docs", "design"), { recursive: true });
+      fs.writeFileSync(
+        path.join(d13Root, "DESIGN-notes.md"),
+        "# notes\n\ndesign system notes\n",
+        "utf8"
+      );
+      fs.writeFileSync(
+        path.join(d13Root, "docs", "design", "DESIGN-old.md"),
+        "# old\n\nalready in SSOT\n",
+        "utf8"
+      );
+      const inv = spawnSync(
+        process.execPath,
+        [
+          path.join(skillRoot, "scripts", "fill-inventory.mjs"),
+          "--domain",
+          "design",
+          "--root",
+          d13Root,
+        ],
+        { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 }
+      );
+      // exitFromReport may be non-zero for a token-less fixture (legit warning);
+      // what matters is the JSON assets payload on stdout.
+      let invJson = null;
+      try {
+        invJson = JSON.parse(inv.stdout);
+      } catch {
+        invJson = null;
+      }
+      assert(
+        invJson && Array.isArray(invJson.assets),
+        `0.8.3 D13 design inventory emits JSON assets (status=${inv.status})`
+      );
+      const hints = new Map(
+        (invJson.assets || [])
+          .filter((a) => a.kind === "design_doc")
+          .map((a) => [String(a.path).replace(/\\/g, "/"), String(a.archive_hint || "")])
+      );
+      assert(
+        /经确认归档 docs\/design\//.test(hints.get("DESIGN-notes.md") || ""),
+        "0.8.3 D13 root-level DESIGN doc still gets the move hint"
+      );
+      assert(
+        /已在 docs\/design\/ SSOT 树内/.test(hints.get("docs/design/DESIGN-old.md") || ""),
+        `0.8.3 D13 in-SSOT DESIGN doc not told to move again (got ${JSON.stringify(hints.get("docs/design/DESIGN-old.md"))})`
+      );
+      // (b) archive CLI round-trip: archive → already-in error → restore → idempotent error
+      const arch = archiveOne(d13Root, "DESIGN-notes.md", "design", "selfcheck");
+      assert(
+        arch.index === 1 &&
+          arch.to === "docs/design/DESIGN-notes.md" &&
+          fs.existsSync(path.join(d13Root, "docs", "design", "DESIGN-notes.md")) &&
+          !fs.existsSync(path.join(d13Root, "DESIGN-notes.md")),
+        "0.8.3 D13 archiveOne moves into SSOT + records ledger"
+      );
+      let alreadyErr = null;
+      try {
+        archiveOne(d13Root, "docs/design/DESIGN-notes.md", "design");
+      } catch (e) {
+        alreadyErr = e;
+      }
+      assert(
+        alreadyErr && /已在 docs\/design\/ SSOT 树内/.test(alreadyErr.message),
+        "0.8.3 D13 archiveOne refuses files already inside SSOT"
+      );
+      const rest = restoreOne(d13Root, 1);
+      assert(
+        !!rest.restored_at &&
+          fs.existsSync(path.join(d13Root, "DESIGN-notes.md")) &&
+          !fs.existsSync(path.join(d13Root, "docs", "design", "DESIGN-notes.md")),
+        "0.8.3 D13 restoreOne moves back to the original path"
+      );
+      let reErr = null;
+      try {
+        restoreOne(d13Root, 1);
+      } catch (e) {
+        reErr = e;
+      }
+      assert(
+        reErr && /already restored/.test(reErr.message),
+        "0.8.3 D13 restoreOne is idempotent-safe (already restored errors)"
+      );
+      // (c) CLI e2e: --archive + --list + --restore via the public surface
+      const cliArch = spawnSync(
+        process.execPath,
+        [
+          path.join(skillRoot, "scripts", "archive-docs.mjs"),
+          "--root",
+          d13Root,
+          "--archive",
+          "DESIGN-notes.md",
+          "--domain",
+          "design",
+        ],
+        { encoding: "utf8" }
+      );
+      assert(
+        cliArch.status === 0 && /docs\/design\/DESIGN-notes\.md/.test(cliArch.stdout || ""),
+        "0.8.3 D13 CLI --archive works"
+      );
+      const cliList = spawnSync(
+        process.execPath,
+        [
+          path.join(skillRoot, "scripts", "archive-docs.mjs"),
+          "--root",
+          d13Root,
+          "--list",
+        ],
+        { encoding: "utf8" }
+      );
+      assert(
+        cliList.status === 0 && /"index": 2/.test(cliList.stdout || ""),
+        "0.8.3 D13 CLI --list shows ledger entries"
+      );
+      const cliRest = spawnSync(
+        process.execPath,
+        [
+          path.join(skillRoot, "scripts", "archive-docs.mjs"),
+          "--root",
+          d13Root,
+          "--restore",
+          "2",
+        ],
+        { encoding: "utf8" }
+      );
+      assert(
+        cliRest.status === 0 && /"restored_at": "/.test(cliRest.stdout || ""),
+        "0.8.3 D13 CLI --restore reverses an archive"
+      );
+    } finally {
+      fs.rmSync(d13Root, { recursive: true, force: true });
+    }
+  }
+
+  // D9: junction 落点健康检查——挖空形态（空目标/死链）给出人话，健康路径安静通过。
+  {
+    const d9Dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d9-"));
+    try {
+      const healthy = path.join(d9Dir, "healthy");
+      fs.mkdirSync(healthy, { recursive: true });
+      fs.writeFileSync(path.join(healthy, "SKILL.md"), "# ok\n", "utf8");
+      assert(
+        __installSurfaceIssue(healthy) === null,
+        "0.8.3 D9 real dir passes the install-surface check"
+      );
+      const linkType = process.platform === "win32" ? "junction" : "dir";
+      const emptyTarget = path.join(d9Dir, "empty-target");
+      fs.mkdirSync(emptyTarget, { recursive: true });
+      const emptyLink = path.join(d9Dir, "empty-link");
+      fs.symlinkSync(emptyTarget, emptyLink, linkType);
+      const emptyIssue = __installSurfaceIssue(emptyLink);
+      assert(
+        emptyIssue && /空目录/.test(emptyIssue),
+        `0.8.3 D9 hollowed-out junction (empty target) gets a 人话 issue (got ${JSON.stringify(emptyIssue)})`
+      );
+      const deadLink = path.join(d9Dir, "dead-link");
+      fs.symlinkSync(path.join(d9Dir, "missing-target"), deadLink, linkType);
+      const deadIssue = __installSurfaceIssue(deadLink);
+      assert(
+        deadIssue && /目标不可达/.test(deadIssue),
+        `0.8.3 D9 dead junction gets an unreachable-target issue (got ${JSON.stringify(deadIssue)})`
+      );
+      const goodLink = path.join(d9Dir, "good-link");
+      fs.symlinkSync(healthy, goodLink, linkType);
+      assert(
+        __installSurfaceIssue(goodLink) === null,
+        "0.8.3 D9 healthy junction passes the install-surface check"
+      );
+    } finally {
+      fs.rmSync(d9Dir, { recursive: true, force: true });
+    }
+  }
+
+  // D14: changelog placeholder residue (PLACEHOLDER / literal v{ts} in table
+  // rows) surfaces as refresh warnings; prose examples are not flagged.
+  {
+    const d14Root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d14-"));
+    try {
+      fs.mkdirSync(path.join(d14Root, "docs", "api"), { recursive: true });
+      fs.mkdirSync(path.join(d14Root, "docs", "db"), { recursive: true });
+      fs.writeFileSync(
+        path.join(d14Root, "docs", "api", "01-residue.md"),
+        [
+          "# api",
+          "",
+          "| 版本 | 类型 | 内容 |",
+          "|---|---|---|",
+          "| PLACEHOLDER | 新增 | 骨架生成后掉线 |",
+          "",
+          "示例说明（非表行）：v{ts} 写法在正文中不报。",
+        ].join("\n"),
+        "utf8"
+      );
+      fs.writeFileSync(
+        path.join(d14Root, "docs", "api", "02-ts-residue.md"),
+        "# api2\n\n| v{ts} | 修复 | 掉线残留 |\n",
+        "utf8"
+      );
+      fs.writeFileSync(
+        path.join(d14Root, "docs", "db", "01-clean.md"),
+        "# db\n\n| v20261125-1015 | 新增 | 正常条目 |\n",
+        "utf8"
+      );
+      const warns = scanChangelogPlaceholders(d14Root, [
+        "api",
+        "db",
+        "redis",
+      ]);
+      const apiFiles = warns.filter((w) => w.file.startsWith("docs/api/"));
+      const dbFiles = warns.filter((w) => w.file.startsWith("docs/db/"));
+      assert(
+        apiFiles.length === 2,
+        `0.8.3 D14 PLACEHOLDER + v{ts} table rows flagged (got ${JSON.stringify(apiFiles.map((w) => w.file))})`
+      );
+      assert(
+        dbFiles.length === 0,
+        "0.8.3 D14 clean changelog rows not flagged"
+      );
+      assert(
+        warns.every((w) => w.kind === "changelog_placeholder" && w.line_snippet),
+        "0.8.3 D14 warnings carry kind + line_snippet"
+      );
+      const cleanWarns = scanChangelogPlaceholders(d14Root, ["db"]);
+      assert(
+        cleanWarns.length === 0,
+        "0.8.3 D14 clean-domain-only scan returns no warnings"
+      );
+      const rfSrc = fs.readFileSync(path.join(skillRoot, "scripts", "lib", "refresh.mjs"), "utf8");
+      assert(
+        /changelog_placeholder_warnings/.test(rfSrc) &&
+          /跑 scripts\/new_changelog_version\.py 补号/.test(rfSrc),
+        "0.8.3 D14 refresh report carries changelog_placeholder_warnings + fix hint"
+      );
+    } finally {
+      fs.rmSync(d14Root, { recursive: true, force: true });
+    }
+  }
+
+  // D11: legacy rule 17 coexisting with rule 101 after upgrade → warn only
+  // (never auto-delete; confirmation gate stays with the user).
+  {
+    const d11Root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d11-"));
+    try {
+      const rulesDir = path.join(d11Root, ".cursor", "rules");
+      fs.mkdirSync(rulesDir, { recursive: true });
+      // only 101 → no warning
+      fs.writeFileSync(path.join(rulesDir, "101-frontend-web.mdc"), "---\nglobs: apps/**\n---\n", "utf8");
+      let single = null;
+      const sink1 = { error: (m) => { single = m; } };
+      const r1 = warnRetiredRule17Coexistence(d11Root, sink1);
+      assert(
+        r1.warned === false && single === null,
+        "0.8.3 D11 101-only repo does not warn"
+      );
+      // both 17 + 101 → warn with the retire command, no deletion
+      fs.writeFileSync(path.join(rulesDir, "17-frontend-web.mdc"), "---\nglobs: src/**\n---\n", "utf8");
+      let both = null;
+      const sink2 = { error: (m) => { both = m; } };
+      const r2 = warnRetiredRule17Coexistence(d11Root, sink2);
+      assert(
+        r2.warned === true &&
+          /17-frontend-web\.mdc 与 101-frontend-web\.mdc 并存/.test(both || "") &&
+          /git mv \.cursor\/rules\/17-frontend-web\.mdc/.test(both || ""),
+        `0.8.3 D11 coexisting 17+101 warns with retire command (got ${JSON.stringify(both)})`
+      );
+      assert(
+        fs.existsSync(path.join(rulesDir, "17-frontend-web.mdc")),
+        "0.8.3 D11 warning never deletes the legacy rule"
+      );
+      // both harness.mjs upgrade tails call it
+      const hmSrc = fs.readFileSync(path.join(skillRoot, "scripts", "harness.mjs"), "utf8");
+      const calls = (hmSrc.match(/warnRetiredRule17Coexistence\(args\.root\)/g) || []).length;
+      assert(
+        calls === 2,
+        `0.8.3 D11 harness upgrade tails call the coexistence check in both branches (got ${calls})`
+      );
+    } finally {
+      fs.rmSync(d11Root, { recursive: true, force: true });
+    }
+  }
+}
+
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);
 if (fail.length) {
   console.error(`fail: ${fail.length}`);
   for (const m of fail) console.error(`  ✗ ${m}`);
+  __restoreExternalHarnessRoot();
   process.exit(1);
 }
 
+__restoreExternalHarnessRoot();
 console.log("selfcheck PASS");

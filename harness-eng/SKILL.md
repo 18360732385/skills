@@ -10,11 +10,13 @@ description: >-
 
 # harness-eng
 
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.8.3**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。报告对照 `skill_version` + `report_schema`（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+
 Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持久约束。  
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
 **Agent 热路径 · 读侧路由 SSOT**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。  
 拓扑：`modes/` 模式规格 · `fill/` 填充家族 · `host/` 多宿主。  
-一页纸：[QUICKSTART.md](QUICKSTART.md)。人读手册：[guide/使用手册.html](guide/使用手册.html) / [guide/使用手册.md](guide/使用手册.md)。施工产物默认 `docs/harness-eng/`。
+一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。人读手册：[guide/使用手册.html](guide/使用手册.html) / [guide/使用手册.md](guide/使用手册.md)。施工产物默认 `docs/harness-eng/`。
 
 **确认闸门 / 预授权**词表 SSOT：[write-plan.md](modes/write-plan.md)。  
 **全部推荐**协议 SSOT：[recommended-profile.md](modes/recommended-profile.md)。他处只指针。
@@ -104,5 +106,4 @@ legacy / 脚本：`fill-truths-auto`（**已归档**：仅脚本、对话不推�
 读侧路由 SSOT 在 [AGENT-INDEX.md](AGENT-INDEX.md)（必读≤8 + 按支按需表）。高频指针：写盘/预授权 → [write-plan.md](modes/write-plan.md)；**打分 / score-policy / 覆盖裁决** → [fill-score.md](fill/fill-score.md)；AI 工具面 / 多宿主 → [ai-tools.md](host/ai-tools.md) · [domain-extend.md](modes/domain-extend.md)。
 
 旁路脚本：`scripts/fill-calibrate-live.mjs`（live 校准）· `scripts/fill-report-html.mjs`（HTML 报告，score 后【推荐】），`--help` 自查。  
-写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill`；以 `--help` 为准；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。`backfill` 只出 WritePlan、不写盘（[backfill.md](modes/backfill.md)）；`refresh` 重建 inventory+score。  
-版本里程碑查 [CHANGELOG.md](CHANGELOG.md)，本页不铺版本行。
+写盘入口：**`scripts/harness.mjs`**（`--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill`；以 `--help` 为准；L5 拒直渲生成宿主路径；内部 `render.mjs` 勿当 Agent 主路径）。`backfill` 只出 WritePlan、不写盘（[backfill.md](modes/backfill.md)）；`refresh` 重建 inventory+score。

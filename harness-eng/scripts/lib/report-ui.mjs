@@ -1,9 +1,10 @@
 /**
  * Build human-facing `ui` projection from fill-score JSON.
- * 报告壳主键：`ui.report_schema`（现 0.4.1）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.4.2）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
+ * 0.4.2：术语人话化（形态分→文档质量分等）+ 决策台总评模块（grade_zh / one_line_zh / parts）；0.4.x 趋势仍可比。
  * 0.4.1：首屏 gap/headline 人话化；blockers_grouped；宿主三态 status_zh。
  * 0.4.0：go_nogo · tasks[] · diagnose.story · ladder_progress · host_surface；趋势 incomparable。
  * 0.3.0 / skill 0.7.0：形态满分 100（探针+深度）；ready.ok 对外废弃；morph_scale。
@@ -15,7 +16,7 @@ import {
   defaultContractDomains,
 } from "./domains.mjs";
 
-export const REPORT_SCHEMA = "0.4.1";
+export const REPORT_SCHEMA = "0.4.2";
 const LADDER_STEPS = ["L0", "L1", "L2", "L3", "L4", "L5"];
 
 /** 施工阶梯悬停说明（与 glossary 一句话对齐） */
@@ -91,10 +92,28 @@ const MISS_ZH = {
 
 const GLOSSARY = [
   {
+    id: "composite_score",
+    zh: "总评分",
+    en: "composite_score",
+    tip: "文档质量分35% · 代码覆盖率25% · 验收通过率20% · 开干清单20% 加权；仅供参考，能否开干只看「可 AI coding」。",
+  },
+  {
+    id: "pipeline_progress",
+    zh: "开干清单",
+    en: "pipeline_progress",
+    tip: "原「开干闸路径」：骨架 → 覆盖 → 补文档计划 → 批次完成 → 语义抽检 → 可 AI coding 六步。",
+  },
+  {
+    id: "host_surface",
+    zh: "落地检查",
+    en: "host_surface",
+    tip: "原「宿主台/宿主面」：各 AI 工具的规则/钩子/MCP 是否真配置进仓库；落地≠生效，不否决开干。",
+  },
+  {
     id: "gold_ratio",
-    zh: "金标达标率",
+    zh: "验收通过率",
     en: "gold_ratio",
-    tip: "acceptance-check 通过节占比；大仓看局部金标，不替代 ai_coding_ready。",
+    tip: "原「金标达标率」gold_ratio：acceptance-check 通过节占比；大仓看局部验收，不替代 ai_coding_ready。",
   },
   {
     id: "ai_coding_ready",
@@ -116,45 +135,45 @@ const GLOSSARY = [
   },
   {
     id: "semantic_ready",
-    zh: "语义抽检通过",
+    zh: "语义抽检",
     en: "semantic_ready",
-    tip: "启发式：通用逻辑模板、DTO 错挂等 miss 低于阈。",
+    tip: "原「语义闸」semantic_ready：启发式抽检——通用逻辑模板、DTO 错挂等 miss 低于阈。",
   },
   {
     id: "fill_plan",
-    zh: "填充计划",
+    zh: "补文档计划",
     en: "fill_plan",
-    tip: "docs/harness-eng/fill-plan.yaml：目标/批次/Done；早停看关闭率。",
+    tip: "原「填充计划」fill_plan：docs/harness-eng/fill-plan.yaml 目标/批次/Done；早停看关闭率。",
   },
   {
     id: "quality",
-    zh: "文档形态分",
+    zh: "文档质量分",
     en: "quality / overall",
-    tip: "真相写得像不像模板，不是业务正确性分数。",
+    tip: "原「形态分」quality/overall：真相写得像不像模板，不是业务正确性分数。",
   },
   {
     id: "coverage",
-    zh: "相对代码覆盖",
+    zh: "代码覆盖率",
     en: "coverage",
-    tip: "已文档化条目 ÷ inventory 扫到的条目。",
+    tip: "原「覆盖」coverage：已文档化条目 ÷ inventory 扫到的条目。",
   },
   {
     id: "formula_ceiling",
-    zh: "公式上限",
+    zh: "理论上限",
     en: "formula_ceiling",
-    tip: "按当前打分规则（0.7 探针+深度）理论顶≈100；贴顶后走 agents，勿空追。",
+    tip: "原「公式上限」formula_ceiling：当前打分规则理论顶≈100；到顶后走 agents，勿空追。",
   },
   {
     id: "domain_caps",
-    zh: "分域上限",
+    zh: "各域上限",
     en: "domain_caps",
-    tip: "各域形态分理论顶（0.7 起均为 100）。",
+    tip: "原「分域上限」domain_caps：各域文档质量分理论顶（0.7 起均为 100）。",
   },
   {
     id: "morph_scale",
-    zh: "形态尺度",
+    zh: "评分尺度",
     en: "morph_scale",
-    tip: "0.7=探针≈75+深度≈25；与 0.6.x 历史 overall 不可比。",
+    tip: "原「形态尺度」morph_scale：0.7=探针≈75+深度≈25；与 0.6.x 历史 overall 不可比。",
   },
   {
     id: "miss_histogram",
@@ -166,13 +185,13 @@ const GLOSSARY = [
     id: "next_shards",
     zh: "下一批补文档任务",
     en: "next_shards",
-    tip: "建议下一批要补的接口/模块分片。",
+    tip: "建议下一批要补的接口/模块任务。",
   },
   {
     id: "warning_shards",
-    zh: "acceptance 残项",
+    zh: "验收遗留项",
     en: "warning_shards",
-    tip: "金标批次已关后仍可能剩 acceptance warnings；用 fill-plan --residual 清。",
+    tip: "原「残差」warning_shards：验收批次已关后仍可能剩 acceptance warnings；用 fill-plan --residual 清。",
   },
   {
     id: "coverage_ready",
@@ -202,7 +221,7 @@ const GLOSSARY = [
     id: "template_completeness",
     zh: "模板完整度",
     en: "template_completeness",
-    tip: "真相是否含模板必填章（启发式）；贴 formula_ceiling 但此项低 → fill-truths-agents，勿空追 overall。",
+    tip: "真相是否含模板必填章（启发式）；贴理论上限但此项低 → fill-truths-agents，勿空追文档质量分。",
   },
 ];
 
@@ -275,15 +294,15 @@ function buildTasksEmptyHint(score) {
     ? score.ai_coding_ready.blockers
     : [];
   if (blockers.includes("fill_plan_missing")) {
-    return "暂无分片：先 fill-plan --init，再 inventory / agents。";
+    return "暂无任务：先 fill-plan --init，再 inventory / agents。";
   }
   if (score?.ready?.coverage_incomplete) {
-    return "暂无分片：先跑 fill-inventory.mjs --domain <域> 生成 inventory。";
+    return "暂无任务：先跑 fill-inventory.mjs --domain <域> 生成 inventory。";
   }
   if (hasResidualHint(score) && !(score?.next_shards?.length)) {
-    return "无 next_shards；有 acceptance 残项 → 见上方 residual 卡或 fill-plan --residual。";
+    return "无 next_shards；有验收遗留项 → 见上方遗留卡或 fill-plan --residual。";
   }
-  return "暂无分片任务。先完成 fill-plan / inventory 后再看本台。";
+  return "暂无任务。先完成 fill-plan / inventory 后再看本台。";
 }
 
 function domainStatus(score, d) {
@@ -294,19 +313,19 @@ function domainStatus(score, d) {
   const incomplete = score.ready?.coverage_incomplete && d === "api";
 
   if (incomplete || (cov && cov.ratio == null && !x)) {
-    return { tone: "warn", label: "缺清单或缺覆盖数据" };
+    return { tone: "warn", label: "缺代码清单或缺覆盖率数据" };
   }
   if (typeof q === "number" && typeof cap === "number" && q >= cap - 1) {
-    return { tone: "ok", label: "已贴形态上限" };
+    return { tone: "ok", label: "已达理论上限" };
   }
   if (cov && typeof cov.percent === "number" && cov.percent < 60) {
-    return { tone: "warn", label: "覆盖仍可补" };
+    return { tone: "warn", label: "代码覆盖率仍可补" };
   }
   if (x && typeof x.shells === "number" && x.shells > 0) {
     return { tone: "warn", label: `约 ${x.shells} 个空壳` };
   }
   if (typeof q === "number" && q >= 70) {
-    return { tone: "ok", label: "形态达标" };
+    return { tone: "ok", label: "文档质量达标" };
   }
   return { tone: "warn", label: "建议继续补文档" };
 }
@@ -330,12 +349,12 @@ export function humanizeBlockers(blockers) {
   const list = Array.isArray(blockers) ? blockers.map(String) : [];
   const buckets = {
     skeleton: { id: "skeleton", label_zh: "骨架未就绪", ids: [] },
-    coverage: { id: "coverage", label_zh: "覆盖未达标", ids: [] },
-    semantic: { id: "semantic", label_zh: "语义闸", ids: [] },
-    fill_plan: { id: "fill_plan", label_zh: "填充计划", ids: [] },
+    coverage: { id: "coverage", label_zh: "代码覆盖率未达标", ids: [] },
+    semantic: { id: "semantic", label_zh: "语义抽检", ids: [] },
+    fill_plan: { id: "fill_plan", label_zh: "补文档计划", ids: [] },
     drift: { id: "drift", label_zh: "文档漂移", ids: [] },
-    morph: { id: "morph", label_zh: "形态闸", ids: [] },
-    acceptance: { id: "acceptance", label_zh: "金标/acceptance", ids: [] },
+    morph: { id: "morph", label_zh: "文档质量未过线", ids: [] },
+    acceptance: { id: "acceptance", label_zh: "验收（金标）", ids: [] },
     other: { id: "other", label_zh: "其他缺口", ids: [] },
   };
 
@@ -390,17 +409,17 @@ export function humanizeBlockers(blockers) {
       const domTip = domains.length
         ? domains.map((d) => DOMAIN_SHORT_ZH[d] || d).join("/")
         : "";
-      label = domTip ? `形态闸未过（${domTip}）` : "形态闸未过";
+      label = domTip ? `文档质量未过线（${domTip}）` : "文档质量未过线";
     } else if (key === "acceptance") {
       const hasBlock = buck.ids.some((x) => x.startsWith("acceptance_blockers:"));
       const hasWarn = buck.ids.some((x) => x.startsWith("acceptance_warnings:"));
-      if (hasBlock && hasWarn) label = "acceptance 有 blocker/warning";
-      else if (hasBlock) label = "acceptance 有 blocker";
-      else if (hasWarn) label = "acceptance 有 warning";
-      else label = "金标未过";
+      if (hasBlock && hasWarn) label = "验收有 blocker/warning";
+      else if (hasBlock) label = "验收有 blocker";
+      else if (hasWarn) label = "验收有 warning";
+      else label = "验收未过";
     } else if (key === "fill_plan") {
-      if (buck.ids.includes("fill_plan_missing")) label = "缺 fill-plan";
-      else if (buck.ids.includes("fill_plan_open_batches")) label = "Plan 批次未关";
+      if (buck.ids.includes("fill_plan_missing")) label = "缺补文档计划";
+      else if (buck.ids.includes("fill_plan_open_batches")) label = "补文档计划批次未完成";
     } else if (key === "other" && count > 1) {
       label = `其他缺口×${count}`;
     }
@@ -420,7 +439,7 @@ export function humanizeBlockers(blockers) {
 function formatMorphFloorDetail(raw) {
   const body = String(raw).replace(/^morph_floor:/, "");
   const parts = body.split(",").map((p) => p.trim()).filter(Boolean);
-  if (!parts.length) return "形态分未过阈，按拖后腿域补模板章/列密度，再 fill-score。";
+  if (!parts.length) return "文档质量分未过线，按拖后腿域补模板章/列密度，再 fill-score。";
   const bits = parts.map((p) => {
     const [dom, rest] = p.split(":");
     const name = DOMAIN_SHORT_ZH[dom] || dom;
@@ -452,7 +471,7 @@ function buildHeadline(score) {
   );
   if (gateBlockers.length) {
     const { headline_bits } = humanizeBlockers(gateBlockers);
-    const tip = headline_bits.length ? headline_bits.join(" · ") : "形态/金标闸未过";
+    const tip = headline_bits.length ? headline_bits.join(" · ") : "文档质量/验收闸未过";
     const line = `开干=NO · ${tip}。见任务台对应 fill 建议。`;
     return line.length > 80 ? line.slice(0, 77) + "…" : line;
   }
@@ -461,7 +480,7 @@ function buildHeadline(score) {
     score.gold_ratio < 0.6 &&
     (score.acceptance?.blockers > 0 || score.acceptance?.status === 1)
   ) {
-    return "开干=NO · 金标达标率偏低且有 acceptance blocker；先按 truth-quality 精修。";
+    return "开干=NO · 验收通过率偏低且有验收阻断项；先按 truth-quality 精修。";
   }
   if (blockers.includes("fill_plan_missing")) {
     return "开干=NO：缺 fill-plan → 先 --init，再按批次 fill-truths-agents。";
@@ -470,13 +489,13 @@ function buildHeadline(score) {
     return `开干=NO：fill-plan 仍有开放批次≈${openBatches ?? "?"}；继续 agents。`;
   }
   if (blockers.includes("semantic_ready") || score.semantic_ready?.ok === false) {
-    return "开干=NO：语义闸未过（通用逻辑模板 / DTO 错挂）；按接口重填后再打分。";
+    return "开干=NO：语义抽检未过（通用逻辑模板 / DTO 错挂）；按接口重填后再打分。";
   }
   if (blockers.includes("skeleton_ready") || score.skeleton_ready?.ok === false) {
     return "开干=NO：骨架未就绪 → upgrade/resume 到 L4。";
   }
   if (blockers.includes("coverage_ready")) {
-    return "开干=NO：覆盖未达标（见分域 coverage_gaps）；按域补 inventory/批次。";
+    return "开干=NO：代码覆盖率未达标（见分域 coverage_gaps）；按域补 inventory/批次。";
   }
   if (blockers.length) {
     const { headline_bits } = humanizeBlockers(blockers);
@@ -488,7 +507,7 @@ function buildHeadline(score) {
     return "缺 inventory，覆盖率不完整；先 inventory → fill-plan → agents。";
   }
   if (atCeil) {
-    return "形态已贴公式上限，但开干未达；请关 Plan / 过语义 / 清 gate，勿空追 overall。";
+    return "文档质量分已达理论上限，但开干未达；请关 Plan / 过语义抽检 / 清闸门，勿空追分数。";
   }
   return "开干=NO；请按 fill-plan 批次 fill-truths-agents 后打分。";
 }
@@ -507,11 +526,11 @@ function buildVerdict(score) {
     ready_ok: false,
     ai_coding_ready: false,
     ready_label: "建议暂缓",
-    ready_hint: "先补填充计划并过语义闸；开干只看「可 AI coding」灯。",
+    ready_hint: "先推进补文档计划并过语义抽检；能否开干只看「可 AI coding」。",
   };
 }
 
-/** 决策台 KPI：开干闸 + 条件金标 + 四态只读灯（不替代开干） */
+/** 决策台 KPI：开干判定 + 条件验收 + 四态参考灯（不决定开干） */
 function buildDecisionKpis(score) {
   const aiOk = !!score.ai_coding_ready?.ok;
   const kpis = [
@@ -526,7 +545,7 @@ function buildDecisionKpis(score) {
   if (typeof score.gold_ratio === "number") {
     kpis.push({
       id: "gold_ratio",
-      label_zh: "金标达标率",
+      label_zh: "验收通过率",
       value: Math.round(score.gold_ratio * 1000) / 10 + "%",
       sub:
         score.gold_ratio < 0.6
@@ -540,15 +559,15 @@ function buildDecisionKpis(score) {
     id: "skeleton_ready",
     label_zh: "骨架",
     value: skOk === true ? "是" : skOk === false ? "否" : "—",
-    sub: "只读灯 · 非开干",
+    sub: "参考灯 · 不决定开干",
     tone: skOk === true ? "ok" : skOk === false ? "warn" : "",
   });
   const covOk = score.coverage_ready?.ok;
   kpis.push({
     id: "coverage_ready",
-    label_zh: "覆盖",
+    label_zh: "覆盖就绪",
     value: covOk === true ? "是" : covOk === false ? "否" : "—",
-    sub: "只读灯 · 非开干",
+    sub: "参考灯 · 不决定开干",
     tone: covOk === true ? "ok" : covOk === false ? "warn" : "",
   });
   const semOk = score.semantic_ready?.ok;
@@ -556,7 +575,7 @@ function buildDecisionKpis(score) {
     id: "semantic_ready",
     label_zh: "语义",
     value: semOk === true ? "是" : semOk === false ? "否" : "—",
-    sub: "只读灯 · 非开干",
+    sub: "参考灯 · 不决定开干",
     tone: semOk === true ? "ok" : semOk === false ? "warn" : "",
   });
   const plan = score.fill_plan;
@@ -581,7 +600,7 @@ function buildDecisionKpis(score) {
     id: "fill_plan",
     label_zh: "Plan",
     value: planVal,
-    sub: "只读灯 · 非开干",
+    sub: "参考灯 · 不决定开干",
     tone: planTone,
   });
   return kpis;
@@ -600,7 +619,7 @@ function buildMorphStrip(score) {
   if (overall != null) {
     items.push({
       id: "quality",
-      label_zh: "形态分",
+      label_zh: "文档质量分",
       value: overall + "%",
       sub: ceil != null ? "上限约 " + ceil + "%" : "像不像模板",
     });
@@ -608,9 +627,9 @@ function buildMorphStrip(score) {
   if (ceil != null) {
     items.push({
       id: "ceiling",
-      label_zh: "公式上限",
+      label_zh: "理论上限",
       value: "~" + ceil + "%",
-      sub: "贴顶后走 agents",
+      sub: "到顶后转 agents 精修",
     });
   }
   if (tc != null) {
@@ -624,21 +643,50 @@ function buildMorphStrip(score) {
   return items;
 }
 
+/**
+ * 0.8.2 patch (D8): gate-aligned coverage percent — prefers the same aggregate
+ * the coverage_ready gate uses (coverage_ready.all_percent), falls back to the
+ * legacy API-scoped coverage.percent for old reports.
+ */
+function gateCoveragePercent(score) {
+  const all = score?.coverage_ready?.all_percent;
+  if (typeof all === "number") return all;
+  const legacy = score?.coverage?.percent;
+  return typeof legacy === "number" ? legacy : null;
+}
+
+/** 0.8.2 patch (D8): true when gateCoveragePercent resolved from the gate scope. */
+function coverageIsGateScope(score) {
+  return typeof score?.coverage_ready?.all_percent === "number";
+}
+
+/** 0.8.2 patch (D8): gate-aligned ratio (effective_ratio first, legacy fallback). */
+function gateCoverageRatio(score) {
+  const er = score?.coverage_ready?.effective_ratio;
+  if (typeof er === "number") return er;
+  const r = score?.coverage?.ratio;
+  if (typeof r === "number") return r;
+  const p = score?.coverage?.percent;
+  return typeof p === "number" ? p / 100 : null;
+}
+
 /** 覆盖条：与形态条分列（三词名实） */
 function buildCoverageStrip(score) {
-  const covP =
-    typeof score.coverage?.percent === "number" ? score.coverage.percent : null;
+  const covP = gateCoveragePercent(score);
   if (covP == null) return [];
   const covered = score.coverage?.covered;
   const code = score.coverage?.code;
   const mode = score.coverage_ready?.mode || score.score_policy?.coverage_mode;
+  const scopeNote = coverageIsGateScope(score) ? "按分域口径" : "相对 inventory";
   return [
     {
       id: "coverage",
-      label_zh: "覆盖",
+      label_zh: "代码覆盖率",
       value: covP + "%",
       sub:
-        (covered != null && code != null ? covered + " / " + code : "相对 inventory") +
+        (covered != null && code != null && !coverageIsGateScope(score)
+          ? covered + " / " + code
+          : scopeNote) +
         (mode ? " · mode=" + mode : ""),
     },
   ];
@@ -651,12 +699,8 @@ function buildGapToReady(score) {
       ? score.ready.ready_coverage
       : 0.6;
   const overall = typeof score.overall === "number" ? score.overall : null;
-  const covRatio =
-    typeof score.coverage?.ratio === "number"
-      ? score.coverage.ratio
-      : typeof score.coverage?.percent === "number"
-        ? score.coverage.percent / 100
-        : null;
+  // 0.8.2 patch (D8): gap-to-ready must measure against the gate scope.
+  const covRatio = gateCoverageRatio(score);
 
   const qualityGap =
     overall == null ? null : Math.max(0, Math.round((rq - overall) * 10) / 10);
@@ -680,9 +724,9 @@ function buildGapToReady(score) {
     summary = "形态/覆盖已就绪；仍差语义或 fill-plan。";
   } else {
     const bits = [];
-    if (qualityGap != null && qualityGap > 0) bits.push(`形态分还差约 ${qualityGap} 分`);
+    if (qualityGap != null && qualityGap > 0) bits.push(`文档质量分还差约 ${qualityGap} 分`);
     if (coverageGapPct != null && coverageGapPct > 0) {
-      bits.push(`覆盖还差约 ${coverageGapPct}%`);
+      bits.push(`代码覆盖率还差约 ${coverageGapPct}%`);
     }
     summary = bits.length ? bits.join("；") : "尚未达标，请查看分域与缺口。";
   }
@@ -803,16 +847,16 @@ function buildNextActions(score, opts = {}) {
   if (aiOk) {
     actions.push({
       title: "可开始业务改动（人工审契约）",
-      detail: "ai_coding_ready=true。形态分贴顶时勿空追 overall（尺度 0.7）。",
+      detail: "ai_coding_ready=true。文档质量分到顶时勿空追分数（尺度 0.7）。",
       command: null,
     });
     if (hasResidualHint(score) && actions.length < 3) {
       const n = warningShardCount(score);
       actions.push({
-        title: "清 acceptance 残项（--residual）",
+        title: "清验收遗留项（--residual）",
         detail:
           (n ? `warning_shards×${n}。` : "") +
-          "开干 YES 仍建议清 warnings；见任务台 residual 卡。",
+          "开干 YES 仍建议清 warnings；见任务台验收遗留卡。",
         command: residualCommand(root, score),
       });
     }
@@ -852,10 +896,10 @@ function buildNextActions(score, opts = {}) {
   if (hasResidualHint(score) && actions.length < 3) {
     const n = warningShardCount(score);
     actions.push({
-      title: "清 acceptance 残项（--residual）",
+      title: "清验收遗留项（--residual）",
       detail:
         (n ? `warning_shards×${n}。` : "") +
-        "金标批次已关后清 warnings；再 fill-score。",
+        "验收批次已关后清 warnings；再 fill-score。",
       command: residualCommand(root, score),
     });
   }
@@ -864,7 +908,7 @@ function buildNextActions(score, opts = {}) {
     if (actions.length >= 3) break;
     if (String(b).startsWith("morph_floor:")) {
       actions.push({
-        title: "抬域形态分（过 morph_floor）",
+        title: "抬域文档质量分（过下限）",
         detail: formatMorphFloorDetail(b),
         command: null,
       });
@@ -877,7 +921,7 @@ function buildNextActions(score, opts = {}) {
     } else if (String(b).startsWith("acceptance_warnings:")) {
       if (!hasResidualHint(score) || warningShardCount(score) === 0) {
         actions.push({
-          title: "清 acceptance warnings（gold）",
+          title: "清验收 warnings（gold）",
           detail: `按 truth-quality 精修 ${accDomain} 真相至 warnings=0。`,
           command: `node scripts/acceptance-check.mjs --root ${R} --domain ${accDomain} --gold`,
         });
@@ -887,7 +931,7 @@ function buildNextActions(score, opts = {}) {
       String(b).startsWith("gold_ratio:")
     ) {
       actions.push({
-        title: "清 acceptance blocker / 抬金标",
+        title: "清验收 blocker / 抬验收通过率",
         detail: "对 .fill-work 或 SSOT 跑 acceptance-check，过闸再 merge。",
         command: `node scripts/acceptance-check.mjs --root ${R} --domain ${accDomain} --gold`,
       });
@@ -917,7 +961,7 @@ function buildNextActions(score, opts = {}) {
       )
       .join("、");
     actions.push({
-      title: "按分域补覆盖（all_domains）",
+      title: "按分域补代码覆盖率（all_domains）",
       detail: `coverage_gaps：${tip}。开 fill-plan 对应域批次 → agents。`,
       command: `node scripts/fill-plan.mjs --root ${R} --status`,
     });
@@ -931,28 +975,34 @@ function buildNextActions(score, opts = {}) {
     });
   } else if (
     blockers.includes("coverage_ready") ||
-    (score.coverage &&
-      typeof score.coverage.percent === "number" &&
-      score.coverage.percent < 90)
+    (typeof gateCoveragePercent(score) === "number" && gateCoveragePercent(score) < 90)
   ) {
     const shards = Array.isArray(score.next_shards) ? score.next_shards : [];
     const top = shards
       .slice(0, 3)
       .map((s) => `${s.package || s.id}≈${s.count || "?"}`)
       .join("、");
+    // 0.8.2 patch (D8): advice text uses the gate-aligned percent too.
+    const covP = gateCoveragePercent(score);
+    const legacyDetail =
+      score.coverage &&
+      typeof score.coverage.covered === "number" &&
+      typeof score.coverage.code === "number"
+        ? `（${score.coverage.covered}/${score.coverage.code}）`
+        : "";
     actions.push({
-      title: "按批次补覆盖（fill-truths-agents）",
+      title: "按批次补文档覆盖（fill-truths-agents）",
       detail: top
-        ? `覆盖约 ${score.coverage.percent}%（${score.coverage.covered}/${score.coverage.code}）。优先：${top}`
-        : `覆盖约 ${score.coverage?.percent ?? "?"}% 。走 agents，勿默认 auto 写 SSOT。`,
+        ? `覆盖约 ${covP ?? "?"}%${legacyDetail}。优先：${top}`
+        : `覆盖约 ${covP ?? "?"}% 。走 agents，勿默认 auto 写 SSOT。`,
       command: null,
     });
   }
 
   if (atCeil && actions.length < 3) {
     actions.push({
-      title: "不必再追更高形态总分",
-      detail: `overall≈${overall}% ，formula_ceiling≈${ceil}% 。看 ai_coding_ready / Plan。`,
+      title: "不必再追更高文档质量分",
+      detail: `文档质量分≈${overall}% ，理论上限≈${ceil}% 。看 ai_coding_ready / Plan。`,
       command: null,
     });
   }
@@ -1034,7 +1084,7 @@ function buildShards(score, opts = {}) {
       package: String(pkg),
       count,
       kind: "residual",
-      title: "残项 · " + (s.title || id),
+      title: "验收遗留 · " + (s.title || id),
       hint:
         count != null
           ? `warnings≈${count} · fill-plan --residual`
@@ -1168,7 +1218,7 @@ function buildTasks(score, shards, nextActions) {
     if (out.length >= 16) break;
     out.push({
       id: s.id || "shard-" + out.length,
-      title: s.title || s.id || "分片",
+      title: s.title || s.id || "任务",
       why: s.hint || s.package || "",
       priority: pri++,
       cmd: s.command || null,
@@ -1300,17 +1350,17 @@ function buildPipelineProgress(score) {
     },
     {
       id: "fill_plan",
-      label_zh: "填充计划",
+      label_zh: "补文档计划",
       done: !!plan.present,
     },
     {
       id: "batches",
-      label_zh: "批次关闭",
+      label_zh: "批次完成",
       done: !!plan.all_closed,
     },
     {
       id: "semantic",
-      label_zh: "语义闸",
+      label_zh: "语义抽检",
       done: !!score.semantic_ready?.ok,
     },
     {
@@ -1333,23 +1383,35 @@ function buildPipelineProgress(score) {
     current_id: current.id,
     current_label_zh: current.label_zh,
     ladder,
-    label_zh: "开干闸路径",
+    label_zh: "开干清单",
     steps,
     summary:
       percent >= 100
-        ? "开干闸路径已达可 AI coding"
-        : "开干闸路径：" + current.label_zh + "（" + doneCount + "/" + steps.length + "）",
+        ? "开干清单全部完成，可以 AI coding"
+        : "开干清单：" + current.label_zh + "（" + doneCount + "/" + steps.length + "）",
   };
 }
 
-/** 仪表参考分（≠开干）：形态×0.35 + 覆盖×0.25 + 金标×0.2 + 流水线×0.2；报告仅趋势台次区展示 */
+/** 总评分（≠开干）：文档质量分×0.35 + 代码覆盖率×0.25 + 验收×0.2 + 开干清单×0.2；决策台总评模块展示 */
 function buildCompositeScore(score, pipeline) {
   const overall = typeof score.overall === "number" ? score.overall : null;
-  const cov =
-    typeof score.coverage?.percent === "number" ? score.coverage.percent : null;
+  // 0.8.2 patch (D8): composite coverage part uses the gate-aligned percent.
+  const cov = gateCoveragePercent(score);
   const gold =
     typeof score.gold_ratio === "number" ? score.gold_ratio * 100 : null;
   const pipe = typeof pipeline?.percent === "number" ? pipeline.percent : null;
+
+  const parts = [];
+  if (overall != null) parts.push({ id: "overall", label_zh: "文档质量分", value: overall });
+  if (cov != null) parts.push({ id: "coverage", label_zh: "代码覆盖率", value: cov });
+  if (gold != null) {
+    parts.push({
+      id: "gold_ratio",
+      label_zh: "验收通过率",
+      value: Math.round(gold * 10) / 10,
+    });
+  }
+  if (pipe != null) parts.push({ id: "pipeline", label_zh: "开干清单", value: pipe });
 
   let weight = 0;
   let sum = 0;
@@ -1372,18 +1434,47 @@ function buildCompositeScore(score, pipeline) {
   if (weight <= 0) {
     return {
       value: null,
-      label_zh: "仪表参考分",
+      label_zh: "总评分",
+      grade_zh: null,
+      grade_tone: "",
+      parts,
       breakdown: { overall, coverage: cov, gold_ratio: gold, pipeline: pipe },
-      tip: "缺评分输入；≠开干",
+      one_line_zh: "",
+      tip: "缺评分输入；能否开干只看「可 AI coding」",
     };
   }
   const value = Math.round((sum / weight) * 10) / 10;
+  const grade_zh =
+    value >= 90 ? "优秀" : value >= 75 ? "良好" : value >= 60 ? "合格" : "待改进";
+  const grade_tone = value >= 75 ? "ok" : value >= 60 ? "warn" : "no";
   return {
     value,
-    label_zh: "仪表参考分",
+    label_zh: "总评分",
+    grade_zh,
+    grade_tone,
+    parts,
     breakdown: { overall, coverage: cov, gold_ratio: gold, pipeline: pipe },
-    tip: "形态35%·覆盖25%·金标20%·流水线20% — 仅参考，开干只看 ai_coding_ready",
+    one_line_zh: "",
+    tip: "文档质量分35% · 代码覆盖率25% · 验收通过率20% · 开干清单20% 加权——仅供参考；能否开干只看「可 AI coding」",
   };
+}
+
+/** 总评一句话：短板 + 先做什么（大白话；机器字段留在 breakdown / tech 弹层） */
+function buildOverallOneLine(composite, lagging, nextActions) {
+  if (composite.value == null) return "";
+  const bits = [];
+  if (lagging && (lagging.story || lagging.status_label)) {
+    bits.push(
+      "主要短板：" +
+        (lagging.name_zh || lagging.id) +
+        "（" +
+        (lagging.story || lagging.status_label) +
+        "）"
+    );
+  }
+  const first = (nextActions || []).find((a) => a && a.title);
+  if (first) bits.push("先做：" + first.title);
+  return bits.join("；");
 }
 
 /**
@@ -1414,6 +1505,7 @@ export function buildReportUi(score, opts = {}) {
   const composite_score = buildCompositeScore(s, pipeline_progress);
   const decision_kpis = buildDecisionKpis(s);
   const next_actions = buildNextActions(s, actionOpts);
+  composite_score.one_line_zh = buildOverallOneLine(composite_score, lagging, next_actions);
   const shards = buildShards(s, actionOpts);
   const go_nogo = buildGoNogo(s, next_actions);
   const tasks = buildTasks(s, shards, next_actions);
@@ -1446,7 +1538,11 @@ export function buildReportUi(score, opts = {}) {
         ? s.template_completeness.overall
         : null,
     template_completeness_by_domain: s.template_completeness?.by_domain || null,
-    coverage_percent: typeof cov.percent === "number" ? cov.percent : null,
+    // 0.8.2 patch (D8): top-bar coverage_percent is gate-aligned (all_domains
+    // aggregate via coverage_ready.all_percent); legacy JSON falls back to the
+    // API-scoped percent and is flagged with coverage_percent_source="legacy".
+    coverage_percent: gateCoveragePercent(s),
+    coverage_percent_source: coverageIsGateScope(s) ? "gate" : "legacy",
     coverage_covered: cov.covered ?? null,
     coverage_code: cov.code ?? null,
     ready_rule: s.ai_coding_ready?.rule || null,
@@ -1476,7 +1572,7 @@ export function buildReportUi(score, opts = {}) {
     glossary: GLOSSARY,
     suggest_raw: s.suggest_next || null,
     disclaimer:
-      "本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。开干只看 ai_coding_ready；宿主面不否决开干。",
+      "本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。开干只看 ai_coding_ready；落地检查不否决开干。",
   };
 }
 

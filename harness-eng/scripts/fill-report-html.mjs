@@ -11,7 +11,7 @@
  * Default --out: docs/harness-eng/report-latest.html
  * Also writes docs/harness-eng/score-latest.json (unless --no-score-copy)
  * Appends docs/harness-eng/score-history.jsonl (unless --no-history-append / dry-run)
- * Dashboard: 决策 / 诊断 / 任务 / 趋势 / 宿主台（ui via report-ui.mjs · report_schema 0.4.0）
+ * Dashboard: 决策 / 诊断 / 任务 / 趋势 / 落地检查台（ui via report-ui.mjs · report_schema 0.4.2）
  * Legacy: docs/agent-kb/harness-report-latest.html still readable by agents; new writes go to harness-eng/
  * Does not invent credentials. Write still requires Agent confirmation / preauth.
  */
@@ -95,7 +95,7 @@ Appends ${HISTORY_REL} unless --no-history-append or --dry-run.
 --history → docs/harness-eng/history/report-<timestamp>.html
 
 ui fields (0.4.0+): go_nogo, tasks, diagnose, ladder_progress, host_surface,
-pipeline_progress (开干闸路径), composite_score (参考分), decision_kpis, morph_strip,
+pipeline_progress (开干清单), composite_score (总评分·决策台), decision_kpis, morph_strip,
 show_domain_cards, gap_to_ready, domain_stories, miss_top, gaps_top,
 chart_domains, next_actions[].command, shards[].command, trend.incomparable,
 diff, run_timeline
@@ -192,6 +192,15 @@ function ensureDiffFromHistory(score, prior) {
     typeof last.coverage_percent === "number"
   ) {
     diff.coverage_percent = score.coverage.percent - last.coverage_percent;
+  }
+  // 0.8.2 patch (D8): gate-aligned coverage diff when both sides carry it
+  // (score.coverage_all_percent set since the 0.8.2 patch train).
+  if (
+    typeof score.coverage_all_percent === "number" &&
+    typeof last.coverage_all_percent === "number"
+  ) {
+    diff.coverage_all_percent =
+      score.coverage_all_percent - last.coverage_all_percent;
   }
   return { ...score, diff };
 }
@@ -296,7 +305,7 @@ function main() {
   } catch (e) {
     host_surface = {
       status: "absent",
-      summary_zh: "宿主面不可用",
+      summary_zh: "落地检查数据不可用",
       current: null,
       generated_at: null,
       stale: true,
@@ -424,7 +433,7 @@ function main() {
   if (ui.gap_to_ready?.summary) console.log(`距门槛: ${ui.gap_to_ready.summary}`);
   if (ui.diff?.summary) console.log(`相对上次: ${ui.diff.summary}`);
   if (ui.trend?.summary) console.log(`趋势: ${ui.trend.summary}`);
-  console.log("请将报告路径回复给用户，并用浏览器或 IDE 打开查看（决策/诊断/任务/趋势/宿主台）。");
+  console.log("请将报告路径回复给用户，并用浏览器或 IDE 打开查看（决策/诊断/任务/趋势/落地检查台）。");
 }
 
 try {

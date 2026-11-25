@@ -1,0 +1,38 @@
+---
+description: 页面路由同步规则（pages/views/routes；0.8.1 起计分）
+globs: {{GLOB_PAGES}}
+alwaysApply: false
+---
+
+# 页面路由同步规则（rule 105）
+
+## 权威来源说明
+
+- **页面真相（SSOT）**：`docs/pages/modules/` 下页面文档（路由 / 职责 / 原型映射）。
+- **索引（非 SSOT）**：`docs/pages/pages.md`。
+- 冲突裁决：`docs/pages/modules/*.md` > `pages.md`。
+- 页面与原型映射变更时联动 `docs/prototype`（rule 103）。
+
+## 文件命名（强制）
+
+- 页面真相：`NN-{page}.md`；新建取最大序号 +1，更新 `pages.md`、`modules/README.md`。（**文件名前缀**仍用递增号，不改为时间戳。）
+
+## 变更记录版本号（强制）
+
+- **新条目**版本号：`v{yyMMddHHmmssSSS}`（`Asia/Shanghai`）；发号：`python scripts/new_changelog_version.py --file <path>`。
+- **插入表顶**（倒序）；禁止再写 `vX.Y` 短号。存量 `vX.Y` **不改写**。
+
+## 强制检查流程
+
+1. 先读 `docs/pages/pages.md`。
+2. 再读 `docs/pages/modules/NN-{page}.md`。
+3. **禁止**只读索引就改页面职责 / 路由结构。
+
+## 变更触发条件
+
+新增/下线页面、路由结构、页面职责、页面↔原型映射变更 → 同步 pages 文档。
+
+## 门禁要求
+
+- 变更说明含「pages 文档已同步（modules/…）」
+- 相关翻车回流 `docs/agent-kb/pitfalls.md`

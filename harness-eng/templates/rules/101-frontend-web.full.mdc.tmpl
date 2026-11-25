@@ -1,0 +1,39 @@
+---
+description: 前端协作约束（契约同步 + 禁用清单 + 改动路径；无前端分册时的厚正文回退；rule 101，0.7.x 曾用 17 号）
+globs: {{GLOB_FRONTEND}}
+alwaysApply: false
+---
+
+# 前端协作规则（厚正文回退；契约域为 design/prototype/pages/components/client-api）
+
+触碰前端应用或共享包（`ui` / `theme` / `api-client` / `types` 等）时适用。  
+完整说明见前端分册 `{{FRONTEND_DIR}}/AGENTS.md`（若有）。
+
+## 动手前（读序 0.8.0）
+
+1. 先读前端 `README.md` 与 `docs/design` / `docs/prototype` 索引（若启用；改视觉先 `docs/design`，建页先 `docs/prototype`）
+2. 改 API 契约：先读 `docs/api` 索引 → 真相 → 前端 `types` → `api-client`（必要时 queries 层）
+3. 改业务语义：先读 `docs/func` 索引 → 真相
+4. 改视觉：只动主题 token / 设计文档（`docs/design` 真相）；勿引入新 UI 框架
+
+## 禁止
+
+- 重新引入仓内已禁用的 UI / 样式库（禁用清单以 `docs/design` 真相 / 前端分册为准）
+- 运行时加载外网字体（须自托管）
+- 改接口响应结构却不同步 `docs/api` + `types` + `api-client`
+- 在后端模块内放前端静态资源
+- 原型 HTML / 设计文档当运行代码 import（原型资产非运行时；归档 `docs/prototype/` / `docs/design/`）
+
+## 踩坑回流
+
+本轮修了前端侧智能体易再犯的错 → 在 `docs/agent-kb/pitfalls.md` 追加或核对 `Pn`（rule `19`）。
+
+## 改动路径速查
+
+| 需求 | 优先改动 |
+|---|---|
+| 新 REST 对接 | `types` → `api-client` → queries → 页面 |
+| 共享控件 / 壳 | `ui` 包（`docs/components` 真相若启用） |
+| 主题 / 样式 token | `theme` 包 + `docs/design` 真相（运行源码留原地） |
+| 登录 / Token | `auth` 包 |
+| 页面 / 路由职责 | `docs/pages` 真相若启用（rule `105`） |

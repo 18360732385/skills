@@ -1,7 +1,7 @@
 # {{MODULE_NAME}} — AI 协作规范（前端分册）
 
 > 本文件供 AI 在 `{{MODULE_DIR}}/` 下工作时遵循（**分册厚 SSOT**）。  
-> 仓库命令与红线见根 [AGENTS.md](../AGENTS.md)。与 path rule `17-frontend-web` 对齐；细则以本分册为准。
+> 仓库命令与红线见根 [AGENTS.md](../AGENTS.md)。与 path rule `101-frontend-web`（0.7.x 曾用 17 号）对齐；细则以本分册为准。
 
 ## 模块定位
 
@@ -14,9 +14,9 @@
 
 ## 动手前检查
 
-1. 读根 AGENTS 与本分册
-2. 改接口消费：先读 `docs/api` 索引 → 真相，再改 api-client / types / queries
-3. 触碰 UI：确认禁用清单（见下）仍有效
+1. 读根 AGENTS 与本分册；前端域启用时先读 `docs/design` / `docs/prototype` 索引
+2. 改接口消费：先读 `docs/api` 索引 → 真相，再改 api-client / types / queries（消费侧 `docs/client-api` 若启用）
+3. 触碰 UI：确认禁用清单（见下）仍有效；改视觉先对齐 `docs/design` 真相（rule `102`）
 4. 跑本模块 typecheck / test（见下）
 
 ## 常用命令
@@ -29,7 +29,7 @@ TODO(harness-eng): install / dev / test / typecheck（可复制命令）
 
 - **推荐栈**：TODO(harness-eng)
 - **禁用**（勿重新引入）：TODO(harness-eng): 列出已禁用的 UI / 样式库 / 模式
-- 完整禁用说明：本分册为准；rule `17` 只提醒路径
+- 完整禁用说明：本分册为准；rule `101` 只提醒路径（禁库盘点入 `docs/design` 真相）
 
 ## api-client / 契约同步
 

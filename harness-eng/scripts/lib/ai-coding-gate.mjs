@@ -295,8 +295,14 @@ export function evaluateAiCodingGate(report, policy, gold) {
     }
   }
   const domainKeys = Object.keys(report.domains || {});
-  if (domainKeys.length && !domainKeys.includes("frontend") && !domainKeys.includes("web")) {
-    checks.frontend_coverage = "not_measured";
+  // 0.8.0: 前端域实计——design/prototype（及后续 pages/components/client-api 精填）
+  // 计入 coverage_by_domain；启用即 measured，未启用沿用 not_measured 占位（防回归）
+  if (domainKeys.length) {
+    const FRONTEND_DOMAINS = ["design", "prototype", "pages", "components", "client-api"];
+    const feScored = domainKeys.filter((d) => FRONTEND_DOMAINS.includes(d));
+    checks.frontend_coverage = feScored.length
+      ? `measured_by_domain:${feScored.join(",")}`
+      : "not_measured";
   }
   if (typeof g.morph_floor === "number") {
     const floors = [];

@@ -12,6 +12,7 @@
  * 目录包 jobs/ 生成单文件汇总清单（code/名称/cron/默认参数/引用链接），不再逐任务拷贝真相。
  * SQL 目录包生成 [库名]-V{yyMMdd}-DDL|DML.sql（无库名回落 release-V*）与 sql/README.md（执行库 + 条数 + 提交人执行序）。
  * 定时任务 / 包内附属正文精简为摘要+链接。新骨架 10 章。保留：manual 段人工正文。
+ * 定版同时生成同名只读渲染 {identity}.html（release-note-html；--no-html 关闭；md 为 SSOT）。
  * Exit 0=ok 1=error
  */
 import { spawnSync } from "child_process";
@@ -26,6 +27,7 @@ import {
   releaseSummaryMarkdown,
   shortCommitHash,
   identityFromBranch,
+  identityFromReleaseDate,
   formatConfigAsYamlMd,
   loadModuleBlurb,
   bundleLinkCell,
@@ -47,6 +49,7 @@ import {
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
 import { runSqlBundle } from "./release-sql-bundle.mjs";
 import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
+import { writeNoteHtmlForNote, deriveHtmlPath } from "./release-note-html.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -72,6 +75,7 @@ function parseArgs(argv) {
     sqlAiJson: null,
     skipAiClassify: false,
     overdueWaived: null,
+    html: true,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -98,6 +102,8 @@ function parseArgs(argv) {
     else if (a === "--sql-ai-json") out.sqlAiJson = argv[++i] || null;
     else if (a === "--skip-ai-classify") out.skipAiClassify = true;
     else if (a === "--overdue-waived") out.overdueWaived = argv[++i] || null;
+    else if (a === "--no-html") out.html = false;
+    else if (a === "--html") out.html = true;
     else if (a === "--help" || a === "-h") out.help = true;
   }
   if (out.base && ["none", "无", "-", "null"].includes(String(out.base).toLowerCase())) {
@@ -776,7 +782,7 @@ export function inferServices(root, freeze, profile = DEFAULT_REPO_PROFILE) {
 
 /**
  * 规范化为目录包路径：docs/releases/{identity}/{identity}.md
- * 兼容旧路径 notes/{identity}/… 与扁平 .md；新写默认落在 releases 根下（无 notes/）。
+ * 0.4+ 不再读写 notes/；遇 notes/ → throw，请先 migrate-notes。
  */
 function resolveNoteBundle(root, noteArg, identityHint) {
   const abs = path.isAbsolute(noteArg) ? noteArg : path.join(root, noteArg);
@@ -784,20 +790,17 @@ function resolveNoteBundle(root, noteArg, identityHint) {
   let identity = identityHint;
   let notePath = abs;
 
-  const legacyBundle = rel.match(/docs\/releases\/notes\/([^/]+)\/([^/]+)\.md$/i);
-  const legacyFlat = rel.match(/docs\/releases\/notes\/([^/]+)\.md$/i);
+  if (/docs\/releases\/notes\//i.test(rel) || /(^|\/)notes\//i.test(rel)) {
+    throw new Error(
+      `0.4 已移除 notes/ 兼容读：${rel} — 先运行 node scripts/release.mjs migrate-notes -- --root . --apply`
+    );
+  }
+
   const rootBundle = rel.match(/docs\/releases\/([^/]+)\/([^/]+)\.md$/i);
   const rootFlat = rel.match(/docs\/releases\/([^/]+)\.md$/i);
   const reserved = new Set(["archive", "templates", "notes"]);
 
-  if (legacyBundle) {
-    identity = identity || legacyBundle[1];
-    notePath = abs;
-  } else if (legacyFlat) {
-    identity = identity || legacyFlat[1];
-    // 旧扁平 → 仍读/写到 legacy notes 目录包（不静默搬家）
-    notePath = path.join(root, "docs", "releases", "notes", identity, `${identity}.md`);
-  } else if (rootBundle && !reserved.has(rootBundle[1].toLowerCase())) {
+  if (rootBundle && !reserved.has(rootBundle[1].toLowerCase())) {
     identity = identity || rootBundle[1];
     notePath = abs;
   } else if (rootFlat && !reserved.has(rootFlat[1].replace(/\.md$/i, "").toLowerCase())) {
@@ -1109,15 +1112,40 @@ function main() {
   node release-note-merge.mjs --root <REPO> --note <path> --freeze-json <file> [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --base <ref> --head <ref> [--prior auto] [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
-Options: --identity --release-branch --baseline --release-date --owner --status --overdue-waived <书面说明> --no-bundle-files --no-update-index
+Options: --identity --release-branch --baseline --release-date --owner --status --overdue-waived <书面说明> --no-bundle-files --no-update-index --no-html
 默认回写 docs/releases/releases.md 进行中表（--no-update-index 关闭）
-Note path: docs/releases/{identity}/{identity}.md（进行中目录包直接挂在 releases/；兼容旧 notes/）
-identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 release-V260827；发版日期经 --release-date 传入
+Note path: docs/releases/{identity}/{identity}.md（无 notes/；旧仓先 migrate-notes）
+定版同时生成同名只读渲染 {identity}.html（--no-html 关闭；md 为 SSOT，勿手改 html）
+identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支名当路径
 --overdue-waived：freeze 报逾期硬闸（存在已定版且发版日期已过的进行中发版单）时的书面跳过说明；落盘 artifacts.json.overdueWaived{reason,date}`);
     process.exit(0);
   }
   if (!args.note) {
     console.error("require --note");
+    process.exit(1);
+  }
+
+  const noteBase = path.basename(String(args.note).replace(/[/\\]$/, "")).replace(/\.md$/i, "");
+  // 版本身份：显式 --identity → 发版日期导出 → note 路径 basename（兼容旧分支名路径）
+  const fromDate = args.releaseDate
+    ? identityFromReleaseDate(args.releaseDate)
+    : "";
+  const identityHint =
+    args.identity ||
+    fromDate ||
+    (noteBase &&
+    noteBase !== "notes" &&
+    noteBase !== "releases" &&
+    noteBase !== "."
+      ? noteBase
+      : args.releaseBranch
+        ? identityFromBranch(args.releaseBranch)
+        : "");
+  let bundle;
+  try {
+    bundle = resolveNoteBundle(args.root, args.note, identityHint);
+  } catch (e) {
+    console.error(String(e.message || e));
     process.exit(1);
   }
 
@@ -1129,15 +1157,6 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
     );
     process.exit(1);
   }
-  const noteBase = path.basename(String(args.note).replace(/[/\\]$/, "")).replace(/\.md$/i, "");
-  // 版本身份：显式 --identity 优先；note 路径占位于语义名（release/含日期前缀的旧约定）时按发版分支派生
-  const identityHint =
-    args.identity ||
-    (args.releaseBranch &&
-    (!noteBase || noteBase === "notes" || noteBase === "releases" || noteBase === ".")
-      ? identityFromBranch(args.releaseBranch)
-      : noteBase);
-  const bundle = resolveNoteBundle(args.root, args.note, identityHint);
   const notePath = bundle.notePath;
   const identity = bundle.identity;
 
@@ -1155,12 +1174,10 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
   };
 
   let text = readText(notePath);
-  // 兼容读旧扁平 / 旧 notes 目录包
+  // 兼容读同身份扁平路径（无 notes/）
   if (!text) {
     const candidates = [
       path.join(args.root, "docs", "releases", identity, `${identity}.md`),
-      path.join(args.root, "docs", "releases", "notes", identity, `${identity}.md`),
-      path.join(args.root, "docs", "releases", "notes", `${identity}.md`),
       path.join(args.root, "docs", "releases", `${identity}.md`),
     ];
     for (const c of candidates) {
@@ -1214,6 +1231,9 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
           indexDrift: freeze.indexDrift?.length || 0,
           indexUpdated: Boolean(indexPlan),
           indexRow,
+          html: args.html
+            ? path.relative(args.root, deriveHtmlPath(notePath)).replace(/\\/g, "/")
+            : null,
           bytes: Buffer.byteLength(text, "utf8"),
         },
         null,
@@ -1302,6 +1322,18 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
   fs.mkdirSync(path.dirname(notePath), { recursive: true });
   fs.writeFileSync(notePath, text, "utf8");
 
+  // 同名只读渲染 {identity}.html（约定⑩；失败不阻断定版，降级为 warning）
+  let htmlInfo = null;
+  if (args.html) {
+    try {
+      htmlInfo = writeNoteHtmlForNote({ notePath, root: args.root });
+    } catch (e) {
+      bundleResult.warnings.push(
+        `发版单 HTML 渲染失败（不影响 md / artifacts）：${e?.message || e}`
+      );
+    }
+  }
+
   let indexUpdated = false;
   let indexRow = null;
   if (indexPlan) {
@@ -1339,6 +1371,7 @@ identity 约定：发版分支名（去 origin/ 前缀、/ → -），如 releas
         indexDrift: freeze.indexDrift?.length || 0,
         indexUpdated,
         indexRow,
+        html: htmlInfo ? htmlInfo.rel : null,
       },
       null,
       2

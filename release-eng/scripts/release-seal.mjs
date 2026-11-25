@@ -6,7 +6,8 @@
  *   node release-seal.mjs --root <REPO> --note <path> --online-date YYYY-MM-DD --executor <name> [--force] [--dry-run|--apply]
  *
  * 流程：seal-check →（失败且无 --force 则 exit 2）→ dry-run 打印计划 / --apply：
- *   状态改已上线、填上线日期/执行人、git mv 整夹→archive/、releases.md 删行、ARCHIVE.md 追加。
+ *   状态改已上线、填上线日期/执行人、git mv 整夹→archive/、releases.md 删行、ARCHIVE.md 追加、
+ *   归档侧按已上线状态重渲同名 {identity}.html（md 为 SSOT）。
  * WritePlan 确认词仍由 Agent 把关；本脚本不解析确认词。
  * Exit 0=ok 2=seal-check fail 1=usage/io
  */
@@ -21,6 +22,7 @@ import {
   appendArchiveRow,
   gitEnvChina,
 } from "./release-format.mjs";
+import { writeNoteHtmlForNote } from "./release-note-html.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -84,11 +86,13 @@ function resolveBundle(root, noteArg) {
   const dir = path.dirname(notePath);
   const base = path.basename(notePath, ".md");
   let identity = base;
-  const m =
-    rel.match(/^docs\/releases\/notes\/([^/]+)\//i) ||
-    rel.match(/^docs\/releases\/([^/]+)\//i);
+  if (/docs\/releases\/notes\//i.test(rel) || /\/notes\//.test(rel)) {
+    throw new Error(
+      `0.4 已移除 notes/：请先 migrate-notes --apply，当前: ${rel}`
+    );
+  }
+  const m = rel.match(/^docs\/releases\/([^/]+)\//i);
   if (m) identity = m[1];
-  const fromNotes = /\/notes\//.test(rel);
   const srcDir = dir;
   const destDir = path.join(root, "docs", "releases", "archive", identity);
   const destNoteRel = `docs/releases/archive/${identity}/${identity}.md`;
@@ -99,7 +103,7 @@ function resolveBundle(root, noteArg) {
     srcDir,
     destDir,
     destNoteRel,
-    fromNotes,
+    fromNotes: false,
   };
 }
 
@@ -201,7 +205,13 @@ function main() {
     process.exit(2);
   }
 
-  const bundle = resolveBundle(args.root, args.note);
+  let bundle;
+  try {
+    bundle = resolveBundle(args.root, args.note);
+  } catch (e) {
+    console.error(String(e.message || e));
+    process.exit(1);
+  }
   const text = readText(bundle.notePath);
   if (!text) {
     console.error(`cannot read note ${bundle.relNote}`);
@@ -261,6 +271,18 @@ function main() {
 
   fs.writeFileSync(path.join(bundle.destDir, path.basename(bundle.notePath)), patched, "utf8");
 
+  // 归档侧按「已上线」重渲同名 html（失败不阻断归档）
+  let htmlRel = null;
+  try {
+    const htmlResult = writeNoteHtmlForNote({
+      notePath: path.join(bundle.destDir, path.basename(bundle.notePath)),
+      root: args.root,
+    });
+    htmlRel = htmlResult.rel;
+  } catch (e) {
+    console.error(`发版单 HTML 重渲失败（不影响归档）：${e?.message || e}`);
+  }
+
   const indexPath = path.join(args.root, "docs", "releases", "releases.md");
   const archivePath = path.join(args.root, "docs", "releases", "ARCHIVE.md");
   const indexCur = readText(indexPath);
@@ -294,6 +316,7 @@ function main() {
         mv,
         indexUpdated,
         archiveRow: arch.row,
+        html: htmlRel,
         sealCheckWarnings: check.result?.warnings || [],
       },
       null,

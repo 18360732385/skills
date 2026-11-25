@@ -1,10 +1,72 @@
-﻿# harness-eng 验收记录（0.7.63）
+﻿# harness-eng 验收记录（0.8.3）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.7.63**（superpowers 提交软提醒按本人主题；其下 0.7.62 变更记录/Pn 时间戳发号 · …）。报告对照 **`skill_version` + `report_schema`**（**0.4.1**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.3**（报告缺陷修复列车 D8–D16；其下 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.3 增量验收（报告缺陷修复列车）
+
+对照 0.8.1 升级实战报告（c-be-sms-ai R1–R10，2026-11-25 复核）后仍存在的 D8–D16 缺陷逐项修复并钉版；D1–D7、D17 已由 0.8.1 口径补丁覆盖，见 CHANGELOG「0.8.1（补丁，未改 manifest）」三条。
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.3` | 有 |
+| D12 migrate-docs 幂等：`api_rewrite_path` 未命中 → `noop`（不再假 patched）；`api_append_endpoints` 按 path+method 与文档去重；`api_append_fields` 字段级幂等（重复字段不追加）；jobs op 带 `resolved_from`（new-page/existing-page 审计） | 有 |
+| D10 rule101 接线：`params.rule101`（true/"full"/off）与 CLI `--rule101[=full|off]`（harness → render 转发）直接进写集；rule-101 与 rule-101-full 二选一互斥保持 | 有 |
+| D8 顶栏口径统一：`coverage_ready.all_percent` + 顶层 `coverage_all_percent`（与 `coverage_ready` 同源 `effective_ratio`）；报告顶栏/覆盖条/总评分分项/CLI 摘要/diff 优先门禁口径；legacy JSON 回退 API 口径并标 `coverage_percent_source=legacy` | 有 |
+| D15 `--migrate-docs` help 默认值改「厚仓 dry-run / 薄仓 auto」（与 `resolveMigrateDocsMode` 实际一致） | 有 |
+| D16 selfcheck 入口隔离外部 `HARNESS_ENG_ROOT`（保存→删→exit 恢复；mid-run env 干净；显式设置 env 的单元断言保持） | 有 |
+| D13 design 侧 archive_hint：已在 `docs/design/` 内的 `DESIGN*.md` 提示「已在 SSOT 树内」（对齐 prototype）；新增可逆归档 CLI `scripts/archive-docs.mjs`（`--archive`/`--restore`/`--list`；move + `archive-ledger.json` 账本，只搬不删） | 有 |
+| D9 selfcheck junction 落点健康检查：目标不可达 / 空目录 → 人话 fail fast（skills-manager 落点挖空防御；健康 junction 打印落点提示） | 有 |
+| D14 refresh 扫变更记录占位残留：后端五域表行 `PLACEHOLDER` / 字面 `v{ts}` → `changelog_placeholder_warnings` 非阻断提示（提示跑 `new_changelog_version.py` 补号） | 有 |
+| D11 upgrade 收尾检测 `.cursor/rules/17-frontend-web.mdc` 与 `101-frontend-web.mdc` 并存 → 警告 + 退役命令（`git mv` 到 `docs/harness-eng/archive/`）；不自动删 | 有 |
+| upgrade `## 0.8.2 → 0.8.3`；CHANGELOG 0.8.3；`sync-skill-version --check` ok | 有 |
+| selfcheck 0.8.3 块（D8–D16 定向断言）；`node scripts/selfcheck.mjs` exit 0 | 有 |
+
+## 0.8.2 增量验收（报告页人话化 · report_schema 0.4.2）
+
+| 项 | 期望 |
+|---|---|
+| 当时 `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.2` | 有 |
+| `report_schema` 0.4.1 → **0.4.2**（`report-ui.mjs` / `score-history.mjs` 同步；0.4.x 族内趋势仍可比） | 有 |
+| 首屏**总评横幅**：Verdict 徽章 + 总评分（0–100 + 等级：≥90 优秀 / ≥75 良好 / ≥60 合格 / <60 待改进）+ 一句话结论 + 分项 chips +「仅参考 · ≠开干」角标；施工阶梯并入决策台与开干清单同组；10 秒结论区精简（留「还差什么/建议升阶」） | 有 |
+| 术语人话化：形态分→文档质量分 · 覆盖→代码覆盖率 · 金标达标率→验收通过率 · 语义闸→语义抽检 · 填充计划→补文档计划 · 残差→验收遗留项 · 开干闸路径→开干清单 · 宿主台→落地检查台；原文术语进名词解释 tooltip | 有 |
+| 结构简化：KPI 灯组并入开干清单（决策台）；诊断台「常见缺口分布」「低分原因 Top」折叠；趋势台仪表参考分块移除 | 有 |
+| 降噪：标题去 `CYBERPUNK TERMINAL`；移除扫描线/网格纹理/glitch/闪烁光标/扫描光/Orbitron；深浅双主题保留 | 有 |
+| 视觉精修（工程图纸 × 夜班表盘）：亮色=草图纸墨绿油墨、暗色=蓝绿黑荧光表盘（摆脱纯黑+酸性绿）；Verdict 徽章改**验收印章**（双环边框+微旋转）；等宽字体仅限仪表读数；去 ALL-CAPS/辉光/`>` `▶` `//` 装饰；阶梯与清单之间加图纸虚线分隔；`:focus-visible` 全局焦点环 | 有 |
+| 横幅与动效：分数纵排仪表面 + 方格纸底纹 + 虚线中缝；「盖章时刻」入场编排（stamp-in / stamp-ring / countUp 600ms + setTimeout 兜底 / 进度条 rAF 生长）；阶梯/清单 1fr 1fr 双列并排（<860px 回落纵叠）；光效仅暗色（数字磷光 + 进度条辉光）；`--force-prefers-reduced-motion` 无头验证终值 69.2 落定 | 有 |
+| `selfcheck` 0.8.2 块（总评分 grade/one_line/parts + 模板降噪断言） | 有 |
+| upgrade `## 0.8.1 → 0.8.2`；CHANGELOG 0.8.2 | 有 |
+
+## 0.8.1 增量验收（三域满配计分）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.1` | 有 |
+| `lib/inventory-pages.mjs`（路由声明 + 目录约定）· `inventory-components.mjs`（组件盘点）· `inventory-client-api.mjs`（导出方法 + hooks 清单） | 有 |
+| `morph-required.yaml` 补 pages（4 章）/ components（5 章）/ client-api（3 章）必填 | 有 |
+| 三份真相模板落 `templates/docs/{pages,components,client-api}/templates/`；client-api **双态**（回链态 / 字段级态） | 有 |
+| `domains.yaml`：三域 `optional: false` + `inventory` CLI + `scan_fill_work`；hook_tip 升「0.8.1 起计分」 | 有 |
+| `recommended-profile`：frontend 仓五域全开；fullstack 后端域 ∪ 五域 | 有 |
+| upgrade `## 0.8.0 → 0.8.1`；CHANGELOG 0.8.1；仓库级 `_log` | 有 |
+| sms-ai-web 五域实仓烟测（`.fill-work`）结果随会话归档 | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
+
+## 0.8.0 增量验收（仓型三分 · 前端五域 · rules 101 族）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.0` | 有 |
+| `harness-meta` tmpl 含 `repo_kind` / `monorepo`；detect 规格含三分判定（不确定 → `Q_REPO_KIND`） | 有 |
+| `domains.yaml` 五域注册：`design`/`prototype`（计分）+ `pages`/`components`/`client-api`（索引壳）；`domain-packs.yaml` 五包 + rules 102–106 | 有 |
+| `lib/inventory-design.mjs` / `lib/inventory-prototype.mjs`；`fill-merge` 认 design/prototype 分支 | 有 |
+| rules 101 族：`101-frontend-web(.full)` 改名自 17；render 互斥 rule-101/rule-101-full；正文无残留现行 `17-frontend-web` id | 有 |
+| `recommended-profile` 按 `repo_kind` 分流 domains（frontend→前端域；fullstack→并集；backend→现状） | 有 |
+| `ai-coding-gate`：`frontend_coverage` 按 design/prototype 实计（不再恒 `not_measured`） | 有 |
+| upgrade `## 0.7.63 → 0.8.0`；CHANGELOG 0.8.0；仓库级 `_log` | 有 |
+| `node scripts/selfcheck.mjs` exit 0；`sync-skill-version --check` ok | 有 |
 
 ## 0.7.63 增量验收（superpowers 本人主题软提醒）
 
