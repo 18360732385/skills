@@ -249,12 +249,17 @@ export function main(argv = process.argv) {
     DESIGN_DOC_RE.test(fileRel) && /\.md$/i.test(name) ? { fileRel } : null
   );
   for (const d of designDocs) {
+    // 0.8.2 patch (D13): docs already inside the SSOT tree must not be told to
+    // "move to docs/design/" again (false positive; aligns with prototype).
+    const inSsot = String(d.fileRel).replace(/\\/g, "/").startsWith("docs/design/");
     assets.push({
       id: slugId(root, path.join(root, d.fileRel), "design_doc"),
       kind: "design_doc",
       runtime: false,
       path: d.fileRel,
-      archive_hint: "非运行文件：经确认归档 docs/design/（upgrade 提示 rename/move，不擅删）",
+      archive_hint: inSsot
+        ? "已在 docs/design/ SSOT 树内"
+        : "非运行文件：经确认归档 docs/design/（upgrade 提示 rename/move，不擅删）",
     });
   }
   progress.step(2, 4, `design_docs=${designDocs.length}`);

@@ -172,10 +172,234 @@ export function morphDepthBonus(raw, domain) {
     } else {
       issues.push("深度:标识/Cron 交叉不足");
     }
+
+  } else if (domain === "design") {
+    if (/留原地/.test(text) && /tokens?\.css|运行源码|packages\/theme/i.test(text)) {
+      parts.runtime_inplace = 8;
+      points += 8;
+    } else {
+      issues.push("深度:未标明 runtime 留原地");
+    }
+    if (hasRealPathRef(text)) {
+      parts.paths = 9;
+      points += 9;
+    } else {
+      issues.push("深度:缺真实资产路径");
+    }
+    const content = extractSection(text, /##\s*内容/) || "";
+    if (contentTableOrLong(content)) {
+      parts.content_substance = 8;
+      points += 8;
+    } else {
+      issues.push("深度:内容偏薄");
+    }
+  } else if (domain === "prototype") {
+    if (/docs\/ui-prototypes|docs\/prototype\//.test(text)) {
+      parts.root = 10;
+      points += 10;
+    } else {
+      issues.push("深度:缺原型真实路径");
+    }
+    if (/不搬|留原地|未(?:经确认)?.*归档|尚未.*归档|现行对照|docs\/pages/.test(text)) {
+      parts.archive_or_page = 8;
+      points += 8;
+    } else {
+      issues.push("深度:缺归档纪律或页面映射");
+    }
+    const ev = extractSection(text, /##\s*变体与演进/) || "";
+    if (variantSubstance(ev) || /已选|弃用|权威|优选|勿再作实现基准/.test(text)) {
+      parts.variants = 7;
+      points += 7;
+    } else {
+      issues.push("深度:变体与演进偏薄");
+    }
+  } else if (domain === "pages") {
+    if (hasRealPathRef(text) && /\.(?:tsx|jsx|vue)\b/.test(text)) {
+      parts.entry = 8;
+      points += 8;
+    } else {
+      issues.push("深度:缺真实入口文件");
+    }
+    if (/docs\/ui-prototypes|docs\/prototype|无原型|无独立原型/.test(text)) {
+      parts.proto = 9;
+      points += 9;
+    } else {
+      issues.push("深度:缺原型映射或「无原型」声明");
+    }
+    const duty = extractSection(text, /##\s*职责/) || "";
+    if (duty.replace(/TODO\(harness-eng\)/gi, "").trim().length > 80) {
+      parts.duty = 8;
+      points += 8;
+    } else {
+      issues.push("深度:职责偏薄");
+    }
+  } else if (domain === "components") {
+    if (hasRealPathRef(text)) {
+      parts.path = 10;
+      points += 10;
+    } else {
+      issues.push("深度:缺组件源码路径");
+    }
+    if (/props|变体/i.test(text) && text.replace(/TODO\(harness-eng\)/gi, "").length > 200) {
+      parts.props = 8;
+      points += 8;
+    } else {
+      issues.push("深度:缺 props/变体实质");
+    }
+    if (/token 依赖|docs\/design|无 token/.test(text)) {
+      parts.token = 7;
+      points += 7;
+    } else {
+      issues.push("深度:缺 token 依赖声明");
+    }
+  } else if (domain === "client-api") {
+    if (/契约回链/.test(text) && /docs\/api|外部仓|生成物/.test(text)) {
+      parts.link = 10;
+      points += 10;
+    } else {
+      issues.push("深度:缺契约回链（docs/api 或外部仓/生成物）");
+    }
+    if (
+      /态 A|fullstack|禁止[^\n]{0,20}字段|不展开[^\n]{0,20}字段/.test(text) ||
+      (/态 B|字段级/.test(text) && /\|\s*字段\s*\|/.test(text))
+    ) {
+      parts.dual = 8;
+      points += 8;
+    } else {
+      issues.push("深度:缺双态填写（态 A 回链或态 B 字段表）");
+    }
+    if (
+      /`?(?:GET|POST|PUT|PATCH|DELETE)`?\s+\//.test(text) ||
+      (/端点消费/.test(text) && /\/[A-Za-z][\w./-]*/.test(text))
+    ) {
+      parts.endpoints = 7;
+      points += 7;
+    } else {
+      issues.push("深度:消费表缺真实端点");
+    }
   }
+
 
   return { points: Math.min(25, points), issues, parts };
 }
+
+
+const FRONTEND_MORPH_DOMAINS = new Set([
+  "design",
+  "prototype",
+  "pages",
+  "components",
+  "client-api",
+]);
+
+export function isFrontendMorphDomain(domain) {
+  return FRONTEND_MORPH_DOMAINS.has(domain);
+}
+
+function extractSection(raw, headingRe) {
+  const flags = headingRe.flags.includes("i") ? "i" : "";
+  const re = new RegExp(headingRe.source + "\\s*\\n([\\s\\S]*?)(?=\\n##\\s+|$)", flags);
+  const m = String(raw || "").match(re);
+  return m ? m[1] : null;
+}
+
+function sectionFilled(raw, headingRe, minLen = 40) {
+  const body = extractSection(raw, headingRe);
+  if (body == null) return false;
+  const t = body.replace(/TODO\(harness-eng\)/gi, "").replace(/\s+/g, " ").trim();
+  return t.length >= minLen;
+}
+
+function hasRealPathRef(text) {
+  return (
+    /`[^`]*(?:\.(?:tsx?|jsx?|vue|css|md|html))[^`]*`/.test(text) ||
+    /`[^`]*(?:packages\/|apps\/|docs\/)[^`]+`/.test(text)
+  );
+}
+
+function contentTableOrLong(content) {
+  const body = String(content || "").replace(/TODO\(harness-eng\)/gi, "").trim();
+  const rows = (body.match(/^\|.*\|/gm) || []).filter(
+    (r) => !/^\|\s*:?-/.test(r) && !/^\|\s*-{2,}/.test(r)
+  );
+  return rows.length >= 2 || body.length > 120;
+}
+
+function variantSubstance(ev) {
+  const body = String(ev || "").replace(/TODO\(harness-eng\)/gi, "").trim();
+  const rows = (body.match(/^\|.*\|/gm) || []).filter(
+    (r) => !/^\|\s*:?-/.test(r) && !/^\|\s*-{2,}/.test(r)
+  );
+  return rows.length >= 2 || body.length > 80;
+}
+
+/**
+ * Probe-tier points for frontend domains (0.8.1 templates).
+ * Added on top of base 10 + optional length+5; caller caps at 75.
+ * Empty TODO(harness-eng) headings must not earn the bonus.
+ */
+export function frontendProbeBonus(raw, domain) {
+  const text = raw || "";
+  const issues = [];
+  let points = 0;
+  const add = (ok, pts, issue) => {
+    if (ok) points += pts;
+    else if (issue) issues.push(issue);
+  };
+
+  if (domain === "design") {
+    add(sectionFilled(text, /##\s*资产定位/, 40), 20, "缺填写的资产定位");
+    add(sectionFilled(text, /##\s*内容/, 40), 20, "缺填写的内容");
+    add(sectionFilled(text, /##\s*变更触发/, 20), 15, "缺变更触发");
+    add(/##\s*变更记录/.test(text) && /\|\s*v\d+/.test(text), 5, null);
+  } else if (domain === "prototype") {
+    add(sectionFilled(text, /##\s*资产定位/, 40), 20, "缺填写的资产定位");
+    add(sectionFilled(text, /##\s*变体与演进/, 40), 20, "缺填写的变体与演进");
+    add(sectionFilled(text, /##\s*变更触发/, 20), 15, "缺变更触发");
+    add(/##\s*变更记录/.test(text) && /\|\s*v\d+/.test(text), 5, null);
+  } else if (domain === "pages") {
+    add(
+      sectionFilled(text, /##\s*页面定位/, 40) && /路由|入口|\//.test(text),
+      20,
+      "缺填写的页面定位/路由/入口"
+    );
+    add(sectionFilled(text, /##\s*职责/, 40), 15, "缺填写的职责");
+    add(
+      /原型映射|docs\/prototype|docs\/ui-prototypes|无原型/.test(text) &&
+        sectionFilled(text, /##\s*原型映射/, 20),
+      15,
+      "缺原型映射"
+    );
+    add(sectionFilled(text, /##\s*变更触发/, 20), 10, "缺变更触发");
+  } else if (domain === "components") {
+    add(
+      sectionFilled(text, /##\s*组件定位/, 30) ||
+        (/归属/.test(text) && sectionFilled(text, /##\s*组件定位/, 20)),
+      15,
+      "缺组件定位/归属"
+    );
+    add(sectionFilled(text, /##\s*用途/, 30), 15, "缺用途");
+    add(/props|变体/i.test(text) && !/TODO\(harness-eng\).*props/i.test(text), 15, "缺 props/变体");
+    add(/token 依赖|docs\/design|无 token/.test(text), 10, "缺 token 依赖");
+    add(sectionFilled(text, /##\s*变更触发/, 20), 10, "缺变更触发");
+  } else if (domain === "client-api") {
+    add(
+      sectionFilled(text, /##\s*端点消费(?:表)?/, 40) &&
+        (/\|\s*/.test(text) || /createApiClient|createUse|api\./.test(text)),
+      25,
+      "缺填写的端点消费表"
+    );
+    add(
+      sectionFilled(text, /##\s*契约回链/, 40) && /docs\/api|外部仓|生成物/.test(text),
+      20,
+      "缺契约回链"
+    );
+    add(sectionFilled(text, /##\s*变更触发/, 20), 15, "缺变更触发");
+  }
+
+  return { points, issues };
+}
+
 
 /** Value-evidence quality (heading alone is probe-tier). */
 function redisValueEvidenceOk(raw) {

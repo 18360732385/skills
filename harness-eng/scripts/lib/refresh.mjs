@@ -10,6 +10,7 @@ import { spawnSync } from "child_process";
 import { findHarnessMetaFile } from "./harness-meta.mjs";
 import { parseMetaDomains, defaultContractDomains } from "./domains.mjs";
 import { readInventoryMeta } from "./inventory-meta.mjs";
+import { inventoryScanDomains } from "./frontend-coverage.mjs";
 import { parseFillScoreJson } from "./json-read.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -62,6 +63,54 @@ export function inventoryArgv(domain, absRoot, { noWrite = false } = {}) {
 }
 
 /**
+ * 0.8.2 patch (D14): scan backend truth docs for changelog placeholder residue.
+ * The v{ts} two-step ritual (write placeholder → run new_changelog_version.py)
+ * leaves `PLACEHOLDER` / literal `v{ts}` rows behind when a session drops; refresh
+ * surfaces them as non-blocking warnings instead of silently shipping stale rows.
+ * @param {string} root
+ * @param {string[]} domains backend contract domains to scan
+ * @returns {{ file: string, kind: string, line_snippet: string }[]}
+ */
+export function scanChangelogPlaceholders(root, domains) {
+  const absRoot = path.resolve(root);
+  const warns = [];
+  const doms = (Array.isArray(domains) ? domains : []).filter((d) =>
+    ["api", "db", "redis", "jobs", "func"].includes(d)
+  );
+  for (const d of doms) {
+    const dir = path.join(absRoot, "docs", d);
+    let files = [];
+    try {
+      files = fs.readdirSync(dir).filter((n) => n.endsWith(".md"));
+    } catch {
+      continue;
+    }
+    for (const name of files) {
+      let text = "";
+      try {
+        text = fs.readFileSync(path.join(dir, name), "utf8");
+      } catch {
+        continue;
+      }
+      const rel = `docs/${d}/${name}`;
+      // 只查表行（| 开头）：避免把正文/代码块里的示例文本误报
+      for (const line of text.split(/\r?\n/)) {
+        if (!/^\|/.test(line)) continue;
+        if (/PLACEHOLDER/i.test(line) || /v\{ts\}|P\{ts\}/.test(line)) {
+          warns.push({
+            file: rel,
+            kind: "changelog_placeholder",
+            line_snippet: line.trim().slice(0, 80),
+          });
+          break; // 每文件报一条，避免刷屏
+        }
+      }
+    }
+  }
+  return warns;
+}
+
+/**
  * @param {string} root
  * @param {{ write?: boolean, dryRun?: boolean }} [opts]
  * @returns {{ exitCode: number, report: object }}
@@ -73,9 +122,7 @@ export function runRefresh(root, opts = {}) {
   const steps = [];
   const domains = loadDomains(absRoot);
 
-  const inventoryDomains = domains.filter((d) =>
-    ["api", "func", "db", "redis", "jobs"].includes(d)
-  );
+  const inventoryDomains = inventoryScanDomains(domains);
 
   for (const d of inventoryDomains) {
     if (dryRun) {
@@ -159,6 +206,14 @@ export function runRefresh(root, opts = {}) {
       "覆盖/语义未就绪：检查 docs/harness-eng/fill-plan.yaml；必要时 fill-plan --init 或补开放批次后 fill-merge"
     );
   }
+  // 0.8.2 patch (D14): changelog placeholder residue is non-blocking, but visible.
+  const placeholderWarns = scanChangelogPlaceholders(absRoot, domains);
+  if (placeholderWarns.length) {
+    hints.push(
+      `变更记录有未分配版本号的占位残留（PLACEHOLDER / v{ts}，D14）：${placeholderWarns.length} 个文件；` +
+        `跑 scripts/new_changelog_version.py 补号或手工补齐后再提交`
+    );
+  }
 
   const exitCode = dryRun ? 0 : ready ? 0 : 2;
   return {
@@ -175,6 +230,8 @@ export function runRefresh(root, opts = {}) {
       steps,
       acceptance,
       hints,
+      // 0.8.2 patch (D14): residue list for report shells (non-blocking).
+      changelog_placeholder_warnings: placeholderWarns,
     },
   };
 }

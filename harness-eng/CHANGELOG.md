@@ -1,13 +1,17 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.8.2**。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.8.3**。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.3 | 2026-11-25 | 报告缺陷修复列车（0.8.1 升级实战报告复核后的 D8–D16 残留）：migrate-docs 幂等治理（`api_rewrite_path` 未命中→`noop` 不再假 patched · `api_append_endpoints` 按 path+method 去重 · `api_append_fields` 字段级幂等 · jobs op 带 `resolved_from` 审计）· `params.rule101` 快捷布尔 + CLI `--rule101[=full|off]` 直接进写集（101 互斥保持，不再必须 include_optional）· 顶栏 coverage 切门禁口径（`coverage_ready.all_percent` + 顶层 `coverage_all_percent` 镜像 + diff/报告壳/CLI 摘要同步，legacy JSON 回退并标 `coverage_percent_source`）· `--migrate-docs` help 默认值改「厚仓 dry-run / 薄仓 auto」· selfcheck 入口隔离外部 `HARNESS_ENG_ROOT`（保存→删→exit 恢复）· design 侧 archive_hint 不再提示已在 `docs/design/` 内的文件（对齐 prototype）· 新增可逆归档 CLI `scripts/archive-docs.mjs`（--archive/--restore/--list；move+账本，不删文件）· selfcheck junction 落点健康检查（skills-manager 挖空形态人话 fail fast）· refresh 扫变更记录占位残留（表行 PLACEHOLDER / 字面 `v{ts}` → 非阻断 `changelog_placeholder_warnings`）· upgrade 收尾检测旧 rule 17 与 101 并存（只警告 + 退役命令，不自动删） |
 | 0.8.2 | 2026-11-25 | 报告页人话化（report_schema 0.4.2）：术语大白话（形态分→文档质量分 · 金标达标率→验收通过率 · 语义闸→语义抽检 · 残差→验收遗留项 · 宿主台→落地检查台）· **首屏总评横幅**（Verdict 徽章 + 总评分 0–100 + 等级 + 一句话结论 + 分项；沿用原仪表参考分公式；替代原施工阶梯位）· 施工阶梯并入决策台与开干清单同组 · 10 秒结论区精简 · 开干清单收编进决策台（KPI 灯组并入）· 诊断台缺口/低分明细折叠 · 赛博朋克装饰降噪（扫描线/glitch/Orbitron 移除）· 趋势台参考分块移除 · 视觉精修：工程图纸/夜班表盘双主题色板 · 验收印章式 Verdict 徽章 · 等宽字体仅作仪表读数 · 去 ALL-CAPS/辉光/箭头装饰 · 横幅分数纵排仪表面 + 方格纸底纹 · 「盖章时刻」入场编排（印章缩压/冲击环/分数滚动/进度条生长，reduced-motion 全闸）· 阶梯/清单宽屏双列并排 · 暗色表盘磷光微光 |
 | 0.8.1 | 2026-11-24 | pages/components/client-api 三域满配：路由/组件/契约消费层 inventory 扫描器 · morph 必填章 + 真相模板（client-api 双态）· `optional:false` 翻位计分 · 推荐包五域全开 |
+| 0.8.1（补丁，未改 manifest） | 2026-11-25 | 前端五域 `fill-score`/`morph-depth` 按模板实填计分（空 TODO 不加分）；`acceptance-check` 增加 design/prototype/pages/components/client-api 检查器，已知域不再回落 `checkApiFile` |
+| 0.8.1（补丁，未改 manifest） | 2026-11-25 | 官方 `coverage_by_domain` 纳入前端五域（域级已文档化口径，同时暴露 truths/assets）；func inventory 仅跳过顶层 Java enum / `/enums/`（如 HealthComponent，不误伤含内部 enum 的 Service）；db entity-only 告警保持 exit 2 |
+| 0.8.1（补丁，未改 manifest） | 2026-11-25 | 覆盖/漂移口径：func 按 inventory 类名反引号计覆盖（不再把 `## 1.` 当服务）；redis 不提升 ThreadLocal/CONTEXT_KEY；API 路径识别 `*`/`**`；inventory-db 支持 CHANGE/RENAME COLUMN |
 | 0.8.0 | 2026-11-24 | 仓型三分 `repo_kind`（frontend\|backend\|fullstack + monorepo）· 前端五域 `design/prototype/pages/components/client-api`（0.8.0 起 design·prototype 进计分，其余索引壳 0.8.1+ 升严）· 前端 rules **101 族**（17→101 迁移 + 102–106 随域包）· 非运行设计文档/原型经确认归档仓根 `docs/<domain>/` |
 | 0.7.63 | 2026-11-10 | sms-ai 回流：superpowers 提交软提醒按本人进行中主题（README 用户列）交给 AI 判定收口 |
 | 0.7.62 | 2026-11-10 | sms-ai 回流：变更记录 `v{ts}` + pitfalls `P{ts}` 时间戳发号（双轨倒序置顶；NN/Gn 不动） |

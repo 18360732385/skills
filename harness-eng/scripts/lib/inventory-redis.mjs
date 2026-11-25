@@ -103,11 +103,14 @@ function guessSourceRoots(root) {
 }
 
 /** Promote likely Redis key constants even when defining file has no RedisTemplate. */
-function shouldPromoteRedis(k) {
+export function shouldPromoteRedis(k) {
   if (!k || isNoisePattern(k.pattern)) return false;
   const pat = k.pattern || "";
   const ev = k.evidence || "";
   const note = k.note || "";
+  // Reactor Context / ThreadLocal accessors are not Redis keys (0.8.1 patch).
+  // CONTEXT_KEY + "sms-ai:..." previously matched const *KEY + .java# and was promoted.
+  if (/ThreadLocalAccessor|ThreadLocal|#CONTEXT_KEY/i.test(ev + " " + note)) return false;
   if (/^SMS:/i.test(pat)) return true;
   if (/^(captcha_codes:|ctr_sys_dict:|enable_sys_dict:|login_tokens:|rate_limit:|repeat_submit:)/i.test(pat))
     return true;

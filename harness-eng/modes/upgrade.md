@@ -80,6 +80,16 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.2 → 0.8.3 迁移要点
+
+1. **meta**：`skill_version` → `0.8.3`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳；顶栏 coverage 改读门禁口径字段，旧 JSON 回退）
+3. **重跑打分/报告**（拿门禁口径覆盖率）：`node scripts/fill-score.mjs --root <TARGET> --json --output docs/harness-eng/score-latest.json` → `node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json`
+4. **upgrade 收尾**：若 `.cursor/rules/17-frontend-web.mdc` 与 `101-frontend-web.mdc` 并存，会警告 + 给出退役命令（**不自动删**；经确认后 `git mv` 到 `docs/harness-eng/archive/`）
+5. **可选**：非运行设计/原型归档用新 CLI `node scripts/archive-docs.mjs --root <TARGET> --archive <relPath> [--domain design|prototype]`（可 `--restore`）；变更记录占位残留由 refresh 非阻断提示
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.3`）后再 sync
+7. **勿盲跑**：`migrate-docs=auto` 虽已幂等治理，厚仓默认仍 dry-run；解禁前先看 `docs/harness-eng/migrate-docs-report.json`
+
 ## 0.8.1 → 0.8.2 迁移要点
 
 1. **meta**：`skill_version` → `0.8.2`

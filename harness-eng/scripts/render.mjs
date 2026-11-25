@@ -238,7 +238,7 @@ Public entry:
 }
 
 function parseArgs(argv) {
-  const out = { dryRun: false, root: null, params: null, manifest: null, backup: false, help: false };
+  const out = { dryRun: false, root: null, params: null, manifest: null, backup: false, help: false, rule101: undefined };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--dry-run") out.dryRun = true;
@@ -246,6 +246,15 @@ function parseArgs(argv) {
     else if (a === "--root") out.root = argv[++i];
     else if (a === "--params") out.params = argv[++i];
     else if (a === "--manifest") out.manifest = argv[++i];
+    else if (a === "--rule101" || a.startsWith("--rule101=")) {
+      // 0.8.2 patch (D10): --rule101[=full|off] → params.rule101 quick boolean.
+      let v = "true";
+      if (a.startsWith("--rule101=")) v = a.slice("--rule101=".length) || "true";
+      if (v === "true" || v === "on") out.rule101 = true;
+      else if (v === "full") out.rule101 = "full";
+      else if (v === "off" || v === "false" || v === "none") out.rule101 = "off";
+      else throw new Error(`Unknown --rule101 value: ${v} (use full|off)`);
+    }
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -288,6 +297,24 @@ function assertRule101Mutex(includeOptional) {
   if (set.has("rule-17")) set.add("rule-101");
   if (set.has("rule-17-full")) set.add("rule-101-full");
   return set;
+}
+
+/**
+ * 0.8.2 patch (D10): params.rule101 quick boolean — true|"true"|"on" → rule-101,
+ * "full" → rule-101-full, false|"off"|"none" → explicit exclusion.
+ * Mutates the set in place; caller re-asserts the 101 mutex afterwards.
+ */
+function applyRule101Param(set, flag) {
+  if (flag === true || flag === "true" || flag === "on") {
+    set.delete("rule-101-full");
+    set.add("rule-101");
+  } else if (flag === "full" || flag === "rule-101-full") {
+    set.delete("rule-101");
+    set.add("rule-101-full");
+  } else if (flag === false || flag === "off" || flag === "none") {
+    set.delete("rule-101");
+    set.delete("rule-101-full");
+  }
 }
 
 /** Scan Maven <module> entries from root pom.xml (fs only, UTF-8). */
@@ -967,9 +994,13 @@ function expandFromManifest(manifestPath, params, root) {
   );
   const mcpEngines = resolveMcpEngines(params);
   const variant = params.agents_variant || "solo";
-  const includeOptional = assertRule101Mutex(
-    new Set(normalizeIncludeOptional(params.include_optional))
+  const includeOptional = new Set(
+    normalizeIncludeOptional(params.include_optional)
   );
+  // 0.8.2 patch (D10): params.rule101 boolean wires rule-101 into the write
+  // set without spelling include_optional; mutex still enforced.
+  applyRule101Param(includeOptional, params.rule101);
+  assertRule101Mutex(includeOptional);
   let moduleDirs = params.module_dirs || [];
   if (params.all_modules === true || params.all_modules === "true") {
     const scanned = scanPomModules(root);
@@ -1876,6 +1907,8 @@ function main() {
   }
   const root = path.resolve(args.root);
   const params = readJsonFile(path.resolve(args.params), "--params");
+  // 0.8.2 patch (D10): CLI --rule101 quick boolean overlays params.rule101.
+  if (args.rule101 !== undefined) params.rule101 = args.rule101;
   let placeholders = ensureYamlListPlaceholders(params, params.placeholders || {});
   placeholders = ensureStandardPlaceholders(params, placeholders, root);
   // 0.5.0 计算占位：agent_config / pitfalls 词表 / hooks 家族（params.placeholders 优先）

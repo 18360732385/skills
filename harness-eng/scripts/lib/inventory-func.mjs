@@ -120,7 +120,21 @@ function discoverModuleDirs(root) {
  * 0.7.37 FS-func-noise: do not treat every .java under /service/ as a service
  * (entity/mapper/job under …/service/entity would inflate coverage).
  * Keep *Service(Impl)?.java / *Component.java; drop entity|mapper|job|properties paths.
+ * 0.8.1 patch: also drop /enums/ paths and Java enum types (e.g. HealthComponent).
+ * Filename *Component.java is meant for Spring @Component classes, not enum identifiers.
  */
+export function isJavaTypeEnum(text) {
+  const stripped = String(text || "")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, "");
+  // Only the first type in the compilation unit. Nested `private enum Foo`
+  // inside a *Service.java class must not drop the service.
+  const m = stripped.match(
+    /\b(?:public|protected|private)\s+(class|interface|enum|record)\s+\w+/
+  );
+  return !!(m && m[1] === "enum");
+}
+
 function walkServices(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
   for (const name of fs.readdirSync(dir)) {
@@ -135,7 +149,7 @@ function walkServices(dir, acc = []) {
     if (st.isDirectory()) walkServices(p, acc);
     else if (/\.java$/i.test(name)) {
       const norm = p.replace(/\\/g, "/");
-      if (/\/(entity|mapper|job|jobs|properties)\//i.test(norm)) continue;
+      if (/\/(entity|mapper|job|jobs|properties|enums)\//i.test(norm)) continue;
       if (/Service(Impl)?\.java$/i.test(name) || /Component\.java$/i.test(name)) {
         acc.push(p);
       }
@@ -191,6 +205,7 @@ function scanModule(root, mod) {
   const services = [];
   for (const f of files) {
     const text = fs.readFileSync(f, "utf8");
+    if (isJavaTypeEnum(text)) continue;
     const rel = path.relative(root, f).replace(/\\/g, "/");
     services.push(parseClass(text, rel));
   }

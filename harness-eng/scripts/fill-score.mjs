@@ -54,6 +54,12 @@ import {
   parseMetaDomains,
   knownContractDomainIds,
 } from "./lib/domains.mjs";
+import {
+  FRONTEND_COVERAGE_DOMAINS,
+  inventoryScanDomains,
+  countFrontendTruths,
+  buildFrontendCoverageRow,
+} from "./lib/frontend-coverage.mjs";
 import { loadMorphRequired } from "./lib/morph-required.mjs";
 import { findHarnessMetaFile, findMcpUsageGuideFile } from "./lib/harness-meta.mjs";
 import {
@@ -64,6 +70,8 @@ import {
   morphDepthBonus,
   hasRedisValueHeading,
   hasRedisTtlHeading,
+  isFrontendMorphDomain,
+  frontendProbeBonus,
 } from "./lib/morph-depth.mjs";
 import {
   migrateScorePolicyFile,
@@ -516,6 +524,12 @@ function scoreTruthFile(text, domain, policy) {
   }
 
   if (raw.length > 800) score += 5;
+  // 0.8.1 frontend: probe bonuses from filled template sections (not empty TODOs)
+  if (isFrontendMorphDomain(domain)) {
+    const fb = frontendProbeBonus(raw, domain);
+    score += fb.points;
+    issues.push(...fb.issues);
+  }
   // soft-cap probe before depth (still allow TODO penalties below)
   const probeScore = Math.min(75, Math.max(0, score));
   const depth = morphDepthBonus(raw, domain);
@@ -604,6 +618,19 @@ function coverageFromInventory(inventory, docEndpointCount) {
   return out;
 }
 
+
+/** Inventory service class names mentioned with backticks in func truth docs. */
+export function collectFuncDocClassNames(root) {
+  const names = new Set();
+  for (const f of domainFiles(root, "func")) {
+    const text = fs.readFileSync(f, "utf8");
+    for (const m of text.matchAll(/`([A-Za-z_][A-Za-z0-9_]*)`/g)) {
+      names.add(m[1]);
+    }
+  }
+  return names;
+}
+
 /** Count documented Redis key patterns in truth md (table rows with `pattern`). */
 function countDocumentedRedisKeys(root) {
   let n = 0;
@@ -664,17 +691,26 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
   const funcInv = liveInv.func || loadDomainInventory(root, "func");
   if (funcInv && Array.isArray(funcInv.modules)) {
     // 0.7.26 FC-7: coverage by Service, not modules
-    const code = funcInv.modules.reduce(
-      (n, m) => n + (m.services?.length || m.stats?.services || 0),
-      0
-    );
-    let docs = 0;
-    for (const f of domainFiles(root, "func")) {
-      const text = fs.readFileSync(f, "utf8");
-      const secs = text.match(/^##\s+\d+\.\s+/gm);
-      if (secs) docs += secs.length;
-      else if (/Service|服务/.test(text)) docs += 1;
+    const invNames = [];
+    for (const m of funcInv.modules) {
+      for (const s of m.services || []) {
+        const n = s.class || s.name || s.className;
+        if (n) invNames.push(String(n));
+      }
     }
+    const code =
+      invNames.length ||
+      funcInv.modules.reduce(
+        (n, m) => n + (m.services?.length || m.stats?.services || 0),
+        0
+      );
+    // 0.8.1 patch: inventory class documented as a backtick identifier
+    // (typically ### 服务类, also prose). Do not count `## 1. 业务背景` headings
+    // as services — that locked mature tables-based docs at ~29%.
+    const docNames = collectFuncDocClassNames(root);
+    const docs = invNames.length
+      ? invNames.filter((n) => docNames.has(n)).length
+      : 0;
     const ratio = code ? docs / code : 0;
     out.func = {
       covered: docs,
@@ -709,6 +745,16 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
       out.jobs.anomaly = "covered_gt_code";
       out.jobs.raw_ratio = Math.round(ratio * 1000) / 1000;
     }
+  }
+  // 0.8.1 patch: official coverage_by_domain includes frontend five domains.
+  // Gate ratio is domain-documented (truth pages exist), not 1:1 inventory assets.
+  for (const d of FRONTEND_COVERAGE_DOMAINS) {
+    const feInv = liveInv[d] || loadDomainInventory(root, d);
+    if (!feInv || !Array.isArray(feInv.assets)) continue;
+    const assets = feInv.assets.length || feInv.stats?.assets || 0;
+    const truths = countFrontendTruths(domainFiles(root, d));
+    const row = buildFrontendCoverageRow({ truths, assets });
+    if (row) out[d] = row;
   }
   return out;
 }
@@ -1290,7 +1336,7 @@ function main() {
   const inventoryMode = args.inventoryMode || "live";
   report.inventory_mode = inventoryMode;
   for (const d of domains) {
-    if (!["api", "func", "db", "redis", "jobs"].includes(d)) continue;
+    if (!inventoryScanDomains([d]).length) continue;
     const diskInv =
       d === "api" ? inventory || loadDomainInventory(root, "api") : loadDomainInventory(root, d);
     if (diskInv && isInventoryStale(diskInv, currentHead)) {
@@ -1344,7 +1390,7 @@ function main() {
 
   // 0.7.31 ID-4: scored contract domains missing inventory must not stay ready
   // 0.7.37 cold-fill-work: liveInventoryScan success counts (disk .fill-work may be gitignored)
-  const INV_SCORE_DOMAINS = new Set(["api", "func", "db", "redis", "jobs"]);
+  const INV_SCORE_DOMAINS = new Set(inventoryScanDomains(domains));
   function liveInventorySatisfies(domain, live) {
     if (!live || typeof live !== "object") return false;
     if (domain === "api") return Array.isArray(live.endpoints);
@@ -1352,6 +1398,7 @@ function main() {
     if (domain === "db") return Array.isArray(live.tables);
     if (domain === "redis") return Array.isArray(live.keys);
     if (domain === "jobs") return Array.isArray(live.tasks);
+    if (FRONTEND_COVERAGE_DOMAINS.includes(domain)) return Array.isArray(live.assets);
     return false;
   }
   const missingInventoryDomains = [];
@@ -1508,7 +1555,16 @@ function main() {
     targets: covEval.targets,
     gaps: covEval.gaps,
     effective_ratio: covEval.effective_ratio,
+    // 0.8.2 patch (D8): gate-aligned aggregate percent — same source as the
+    // coverage_ready gate, so top bars can never disagree with the gate again.
+    all_percent:
+      typeof covEval.effective_ratio === "number"
+        ? Math.round(covEval.effective_ratio * 100)
+        : null,
   };
+  // 0.8.2 patch (D8): top-level convenience mirror for report shells (legacy
+  // score.coverage.percent stays API-scoped for per-domain detail).
+  report.coverage_all_percent = report.coverage_ready.all_percent;
   report.score_policy = {
     present: !!scorePolicy.present,
     path: scorePolicy.path || null,
@@ -1550,6 +1606,13 @@ function main() {
       coverage_percent:
         report.coverage && prev.coverage
           ? report.coverage.percent - (prev.coverage.percent || 0)
+          : null,
+      // 0.8.2 patch (D8): gate-aligned coverage diff (legacy coverage_percent kept
+      // for old report shells).
+      coverage_all_percent:
+        typeof report.coverage_all_percent === "number" &&
+        typeof prev.coverage_all_percent === "number"
+          ? report.coverage_all_percent - prev.coverage_all_percent
           : null,
     };
   }
@@ -1669,10 +1732,16 @@ function main() {
   console.log("");
   console.log(`—— fill-score 摘要（focus=${report.focus}）——`);
   if (report.focus !== "morph") {
+    // 0.8.2 patch (D8): CLI summary shows the gate-aligned coverage percent
+    // (falls back to legacy API-scoped percent on old runs).
+    const covShown =
+      typeof report.coverage_all_percent === "number"
+        ? report.coverage_all_percent + "%"
+        : report.coverage
+          ? report.coverage.percent + "%"
+          : "—";
     console.log(
-      `开干: ${report.ai_coding_ready.ok ? "YES" : "NO"}  覆盖: ${
-        report.coverage ? report.coverage.percent + "%" : "—"
-      }(mode=${covEval.mode})  gate_profile: ${
+      `开干: ${report.ai_coding_ready.ok ? "YES" : "NO"}  覆盖: ${covShown}(mode=${covEval.mode})  gate_profile: ${
         scorePolicy.present
           ? scorePolicy.gate_profile || "strict"
           : "legacy（无 score-policy）"
@@ -1731,7 +1800,13 @@ function main() {
   if (report.coverage_by_domain) {
     const parts = [];
     for (const [k, v] of Object.entries(report.coverage_by_domain)) {
-      if (v && typeof v.percent === "number") parts.push(`${k}=${v.percent}%`);
+      if (v && typeof v.percent === "number") {
+        if (typeof v.inventory_assets === "number" && typeof v.truths === "number") {
+          parts.push(`${k}=${v.percent}%(truths=${v.truths}/assets=${v.inventory_assets})`);
+        } else {
+          parts.push(`${k}=${v.percent}%`);
+        }
+      }
     }
     if (parts.length) console.log(`coverage_by_domain: ${parts.join("  ")}`);
   }

@@ -37,6 +37,7 @@ import {
   warnManualReplaceGaps,
   ensureDbMdMaintenance,
   warnMcpExampleProfile,
+  warnRetiredRule17Coexistence,
 } from "./lib/sync-freshness.mjs";
 import {
   migrateScorePolicyFile,
@@ -210,6 +211,19 @@ function parseArgs(argv) {
       else if (v === "dry-run" || v === "dryrun") out.migrateCoverage = "dry-run";
       else if (v === "off" || v === "false" || v === "no") out.migrateCoverage = "off";
       else throw new Error(`Unknown --migrate-coverage value: ${v} (use off|append|dry-run)`);
+    } else if (a === "--rule101" || a.startsWith("--rule101=")) {
+      // 0.8.2 patch (D10): --rule101[=full|off] forwarded to render as params.rule101.
+      let v = "true";
+      if (a.startsWith("--rule101=")) {
+        v = a.slice("--rule101=".length) || "true";
+      } else if (argv[i + 1] && !String(argv[i + 1]).startsWith("-")) {
+        const nv = String(argv[i + 1]);
+        if (nv === "full" || nv === "off") v = argv[++i];
+      }
+      if (v === "true" || v === "on") out.rule101 = true;
+      else if (v === "full") out.rule101 = "full";
+      else if (v === "off" || v === "false" || v === "none") out.rule101 = "off";
+      else throw new Error(`Unknown --rule101 value: ${v} (use full|off)`);
     } else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
@@ -243,12 +257,15 @@ Canonical Agent write entry (0.6.0+).
   --retire-wrappers: upgrade/refresh 将 fill-score-ready / cold-bootstrap 移到
     scripts/agent-kb/_obsolete/（默认只 warn；不删 refresh-score.mjs）。
     环境变量 HARNESS_RETIRE_WRAPPERS=1 等价开启。
-  --migrate-docs[=auto|dry-run|off]: upgrade 升严后结构化迁移真相文档（默认 auto）。
+  --migrate-docs[=auto|dry-run|off]: upgrade 升严后结构化迁移真相文档（默认：厚仓 dry-run / 薄仓 auto）。
     对齐 path/field/task/schedule/key；coverage/covered_gt 默认只移交不删文档。
     --no-migrate-docs 等同 off（仅 doc_todos 移交）。
     注意：--migrate-policy 是 score-policy 字段迁移，与本旗无关。
   --migrate-coverage[=off|append|dry-run]: 覆盖类 blocker 的缺页/缺节 append（默认 off）。
     append 只补缺失页或占位节；covered_gt 仍移交，永不删文档。≠ --migrate-docs。
+  --rule101[=full|off]: 前端总触发 rule-101 快捷布尔（0.8.2；等效 include_optional）。
+    不带值=薄指针版 rule-101；full=厚正文 rule-101-full（无前端分册 AGENTS 时用）；
+    off=显式排除。与 include_optional 同用受二选一互斥保护。
 `);
 }
 
@@ -346,6 +363,10 @@ function runRender(args) {
   if (args.dryRun) argv.push("--dry-run");
   if (args.backup) argv.push("--backup");
   if (args.manifest) argv.push("--manifest", args.manifest);
+  // 0.8.2 patch (D10): forward the rule101 quick boolean to render.
+  if (args.rule101 === true) argv.push("--rule101");
+  else if (args.rule101 === "full") argv.push("--rule101=full");
+  else if (args.rule101 === "off") argv.push("--rule101=off");
   return spawnSync(process.execPath, argv, {
     encoding: "utf8",
     maxBuffer: 20 * 1024 * 1024,
@@ -528,6 +549,8 @@ export function main(argv = process.argv) {
         ensureDbMdMaintenance(args.root);
         warnManualReplaceGaps(args.root);
         warnMcpExampleProfile(args.root);
+        // 0.8.2 patch (D11): legacy rule 17 coexisting with rule 101 → warn only.
+        warnRetiredRule17Coexistence(args.root);
         maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
         emitUpgradeStrictnessDiff(args.root, {
           migrateDocs: args.migrateDocs,
@@ -582,6 +605,8 @@ export function main(argv = process.argv) {
       ensureDbMdMaintenance(args.root);
       warnManualReplaceGaps(args.root);
       warnMcpExampleProfile(args.root);
+      // 0.8.2 patch (D11): legacy rule 17 coexisting with rule 101 → warn only.
+      warnRetiredRule17Coexistence(args.root);
       maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
       emitUpgradeStrictnessDiff(args.root, {
         migrateDocs: args.migrateDocs,

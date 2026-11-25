@@ -643,21 +643,50 @@ function buildMorphStrip(score) {
   return items;
 }
 
+/**
+ * 0.8.2 patch (D8): gate-aligned coverage percent — prefers the same aggregate
+ * the coverage_ready gate uses (coverage_ready.all_percent), falls back to the
+ * legacy API-scoped coverage.percent for old reports.
+ */
+function gateCoveragePercent(score) {
+  const all = score?.coverage_ready?.all_percent;
+  if (typeof all === "number") return all;
+  const legacy = score?.coverage?.percent;
+  return typeof legacy === "number" ? legacy : null;
+}
+
+/** 0.8.2 patch (D8): true when gateCoveragePercent resolved from the gate scope. */
+function coverageIsGateScope(score) {
+  return typeof score?.coverage_ready?.all_percent === "number";
+}
+
+/** 0.8.2 patch (D8): gate-aligned ratio (effective_ratio first, legacy fallback). */
+function gateCoverageRatio(score) {
+  const er = score?.coverage_ready?.effective_ratio;
+  if (typeof er === "number") return er;
+  const r = score?.coverage?.ratio;
+  if (typeof r === "number") return r;
+  const p = score?.coverage?.percent;
+  return typeof p === "number" ? p / 100 : null;
+}
+
 /** 覆盖条：与形态条分列（三词名实） */
 function buildCoverageStrip(score) {
-  const covP =
-    typeof score.coverage?.percent === "number" ? score.coverage.percent : null;
+  const covP = gateCoveragePercent(score);
   if (covP == null) return [];
   const covered = score.coverage?.covered;
   const code = score.coverage?.code;
   const mode = score.coverage_ready?.mode || score.score_policy?.coverage_mode;
+  const scopeNote = coverageIsGateScope(score) ? "按分域口径" : "相对 inventory";
   return [
     {
       id: "coverage",
       label_zh: "代码覆盖率",
       value: covP + "%",
       sub:
-        (covered != null && code != null ? covered + " / " + code : "相对 inventory") +
+        (covered != null && code != null && !coverageIsGateScope(score)
+          ? covered + " / " + code
+          : scopeNote) +
         (mode ? " · mode=" + mode : ""),
     },
   ];
@@ -670,12 +699,8 @@ function buildGapToReady(score) {
       ? score.ready.ready_coverage
       : 0.6;
   const overall = typeof score.overall === "number" ? score.overall : null;
-  const covRatio =
-    typeof score.coverage?.ratio === "number"
-      ? score.coverage.ratio
-      : typeof score.coverage?.percent === "number"
-        ? score.coverage.percent / 100
-        : null;
+  // 0.8.2 patch (D8): gap-to-ready must measure against the gate scope.
+  const covRatio = gateCoverageRatio(score);
 
   const qualityGap =
     overall == null ? null : Math.max(0, Math.round((rq - overall) * 10) / 10);
@@ -950,20 +975,26 @@ function buildNextActions(score, opts = {}) {
     });
   } else if (
     blockers.includes("coverage_ready") ||
-    (score.coverage &&
-      typeof score.coverage.percent === "number" &&
-      score.coverage.percent < 90)
+    (typeof gateCoveragePercent(score) === "number" && gateCoveragePercent(score) < 90)
   ) {
     const shards = Array.isArray(score.next_shards) ? score.next_shards : [];
     const top = shards
       .slice(0, 3)
       .map((s) => `${s.package || s.id}≈${s.count || "?"}`)
       .join("、");
+    // 0.8.2 patch (D8): advice text uses the gate-aligned percent too.
+    const covP = gateCoveragePercent(score);
+    const legacyDetail =
+      score.coverage &&
+      typeof score.coverage.covered === "number" &&
+      typeof score.coverage.code === "number"
+        ? `（${score.coverage.covered}/${score.coverage.code}）`
+        : "";
     actions.push({
       title: "按批次补文档覆盖（fill-truths-agents）",
       detail: top
-        ? `覆盖约 ${score.coverage.percent}%（${score.coverage.covered}/${score.coverage.code}）。优先：${top}`
-        : `覆盖约 ${score.coverage?.percent ?? "?"}% 。走 agents，勿默认 auto 写 SSOT。`,
+        ? `覆盖约 ${covP ?? "?"}%${legacyDetail}。优先：${top}`
+        : `覆盖约 ${covP ?? "?"}% 。走 agents，勿默认 auto 写 SSOT。`,
       command: null,
     });
   }
@@ -1364,8 +1395,8 @@ function buildPipelineProgress(score) {
 /** 总评分（≠开干）：文档质量分×0.35 + 代码覆盖率×0.25 + 验收×0.2 + 开干清单×0.2；决策台总评模块展示 */
 function buildCompositeScore(score, pipeline) {
   const overall = typeof score.overall === "number" ? score.overall : null;
-  const cov =
-    typeof score.coverage?.percent === "number" ? score.coverage.percent : null;
+  // 0.8.2 patch (D8): composite coverage part uses the gate-aligned percent.
+  const cov = gateCoveragePercent(score);
   const gold =
     typeof score.gold_ratio === "number" ? score.gold_ratio * 100 : null;
   const pipe = typeof pipeline?.percent === "number" ? pipeline.percent : null;
@@ -1507,7 +1538,11 @@ export function buildReportUi(score, opts = {}) {
         ? s.template_completeness.overall
         : null,
     template_completeness_by_domain: s.template_completeness?.by_domain || null,
-    coverage_percent: typeof cov.percent === "number" ? cov.percent : null,
+    // 0.8.2 patch (D8): top-bar coverage_percent is gate-aligned (all_domains
+    // aggregate via coverage_ready.all_percent); legacy JSON falls back to the
+    // API-scoped percent and is flagged with coverage_percent_source="legacy".
+    coverage_percent: gateCoveragePercent(s),
+    coverage_percent_source: coverageIsGateScope(s) ? "gate" : "legacy",
     coverage_covered: cov.covered ?? null,
     coverage_code: cov.code ?? null,
     ready_rule: s.ai_coding_ready?.rule || null,

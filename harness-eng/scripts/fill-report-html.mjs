@@ -193,6 +193,15 @@ function ensureDiffFromHistory(score, prior) {
   ) {
     diff.coverage_percent = score.coverage.percent - last.coverage_percent;
   }
+  // 0.8.2 patch (D8): gate-aligned coverage diff when both sides carry it
+  // (score.coverage_all_percent set since the 0.8.2 patch train).
+  if (
+    typeof score.coverage_all_percent === "number" &&
+    typeof last.coverage_all_percent === "number"
+  ) {
+    diff.coverage_all_percent =
+      score.coverage_all_percent - last.coverage_all_percent;
+  }
   return { ...score, diff };
 }
 

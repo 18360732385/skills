@@ -211,6 +211,7 @@ export function extractAlterOps(sqlText, relFile) {
     const body = m[2] || "";
     const add = [];
     const drop = [];
+    const rename = [];
     const addRe = /ADD\s+(?:COLUMN\s+)?[`"]?(\w+)[`"]?/gi;
     let a;
     while ((a = addRe.exec(body)) !== null) {
@@ -221,11 +222,23 @@ export function extractAlterOps(sqlText, relFile) {
     while ((d = dropRe.exec(body)) !== null) {
       if (!/PRIMARY|FOREIGN|INDEX|KEY|CONSTRAINT/i.test(d[1])) drop.push(d[1]);
     }
-    if (add.length || drop.length) {
+    // 0.8.1 patch: CHANGE COLUMN old new / RENAME COLUMN old TO new
+    const changeRe = /CHANGE\s+(?:COLUMN\s+)?[`"]?(\w+)[`"]?\s+[`"]?(\w+)[`"]?/gi;
+    let c;
+    while ((c = changeRe.exec(body)) !== null) {
+      if (c[1] && c[2] && c[1] !== c[2]) rename.push({ from: c[1], to: c[2] });
+    }
+    const renameRe = /RENAME\s+COLUMN\s+[`"]?(\w+)[`"]?\s+TO\s+[`"]?(\w+)[`"]?/gi;
+    let r;
+    while ((r = renameRe.exec(body)) !== null) {
+      if (r[1] && r[2] && r[1] !== r[2]) rename.push({ from: r[1], to: r[2] });
+    }
+    if (add.length || drop.length || rename.length) {
       ops.push({
         table,
         add,
         drop,
+        rename,
         evidence: `${relFile}#ALTER:${table}`,
       });
     }
@@ -256,6 +269,21 @@ function mergeAlterIntoTable(table, op) {
     if (k) delete table.columnComments[k];
     table.columns = table.columns.filter(
       (c) => c.name.toLowerCase() !== col.toLowerCase()
+    );
+  }
+  for (const rn of op.rename || []) {
+    const from = rn.from;
+    const to = rn.to;
+    if (!from || !to) continue;
+    const fromKey = Object.keys(table.columnComments).find(
+      (c) => c.toLowerCase() === from.toLowerCase()
+    );
+    if (fromKey) {
+      table.columnComments[to] = table.columnComments[fromKey];
+      delete table.columnComments[fromKey];
+    }
+    table.columns = (table.columns || []).map((col) =>
+      col.name.toLowerCase() === from.toLowerCase() ? { ...col, name: to } : col
     );
   }
   if (op.evidence) {

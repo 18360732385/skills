@@ -39,6 +39,11 @@ function isSkipBlocker(b) {
   return SKIP_PREFIXES.some((p) => s === p || s.includes(p));
 }
 
+/** 0.8.2 patch (D12): regex-escape a literal for table-row idempotency probes. */
+function escapeRe(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
  * 0.7.48: thick / MATURE-ish truths — any contract NN-*.md with real body.
  * @param {string} root
@@ -521,6 +526,7 @@ export function planMigrateDocs(root, opts = {}) {
           file: rel(absRoot, nextIndexedName(jobsDir, code)),
           task_code: code,
           scheduler: t.scheduler || {},
+          resolved_from: "new-page",
         });
       }
     }
@@ -540,6 +546,7 @@ export function planMigrateDocs(root, opts = {}) {
             file: rel(absRoot, file),
             task_code: code,
             scheduler: { cron: tok },
+            resolved_from: "new-page",
           });
         } else {
           ops.push({
@@ -548,6 +555,7 @@ export function planMigrateDocs(root, opts = {}) {
             file: rel(absRoot, file),
             task_code: code,
             token: tok,
+            resolved_from: "existing-page",
           });
         }
       }
@@ -620,7 +628,8 @@ export function applyMigrateDocs(root, plan, opts = {}) {
         continue;
       }
       if (op.kind === "api_rewrite_path") {
-        let cur = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : "";
+        const orig = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : "";
+        let cur = orig;
         const nextPath = op.path.startsWith("/") ? op.path : `/${op.path}`;
         const replaced = cur.replace(
           /(\*\*接口地址[：:]?\*\*[：:]?\s*)`?[^\s`*\n]+`?/,
@@ -634,6 +643,11 @@ export function applyMigrateDocs(root, plan, opts = {}) {
         } else {
           cur = replaced;
         }
+        // 0.8.2 patch (D12): regex missed → text unchanged → noop, never fake "patched".
+        if (cur === orig) {
+          applied.push({ ...op, action: "noop", unchanged: true });
+          continue;
+        }
         if (!dryRun) {
           fs.mkdirSync(path.dirname(abs), { recursive: true });
           fs.writeFileSync(abs, cur, "utf8");
@@ -643,9 +657,35 @@ export function applyMigrateDocs(root, plan, opts = {}) {
       }
       if (op.kind === "api_append_endpoints") {
         let cur = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : "";
+        // 0.8.2 patch (D12): dedupe against documented endpoints before appending;
+        // re-running auto on an already-migrated page must be a full noop.
+        const { paths: knownKeys } = collectDocApiPaths(cur);
+        const skippedExisting = [];
+        const missing = [];
+        for (const ep of op.endpoints || []) {
+          const method = String(
+            ep.http || ep.method || ep.httpMethod || "GET"
+          ).toUpperCase();
+          const p = String(ep.path || ep.url || "").trim();
+          if (!p) continue;
+          const key = /^[A-Z]+$/.test(method) ? `${method}:${p}` : p;
+          if (knownKeys.has(p) || knownKeys.has(key)) {
+            skippedExisting.push(`${method} ${p}`);
+            continue;
+          }
+          missing.push(ep);
+        }
+        if (!missing.length) {
+          applied.push({
+            ...op,
+            action: "noop",
+            skipped_existing: skippedExisting.length || undefined,
+          });
+          continue;
+        }
         const startIdx =
           (cur.match(/^##\s+\d+\./gm) || []).length + 1;
-        const parts = (op.endpoints || []).map((ep, i) =>
+        const parts = missing.map((ep, i) =>
           endpointToMarkdown(
             {
               ...ep,
@@ -665,6 +705,7 @@ export function applyMigrateDocs(root, plan, opts = {}) {
           ...op,
           action: dryRun ? "dry-run" : fs.existsSync(abs) && cur ? "appended" : "created",
           count: parts.length,
+          skipped_existing: skippedExisting.length || undefined,
         });
         continue;
       }
@@ -672,7 +713,17 @@ export function applyMigrateDocs(root, plan, opts = {}) {
         let cur = fs.existsSync(abs)
           ? fs.readFileSync(abs, "utf8")
           : "# migrate-docs api fields\n";
-        const rows = (op.fields || [])
+        // 0.8.2 patch (D12): per-field idempotency — a field already present
+        // as a table row must not be re-appended; all present → noop.
+        const fields = (op.fields || []).filter(
+          (f) =>
+            !new RegExp(`(^|\\|)\\s*${escapeRe(f)}\\s*\\|`, "m").test(cur)
+        );
+        if (!fields.length) {
+          applied.push({ ...op, action: "noop" });
+          continue;
+        }
+        const rows = fields
           .map(
             (f) =>
               `| ${f} | — | 否 | TODO(harness-eng) migrate-docs | — | — | 未知 |`
