@@ -186,6 +186,26 @@ function collectExternalLinks(root) {
   return links;
 }
 
+function uniquifyAssetIds(assets, report) {
+  const seen = new Map();
+  for (const asset of assets) {
+    const base = String(asset.id || "");
+    const n = seen.get(base) || 0;
+    if (n === 0) {
+      seen.set(base, 1);
+      continue;
+    }
+    const next = n + 1;
+    seen.set(base, next);
+    asset.id = `${base}-${next}`;
+    pushWarning(report, {
+      code: "id_collision",
+      message: `prototype id 碰撞，已改为 ${asset.id}`,
+      path: asset.path || asset.url || base,
+    });
+  }
+}
+
 function shardAssets(assets, shardSize) {
   const shards = [];
   for (let i = 0; i < assets.length; i += shardSize) {
@@ -295,6 +315,7 @@ export function main(argv = process.argv) {
       message: "No prototype assets discovered (proto dirs / files / links)",
     });
   }
+  uniquifyAssetIds(assets, report);
 
   const shards = shardAssets(assets, args.shardSize);
   report.assets = assets;

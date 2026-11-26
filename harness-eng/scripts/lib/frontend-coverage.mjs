@@ -54,21 +54,31 @@ export function countFrontendTruths(files) {
   return (files || []).filter(isFrontendTruthFile).length;
 }
 
-function stripChangelogSections(text) {
-  const parts = String(text || "").split(/(?=^##\s)/m);
-  return parts.filter((p) => !/^##[^\n]*变更记录/m.test(p)).join("");
+/**
+ * Drop H2 changelog sections only.
+ * `##` must not match `###` — a module that uses `### 变更记录` keeps its body (0.8.9).
+ */
+export function stripChangelogSections(text) {
+  const parts = String(text || "").split(/(?=^##(?!#)\s)/m);
+  return parts.filter((p) => !/^##(?!#)[^\n]*变更记录/m.test(p)).join("");
 }
 
 function escapeRe(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Boundary match so `/home` does not hit `/homepage` and `arco` does not hit `barcode`. */
-export function textHasNeedle(text, needle) {
+/**
+ * Boundary match so `/home` does not hit `/homepage` and `arco` does not hit `barcode`.
+ * `extraCont` adds continuation characters (redis keys pass `:` so `sms:code` does not hit `sms:code:phone`).
+ * The hyphen stays at the end of the class so it is literal.
+ */
+export function textHasNeedle(text, needle, extraCont = "") {
   const n = String(needle || "").trim().replace(/\\/g, "/");
   if (n.length < 2) return false;
   const normText = String(text || "").replace(/\\/g, "/");
-  const re = new RegExp(`(^|[^A-Za-z0-9_@./-])${escapeRe(n)}(?![A-Za-z0-9_@./-])`);
+  const extra = String(extraCont || "").replace(/[\]\\^-]/g, "");
+  const cont = `A-Za-z0-9_@./${extra}-`;
+  const re = new RegExp(`(^|[^${cont}])${escapeRe(n)}(?![${cont}])`);
   return re.test(normText);
 }
 

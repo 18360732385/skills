@@ -7,7 +7,13 @@ import {
   isFrontendCoverageDomain,
   assetNeedles,
   textHasNeedle,
+  stripChangelogSections,
 } from "./frontend-coverage.mjs";
+
+/** Service / Component / Manager / Handler, optional Spring Impl suffix (0.8.9). */
+export function newFuncClassRe() {
+  return /\b([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler)(?:Impl)?)\b/g;
+}
 
 export function textMentionsUnits(domain, text, units, assets) {
   if (!units) return true;
@@ -36,15 +42,14 @@ export function apiUnitId(http, rawPath) {
 }
 
 function stripChangelog(text) {
-  const parts = String(text || "").split(/(?=^##\s)/m);
-  return parts.filter((p) => !/^##[^\n]*变更记录/m.test(p)).join("");
+  return stripChangelogSections(text);
 }
 
 export function apiUnitsFromText(text) {
   const ids = [];
   const parts = stripChangelog(text).split(/(?=^##\s)/m);
   for (const sec of parts) {
-    if (/^##[^\n]*变更记录/.test(sec)) continue;
+    if (/^##(?!#)[^\n]*变更记录/.test(sec)) continue;
     const pathM = sec.match(/接口地址[^\n]{0,80}?(\/[A-Za-z0-9_./{}*-]+)/);
     if (!pathM) continue;
     const methodM = sec.match(/请求方式[^\n]{0,40}?(GET|POST|PUT|DELETE|PATCH)\b/i);
@@ -59,21 +64,16 @@ function classNamesFromFunc(text) {
   const names = new Set();
   const sec = body.match(/###\s*服务类[\s\S]*?(?=\n###\s|\n##\s|$)/);
   const scope = sec ? sec[0] : "";
-  const CLASS_RE = /\b([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/g;
+  const CLASS_RE = newFuncClassRe();
   for (const line of scope.split(/\n/)) {
     if (!line.trim().startsWith("|")) continue;
     CLASS_RE.lastIndex = 0;
     for (const m of line.matchAll(CLASS_RE)) names.add(m[1]);
   }
-  for (const m of body.matchAll(
-    /^\*\*([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\*\*\s*$/gm
-  )) {
-    names.add(m[1]);
-  }
-  for (const m of body.matchAll(
-    /^###\s+[^\n]*?([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/gm
-  )) {
-    names.add(m[1]);
+  for (const line of body.split(/\n/)) {
+    if (!/^\*\*[A-Z]/.test(line.trim()) && !/^###\s+/.test(line)) continue;
+    CLASS_RE.lastIndex = 0;
+    for (const m of line.matchAll(CLASS_RE)) names.add(m[1]);
   }
   return [...names];
 }
@@ -81,8 +81,11 @@ function classNamesFromFunc(text) {
 function tableNamesFromDb(text) {
   const body = stripChangelog(text);
   const ids = [];
-  const re = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?([A-Za-z0-9_]+)[`"]?/gi;
-  for (const m of body.matchAll(re)) ids.push(m[1]);
+  const re = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?([A-Za-z_][A-Za-z0-9_]*)[`"]?/gi;
+  for (const m of body.matchAll(re)) {
+    if (/^(?:IF|NOT|EXISTS)$/i.test(m[1])) continue;
+    ids.push(m[1]);
+  }
   return ids;
 }
 

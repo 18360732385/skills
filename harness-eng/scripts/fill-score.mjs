@@ -69,7 +69,7 @@ import {
   runAcceptanceJson,
   shardsFromAcceptanceItems,
 } from "./lib/acceptance-report.mjs";
-import { inventoryUnitIds } from "./lib/coverage-identity.mjs";
+import { inventoryUnitIds, citedUnitIds, newFuncClassRe } from "./lib/coverage-identity.mjs";
 import { validateAudit, loadAudit } from "./lib/coverage-audit.mjs";
 import {
   morphDepthBonus,
@@ -680,14 +680,15 @@ function coverageFromInventory(inventory, docEndpointCount) {
  */
 export function collectFuncDocClassNames(root) {
   const names = new Set();
-  const CLASS_RE = /\b([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/g;
+  const CLASS_RE = newFuncClassRe();
   for (const f of domainFiles(root, "func")) {
     const text = fs.readFileSync(f, "utf8");
     for (const m of text.matchAll(/`([A-Za-z_][A-Za-z0-9_]*)`/g)) {
       names.add(m[1]);
     }
-    for (const m of text.matchAll(/^###\s+[^\n]*?([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/gm)) {
-      names.add(m[1]);
+    for (const m of text.matchAll(/^###\s+[^\n]+$/gm)) {
+      CLASS_RE.lastIndex = 0;
+      for (const c of m[0].matchAll(CLASS_RE)) names.add(c[1]);
     }
     for (const m of text.matchAll(/^\|[^\n]*$/gm)) {
       CLASS_RE.lastIndex = 0;
@@ -704,11 +705,7 @@ function countDocumentedRedisKeys(root) {
   let n = 0;
   for (const f of domainFiles(root, "redis")) {
     const text = fs.readFileSync(f, "utf8");
-    // Prefer section under "## Key 模式" until next ##
-    const sec = text.match(/##\s*Key 模式[\s\S]*?(?=\n##\s+|$)/i);
-    const body = sec ? sec[0] : text;
-    const rows = body.match(/^\|\s*`[^`]+`\s*\|/gm);
-    if (rows) n += rows.filter((r) => !/\|\s*`—`\s*\|/.test(r)).length;
+    n += citedUnitIds("redis", text).length;
   }
   return n;
 }

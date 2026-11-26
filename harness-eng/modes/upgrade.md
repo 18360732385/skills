@@ -80,6 +80,16 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.8 → 0.8.9 迁移要点
+
+1. **meta**：`skill_version` → `0.8.9`
+2. **报告壳**：`report_schema` 仍 **0.4.3**（形态到顶但金标未过时写「未过线」，不再把「已达理论上限」叫拖后腿）
+3. **身份**：func 引用槽认出 `ServiceImpl` / `ComponentImpl` / `ManagerImpl` / `HandlerImpl`。变更记录只剥离 `##` 级标题，`### 变更记录` 留在正文
+4. **覆盖补页**：路径、类名、Redis 模式按边界判断是否已写入，短前缀不再算已覆盖。`CREATE TABLE IF NOT EXISTS` 后面没有表名时不再得到表名 `IF`
+5. **migrate-docs 报告**：本轮没有升严 blocker 时，若已有 `ops`，只刷新时间戳并保留原计划；没有旧计划才写空心跳
+6. **refresh**：打分成功后重建 `docs/harness-eng/report-latest.html`。失败只提示，不改变 refresh 退出码
+7. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.9`）后再 sync
+
 ## 0.8.7 → 0.8.8 迁移要点
 
 1. **meta**：`skill_version` → `0.8.8`

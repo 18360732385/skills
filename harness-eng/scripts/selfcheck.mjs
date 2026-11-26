@@ -182,7 +182,7 @@ import {
 } from "./render.mjs";
 import { hasApiEvidence } from "./acceptance-check.mjs";
 import { collectFuncDocClassNames } from "./fill-score.mjs";
-import { collectIdentityBlockers } from "./lib/coverage-identity.mjs";
+import { collectIdentityBlockers, citedUnitIds } from "./lib/coverage-identity.mjs";
 import { validateAudit, sha256File } from "./lib/coverage-audit.mjs";
 import {
   ensureDbMdMaintenance,
@@ -8415,16 +8415,35 @@ console.log("theme-gate-smoke-ok");
     const reportPath = path.join(eng, "migrate-docs-report.json");
     fs.writeFileSync(
       reportPath,
-      JSON.stringify({ generated_at: "2020-01-01T00:00:00.000Z", ops: [{ kind: "old" }] }),
+      JSON.stringify({
+        generated_at: "2020-01-01T00:00:00.000Z",
+        ops: [{ kind: "old" }],
+        skipped: [{ reason: "本轮无升严 blocker，未规划补丁" }],
+      }),
       "utf8"
     );
     const beat = writeMigrateReportHeartbeat(beatRoot, { mode: "dry-run", skillVersion: "0.8.7" });
     assert(beat.generated_at !== "2020-01-01T00:00:00.000Z", "0.8.7 heartbeat refreshes generated_at");
-    assert(Array.isArray(beat.ops) && beat.ops.length === 0, "0.8.7 heartbeat ops empty");
+    assert(beat.ops.length === 1 && beat.ops[0].kind === "old", "0.8.9 heartbeat keeps prior ops");
+    assert(beat.preserved_prior_plan === true, "0.8.9 heartbeat marks preserved plan");
     assert(
       (beat.skipped || []).some((s) => /未规划补丁/.test(s.reason || "")),
       "0.8.7 heartbeat says no plan"
     );
+    const emptyRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-089-beat-empty-"));
+    try {
+      fs.mkdirSync(path.join(emptyRoot, "docs", "harness-eng"), { recursive: true });
+      const emptyBeat = writeMigrateReportHeartbeat(emptyRoot, {
+        mode: "dry-run",
+        skillVersion: "0.8.7",
+      });
+      assert(
+        emptyBeat.ops.length === 0 && emptyBeat.preserved_prior_plan === false,
+        "0.8.7 heartbeat ops empty"
+      );
+    } finally {
+      fs.rmSync(emptyRoot, { recursive: true, force: true });
+    }
     assert(beat.skill_version === "0.8.7" && beat.dry_run === true && /planMigrateDocs/.test(beat.note || ""), "0.8.7 heartbeat marks dry-run and no planner");
     assert(fs.readFileSync(path.join(db, "db.md"), "utf8") === "keep\n", "0.8.7 heartbeat does not touch truths");
     assert(!/planMigrateDocs\(/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/migrate-docs.mjs"), "utf8").split("export function writeMigrateReportHeartbeat")[1].split("export function runMigrateDocs")[0]), "0.8.7 heartbeat body does not call planMigrateDocs");
@@ -8667,6 +8686,251 @@ console.log("theme-gate-smoke-ok");
   } finally {
     fs.rmSync(planRoot, { recursive: true, force: true });
   }
+}
+
+// --- 0.8.9: 0.8.8 实战解析（ServiceImpl / ### 变更记录 / 子串漏补 / 表名 IF / 心跳保留 / 金标文案） ---
+{
+  const funcText = [
+    "# mod",
+    "",
+    "### 服务类",
+    "",
+    "| 类 | 说明 |",
+    "|---|---|",
+    "| Neo4jQueryServiceImpl | 查询 |",
+    "| TranslateServiceImpl | 翻译 |",
+    "| WorkflowServiceImpl | 流程 |",
+    "",
+    "### 变更记录",
+    "",
+    "| v | 整节不该被丢掉 |",
+    "",
+  ].join("\n");
+  const classes = citedUnitIds("func", funcText);
+  for (const name of ["Neo4jQueryServiceImpl", "TranslateServiceImpl", "WorkflowServiceImpl"]) {
+    assert(classes.includes(name), `0.8.9 func cites ${name} (got ${classes.join(",")})`);
+  }
+  const apiText = [
+    "# api",
+    "",
+    "## 1. list tools",
+    "",
+    "接口地址：`/api/v1/tools/list`",
+    "请求方式：GET",
+    "",
+    "### 变更记录",
+    "",
+    "| v | note |",
+    "",
+  ].join("\n");
+  const apis = citedUnitIds("api", apiText);
+  assert(
+    apis.includes("GET /api/v1/tools/list"),
+    `0.8.9 ### changelog keeps api section (got ${apis.join(",")})`
+  );
+  assert(
+    !citedUnitIds("db", "CREATE TABLE IF NOT EXISTS").includes("IF"),
+    "0.8.9 bare IF NOT EXISTS is not a table"
+  );
+  assert(
+    citedUnitIds("db", "CREATE TABLE IF NOT EXISTS `sys_user`").includes("sys_user"),
+    "0.8.9 named IF NOT EXISTS keeps the table"
+  );
+  assert(
+    citedUnitIds("redis", "# r\n\n| `sms:orphan` | x |\n\n## 变更记录\n\n| `sms:log` | x |\n").length === 0,
+    "0.8.9 redis count ignores rows outside Key 模式"
+  );
+  const redisIds = citedUnitIds(
+    "redis",
+    "# r\n\n## Key 模式\n\n| `sms:otp` | 验证码 |\n\n## 变更记录\n\n| `sms:log` | x |\n"
+  );
+  assert(
+    redisIds.includes("sms:otp") && !redisIds.includes("sms:log"),
+    `0.8.9 redis slot (got ${redisIds.join(",")})`
+  );
+
+  const fRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-089-func-"));
+  try {
+    fs.mkdirSync(path.join(fRoot, "docs", "func", "modules"), { recursive: true });
+    fs.writeFileSync(
+      path.join(fRoot, "docs", "func", "modules", "01-impl.md"),
+      "| Neo4jQueryServiceImpl | 查询 |\n",
+      "utf8"
+    );
+    const names = collectFuncDocClassNames(fRoot);
+    assert(names.has("Neo4jQueryServiceImpl"), `0.8.9 collectFuncDocClassNames Impl (got ${[...names]})`);
+  } finally {
+    fs.rmSync(fRoot, { recursive: true, force: true });
+  }
+
+  const prefixRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-089-prefix-"));
+  try {
+    const apiDir = path.join(prefixRoot, "docs", "api", "modules");
+    const funcDir = path.join(prefixRoot, "docs", "func", "modules");
+    const redisDir = path.join(prefixRoot, "docs", "redis", "keys");
+    fs.mkdirSync(apiDir, { recursive: true });
+    fs.mkdirSync(funcDir, { recursive: true });
+    fs.mkdirSync(redisDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(apiDir, "01-tools.md"),
+      "## 1. list\n\n**接口地址：** /api/v1/tools/list\n\n业务说明，不要删。\n\n## 2. stream\n\n**接口地址：** /api/v1/agent/run/streaming\n\n业务说明。\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(funcDir, "01-svc.md"),
+      "### 服务类\n\n| Neo4jQueryServiceImpl | 查询 |\n\n业务说明，不要删。\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(redisDir, "01-key.md"),
+      "## Key 模式\n\n| `sms:code:phone` | 验证码 |\n\n业务说明，不要删。\n",
+      "utf8"
+    );
+    const planned = planCoverageAppend({
+      blockers: ["coverage_ready"],
+      docsRoot: prefixRoot,
+      inventories: {
+        api: {
+          endpoints: [
+            { method: "GET", path: "/api/v1/tools", http: "GET" },
+            { method: "POST", path: "/api/v1/agent/run/stream", http: "POST" },
+          ],
+        },
+        func: { modules: [{ services: [{ class: "Neo4jQueryService" }] }] },
+        redis: { keys: [{ pattern: "sms:code", redis: true }] },
+      },
+    });
+    for (const domain of ["api", "func", "redis"]) {
+      assert(
+        planned.skipped.some((s) => s.domain === domain && /user content present/.test(s.reason || "")),
+        `0.8.9 ${domain} prefix is not already covered (got ${JSON.stringify(planned.skipped)})`
+      );
+    }
+    const exact = planCoverageAppend({
+      blockers: ["coverage_ready"],
+      docsRoot: prefixRoot,
+      inventories: {
+        api: { endpoints: [{ method: "GET", path: "/api/v1/tools/list", http: "GET" }] },
+      },
+    });
+    assert(
+      !exact.skipped.some((s) => s.domain === "api") && exact.ops.length === 0,
+      `0.8.9 exact api path stays covered (got ${JSON.stringify(exact)})`
+    );
+  } finally {
+    fs.rmSync(prefixRoot, { recursive: true, force: true });
+  }
+
+  const ui = buildReportUi({
+    overall: 100,
+    formula_ceiling: 100,
+    gate_profile: "gold",
+    domains: { func: { score: 100, truths: 43, shells: 0 } },
+    quality: { domains: { func: 100 } },
+    domain_caps: { func: 100 },
+    coverage_by_domain: { func: { percent: 100, covered: 43, code: 43, ratio: 1 } },
+    gold_by_domain: { func: { gold_pass_ratio: 0.93 } },
+    ai_coding_ready: { ok: false, blockers: ["gold_ratio"] },
+    skeleton_ready: { ok: true },
+    coverage_ready: { ok: true },
+    semantic_ready: { ok: true },
+  });
+  const storyText = ((ui.diagnose && ui.diagnose.story) || []).map((s) => s.text).join("\n");
+  const oneLine = (ui.composite_score && ui.composite_score.one_line_zh) || "";
+  const lagStory = (ui.lagging_domain && ui.lagging_domain.story) || "";
+  assert(/未过线/.test(storyText) && /金标/.test(storyText + lagStory), `0.8.9 gold gap copy (got ${storyText})`);
+  assert(!/拖后腿|已达理论上限/.test(storyText + "\n" + oneLine + "\n" + lagStory), `0.8.9 ceiling gold copy (got ${oneLine} / ${storyText})`);
+  assert(
+    /未过线优先看/.test(fs.readFileSync(path.join(skillRoot, "templates/report/harness-report.html.tmpl"), "utf8")),
+    "0.8.9 report shell names 未过线"
+  );
+
+  const protoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-089-proto-"));
+  try {
+    const dir = path.join(protoRoot, "docs", "ui-prototypes");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "foo.html"), "<html></html>", "utf8");
+    fs.writeFileSync(path.join(dir, "foo.png"), "png", "utf8");
+    const proto = runNode([
+      path.join(skillRoot, "scripts/fill-inventory.mjs"),
+      "--domain",
+      "prototype",
+      "--root",
+      protoRoot,
+      "--quiet",
+    ]);
+    assert(proto.status === 2, `0.8.9 prototype collision exits 2 (got ${proto.status} ${(proto.stderr || "").slice(-200)})`);
+    const protoJson = JSON.parse(proto.stdout);
+    const ids = (protoJson.assets || []).map((a) => a.id);
+    assert(ids.length === 2 && new Set(ids).size === 2, `0.8.9 prototype ids unique (got ${ids.join(",")})`);
+    assert(
+      (protoJson.warnings || []).some((w) => w.code === "id_collision"),
+      "0.8.9 prototype id_collision warning"
+    );
+  } finally {
+    fs.rmSync(protoRoot, { recursive: true, force: true });
+  }
+
+  const jobsRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-089-jobs-"));
+  try {
+    const auditDir = path.join(jobsRoot, "docs", "harness-eng", "coverage-audit");
+    fs.mkdirSync(auditDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(auditDir, "jobs.json"),
+      JSON.stringify({
+        units: [
+          {
+            unit_id: "sendSms",
+            verdict: "pass",
+            reason: "ok",
+            truth_path: "docs/jobs/jobs.md",
+            evidence_path: "docs/jobs/jobs.md",
+          },
+        ],
+      }),
+      "utf8"
+    );
+    const jobsAudit = validateAudit({ root: jobsRoot, domain: "jobs", unitIds: ["sendSms"] });
+    assert(
+      !jobsAudit.ok && /tasks\//.test(jobsAudit.reason || ""),
+      `0.8.9 jobs truth reason names tasks/ (got ${jobsAudit.reason})`
+    );
+  } finally {
+    fs.rmSync(jobsRoot, { recursive: true, force: true });
+  }
+
+  const accTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-089-acc-"));
+  try {
+    const accFile = path.join(accTmp, "x.md");
+    fs.writeFileSync(accFile, "# x\n", "utf8");
+    const acc = runNode([
+      path.join(skillRoot, "scripts/acceptance-check.mjs"),
+      "--files",
+      accFile,
+      "--domain",
+      "api",
+    ]);
+    const accJson = JSON.parse(acc.stdout);
+    assert(accJson.version === EXPECTED, `0.8.9 acceptance version follows manifest (got ${accJson.version})`);
+  } finally {
+    fs.rmSync(accTmp, { recursive: true, force: true });
+  }
+  assert(
+    /readSkillVersion\(SKILL_ROOT\)/.test(fs.readFileSync(path.join(skillRoot, "scripts/acceptance-check.mjs"), "utf8")),
+    "0.8.9 acceptance-check reads skill version"
+  );
+  assert(
+    /fill-report-html\.mjs/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/refresh.mjs"), "utf8")),
+    "0.8.9 refresh rebuilds report html"
+  );
+  assert(
+    /type_export/.test(fs.readFileSync(path.join(skillRoot, "templates/docs/client-api/client-api.md.tmpl"), "utf8")),
+    "0.8.9 client-api index names type_export"
+  );
+  assert(/\| 0\.8\.9 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.9 CHANGELOG");
+  assert(/0\.8\.9 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.9 VERIFY.md");
+  assert(/0\.8\.8 → 0\.8\.9/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.9 upgrade.md");
+  assert(logExists("0.8.9"), "0.8.9 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

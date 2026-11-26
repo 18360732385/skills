@@ -12,6 +12,7 @@ import {
   indexFileName,
   loadDomainRegistry,
 } from "./domains.mjs";
+import { stripChangelogSections } from "./frontend-coverage.mjs";
 
 /** 0.3.0 / 0.7.0: strict 缺省门槛（仅填充仍为 null/未显式关闭的项） */
 export function applyStrictGateDefaults(gate, explicit = {}) {
@@ -126,15 +127,6 @@ export function reapplyGateProfile(policy, profile, opts = {}) {
     p.gate = gate;
   }
   return p;
-}
-
-/**
- * Strip ## 变更记录 … (until next ##) so changelog mentions of the marker
- * do not inflate harness_todo counts (0.8.5).
- */
-function stripChangelogSections(text) {
-  const parts = String(text || "").split(/(?=^##\s)/m);
-  return parts.filter((p) => !/^##[^\n]*变更记录/m.test(p)).join("");
 }
 
 function stripTodoNoise(text) {

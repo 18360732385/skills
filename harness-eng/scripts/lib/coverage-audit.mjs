@@ -100,7 +100,7 @@ export function validateAudit(input) {
     const truthRel = normRel(row.truth_path);
     const evidenceRel = normRel(row.evidence_path);
     if (!truthRel.startsWith(truthsRel) || truthRel.includes("/.fill-work/")) {
-      problems.push({ unit_id: id, kind: "truth" });
+      problems.push({ unit_id: id, kind: "truth", expected: truthsRel });
       continue;
     }
     const truthAbs = path.join(root, truthRel);
@@ -125,12 +125,15 @@ export function validateAudit(input) {
     pass++;
   }
   const kinds = [...new Set(problems.map((p) => p.kind))];
+  const expected = problems.find((p) => p.kind === "truth" && p.expected)?.expected;
+  let reason = kinds.join(",") || "ok";
+  if (expected) reason += `(${expected})`;
   return {
     ok: problems.length === 0,
     pass,
     total,
     present: true,
-    reason: kinds.join(",") || "ok",
+    reason,
     problems,
   };
 }

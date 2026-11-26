@@ -1,10 +1,24 @@
-﻿# harness-eng 验收记录（0.8.8）
+﻿# harness-eng 验收记录（0.8.9）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.8**（gold 开干四道 + 报告壳 0.4.3；其下 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.9**（实战解析修复 + gold 开干四道 + 报告壳 0.4.3；其下 0.8.8 gold 四道 · 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.9 增量验收（实战解析）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.8.9`；`report_schema` 仍 **0.4.3** | 有 |
+| func 引用槽认出 `*ServiceImpl`；`### 变更记录` 不吞掉所在 `##` 节 | 有 |
+| `acceptance-check` 的 `version` 读 manifest，不再写死 | 有 |
+| 已有 migrate `ops` 的心跳只刷新时间戳；空报告仍是短心跳 | 有 |
+| 形态到顶且金标未过时文案为「未过线」，不写「拖后腿 / 已达理论上限」 | 有 |
+| API 路径、类名、Redis 模式按边界判断已覆盖；无表名的 `IF NOT EXISTS` 不产出 `IF` | 有 |
+| prototype 重复 id 消解并告警；jobs 真相路径不对时 reason 含 `docs/jobs/tasks/` | 有 |
+| client-api 索引写明排除 `type_export`；refresh 成功打分后重建报告 HTML | 有 |
+| upgrade `## 0.8.8 → 0.8.9`；CHANGELOG 0.8.9 | 有 |
 
 ## 0.8.8 增量验收（gold 开干四道）
 

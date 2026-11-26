@@ -815,6 +815,22 @@ function goldDomainGaps(score, d) {
   return gaps;
 }
 
+function ceilingGoldGap(domain) {
+  return !!(domain && domain.quality_at_ceiling && (domain.gold_gaps || []).length);
+}
+
+function slimLagging(domain) {
+  if (!domain) return null;
+  return {
+    id: domain.id,
+    name_zh: domain.name_zh,
+    story: domain.story,
+    tone: domain.tone,
+    quality_at_ceiling: !!domain.quality_at_ceiling,
+    gold_gaps: domain.gold_gaps || [],
+  };
+}
+
 function buildDomainStories(score) {
   const stories = [];
   const gold = isGoldProfile(score);
@@ -830,8 +846,11 @@ function buildDomainStories(score) {
         ? Math.max(0, Math.round((cap - q) * 10) / 10)
         : null;
     const gaps = goldDomainGaps(score, d);
-    let story = st.label;
-    if (room != null && room > 1) story += `；距上限约 ${room} 分`;
+    const qualityAtCeiling =
+      typeof q === "number" && typeof cap === "number" && q >= cap - 1;
+    const leadWithGap = qualityAtCeiling && gaps.length > 0;
+    let story = leadWithGap ? gaps.join("；") : st.label;
+    if (!leadWithGap && room != null && room > 1) story += `；距上限约 ${room} 分`;
     if (typeof cov?.percent === "number") story += `；覆盖 ${cov.percent}%`;
     story += `；金标指数 ${goldIndexLabel(score, d)}`;
     story += `；真实性 ${authenticityLabel(score, d)}`;
@@ -842,7 +861,7 @@ function buildDomainStories(score) {
       story += `；计分已排除 ${cov.excluded_type_exports} 个 type_export`;
     }
     if (x?.shells > 0) story += `；空壳 ${x.shells}`;
-    if (gaps.length) story += `；${gaps.join("；")}`;
+    if (gaps.length && !leadWithGap) story += `；${gaps.join("；")}`;
     let coverage_band = null;
     if (gold && typeof cov?.percent === "number") {
       coverage_band = cov.percent >= 100 ? "ok" : cov.percent >= 80 ? "warn" : "low";
@@ -858,6 +877,7 @@ function buildDomainStories(score) {
       gold_index_label: goldIndexLabel(score, d),
       authenticity_label: authenticityLabel(score, d),
       gold_gaps: gaps,
+      quality_at_ceiling: qualityAtCeiling,
       ...(typeof cov?.excluded_type_exports === "number"
         ? { excluded_type_exports: cov.excluded_type_exports }
         : {}),
@@ -1382,7 +1402,7 @@ function buildDiagnose(score, domainStories, missTop, decisionKpis) {
       id: "lagging",
       tone: lagging.tone || "warn",
       text:
-        "拖后腿：" +
+        (ceilingGoldGap(lagging) ? "未过线：" : "拖后腿：") +
         (lagging.name_zh || lagging.id) +
         " — " +
         (lagging.story || lagging.status_label || ""),
@@ -1406,9 +1426,7 @@ function buildDiagnose(score, domainStories, missTop, decisionKpis) {
   return {
     story,
     gate_lamps: gateKpis,
-    lagging_domain: lagging
-      ? { id: lagging.id, name_zh: lagging.name_zh, story: lagging.story, tone: lagging.tone }
-      : null,
+    lagging_domain: slimLagging(lagging),
   };
 }
 
@@ -1587,7 +1605,7 @@ function buildOverallOneLine(composite, lagging, nextActions, score) {
   const bits = [];
   if (lagging && lagging.tone === "warn" && (lagging.story || lagging.status_label)) {
     bits.push(
-      "主要短板：" +
+      (ceilingGoldGap(lagging) ? "未过线：" : "主要短板：") +
         (lagging.name_zh || lagging.id) +
         "（" +
         (lagging.story || lagging.status_label) +
@@ -1692,9 +1710,7 @@ export function buildReportUi(score, opts = {}) {
     fill_plan: s.fill_plan || null,
     domains,
     domain_stories: domainStories,
-    lagging_domain: lagging
-      ? { id: lagging.id, name_zh: lagging.name_zh, story: lagging.story, tone: lagging.tone }
-      : null,
+    lagging_domain: slimLagging(lagging),
     chart_domains: buildChartDomains(s),
     miss_top: missTop,
     gaps_top: buildGapsTop(s),

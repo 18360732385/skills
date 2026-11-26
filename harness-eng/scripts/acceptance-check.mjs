@@ -27,8 +27,10 @@ import {
   citedUnitIds,
   textMentionsUnits,
 } from "./lib/coverage-identity.mjs";
+import { readSkillVersion } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SKILL_ROOT = path.resolve(__dirname, "..");
 
 function parseArgs(argv) {
   const out = {
@@ -692,7 +694,7 @@ function main() {
   const files = collectFiles(args);
   const report = {
     ok: true,
-    version: "0.8.7",
+    version: readSkillVersion(SKILL_ROOT),
     gold: args.gold,
     ssot_only: args.ssotOnly,
     files: files.length,

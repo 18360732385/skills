@@ -2383,8 +2383,11 @@
     }
 
     if (ui.lagging_domain && ui.lagging_domain.tone === "warn" && ui.lagging_domain.story) {
+      var ceilingGap = ui.lagging_domain.quality_at_ceiling &&
+        ui.lagging_domain.gold_gaps && ui.lagging_domain.gold_gaps.length;
+      var lead = ceilingGap ? "未过线优先看：" : "拖后腿优先看：";
       $("lagging-lead").innerHTML =
-        "拖后腿优先看：" + esc(ui.lagging_domain.name_zh || ui.lagging_domain.id) +
+        lead + esc(ui.lagging_domain.name_zh || ui.lagging_domain.id) +
         " — " + linkTerms(ui.lagging_domain.story, termIndex);
     } else if ($("lagging-lead")) {
       $("lagging-lead").textContent = "各域都已到理论上限。";
