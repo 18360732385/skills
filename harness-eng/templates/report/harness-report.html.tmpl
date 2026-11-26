@@ -396,7 +396,7 @@
       background: var(--warn-soft);
     }
     .diagnose-story {
-      margin: 0 0 16px;
+      margin: 0;
       padding: 0;
       list-style: none;
       display: grid;
@@ -667,86 +667,67 @@
     .fold.hidden { display: none; }
 
     /* ============================================================
-       COVERAGE + MORPH STRIP（同一行）
+       COVERAGE + MORPH STRIP（右侧纵向一行行）
        ============================================================ */
     .diag-strips {
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: stretch;
-      gap: 10px;
-      margin-bottom: 14px;
+      display: grid;
+      gap: 8px;
+      margin: 0;
     }
-    .diag-strips .coverage-strip,
-    .diag-strips .morph-strip {
-      flex: 1 1 0;
-      margin-bottom: 0;
-      min-width: 0;
-    }
-    @media (max-width: 720px) {
-      .diag-strips { flex-wrap: wrap; }
-      .diag-strips .coverage-strip,
-      .diag-strips .morph-strip { flex: 1 1 100%; }
-    }
-    .morph-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      margin-bottom: 14px;
-      padding: 10px 14px;
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.8rem;
-      border-left: 3px solid var(--info);
-    }
-    .morph-strip .item { min-width: 0; }
-    .morph-strip .k {
-      color: var(--muted);
-      font-size: 0.7rem;
-      letter-spacing: 0.02em;
-    }
-    .morph-strip .v {
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      margin-right: 4px;
-      color: var(--accent);
-    }
-    .morph-strip .s { color: var(--muted); font-size: 0.72rem; }
+    .morph-strip,
     .coverage-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      margin-bottom: 14px;
-      padding: 10px 14px;
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 10px 12px;
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       font-size: 0.8rem;
-      border-left: 3px solid var(--ok, #3dd68c);
     }
-    .coverage-strip .item { min-width: 0; }
+    .morph-strip { border-left: 3px solid var(--info); }
+    .coverage-strip { border-left: 3px solid var(--ok, #3dd68c); }
+    .morph-strip .item,
+    .coverage-strip .item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px 8px;
+      min-width: 0;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .morph-strip .item:last-child,
+    .coverage-strip .item:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .morph-strip .k,
     .coverage-strip .k {
       color: var(--muted);
       font-size: 0.7rem;
       letter-spacing: 0.02em;
+      min-width: 5.5em;
     }
+    .morph-strip .v,
     .coverage-strip .v {
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       margin-right: 4px;
       color: var(--accent);
     }
+    .morph-strip .s,
     .coverage-strip .s { color: var(--muted); font-size: 0.72rem; }
 
     /* ============================================================
-       DOMAIN SUMMARY（两域一行；不达标域名红字）
+       DOMAIN SUMMARY（悬浮明细：两域一行；不达标域名红字）
        ============================================================ */
     .domain-summary {
-      margin-top: 12px;
+      margin: 0;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 6px 16px;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: var(--muted);
       line-height: 1.5;
     }
@@ -886,9 +867,11 @@
       margin-bottom: 12px;
     }
     .radar-wrap {
+      position: relative;
       display: grid;
       justify-items: center;
       gap: 10px;
+      padding-bottom: 4px;
     }
     .radar-legend {
       display: flex;
@@ -914,6 +897,68 @@
       height: 0;
       width: 18px;
     }
+    .radar-detail {
+      position: absolute;
+      right: 0;
+      top: 0;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: var(--panel);
+      color: var(--muted);
+      cursor: help;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .radar-detail:hover,
+    .radar-detail:focus-visible {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .radar-detail-tip {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      z-index: 20;
+      width: min(520px, 86vw);
+      max-height: min(360px, 55vh);
+      overflow: auto;
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.55;
+      letter-spacing: 0;
+      white-space: normal;
+      text-align: left;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    }
+    .radar-detail:hover .radar-detail-tip,
+    .radar-detail:focus-visible .radar-detail-tip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
     .chart-svg {
       width: 100%;
       max-width: 420px;
@@ -922,12 +967,20 @@
       margin: 0 auto;
       color: var(--text);
     }
+    .chart-svg .radar-score-low { fill: var(--danger); font-weight: 700; }
+    .chart-svg .radar-score-ok { fill: var(--accent); font-weight: 600; }
+    .chart-svg .radar-dot-low { fill: var(--danger); }
     .diag-side {
       display: grid;
-      gap: 14px;
+      gap: 10px;
       align-content: start;
+      min-width: 0;
     }
-    .diag-side .fold { margin-top: 0; min-height: 120px; }
+    .diag-side .fold { margin-top: 0; }
+    .diag-side .diagnose-story li {
+      padding: 8px 10px;
+      font-size: 0.82rem;
+    }
 
     .hbar-row {
       display: grid;
@@ -1474,11 +1527,6 @@
       <section class="panel" id="panel-diagnose" data-panel="diagnose" role="tabpanel">
         <h2>诊断台</h2>
         <p class="lead" id="lagging-lead">哪一域拖后腿、缺口在哪、低分原因。</p>
-        <ul class="diagnose-story" id="diagnose-story"></ul>
-        <div class="diag-strips" id="diag-strips">
-          <div class="coverage-strip hidden" id="coverage-strip"></div>
-          <div class="morph-strip hidden" id="morph-strip"></div>
-        </div>
         <div class="diag-grid">
           <div class="chart-box" id="radar-box">
             <div class="chart-head">
@@ -1490,13 +1538,20 @@
                 <span><i class="lg-q"></i>文档质量分</span>
                 <span><i class="lg-c"></i>理论上限</span>
               </div>
+              <button type="button" class="radar-detail" id="radar-detail" hidden aria-label="各域分数明细" title="各域分数明细">
+                i
+                <div class="radar-detail-tip" role="tooltip">
+                  <div class="domain-summary" id="domain-summary"></div>
+                </div>
+              </button>
             </div>
           </div>
           <div class="diag-side">
-            <details class="fold" id="miss-fold">
-              <summary>常见缺口分布（明细）</summary>
-              <div class="fold-body" id="chart-miss"></div>
-            </details>
+            <ul class="diagnose-story" id="diagnose-story"></ul>
+            <div class="diag-strips" id="diag-strips">
+              <div class="coverage-strip hidden" id="coverage-strip"></div>
+              <div class="morph-strip hidden" id="morph-strip"></div>
+            </div>
             <details id="gaps-block" class="fold hidden">
               <summary>低分原因 Top（明细）</summary>
               <div class="fold-body">
@@ -1508,7 +1563,6 @@
             </details>
           </div>
         </div>
-        <div class="domain-summary" id="domain-summary"></div>
         <div class="stories hidden" id="stories"></div>
       </section>
 
@@ -1795,8 +1849,8 @@
     var size = 420;
     var cx = size / 2;
     var cy = size / 2 + 4;
-    var rMax = Math.min(128, 52 + n * 8);
-    var labelR = rMax + 34;
+    var rMax = Math.min(122, 48 + n * 7.5);
+    var labelR = rMax + 40;
 
     function ang(i) { return -Math.PI / 2 + (i / n) * Math.PI * 2; }
     function xy(i, pct, radius) {
@@ -1867,9 +1921,12 @@
     for (var d = 0; d < n; d++) {
       var pq = xy(d, qVals[d]);
       var rDot = style === "dial" ? 3.6 : 2.8;
+      var low = qVals[d] < 100;
       dots +=
-        '<circle cx="' + pq.x.toFixed(1) + '" cy="' + pq.y.toFixed(1) + '" r="' + rDot +
-        '" fill="var(--accent)" stroke="var(--panel)" stroke-width="1.5"/>';
+        '<circle class="' + (low ? "radar-dot-low" : "") + '" cx="' + pq.x.toFixed(1) +
+        '" cy="' + pq.y.toFixed(1) + '" r="' + (low ? rDot + 0.6 : rDot) +
+        '" fill="' + (low ? "var(--danger)" : "var(--accent)") +
+        '" stroke="var(--panel)" stroke-width="1.5"/>';
       if (style === "ghost") {
         var pc = xy(d, cVals[d]);
         dots +=
@@ -1882,12 +1939,20 @@
     for (var li = 0; li < n; li++) {
       var lp = xy(li, 100, labelR);
       var anchor = Math.abs(lp.x - cx) < 8 ? "middle" : (lp.x > cx ? "start" : "end");
-      var dy = lp.y < cy - 8 ? -2 : (lp.y > cy + 8 ? 10 : 4);
+      var above = lp.y < cy - 8;
+      var below = lp.y > cy + 8;
+      var nameDy = above ? -10 : (below ? 4 : -2);
+      var scoreDy = above ? 4 : (below ? 18 : 12);
+      var qv = Math.round(qVals[li]);
+      var scoreCls = qv < 100 ? "radar-score-low" : "radar-score-ok";
       labs +=
-        '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + dy).toFixed(1) +
+        '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + nameDy).toFixed(1) +
         '" text-anchor="' + anchor + '" fill="currentColor" font-size="11" font-family="var(--mono)">' +
-        "<title>" + esc(labels[li]) + " · 质量 " + qVals[li] + " · 上限 " + cVals[li] + "</title>" +
-        esc(shortLab(labels[li])) + "</text>";
+        "<title>" + esc(labels[li]) + " · 质量 " + qv + "% · 上限 " + cVals[li] + "</title>" +
+        esc(shortLab(labels[li])) + "</text>" +
+        '<text class="' + scoreCls + '" x="' + lp.x.toFixed(1) + '" y="' + (lp.y + scoreDy).toFixed(1) +
+        '" text-anchor="' + anchor + '" font-size="10" font-family="var(--mono)">' +
+        qv + "%</text>";
     }
 
     return (
@@ -1922,18 +1987,6 @@
       }).join("") +
       "</ol>"
     );
-  }
-  function missBars(missTop) {
-    if (!missTop || !missTop.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无常见缺口数据</p>";
-    var max = Math.max.apply(null, missTop.map(function (m) { return m.count; })) || 1;
-    return missTop.map(function (m) {
-      var pct = Math.round((m.count / max) * 100);
-      return (
-        '<div class="hbar-row"><div class="mono" title="' + esc(m.id) + '">' + esc(m.label_zh || m.id) +
-        '</div><div class="hbar-track"><div class="hbar-fill" style="width:' + pct + '%"></div></div><div>' +
-        esc(m.count) + "</div></div>"
-      );
-    }).join("");
   }
   function trendLines(trend) {
     if (!trend || !trend.labels || trend.labels.length < 1) {
@@ -2297,18 +2350,19 @@
 
     _chartDomains = ui.chart_domains || null;
     renderDomainChart(RADAR_STYLE);
-    $("chart-miss").innerHTML = missBars(ui.miss_top);
 
     var stories = ui.domain_stories || ui.domains || [];
-    if (stories.length) {
-      $("domain-summary").innerHTML = stories.map(function (d) {
+    var detailBtn = $("radar-detail");
+    var summaryEl = $("domain-summary");
+    if (stories.length && summaryEl) {
+      summaryEl.innerHTML = stories.map(function (d) {
         var bits = [];
         if (typeof d.score === "number") bits.push(d.score + "%");
         if (d.cap != null) bits.push("上限≈" + d.cap);
         if (d.room != null && d.room > 0) bits.push("距上限 " + d.room);
         if (typeof d.coverage_percent === "number") bits.push("覆盖 " + d.coverage_percent + "%");
         if (d.status_label) bits.push(d.status_label);
-        var warn = d.tone === "warn";
+        var warn = d.tone === "warn" || (typeof d.score === "number" && d.score < 100);
         var mark = warn ? "⚠ " : "";
         return (
           '<div class="dom-row">' +
@@ -2317,6 +2371,10 @@
           '<span class="dom-bits">' + esc(bits.join(" · ")) + "</span></div>"
         );
       }).join("");
+      if (detailBtn) detailBtn.hidden = false;
+    } else if (detailBtn) {
+      detailBtn.hidden = true;
+      if (summaryEl) summaryEl.innerHTML = "";
     }
 
     if (ui.show_domain_cards && stories.length) {

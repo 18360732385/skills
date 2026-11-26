@@ -6977,7 +6977,13 @@ console.log("theme-gate-smoke-ok");
   assert(!/CYBERPUNK/.test(tmpl82) && !/Orbitron/.test(tmpl82), "0.8.2 tmpl de-cyberpunk");
   assert(!/scan-shine/.test(tmpl82) && !/glitch-in/.test(tmpl82) && !/keyframes blink/.test(tmpl82), "0.8.2 tmpl noise removed");
   assert(!/id="kpis"/.test(tmpl82), "0.8.2 kpi strip folded into 开干清单");
-  assert(/常见缺口分布（明细）/.test(tmpl82) && /低分原因 Top（明细）/.test(tmpl82), "0.8.3 Details folds");
+  assert(
+    /id="diagnose-story"/.test(tmpl82) &&
+      /class="diag-side"/.test(tmpl82) &&
+      /低分原因 Top（明细）/.test(tmpl82),
+    "diagnose story beside radar + gaps fold"
+  );
+  assert(!/常见缺口分布（明细）/.test(tmpl82) && !/id="chart-miss"/.test(tmpl82), "miss distribution fold removed");
   assert(!/仪表参考分/.test(tmpl82) && !/综合评分/.test(tmpl82), "0.8.2 no stale composite name");
   assert(/仅参考/.test(tmpl82), "0.8.2 仅参考 badge");
 
