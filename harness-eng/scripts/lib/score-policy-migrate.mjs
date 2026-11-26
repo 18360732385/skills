@@ -2,10 +2,21 @@
  * 0.7.0: field-level migrate of legacy morph_floor defaults in score-policy.yaml.
  * Does not wipe other keys. Old fingerprints: strict 60 → 75; gold 90 → 95.
  * 0.7.35 FS-9: applyGateProfileToPolicyFile for resume/upgrade gate_profile落盘.
+ * 0.8.5: CRLF normalize; gold no-op when unchanged; ensure frontend coverage_targets.
  */
 import fs from "fs";
 import path from "path";
 import { reapplyGateProfile } from "./ai-coding-gate.mjs";
+import { knownContractDomainIds } from "./domains.mjs";
+
+/** Normalize CR/CRLF → LF so /^…/m line edits never glue keys. */
+export function normalizePolicyNewlines(raw) {
+  return String(raw || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
+function escapeRe(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 /**
  * @param {string} root target repo root
@@ -19,8 +30,8 @@ export function migrateScorePolicyFile(root) {
     return out;
   }
   out.path = p;
-  let raw = fs.readFileSync(p, "utf8");
-  const gp = (raw.match(/^\s*gate_profile:\s*(\w+)/m) || [])[1] || "strict";
+  let raw = normalizePolicyNewlines(fs.readFileSync(p, "utf8"));
+  const gp = (raw.match(/^\s*gate_profile:\s*(\w+)\s*$/m) || [])[1] || "strict";
   const mf = raw.match(/morph_floor:\s*([0-9.]+|null)/);
   if (!mf || mf[1] === "null") {
     out.warnings.push("morph_floor absent or null (runtime defaults apply)");
@@ -52,7 +63,36 @@ export function migrateScorePolicyFile(root) {
 }
 
 /**
- * 0.7.35 FS-9: rewrite gate_profile (+ gold coverage targets) on disk.
+ * Set or insert `domain: value` under coverage_targets. Only rewrite when Number differs.
+ * @param {string} raw
+ * @param {string} domain
+ * @param {number} value
+ */
+function upsertCoverageTarget(raw, domain, value) {
+  const esc = escapeRe(domain);
+  const lineRe = new RegExp(`^(\\s*${esc}:\\s*)([0-9.]+)(\\s*)$`, "m");
+  const m = raw.match(lineRe);
+  if (m) {
+    if (Number(m[2]) === Number(value)) return raw;
+    return raw.replace(lineRe, `$1${value}$3`);
+  }
+  // Insert after coverage_targets: block header
+  if (/^\s*coverage_targets:\s*$/m.test(raw)) {
+    return raw.replace(/^(\s*coverage_targets:\s*)$/m, `$1\n  ${domain}: ${value}`);
+  }
+  // No coverage_targets section — append a minimal block before gate_profile / gate / EOF
+  const block = `coverage_targets:\n  ${domain}: ${value}\n`;
+  if (/^gate_profile:/m.test(raw)) {
+    return raw.replace(/^gate_profile:/m, `${block}gate_profile:`);
+  }
+  if (/^gate:/m.test(raw)) {
+    return raw.replace(/^gate:/m, `${block}gate:`);
+  }
+  return raw.trimEnd() + "\n" + block;
+}
+
+/**
+ * 0.7.35 FS-9 / 0.8.5: rewrite gate_profile (+ gold coverage targets) on disk.
  * @param {string} root
  * @param {string} profile strict|gold|legacy
  * @returns {{ changed: boolean, path: string|null, from: string|null, to: string|null }}
@@ -67,52 +107,77 @@ export function applyGateProfileToPolicyFile(root, profile) {
     return out;
   }
   out.path = p;
-  let raw = fs.readFileSync(p, "utf8");
-  const cur = (raw.match(/^\s*gate_profile:\s*(\w+)/m) || [])[1] || "strict";
+  const diskRaw = fs.readFileSync(p, "utf8");
+  let raw = normalizePolicyNewlines(diskRaw);
+  const prevNorm = raw;
+  const cur = (raw.match(/^\s*gate_profile:\s*(\w+)\s*$/m) || [])[1] || "strict";
   out.from = cur;
   out.to = next;
-  if (cur === next && next !== "gold") return out;
 
-  // Always rewrite gate_profile line
-  if (/^\s*gate_profile:\s*/m.test(raw)) {
-    raw = raw.replace(/^\s*gate_profile:\s*\w+/m, `gate_profile: ${next}`);
+  // non-gold same-profile: still normalize CRLF→LF if needed
+  if (cur === next && next !== "gold") {
+    if (raw !== diskRaw) {
+      fs.writeFileSync(p, raw, "utf8");
+      out.changed = true;
+    }
+    return out;
+  }
+
+  if (/^\s*gate_profile:\s*\w+\s*$/m.test(raw)) {
+    if (cur !== next) {
+      raw = raw.replace(/^\s*gate_profile:\s*\w+\s*$/m, `gate_profile: ${next}`);
+    }
   } else {
     raw = `gate_profile: ${next}\n` + raw;
   }
 
   if (next === "gold") {
-    // Align coverage_targets to 1.0 for known domains (reapplyGateProfile semantics)
+    const domains = knownContractDomainIds();
     const policyStub = {
       gate_profile: cur,
       coverage_targets: {},
       gate: {},
     };
-    for (const d of ["api", "func", "db", "redis", "jobs"]) {
-      const m = raw.match(new RegExp(`^(\\s*${d}:\\s*)([0-9.]+)`, "m"));
-      if (m) policyStub.coverage_targets[d] = Number(m[2]);
+    for (const d of domains) {
+      const m = raw.match(new RegExp(`^\\s*${escapeRe(d)}:\\s*([0-9.]+)\\s*$`, "m"));
+      if (m) policyStub.coverage_targets[d] = Number(m[1]);
     }
     const applied = reapplyGateProfile(policyStub, "gold", {});
-    for (const [d, v] of Object.entries(applied.coverage_targets || {})) {
+    const targets = applied.coverage_targets || applyGoldTargetsFallback(domains);
+    for (const [d, v] of Object.entries(targets)) {
       if (v == null) continue;
-      const re = new RegExp(`^(\\s*${d}:\\s*)([0-9.]+)`, "m");
-      if (re.test(raw)) raw = raw.replace(re, `$1${v}`);
+      raw = upsertCoverageTarget(raw, d, v);
     }
-    if (/^\s*coverage_mode:\s*/m.test(raw)) {
-      raw = raw.replace(/^\s*coverage_mode:\s*\w+/m, "coverage_mode: all_domains");
+    if (/^\s*coverage_mode:\s*\w+\s*$/m.test(raw)) {
+      const cm = (raw.match(/^\s*coverage_mode:\s*(\w+)\s*$/m) || [])[1];
+      if (cm !== "all_domains") {
+        raw = raw.replace(/^\s*coverage_mode:\s*\w+\s*$/m, "coverage_mode: all_domains");
+      }
+    } else if (!/^\s*coverage_mode:/m.test(raw)) {
+      raw = `coverage_mode: all_domains\n` + raw;
     }
   } else if (next === "strict" && cur === "gold") {
-    // Downgrade: restore common strict 0.8 targets when still at gold 1.0
-    for (const d of ["api", "func", "db", "redis", "jobs"]) {
-      const re = new RegExp(`^(\\s*${d}:\\s*)1(?:\\.0+)?\\s*$`, "m");
-      if (re.test(raw)) raw = raw.replace(re, `$10.8`);
+    const domains = knownContractDomainIds();
+    for (const d of domains) {
+      const re = new RegExp(`^(\\s*${escapeRe(d)}:\\s*)1(?:\\.0+)?(\\s*)$`, "m");
+      if (re.test(raw)) raw = raw.replace(re, `$10.8$2`);
     }
   }
 
-  const prev = fs.readFileSync(p, "utf8");
-  if (raw !== prev) {
+  if (raw === prevNorm && raw === diskRaw) {
+    return out;
+  }
+  // Write when content changed OR only line endings needed normalize after edits
+  if (raw !== diskRaw) {
     fs.writeFileSync(p, raw, "utf8");
     out.changed = true;
   }
+  return out;
+}
+
+function applyGoldTargetsFallback(domains) {
+  const out = {};
+  for (const d of domains) out[d] = 1.0;
   return out;
 }
 
@@ -120,8 +185,8 @@ export function applyGateProfileToPolicyFile(root, profile) {
 export function detectLegacyMorphFloor(root) {
   const p = path.join(root, "docs", "harness-eng", "score-policy.yaml");
   if (!fs.existsSync(p)) return null;
-  const raw = fs.readFileSync(p, "utf8");
-  const gp = (raw.match(/^\s*gate_profile:\s*(\w+)/m) || [])[1] || "strict";
+  const raw = normalizePolicyNewlines(fs.readFileSync(p, "utf8"));
+  const gp = (raw.match(/^\s*gate_profile:\s*(\w+)\s*$/m) || [])[1] || "strict";
   const mf = raw.match(/morph_floor:\s*([0-9.]+)/);
   if (!mf) return null;
   const floor = Number(mf[1]);

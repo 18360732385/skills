@@ -1,11 +1,10 @@
 /**
- * Frontend + inventory-scan domain helpers (0.8.1 patch).
+ * Frontend + inventory-scan domain helpers (0.8.0+).
  *
  * Official coverage_by_domain includes design/prototype/pages/components/client-api.
- * 0.8.1 frontend truths are domain-level pages (shell / core flows), not one
- * markdown file per inventory asset. The gold gate therefore uses a domain-
- * documented ratio (truths exist when assets exist). Asset counts stay on the
- * row as inventory_assets / truths / asset_ratio so the gap is visible.
+ * 0.8.5: gate ratio = truths/assets (real asset coverage). Do not treat one truth
+ * page as domain-level 100%. Scaffold templates under /templates/ are excluded
+ * from the numerator; business filenames containing "template" still count.
  */
 export const FRONTEND_COVERAGE_DOMAINS = [
   "design",
@@ -34,12 +33,20 @@ export function isFrontendCoverageDomain(domain) {
   return FRONTEND_COVERAGE_DOMAINS.includes(domain);
 }
 
-/** Skip index-adjacent README and templates under docs/<domain>/modules/. */
+/**
+ * Truth files that count toward frontend coverage numerator.
+ * Skip README, docs/<domain>/templates/* scaffolds, and *-template.md scaffold names.
+ * Business names like 19-desc-template-import.md still count.
+ */
 export function isFrontendTruthFile(filePath) {
-  const base = String(filePath || "").replace(/\\/g, "/").split("/").pop() || "";
+  const norm = String(filePath || "").replace(/\\/g, "/");
+  const base = norm.split("/").pop() || "";
+  if (!/\.md$/i.test(base)) return false;
   if (/^README(?:\.[A-Za-z0-9]+)?\.md$/i.test(base)) return false;
-  if (/template/i.test(base)) return false;
-  return /\.md$/i.test(base);
+  if (/\/templates\//i.test(norm)) return false;
+  // scaffold basename only: template.md / foo-template.md (not mid-token business e.g. *-template-import.md)
+  if (/^(?:.+-)?template\.md$/i.test(base)) return false;
+  return true;
 }
 
 export function countFrontendTruths(files) {
@@ -54,18 +61,18 @@ export function buildFrontendCoverageRow({ truths, assets }) {
   const truthCount = Number(truths) || 0;
   const assetCount = Number(assets) || 0;
   if (!(assetCount > 0)) return null;
-  const covered = truthCount > 0 ? 1 : 0;
-  const assetRatio = assetCount ? truthCount / assetCount : 0;
+  const ratio = Math.min(truthCount / assetCount, 1);
+  const rounded = Math.round(ratio * 1000) / 1000;
   return {
-    covered,
-    code: 1,
-    ratio: covered,
-    percent: covered * 100,
-    unit: "domain",
+    covered: truthCount,
+    code: assetCount,
+    ratio: rounded,
+    percent: Math.round(rounded * 100),
+    unit: "asset",
     truths: truthCount,
     inventory_assets: assetCount,
-    asset_ratio: Math.round(Math.min(assetRatio, 1) * 1000) / 1000,
-    source: "domain_documented",
-    note: "frontend coverage is domain-level truths, not 1:1 inventory assets",
+    asset_ratio: rounded,
+    source: "asset_ratio",
+    note: "frontend coverage is truths/assets; gold target 1.0 requires full asset docs",
   };
 }

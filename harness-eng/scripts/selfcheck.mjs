@@ -105,6 +105,7 @@ import {
   inventoryScanDomains,
   buildFrontendCoverageRow,
   countFrontendTruths,
+  isFrontendTruthFile,
 } from "./lib/frontend-coverage.mjs";
 import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
 import { readGitHead } from "./lib/git-head.mjs";
@@ -160,7 +161,10 @@ import {
   retireObsoleteWrappers,
   warnObsoleteWrappers,
 } from "./lib/obsolete-wrappers.mjs";
-import { applyGateProfileToPolicyFile } from "./lib/score-policy-migrate.mjs";
+import {
+  applyGateProfileToPolicyFile,
+  normalizePolicyNewlines,
+} from "./lib/score-policy-migrate.mjs";
 import { buildBackfillPlan } from "./lib/backfill-plan.mjs";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
@@ -1064,7 +1068,10 @@ if (fs.existsSync(fixture)) {
 // --- 0.8.1 official frontend coverage_by_domain + func enum skip ---
 {
   const documented = buildFrontendCoverageRow({ truths: 4, assets: 80 });
-  assert(documented && documented.unit === "domain" && documented.ratio === 1, "documented frontend domain ratio is 1");
+  assert(
+    documented && documented.unit === "asset" && documented.ratio === 0.05,
+    "0.8.5 frontend ratio is truths/assets (got " + JSON.stringify(documented) + ")"
+  );
   assert(documented.inventory_assets === 80 && documented.truths === 4, "frontend row keeps asset/truth counts");
   assert(documented.asset_ratio === 0.05, "frontend asset_ratio is truths/assets, got " + documented.asset_ratio);
   const missing = buildFrontendCoverageRow({ truths: 0, assets: 79 });
@@ -7567,8 +7574,8 @@ console.log("theme-gate-smoke-ok");
           /17-frontend-web\.mdc/.test(both || "") &&
           /并存/.test(both || "") &&
           /git mv/.test(both || "") &&
-          /收窄 101|SSOT/.test(both || ""),
-        `0.8.3/0.8.4 D11 coexisting 17+101 warns with retire command (got ${JSON.stringify(both)})`
+          /经确认|SSOT|宿主/.test(both || ""),
+        `0.8.3/0.8.5 D11 coexisting 17+101 warns with retire command (got ${JSON.stringify(both)})`
       );
       assert(
         fs.existsSync(path.join(rulesDir, "17-frontend-web.mdc")),
@@ -7916,9 +7923,170 @@ console.log("theme-gate-smoke-ok");
   assert(/0\.8\.4 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.4 VERIFY.md");
   assert(/0\.8\.3 → 0\.8\.4/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.4 upgrade.md");
   assert(logExists("0.8.4"), "0.8.4 _log note exists");
+}
+
+// --- 0.8.5: sms-ai 实战缺陷全修（CRLF / gold noop / real FE coverage / inventory / rule17.md / TODO scan） ---
+{
   assert(
-    /当前 \*\*0\.8\.4\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
-    "0.8.4 SKILL.md version pin"
+    normalizePolicyNewlines("a\r\nb\rc") === "a\nb\nc",
+    "0.8.5 normalizePolicyNewlines CRLF/CR→LF"
+  );
+
+  const polRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-085-pol-"));
+  try {
+    const polDir = path.join(polRoot, "docs", "harness-eng");
+    fs.mkdirSync(polDir, { recursive: true });
+    const polPath = path.join(polDir, "score-policy.yaml");
+    const crlfBody = [
+      "gate_profile: strict",
+      "coverage_mode: overall",
+      "coverage_targets:",
+      "  api: 0.8",
+      "  func: 0.8",
+      "  db: 0.8",
+      "  redis: 0.8",
+      "  jobs: 0.8",
+      "gate:",
+      "  morph_floor: 75",
+      "",
+    ].join("\r\n");
+    fs.writeFileSync(polPath, crlfBody);
+    const a1 = applyGateProfileToPolicyFile(polRoot, "gold");
+    assert(a1.changed === true && a1.from === "strict" && a1.to === "gold", "0.8.5 CRLF strict→gold writes");
+    const after1 = fs.readFileSync(polPath, "utf8");
+    assert(!after1.includes("\r"), "0.8.5 after apply file is LF-only");
+    assert(/^\s*gate_profile:\s*gold\s*$/m.test(after1), "0.8.5 gate_profile line intact");
+    assert(/^\s*coverage_mode:\s*all_domains\s*$/m.test(after1), "0.8.5 coverage_mode line intact");
+    assert(/^\s*pages:\s*1(?:\.0)?\s*$/m.test(after1), "0.8.5 gold inserts frontend pages target");
+    assert(/^\s*prototype:\s*1(?:\.0)?\s*$/m.test(after1), "0.8.5 gold inserts prototype target");
+    const a2 = applyGateProfileToPolicyFile(polRoot, "gold");
+    assert(a2.changed === false, "0.8.5 gold→gold noop when already aligned");
+    const after2 = fs.readFileSync(polPath, "utf8");
+    assert(after2 === after1, "0.8.5 gold→gold does not rewrite content");
+  } finally {
+    fs.rmSync(polRoot, { recursive: true, force: true });
+  }
+
+  const protoTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/prototype/prototype.md.tmpl"),
+    "utf8"
+  );
+  const designTmpl = fs.readFileSync(
+    path.join(skillRoot, "templates/docs/design/design.md.tmpl"),
+    "utf8"
+  );
+  assert(!/TODO\(harness-eng\)/.test(protoTmpl), "0.8.5 prototype index tmpl has no harness TODO");
+  assert(!/TODO\(harness-eng\)/.test(designTmpl), "0.8.5 design index tmpl has no harness TODO");
+
+  const rowReal = buildFrontendCoverageRow({ truths: 1, assets: 10 });
+  assert(
+    rowReal && rowReal.ratio === 0.1 && rowReal.unit === "asset" && rowReal.source === "asset_ratio",
+    `0.8.5 one truth / 10 assets ratio=0.1 (got ${JSON.stringify(rowReal)})`
+  );
+  assert(
+    isFrontendTruthFile("docs/pages/modules/19-desc-template-import.md"),
+    "0.8.5 business filename with template mid-token counts"
+  );
+  assert(
+    !isFrontendTruthFile("docs/pages/templates/page-asset-template.md"),
+    "0.8.5 /templates/ scaffold excluded"
+  );
+  assert(
+    !isFrontendTruthFile("docs/pages/modules/foo-template.md"),
+    "0.8.5 *-template.md scaffold basename excluded"
+  );
+
+  const invRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-085-proto-"));
+  try {
+    const ssot = path.join(invRoot, "docs", "prototype", "modules");
+    fs.mkdirSync(ssot, { recursive: true });
+    fs.writeFileSync(path.join(invRoot, "docs", "prototype", "prototype.md"), "# idx\n", "utf8");
+    fs.writeFileSync(path.join(ssot, "01-home.md"), "# truth\n", "utf8");
+    fs.writeFileSync(path.join(invRoot, "docs", "prototype", "wire.html"), "<html></html>", "utf8");
+    const invScript = path.join(skillRoot, "scripts/fill-inventory.mjs");
+    const invRun = runNode(
+      [invScript, "--domain", "prototype", "--root", invRoot, "--no-write", "--quiet"],
+      { cwd: skillRoot, windowsHide: true }
+    );
+    assert(
+      invRun.status === 0 || invRun.status === 2,
+      `0.8.5 prototype inventory exit (got ${invRun.status}): ${invRun.stderr || ""}`
+    );
+    const out = String(invRun.stdout || "");
+    const i = out.indexOf("{");
+    const j = out.lastIndexOf("}");
+    const invJson = i >= 0 && j > i ? JSON.parse(out.slice(i, j + 1)) : {};
+    const mdAssets = (invJson.assets || []).filter((a) => /\.md$/i.test(a.path || ""));
+    assert(
+      mdAssets.length === 0,
+      `0.8.5 SSOT md not in prototype inventory denom (got ${JSON.stringify(mdAssets)})`
+    );
+    assert(
+      (invJson.assets || []).some((a) => /wire\.html$/i.test(a.path || "")),
+      "0.8.5 static html still inventoried under SSOT"
+    );
+  } finally {
+    fs.rmSync(invRoot, { recursive: true, force: true });
+  }
+
+  {
+    const d11 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-085-d11-"));
+    try {
+      const claudeRules = path.join(d11, ".claude", "rules");
+      fs.mkdirSync(claudeRules, { recursive: true });
+      fs.writeFileSync(path.join(claudeRules, "101-frontend-web.md"), "# 101\n", "utf8");
+      fs.writeFileSync(path.join(claudeRules, "17-frontend-web.md"), "# 17\n", "utf8");
+      let msg = null;
+      const r = warnRetiredRule17Coexistence(d11, { error: (m) => { msg = m; } });
+      assert(
+        r.warned === true &&
+          r.paths.some((p) => p.endsWith(".claude/rules/17-frontend-web.md")) &&
+          /经确认/.test(msg || "") &&
+          !/先收窄 101/.test(msg || ""),
+        `0.8.5 D11 scans host .md (got paths=${JSON.stringify(r.paths)} msg=${JSON.stringify(msg)})`
+      );
+    } finally {
+      fs.rmSync(d11, { recursive: true, force: true });
+    }
+  }
+
+  {
+    const todoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-085-todo-"));
+    try {
+      const doc = path.join(todoRoot, "docs", "api", "modules");
+      fs.mkdirSync(doc, { recursive: true });
+      fs.writeFileSync(
+        path.join(doc, "01-x.md"),
+        [
+          "# X",
+          "",
+          "## 概述",
+          "",
+          "done",
+          "",
+          "## 变更记录",
+          "",
+          "| 版本 | 内容 |",
+          "|---|---|",
+          "| v1 | 清掉 TODO(harness-eng) 占位 |",
+          "",
+        ].join("\n"),
+        "utf8"
+      );
+      const n = countHarnessTodos(todoRoot, "truths");
+      assert(n === 0, `0.8.5 changelog TODO mention not counted (got ${n})`);
+    } finally {
+      fs.rmSync(todoRoot, { recursive: true, force: true });
+    }
+  }
+
+  assert(/\| 0\.8\.5 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.5 CHANGELOG");
+  assert(/0\.8\.5 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.5 VERIFY.md");
+  assert(/0\.8\.4 → 0\.8\.5/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.5 upgrade.md");
+  assert(logExists("0.8.5"), "0.8.5 _log note exists");
+  assert(
+    /当前 \*\*0\.8\.5\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
+    "0.8.5 SKILL.md version pin"
   );
 }
 

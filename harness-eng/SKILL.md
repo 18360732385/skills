@@ -10,7 +10,7 @@ description: >-
 
 # harness-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.8.4**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。报告对照 `skill_version` + `report_schema`（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.8.5**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。报告对照 `skill_version` + `report_schema`（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 
 Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持久约束。  
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  

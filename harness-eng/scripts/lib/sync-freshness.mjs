@@ -333,9 +333,9 @@ export const RULE17_COEXIST_DIRS = [
 ];
 
 /**
- * 0.8.2 patch (D11) / 0.8.4: 存量仓升级后旧 rule 17 与新 rule 101 并存（同域双触发）。
+ * 0.8.2 patch (D11) / 0.8.4 / 0.8.5: 存量仓升级后旧 rule 17 与新 rule 101 并存（同域双触发）。
  * 只警告 + 给出退役命令（确认闸门纪律：不自动删）。
- * 0.8.4：扫宿主落点 + SSOT；多行可复制 git mv；提示先收窄 101 glob 再退役。
+ * 0.8.5：同时扫 .mdc 与宿主镜像 .md（claude/qoder/trae/codebuddy）；确认后 git mv 归档。
  * @returns {{ warned: boolean, old17: boolean, new101: boolean, paths: string[] }}
  */
 export function warnRetiredRule17Coexistence(root, log = console) {
@@ -344,12 +344,15 @@ export function warnRetiredRule17Coexistence(root, log = console) {
   let any101 = false;
   for (const relDir of RULE17_COEXIST_DIRS) {
     const dir = path.join(absRoot, relDir);
-    const old17 = path.join(dir, "17-frontend-web.mdc");
-    const new101 = path.join(dir, "101-frontend-web.mdc");
+    const relBase = relDir.replace(/\\/g, "/");
     try {
-      if (fs.existsSync(new101)) any101 = true;
-      if (fs.existsSync(old17)) {
-        found17.push(relDir.replace(/\\/g, "/") + "/17-frontend-web.mdc");
+      for (const ext of [".mdc", ".md"]) {
+        if (fs.existsSync(path.join(dir, `101-frontend-web${ext}`))) any101 = true;
+        const oldName = `17-frontend-web${ext}`;
+        if (fs.existsSync(path.join(dir, oldName))) {
+          const rel = `${relBase}/${oldName}`;
+          if (!found17.includes(rel)) found17.push(rel);
+        }
       }
     } catch {
       /* ignore unreadable host dirs */
@@ -368,8 +371,8 @@ export function warnRetiredRule17Coexistence(root, log = console) {
       `git mv ${rel} docs/harness-eng/archive/${path.posix.basename(rel)}`
   );
   log.error(
-    "harness: 旧前端规则 17-frontend-web.mdc 与 101-frontend-web.mdc 并存（同域双触发，D11）。" +
-      "建议先收窄 101 glob，再经确认退役旧规则（含宿主落点 + SSOT）：\n  " +
+    "harness: 旧前端规则 17-frontend-web 与 101-frontend-web 并存（同域双触发，D11）。" +
+      "经确认后退役旧规则（含宿主 .mdc/.md 落点 + SSOT）：\n  " +
       cmds.join("\n  ")
   );
   return { warned: true, old17: true, new101: true, paths: found17 };

@@ -761,8 +761,7 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
       out.jobs.raw_ratio = Math.round(ratio * 1000) / 1000;
     }
   }
-  // 0.8.1 patch: official coverage_by_domain includes frontend five domains.
-  // Gate ratio is domain-documented (truth pages exist), not 1:1 inventory assets.
+  // 0.8.1+/0.8.5: frontend five domains; gate ratio = truths/assets (real).
   for (const d of FRONTEND_COVERAGE_DOMAINS) {
     const feInv = liveInv[d] || loadDomainInventory(root, d);
     if (!feInv || !Array.isArray(feInv.assets)) continue;
@@ -894,7 +893,11 @@ function loadScorePolicy(root) {
   const p = path.join(root, "docs", "harness-eng", "score-policy.yaml");
   const base = defaultScorePolicy();
   if (!fs.existsSync(p)) return { ...base, present: false, path: null };
-  const raw = fs.readFileSync(p, "utf8");
+  // 0.8.5: normalize CR/CRLF so /^…/m keys match after Windows writes
+  const raw = fs
+    .readFileSync(p, "utf8")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
   const mode = raw.match(/^\s*coverage_mode:\s*(\w+)/m);
   if (mode) base.coverage_mode = mode[1];
   for (const d of KNOWN_DOMAINS) {

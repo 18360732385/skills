@@ -80,6 +80,17 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.4 → 0.8.5 迁移要点
+
+1. **meta**：`skill_version` → `0.8.5`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳）
+3. **前端覆盖口径变更（破坏性）**：`coverage_by_domain` 前端域 `ratio` = `truths/assets`（不再「一篇过域」）；gold `coverage_targets`=1.0 时须按资产补齐真相，否则 `coverage_ready`/`ai_coding_ready` 不过
+4. **重跑 inventory + 打分**：尤其 `fill-inventory --domain prototype`（SSOT 下 md 不再进分母）→ `fill-score` → `fill-report-html`
+5. **score-policy**：若 Windows CRLF 曾被 gold apply 腐蚀，upgrade/resume 会 normalize 为 LF；已是 gold 且 targets 齐全时不再空写
+6. **索引骨架**：新渲 prototype/design 索引不再自带 `TODO(harness-eng)`；存量索引请手改占位或精填
+7. **rule 17**：退役警告现含宿主 `.md` 镜像；经确认后 `git mv` 归档（不自动删）
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.5`）后再 sync
+
 ## 0.8.3 → 0.8.4 迁移要点
 
 1. **meta**：`skill_version` → `0.8.4`

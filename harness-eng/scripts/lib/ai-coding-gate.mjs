@@ -114,9 +114,18 @@ export function reapplyGateProfile(policy, profile, opts = {}) {
   return p;
 }
 
+/**
+ * Strip ## 变更记录 … (until next ##) so changelog mentions of the marker
+ * do not inflate harness_todo counts (0.8.5).
+ */
+function stripChangelogSections(text) {
+  const parts = String(text || "").split(/(?=^##\s)/m);
+  return parts.filter((p) => !/^##[^\n]*变更记录/m.test(p)).join("");
+}
+
 function countTodosInFile(filePath) {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return 0;
-  const text = fs.readFileSync(filePath, "utf8");
+  const text = stripChangelogSections(fs.readFileSync(filePath, "utf8"));
   const m = text.match(/TODO\(harness-eng\)/gi);
   return m ? m.length : 0;
 }
