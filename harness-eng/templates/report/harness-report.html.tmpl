@@ -274,29 +274,33 @@
     }
     .banner-side .part b { color: var(--text); font-weight: 700; }
 
-    /* ---- 施工阶梯 + 开干清单 同组（决策台内，宽屏双列并排） ---- */
+    /* ---- 施工阶梯 + 开干清单 同组（决策台内，宽屏双列并排，卡间留白） ---- */
     .pipe-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px 0;
-      margin-bottom: 14px;
-      padding: 14px 18px;
+      gap: 28px;
+      margin-bottom: 18px;
+      padding: 0;
+      background: transparent;
+      border: none;
+    }
+    .pipe-group .pipe-axis {
+      display: block;
+      min-width: 0;
+      padding: 14px 16px;
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
     }
-    .pipe-group .pipe-axis { display: block; min-width: 0; }
     .pipe-group .pipe-axis + .pipe-axis {
-      padding-left: 22px;
-      border-left: 1px dashed var(--border);
+      padding-left: 16px;
+      border-left: 1px solid var(--border);
     }
     @media (max-width: 860px) {
-      .pipe-group { grid-template-columns: 1fr; }
+      .pipe-group { grid-template-columns: 1fr; gap: 12px; }
       .pipe-group .pipe-axis + .pipe-axis {
-        padding-left: 0;
-        border-left: none;
-        padding-top: 14px;
-        border-top: 1px dashed var(--border);
+        padding-left: 16px;
+        border-left: 1px solid var(--border);
       }
     }
     .pipe-group .axis-label {
@@ -304,7 +308,7 @@
       letter-spacing: 0.04em;
       color: var(--muted);
       font-family: var(--mono);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .host-capsule {
@@ -392,15 +396,20 @@
       background: var(--warn-soft);
     }
     .diagnose-story {
-      margin: 0 0 12px;
+      margin: 0 0 16px;
       padding: 0;
       list-style: none;
+      display: grid;
+      gap: 8px;
     }
     .diagnose-story li {
-      margin: 0 0 6px;
-      padding: 6px 10px;
+      margin: 0;
+      padding: 10px 12px;
       border-left: 3px solid var(--border);
       font-size: 0.85rem;
+      background: var(--panel2);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      line-height: 1.55;
     }
     .diagnose-story li.warn { border-left-color: var(--warn); }
     .diagnose-story li.ok { border-left-color: var(--ok, #2ecc71); }
@@ -771,19 +780,28 @@
     /* ============================================================
        ACTIONS
        ============================================================ */
-    .actions { list-style: none; margin: 14px 0 0; padding: 0; counter-reset: act; }
+    .actions-title {
+      margin: 22px 0 10px;
+      padding-top: 6px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--accent);
+      border-top: 1px dashed var(--border);
+    }
+    .actions { list-style: none; margin: 0; padding: 0; counter-reset: act; display: grid; gap: 10px; }
     .actions li {
-      padding: 12px 0;
-      border-top: 1px solid var(--border);
+      padding: 14px 14px 14px 40px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel2);
       position: relative;
-      padding-left: 28px;
     }
     .actions li::before {
       counter-increment: act;
       content: '0' counter(act);
       position: absolute;
-      left: 0;
-      top: 12px;
+      left: 12px;
+      top: 14px;
       font-family: var(--mono);
       font-size: 0.78rem;
       font-weight: 700;
@@ -791,11 +809,11 @@
     }
     .actions strong {
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       font-weight: 700;
       color: var(--text);
     }
-    .actions span { color: var(--muted); font-size: 0.86rem; }
+    .actions span { color: var(--muted); font-size: 0.86rem; line-height: 1.5; }
 
     /* ---- 命令行代码块 + 复制 ---- */
     .cmd-wrap {
@@ -843,36 +861,80 @@
        ============================================================ */
     .diag-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 16px;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+      margin-top: 4px;
     }
     @media (max-width: 860px) { .diag-grid { grid-template-columns: 1fr; } }
 
     .chart-box {
       background: var(--panel2);
       border-radius: var(--radius);
-      padding: 14px;
+      padding: 16px;
       border: 1px solid var(--border);
+      min-height: 100%;
     }
     .chart-box h3 {
-      margin: 0 0 10px;
+      margin: 0;
       font-size: 0.84rem;
       font-weight: 700;
       color: var(--text);
       letter-spacing: 0.01em;
     }
+    .chart-head {
+      margin-bottom: 12px;
+    }
+    .radar-wrap {
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+    }
+    .radar-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .radar-legend i {
+      display: inline-block;
+      width: 18px;
+      height: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+      border-radius: 1px;
+    }
+    .radar-legend .lg-q { background: var(--accent); }
+    .radar-legend .lg-c {
+      background: transparent;
+      border-top: 2px dashed var(--cap);
+      height: 0;
+      width: 18px;
+    }
     .chart-svg {
       width: 100%;
+      max-width: 420px;
       height: auto;
       display: block;
+      margin: 0 auto;
+      color: var(--text);
     }
+    .diag-side {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    .diag-side .fold { margin-top: 0; min-height: 120px; }
 
     .hbar-row {
       display: grid;
-      grid-template-columns: 110px 1fr 36px;
+      grid-template-columns: minmax(72px, 110px) 1fr 36px;
       gap: 8px;
       align-items: center;
-      margin: 8px 0;
+      margin: 10px 0;
       font-size: 0.78rem;
     }
     .hbar-track {
@@ -1177,14 +1239,104 @@
        FOOTER
        ============================================================ */
     footer {
-      margin-top: 22px;
-      padding-top: 14px;
+      margin-top: 36px;
+      padding-top: 18px;
       border-top: 1px solid var(--border);
       color: var(--muted);
       font-size: 0.74rem;
-      font-family: var(--mono);
-      letter-spacing: 0.02em;
+      display: grid;
+      gap: 14px;
     }
+    .footer-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      align-items: center;
+      font-family: var(--mono);
+      letter-spacing: 0.01em;
+    }
+    .footer-meta > span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel2);
+      white-space: nowrap;
+    }
+    .footer-meta .k { color: var(--muted); }
+    .footer-meta .v { color: var(--text); font-weight: 600; }
+    .footer-note {
+      margin: 0;
+      color: var(--muted);
+      opacity: 0.9;
+      line-height: 1.5;
+    }
+    .footer-help {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: var(--panel2);
+      color: var(--muted);
+      cursor: help;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .footer-help:hover,
+    .footer-help:focus-visible {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .footer-help-tip {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 10px);
+      z-index: 20;
+      min-width: 280px;
+      max-width: min(420px, 78vw);
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.55;
+      letter-spacing: 0;
+      white-space: normal;
+      text-align: left;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(4px);
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+    }
+    .footer-help:hover .footer-help-tip,
+    .footer-help:focus-visible .footer-help-tip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .footer-help-tip ol {
+      margin: 0;
+      padding: 0 0 0 1.35em;
+      display: grid;
+      gap: 6px;
+    }
+    .footer-help-tip li { margin: 0; }
 
     /* ============================================================
        MISC
@@ -1315,7 +1467,7 @@
             <div class="pipe-steps" id="pipe-steps"></div>
           </div>
         </div>
-        <h3 class="actions-title" id="actions-title" style="margin:16px 0 0;font-size:0.88rem;font-weight:700;color:var(--accent)">下一步建议</h3>
+        <h3 class="actions-title" id="actions-title">下一步建议</h3>
         <ol class="actions" id="actions"></ol>
       </section>
 
@@ -1328,26 +1480,36 @@
           <div class="morph-strip hidden" id="morph-strip"></div>
         </div>
         <div class="diag-grid">
-          <div class="chart-box">
-            <h3>各域文档质量分 vs 上限</h3>
-            <div id="chart-domains"></div>
+          <div class="chart-box" id="radar-box">
+            <div class="chart-head">
+              <h3>各域文档质量分 vs 上限</h3>
+            </div>
+            <div class="radar-wrap">
+              <div id="chart-domains"></div>
+              <div class="radar-legend" id="radar-legend" hidden>
+                <span><i class="lg-q"></i>文档质量分</span>
+                <span><i class="lg-c"></i>理论上限</span>
+              </div>
+            </div>
           </div>
-          <details class="fold" id="miss-fold" style="margin-top:0">
-            <summary>常见缺口分布（明细）</summary>
-            <div class="fold-body" id="chart-miss"></div>
-          </details>
+          <div class="diag-side">
+            <details class="fold" id="miss-fold">
+              <summary>常见缺口分布（明细）</summary>
+              <div class="fold-body" id="chart-miss"></div>
+            </details>
+            <details id="gaps-block" class="fold hidden">
+              <summary>低分原因 Top（明细）</summary>
+              <div class="fold-body">
+                <table>
+                  <thead><tr><th>域</th><th>路径</th><th>分</th><th>问题</th></tr></thead>
+                  <tbody id="gaps-body"></tbody>
+                </table>
+              </div>
+            </details>
+          </div>
         </div>
         <div class="domain-summary" id="domain-summary"></div>
         <div class="stories hidden" id="stories"></div>
-        <details id="gaps-block" class="fold hidden">
-          <summary>低分原因 Top（明细）</summary>
-          <div class="fold-body">
-            <table>
-              <thead><tr><th>域</th><th>路径</th><th>分</th><th>问题</th></tr></thead>
-              <tbody id="gaps-body"></tbody>
-            </table>
-          </div>
-        </details>
       </section>
 
       <section class="panel" id="panel-tasks" data-panel="tasks" role="tabpanel">
@@ -1408,7 +1570,10 @@
       </div>
     </div>
 
-    <footer id="footer" class="hidden"></footer>
+    <footer id="footer" class="hidden">
+      <div class="footer-meta" id="footer-meta"></div>
+      <p class="footer-note" id="footer-note"></p>
+    </footer>
   </div>
   <script type="application/json" id="report-data">{{REPORT_JSON}}</script>
   <script>
@@ -1616,28 +1781,147 @@
     var tag = (el.tagName || "").toLowerCase();
     return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
   }
-  function domainBars(chart) {
+  var RADAR_STYLE = "ghost";
+  var _chartDomains = null;
+
+  function domainRadar(chart, style) {
     var labels = (chart && (chart.labels_zh && chart.labels_zh.length ? chart.labels_zh : chart.labels)) || [];
     var quality = (chart && chart.quality) || [];
     var caps = (chart && chart.caps) || [];
-    if (!labels.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无分域数据</p>";
-    var w = 420, h = 28 + labels.length * 36, padL = 72, padR = 24, max = 100;
-    var rows = labels.map(function (lab, i) {
-      var y = 20 + i * 36;
-      var q = Math.max(0, Math.min(100, quality[i] || 0));
-      var c = Math.max(0, Math.min(100, caps[i] || 100));
-      var bw = w - padL - padR;
-      var qw = (q / max) * bw;
-      var cx = padL + (c / max) * bw;
-      return (
-        '<text x="0" y="' + (y + 12) + '" fill="currentColor" font-size="12" font-family="var(--mono)">' + esc(lab) + "</text>" +
-        '<rect x="' + padL + '" y="' + y + '" width="' + bw + '" height="14" rx="2" fill="var(--bar-track)"/>' +
-        '<rect x="' + padL + '" y="' + y + '" width="' + qw + '" height="14" rx="2" fill="var(--accent)"/>' +
-        '<line x1="' + cx + '" y1="' + (y - 2) + '" x2="' + cx + '" y2="' + (y + 16) + '" stroke="var(--cap)" stroke-width="2"/>' +
-        '<text x="' + (padL + qw + 6) + '" y="' + (y + 12) + '" fill="var(--muted)" font-size="11">' + q + "%</text>"
-      );
-    }).join("");
-    return '<svg class="chart-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="各域文档质量分">' + rows + "</svg>";
+    var n = labels.length;
+    if (!n) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无分域数据</p>";
+    style = style || RADAR_STYLE;
+
+    var size = 420;
+    var cx = size / 2;
+    var cy = size / 2 + 4;
+    var rMax = Math.min(128, 52 + n * 8);
+    var labelR = rMax + 34;
+
+    function ang(i) { return -Math.PI / 2 + (i / n) * Math.PI * 2; }
+    function xy(i, pct, radius) {
+      var a = ang(i);
+      var r = ((Math.max(0, Math.min(100, pct)) / 100) * (radius == null ? rMax : radius));
+      return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+    }
+    function poly(vals, radius) {
+      return vals.map(function (v, i) {
+        var p = xy(i, v, radius);
+        return p.x.toFixed(1) + "," + p.y.toFixed(1);
+      }).join(" ");
+    }
+    function shortLab(s) {
+      var t = String(s || "");
+      return t.length > 6 ? t.slice(0, 6) : t;
+    }
+
+    var rings = "";
+    var ringLevels = style === "dial" ? [25, 50, 75, 100] : [50, 100];
+    ringLevels.forEach(function (lv) {
+      var pts = [];
+      for (var i = 0; i < n; i++) {
+        var p = xy(i, lv);
+        pts.push(p.x.toFixed(1) + "," + p.y.toFixed(1));
+      }
+      var dash = style === "ink" ? ' stroke-dasharray="3 4"' : "";
+      var op = style === "ghost" ? "0.35" : (lv === 100 ? "0.55" : "0.35");
+      rings +=
+        '<polygon points="' + pts.join(" ") + '" fill="none" stroke="var(--border)" stroke-width="1"' +
+        dash + ' opacity="' + op + '"/>';
+      if (style === "dial") {
+        var tick = xy(0, lv);
+        rings +=
+          '<text x="' + (tick.x + 4).toFixed(1) + '" y="' + (tick.y + 3).toFixed(1) +
+          '" fill="var(--muted)" font-size="9" font-family="var(--mono)">' + lv + "</text>";
+      }
+    });
+
+    var spokes = "";
+    for (var s = 0; s < n; s++) {
+      var tip = xy(s, 100);
+      spokes +=
+        '<line x1="' + cx + '" y1="' + cy + '" x2="' + tip.x.toFixed(1) + '" y2="' + tip.y.toFixed(1) +
+        '" stroke="var(--border)" stroke-width="1" opacity="0.55"/>';
+    }
+
+    var qVals = labels.map(function (_, i) { return Math.max(0, Math.min(100, quality[i] || 0)); });
+    var cVals = labels.map(function (_, i) { return Math.max(0, Math.min(100, caps[i] != null ? caps[i] : 100)); });
+
+    var layers = "";
+    if (style === "ghost") {
+      layers +=
+        '<polygon points="' + poly(cVals) + '" fill="var(--warn-soft)" stroke="var(--cap)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.95"/>' +
+        '<polygon points="' + poly(qVals) + '" fill="var(--accent)" fill-opacity="0.22" stroke="var(--accent)" stroke-width="2"/>';
+    } else if (style === "dial") {
+      layers +=
+        '<polygon points="' + poly(cVals) + '" fill="none" stroke="var(--cap)" stroke-width="1.5" stroke-dasharray="5 4"/>' +
+        '<polygon points="' + poly(qVals) + '" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2.2"/>';
+    } else {
+      /* ink：图纸油墨 — 上限虚线框 + 质量实心淡填 */
+      layers +=
+        '<polygon points="' + poly(cVals) + '" fill="none" stroke="var(--cap)" stroke-width="1.6" stroke-dasharray="4 3"/>' +
+        '<polygon points="' + poly(qVals) + '" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="2"/>';
+    }
+
+    var dots = "";
+    for (var d = 0; d < n; d++) {
+      var pq = xy(d, qVals[d]);
+      var rDot = style === "dial" ? 3.6 : 2.8;
+      dots +=
+        '<circle cx="' + pq.x.toFixed(1) + '" cy="' + pq.y.toFixed(1) + '" r="' + rDot +
+        '" fill="var(--accent)" stroke="var(--panel)" stroke-width="1.5"/>';
+      if (style === "ghost") {
+        var pc = xy(d, cVals[d]);
+        dots +=
+          '<circle cx="' + pc.x.toFixed(1) + '" cy="' + pc.y.toFixed(1) +
+          '" r="2.2" fill="var(--cap)" opacity="0.85"/>';
+      }
+    }
+
+    var labs = "";
+    for (var li = 0; li < n; li++) {
+      var lp = xy(li, 100, labelR);
+      var anchor = Math.abs(lp.x - cx) < 8 ? "middle" : (lp.x > cx ? "start" : "end");
+      var dy = lp.y < cy - 8 ? -2 : (lp.y > cy + 8 ? 10 : 4);
+      labs +=
+        '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + dy).toFixed(1) +
+        '" text-anchor="' + anchor + '" fill="currentColor" font-size="11" font-family="var(--mono)">' +
+        "<title>" + esc(labels[li]) + " · 质量 " + qVals[li] + " · 上限 " + cVals[li] + "</title>" +
+        esc(shortLab(labels[li])) + "</text>";
+    }
+
+    return (
+      '<svg class="chart-svg" viewBox="0 0 ' + size + " " + size +
+      '" role="img" aria-label="各域文档质量分雷达图">' +
+      "<g>" + rings + spokes + layers + dots + labs + "</g></svg>"
+    );
+  }
+
+  function renderDomainChart(style) {
+    var el = $("chart-domains");
+    var legend = $("radar-legend");
+    if (!el) return;
+    if (!_chartDomains || !((_chartDomains.labels_zh && _chartDomains.labels_zh.length) || (_chartDomains.labels && _chartDomains.labels.length))) {
+      el.innerHTML = domainRadar(_chartDomains, style);
+      if (legend) legend.hidden = true;
+      return;
+    }
+    el.innerHTML = domainRadar(_chartDomains, style);
+    if (legend) legend.hidden = false;
+  }
+
+  function buildDisclaimerTip(raw) {
+    var text = String(raw || "").trim();
+    if (!text) return "";
+    var parts = text.split("；").map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!parts.length) return "";
+    return (
+      '<ol>' +
+      parts.map(function (p, i) {
+        return "<li><span class=\"mono\">" + (i + 1) + ".</span> " + esc(p) + "</li>";
+      }).join("") +
+      "</ol>"
+    );
   }
   function missBars(missTop) {
     if (!missTop || !missTop.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无常见缺口数据</p>";
@@ -2011,7 +2295,8 @@
       show($("morph-strip"));
     }
 
-    $("chart-domains").innerHTML = domainBars(ui.chart_domains);
+    _chartDomains = ui.chart_domains || null;
+    renderDomainChart(RADAR_STYLE);
     $("chart-miss").innerHTML = missBars(ui.miss_top);
 
     var stories = ui.domain_stories || ui.domains || [];
@@ -2182,11 +2467,22 @@
     if (TAB_ORDER.indexOf(hashTab) >= 0) setTab(hashTab, true);
     else setTab("decision");
 
-    $("footer").textContent =
-      (ui.disclaimer || "本报告不是契约真相。") +
-      " skill_version " + (skillVer || "—") +
-      " · report_schema " + (ui.report_schema || ui.version || "—") +
-      "（报告壳 ≠ skill） · 由 harness-eng fill-report-html 生成 · 不含密文。";
+    var tipHtml = buildDisclaimerTip(
+      ui.disclaimer ||
+      "本报告不是契约真相；契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/；施工产物默认在 docs/harness-eng/；开干只看 ai_coding_ready；落地检查不否决开干"
+    );
+    $("footer-meta").innerHTML =
+      (tipHtml
+        ? '<button type="button" class="footer-help" aria-label="报告说明" title="报告说明">' +
+          "i" +
+          '<div class="footer-help-tip" role="tooltip">' + tipHtml + "</div>" +
+          "</button>"
+        : "") +
+      '<span><span class="k">skill</span><span class="v">' + esc(skillVer || "—") + "</span></span>" +
+      '<span><span class="k">schema</span><span class="v">' + esc(ui.report_schema || ui.version || "—") + "</span></span>" +
+      '<span><span class="k">shell ≠ skill</span></span>' +
+      '<span><span class="k">generator</span><span class="v">fill-report-html</span></span>';
+    $("footer-note").textContent = "由 harness-eng 生成 · 不含密文。";
     show($("footer"));
   } catch (e) {
     show($("err"));

@@ -1632,7 +1632,7 @@ export function buildReportUi(score, opts = {}) {
     glossary: GLOSSARY,
     suggest_raw: s.suggest_next || null,
     disclaimer:
-      "本报告不是契约真相。契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/。施工产物默认在 docs/harness-eng/。开干只看 ai_coding_ready；落地检查不否决开干。",
+      "本报告不是契约真相；契约见 docs/func|api|db|redis|jobs；踩坑回流见 docs/agent-kb/；施工产物默认在 docs/harness-eng/；开干只看 ai_coding_ready；落地检查不否决开干",
   };
 }
 
