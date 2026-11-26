@@ -864,14 +864,22 @@
       letter-spacing: 0.01em;
     }
     .chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       margin-bottom: 12px;
+      min-height: 28px;
+    }
+    .chart-head h3 {
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: 0;
     }
     .radar-wrap {
-      position: relative;
       display: grid;
       justify-items: center;
       gap: 10px;
-      padding-bottom: 4px;
     }
     .radar-legend {
       display: flex;
@@ -898,10 +906,9 @@
       width: 18px;
     }
     .radar-detail {
-      position: absolute;
-      right: 0;
-      top: 0;
+      position: relative;
       z-index: 3;
+      flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1531,6 +1538,12 @@
           <div class="chart-box" id="radar-box">
             <div class="chart-head">
               <h3>各域文档质量分 vs 上限</h3>
+              <button type="button" class="radar-detail" id="radar-detail" hidden aria-label="各域分数明细" title="各域分数明细">
+                i
+                <div class="radar-detail-tip" role="tooltip">
+                  <div class="domain-summary" id="domain-summary"></div>
+                </div>
+              </button>
             </div>
             <div class="radar-wrap">
               <div id="chart-domains"></div>
@@ -1538,12 +1551,6 @@
                 <span><i class="lg-q"></i>文档质量分</span>
                 <span><i class="lg-c"></i>理论上限</span>
               </div>
-              <button type="button" class="radar-detail" id="radar-detail" hidden aria-label="各域分数明细" title="各域分数明细">
-                i
-                <div class="radar-detail-tip" role="tooltip">
-                  <div class="domain-summary" id="domain-summary"></div>
-                </div>
-              </button>
             </div>
           </div>
           <div class="diag-side">
