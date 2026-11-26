@@ -322,29 +322,57 @@ function readFillMcpProfile(root) {
   }
 }
 
+/** Host / SSOT rule dirs that may still hold legacy 17 + new 101. */
+export const RULE17_COEXIST_DIRS = [
+  ".cursor/rules",
+  "docs/agent-config/rules",
+  ".trae/rules",
+  ".qoder/rules",
+  ".claude/rules",
+  ".codebuddy/rules",
+];
+
 /**
- * 0.8.2 patch (D11): 存量仓升级后旧 rule 17 与新 rule 101 并存（同域双触发）。
- * 只警告 + 给出退役命令（确认闸门纪律：不自动删；本检测对 .cursor/rules 落点）。
- * @returns {{ warned: boolean, old17: boolean, new101: boolean }}
+ * 0.8.2 patch (D11) / 0.8.4: 存量仓升级后旧 rule 17 与新 rule 101 并存（同域双触发）。
+ * 只警告 + 给出退役命令（确认闸门纪律：不自动删）。
+ * 0.8.4：扫宿主落点 + SSOT；多行可复制 git mv；提示先收窄 101 glob 再退役。
+ * @returns {{ warned: boolean, old17: boolean, new101: boolean, paths: string[] }}
  */
 export function warnRetiredRule17Coexistence(root, log = console) {
-  const rulesDir = path.join(path.resolve(root), ".cursor", "rules");
-  const old17 = path.join(rulesDir, "17-frontend-web.mdc");
-  const new101 = path.join(rulesDir, "101-frontend-web.mdc");
-  let has17 = false;
-  let has101 = false;
-  try {
-    has17 = fs.existsSync(old17);
-    has101 = fs.existsSync(new101);
-  } catch {
-    return { warned: false, old17: false, new101: false };
+  const absRoot = path.resolve(root);
+  const found17 = [];
+  let any101 = false;
+  for (const relDir of RULE17_COEXIST_DIRS) {
+    const dir = path.join(absRoot, relDir);
+    const old17 = path.join(dir, "17-frontend-web.mdc");
+    const new101 = path.join(dir, "101-frontend-web.mdc");
+    try {
+      if (fs.existsSync(new101)) any101 = true;
+      if (fs.existsSync(old17)) {
+        found17.push(relDir.replace(/\\/g, "/") + "/17-frontend-web.mdc");
+      }
+    } catch {
+      /* ignore unreadable host dirs */
+    }
   }
-  if (!(has17 && has101)) return { warned: false, old17: has17, new101: has101 };
-  log.error(
-    "harness: 旧前端规则 .cursor/rules/17-frontend-web.mdc 与 101-frontend-web.mdc 并存（同域双触发，D11）。" +
-      "建议经确认后退役旧规则：git mv .cursor/rules/17-frontend-web.mdc docs/harness-eng/archive/17-frontend-web.mdc"
+  if (!(found17.length && any101)) {
+    return {
+      warned: false,
+      old17: found17.length > 0,
+      new101: any101,
+      paths: found17,
+    };
+  }
+  const cmds = found17.map(
+    (rel) =>
+      `git mv ${rel} docs/harness-eng/archive/${path.posix.basename(rel)}`
   );
-  return { warned: true, old17: true, new101: true };
+  log.error(
+    "harness: 旧前端规则 17-frontend-web.mdc 与 101-frontend-web.mdc 并存（同域双触发，D11）。" +
+      "建议先收窄 101 glob，再经确认退役旧规则（含宿主落点 + SSOT）：\n  " +
+      cmds.join("\n  ")
+  );
+  return { warned: true, old17: true, new101: true, paths: found17 };
 }
 
 /**

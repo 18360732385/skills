@@ -42,6 +42,9 @@ const ROUTE_PATH_RE = /\bpath\s*[:=]\s*["']([^"']+)["']/g;
 const PAGE_CODE_RE = /\.(tsx|jsx|vue|svelte|ts|js)$/i;
 const PAGE_DIR_RE = /[\\\/](pages?|views?|screens?)[\\\/]/i;
 const FEATURE_PAGES_RE = /[\\\/]features?[\\\/][^\\\/]+[\\\/]pages[\\\/]/i;
+// 0.8.4: feature root catalog pages (index / *Page) outside features/<mod>/pages/.
+const FEATURE_ROOT_PAGE_RE =
+  /[\\\/]features?[\\\/][^\\\/]+[\\\/](?:index|[^\\\/]+Page)\.(tsx|jsx)$/i;
 const NOISE_PAGE_RE = /(\.test\.|\.spec\.|\.stories\.|\.d\.ts$|^_)/i;
 const MAX_FILES = 2500;
 
@@ -183,11 +186,17 @@ export function main(argv = process.argv) {
   }
   progress.step(2, 3, `route_src=${routeSrcFiles} routes=${routes}`);
 
-  // 2) 目录约定：pages/ views/ screens/ features/*/pages/ 每文件一页
+  // 2) 目录约定：pages/ views/ screens/ features/*/pages/ + feature 根 index|*Page
   let pageFiles = 0;
   for (const f of codeFiles) {
     const fRel = rel(root, f);
-    if (!PAGE_DIR_RE.test(fRel) && !FEATURE_PAGES_RE.test(fRel)) continue;
+    if (
+      !PAGE_DIR_RE.test(fRel) &&
+      !FEATURE_PAGES_RE.test(fRel) &&
+      !FEATURE_ROOT_PAGE_RE.test(fRel)
+    ) {
+      continue;
+    }
     if (NOISE_PAGE_RE.test(path.basename(f))) continue;
     if (seenRouteIds.has(`route-${slugId(root, f, null)}`)) continue;
     pageFiles++;
@@ -195,7 +204,9 @@ export function main(argv = process.argv) {
       id: slugId(root, f, null),
       kind: "page_file",
       path: fRel,
-      source: "dir-convention",
+      source: FEATURE_ROOT_PAGE_RE.test(fRel)
+        ? "feature-root"
+        : "dir-convention",
     });
   }
   progress.step(3, 3, `page_files=${pageFiles}`);

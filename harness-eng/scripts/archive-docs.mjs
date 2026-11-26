@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * archive-docs — 可逆归档 CLI（0.8.3，D13）。
+ * archive-docs — 可逆归档 CLI（0.8.3 D13；0.8.4 嵌套路径 + dry-run + 运行时拒绝）。
  *
  * inventory 的 archive_hint 只是文本提示；本 CLI 把「经确认归档」落成一条可审计、
- * 可回滚的命令（move + sidecar 账本记录原路径），补上报告缺陷 D13 的「无可逆归档 CLI」。
+ * 可回滚的命令（move + sidecar 账本记录原路径）。
  *
  * Usage:
- *   node scripts/archive-docs.mjs --root <TARGET> --archive <relPath> [--domain design|prototype] [--note <text>]
+ *   node scripts/archive-docs.mjs --root <TARGET> --archive <relPath> [--domain design|prototype] [--note <text>] [--dry-run]
  *   node scripts/archive-docs.mjs --root <TARGET> --restore <ledgerIndex>
  *   node scripts/archive-docs.mjs --root <TARGET> --list
  *   node scripts/archive-docs.mjs --help
@@ -26,6 +26,12 @@ export const DEFAULT_LEDGER_REL = path.join(
   "archive-ledger.json"
 );
 const DOMAINS = ["design", "prototype"];
+
+/** Runtime / package files that must never be archived as design/prototype docs. */
+const RUNTIME_BASENAME_RE =
+  /^(tokens\.css|package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|tsconfig.*\.json|vite\.config\..+|webpack\.config\..+)$/i;
+const RUNTIME_EXT_RE = /\.(tsx?|jsx?|vue|css|scss|sass|less|mjs|cjs)$/i;
+const DOC_NAME_RE = /^(DESIGN|design-|prototype|PROTO)/i;
 
 function nowIso() {
   return new Date().toISOString();
@@ -52,16 +58,61 @@ function saveLedger(absLedger, ledger) {
 }
 
 /**
- * 归档一个非运行文档：move 到 docs/<domain>/，账本记录原路径。
- * @returns {object} the ledger entry created (with ledger_path)
+ * 0.8.4: refuse obvious runtime paths (tokens.css / package.json / source files)
+ * unless already under docs/ or the basename looks like a design/prototype doc.
+ */
+export function assertArchivableDoc(relNorm) {
+  const posix = toPosix(relNorm);
+  const base = path.posix.basename(posix);
+  if (posix.startsWith("docs/")) return;
+  if (DOC_NAME_RE.test(base)) return;
+  if (RUNTIME_BASENAME_RE.test(base)) {
+    throw new Error(
+      `refusing runtime file (not a design/prototype doc): ${posix}`
+    );
+  }
+  if (RUNTIME_EXT_RE.test(base)) {
+    throw new Error(
+      `refusing runtime source/style file (not a design/prototype doc): ${posix}`
+    );
+  }
+}
+
+/**
+ * Preserve nested relative path under docs/<domain>/ instead of flattening
+ * to basename (0.8.4 — avoids collisions when archiving nested trees).
+ */
+export function resolveArchiveTarget(absRoot, domain, relNorm) {
+  const posix = toPosix(relNorm);
+  let nested = posix;
+  // Drop leading ./ and collapse; keep meaningful nesting.
+  nested = nested.replace(/^\.\//, "");
+  // If source was already under docs/<other>/, keep the tail after docs/.
+  const docsTail = nested.match(/^docs\/(.+)$/);
+  if (docsTail) nested = docsTail[1];
+  // Avoid escaping via .. segments.
+  const parts = nested.split("/").filter((p) => p && p !== "." && p !== "..");
+  if (!parts.length) parts.push(path.posix.basename(posix) || "archived.md");
+  const toRel = toPosix(path.posix.join("docs", domain, ...parts));
+  const toAbs = path.join(absRoot, ...toRel.split("/"));
+  return { toRel, toAbs };
+}
+
+/**
+ * 归档一个非运行文档：move 到 docs/<domain>/（保留相对嵌套），账本记录原路径。
+ * @param {object} [opts]
+ * @param {boolean} [opts.dryRun] — plan only; no rename / ledger write
+ * @returns {object} the ledger entry created (with ledger_path); dry-run adds dry_run:true
  */
 export function archiveOne(
   root,
   relPath,
   domain = "design",
   note = "",
-  ledgerRel = DEFAULT_LEDGER_REL
+  ledgerRel = DEFAULT_LEDGER_REL,
+  opts = {}
 ) {
+  const dryRun = !!opts.dryRun;
   const absRoot = path.resolve(root);
   if (!DOMAINS.includes(domain)) {
     throw new Error(`Unsupported domain: ${domain} (use ${DOMAINS.join("|")})`);
@@ -77,24 +128,33 @@ export function archiveOne(
   if (!fs.existsSync(fromAbs) || !fs.statSync(fromAbs).isFile()) {
     throw new Error(`source not found: ${relNorm}`);
   }
-  const ssotDir = path.join(absRoot, "docs", domain);
-  const toAbs = path.join(ssotDir, path.basename(fromAbs));
+  assertArchivableDoc(relNorm);
+  const { toRel, toAbs } = resolveArchiveTarget(absRoot, domain, relNorm);
   if (fs.existsSync(toAbs)) {
-    throw new Error(`target exists: ${toPosix(path.relative(absRoot, toAbs))}`);
+    throw new Error(`target exists: ${toRel}`);
   }
   const absLedger = path.resolve(absRoot, ledgerRel);
-  const ledger = loadLedger(absLedger);
-  fs.mkdirSync(ssotDir, { recursive: true });
-  fs.renameSync(fromAbs, toAbs);
   const entry = {
-    index: ledger.entries.length + 1,
+    index: null,
     from: relNorm,
-    to: toPosix(path.relative(absRoot, toAbs)),
+    to: toRel,
     domain,
     note: note || null,
     archived_at: nowIso(),
     restored_at: null,
   };
+  if (dryRun) {
+    return {
+      ...entry,
+      index: 0,
+      dry_run: true,
+      ledger_path: toPosix(path.relative(absRoot, absLedger)),
+    };
+  }
+  const ledger = loadLedger(absLedger);
+  entry.index = ledger.entries.length + 1;
+  fs.mkdirSync(path.dirname(toAbs), { recursive: true });
+  fs.renameSync(fromAbs, toAbs);
   ledger.entries.push(entry);
   saveLedger(absLedger, ledger);
   return { ...entry, ledger_path: toPosix(path.relative(absRoot, absLedger)) };
@@ -141,13 +201,15 @@ export function listLedger(root, ledgerRel = DEFAULT_LEDGER_REL) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/archive-docs.mjs --root <TARGET> --archive <relPath> [--domain design|prototype] [--note <text>]
+  node scripts/archive-docs.mjs --root <TARGET> --archive <relPath> [--domain design|prototype] [--note <text>] [--dry-run]
   node scripts/archive-docs.mjs --root <TARGET> --restore <ledgerIndex>
   node scripts/archive-docs.mjs --root <TARGET> --list
   node scripts/archive-docs.mjs --help
 
-可逆归档 CLI（0.8.3 D13）。只 move、不删；账本默认
+可逆归档 CLI（0.8.3 D13 / 0.8.4 嵌套路径）。只 move、不删；账本默认
 docs/harness-eng/.fill-work/archive-ledger.json；--restore 按账本 index 原路回滚。
+--dry-run：只预告 from→to，不 rename、不写账本。
+拒绝 tokens.css / package.json / 源码扩展名等运行时文件（除非已在 docs/ 或 DESIGN*|prototype* 命名）。
 归档纪律不变：动手前须经用户确认（upgrade/audit 仅提示）。
 `);
 }
@@ -162,6 +224,7 @@ function main(argv) {
     domain: "design",
     note: "",
     ledger: null,
+    dryRun: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -173,6 +236,7 @@ function main(argv) {
     else if (a === "--domain") out.domain = String(argv[++i] || "design").toLowerCase();
     else if (a === "--note") out.note = argv[++i] || "";
     else if (a === "--ledger") out.ledger = argv[++i];
+    else if (a === "--dry-run") out.dryRun = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
   if (out.help) {
@@ -190,7 +254,9 @@ function main(argv) {
     );
   }
   if (out.archive) {
-    const r = archiveOne(out.root, out.archive, out.domain, out.note, ledgerRel);
+    const r = archiveOne(out.root, out.archive, out.domain, out.note, ledgerRel, {
+      dryRun: out.dryRun,
+    });
     console.log(JSON.stringify(r, null, 2));
     return;
   }

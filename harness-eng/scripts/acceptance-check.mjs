@@ -12,6 +12,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isCliMain } from "./lib/cli-main.mjs";
 import {
   knownContractDomainIds,
   truthsPath,
@@ -81,6 +82,22 @@ function splitApiSections(text) {
   return parts.length ? parts : text.trim() ? [text] : [];
 }
 
+/**
+ * 0.8.4: api evidence is satisfied by any of:
+ * - `**evidence:**` / `**证据:**`
+ * - non-empty `### 联调` / `### 联调示例` section
+ * - `` `XxxController` `` or `*Controller.java` path mention
+ */
+export function hasApiEvidence(body) {
+  const text = String(body || "");
+  if (/\*\*(?:evidence|证据)[:：]\*\*/i.test(text)) return true;
+  const joint = text.match(/###\s*联调(?:示例)?\s*\n([\s\S]*?)(?=\n###\s+|$)/i);
+  if (joint && joint[1].trim().length > 0) return true;
+  if (/`[A-Za-z][A-Za-z0-9_]*Controller`/.test(text)) return true;
+  if (/[A-Za-z0-9_./\\-]+Controller\.java/.test(text)) return true;
+  return false;
+}
+
 function checkApiSection(body, file, gold) {
   const blockers = [];
   const warnings = [];
@@ -95,7 +112,8 @@ function checkApiSection(body, file, gold) {
   if (!isExport && /导出路径：按查询条件生成 Excel|生成 Excel，经 HttpServletResponse/.test(body)) {
     blockers.push({ id: "api-fake-export", file, title, detail: "non-export fake Excel logic" });
   }
-  if (!/\*\*evidence[:：]\*\*/i.test(body)) {
+  // 0.8.4: accept equivalent evidence signals (literal evidence / 联调段 / Controller)
+  if (!hasApiEvidence(body)) {
     blockers.push({ id: "api-no-evidence", file, title, detail: "missing evidence" });
   }
   const logicBlock = body.match(/###\s*功能逻辑([\s\S]*?)(?=###\s*|$)/i);
@@ -706,4 +724,6 @@ function main() {
   }
 }
 
-main();
+if (isCliMain(import.meta.url)) {
+  main();
+}

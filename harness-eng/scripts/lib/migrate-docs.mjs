@@ -801,6 +801,7 @@ export function applyMigrateDocs(root, plan, opts = {}) {
   const report = {
     ok: errors.length === 0,
     dry_run: dryRun,
+    generated_at: new Date().toISOString(),
     ops: plan?.ops || [],
     applied,
     skipped: plan?.skipped || [],
@@ -808,15 +809,15 @@ export function applyMigrateDocs(root, plan, opts = {}) {
     out_path: MIGRATE_REPORT_REL,
   };
 
-  if (!dryRun) {
-    try {
-      const outAbs = path.join(absRoot, MIGRATE_REPORT_REL);
-      fs.mkdirSync(path.dirname(outAbs), { recursive: true });
-      fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
-    } catch (e) {
-      report.ok = false;
-      report.errors.push({ error: `write report: ${e.message}` });
-    }
+  // 0.8.4: always refresh migrate-docs-report.json (including dry-run / ops=0)
+  // so thick-repo dry-run does not leave a stale timestamp from a prior run.
+  try {
+    const outAbs = path.join(absRoot, MIGRATE_REPORT_REL);
+    fs.mkdirSync(path.dirname(outAbs), { recursive: true });
+    fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
+  } catch (e) {
+    report.ok = false;
+    report.errors.push({ error: `write report: ${e.message}` });
   }
 
   return report;

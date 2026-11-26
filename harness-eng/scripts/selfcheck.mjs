@@ -41,7 +41,7 @@ import {
   decideFixHookAction,
   stripHookConstSkeleton,
 } from "./lib/upgrade-fix-hooks.mjs";
-import { buildReportUi } from "./lib/report-ui.mjs";
+import { buildReportUi, lowAssetRatioHints } from "./lib/report-ui.mjs";
 import { buildHostSurface, formatHostSurfaceLine } from "./lib/host-surface.mjs";
 import {
   isIncomparablePoint,
@@ -164,7 +164,14 @@ import { applyGateProfileToPolicyFile } from "./lib/score-policy-migrate.mjs";
 import { buildBackfillPlan } from "./lib/backfill-plan.mjs";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { isGeneratedHostPath, resolveLandAgentConfig } from "./harness.mjs";
-import { mergeYamlMaps } from "./render.mjs";
+import {
+  mergeYamlMaps,
+  defaultGlobFrontend,
+  readLegacyFrontendGlobs,
+  ensureStandardPlaceholders,
+} from "./render.mjs";
+import { hasApiEvidence } from "./acceptance-check.mjs";
+import { collectFuncDocClassNames } from "./fill-score.mjs";
 import {
   ensureDbMdMaintenance,
   detectDbMigrationMode,
@@ -206,8 +213,9 @@ function __restoreExternalHarnessRoot() {
 }
 
 /**
- * 0.8.3 (D9): junction 落点健康检查（skills-manager 挖空防御）。
- * skillRoot 若是 junction/symlink，目标必须可达且非空；挖空形态给出人话。
+ * 0.8.3 (D9) / 0.8.4: 安装落点健康检查（skills-manager 挖空/错位防御）。
+ * - junction/symlink：目标必须可达且非空
+ * - 任意落点（含普通目录）：必备 SKILL.md、_meta/manifest.yaml、scripts/
  * @returns {string|null} issue message, or null when the install surface is healthy
  */
 export function __installSurfaceIssue(rootDir) {
@@ -215,23 +223,44 @@ export function __installSurfaceIssue(rootDir) {
   try {
     st = fs.lstatSync(rootDir);
   } catch {
-    return null; // plain ENOENT 交给原生报错；本检查只管 junction 形态
+    return null; // plain ENOENT 交给原生报错
   }
-  if (!st.isSymbolicLink()) return null;
-  let real;
-  try {
-    real = fs.realpathSync(rootDir);
-  } catch {
-    return `skillRoot 是 junction 但目标不可达（D9 挖空形态）：${rootDir}`;
+  let real = rootDir;
+  if (st.isSymbolicLink()) {
+    try {
+      real = fs.realpathSync(rootDir);
+    } catch {
+      return `skillRoot 是 junction 但目标不可达（D9 挖空形态）：${rootDir}`;
+    }
+    let entries;
+    try {
+      entries = fs.readdirSync(real);
+    } catch {
+      return `skillRoot junction 目标不可读（D9 挖空形态）：${real}`;
+    }
+    if (entries.length === 0) {
+      return `skillRoot junction 目标为空目录（D9 挖空形态）：${real}`;
+    }
   }
-  let entries;
-  try {
-    entries = fs.readdirSync(real);
-  } catch {
-    return `skillRoot junction 目标不可读（D9 挖空形态）：${real}`;
-  }
-  if (entries.length === 0) {
-    return `skillRoot junction 目标为空目录（D9 挖空形态）：${real}`;
+  // 0.8.4: marker files catch wrong/hollow content even for real directories
+  const markers = [
+    ["SKILL.md", "file"],
+    [path.join("_meta", "manifest.yaml"), "file"],
+    ["scripts", "dir"],
+  ];
+  for (const [rel, kind] of markers) {
+    const abs = path.join(real, rel);
+    try {
+      const m = fs.statSync(abs);
+      if (kind === "dir" && !m.isDirectory()) {
+        return `skillRoot 落点内容错位：缺目录 ${rel.replace(/\\/g, "/")}（${real}）`;
+      }
+      if (kind === "file" && !m.isFile()) {
+        return `skillRoot 落点内容错位：缺文件 ${rel.replace(/\\/g, "/")}（${real}）`;
+      }
+    } catch {
+      return `skillRoot 落点内容错位/挖空：缺 ${rel.replace(/\\/g, "/")}（${real}）`;
+    }
   }
   return null;
 }
@@ -6977,10 +7006,7 @@ console.log("theme-gate-smoke-ok");
   assert(/0\.8\.3 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.3 VERIFY.md");
   assert(/0\.8\.2 → 0\.8\.3/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.3 upgrade.md");
   assert(logExists("0.8.3"), "0.8.3 _log note exists");
-  assert(
-    /当前 \*\*0\.8\.3\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
-    "0.8.3 SKILL.md version pin"
-  );
+  // SKILL.md always pins the current train (0.8.4+); historical pin lives in CHANGELOG/VERIFY.
 
   // --- 0.8.3 defect fixes (D8–D16; was workspace patch under 0.8.2) ---
 
@@ -7396,11 +7422,25 @@ console.log("theme-gate-smoke-ok");
     const d9Dir = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d9-"));
     try {
       const healthy = path.join(d9Dir, "healthy");
-      fs.mkdirSync(healthy, { recursive: true });
+      fs.mkdirSync(path.join(healthy, "_meta"), { recursive: true });
+      fs.mkdirSync(path.join(healthy, "scripts"), { recursive: true });
       fs.writeFileSync(path.join(healthy, "SKILL.md"), "# ok\n", "utf8");
+      fs.writeFileSync(
+        path.join(healthy, "_meta", "manifest.yaml"),
+        'version: "0.8.4"\n',
+        "utf8"
+      );
       assert(
         __installSurfaceIssue(healthy) === null,
         "0.8.3 D9 real dir passes the install-surface check"
+      );
+      const hollowReal = path.join(d9Dir, "hollow-real");
+      fs.mkdirSync(hollowReal, { recursive: true });
+      fs.writeFileSync(path.join(hollowReal, "SKILL.md"), "# only\n", "utf8");
+      const hollowIssue = __installSurfaceIssue(hollowReal);
+      assert(
+        hollowIssue && /落点内容错位|缺/.test(hollowIssue),
+        `0.8.4 D9-marker hollow real dir gets 人话 (got ${JSON.stringify(hollowIssue)})`
       );
       const linkType = process.platform === "win32" ? "junction" : "dir";
       const emptyTarget = path.join(d9Dir, "empty-target");
@@ -7511,20 +7551,45 @@ console.log("theme-gate-smoke-ok");
         r1.warned === false && single === null,
         "0.8.3 D11 101-only repo does not warn"
       );
-      // both 17 + 101 → warn with the retire command, no deletion
+      // both 17 + 101 → warn with retire commands (multi-line; SSOT hint), no deletion
       fs.writeFileSync(path.join(rulesDir, "17-frontend-web.mdc"), "---\nglobs: src/**\n---\n", "utf8");
       let both = null;
       const sink2 = { error: (m) => { both = m; } };
       const r2 = warnRetiredRule17Coexistence(d11Root, sink2);
       assert(
         r2.warned === true &&
-          /17-frontend-web\.mdc 与 101-frontend-web\.mdc 并存/.test(both || "") &&
-          /git mv \.cursor\/rules\/17-frontend-web\.mdc/.test(both || ""),
-        `0.8.3 D11 coexisting 17+101 warns with retire command (got ${JSON.stringify(both)})`
+          /17-frontend-web\.mdc/.test(both || "") &&
+          /并存/.test(both || "") &&
+          /git mv/.test(both || "") &&
+          /收窄 101|SSOT/.test(both || ""),
+        `0.8.3/0.8.4 D11 coexisting 17+101 warns with retire command (got ${JSON.stringify(both)})`
       );
       assert(
         fs.existsSync(path.join(rulesDir, "17-frontend-web.mdc")),
         "0.8.3 D11 warning never deletes the legacy rule"
+      );
+      // SSOT + cursor both present → multi-path retire list
+      const ssotRules = path.join(d11Root, "docs", "agent-config", "rules");
+      fs.mkdirSync(ssotRules, { recursive: true });
+      fs.writeFileSync(
+        path.join(ssotRules, "17-frontend-web.mdc"),
+        "---\nglobs: sms-ai-web/**\n---\n",
+        "utf8"
+      );
+      fs.writeFileSync(
+        path.join(ssotRules, "101-frontend-web.mdc"),
+        "---\nglobs: apps/**\n---\n",
+        "utf8"
+      );
+      let multi = null;
+      const sink3 = { error: (m) => { multi = m; } };
+      const r3 = warnRetiredRule17Coexistence(d11Root, sink3);
+      assert(
+        r3.warned === true &&
+          r3.paths.length >= 2 &&
+          /docs\/agent-config\/rules\/17-frontend-web\.mdc/.test(multi || "") &&
+          /\.cursor\/rules\/17-frontend-web\.mdc/.test(multi || ""),
+        `0.8.4 D11 multi-host+SSOT retire list (got paths=${JSON.stringify(r3.paths)} msg=${JSON.stringify(multi)})`
       );
       // both harness.mjs upgrade tails call it
       const hmSrc = fs.readFileSync(path.join(skillRoot, "scripts", "harness.mjs"), "utf8");
@@ -7537,6 +7602,318 @@ console.log("theme-gate-smoke-ok");
       fs.rmSync(d11Root, { recursive: true, force: true });
     }
   }
+
+  // --- 0.8.4: 实战残留缺陷收口（glob / asset_ratio / archive / diff / func / evidence / migrate / inventory） ---
+  {
+    const gDefault = defaultGlobFrontend("frontend");
+    assert(
+      /apps\/\*\*\/\*\.ts/.test(gDefault) &&
+        /packages\/\*\*/.test(gDefault) &&
+        !/\*\*\/src\/\*\*/.test(gDefault),
+      `0.8.4 GLOB_FRONTEND default excludes **/src/** (got ${gDefault})`
+    );
+    const gCustom = defaultGlobFrontend("sms-ai-web");
+    assert(
+      /sms-ai-web\/\*\*/.test(gCustom),
+      `0.8.4 GLOB_FRONTEND appends non-default FRONTEND_DIR (got ${gCustom})`
+    );
+
+    const gRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-084-glob-"));
+    try {
+      const rulesDir = path.join(gRoot, ".cursor", "rules");
+      fs.mkdirSync(rulesDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(rulesDir, "17-frontend-web.mdc"),
+        "---\nglobs: sms-ai-web/**\nalwaysApply: false\n---\n# legacy\n",
+        "utf8"
+      );
+      assert(
+        readLegacyFrontendGlobs(gRoot) === "sms-ai-web/**",
+        "0.8.4 readLegacyFrontendGlobs inherits 17 globs"
+      );
+      const ph = ensureStandardPlaceholders({}, {}, gRoot);
+      assert(
+        ph.GLOB_FRONTEND === "sms-ai-web/**",
+        `0.8.4 ensureStandardPlaceholders inherits 17 globs (got ${ph.GLOB_FRONTEND})`
+      );
+      const phExplicit = ensureStandardPlaceholders(
+        {},
+        { GLOB_FRONTEND: "apps/**" },
+        gRoot
+      );
+      assert(
+        phExplicit.GLOB_FRONTEND === "apps/**",
+        "0.8.4 explicit GLOB_FRONTEND wins over 17 inherit"
+      );
+    } finally {
+      fs.rmSync(gRoot, { recursive: true, force: true });
+    }
+  }
+
+  {
+    const ui = buildReportUi({
+      overall: 100,
+      coverage: { percent: 100, covered: 1, code: 1 },
+      coverage_ready: { ok: true, all_percent: 100 },
+      coverage_by_domain: {
+        pages: {
+          percent: 100,
+          covered: 1,
+          code: 1,
+          truths: 1,
+          inventory_assets: 64,
+          asset_ratio: 0.016,
+        },
+        api: { percent: 100, covered: 10, code: 10 },
+      },
+      domains: { pages: { score: 100, truths: 1 }, api: { score: 100 } },
+      quality: { domains: { pages: 100, api: 100 } },
+      ai_coding_ready: { ok: true, rule: "x" },
+      skeleton_ready: { ok: true },
+      semantic_ready: { ok: true },
+    });
+    const pages = (ui.domains || []).find((d) => d.id === "pages");
+    assert(
+      pages && pages.asset_ratio === 0.016 && pages.inventory_assets === 64,
+      `0.8.4 report-ui domains expose asset_ratio (got ${JSON.stringify(pages)})`
+    );
+    assert(
+      /资产比偏低/.test(ui.composite_score?.one_line_zh || "") &&
+        /pages 1\/64/.test(ui.composite_score?.one_line_zh || ""),
+      `0.8.4 one_line mentions low asset_ratio (got ${ui.composite_score?.one_line_zh})`
+    );
+    assert(
+      lowAssetRatioHints({
+        coverage_by_domain: {
+          pages: { asset_ratio: 0.016, inventory_assets: 64, truths: 1 },
+        },
+      }).includes("pages 1/64"),
+      "0.8.4 lowAssetRatioHints formats pages chip"
+    );
+  }
+
+  {
+    const aRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-084-arch-"));
+    try {
+      fs.mkdirSync(path.join(aRoot, "ui", "nested"), { recursive: true });
+      fs.writeFileSync(
+        path.join(aRoot, "ui", "nested", "DESIGN-notes.md"),
+        "# design\n",
+        "utf8"
+      );
+      const dry = archiveOne(
+        aRoot,
+        "ui/nested/DESIGN-notes.md",
+        "design",
+        "dry",
+        undefined,
+        { dryRun: true }
+      );
+      assert(
+        dry.dry_run === true &&
+          dry.to === "docs/design/ui/nested/DESIGN-notes.md" &&
+          fs.existsSync(path.join(aRoot, "ui", "nested", "DESIGN-notes.md")),
+        `0.8.4 archive dry-run nested path, no move (got ${JSON.stringify(dry)})`
+      );
+      const arch = archiveOne(aRoot, "ui/nested/DESIGN-notes.md", "design");
+      assert(
+        arch.to === "docs/design/ui/nested/DESIGN-notes.md" &&
+          fs.existsSync(
+            path.join(aRoot, "docs", "design", "ui", "nested", "DESIGN-notes.md")
+          ) &&
+          !fs.existsSync(path.join(aRoot, "ui", "nested", "DESIGN-notes.md")),
+        "0.8.4 archiveOne preserves nested path under docs/design/"
+      );
+      fs.writeFileSync(path.join(aRoot, "tokens.css"), ":root{}\n", "utf8");
+      let refuse = null;
+      try {
+        archiveOne(aRoot, "tokens.css", "design");
+      } catch (e) {
+        refuse = e;
+      }
+      assert(
+        refuse && /refusing runtime/.test(refuse.message),
+        `0.8.4 archive refuses tokens.css (got ${refuse && refuse.message})`
+      );
+    } finally {
+      fs.rmSync(aRoot, { recursive: true, force: true });
+    }
+  }
+
+  {
+    // coverage diff: prefer gate; mixed history must not invent fake 0
+    const fillHtmlPath = path.join(skillRoot, "scripts", "fill-report-html.mjs");
+    const scoreGate = {
+      overall: 80,
+      coverage_all_percent: 70,
+      coverage: { percent: 100 },
+      diff: {
+        overall: 10,
+        coverage_all_percent: 20,
+        coverage_percent_source: "gate",
+      },
+    };
+    const uiGate = buildReportUi(scoreGate);
+    assert(
+      uiGate.diff &&
+        uiGate.diff.coverage_delta === 20 &&
+        uiGate.diff.coverage_percent_source === "gate",
+      `0.8.4 buildDiff prefers gate coverage delta (got ${JSON.stringify(uiGate.diff)})`
+    );
+    const scoreOmit = {
+      overall: 80,
+      coverage: { percent: 100 },
+      diff: { overall: 5, coverage_percent_source: "omit" },
+    };
+    const uiOmit = buildReportUi(scoreOmit);
+    assert(
+      uiOmit.diff && uiOmit.diff.coverage_delta == null,
+      `0.8.4 omit source yields no coverage_delta (got ${JSON.stringify(uiOmit.diff)})`
+    );
+    // also assert fill-report-html source carries omit / gate preference
+    const rhSrc = fs.readFileSync(fillHtmlPath, "utf8");
+    assert(
+      /coverage_percent_source = "omit"/.test(rhSrc) &&
+        /prefer gate-aligned coverage_all_percent/.test(rhSrc),
+      "0.8.4 fill-report-html ensureDiffFromHistory gate-prefer + omit"
+    );
+  }
+
+  {
+    const fRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-084-func-"));
+    try {
+      fs.mkdirSync(path.join(fRoot, "docs", "func", "modules"), { recursive: true });
+      fs.writeFileSync(
+        path.join(fRoot, "docs", "func", "modules", "01-demo.md"),
+        [
+          "# demo",
+          "",
+          "### 服务类 FooBarService",
+          "",
+          "| 类 | 说明 |",
+          "|---|---|",
+          "| BazComponent | 组件 |",
+          "",
+        ].join("\n"),
+        "utf8"
+      );
+      const names = collectFuncDocClassNames(fRoot);
+      assert(
+        names.has("FooBarService") && names.has("BazComponent"),
+        `0.8.4 collectFuncDocClassNames heading+table (got ${[...names]})`
+      );
+    } finally {
+      fs.rmSync(fRoot, { recursive: true, force: true });
+    }
+  }
+
+  {
+    assert(
+      hasApiEvidence("**evidence:** from controller\n") === true,
+      "0.8.4 evidence literal ok"
+    );
+    assert(
+      hasApiEvidence("**证据：** 联调通过\n") === true,
+      "0.8.4 证据 literal ok"
+    );
+    assert(
+      hasApiEvidence("### 联调示例\n\n- hit once\n") === true,
+      "0.8.4 联调 section ok"
+    );
+    assert(
+      hasApiEvidence("see `DemoController` path\n") === true,
+      "0.8.4 Controller backtick ok"
+    );
+    assert(
+      hasApiEvidence("## 1. x\n\nno proof here\n") === false,
+      "0.8.4 no evidence still false"
+    );
+  }
+
+  {
+    const mRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-084-mig-"));
+    try {
+      fs.mkdirSync(path.join(mRoot, "docs", "harness-eng"), { recursive: true });
+      const stale = path.join(mRoot, "docs", "harness-eng", "migrate-docs-report.json");
+      fs.writeFileSync(
+        stale,
+        JSON.stringify({ generated_at: "2026-11-17T00:00:00.000Z", ops: [{ kind: "old" }] }, null, 2),
+        "utf8"
+      );
+      const report = applyMigrateDocs(mRoot, { ops: [], skipped: [] }, { dryRun: true });
+      assert(report.dry_run === true, "0.8.4 migrate dry-run flag");
+      assert(fs.existsSync(stale), "0.8.4 migrate dry-run still writes report");
+      const disk = JSON.parse(fs.readFileSync(stale, "utf8"));
+      assert(
+        disk.generated_at &&
+          disk.generated_at !== "2026-11-17T00:00:00.000Z" &&
+          Array.isArray(disk.ops) &&
+          disk.ops.length === 0 &&
+          disk.dry_run === true,
+        `0.8.4 migrate-docs-report refreshed on dry-run ops=0 (got ${JSON.stringify(disk)})`
+      );
+    } finally {
+      fs.rmSync(mRoot, { recursive: true, force: true });
+    }
+  }
+
+  {
+    const pRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-084-pages-"));
+    try {
+      const feat = path.join(pRoot, "apps", "web", "features", "risk");
+      fs.mkdirSync(feat, { recursive: true });
+      fs.writeFileSync(path.join(feat, "index.tsx"), "export default function Page(){return null}\n", "utf8");
+      fs.writeFileSync(path.join(feat, "RiskPage.tsx"), "export default function RiskPage(){return null}\n", "utf8");
+      const inv = spawnSync(
+        process.execPath,
+        [
+          path.join(skillRoot, "scripts", "fill-inventory.mjs"),
+          "--domain",
+          "pages",
+          "--root",
+          pRoot,
+          "--no-write",
+        ],
+        { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 }
+      );
+      let json = null;
+      try {
+        json = JSON.parse(inv.stdout);
+      } catch {
+        json = null;
+      }
+      const featureRoot = (json?.assets || []).filter((a) => a.source === "feature-root");
+      assert(
+        featureRoot.length >= 2,
+        `0.8.4 pages inventory picks feature root index|*Page (got ${JSON.stringify(json?.assets)})`
+      );
+    } finally {
+      fs.rmSync(pRoot, { recursive: true, force: true });
+    }
+  }
+
+  {
+    const rowAll = buildFrontendCoverageRow({ truths: 1, assets: 10 });
+    assert(rowAll && rowAll.inventory_assets === 10, "0.8.4 frontend row baseline");
+    // client-api denominator exclusion is in coverageByDomain; spot-check filter intent
+    const assets = [
+      { kind: "api_method" },
+      { kind: "query_hook" },
+      { kind: "type_export" },
+      { kind: "type_export" },
+    ];
+    const denom = assets.filter((a) => a.kind !== "type_export").length;
+    assert(denom === 2, "0.8.4 client-api denom excludes type_export");
+  }
+
+  assert(/\| 0\.8\.4 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.4 CHANGELOG");
+  assert(/0\.8\.4 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.4 VERIFY.md");
+  assert(/0\.8\.3 → 0\.8\.4/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.4 upgrade.md");
+  assert(logExists("0.8.4"), "0.8.4 _log note exists");
+  assert(
+    /当前 \*\*0\.8\.4\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
+    "0.8.4 SKILL.md version pin"
+  );
 }
 
 console.log(`ok: ${ok.length}`);

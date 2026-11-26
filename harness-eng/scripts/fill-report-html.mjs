@@ -187,20 +187,27 @@ function ensureDiffFromHistory(score, prior) {
     overall: Math.round((score.overall - last.overall) * 10) / 10,
     source: "history",
   };
-  if (
-    typeof score.coverage?.percent === "number" &&
-    typeof last.coverage_percent === "number"
-  ) {
-    diff.coverage_percent = score.coverage.percent - last.coverage_percent;
-  }
-  // 0.8.2 patch (D8): gate-aligned coverage diff when both sides carry it
-  // (score.coverage_all_percent set since the 0.8.2 patch train).
+  // 0.8.4: prefer gate-aligned coverage_all_percent; never invent a misleading 0
+  // when only one side has API coverage_percent.
   if (
     typeof score.coverage_all_percent === "number" &&
     typeof last.coverage_all_percent === "number"
   ) {
     diff.coverage_all_percent =
       score.coverage_all_percent - last.coverage_all_percent;
+    diff.coverage_percent_source = "gate";
+  } else if (
+    typeof score.coverage?.percent === "number" &&
+    typeof last.coverage_percent === "number" &&
+    typeof last.coverage_all_percent !== "number" &&
+    typeof score.coverage_all_percent !== "number"
+  ) {
+    // Both sides legacy API-only → still comparable on API scope.
+    diff.coverage_percent = score.coverage.percent - last.coverage_percent;
+    diff.coverage_percent_source = "legacy";
+  } else {
+    // Mixed / missing gate field on one side → omit (do not show fake 0).
+    diff.coverage_percent_source = "omit";
   }
   return { ...score, diff };
 }

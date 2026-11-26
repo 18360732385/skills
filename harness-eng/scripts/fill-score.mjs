@@ -13,6 +13,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { isCliMain } from "./lib/cli-main.mjs";
 import { mergeApiInventories, loadDomainInventory } from "./lib/inventory-paths.mjs";
 import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
 import { readInventoryMeta } from "./lib/inventory-meta.mjs";
@@ -619,13 +620,27 @@ function coverageFromInventory(inventory, docEndpointCount) {
 }
 
 
-/** Inventory service class names mentioned with backticks in func truth docs. */
+/**
+ * Inventory service class names mentioned in func truth docs.
+ * 0.8.4: backticks + `### 服务类` headings + bare CamelCase Service/Component
+ * table cells (not only standalone backticks).
+ */
 export function collectFuncDocClassNames(root) {
   const names = new Set();
+  const CLASS_RE = /\b([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/g;
   for (const f of domainFiles(root, "func")) {
     const text = fs.readFileSync(f, "utf8");
     for (const m of text.matchAll(/`([A-Za-z_][A-Za-z0-9_]*)`/g)) {
       names.add(m[1]);
+    }
+    for (const m of text.matchAll(/^###\s+[^\n]*?([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/gm)) {
+      names.add(m[1]);
+    }
+    for (const m of text.matchAll(/^\|[^\n]*$/gm)) {
+      CLASS_RE.lastIndex = 0;
+      for (const c of m[0].matchAll(CLASS_RE)) {
+        names.add(c[1]);
+      }
     }
   }
   return names;
@@ -751,7 +766,12 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
   for (const d of FRONTEND_COVERAGE_DOMAINS) {
     const feInv = liveInv[d] || loadDomainInventory(root, d);
     if (!feInv || !Array.isArray(feInv.assets)) continue;
-    const assets = feInv.assets.length || feInv.stats?.assets || 0;
+    let assets = feInv.assets.length || feInv.stats?.assets || 0;
+    // 0.8.4: client-api coverage denominator excludes type_export (types noise);
+    // inventory JSON still keeps type_export in assets/stats for split reporting.
+    if (d === "client-api") {
+      assets = feInv.assets.filter((a) => a && a.kind !== "type_export").length;
+    }
     const truths = countFrontendTruths(domainFiles(root, d));
     const row = buildFrontendCoverageRow({ truths, assets });
     if (row) out[d] = row;
@@ -1871,9 +1891,11 @@ function main() {
   }
 }
 
-try {
-  main();
-} catch (e) {
-  console.error(String(e && e.stack ? e.stack : e));
-  process.exit(1);
+if (isCliMain(import.meta.url)) {
+  try {
+    main();
+  } catch (e) {
+    console.error(String(e && e.stack ? e.stack : e));
+    process.exit(1);
+  }
 }

@@ -80,6 +80,16 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.3 → 0.8.4 迁移要点
+
+1. **meta**：`skill_version` → `0.8.4`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳；分域透出 `asset_ratio`，总评提示偏低）
+3. **重渲 101**：默认 `GLOB_FRONTEND` 已收窄（禁裸 `**/src/**`）；若仓内仍有 rule 17，upgrade/render 会**继承其 globs**；建议确认后再退役 17（警告现含宿主 + SSOT 多行 `git mv`）
+4. **重跑打分/报告**：`node scripts/fill-score.mjs --root <TARGET> --json --output docs/harness-eng/score-latest.json` → `node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json`（对比句优先门禁覆盖差）
+5. **归档 CLI**：`archive-docs.mjs` 现保留嵌套路径，支持 `--dry-run`，拒绝 `tokens.css` 等运行时文件
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.4`）后再 sync
+7. **勿盲跑**：厚仓 `migrate-docs` 默认仍 dry-run；dry-run / ops=0 也会刷新 `migrate-docs-report.json`
+
 ## 0.8.2 → 0.8.3 迁移要点
 
 1. **meta**：`skill_version` → `0.8.3`

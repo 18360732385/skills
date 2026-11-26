@@ -1,10 +1,29 @@
-﻿# harness-eng 验收记录（0.8.3）
+﻿# harness-eng 验收记录（0.8.4）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.3**（报告缺陷修复列车 D8–D16；其下 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.4**（0.8.3 实战总析残留收口；其下 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.4 增量验收（实战残留收口）
+
+对照 0.8.3 实战总析（c-be-sms-ai，https://harness-eng-0-8-3-asan.pages.grok.bot/）「待完善」项逐项修复并钉版；不改前端金标「一门一真相」公式。
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.4` | 有 |
+| `GLOB_FRONTEND` 默认对齐 detect（apps/packages）；禁裸 `**/src/**`；非默认 `FRONTEND_DIR` 追加；upgrade 继承 rule-17 globs | 有 |
+| 17 退役：扫宿主 + SSOT；多行 `git mv`；提示先收窄 101；selfcheck 不锁死单句金标 | 有 |
+| 报告 `domains[].asset_ratio` / `inventory_assets`；总评 `one_line_zh` 提示资产比偏低 | 有 |
+| archive-docs：嵌套路径、`--dry-run`、拒绝 runtime（tokens.css 等） | 有 |
+| 对比句优先 `coverage_all_percent`；缺历史门禁字段 → omit（不假 0） | 有 |
+| `collectFuncDocClassNames`：标题/表裸类名；`hasApiEvidence`：联调/Controller 等价 | 有 |
+| `__installSurfaceIssue`：落点 marker（SKILL.md / `_meta/manifest.yaml` / `scripts/`） | 有 |
+| migrate-docs：dry-run / ops=0 刷新 `migrate-docs-report.json`（含 `generated_at`） | 有 |
+| pages feature 根 `index`/`*Page`；client-api 覆盖分母排除 `type_export` | 有 |
+| upgrade `## 0.8.3 → 0.8.4`；CHANGELOG 0.8.4；`sync-skill-version --check` ok | 有 |
+| selfcheck 0.8.4 块；`node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.8.3 增量验收（报告缺陷修复列车）
 

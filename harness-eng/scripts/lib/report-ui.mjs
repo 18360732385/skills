@@ -1034,21 +1034,44 @@ function buildDomains(score) {
     if (x == null && q == null) continue;
     const cov = score.coverage_by_domain?.[d];
     const st = domainStatus(score, d);
+    const truths =
+      typeof cov?.truths === "number"
+        ? cov.truths
+        : x?.truths ?? null;
     out.push({
       id: d,
       name_zh: domainDisplayName(d),
       score: typeof q === "number" ? q : null,
       cap: score.domain_caps?.[d] ?? null,
-      truths: x?.truths ?? null,
+      truths,
       shells: x?.shells ?? null,
       coverage_percent: cov?.percent ?? null,
       coverage_covered: cov?.covered ?? null,
       coverage_code: cov?.code ?? null,
+      // 0.8.4: surface frontend asset_ratio so YES/100 does not hide 1/64 gaps
+      inventory_assets:
+        typeof cov?.inventory_assets === "number" ? cov.inventory_assets : null,
+      asset_ratio: typeof cov?.asset_ratio === "number" ? cov.asset_ratio : null,
       tone: st.tone,
       status_label: st.label,
     });
   }
   return out;
+}
+
+/** Frontend domains with asset_ratio < 0.2 → short chips like `pages 1/64`. */
+export function lowAssetRatioHints(score) {
+  const cov = score?.coverage_by_domain || {};
+  const hints = [];
+  for (const [id, row] of Object.entries(cov)) {
+    if (!row || typeof row !== "object") continue;
+    if (typeof row.asset_ratio !== "number" || !(row.asset_ratio < 0.2)) continue;
+    const assets = Number(row.inventory_assets) || 0;
+    if (!(assets > 0)) continue;
+    const truths = typeof row.truths === "number" ? row.truths : "?";
+    hints.push(`${id} ${truths}/${assets}`);
+  }
+  return hints;
 }
 
 function buildShards(score, opts = {}) {
@@ -1101,17 +1124,45 @@ function buildDiff(score) {
   const overall = typeof d.overall === "number" ? d.overall : null;
   const domains = {};
   for (const k of Object.keys(d)) {
-    if (k === "overall") continue;
+    if (k === "overall" || k === "source" || k === "coverage_percent_source") continue;
     if (typeof d[k] === "number") domains[k] = d[k];
+  }
+  // 0.8.4: prefer gate-aligned coverage delta; never treat missing as 0.
+  let coverageDelta = null;
+  let coverageSource = null;
+  if (typeof d.coverage_all_percent === "number") {
+    coverageDelta = d.coverage_all_percent;
+    coverageSource = "gate";
+  } else if (
+    typeof d.coverage_percent === "number" &&
+    d.coverage_percent_source !== "omit"
+  ) {
+    coverageDelta = d.coverage_percent;
+    coverageSource = d.coverage_percent_source || "legacy";
   }
   const sign = (n) => (n > 0 ? "+" : "") + n;
   let summary = "无相对上次变化";
   if (overall != null) {
     summary = "相对上次 overall " + sign(overall);
-    const bits = Object.keys(domains).map((k) => k + " " + sign(domains[k]));
+    const bits = Object.keys(domains)
+      .filter((k) => k !== "coverage_percent" && k !== "coverage_all_percent")
+      .map((k) => k + " " + sign(domains[k]));
+    if (coverageDelta != null) {
+      bits.unshift(
+        "门禁覆盖 " +
+          sign(coverageDelta) +
+          (coverageSource === "legacy" ? "（API口径）" : "")
+      );
+    }
     if (bits.length) summary += "（" + bits.join("、") + "）";
   }
-  return { overall, domains, summary };
+  return {
+    overall,
+    domains,
+    summary,
+    coverage_delta: coverageDelta,
+    coverage_percent_source: coverageSource,
+  };
 }
 
 function buildRunTimeline(run) {
@@ -1459,8 +1510,8 @@ function buildCompositeScore(score, pipeline) {
   };
 }
 
-/** 总评一句话：短板 + 先做什么（大白话；机器字段留在 breakdown / tech 弹层） */
-function buildOverallOneLine(composite, lagging, nextActions) {
+/** 总评一句话：短板 + 资产比偏低 + 先做什么（大白话；机器字段留在 breakdown / tech 弹层） */
+function buildOverallOneLine(composite, lagging, nextActions, score) {
   if (composite.value == null) return "";
   const bits = [];
   if (lagging && (lagging.story || lagging.status_label)) {
@@ -1471,6 +1522,10 @@ function buildOverallOneLine(composite, lagging, nextActions) {
         (lagging.story || lagging.status_label) +
         "）"
     );
+  }
+  const assetHints = lowAssetRatioHints(score);
+  if (assetHints.length) {
+    bits.push("资产比偏低：" + assetHints.slice(0, 3).join("、"));
   }
   const first = (nextActions || []).find((a) => a && a.title);
   if (first) bits.push("先做：" + first.title);
@@ -1505,7 +1560,12 @@ export function buildReportUi(score, opts = {}) {
   const composite_score = buildCompositeScore(s, pipeline_progress);
   const decision_kpis = buildDecisionKpis(s);
   const next_actions = buildNextActions(s, actionOpts);
-  composite_score.one_line_zh = buildOverallOneLine(composite_score, lagging, next_actions);
+  composite_score.one_line_zh = buildOverallOneLine(
+    composite_score,
+    lagging,
+    next_actions,
+    s
+  );
   const shards = buildShards(s, actionOpts);
   const go_nogo = buildGoNogo(s, next_actions);
   const tasks = buildTasks(s, shards, next_actions);

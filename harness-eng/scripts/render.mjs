@@ -448,10 +448,54 @@ function ensureYamlListPlaceholders(params, placeholders) {
 }
 
 /**
+ * 0.8.4: default GLOB_FRONTEND aligned with detect.md (apps/packages).
+ * Never include bare "star-star/src/star-star" (fullstack monorepo would hit backend Java).
+ * Non-default FRONTEND_DIR appends FRONTEND_DIR/** .
+ */
+export function defaultGlobFrontend(frontendDir = "frontend") {
+  const parts = ["**/apps/**/*.ts", "**/apps/**/*.tsx", "**/packages/**"];
+  const fd = String(frontendDir || "frontend")
+    .replace(/\\/g, "/")
+    .replace(/^\/+|\/+$/g, "");
+  if (fd && fd !== "frontend") {
+    parts.push(`${fd}/**`);
+  }
+  return parts.join(",");
+}
+
+/**
+ * 0.8.4: read legacy rule-17 frontmatter globs so upgrade can inherit a narrow
+ * frontend glob onto rule-101 when placeholders.GLOB_FRONTEND is unset.
+ */
+export function readLegacyFrontendGlobs(root) {
+  if (!root) return null;
+  const absRoot = path.resolve(root);
+  const candidates = [
+    ".cursor/rules/17-frontend-web.mdc",
+    "docs/agent-config/rules/17-frontend-web.mdc",
+  ];
+  for (const rel of candidates) {
+    const abs = path.join(absRoot, rel);
+    if (!fs.existsSync(abs)) continue;
+    let text;
+    try {
+      text = fs.readFileSync(abs, "utf8");
+    } catch {
+      continue;
+    }
+    const fm = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!fm) continue;
+    const g = fm[1].match(/^globs:\s*(.+)\s*$/m);
+    if (g && String(g[1]).trim()) return String(g[1]).trim();
+  }
+  return null;
+}
+
+/**
  * 0.7.26 LT-11 配套：为常见占位提供可推导缺省，避免 land/resume 因 PROJECT_NAME↔REPO_NAME
  * 别名或未传 DATE/LADDER 等而整批失败。params.placeholders 显式值优先。
  */
-function ensureStandardPlaceholders(params, placeholders, root) {
+export function ensureStandardPlaceholders(params, placeholders, root) {
   const ph = { ...placeholders };
   const set = (k, v) => {
     if (ph[k] == null || ph[k] === "") ph[k] = v;
@@ -496,7 +540,10 @@ function ensureStandardPlaceholders(params, placeholders, root) {
     ph.DB_MIGRATION_DIR = normalizeMigrationDir(ph.DB_MIGRATION_DIR);
   }
   set("BASE_PACKAGE", String(params.base_package || params.BASE_PACKAGE || ""));
-  set("FRONTEND_DIR", String(params.frontend_dir || params.FRONTEND_DIR || "frontend"));
+  const frontendDir = String(
+    params.frontend_dir || params.FRONTEND_DIR || ph.FRONTEND_DIR || "frontend"
+  );
+  set("FRONTEND_DIR", frontendDir);
   set("GLOB_API", "**/controller/**,**/*Controller.java,docs/api/**");
   set("GLOB_FUNC", "**/src/**,docs/func/**");
   set("GLOB_DB", "**/db/**,docs/db/**");
@@ -505,7 +552,13 @@ function ensureStandardPlaceholders(params, placeholders, root) {
   set("GLOB_SUPERPOWERS", "docs/superpowers/**");
   set("GLOB_AI_TOOLS", ".cursor/**");
   set("GLOB_OBSERVABILITY", "**/src/**");
-  set("GLOB_FRONTEND", "**/frontend/**,**/src/**");
+  // 0.8.4: inherit narrow rule-17 globs on upgrade when GLOB_FRONTEND unset;
+  // fallback default never includes bare **/src/** (see defaultGlobFrontend).
+  if ((ph.GLOB_FRONTEND == null || ph.GLOB_FRONTEND === "") && root) {
+    const inherited = readLegacyFrontendGlobs(root);
+    if (inherited) set("GLOB_FRONTEND", inherited);
+  }
+  set("GLOB_FRONTEND", defaultGlobFrontend(frontendDir));
   // 0.8.0 前端域 rules（102–106）globs
   set("GLOB_DESIGN", "**/theme/**,**/tokens.*,docs/design/**");
   set("GLOB_PROTOTYPE", "docs/prototype/**,**/ui-prototypes/**,**/prototype/**");
