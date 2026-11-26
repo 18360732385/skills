@@ -186,7 +186,7 @@
     .domain-metrics-table th:nth-child(5),
     .domain-metrics-table td:nth-child(5) { width: 4.4em; }
     .domain-metrics-table th:nth-child(6),
-    .domain-metrics-table td:nth-child(6) { width: auto; }
+    .domain-metrics-table td:nth-child(6) { width: 7.2em; }
     .domain-metrics-table .num {
       text-align: right;
       font-family: var(--mono);
@@ -203,11 +203,13 @@
     .domain-metrics-table .note {
       color: var(--muted);
       font-size: 0.72rem;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      line-height: 1.35;
+      white-space: nowrap;
+      max-width: 8.5em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
     }
+    .domain-metrics-table .note[title] { cursor: help; }
     .domain-metrics-table tr.lag td { background: var(--danger-soft); }
     .domain-metrics-table tr.lag .dom-name { color: var(--danger); }
     .ok { color: var(--accent); }
@@ -397,7 +399,12 @@
           '<td class="num ' + pctBand(d.c) + '">' + fmtPct(d.c) + "</td>" +
           '<td class="num ' + goldBand(d.g) + '">' + esc(d.g) + "</td>" +
           '<td class="num ' + authBand(d.a) + '">' + esc(d.a) + "</td>" +
-          '<td class="note">' + esc(d.note || "") + "</td></tr>";
+          (function () {
+            var note = d.note || "";
+            var short = note.length > 10 ? note.slice(0, 10) + "…" : note;
+            var title = note.length > 10 ? ' title="' + esc(note) + '"' : "";
+            return '<td class="note"' + title + ">" + esc(short) + "</td></tr>";
+          })();
       }).join("");
     }
 

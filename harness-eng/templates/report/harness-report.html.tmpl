@@ -155,12 +155,12 @@
     .btn.theme { min-width: 80px; }
 
     /* ============================================================
-       角标 mixin —— L 形制图角标，只用于 deck 与首屏横幅
+       角标 mixin —— L 形制图角标，只用于 deck 与横幅瓷砖
        ============================================================ */
-    .deck, .banner-card {
+    .deck, .banner-tile {
       position: relative;
     }
-    .deck::before, .banner-card::before {
+    .deck::before, .banner-tile::before {
       content: '';
       position: absolute;
       top: -1px; left: -1px;
@@ -170,7 +170,7 @@
       pointer-events: none;
       z-index: 2;
     }
-    .deck::after, .banner-card::after {
+    .deck::after, .banner-tile::after {
       content: '';
       position: absolute;
       bottom: -1px; right: -1px;
@@ -182,30 +182,42 @@
     }
 
     /* ============================================================
-       BANNER CARD（首屏总评横幅：Verdict 徽章 + 总评分 + 结论 + 分项）
+       BANNER（左小右大两块，中间留白；总宽与下方 deck 对齐）
        ============================================================ */
-    .banner-card {
+    .banner-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px 26px;
-      align-items: center;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 12px;
+      width: 100%;
       margin-bottom: 14px;
-      padding: 16px 20px;
+    }
+    .banner-tile {
       background:
         linear-gradient(var(--grid-line) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
         var(--panel);
       background-size: 24px 24px, 24px 24px, auto;
       border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
     .banner-score {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      min-width: 172px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 280px;
+      flex: 0 0 auto;
+      padding: 14px 18px;
+      text-align: center;
+      background-color: var(--panel2);
+    }
+    .banner-score .lab-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .banner-score .lab {
       color: var(--muted);
@@ -213,66 +225,207 @@
       font-weight: 600;
       letter-spacing: 0.02em;
     }
-    .banner-score .score-row {
-      display: flex;
-      align-items: baseline;
+    .banner-score .score-stage {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
       gap: 10px;
+      min-width: 7.5em;
+      min-height: 3.6em;
+      padding-right: 0.2em;
     }
     .banner-score .val {
       font-family: var(--mono);
-      font-size: 2.6rem;
+      font-size: 2.5rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       line-height: 1;
       color: var(--accent);
+      position: relative;
+      z-index: 0;
     }
-    .banner-score .grade {
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 2px;
-      border: 1px solid var(--border);
-      white-space: nowrap;
+    .banner-score .stamp:not(.circle) {
+      letter-spacing: 0.1em;
+      text-indent: 0.1em;
+      font-size: 0.78rem;
+      padding: 5px 10px;
     }
-    .banner-score .grade.ok { color: var(--ok); border-color: var(--accent); background: var(--accent-soft); }
-    .banner-score .grade.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
-    .banner-score .grade.no { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
-    .banner-score .ref-tip {
+    .banner-score .stamp.circle {
+      position: static;
+      flex: 0 0 auto;
+      width: 5.2em;
+      height: 5.2em;
+      padding: 0;
+      margin: 0 0 0 2px;
+      border-radius: 50%;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      text-align: center;
       font-size: 0.68rem;
-      color: var(--muted);
-      border: 1px dashed var(--border);
-      padding: 2px 8px;
-      border-radius: 2px;
+      letter-spacing: 0.06em;
+      text-indent: 0;
+      line-height: 1.05;
       white-space: nowrap;
+      transform: rotate(-14deg);
+      background: var(--danger-soft);
+      box-shadow:
+        inset 0 0 0 2px var(--panel),
+        inset 0 0 0 3px currentColor;
+      animation: stamp-circle-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both;
+      pointer-events: none;
+    }
+    .banner-score .stamp.circle::before { content: none; }
+    .banner-score .stamp.circle .mark {
+      font-size: 0.95em;
+      letter-spacing: 0;
+      line-height: 1;
+      font-weight: 800;
+    }
+    .banner-score .stamp.circle .txt {
+      letter-spacing: 0.08em;
+    }
+    .banner-score .stamp.circle::after {
+      border-radius: 50%;
+      inset: -3px;
+      animation: stamp-circle-ring 0.8s ease-out 0.55s;
+    }
+    @keyframes stamp-circle-in {
+      0% { opacity: 0; transform: rotate(-14deg) scale(1.7); }
+      55% { opacity: 1; transform: rotate(-14deg) scale(0.94); }
+      100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+    }
+    @keyframes stamp-circle-ring {
+      0% { opacity: 0.4; transform: scale(0.96); }
+      100% { opacity: 0; transform: scale(1.28); }
+    }
+    .parts-hint {
+      position: relative;
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      padding: 0;
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1;
       cursor: help;
-      align-self: flex-start;
     }
-    .banner-side { flex: 1 1 280px; min-width: 0; padding-left: 26px; border-left: 1px dashed var(--border); }
-    @media (max-width: 720px) {
-      .banner-side { padding-left: 0; border-left: none; }
+    .parts-hint:hover,
+    .parts-hint:focus-visible {
+      color: var(--accent);
+      border-color: var(--accent);
     }
-    .banner-side .one-line {
-      margin: 0 0 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      line-height: 1.6;
+    .parts-hint[hidden] { display: none !important; }
+    .parts-tip {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      z-index: 5;
+      min-width: 168px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      text-align: left;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.12s ease;
     }
-    .banner-side .parts {
+    .parts-hint:hover .parts-tip,
+    .parts-hint:focus-visible .parts-tip {
+      opacity: 1;
+      visibility: visible;
+    }
+    .parts-tip .part {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .banner-side .part {
+      justify-content: space-between;
+      gap: 12px;
       font-size: 0.7rem;
       color: var(--muted);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 3px 8px;
       font-family: var(--mono);
+      line-height: 1.45;
       white-space: nowrap;
     }
-    .banner-side .part b { color: var(--text); font-weight: 700; }
+    .parts-tip .part b { color: var(--text); font-weight: 700; }
+    .banner-coding {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 28px;
+      min-width: 0;
+      flex: 1 1 auto;
+      padding: 12px 20px 12px 28px;
+      border-left: 3px solid var(--accent);
+    }
+    .banner-coding .coding-main {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .banner-coding .coding-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px 14px;
+    }
+    .banner-coding .lab {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .banner-coding .one-line {
+      margin: 0;
+      max-width: 38em;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.45;
+      text-align: left;
+    }
+    .banner-coding .coding-lamps {
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      gap: 6px;
+      flex: 0 0 auto;
+      align-content: center;
+      justify-items: stretch;
+    }
+    .banner-coding .coding-lamp {
+      font-size: 0.7rem;
+      padding: 3px 7px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--panel2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .banner-coding .coding-lamp b {
+      margin-left: 4px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .banner-coding .coding-lamp.ok { border-color: var(--accent); color: var(--ok); }
+    .banner-coding .coding-lamp.ok b { color: var(--ok); }
+    .banner-coding .coding-lamp.warn { border-color: var(--warn); color: var(--warn); }
+    .banner-coding .coding-lamp.warn b { color: var(--warn); }
+    .banner-coding .coding-lamp.no { border-color: var(--danger); color: var(--danger); }
+    .banner-coding .coding-lamp.no b { color: var(--danger); }
 
     /* ---- 施工阶梯 + 开干清单 同组（决策台内，宽屏双列并排，卡间留白） ---- */
     .pipe-group {
@@ -580,10 +733,10 @@
     }
 
     /* ============================================================
-       VERDICT（验收印章 —— 横幅内唯一装饰性元素）
+       STAMP（验收印章 —— 总评分档 / 开干结论共用）
        双环边框 + 微旋转，像盖在验收单上的章。
        ============================================================ */
-    .verdict-badge {
+    .stamp {
       font-family: var(--font);
       font-size: 0.86rem;
       font-weight: 700;
@@ -596,12 +749,13 @@
       display: inline-block;
       position: relative;
       transform: rotate(-2deg);
+      background: transparent;
       box-shadow:
         inset 0 0 0 3px var(--panel),
         inset 0 0 0 4px currentColor;
       animation: stamp-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both;
     }
-    .verdict-badge::after {
+    .stamp::after {
       content: '';
       position: absolute;
       inset: -3px;
@@ -620,16 +774,27 @@
       0% { opacity: 0.45; transform: scale(0.96); }
       100% { opacity: 0; transform: scale(1.3); }
     }
-    .verdict-badge.ok {
-      color: var(--ok);
-      background: transparent;
+    .stamp.ok { color: var(--ok); }
+    .stamp.ok::before { content: '\2713 '; }
+    .stamp.perfect {
+      color: var(--accent);
+      letter-spacing: 0.18em;
+      text-indent: 0.18em;
     }
-    .verdict-badge.ok::before { content: '\2713 '; }
-    .verdict-badge.no {
-      color: var(--danger);
-      background: transparent;
+    .stamp.perfect::before { content: '\2605 '; }
+    .stamp.warn { color: var(--warn); }
+    .stamp.warn::before { content: '\25C6 '; }
+    .stamp.no { color: var(--danger); }
+    .stamp.no::before { content: '\2717 '; }
+    .stamp.sm {
+      font-size: 0.72rem;
+      padding: 4px 9px;
+      letter-spacing: 0.1em;
+      text-indent: 0.1em;
+      box-shadow:
+        inset 0 0 0 2px var(--panel),
+        inset 0 0 0 3px currentColor;
     }
-    .verdict-badge.no::before { content: '\2717 '; }
     .gap-line {
       margin-top: 10px;
       padding: 10px 12px;
@@ -771,7 +936,7 @@
     .domain-metrics-table th:nth-child(5),
     .domain-metrics-table td:nth-child(5) { width: 4.4em; }
     .domain-metrics-table th:nth-child(6),
-    .domain-metrics-table td:nth-child(6) { width: auto; }
+    .domain-metrics-table td:nth-child(6) { width: 7.2em; }
     .domain-metrics-table .num {
       text-align: right;
       font-family: var(--mono);
@@ -790,11 +955,13 @@
       color: var(--muted);
       font-weight: 500;
       font-size: 0.72rem;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      line-height: 1.35;
+      white-space: nowrap;
+      max-width: 8.5em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
     }
+    .domain-metrics-table .note[title] { cursor: help; }
     .domain-metrics-table tr.lag td {
       background: var(--danger-soft);
     }
@@ -1487,19 +1654,29 @@
       </div>
     </div>
 
-    <section class="banner-card hidden" id="sec-banner">
-      <div class="verdict-badge" id="verdict-badge">—</div>
-      <div class="banner-score">
-        <span class="lab" id="overall-lab">总评分</span>
-        <span class="score-row">
+    <section class="banner-row hidden" id="sec-banner">
+      <div class="banner-tile banner-score">
+        <div class="lab-row">
+          <span class="lab" id="overall-lab">总评分</span>
+          <button type="button" class="parts-hint" id="parts-hint" hidden aria-label="查看总评分分项">
+            i
+            <span class="parts-tip" id="overall-parts" role="tooltip"></span>
+          </button>
+        </div>
+        <div class="score-stage">
           <span class="val" id="overall-val">—</span>
-          <span class="grade" id="overall-grade"></span>
-        </span>
-        <span class="ref-tip" id="overall-ref" title="">仅参考 · ≠开干</span>
+          <span class="stamp" id="overall-grade" hidden></span>
+        </div>
       </div>
-      <div class="banner-side">
-        <p class="one-line" id="headline"></p>
-        <div class="parts" id="overall-parts"></div>
+      <div class="banner-tile banner-coding">
+        <div class="coding-main">
+          <div class="coding-head">
+            <span class="lab">可 AI coding</span>
+            <div class="stamp verdict-badge" id="verdict-badge">—</div>
+          </div>
+          <p class="one-line" id="headline"></p>
+        </div>
+        <div class="coding-lamps" id="coding-lamps"></div>
       </div>
     </section>
 
@@ -2274,14 +2451,37 @@
       $("overall-val").textContent = "—";
     }
     var gradeEl = $("overall-grade");
-    gradeEl.textContent = composite.grade_zh || "";
-    gradeEl.className = "grade " + (composite.grade_tone || "");
-    var refEl = $("overall-ref");
-    refEl.textContent = "仅参考 · ≠开干";
-    refEl.title = composite.tip || "";
-    $("overall-parts").innerHTML = (composite.parts || []).map(function (p) {
-      return '<span class="part">' + esc(p.label_zh || p.id) + " <b>" + esc(p.value) + "%</b></span>";
-    }).join("");
+    if (composite.grade_zh) {
+      gradeEl.hidden = false;
+      var failStamp = composite.grade_tone === "no" || composite.grade_zh === "不合格";
+      gradeEl.className = "stamp " + (failStamp ? "circle " : "") + (composite.grade_tone || "no");
+      gradeEl.title = composite.tip || "";
+      if (failStamp) {
+        gradeEl.innerHTML = '<span class="mark" aria-hidden="true">\u2717</span><span class="txt">' + esc(composite.grade_zh) + "</span>";
+      } else {
+        gradeEl.textContent = composite.grade_zh;
+      }
+    } else {
+      gradeEl.hidden = true;
+      gradeEl.textContent = "";
+      gradeEl.className = "stamp";
+    }
+    var partsHint = $("parts-hint");
+    var partsTip = $("overall-parts");
+    var parts = composite.parts || [];
+    if (partsHint && partsTip) {
+      if (parts.length) {
+        partsTip.innerHTML = parts.map(function (p) {
+          var isScore = p.id === "overall";
+          var unit = isScore ? "" : "%";
+          return '<span class="part"><span>' + esc(p.label_zh || p.id) + "</span><b>" + esc(p.value) + unit + "</b></span>";
+        }).join("");
+        partsHint.hidden = false;
+      } else {
+        partsTip.innerHTML = "";
+        partsHint.hidden = true;
+      }
+    }
 
     $("ladder-summary").textContent = ladderProg.summary || "施工阶梯";
     $("ladder-pct").textContent =
@@ -2331,9 +2531,29 @@
     var readyOk = go.ok != null ? !!go.ok : (!!verdict.ai_coding_ready || !!verdict.ready_ok);
     var badge = $("verdict-badge");
     badge.textContent = go.label_zh || verdict.ready_label || (readyOk ? "建议可以开干" : "建议暂缓");
-    badge.className = "verdict-badge " + (readyOk ? "ok" : "no");
+    badge.className = "stamp verdict-badge " + (readyOk ? "ok" : "no");
 
-    $("headline").innerHTML = linkTerms(ui.headline || score.suggest_next || "（无摘要）", termIndex);
+    var codingLamps = $("coding-lamps");
+    if (codingLamps) {
+      var lampIds = ["ai_coding_ready", "skeleton_ready", "coverage_ready", "semantic_ready", "fill_plan"];
+      var kpis = ui.decision_kpis || [];
+      var byLamp = {};
+      kpis.forEach(function (k) { if (k && k.id) byLamp[k.id] = k; });
+      codingLamps.innerHTML = lampIds.map(function (id) {
+        var k = byLamp[id];
+        if (!k) return "";
+        var tone = k.tone || "";
+        return (
+          '<span class="coding-lamp ' + esc(tone) + '">' +
+          esc(k.label_zh || k.id) + "<b>" + esc(k.value) + "</b></span>"
+        );
+      }).join("");
+    }
+
+    $("headline").innerHTML = linkTerms(
+      verdict.ready_hint || ui.headline || score.suggest_next || "（无摘要）",
+      termIndex
+    );
     var gap = ui.gap_to_ready || {};
     var gapHtml =
       "<strong>还差什么：</strong>" + linkTerms(gap.summary_zh || gap.summary || "—", termIndex) +
@@ -2475,6 +2695,8 @@
           typeof d.excluded_type_exports === "number" && d.excluded_type_exports > 0
             ? d.excluded_type_exports + " 个 type_export 未计入覆盖"
             : "";
+        var noteShort = note.length > 10 ? note.slice(0, 10) + "…" : note;
+        var noteTitle = note.length > 10 ? ' title="' + escAttr(note) + '"' : "";
         var lag = lagId && d.id === lagId;
         return (
           '<tr class="' + (lag ? "lag" : "") + '">' +
@@ -2483,7 +2705,7 @@
           '<td class="num ' + cBand + '">' + esc(formatPct(pct)) + "</td>" +
           '<td class="num ' + goldBand(gold) + '">' + esc(gold) + "</td>" +
           '<td class="num ' + authenticityBand(auth) + '">' + esc(auth) + "</td>" +
-          '<td class="note">' + esc(note) + "</td></tr>"
+          '<td class="note"' + noteTitle + ">" + esc(noteShort) + "</td></tr>"
         );
       }
       summaryEl.innerHTML = ordered.map(metricRow).join("");
@@ -2514,7 +2736,7 @@
           (d.room != null ? " · 距上限 " + d.room : "") +
           (covLine ? "<br>" + esc(covLine) : "") +
           (d.story ? "<br>" + esc(d.story) : "") +
-          '</div><span class="status ' + esc(d.tone || "warn") + '">' +
+          '</div><span class="stamp sm ' + esc(d.tone || "warn") + '">' +
           esc(d.status_label || "") + "</span></div>"
         );
       }).join("");

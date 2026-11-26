@@ -6947,7 +6947,7 @@ console.log("theme-gate-smoke-ok");
   );
   assert(
     typeof ui82.composite_score.grade_zh === "string" &&
-      ["优秀", "良好", "合格", "待改进"].includes(ui82.composite_score.grade_zh),
+      ["完美", "优秀", "良好", "不合格"].includes(ui82.composite_score.grade_zh),
     "0.8.2 composite grade_zh band"
   );
   assert(
@@ -6983,7 +6983,7 @@ console.log("theme-gate-smoke-ok");
     path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
     "utf8"
   );
-  assert(/sec-banner/.test(tmpl82) && /banner-card/.test(tmpl82) && /总评分/.test(tmpl82), "0.8.2 top banner 总评分+结论");
+  assert(/sec-banner/.test(tmpl82) && /banner-row/.test(tmpl82) && /总评分/.test(tmpl82), "0.8.2 top banner 总评分+结论");
   const decision82 = tmpl82.slice(
     tmpl82.indexOf('id="panel-decision"'),
     tmpl82.indexOf('id="panel-diagnose"')
@@ -7009,7 +7009,7 @@ console.log("theme-gate-smoke-ok");
   );
   assert(!/常见缺口分布（明细）/.test(tmpl82) && !/id="chart-miss"/.test(tmpl82), "miss distribution fold removed");
   assert(!/仪表参考分/.test(tmpl82) && !/综合评分/.test(tmpl82), "0.8.2 no stale composite name");
-  assert(/仅参考/.test(tmpl82), "0.8.2 仅参考 badge");
+  assert(/class="stamp"/.test(tmpl82) && /banner-coding/.test(tmpl82) && /parts-hint/.test(tmpl82), "0.8.2 banner stamp + AI coding + parts hint");
 
   const reportUi82 = fs.readFileSync(
     path.join(skillRoot, "scripts/lib/report-ui.mjs"),

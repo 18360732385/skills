@@ -1584,9 +1584,11 @@ function buildCompositeScore(score, pipeline) {
     };
   }
   const value = Math.round((sum / weight) * 10) / 10;
+  // 盖章档：100 完美 · ≥95 优秀 · ≥85 良好 · <85 不合格
   const grade_zh =
-    value >= 90 ? "优秀" : value >= 75 ? "良好" : value >= 60 ? "合格" : "待改进";
-  const grade_tone = value >= 75 ? "ok" : value >= 60 ? "warn" : "no";
+    value >= 100 ? "完美" : value >= 95 ? "优秀" : value >= 85 ? "良好" : "不合格";
+  const grade_tone =
+    value >= 100 ? "perfect" : value >= 95 ? "ok" : value >= 85 ? "warn" : "no";
   return {
     value,
     label_zh: "总评分",
@@ -1595,7 +1597,7 @@ function buildCompositeScore(score, pipeline) {
     parts,
     breakdown: { overall, coverage: cov, gold_ratio: gold, pipeline: pipe },
     one_line_zh: "",
-    tip: "文档质量分35% · 代码覆盖率25% · 验收通过率20% · 开干清单20% 加权——仅供参考；能否开干只看「可 AI coding」",
+    tip: "文档质量分35% · 代码覆盖率25% · 验收通过率20% · 开干清单20% 加权；能否开干只看「可 AI coding」",
   };
 }
 
