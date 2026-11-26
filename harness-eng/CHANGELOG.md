@@ -1,11 +1,13 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.8.6**。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.8.8**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.8 | 2026-11-26 | gold 开干追加四道：判定时分域覆盖 100%（不改写策略文件）、全仓与分域金标指数 ≥ 98%、正式真相身份双向一致、覆盖真实性记录全部未过期 pass。strict / mature_compat 门槛不变。诊断台并列三列（report_schema 0.4.3）。批次开工冻结 unit_ids，关批只核本批 |
+| 0.8.7 | 2026-11-26 | 0.8.6 sms-ai 实战待完善：dry-run 不再回写 harness-meta · upgrade 提示安装副本版本错位 · upgrade-diff 带覆盖口径 · 无 blocker 也刷新 migrate-docs 报告时间戳 · hook 预览内容相同记 unchanged · 满分不写拖后腿 · client-api 写明排除的 type_export |
 | 0.8.6 | 2026-11-26 | 0.8.5 sms-ai 实战总析仍存项：design inventory 排除 `docs/design/` 与脚手架 · pages 同一源文件不再 route+page_file 双计 · 前端覆盖改为被点名资产/资产（破坏性）· TODO 正文提及与代码块不计、真占位仍计 · `selfcheck --help` 不跑套件 · `reverse-changelog-tables` 改为 optional |
 | 0.8.5 | 2026-11-26 | 0.8.4 sms-ai 实战总析残留全修：score-policy CRLF 腐蚀修复 + gold 无变更不写盘 + 补齐前端 coverage_targets · 索引骨架去 `TODO(harness-eng)` · 前端覆盖改真实 `truths/assets`（不过不放宽）· `isFrontendTruthFile` 只排除 `/templates/` 与 `*-template.md` 脚手架 · prototype inventory 排除 SSOT 下 md · rule17 退役扫宿主 `.md` · TODO 扫描跳过变更记录节 |
 | 0.8.4 | 2026-11-26 | 0.8.3 实战总析残留收口：`GLOB_FRONTEND` 默认对齐 detect（禁裸 `**/src/**`）+ upgrade 继承 rule-17 globs · 17 退役多宿主/SSOT 命令 + 松 D11 金标文案 · 报告透出 `asset_ratio` 并提示偏低 · archive-docs 嵌套路径/`--dry-run`/拒绝运行时文件 · 对比句优先门禁 `coverage_all_percent`（缺历史不假 0）· func 类名放宽（标题/表）· acceptance evidence 等价（联调/Controller）· 落点 marker 错位人话 · migrate-docs dry-run/ops=0 刷新报告 · pages feature 根扫描 · client-api 覆盖分母排除 `type_export` |

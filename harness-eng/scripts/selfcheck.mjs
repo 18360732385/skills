@@ -55,6 +55,7 @@ import {
   applyMatureCompatGateDefaults,
   reapplyGateProfile,
   evaluateAiCodingGate,
+  evaluationCoveragePolicy,
   countHarnessTodos,
   countActionableHarnessTodos,
   checkEntryReady,
@@ -118,6 +119,8 @@ import {
   emitUpgradeStrictnessDiff,
   resolveMigrateDocsMode,
   resolveCoverageMode,
+  summarizeCoverage,
+  coverageCompareNote,
 } from "./lib/upgrade-diff.mjs";
 import {
   planMigrateDocs,
@@ -127,6 +130,7 @@ import {
   normalizeCoverageMode,
   detectThickTruths,
   pickApiDocForPath,
+  writeMigrateReportHeartbeat,
 } from "./lib/migrate-docs.mjs";
 import {
   stripYamlKeys,
@@ -178,6 +182,8 @@ import {
 } from "./render.mjs";
 import { hasApiEvidence } from "./acceptance-check.mjs";
 import { collectFuncDocClassNames } from "./fill-score.mjs";
+import { collectIdentityBlockers } from "./lib/coverage-identity.mjs";
+import { validateAudit, sha256File } from "./lib/coverage-audit.mjs";
 import {
   ensureDbMdMaintenance,
   detectDbMigrationMode,
@@ -194,7 +200,7 @@ import {
 } from "./lib/doc-paths.mjs";
 import { runChecks05 } from "./lib/selfcheck/checks-0.5.mjs";
 import { runChecks06 } from "./lib/selfcheck/checks-0.6.mjs";
-import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
+import { readSkillVersion, escapeSemverRe, installSkewWarning } from "./lib/skill-version.mjs";
 import { archiveOne, restoreOne } from "./archive-docs.mjs";
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
@@ -832,14 +838,14 @@ const fixture = path.join(skillRoot, "scripts/fixtures/score-sample.json");
 if (fs.existsSync(fixture)) {
   const scoreObj = JSON.parse(fs.readFileSync(fixture, "utf8"));
   const ui = buildReportUi(scoreObj);
-  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0","0.4.1","0.4.2"].includes(ui.version), "ui.version compatible");
+  assert(["0.2.18","0.2.19","0.2.20","0.2.21","0.2.22","0.2.23","0.2.24","0.2.25","0.2.26","0.2.27","0.2.28","0.2.29","0.3.0","0.4.0","0.4.1","0.4.2","0.4.3"].includes(ui.version), "ui.version compatible");
   assert(Array.isArray(ui.decision_kpis) && ui.decision_kpis.length >= 1, "ui.decision_kpis");
   assert(Array.isArray(ui.morph_strip), "ui.morph_strip");
   assert(ui.show_domain_cards === false, "domain cards default off");
   assert(ui.verdict.ready_label === "建议可以开干" || ui.verdict.ready_label === "建议暂缓", "verdict binary");
   assert(ui.composite_score && typeof ui.composite_score.value === "number", "ui.composite_score");
   assert(ui.pipeline_progress && Array.isArray(ui.pipeline_progress.steps), "ui.pipeline_progress");
-  assert(ui.report_schema === "0.4.2", "report_schema 0.4.2");
+  assert(ui.report_schema === "0.4.3", "report_schema 0.4.3");
   assert(ui.go_nogo && typeof ui.go_nogo.ok === "boolean", "ui.go_nogo");
   assert(Array.isArray(ui.tasks), "ui.tasks");
   assert(ui.ladder_progress && Array.isArray(ui.ladder_progress.steps), "ui.ladder_progress");
@@ -2259,7 +2265,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
 
 // --- 0.7.14 / report_schema 0.4.x ---
 {
-  assert(CURRENT_REPORT_SCHEMA === "0.4.2", "score-history CURRENT_REPORT_SCHEMA 0.4.2");
+  assert(CURRENT_REPORT_SCHEMA === "0.4.3", "score-history CURRENT_REPORT_SCHEMA 0.4.3");
   assert(
     isIncomparablePoint({ report_schema: "0.3.0", morph_scale: "0.7" }),
     "history 0.3.0 incomparable"
@@ -2327,7 +2333,7 @@ assert(fs.existsSync(path.join(skillRoot, "scripts/lib/selfcheck/checks-0.5.mjs"
       },
       { meta: { ladder: "L4" }, root: tmpHs, host_surface: hs }
     );
-    assert(uiHs.report_schema === "0.4.2", "ui 0.4.2 with host");
+    assert(uiHs.report_schema === "0.4.3", "ui 0.4.3 with host");
     assert(uiHs.host_surface && uiHs.host_surface.status, "ui carries host_surface");
     assert(uiHs.go_nogo.ok === false, "go_nogo from ai_coding_ready");
     assert(uiHs.ladder_progress.current === "L4", "ladder_progress from meta");
@@ -6307,7 +6313,7 @@ module.exports = { hello };
 
   const scoreSrc58 = fs.readFileSync(path.join(skillRoot, "scripts/fill-score.mjs"), "utf8");
   assert(
-    /runAcceptanceJson\(root,\s*\{\s*\}\)/.test(scoreSrc58) && /scope:\s*"all"/.test(scoreSrc58),
+    /runAcceptanceJson\(root,\s*\{/.test(scoreSrc58) && /"all"/.test(scoreSrc58),
     "0.7.58 fill-score acceptance 全域"
   );
   assert(/acceptance\.scope=all|scope=\$\{report\.acceptance/.test(scoreSrc58), "0.7.58 score 摘要 scope");
@@ -6371,7 +6377,7 @@ module.exports = { hello };
     "utf8"
   );
   assert(/humanizeBlockers/.test(reportUi60), "0.7.60 humanizeBlockers");
-  assert(/REPORT_SCHEMA = "0\.4\.2"/.test(reportUi60), "0.7.60 REPORT_SCHEMA 0.4.2");
+  assert(/REPORT_SCHEMA = "0\.4\.3"/.test(reportUi60), "report-ui REPORT_SCHEMA 0.4.3");
 
   const hostSurf60 = fs.readFileSync(
     path.join(skillRoot, "scripts/lib/host-surface.mjs"),
@@ -6932,7 +6938,7 @@ console.log("theme-gate-smoke-ok");
     fill_plan: { present: true, all_closed: false },
     domains: { api: { score: 72 } },
   });
-  assert(ui82.report_schema === "0.4.2", "0.8.2 ui report_schema 0.4.2");
+  assert(ui82.report_schema === "0.4.3", "ui report_schema 0.4.3");
   assert(
     ui82.composite_score &&
       typeof ui82.composite_score.value === "number" &&
@@ -7009,7 +7015,7 @@ console.log("theme-gate-smoke-ok");
     path.join(skillRoot, "scripts/lib/report-ui.mjs"),
     "utf8"
   );
-  assert(/REPORT_SCHEMA = "0\.4\.2"/.test(reportUi82), "0.8.2 report-ui REPORT_SCHEMA 0.4.2");
+  assert(/REPORT_SCHEMA = "0\.4\.3"/.test(reportUi82), "report-ui REPORT_SCHEMA 0.4.3");
   assert(/buildOverallOneLine/.test(reportUi82), "0.8.2 buildOverallOneLine helper");
   assert(
     /文档质量分/.test(reportUi82) && /验收通过率/.test(reportUi82) && /验收遗留/.test(reportUi82),
@@ -8264,10 +8270,403 @@ console.log("theme-gate-smoke-ok");
   assert(/0\.8\.5 → 0\.8\.6/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.6 upgrade.md");
   assert(/0\.8\.6 起默认不进写集/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.6 upgrade notes optional reverse script");
   assert(logExists("0.8.6"), "0.8.6 _log note exists");
+}
+
+// --- 0.8.7: 0.8.6 实战待完善（dry-run meta / 安装错位 / 升严口径 / 迁移心跳 / hook 用词 / 报告文案） ---
+{
+  const guardLine = 'mysql_guard_servers: "mysql-(local|dev|test|uat)"\n';
+  const sameRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-guard-"));
+  try {
+    const metaDir = path.join(sameRoot, "docs", "harness-eng");
+    fs.mkdirSync(metaDir, { recursive: true });
+    const metaPath = path.join(metaDir, "harness-meta.yaml");
+    fs.writeFileSync(metaPath, "skill: harness-eng\n" + guardLine, "utf8");
+    const beforeHash = createHash("sha256").update(fs.readFileSync(metaPath)).digest("hex");
+    const beforeMtime = fs.statSync(metaPath).mtimeMs;
+    buildHookPlaceholders({
+      params: { domains: [], ai_tools: ["cursor"], mode: "upgrade" },
+      root: sameRoot,
+    });
+    const afterStat = fs.statSync(metaPath);
+    assert(
+      createHash("sha256").update(fs.readFileSync(metaPath)).digest("hex") === beforeHash &&
+        afterStat.mtimeMs === beforeMtime,
+      "0.8.7 identical mysql_guard_servers does not rewrite harness-meta"
+    );
+  } finally {
+    fs.rmSync(sameRoot, { recursive: true, force: true });
+  }
+
+  const dryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-dry-"));
+  try {
+    const metaDir = path.join(dryRoot, "docs", "harness-eng");
+    fs.mkdirSync(metaDir, { recursive: true });
+    const metaPath = path.join(metaDir, "harness-meta.yaml");
+    const body = "skill: harness-eng\nskill_version: \"0.8.6\"\n";
+    fs.writeFileSync(metaPath, body, "utf8");
+    const beforeHash = createHash("sha256").update(fs.readFileSync(metaPath)).digest("hex");
+    const beforeMtime = fs.statSync(metaPath).mtimeMs;
+    const paramsPath = path.join(dryRoot, "params.json");
+    fs.writeFileSync(
+      paramsPath,
+      JSON.stringify({
+        mode: "upgrade",
+        last_mode: "upgrade",
+        ladder: "L0",
+        on_exists: "skip",
+        expandFromManifest: true,
+        domains: ["func"],
+        ai_tools: ["cursor"],
+        agents_variant: "solo",
+        upgrade_fix_hooks: "auto",
+      }),
+      "utf8"
+    );
+    const dry = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/render.mjs"), "--root", dryRoot, "--params", paramsPath, "--dry-run"],
+      { encoding: "utf8", maxBuffer: 20 * 1024 * 1024 }
+    );
+    assert(dry.status === 0, `0.8.7 render dry-run exit 0 (${(dry.stderr || "").slice(-200)})`);
+    const afterStat = fs.statSync(metaPath);
+    assert(
+      fs.readFileSync(metaPath, "utf8") === body &&
+        createHash("sha256").update(fs.readFileSync(metaPath)).digest("hex") === beforeHash &&
+        afterStat.mtimeMs === beforeMtime,
+      "0.8.7 render --dry-run does not touch harness-meta"
+    );
+  } finally {
+    fs.rmSync(dryRoot, { recursive: true, force: true });
+  }
+
+  const runRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-run-"));
+  const instRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-inst-"));
+  const sameVer = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-same-"));
+  try {
+    for (const [dir, ver] of [
+      [runRoot, "0.8.7"],
+      [instRoot, "0.8.5"],
+      [sameVer, "0.8.7"],
+    ]) {
+      const d = path.join(dir, "_meta");
+      fs.mkdirSync(d, { recursive: true });
+      fs.writeFileSync(path.join(d, "manifest.yaml"), `version: "${ver}"\n`, "utf8");
+    }
+    const skew = installSkewWarning(runRoot, instRoot);
+    assert(
+      skew && skew.includes("0.8.7") && skew.includes("0.8.5"),
+      `0.8.7 install skew warning (got ${skew})`
+    );
+    assert(installSkewWarning(runRoot, runRoot) == null, "0.8.7 same realpath is silent");
+    assert(installSkewWarning(runRoot, sameVer) == null, "0.8.7 same version is silent");
+    assert(
+      installSkewWarning(runRoot, fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-miss-"))) == null,
+      "0.8.7 missing install manifest is silent"
+    );
+  } finally {
+    fs.rmSync(runRoot, { recursive: true, force: true });
+    fs.rmSync(instRoot, { recursive: true, force: true });
+    fs.rmSync(sameVer, { recursive: true, force: true });
+  }
+
+  const snap = summarizeCoverage({
+    coverage_source: "rescanned",
+    skill_version: "0.8.6",
+    coverage_by_domain: {
+      design: { percent: 100, covered: 6, code: 6, source: "mapped_assets", truths: 8, mapped: 6, extra: 1 },
+    },
+  });
   assert(
-    /当前 \*\*0\.8\.6\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
-    "0.8.6 SKILL.md version pin"
+    snap && snap.domains.design.mapped === 6 && snap.domains.design.source === "mapped_assets" && snap.domains.design.extra == null,
+    `0.8.7 summarizeCoverage (got ${JSON.stringify(snap)})`
   );
+  assert(/coverage_after/.test(coverageCompareNote()), "0.8.7 coverage note names coverage_after");
+  assert(/没算出来/.test(coverageCompareNote({ scoreError: true })), "0.8.7 coverage failure note");
+  const diffTmp = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-diff-"));
+  try {
+    const scoreDir = path.join(diffTmp, "docs", "harness-eng");
+    fs.mkdirSync(scoreDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(scoreDir, "score-latest.json"),
+      JSON.stringify({
+        ai_coding_ready: { ok: true, blockers: [] },
+        coverage_source: "file",
+        coverage_by_domain: {
+          design: { percent: 100, covered: 6, code: 6, source: "asset_ratio", truths: 8 },
+        },
+      }),
+      "utf8"
+    );
+    const dryDiff = emitUpgradeStrictnessDiff(diffTmp, { dryRun: true });
+    assert(dryDiff.coverage_before && dryDiff.coverage_before.domains.design.covered === 6, "0.8.7 dry diff keeps coverage_before");
+    assert(dryDiff.coverage_after == null, "0.8.7 dry diff has no coverage_after");
+    assert(/升版前分数/.test(dryDiff.coverage_note_zh || ""), "0.8.7 dry diff coverage note");
+  } finally {
+    fs.rmSync(diffTmp, { recursive: true, force: true });
+  }
+
+  const beatRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-beat-"));
+  try {
+    const eng = path.join(beatRoot, "docs", "harness-eng");
+    const db = path.join(beatRoot, "docs", "db");
+    fs.mkdirSync(eng, { recursive: true });
+    fs.mkdirSync(db, { recursive: true });
+    fs.writeFileSync(path.join(db, "db.md"), "keep\n", "utf8");
+    const reportPath = path.join(eng, "migrate-docs-report.json");
+    fs.writeFileSync(
+      reportPath,
+      JSON.stringify({ generated_at: "2020-01-01T00:00:00.000Z", ops: [{ kind: "old" }] }),
+      "utf8"
+    );
+    const beat = writeMigrateReportHeartbeat(beatRoot, { mode: "dry-run", skillVersion: "0.8.7" });
+    assert(beat.generated_at !== "2020-01-01T00:00:00.000Z", "0.8.7 heartbeat refreshes generated_at");
+    assert(Array.isArray(beat.ops) && beat.ops.length === 0, "0.8.7 heartbeat ops empty");
+    assert(
+      (beat.skipped || []).some((s) => /未规划补丁/.test(s.reason || "")),
+      "0.8.7 heartbeat says no plan"
+    );
+    assert(beat.skill_version === "0.8.7" && beat.dry_run === true && /planMigrateDocs/.test(beat.note || ""), "0.8.7 heartbeat marks dry-run and no planner");
+    assert(fs.readFileSync(path.join(db, "db.md"), "utf8") === "keep\n", "0.8.7 heartbeat does not touch truths");
+    assert(!/planMigrateDocs\(/.test(fs.readFileSync(path.join(skillRoot, "scripts/lib/migrate-docs.mjs"), "utf8").split("export function writeMigrateReportHeartbeat")[1].split("export function runMigrateDocs")[0]), "0.8.7 heartbeat body does not call planMigrateDocs");
+  } finally {
+    fs.rmSync(beatRoot, { recursive: true, force: true });
+  }
+
+  const hookRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-hook-"));
+  try {
+    const hookRel = path.join("docs", "agent-config", "hooks", "claude-adapter.js");
+    const hookAbs = path.join(hookRoot, hookRel);
+    fs.mkdirSync(path.dirname(hookAbs), { recursive: true });
+    fs.copyFileSync(path.join(skillRoot, "templates", "hooks", "claude-adapter.js"), hookAbs);
+    const paramsPath = path.join(hookRoot, "params.json");
+    fs.writeFileSync(
+      paramsPath,
+      JSON.stringify({
+        mode: "upgrade",
+        last_mode: "upgrade",
+        upgrade_fix_hooks: "auto",
+        files: [
+          {
+            id: "hookfam-claude-adapter",
+            template: "hooks/claude-adapter.js",
+            target: "docs/agent-config/hooks/claude-adapter.js",
+            action: "replace",
+          },
+        ],
+      }),
+      "utf8"
+    );
+    const hookDry = spawnSync(
+      process.execPath,
+      [path.join(skillRoot, "scripts/render.mjs"), "--root", hookRoot, "--params", paramsPath, "--dry-run"],
+      { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }
+    );
+    assert(hookDry.status === 0, `0.8.7 hook dry-run exit 0 (${(hookDry.stderr || "").slice(-200)})`);
+    const hookJson = JSON.parse(hookDry.stdout);
+    const row = (hookJson.results || []).find((r) => String(r.target || "").includes("claude-adapter.js"));
+    assert(row && row.action === "unchanged" && row.status === "unchanged", `0.8.7 identical hook is unchanged (got ${JSON.stringify(row)})`);
+    const reviewed = (hookJson.hooks_reviewed || []).find((r) => String(r.path || "").includes("claude-adapter.js"));
+    assert(reviewed && reviewed.action === "unchanged", "0.8.7 hooks_reviewed unchanged");
+  } finally {
+    fs.rmSync(hookRoot, { recursive: true, force: true });
+  }
+
+  const ui = buildReportUi({
+    overall: 100,
+    formula_ceiling: 100,
+    domains: {
+      func: { score: 100, truths: 1, shells: 0 },
+      "client-api": { score: 100, truths: 57, shells: 0 },
+    },
+    quality: { domains: { func: 100, "client-api": 100 } },
+    domain_caps: { func: 100, "client-api": 100 },
+    coverage_by_domain: {
+      func: { percent: 100, covered: 1, code: 1 },
+      "client-api": {
+        percent: 100,
+        covered: 57,
+        code: 57,
+        source: "mapped_assets",
+        truths: 57,
+        mapped: 57,
+        excluded_type_exports: 154,
+      },
+    },
+    ai_coding_ready: { ok: true, blockers: [] },
+    skeleton_ready: { ok: true },
+    coverage_ready: { ok: true },
+    semantic_ready: { ok: true },
+  });
+  const storyText = ((ui.diagnose && ui.diagnose.story) || []).map((s) => s.text).join("\n");
+  const oneLine = (ui.composite_score && ui.composite_score.one_line_zh) || "";
+  assert(ui.lagging_domain == null, `0.8.7 no lagging domain at ceiling (got ${JSON.stringify(ui.lagging_domain)})`);
+  assert(!/拖后腿|主要短板/.test(storyText + "\n" + oneLine), `0.8.7 ceiling copy (got ${oneLine} / ${storyText})`);
+  assert(/点名路径/.test(oneLine), `0.8.7 citation caveat (got ${oneLine})`);
+  const ca = (ui.domain_stories || []).find((d) => d.id === "client-api");
+  assert(
+    ca && ca.excluded_type_exports === 154 && /type_export/.test(ca.story || ""),
+    `0.8.7 client-api exclusion story (got ${JSON.stringify(ca)})`
+  );
+  assert(
+    /各域都已到理论上限/.test(fs.readFileSync(path.join(skillRoot, "templates/report/harness-report.html.tmpl"), "utf8")),
+    "0.8.7 report shell clears lagging lead"
+  );
+
+  assert(/\| 0\.8\.7 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.7 CHANGELOG");
+  assert(/0\.8\.7 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.7 VERIFY.md");
+  assert(/0\.8\.6 → 0\.8\.7/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.7 upgrade.md");
+  assert(logExists("0.8.7"), "0.8.7 _log note exists");
+  assert(
+    new RegExp(`当前 \\*\\*${VER_RE}\\*\\*`).test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
+    "0.8.7 SKILL.md version pin"
+  );
+}
+
+// --- 0.8.7 gold 开干：分域 1.0、指数 0.98、身份、真实性、批次 unit_ids ---
+{
+  const forced = evaluationCoveragePolicy({
+    gate_profile: "gold",
+    coverage_mode: "overall",
+    coverage_targets: { api: 0.8 },
+  });
+  assert(forced.coverage_mode === "all_domains", "0.8.7 gold eval forces all_domains");
+  assert(forced.coverage_targets.api === 1, "0.8.7 gold eval target 1.0");
+  const strictPol = evaluationCoveragePolicy({
+    gate_profile: "strict",
+    coverage_mode: "overall",
+    coverage_targets: { api: 0.8 },
+  });
+  assert(strictPol.coverage_mode === "overall", "0.8.7 strict keeps overall");
+
+  const low = evaluateAiCodingGate(
+    { domains: { api: { score: 96 } }, template_completeness: { overall: 96 } },
+    { gate_profile: "gold", gate: applyGoldGateDefaults({ forbid_harness_todo: false }) },
+    { blockers: 0, warnings: 0, gold_pass_ratio: 0.97 }
+  );
+  assert(low.blockers.some((b) => String(b).startsWith("gold_ratio:0.97")), "0.8.7 ratio 0.97 blocks");
+  const emptyRatio = evaluateAiCodingGate(
+    { domains: { api: { score: 96 } }, template_completeness: { overall: 96 } },
+    { gate_profile: "gold", gate: applyGoldGateDefaults({ forbid_harness_todo: false }) },
+    { blockers: 0, warnings: 0, gold_pass_ratio: null }
+  );
+  assert(emptyRatio.blockers.some((b) => /gold_ratio:null/.test(String(b))), "0.8.7 null ratio blocks");
+  const domainLow = evaluateAiCodingGate(
+    {
+      domains: { api: { score: 99 } },
+      template_completeness: { overall: 99 },
+      coverage_by_domain: { api: { code: 2, ratio: 1 } },
+      gold_by_domain: { api: { gold_pass_ratio: 0.5 } },
+    },
+    { gate_profile: "gold", gate: applyGoldGateDefaults({ forbid_harness_todo: false }) },
+    { blockers: 0, warnings: 0, gold_pass_ratio: 1 }
+  );
+  assert(
+    domainLow.blockers.some((b) => String(b).startsWith("gold_ratio_domain:")),
+    "0.8.7 per-domain index blocks"
+  );
+  const strictNoAudit = evaluateAiCodingGate(
+    { domains: { api: { score: 80 } }, template_completeness: { overall: 80 } },
+    { gate_profile: "strict", gate: applyStrictGateDefaults({ forbid_harness_todo: false, morph_floor: 0 }) },
+    { blockers: 0, warnings: 0 }
+  );
+  assert(
+    !strictNoAudit.blockers.some((b) => String(b).startsWith("coverage_audit:")),
+    "0.8.7 strict ignores missing coverage audit"
+  );
+
+  const idMissing = collectIdentityBlockers({
+    domain: "api",
+    inventory: { endpoints: [{ http: "GET", path: "/a" }, { http: "GET", path: "/b" }] },
+    files: [{ file: "docs/api/modules/a.md", text: "## 1. A\n\n**接口地址：** /a\n**请求方式：** GET\n" }],
+    units: ["GET /a"],
+  });
+  assert(
+    !idMissing.some((b) => /\/b/.test(b.detail)),
+    "0.8.7 batch identity ignores units outside the list"
+  );
+  const idBoth = collectIdentityBlockers({
+    domain: "api",
+    inventory: { endpoints: [{ http: "GET", path: "/a" }] },
+    files: [{ file: "docs/api/modules/a.md", text: "## 1. A\n\n**接口地址：** /a\n**请求方式：** GET\n## 2. Z\n\n**接口地址：** /nope\n**请求方式：** POST\n" }],
+  });
+  assert(idBoth.some((b) => b.id === "coverage-identity-extra"), "0.8.7 extra citation blocks");
+  const idGap = collectIdentityBlockers({
+    domain: "api",
+    inventory: { endpoints: [{ http: "GET", path: "/a" }, { http: "GET", path: "/b" }] },
+    files: [{ file: "docs/api/modules/a.md", text: "## 1. A\n\n**接口地址：** /a\n**请求方式：** GET\n" }],
+  });
+  assert(idGap.some((b) => b.id === "coverage-identity-missing" && /\/b/.test(b.detail)), "0.8.7 missing citation blocks");
+
+  const auditRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-audit-"));
+  try {
+    const truthRel = "docs/api/modules/a.md";
+    const evidenceRel = "src/A.java";
+    fs.mkdirSync(path.join(auditRoot, "docs/api/modules"), { recursive: true });
+    fs.mkdirSync(path.join(auditRoot, "src"), { recursive: true });
+    fs.mkdirSync(path.join(auditRoot, "docs/harness-eng/coverage-audit"), { recursive: true });
+    fs.writeFileSync(path.join(auditRoot, truthRel), "# a\n", "utf8");
+    fs.writeFileSync(path.join(auditRoot, evidenceRel), "class A {}\n", "utf8");
+    const row = {
+      unit_id: "GET /a",
+      truth_path: truthRel,
+      evidence_path: evidenceRel,
+      verdict: "pass",
+      reason: "地址与类一致",
+      truth_sha256: sha256File(path.join(auditRoot, truthRel)),
+      evidence_sha256: sha256File(path.join(auditRoot, evidenceRel)),
+    };
+    const auditFile = path.join(auditRoot, "docs/harness-eng/coverage-audit/api.json");
+    fs.writeFileSync(auditFile, JSON.stringify({ units: [row, { ...row }] }), "utf8");
+    const dup = validateAudit({ root: auditRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(!dup.ok && dup.reason.includes("dup"), "0.8.7 duplicate audit unit fails");
+    fs.writeFileSync(auditFile, JSON.stringify({ units: [row] }), "utf8");
+    const okAudit = validateAudit({ root: auditRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(okAudit.ok && okAudit.pass === 1, "0.8.7 fresh audit passes");
+    fs.writeFileSync(path.join(auditRoot, truthRel), "# a changed\n", "utf8");
+    const stale = validateAudit({ root: auditRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(!stale.ok && stale.reason.includes("stale"), "0.8.7 stale audit fails");
+    fs.rmSync(auditFile);
+    const absent = validateAudit({ root: auditRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(!absent.ok && absent.reason === "absent", "0.8.7 missing audit fails");
+  } finally {
+    fs.rmSync(auditRoot, { recursive: true, force: true });
+  }
+
+  const planRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-087-plan-"));
+  try {
+    fs.mkdirSync(path.join(planRoot, "docs/api/.fill-work"), { recursive: true });
+    fs.writeFileSync(
+      path.join(planRoot, "docs/api/.fill-work/inventory.json"),
+      JSON.stringify({
+        endpoints: [
+          { http: "GET", path: "/a" },
+          { http: "GET", path: "/b" },
+          { http: "POST", path: "/c" },
+        ],
+      }),
+      "utf8"
+    );
+    const init = runNode([
+      path.join(skillRoot, "scripts/fill-plan.mjs"),
+      "--root",
+      planRoot,
+      "--init",
+      "--domains",
+      "api",
+      "--gold",
+      "--sample-n",
+      "1",
+    ]);
+    assert(init.status === 0, "0.8.7 fill-plan init");
+    const planText = fs.readFileSync(path.join(planRoot, "docs/harness-eng/fill-plan.yaml"), "utf8");
+    const ids = [...planText.matchAll(/unit_ids: (\[[^\]]*\])/g)].map((m) => JSON.parse(m[1]));
+    const flat = ids.flat();
+    assert(flat.length === 3, `0.8.7 unit_ids cover inventory (got ${flat.length})`);
+    assert(new Set(flat).size === flat.length, "0.8.7 unit_ids are unique");
+    assert(ids[0].length === 1, "0.8.7 first batch respects sample_n");
+  } finally {
+    fs.rmSync(planRoot, { recursive: true, force: true });
+  }
 }
 
 console.log(`ok: ${ok.length}`);

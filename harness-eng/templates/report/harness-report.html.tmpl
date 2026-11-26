@@ -1505,6 +1505,7 @@
       <section class="panel" id="panel-diagnose" data-panel="diagnose" role="tabpanel">
         <h2>诊断台</h2>
         <p class="lead" id="lagging-lead">哪一域拖后腿、缺口在哪、低分原因。</p>
+        <div class="domain-summary" id="domain-metrics"></div>
         <div class="diag-grid">
           <div class="chart-box" id="radar-box">
             <div class="chart-head">
@@ -2320,10 +2321,12 @@
       }).join("");
     }
 
-    if (ui.lagging_domain && ui.lagging_domain.story) {
+    if (ui.lagging_domain && ui.lagging_domain.tone === "warn" && ui.lagging_domain.story) {
       $("lagging-lead").innerHTML =
         "拖后腿优先看：" + esc(ui.lagging_domain.name_zh || ui.lagging_domain.id) +
         " — " + linkTerms(ui.lagging_domain.story, termIndex);
+    } else if ($("lagging-lead")) {
+      $("lagging-lead").textContent = "各域都已到理论上限。";
     }
 
     var covStrip = ui.coverage_strip || [];
@@ -2375,15 +2378,24 @@
         if (!d || (d.id && seen[d.id])) return;
         ordered.push(d);
       });
-      summaryEl.innerHTML = ordered.map(function (d) {
+      function metricRow(d) {
         var pct = typeof d.coverage_percent === "number" ? d.coverage_percent : null;
-        var band = pct == null ? "na" : pctBand(pct);
+        var band = d.coverage_band || (pct == null ? "na" : pctBand(pct));
+        var excluded =
+          typeof d.excluded_type_exports === "number" && d.excluded_type_exports > 0
+            ? " · 计分已排除 " + d.excluded_type_exports + " 个 type_export"
+            : "";
         return (
           '<div class="dom-row">' +
           '<span class="dom-name">' + esc(d.name_zh || d.id) + "</span>" +
-          '<span class="dom-cov ' + band + '">' + esc(formatPct(pct)) + "</span></div>"
+          '<span class="dom-cov ' + band + '">覆盖 ' + esc(formatPct(pct)) + esc(excluded) + "</span>" +
+          '<span class="dom-cov">金标 ' + esc(d.gold_index_label || "—") + "</span>" +
+          '<span class="dom-cov">真实性 ' + esc(d.authenticity_label || "未要求") + "</span></div>"
         );
-      }).join("");
+      }
+      summaryEl.innerHTML = ordered.map(metricRow).join("");
+      var metricsEl = $("domain-metrics");
+      if (metricsEl) metricsEl.innerHTML = ordered.map(metricRow).join("");
       if (detailBtn) {
         detailBtn.hidden = false;
         detailBtn.setAttribute("aria-expanded", "false");
@@ -2393,6 +2405,8 @@
     } else if (detailBtn) {
       detailBtn.hidden = true;
       if (summaryEl) summaryEl.innerHTML = "";
+      var metricsEmpty = $("domain-metrics");
+      if (metricsEmpty) metricsEmpty.innerHTML = "";
       if (coveragePanel) coveragePanel.hidden = true;
     }
 
@@ -2400,6 +2414,8 @@
       $("stories").innerHTML = stories.map(function (d) {
         var covLine = "";
         if (typeof d.coverage_percent === "number") covLine = "覆盖 " + d.coverage_percent + "%";
+        if (d.gold_index_label) covLine += (covLine ? " · " : "") + "金标指数 " + d.gold_index_label;
+        if (d.authenticity_label) covLine += (covLine ? " · " : "") + "真实性 " + d.authenticity_label;
         return (
           '<div class="story"><h3>' + esc(d.name_zh || d.id) +
           ' <span class="mono" style="font-weight:500;color:var(--muted)">' + esc(d.id) + "</span></h3>" +

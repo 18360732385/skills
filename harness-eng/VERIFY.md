@@ -1,10 +1,47 @@
-﻿# harness-eng 验收记录（0.8.6）
+﻿# harness-eng 验收记录（0.8.8）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.6**（0.8.5 实战总析仍存项收口；其下 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.8**（gold 开干四道 + 报告壳 0.4.3；其下 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.8 增量验收（gold 开干四道）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.8.8`；`report_schema` **0.4.3** | 有 |
+| gold 判定：分域覆盖 100%、金标指数 ≥ 98%、身份双向一致、真实性记录未过期 pass | 有 |
+| strict / mature_compat 不套用上述四道 | 有 |
+| `fill-plan --gold` 批次带唯一 `unit_ids` | 有 |
+| upgrade `## 0.8.7 → 0.8.8`；CHANGELOG 0.8.8 | 有 |
+
+## 0.8.8 增量验收（gold 开干与精填核对）
+
+| 项 | 期望 |
+|---|---|
+| gold 判定覆盖用 `all_domains` / 每域 1.0，不改写策略文件里的 `coverage_mode` | 有 |
+| 全仓与分域金标指数必须是数字且 ≥ 0.98；阻断项与警告仍须为 0 | 有 |
+| `--gold --ssot-only` 做身份双向核对；`--units` 只核名单内单位 | 有 |
+| `coverage-audit/<域>.json` 机械校验哈希与唯一 `pass`；脚本不写 `verdict` | 有 |
+| 批次 `in_progress` 冻结 `unit_ids`；gold 关批不扫 `.fill-work` | 有 |
+| 诊断台三列；`report_schema` 0.4.3；非 gold 真实性显示「未要求」 | 有 |
+
+## 0.8.7 增量验收（实战待完善）
+
+对照 0.8.6 实战总析（c-be-sms-ai）「缺点与待完善」里应改的 7 项。计分分母与 `report_schema` 0.4.2 不动。
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.7` | 有 |
+| render `--dry-run` 不回写 `harness-meta.yaml`（含 mtime）；相同 `mysql_guard_servers` 真写也不碰文件 | 有 |
+| upgrade 比较正在执行的技能与 `~/.cursor/skills/harness-eng`；版本不同且路径不同才警告，不改变 exit code | 有 |
+| `upgrade-diff` 带 `coverage_before` / `coverage_after` / `coverage_note_zh`；不在 upgrade 里 refresh | 有 |
+| 无升严 blocker 时只刷新 `migrate-docs-report.json` 时间戳，不调用 `planMigrateDocs` | 有 |
+| hook dry-run 内容相同：`results` 与 `hooks_reviewed` 都是 `unchanged` | 有 |
+| 满分不写「拖后腿 / 主要短板」；总评写明覆盖等于点名、不核字段；client-api 写明排除的 `type_export` | 有 |
+| upgrade `## 0.8.6 → 0.8.7`；CHANGELOG 0.8.7；`sync-skill-version --check` ok | 有 |
+| selfcheck 0.8.7 块；`node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.8.6 增量验收（实战总析仍存项）
 

@@ -1,6 +1,6 @@
 # 真相质量：深 · 真 · 全（0.2.18+）
 
-填充与 promote 的验收规格。对照优秀仓契约写法；可 AI coding **仅**绑 `ai_coding_ready`（不是 coverage）。
+填充与 promote 的验收规格。对照优秀仓契约写法；可 AI coding **仅**绑 `ai_coding_ready`。P0 范围仍是契约域闭环（api+func+相关表+相关 key；有 Scheduler 时含 jobs）。`gold` 档的开干在原有条件上还要求：启用域覆盖率逐个 100%、全仓与分域金标指数 ≥ 98%、正式真相与 inventory 身份一致、覆盖真实性记录全部未过期 `pass`。
 
 详见执行：[fill-truths-agents.md](../fill/fill-truths-agents.md) · [fill-workers.md](../fill/fill-workers.md) · [scripts/acceptance-check.mjs](../scripts/acceptance-check.mjs)。
 
@@ -31,8 +31,8 @@
 | 层级 | 含义 |
 |---|---|
 | 文件内全 | 模板必填章齐（api：描述/地址/方法/逻辑/入参/出参/**示例值**/变更；新建优先 **说明/枚举/备注** 分列；func：服务类+方法；db：DDL+变更；redis：模式/TTL/读写/Value） |
-| 模块内全 | inventory 条目全有真相，或 Plan 显式 `sample_n` / `deferred` |
-| 仓内全（大仓） | **不是**千级接口一天齐；而是 **P0 金标域契约域闭环**（api+func+相关表+相关 key；有 Scheduler 时含 jobs）= 局部达标 |
+| 模块内全 | inventory 条目都有正式真相。`sample_n` / `deferred` 只排精填批次，不表示 gold 开干覆盖已完成 |
+| 仓内全（gold 开干） | 启用且 `code>0` 的域覆盖率都是 100%，身份双向一致，分域金标指数 ≥ 98%，真实性记录全部 `pass`。精填过程仍按批次做契约域闭环，闭环本身不等于开干 |
 
 ## 两级产物
 
@@ -47,6 +47,29 @@ inventory → docs/<domain>/.fill-work/   # draft（agents | heuristic）
 | `docs/*/ .fill-work/` | draft；可含 `quality: heuristic` |
 | `docs/api/modules` 等 | SSOT；仅过 acceptance 的 promote |
 | `docs/harness-eng/` | 施工产物（plan/score/report），非契约 |
+| `docs/harness-eng/coverage-audit/<域>.json` | Agent 写的覆盖真实性记录。脚本只核路径、哈希、唯一 `pass`，不写 `verdict`、不解读正文 |
+
+## 覆盖真实性记录
+
+单位 merge 进正式真相后，精填 worker 重读 `docs/harness-eng/coverage-audit/<域>.json`，只替换自己的 `unit_id`，再写回整份。并行时先重读，避免盖掉别人的条目。
+
+```json
+{
+  "units": [
+    {
+      "unit_id": "GET /api/demo",
+      "truth_path": "docs/api/modules/01-demo.md",
+      "evidence_path": "src/DemoController.java",
+      "verdict": "pass",
+      "reason": "接口地址与 Controller 映射一致，逻辑步骤能改对这段代码",
+      "truth_sha256": "<原始字节 SHA-256>",
+      "evidence_sha256": "<原始字节 SHA-256>"
+    }
+  ]
+}
+```
+
+`pass` 表示标识与代码是同一个单位，文档不是空壳或套话，读完能改对这段代码。张冠李戴、只点了名字没有正文，记 `fail`。真相或证据内容变了，该条过期，gold 开干为 NO，直到 Agent 重写这条。
 
 ## 机器反例（acceptance-check）
 

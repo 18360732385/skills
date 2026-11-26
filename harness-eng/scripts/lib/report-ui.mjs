@@ -1,6 +1,6 @@
 /**
  * Build human-facing `ui` projection from fill-score JSON.
- * 报告壳主键：`ui.report_schema`（现 0.4.2）。≠ skill_version。
+ * 报告壳主键：`ui.report_schema`（现 0.4.3）。≠ skill_version。
  * `ui.version` 仅为兼容别名（= report_schema）；人读/页脚只展示 report_schema，勿当 skill 号。
  * Machine fields stay on `score`; report template prefers `ui.*`.
  * 「建议可以开干」仅绑 ai_coding_ready（非旧 ready.ok）。大仓另看 gold_ratio。
@@ -16,7 +16,7 @@ import {
   defaultContractDomains,
 } from "./domains.mjs";
 
-export const REPORT_SCHEMA = "0.4.2";
+export const REPORT_SCHEMA = "0.4.3";
 const LADDER_STEPS = ["L0", "L1", "L2", "L3", "L4", "L5"];
 
 /** 施工阶梯悬停说明（与 glossary 一句话对齐） */
@@ -777,8 +777,47 @@ function buildGapsTop(score) {
   }));
 }
 
+function isGoldProfile(score) {
+  return (score?.score_policy?.gate_profile || score?.gate_profile) === "gold";
+}
+
+function goldIndexLabel(score, d) {
+  const ratio = score.gold_by_domain?.[d]?.gold_pass_ratio;
+  if (typeof ratio !== "number") return "—";
+  return Math.round(ratio * 1000) / 10 + "%";
+}
+
+function authenticityLabel(score, d) {
+  const row = score.coverage_audit?.by_domain?.[d];
+  const gold = isGoldProfile(score);
+  if (!row || row.status === "unrequired" || (!gold && row.present === false)) return "未要求";
+  if (typeof row.pass === "number" && typeof row.total === "number") {
+    return `${row.pass}/${row.total}`;
+  }
+  return gold ? "—" : "未要求";
+}
+
+function goldDomainGaps(score, d) {
+  if (!isGoldProfile(score)) return [];
+  const gaps = [];
+  const cov = score.coverage_by_domain?.[d];
+  if (cov && cov.code > 0 && typeof cov.ratio === "number" && cov.ratio + 1e-9 < 1) {
+    gaps.push("覆盖未到100%");
+  }
+  if (cov && cov.code > 0) {
+    const ratio = score.gold_by_domain?.[d]?.gold_pass_ratio;
+    if (typeof ratio !== "number" || ratio + 1e-9 < 0.98) gaps.push("金标指数未到98%");
+  }
+  const aud = score.coverage_audit?.by_domain?.[d];
+  if (aud?.required && aud.status !== "pass") gaps.push("真实性未齐");
+  const warns = score.gold_by_domain?.[d]?.warnings;
+  if (typeof warns === "number" && warns > 0) gaps.push(`警告${warns}`);
+  return gaps;
+}
+
 function buildDomainStories(score) {
   const stories = [];
+  const gold = isGoldProfile(score);
   for (const d of contractDomainList(score)) {
     const x = score.domains?.[d];
     const q = score.quality?.domains?.[d] ?? x?.score;
@@ -790,10 +829,24 @@ function buildDomainStories(score) {
       typeof q === "number" && typeof cap === "number"
         ? Math.max(0, Math.round((cap - q) * 10) / 10)
         : null;
+    const gaps = goldDomainGaps(score, d);
     let story = st.label;
     if (room != null && room > 1) story += `；距上限约 ${room} 分`;
     if (typeof cov?.percent === "number") story += `；覆盖 ${cov.percent}%`;
+    story += `；金标指数 ${goldIndexLabel(score, d)}`;
+    story += `；真实性 ${authenticityLabel(score, d)}`;
+    if (
+      typeof cov?.excluded_type_exports === "number" &&
+      cov.excluded_type_exports > 0
+    ) {
+      story += `；计分已排除 ${cov.excluded_type_exports} 个 type_export`;
+    }
     if (x?.shells > 0) story += `；空壳 ${x.shells}`;
+    if (gaps.length) story += `；${gaps.join("；")}`;
+    let coverage_band = null;
+    if (gold && typeof cov?.percent === "number") {
+      coverage_band = cov.percent >= 100 ? "ok" : cov.percent >= 80 ? "warn" : "low";
+    }
     stories.push({
       id: d,
       name_zh: domainDisplayName(d),
@@ -801,8 +854,15 @@ function buildDomainStories(score) {
       cap: cap ?? null,
       room,
       coverage_percent: cov?.percent ?? null,
-      tone: st.tone,
-      status_label: st.label,
+      coverage_band,
+      gold_index_label: goldIndexLabel(score, d),
+      authenticity_label: authenticityLabel(score, d),
+      gold_gaps: gaps,
+      ...(typeof cov?.excluded_type_exports === "number"
+        ? { excluded_type_exports: cov.excluded_type_exports }
+        : {}),
+      tone: gaps.length ? "warn" : st.tone,
+      status_label: gaps.length ? gaps[0] : st.label,
       story,
     });
   }
@@ -1059,6 +1119,10 @@ function buildDomains(score) {
       asset_ratio: typeof cov?.asset_ratio === "number" ? cov.asset_ratio : null,
       ...(typeof cov?.mapped === "number" ? { mapped: cov.mapped } : {}),
       ...(typeof cov?.unmapped === "number" ? { unmapped: cov.unmapped } : {}),
+      ...(typeof cov?.excluded_type_exports === "number"
+        ? { excluded_type_exports: cov.excluded_type_exports }
+        : {}),
+      coverage_source: cov?.source ?? null,
       tone: st.tone,
       status_label: st.label,
     });
@@ -1312,7 +1376,7 @@ function buildDiagnose(score, domainStories, missTop, decisionKpis) {
             : "—") +
       "（不替代开干）",
   });
-  const lagging = domainStories.find((d) => d.tone === "warn") || domainStories[0];
+  const lagging = domainStories.find((d) => d.tone === "warn") || null;
   if (lagging) {
     story.push({
       id: "lagging",
@@ -1343,7 +1407,7 @@ function buildDiagnose(score, domainStories, missTop, decisionKpis) {
     story,
     gate_lamps: gateKpis,
     lagging_domain: lagging
-      ? { id: lagging.id, name_zh: lagging.name_zh, story: lagging.story }
+      ? { id: lagging.id, name_zh: lagging.name_zh, story: lagging.story, tone: lagging.tone }
       : null,
   };
 }
@@ -1521,7 +1585,7 @@ function buildCompositeScore(score, pipeline) {
 function buildOverallOneLine(composite, lagging, nextActions, score) {
   if (composite.value == null) return "";
   const bits = [];
-  if (lagging && (lagging.story || lagging.status_label)) {
+  if (lagging && lagging.tone === "warn" && (lagging.story || lagging.status_label)) {
     bits.push(
       "主要短板：" +
         (lagging.name_zh || lagging.id) +
@@ -1529,6 +1593,13 @@ function buildOverallOneLine(composite, lagging, nextActions, score) {
         (lagging.story || lagging.status_label) +
         "）"
     );
+  }
+  const covRows = score?.coverage_by_domain || {};
+  const mappedCite = Object.values(covRows).some(
+    (row) => row && row.source === "mapped_assets"
+  );
+  if (mappedCite) {
+    bits.push("覆盖等于点名路径、路由、url 或依赖名，不核字段");
   }
   const assetHints = lowAssetRatioHints(score);
   if (assetHints.length) {
@@ -1557,7 +1628,7 @@ export function buildReportUi(score, opts = {}) {
   const domains = buildDomains(s);
   const missTop = buildMissTop(s);
   const domainStories = buildDomainStories(s);
-  const lagging = domainStories.find((d) => d.tone === "warn") || domainStories[0];
+  const lagging = domainStories.find((d) => d.tone === "warn") || null;
   const diff = buildDiff(s);
   const run_timeline = buildRunTimeline(opts.run);
   const trend = buildTrend(opts.history_series || null);
@@ -1622,7 +1693,7 @@ export function buildReportUi(score, opts = {}) {
     domains,
     domain_stories: domainStories,
     lagging_domain: lagging
-      ? { id: lagging.id, name_zh: lagging.name_zh, story: lagging.story }
+      ? { id: lagging.id, name_zh: lagging.name_zh, story: lagging.story, tone: lagging.tone }
       : null,
     chart_domains: buildChartDomains(s),
     miss_top: missTop,

@@ -451,7 +451,7 @@ function hooksConfigEntriesJson(selection, aiTools) {
 /**
  * 计算 hooks 家族相关占位。已存在于 existing 的键不覆盖（params.placeholders 优先）。
  */
-export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
+export function buildHookPlaceholders({ params, agentConfig, existing, root, dryRun }) {
   const ph = existing || {};
   const out = {};
   const selection = resolveHooksFamily(params, root);
@@ -595,7 +595,8 @@ export function buildHookPlaceholders({ params, agentConfig, existing, root }) {
     );
   }
   put("MYSQL_GUARD_SERVERS", resolvedMysqlGuard);
-  if (root && resolvedMysqlGuard) {
+  // 0.8.7: dry-run only computes the placeholder. Persist is a real write.
+  if (root && resolvedMysqlGuard && !dryRun) {
     try {
       writeMysqlGuardServers(root, resolvedMysqlGuard);
     } catch {

@@ -40,16 +40,30 @@ export function applyGoldGateDefaults(gate, explicit = {}) {
   }
   if (!explicit.forbid_harness_todo) g.forbid_harness_todo = true;
   if (!explicit.todo_scan && !g.todo_scan) g.todo_scan = "harness_docs";
-  if (
-    typeof g.acceptance_blockers_max !== "number" &&
-    typeof g.gold_ratio_min !== "number"
-  ) {
+  if (typeof g.acceptance_blockers_max !== "number") {
     g.acceptance_blockers_max = 0;
+  }
+  // 0.8.7: gold 同时要求全仓通过率 ≥ 0.98，不再与 blockers 互斥
+  if (typeof g.gold_ratio_min !== "number") {
+    g.gold_ratio_min = 0.98;
   }
   if (typeof g.acceptance_warnings_max !== "number" && !explicit.acceptance_warnings_max) {
     g.acceptance_warnings_max = 0;
   }
   return g;
+}
+
+/**
+ * gold 开干判定用的覆盖策略。不写回 score-policy.yaml。
+ * 文件里的 overall / weighted 只在非 gold 档生效。
+ */
+export function evaluationCoveragePolicy(policy) {
+  if ((policy?.gate_profile || "") !== "gold") return policy || {};
+  return {
+    ...policy,
+    coverage_mode: "all_domains",
+    coverage_targets: applyGoldCoverageDefaults({ ...(policy.coverage_targets || {}) }),
+  };
 }
 
 /** Gold profile forces per-domain coverage targets to 1.0 (only code>0 domains enforced). */
@@ -202,6 +216,7 @@ function countTodosInDir(dir, { recursive = false, nameRe = /\.md$/i } = {}) {
  *   all (C): B + 常见源码树中的 TODO(harness-eng)
  */
 export function countHarnessTodos(root, scan = "truths") {
+  if (!root) return 0;
   let n = 0;
   const registry = loadDomainRegistry();
   const domains = knownContractDomainIds(registry);
@@ -388,11 +403,42 @@ export function evaluateAiCodingGate(report, policy, gold) {
       blockers.push(
         `acceptance_blockers:${b ?? "null"}>max${g.acceptance_blockers_max}`
       );
-  } else if (typeof g.gold_ratio_min === "number") {
+  }
+  if (typeof g.gold_ratio_min === "number") {
     const r = gold?.gold_pass_ratio;
-    checks.gold_ok = typeof r === "number" && r + 1e-9 >= g.gold_ratio_min;
-    if (!checks.gold_ok)
+    const ratioOk = typeof r === "number" && r + 1e-9 >= g.gold_ratio_min;
+    checks.gold_ratio_ok = ratioOk;
+    if (checks.gold_ok == null) checks.gold_ok = ratioOk;
+    else if (!ratioOk) checks.gold_ok = false;
+    if (!ratioOk)
       blockers.push(`gold_ratio:${r ?? "null"}<${g.gold_ratio_min}`);
+  }
+  if (profile === "gold") {
+    const min =
+      typeof g.gold_ratio_min === "number" ? g.gold_ratio_min : 0.98;
+    const domainGaps = [];
+    for (const [d, row] of Object.entries(report.coverage_by_domain || {})) {
+      if (!(row && row.code > 0)) continue;
+      const ratio = report.gold_by_domain?.[d]?.gold_pass_ratio;
+      if (typeof ratio !== "number" || ratio + 1e-9 < min) {
+        domainGaps.push(`${d}:${ratio ?? "null"}<${min}`);
+      }
+    }
+    checks.gold_ratio_domain_ok = domainGaps.length === 0;
+    if (!checks.gold_ratio_domain_ok) {
+      blockers.push("gold_ratio_domain:" + domainGaps.join(","));
+    }
+    const auditGaps = [];
+    for (const [d, row] of Object.entries(report.coverage_audit?.by_domain || {})) {
+      if (!row?.required) continue;
+      if (row.status !== "pass") {
+        auditGaps.push(`${d}:${row.reason || row.status || "gap"}`);
+      }
+    }
+    checks.coverage_audit_ok = auditGaps.length === 0;
+    if (!checks.coverage_audit_ok) {
+      blockers.push("coverage_audit:" + auditGaps.join(","));
+    }
   }
   if (typeof g.acceptance_warnings_max === "number") {
     const w = gold?.warnings;

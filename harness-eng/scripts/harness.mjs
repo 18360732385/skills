@@ -53,6 +53,7 @@ import {
 } from "./lib/obsolete-wrappers.mjs";
 import { runMetaStableCheck } from "./lib/meta-stable.mjs";
 import { readJsonFile } from "./lib/json-read.mjs";
+import { installSkewWarning } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
@@ -404,6 +405,13 @@ function forward(r, { stdoutToStderr = false } = {}) {
   return r.status === null ? 1 : r.status;
 }
 
+/** 0.8.7: upgrade 开头提示 ~/.cursor/skills 安装副本与正在执行的技能版本不一致。 */
+function warnInstallSkew(skillRoot) {
+  const installRoot = path.join(os.homedir(), ".cursor", "skills", "harness-eng");
+  const msg = installSkewWarning(skillRoot, installRoot);
+  if (msg) console.error(msg);
+}
+
 function announceMode(mode) {
   if (mode === "pipeline-skeleton") {
     console.error(
@@ -522,6 +530,7 @@ export function main(argv = process.argv) {
   const agentConfig = resolveLandAgentConfig(params, meta);
 
   announceMode(mode);
+  if (mode === "upgrade") warnInstallSkew(skillRoot);
   if (applied.tmp && (mode === "resume" || mode === "upgrade")) {
     console.error(`harness: on_exists=${params.on_exists}（mode=${mode} 默认 skip）`);
   }

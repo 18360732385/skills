@@ -43,12 +43,12 @@ batches:
 | 域 | 关闭批次前至少满足 |
 |---|---|
 | api | evidence；入参绑定；禁通用四步/路径回声/假导出；`acceptance-check` 无 blocker；dto-batch 无新增 `dto-unbound` |
-| func | 方法说明含业务谓词；结案范围以 Plan `sample_n`/`deferred` 为准 |
+| func | 方法说明含业务谓词；关批只核本批 `unit_ids` |
 | db | 完整 DDL；COMMENT 或显式未知 |
 | redis | Key 模式 + Value + TTL + 读写方 |
 | jobs | task_code / Cron / Scheduler 入口 / 代码锚点；heuristic 不得升 SSOT |
 
-**`ai_coding_ready`**：分层 ready 全真且开放批次=0。大仓另看 **`gold_ratio`**（局部金标闭环即可）。
+**`ai_coding_ready`**：分层 ready 全真且开放批次=0。`gold` 另要求启用域覆盖率逐个 100%、全仓与分域金标指数 ≥ 98%、身份一致、真实性记录全部 `pass`。`sample_n` 只决定每批大小，不豁免整域覆盖。
 
 ## 主 Agent 流水线
 
@@ -87,7 +87,9 @@ node scripts/fill-plan.mjs --root <TARGET> --close <batch-id> --force-close
 
 ## 纪律
 
-- 大仓默认金标 + `sample_n`；精填完成以 Plan 批次关闭 + acceptance 为准
+- 大仓默认金标 + `sample_n`。进入 `in_progress` 时按 inventory 顺序冻结本批 `unit_ids`（最多 `sample_n` 个，空则全取），剩余单位拆进后续 `open` 批次。一个单位只属于一个批次
+- gold 关批只核本批：`--gold --ssot-only --units`，有阻断或警告都不能关；本批每条核对记录须是未过期的 `pass`。不再用 `.fill-work` 代替关批依据
+- `--force-close` 只移交批次状态，不能让开干变成 YES
 - close 前跑 acceptance；失败标 `blocked`
 - 金标 close 只接受过 acceptance 的批次；heuristic 草稿保持 draft
-- 开干 YES 不等于零 warning；残项用 `--residual` 清
+- gold 开干要求警告为 0。非 gold 的残项仍可用 `--residual` 清

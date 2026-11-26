@@ -56,7 +56,8 @@ inventory（脚本；jobs=`fill-inventory.mjs --domain jobs`）
 - [ ] 4 收盘：只认磁盘 fragment；usage limit/超时 → 批次 blocked；启发式只标 `quality: heuristic` 留在 `.fill-work`
 - [ ] 5 acceptance-check.mjs；`fill-merge.mjs --domain <id> --check` → `--write`；api 需 enrich-dto 时加在统一 CLI；fill-dto-batch
 - [ ] 6 各契约域过闸后并入 SSOT
-- [ ] 7 fill-score + fill-report-html；过闸则 fill-plan --close
+- [ ] 7 对本批每个 `unit_id` 重读 `docs/harness-eng/coverage-audit/<域>.json`，只替换自己的条目（`verdict` / 理由 / 两份文件 SHA-256）
+- [ ] 8 fill-score + fill-report-html；过闸则 fill-plan --close
 ```
 
 ## 失败协议（0.2.18）
@@ -102,6 +103,7 @@ inventory（脚本；jobs=`fill-inventory.mjs --domain jobs`）
 | acceptance-check | promote / close 语义闸 |
 | fill-calibrate-live | db/redis 实据 |
 | fill-score | 看 `gold_ratio` + **`ai_coding_ready`**；贴 ceiling 则继续 agents 或移交 |
+| coverage-audit | 单位 merge 后写 `docs/harness-eng/coverage-audit/<域>.json` 的本条。见 [truth-quality.md](../modes/truth-quality.md) |
 
 ## 早停
 

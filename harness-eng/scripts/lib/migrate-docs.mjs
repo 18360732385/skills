@@ -1350,6 +1350,33 @@ function writeCoverageReport(absRoot, report) {
  * @param {string} root
  * @param {{ mode?: 'auto'|'off'|'dry-run', coverageMode?: 'off'|'append'|'dry-run', blockers?: string[], inventories?: object }} [opts]
  */
+/**
+ * 0.8.7: refresh migrate-docs-report.json when this upgrade did not enter planning.
+ * Does not call planMigrateDocs (empty blockers still scan db drift).
+ * @param {string} root
+ * @param {{ mode?: string, skillVersion?: string|null }} [opts]
+ */
+export function writeMigrateReportHeartbeat(root, opts = {}) {
+  const absRoot = path.resolve(root);
+  const mode = opts.mode || "dry-run";
+  const report = {
+    ok: true,
+    dry_run: mode === "dry-run",
+    generated_at: new Date().toISOString(),
+    skill_version: opts.skillVersion || null,
+    ops: [],
+    applied: [],
+    skipped: [{ reason: "本轮无升严 blocker，未规划补丁" }],
+    errors: [],
+    out_path: MIGRATE_REPORT_REL,
+    note: "未调用 planMigrateDocs",
+  };
+  const outAbs = path.join(absRoot, MIGRATE_REPORT_REL);
+  fs.mkdirSync(path.dirname(outAbs), { recursive: true });
+  fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
+  return report;
+}
+
 export function runMigrateDocs(root, opts = {}) {
   const mode = opts.mode || "auto";
   const coverageMode = normalizeCoverageMode(opts.coverageMode);

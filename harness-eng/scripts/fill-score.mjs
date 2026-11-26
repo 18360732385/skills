@@ -41,7 +41,7 @@ import { spawnSync } from "child_process";
 import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
-  applyGoldCoverageDefaults,
+  evaluationCoveragePolicy,
   reapplyGateProfile,
   evaluateAiCodingGate,
   countActionableHarnessTodos,
@@ -69,6 +69,8 @@ import {
   runAcceptanceJson,
   shardsFromAcceptanceItems,
 } from "./lib/acceptance-report.mjs";
+import { inventoryUnitIds } from "./lib/coverage-identity.mjs";
+import { validateAudit, loadAudit } from "./lib/coverage-audit.mjs";
 import {
   morphDepthBonus,
   hasRedisValueHeading,
@@ -86,14 +88,63 @@ const DOMAIN_REGISTRY = loadDomainRegistry();
 const KNOWN_DOMAINS = knownContractDomainIds(DOMAIN_REGISTRY);
 
 /** 0.7.58: 与 acceptance-check CLI 默认 --domain all 对齐（不再仅 api）。 */
-function runGoldAcceptance(root) {
-  const parsed = runAcceptanceJson(root, {});
+function buildCoverageAudit(root, domains, report, liveByDomain, inventory, gateProfile) {
+  const by_domain = {};
+  const gold = gateProfile === "gold";
+  for (const d of domains) {
+    const cov = report.coverage_by_domain?.[d];
+    const code = cov?.code || 0;
+    const inv = liveByDomain[d] || (d === "api" ? inventory : loadDomainInventory(root, d));
+    const ids = inventoryUnitIds(d, inv);
+    const loaded = loadAudit(root, d);
+    if (!gold) {
+      by_domain[d] = loaded.present
+        ? {
+            required: false,
+            status: "info",
+            present: true,
+            pass: validateAudit({ root, domain: d, unitIds: ids }).pass,
+            total: ids.length,
+          }
+        : { required: false, status: "unrequired", present: false, pass: 0, total: ids.length };
+      continue;
+    }
+    if (!(code > 0)) {
+      by_domain[d] = {
+        required: false,
+        status: "not_measured",
+        present: loaded.present,
+        pass: 0,
+        total: 0,
+      };
+      continue;
+    }
+    const v = validateAudit({ root, domain: d, unitIds: ids.length ? ids : [] });
+    const ok = ids.length > 0 && v.ok;
+    by_domain[d] = {
+      required: true,
+      status: ok ? "pass" : "gap",
+      present: loaded.present,
+      pass: v.pass,
+      total: ids.length || code,
+      reason: ids.length ? v.reason : "no-units",
+    };
+  }
+  return { by_domain };
+}
+
+function runGoldAcceptance(root, opts = {}) {
+  const parsed = runAcceptanceJson(root, {
+    gold: !!opts.gold,
+    ssotOnly: !!opts.ssotOnly,
+  });
   return {
     gold_pass_ratio: parsed.gold_pass_ratio,
     blockers: parsed.blockers.length,
     warnings: parsed.warnings.length,
     status: parsed.status,
-    scope: "all",
+    scope: opts.ssotOnly ? "ssot" : "all",
+    by_domain: parsed.raw?.by_domain || {},
     warning_shards: shardsFromAcceptanceItems(parsed.warnings, root),
     blocker_shards: shardsFromAcceptanceItems(parsed.blockers, root),
     blocker_items: parsed.blockers,
@@ -768,7 +819,9 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
     const feInv = liveInv[d] || loadDomainInventory(root, d);
     if (!feInv || !Array.isArray(feInv.assets)) continue;
     let assetList = feInv.assets;
+    let excludedTypeExports = 0;
     if (d === "client-api") {
+      excludedTypeExports = feInv.assets.filter((a) => a && a.kind === "type_export").length;
       assetList = feInv.assets.filter((a) => a && a.kind !== "type_export");
     }
     let assets = assetList.length;
@@ -787,7 +840,10 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
       mapped = countMappedAssets(assetList, texts).covered;
     }
     const row = buildFrontendCoverageRow({ truths, assets, mapped });
-    if (row) out[d] = row;
+    if (row) {
+      if (excludedTypeExports > 0) row.excluded_type_exports = excludedTypeExports;
+      out[d] = row;
+    }
   }
   return out;
 }
@@ -1452,11 +1508,12 @@ function main() {
 
   const qOk = report.overall >= args.readyQuality;
   const covIncomplete = !report.coverage;
+  const covPolicy = evaluationCoveragePolicy(scorePolicy);
   const covEval = evaluateCoverageReady(
     report.coverage_by_domain,
     report.coverage,
     args.readyCoverage,
-    scorePolicy,
+    covPolicy,
     domains
   );
   // compat ready.ok still uses overall api coverage vs ready_coverage
@@ -1512,8 +1569,13 @@ function main() {
   const planClosed = plan.present ? !!plan.all_closed : false;
 
   // 0.2.18/0.2.29: gold before gate so strict/gold can require acceptance_*_max
-  const gold = runGoldAcceptance(root);
+  const gold = runGoldAcceptance(root, {
+    gold: gateProfile === "gold",
+    ssotOnly: gateProfile === "gold",
+  });
   report.gold_ratio = gold.gold_pass_ratio;
+  report.gold_by_domain = gold.by_domain || {};
+  report.coverage_audit = buildCoverageAudit(root, domains, report, liveByDomain, inventory, gateProfile);
   report.acceptance = {
     blockers: gold.blockers,
     warnings: gold.warnings,

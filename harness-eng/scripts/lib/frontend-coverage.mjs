@@ -64,7 +64,7 @@ function escapeRe(s) {
 }
 
 /** Boundary match so `/home` does not hit `/homepage` and `arco` does not hit `barcode`. */
-function textHasNeedle(text, needle) {
+export function textHasNeedle(text, needle) {
   const n = String(needle || "").trim().replace(/\\/g, "/");
   if (n.length < 2) return false;
   const normText = String(text || "").replace(/\\/g, "/");

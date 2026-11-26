@@ -80,6 +80,25 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.7 → 0.8.8 迁移要点
+
+1. **meta**：`skill_version` → `0.8.8`
+2. **报告壳**：`report_schema` → **0.4.3**（诊断台并列覆盖率、金标指数、真实性；0.4 族趋势仍可比）
+3. **gold 开干**：启用域覆盖率须逐个 100%（判定时强制，不改写 `score-policy.yaml`），全仓与分域金标指数 ≥ 98%，`--gold --ssot-only` 身份双向一致，`coverage-audit` 全部未过期 `pass`。strict / mature_compat 门槛不变
+4. **批次**：进入 `in_progress` 时冻结 `unit_ids`。gold 关批只核本批正式真相和核对记录，不再用 `.fill-work` 代替关批
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.8`）后再 sync
+
+## 0.8.6 → 0.8.7 迁移要点
+
+1. **meta**：`skill_version` → `0.8.7`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳；满分不再写拖后腿；client-api 行写明排除的 `type_export`；总评说明覆盖等于点名、不核字段）
+3. **dry-run**：不再把 `mysql_guard_servers` 回写进 `harness-meta.yaml`。文本相同的真写也不改 mtime
+4. **安装副本**：upgrade 开头若 `~/.cursor/skills/harness-eng` 与正在执行的技能版本不同，stderr 警告一行。以正在执行的那份为准
+5. **升严差分**：`upgrade-diff.json` 增加 `coverage_before` / `coverage_after` / `coverage_note_zh`。磁盘 `score-latest.json` 仍是升版前分数，对照口径看 `coverage_after`，refresh 之后再比磁盘文件
+6. **migrate-docs 报告**：本轮没有升严 blocker 时只刷新 `migrate-docs-report.json` 的时间戳（`ops: []`，未规划补丁），不扫库表漂移
+7. **hook 预览**：dry-run 内容与磁盘相同的 fix-hook 记 `unchanged`，不再预告 `replace`
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.7`）后再 sync
+
 ## 0.8.5 → 0.8.6 迁移要点
 
 1. **meta**：`skill_version` → `0.8.6`

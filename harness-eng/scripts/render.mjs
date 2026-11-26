@@ -1745,15 +1745,23 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
         });
         return;
       }
-      // dry-run 将 replace（或内容 unchanged 亦记 replace 预告；真写再分 unchanged）
+      // 0.8.7: 内容相同不进将写入列表（与 hooks_reviewed=unchanged 同一说法）
       if (
         disk &&
         normalizeRenderedForCompare(disk) === normalizeRenderedForCompare(rendered)
       ) {
         recordHooksReviewed(targetRel, "unchanged");
-      } else {
-        recordHooksReviewed(targetRel, "replace");
+        log.push({
+          target: targetRel,
+          action: "unchanged",
+          status: "unchanged",
+          dryRun: true,
+          exists,
+          id: item.id || undefined,
+        });
+        return;
       }
+      recordHooksReviewed(targetRel, "replace");
     }
     const entry = {
       target: targetRel,
@@ -2012,6 +2020,7 @@ function main() {
     agentConfig,
     existing: placeholders,
     root,
+    dryRun: !!args.dryRun,
   });
   Object.assign(placeholders, hookPh);
   // upgrade visibility: migration dir / name RE after resolve
