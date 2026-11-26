@@ -2,9 +2,10 @@
  * Frontend + inventory-scan domain helpers (0.8.0+).
  *
  * Official coverage_by_domain includes design/prototype/pages/components/client-api.
- * 0.8.5: gate ratio = truths/assets (real asset coverage). Do not treat one truth
- * page as domain-level 100%. Scaffold templates under /templates/ are excluded
- * from the numerator; business filenames containing "template" still count.
+ * 0.8.5: gate ratio = truths/assets when `mapped` is omitted.
+ * 0.8.6: fill-score passes `mapped` (assets cited by a truth). Scaffold templates
+ * under /templates/ are excluded from the numerator; business filenames
+ * containing "template" still count.
  */
 export const FRONTEND_COVERAGE_DOMAINS = [
   "design",
@@ -53,18 +54,68 @@ export function countFrontendTruths(files) {
   return (files || []).filter(isFrontendTruthFile).length;
 }
 
+function stripChangelogSections(text) {
+  const parts = String(text || "").split(/(?=^##\s)/m);
+  return parts.filter((p) => !/^##[^\n]*变更记录/m.test(p)).join("");
+}
+
+function escapeRe(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Boundary match so `/home` does not hit `/homepage` and `arco` does not hit `barcode`. */
+function textHasNeedle(text, needle) {
+  const n = String(needle || "").trim().replace(/\\/g, "/");
+  if (n.length < 2) return false;
+  const normText = String(text || "").replace(/\\/g, "/");
+  const re = new RegExp(`(^|[^A-Za-z0-9_@./-])${escapeRe(n)}(?![A-Za-z0-9_@./-])`);
+  return re.test(normText);
+}
+
+/** Needles a truth must cite for the asset to count as covered. */
+export function assetNeedles(asset) {
+  const a = asset || {};
+  const out = [];
+  if (a.path) out.push(String(a.path));
+  if (a.route) out.push(String(a.route));
+  if (a.url) out.push(String(a.url));
+  if (a.dep) out.push(String(a.dep));
+  return out.map((s) => s.trim()).filter((s) => s.length >= 2);
+}
+
 /**
- * @param {{ truths: number, assets: number }} input
+ * @param {object[]} assets
+ * @param {string[]} truthTexts
+ * @returns {{ covered: number, unmatched: string[] }}
+ */
+export function countMappedAssets(assets, truthTexts) {
+  const texts = (truthTexts || []).map((t) => stripChangelogSections(t));
+  let covered = 0;
+  const unmatched = [];
+  for (const asset of assets || []) {
+    const needles = assetNeedles(asset);
+    const hit = needles.some((n) => texts.some((t) => textHasNeedle(t, n)));
+    if (hit) covered++;
+    else if (asset && asset.id) unmatched.push(String(asset.id));
+  }
+  return { covered, unmatched };
+}
+
+/**
+ * @param {{ truths: number, assets: number, mapped?: number }} input
+ * `mapped` omitted → ratio is truths/assets (0.8.5). `mapped` set → mapped/assets (0.8.6).
  * @returns {object|null} coverage row, or null when the domain has no assets
  */
-export function buildFrontendCoverageRow({ truths, assets }) {
+export function buildFrontendCoverageRow({ truths, assets, mapped }) {
   const truthCount = Number(truths) || 0;
   const assetCount = Number(assets) || 0;
   if (!(assetCount > 0)) return null;
-  const ratio = Math.min(truthCount / assetCount, 1);
+  const useMapped = mapped != null && mapped !== "";
+  const coveredCount = useMapped ? Number(mapped) || 0 : truthCount;
+  const ratio = Math.min(coveredCount / assetCount, 1);
   const rounded = Math.round(ratio * 1000) / 1000;
-  return {
-    covered: truthCount,
+  const row = {
+    covered: coveredCount,
     code: assetCount,
     ratio: rounded,
     percent: Math.round(rounded * 100),
@@ -72,7 +123,14 @@ export function buildFrontendCoverageRow({ truths, assets }) {
     truths: truthCount,
     inventory_assets: assetCount,
     asset_ratio: rounded,
-    source: "asset_ratio",
-    note: "frontend coverage is truths/assets; gold target 1.0 requires full asset docs",
+    source: useMapped ? "mapped_assets" : "asset_ratio",
+    note: useMapped
+      ? "frontend coverage is mapped assets/assets; a truth counts only when it cites the asset path, route, url, or dep"
+      : "frontend coverage is truths/assets; gold target 1.0 requires full asset docs",
   };
+  if (useMapped) {
+    row.mapped = coveredCount;
+    row.unmapped = Math.max(assetCount - coveredCount, 0);
+  }
+  return row;
 }

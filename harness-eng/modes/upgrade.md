@@ -80,6 +80,15 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.5 → 0.8.6 迁移要点
+
+1. **meta**：`skill_version` → `0.8.6`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳；分域透出 `mapped` / `unmapped`）
+3. **前端覆盖口径变更（破坏性）**：`coverage_by_domain` 前端域 `ratio` = 被真相点名的资产 / 资产（路径、路由、url 或依赖名；变更记录节不算）。篇数凑齐但没点名资产时金标 1.0 会掉下来
+4. **重跑 inventory + 打分**：`fill-inventory`（design 不再把 `docs/design/` 与脚手架算进分母；pages 同一页面源文件不再既出 route 又出 page_file）→ `fill-score` → `fill-report-html`
+5. **倒排脚本**：`reverse-changelog-tables` 改为 optional，**0.8.6 起默认不进写集**。目标仓里已经有的 `scripts/reverse_changelog_tables.py` 保持不动。需要倒排旧表时把该 id 放进 `include_optional`，或对已有脚本跑 `--dry-run` 再 apply
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.6`）后再 sync
+
 ## 0.8.4 → 0.8.5 迁移要点
 
 1. **meta**：`skill_version` → `0.8.5`
@@ -139,7 +148,7 @@
 ## 0.7.61 → 0.7.62 迁移要点
 
 1. **meta**：`skill_version` → `0.7.62`
-2. **L1 脚本**：刷新 `scripts/doc_versioning.py`、`new_changelog_version.py`、`reverse_changelog_tables.py`；rules `11`/`12`/`13`/`16`/`20` 与五域变更记录模板改 `v{ts}` 表顶插入（存量 `vX.Y` 双轨）
+2. **L1 脚本**：刷新 `scripts/doc_versioning.py`、`new_changelog_version.py`、`reverse_changelog_tables.py`（**0.8.6 起默认不进写集**，需要时 `include_optional`）；rules `11`/`12`/`13`/`16`/`20` 与五域变更记录模板改 `v{ts}` 表顶插入（存量 `vX.Y` 双轨）
 3. **L2**：刷新 `lint-pitfalls.mjs`（双轨倒序）+ 新增 `scripts/agent-kb/new-pitfall-id.mjs`；rule `19`/`00` / pitfalls 骨架 / delivery-checklist 对齐 `P{ts}`
 4. **存量仓**：可跑 `python scripts/reverse_changelog_tables.py --dry-run` 再 apply，将变更记录表倒排为新→旧
 5. **不动**：`NN-*` 文件名前缀、`Gn`、SQL 迁移发号（已时间戳）

@@ -44,6 +44,7 @@ import {
   applyGoldCoverageDefaults,
   reapplyGateProfile,
   evaluateAiCodingGate,
+  countActionableHarnessTodos,
 } from "./lib/ai-coding-gate.mjs";
 import {
   loadDomainRegistry,
@@ -58,8 +59,9 @@ import {
 import {
   FRONTEND_COVERAGE_DOMAINS,
   inventoryScanDomains,
-  countFrontendTruths,
   buildFrontendCoverageRow,
+  countMappedAssets,
+  isFrontendTruthFile,
 } from "./lib/frontend-coverage.mjs";
 import { loadMorphRequired } from "./lib/morph-required.mjs";
 import { findHarnessMetaFile, findMcpUsageGuideFile } from "./lib/harness-meta.mjs";
@@ -442,7 +444,7 @@ function buildChecks(text, domain, policy) {
     add("has-scheduler", /Scheduler|调度入口/i.test(raw));
     add("has-code-anchors", /##\s*代码锚点|Registry/i.test(raw));
   }
-  add("no-todo", !/TODO\(harness-eng\)/i.test(raw));
+  add("no-todo", countActionableHarnessTodos(raw) === 0);
   const tc = templateCompletenessForFile(raw, domain, policy);
   for (const c of tc.checks) add(c.id, c.ok);
   if (tc.missing.length) add("missing-req-section", false);
@@ -460,10 +462,10 @@ function scoreTruthFile(text, domain, policy) {
   const issues = [];
   const checks = buildChecks(raw, domain, policy);
 
-  if (/TODO\(harness-eng\)/i.test(raw)) {
-    const n = (raw.match(/TODO\(harness-eng\)/gi) || []).length;
-    score -= Math.min(40, n * 8);
-    issues.push(`TODO(harness-eng)×${n}`);
+  const todoN = countActionableHarnessTodos(raw);
+  if (todoN) {
+    score -= Math.min(40, todoN * 8);
+    issues.push(`TODO(harness-eng)×${todoN}`);
   }
   if (/占位接口/.test(raw) || /接口地址[：:]\s*TODO/i.test(raw)) {
     score -= 25;
@@ -543,7 +545,7 @@ function scoreTruthFile(text, domain, policy) {
     depth_parts: depth.parts,
     issues,
     checks,
-    shell: /TODO\(harness-eng\)/i.test(raw) && score < 40,
+    shell: countActionableHarnessTodos(raw) > 0 && score < 40,
     endpoints: domain === "api" ? countDocEndpoints(raw) : undefined,
   };
 }
@@ -761,18 +763,30 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
       out.jobs.raw_ratio = Math.round(ratio * 1000) / 1000;
     }
   }
-  // 0.8.1+/0.8.5: frontend five domains; gate ratio = truths/assets (real).
+  // 0.8.1+/0.8.6: frontend five domains; gate ratio = mapped assets/assets.
   for (const d of FRONTEND_COVERAGE_DOMAINS) {
     const feInv = liveInv[d] || loadDomainInventory(root, d);
     if (!feInv || !Array.isArray(feInv.assets)) continue;
-    let assets = feInv.assets.length || feInv.stats?.assets || 0;
-    // 0.8.4: client-api coverage denominator excludes type_export (types noise);
-    // inventory JSON still keeps type_export in assets/stats for split reporting.
+    let assetList = feInv.assets;
     if (d === "client-api") {
-      assets = feInv.assets.filter((a) => a && a.kind !== "type_export").length;
+      assetList = feInv.assets.filter((a) => a && a.kind !== "type_export");
     }
-    const truths = countFrontendTruths(domainFiles(root, d));
-    const row = buildFrontendCoverageRow({ truths, assets });
+    let assets = assetList.length;
+    if (!feInv.assets.length) assets = feInv.stats?.assets || 0;
+    const truthFiles = domainFiles(root, d).filter((f) => isFrontendTruthFile(f));
+    const truths = truthFiles.length;
+    let mapped;
+    if (feInv.assets.length) {
+      const texts = truthFiles.map((f) => {
+        try {
+          return fs.readFileSync(f, "utf8");
+        } catch {
+          return "";
+        }
+      });
+      mapped = countMappedAssets(assetList, texts).covered;
+    }
+    const row = buildFrontendCoverageRow({ truths, assets, mapped });
     if (row) out[d] = row;
   }
   return out;

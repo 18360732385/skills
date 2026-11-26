@@ -1,10 +1,28 @@
-﻿# harness-eng 验收记录（0.8.5）
+﻿# harness-eng 验收记录（0.8.6）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.5**（0.8.4 sms-ai 实战总析残留全修；其下 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.6**（0.8.5 实战总析仍存项收口；其下 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.6 增量验收（实战总析仍存项）
+
+对照 0.8.5 实战总析（c-be-sms-ai）「仍存 / 半完成」项。前端金标改为资产点名，不过不放宽。
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` ≡ `templates/_meta/manifest.yaml` 为权威 `0.8.6` | 有 |
+| design inventory：`docs/design/` 与 `/templates/`、`*-template.md` 不进分母；仓外 `DESIGN.md` 仍收录 | 有 |
+| pages inventory：页面约定源文件只出 `page_file`；路由表文件仍出 `route` | 有 |
+| `buildFrontendCoverageRow`：传入 `mapped` 时 `ratio=mapped/assets`，并带 `unmapped`；省略 `mapped` 时仍为 `truths/assets` | 有 |
+| 点名规则：真相正文中的 path / route / url / dep；变更记录节不计；短名整 token | 有 |
+| `countActionableHarnessTodos`：正文提及、变更记录、围栏代码不计；整行或表格占位仍计 | 有 |
+| `selfcheck --help` / `-h`：exit 0，不跑套件 | 有 |
+| `reverse-changelog-tables` 为 `optional: true`；upgrade 写明 0.8.6 起默认不进写集 | 有 |
+| 报告分域行在有数字时透出 `mapped` / `unmapped` | 有 |
+| upgrade `## 0.8.5 → 0.8.6`；CHANGELOG 0.8.6；`sync-skill-version --check` ok | 有 |
+| selfcheck 0.8.6 块；`node scripts/selfcheck.mjs` exit 0 | 有 |
 
 ## 0.8.5 增量验收（实战缺陷全修）
 

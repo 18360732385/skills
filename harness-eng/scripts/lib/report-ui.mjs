@@ -1052,6 +1052,8 @@ function buildDomains(score) {
       inventory_assets:
         typeof cov?.inventory_assets === "number" ? cov.inventory_assets : null,
       asset_ratio: typeof cov?.asset_ratio === "number" ? cov.asset_ratio : null,
+      ...(typeof cov?.mapped === "number" ? { mapped: cov.mapped } : {}),
+      ...(typeof cov?.unmapped === "number" ? { unmapped: cov.unmapped } : {}),
       tone: st.tone,
       status_label: st.label,
     });

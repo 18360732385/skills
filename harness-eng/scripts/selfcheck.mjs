@@ -56,6 +56,7 @@ import {
   reapplyGateProfile,
   evaluateAiCodingGate,
   countHarnessTodos,
+  countActionableHarnessTodos,
   checkEntryReady,
 } from "./lib/ai-coding-gate.mjs";
 import { parseDomainsYaml, resolveScoreDomains, expandDomainPackEntries, parseDomainPacksYaml, defaultContractDomains, knownContractDomainIds } from "./lib/domains.mjs";
@@ -105,6 +106,7 @@ import {
   inventoryScanDomains,
   buildFrontendCoverageRow,
   countFrontendTruths,
+  countMappedAssets,
   isFrontendTruthFile,
 } from "./lib/frontend-coverage.mjs";
 import { scanApiInventoryMemory } from "./lib/inventory-api.mjs";
@@ -194,6 +196,15 @@ import { runChecks05 } from "./lib/selfcheck/checks-0.5.mjs";
 import { runChecks06 } from "./lib/selfcheck/checks-0.6.mjs";
 import { readSkillVersion, escapeSemverRe } from "./lib/skill-version.mjs";
 import { archiveOne, restoreOne } from "./archive-docs.mjs";
+
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(`Usage: node scripts/selfcheck.mjs [--help]
+
+Runs the harness-eng selfcheck suite for the current skill version.
+--help prints this message and exits 0 without running checks.
+`);
+  process.exit(0);
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(__dirname, "..");
@@ -7288,9 +7299,9 @@ console.log("theme-gate-smoke-ok");
     );
   }
 
-  // D13: design-side archive_hint must not flag docs already inside
-  // docs/design/ (aligns with prototype); archive-docs.mjs gives the
-  // missing reversible archive CLI (move + ledger + restore).
+  // D13: root DESIGN*.md still gets a move hint. 0.8.6: files already
+  // inside docs/design/ are not inventory assets (so they are not told to move).
+  // archive-docs.mjs remains the reversible archive CLI (move + ledger + restore).
   {
     const d13Root = fs.mkdtempSync(path.join(os.tmpdir(), "harness-082-d13-"));
     try {
@@ -7339,8 +7350,8 @@ console.log("theme-gate-smoke-ok");
         "0.8.3 D13 root-level DESIGN doc still gets the move hint"
       );
       assert(
-        /已在 docs\/design\/ SSOT 树内/.test(hints.get("docs/design/DESIGN-old.md") || ""),
-        `0.8.3 D13 in-SSOT DESIGN doc not told to move again (got ${JSON.stringify(hints.get("docs/design/DESIGN-old.md"))})`
+        !hints.has("docs/design/DESIGN-old.md"),
+        `0.8.6 SSOT design doc is not an inventory asset (got ${JSON.stringify(hints.get("docs/design/DESIGN-old.md"))})`
       );
       // (b) archive CLI round-trip: archive → already-in error → restore → idempotent error
       const arch = archiveOne(d13Root, "DESIGN-notes.md", "design", "selfcheck");
@@ -8084,9 +8095,178 @@ console.log("theme-gate-smoke-ok");
   assert(/0\.8\.5 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.5 VERIFY.md");
   assert(/0\.8\.4 → 0\.8\.5/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.5 upgrade.md");
   assert(logExists("0.8.5"), "0.8.5 _log note exists");
+}
+
+// --- 0.8.6: 实战总析仍存项（design 分母 / pages 去重 / 资产点名 / TODO 提及 / --help / 倒排可选） ---
+{
+  const none = countMappedAssets(
+    [
+      { id: "a", path: "src/tokens.css" },
+      { id: "b", path: "src/theme.css" },
+    ],
+    ["# one\nno path here\n", "# two\nstill nothing\n"]
+  );
+  assert(none.covered === 0, `0.8.6 uncited assets stay uncovered (got ${none.covered})`);
+  const rowNone = buildFrontendCoverageRow({ truths: 2, assets: 2, mapped: none.covered });
   assert(
-    /当前 \*\*0\.8\.5\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
-    "0.8.5 SKILL.md version pin"
+    rowNone && rowNone.ratio === 0 && rowNone.mapped === 0 && rowNone.unmapped === 2 && rowNone.source === "mapped_assets",
+    `0.8.6 two truths without citations ratio 0 (got ${JSON.stringify(rowNone)})`
+  );
+  const cited = countMappedAssets(
+    [{ id: "a", path: "src/tokens.css" }],
+    ["# t\nsee `src/tokens.css`\n"]
+  );
+  assert(cited.covered === 1, `0.8.6 path citation maps (got ${cited.covered})`);
+  const rowOne = buildFrontendCoverageRow({ truths: 1, assets: 1, mapped: cited.covered });
+  assert(rowOne && rowOne.ratio === 1 && rowOne.mapped === 1, "0.8.6 cited path mapped 1");
+  const changelogOnly = countMappedAssets(
+    [{ id: "a", path: "src/tokens.css" }],
+    ["# t\n\n## 变更记录\n\npointed at src/tokens.css\n"]
+  );
+  assert(changelogOnly.covered === 0, "0.8.6 changelog citation does not map");
+  assert(
+    countMappedAssets([{ id: "u", dep: "arco" }], ["barcode"]).covered === 0,
+    "0.8.6 short dep is a whole token"
+  );
+  assert(
+    countMappedAssets([{ id: "r", route: "/home" }], ["see /homepage"]).covered === 0,
+    "0.8.6 route /home does not match /homepage"
+  );
+  assert(
+    countMappedAssets([{ id: "r", route: "/home" }], ["route `/home`"]).covered === 1,
+    "0.8.6 route citation maps"
+  );
+  const legacy = buildFrontendCoverageRow({ truths: 1, assets: 10 });
+  assert(legacy && legacy.ratio === 0.1 && legacy.mapped == null, "0.8.6 omitted mapped keeps truths/assets");
+
+  assert(
+    countActionableHarnessTodos("# x\n\n清掉 TODO(harness-eng) 占位\n\n## 变更记录\n\n| v1 | 清掉 TODO(harness-eng) 占位 |\n") === 0,
+    "0.8.6 prose and changelog mentions are not todos"
+  );
+  assert(
+    countActionableHarnessTodos("# x\n\nTODO(harness-eng)\n\n| 路由 | TODO(harness-eng): /x |\n") === 2,
+    "0.8.6 real placeholders still count"
+  );
+  assert(
+    countActionableHarnessTodos("```\nTODO(harness-eng)\n```\n") === 0,
+    "0.8.6 fenced example is not a todo"
+  );
+
+  const help86 = runNode([path.join(skillRoot, "scripts/selfcheck.mjs"), "--help"]);
+  assert(help86.status === 0, `0.8.6 selfcheck --help exit 0 (got ${help86.status})`);
+  assert(/Usage:/.test(help86.stdout || ""), "0.8.6 selfcheck --help prints usage");
+  assert(!/selfcheck PASS/.test(help86.stdout || ""), "0.8.6 selfcheck --help does not run the suite");
+
+  const man86 = fs.readFileSync(path.join(skillRoot, "templates/_meta/manifest.yaml"), "utf8");
+  const revBlock = (man86.split(/- id: reverse-changelog-tables/)[1] || "").split(/\n  - id:/)[0];
+  assert(/optional:\s*true/.test(revBlock), "0.8.6 reverse-changelog-tables is optional");
+
+  const invRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-086-design-"));
+  try {
+    fs.mkdirSync(path.join(invRoot, "docs", "design", "templates"), { recursive: true });
+    fs.mkdirSync(path.join(invRoot, "notes", "templates"), { recursive: true });
+    fs.writeFileSync(path.join(invRoot, "docs", "design", "design.md"), "# index\n", "utf8");
+    fs.writeFileSync(
+      path.join(invRoot, "docs", "design", "templates", "design-asset-template.md"),
+      "# scaffold\n",
+      "utf8"
+    );
+    fs.writeFileSync(path.join(invRoot, "notes", "templates", "style-guide.md"), "# tmpl\n", "utf8");
+    fs.writeFileSync(path.join(invRoot, "DESIGN.md"), "# external\n", "utf8");
+    const invScript = path.join(skillRoot, "scripts/fill-inventory.mjs");
+    const invRun = runNode(
+      [invScript, "--domain", "design", "--root", invRoot, "--no-write", "--quiet"],
+      { cwd: skillRoot, windowsHide: true }
+    );
+    assert(
+      invRun.status === 0 || invRun.status === 2,
+      `0.8.6 design inventory exit (got ${invRun.status}): ${invRun.stderr || ""}`
+    );
+    const out = String(invRun.stdout || "");
+    const i = out.indexOf("{");
+    const j = out.lastIndexOf("}");
+    const invJson = i >= 0 && j > i ? JSON.parse(out.slice(i, j + 1)) : {};
+    const paths = (invJson.assets || []).map((a) => a.path);
+    assert(!paths.some((p) => String(p).startsWith("docs/design/")), `0.8.6 SSOT design md not in denom (got ${JSON.stringify(paths)})`);
+    assert(!paths.some((p) => /\/templates\//i.test(String(p))), "0.8.6 templates/ design docs not in denom");
+    assert(paths.some((p) => p === "DESIGN.md"), `0.8.6 external DESIGN.md still inventoried (got ${JSON.stringify(paths)})`);
+  } finally {
+    fs.rmSync(invRoot, { recursive: true, force: true });
+  }
+
+  const pageRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-086-pages-"));
+  try {
+    fs.mkdirSync(path.join(pageRoot, "src", "pages"), { recursive: true });
+    fs.writeFileSync(
+      path.join(pageRoot, "src", "pages", "Home.tsx"),
+      'import "react-router";\nexport const routes = [{ path: "/home" }];\n',
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(pageRoot, "src", "router.tsx"),
+      'import "react-router";\nexport const routes = [{ path: "/from-router" }];\n',
+      "utf8"
+    );
+    const invScript = path.join(skillRoot, "scripts/fill-inventory.mjs");
+    const invRun = runNode(
+      [invScript, "--domain", "pages", "--root", pageRoot, "--no-write", "--quiet"],
+      { cwd: skillRoot, windowsHide: true }
+    );
+    assert(
+      invRun.status === 0 || invRun.status === 2,
+      `0.8.6 pages inventory exit (got ${invRun.status}): ${invRun.stderr || ""}`
+    );
+    const out = String(invRun.stdout || "");
+    const i = out.indexOf("{");
+    const j = out.lastIndexOf("}");
+    const invJson = i >= 0 && j > i ? JSON.parse(out.slice(i, j + 1)) : {};
+    const assets = invJson.assets || [];
+    const homeRoutes = assets.filter((a) => a.kind === "route" && /Home\.tsx$/.test(a.path || ""));
+    const homePages = assets.filter((a) => a.kind === "page_file" && /Home\.tsx$/.test(a.path || ""));
+    const routerRoutes = assets.filter((a) => a.kind === "route" && a.route === "/from-router");
+    assert(homeRoutes.length === 0, `0.8.6 page file does not also emit routes (got ${JSON.stringify(homeRoutes)})`);
+    assert(homePages.length === 1, `0.8.6 page file counted once (got ${homePages.length})`);
+    assert(routerRoutes.length === 1, `0.8.6 router file still emits routes (got ${routerRoutes.length})`);
+  } finally {
+    fs.rmSync(pageRoot, { recursive: true, force: true });
+  }
+
+  const ui = buildReportUi({
+    overall: 80,
+    coverage: { percent: 50, covered: 1, code: 2 },
+    coverage_ready: { ok: false, all_percent: 50 },
+    coverage_by_domain: {
+      design: {
+        percent: 50,
+        covered: 1,
+        code: 2,
+        truths: 2,
+        inventory_assets: 2,
+        asset_ratio: 0.5,
+        mapped: 1,
+        unmapped: 1,
+      },
+    },
+    domains: { design: { score: 80, truths: 2 } },
+    quality: { domains: { design: 80 } },
+    ai_coding_ready: { ok: false, rule: "x" },
+    skeleton_ready: { ok: true },
+    semantic_ready: { ok: true },
+  });
+  const designRow = (ui.domains || []).find((d) => d.id === "design");
+  assert(
+    designRow && designRow.mapped === 1 && designRow.unmapped === 1,
+    `0.8.6 report-ui surfaces mapped/unmapped (got ${JSON.stringify(designRow)})`
+  );
+
+  assert(/\| 0\.8\.6 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.6 CHANGELOG");
+  assert(/0\.8\.6 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.6 VERIFY.md");
+  assert(/0\.8\.5 → 0\.8\.6/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.6 upgrade.md");
+  assert(/0\.8\.6 起默认不进写集/.test(fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8")), "0.8.6 upgrade notes optional reverse script");
+  assert(logExists("0.8.6"), "0.8.6 _log note exists");
+  assert(
+    /当前 \*\*0\.8\.6\*\*/.test(fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8")),
+    "0.8.6 SKILL.md version pin"
   );
 }
 

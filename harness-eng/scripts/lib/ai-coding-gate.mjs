@@ -123,11 +123,49 @@ function stripChangelogSections(text) {
   return parts.filter((p) => !/^##[^\n]*变更记录/m.test(p)).join("");
 }
 
+function stripTodoNoise(text) {
+  let s = stripChangelogSections(text);
+  s = s.replace(/```[\s\S]*?```/g, "");
+  s = s.replace(/`[^`\n]*`/g, "");
+  return s;
+}
+
+/** A line counts when the marker is the placeholder, not a mid-sentence mention. */
+function lineActionableTodoHits(line) {
+  if (!/TODO\(harness-eng\)/i.test(line)) return 0;
+  if (line.includes("|")) {
+    const cells = line.split("|").map((c) => c.trim());
+    let n = 0;
+    for (const cell of cells) {
+      if (/^TODO\(harness-eng\)(?:\s*[:：]|\s*$)/i.test(cell)) n++;
+    }
+    if (n) return n;
+  }
+  const stripped = line
+    .replace(/^\s*(?:#{1,6}\s+|[-*+]\s+|>\s+|\d+[.)]\s+)*/, "")
+    .trim();
+  if (/^TODO\(harness-eng\)(?:\s*[:：]|\s*$)/i.test(stripped)) return 1;
+  return 0;
+}
+
+/**
+ * Count placeholder TODO(harness-eng), not prose mentions (0.8.6).
+ * Skips changelog sections, fenced code, and inline code.
+ */
+export function countActionableHarnessTodos(text) {
+  const body = stripTodoNoise(text);
+  let n = 0;
+  for (const line of body.split(/\r?\n/)) n += lineActionableTodoHits(line);
+  return n;
+}
+
+export function hasActionableHarnessTodo(text) {
+  return countActionableHarnessTodos(text) > 0;
+}
+
 function countTodosInFile(filePath) {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return 0;
-  const text = stripChangelogSections(fs.readFileSync(filePath, "utf8"));
-  const m = text.match(/TODO\(harness-eng\)/gi);
-  return m ? m.length : 0;
+  return countActionableHarnessTodos(fs.readFileSync(filePath, "utf8"));
 }
 
 function countTodosInDir(dir, { recursive = false, nameRe = /\.md$/i } = {}) {
@@ -262,7 +300,7 @@ export function checkEntryReady(root) {
         )
       )
         continue;
-      if (/TODO\(harness-eng\)/i.test(sec)) {
+      if (hasActionableHarnessTodo(sec)) {
         files.push(path.relative(root, abs).replace(/\\/g, "/"));
         break;
       }

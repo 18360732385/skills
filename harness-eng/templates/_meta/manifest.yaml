@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version 必须一致。
-version: "0.8.5"
+version: "0.8.6"
 source_repo: ""
 description: "De-domainized Agent Harness templates for cross-repo landing. Write entry: scripts/harness.mjs; hot path: AGENT-INDEX.md."
 # 0.8.2: report 人话化 + 决策台总评模块（report_schema 0.4.2）；趋势台去参考分块。
@@ -225,7 +225,8 @@ files:
     ladder: L1
     template: scripts/reverse_changelog_tables.py
     target: scripts/reverse_changelog_tables.py
-    note: 存量变更记录按版本键降序（幂等；升级旧仓用）
+    optional: true
+    note: 存量变更记录按版本键降序（一次性；0.8.6 起默认不进 upgrade/land 写集。需要时放入 include_optional）
 
   # L2
   - id: kb-readme
