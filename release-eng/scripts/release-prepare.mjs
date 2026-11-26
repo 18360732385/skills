@@ -20,6 +20,11 @@ import {
   identityFromReleaseDate,
   recommendedReleaseThursday,
   stripBom,
+  readSqlProfile,
+  canonicalSqlFormat,
+  normalizeSqlDir,
+  validateSqlDir,
+  validateSqlFormat,
 } from "./release-format.mjs";
 import { readSkillVersion } from "./lib/skill-version.mjs";
 import { checkConsumerSnapshot } from "./lib/snapshot-version.mjs";
@@ -38,6 +43,8 @@ function parseArgs(argv) {
     aiTrack: false,
     out: null,
     format: "summary",
+    sqlDir: null,
+    sqlFormat: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -52,6 +59,8 @@ function parseArgs(argv) {
     else if (a === "--ai-track") out.aiTrack = true;
     else if (a === "--out") out.out = argv[++i];
     else if (a === "--format") out.format = argv[++i];
+    else if (a === "--sql-dir") out.sqlDir = argv[++i] || "";
+    else if (a === "--sql-format") out.sqlFormat = argv[++i] || "";
   }
   return out;
 }
@@ -62,9 +71,11 @@ function printHelp() {
 Usage:
   node release-prepare.mjs --root <REPO> --release-date YYYY-MM-DD \\
     --release-branch <branch> (--baseline <branch> | --first-release) \\
-    [--allow-drift] [--ai-track] [--out <freeze.json>] [--format summary|json]
+    [--allow-drift] [--ai-track] [--out <freeze.json>] [--format summary|json] \\
+    [--sql-dir <rel> --sql-format <flyway|glob>]
 
-步骤: sync-check → push-gate → freeze →（可选 ai-track）→ draft-md
+步骤: SQL 扫描记录（缺则 exit 1）→ sync-check → push-gate → freeze →（可选 ai-track）→ draft-md
+未传 --sql-dir/--sql-format 时读取 docs/releases/releases.md。两项缺一即首次使用，拒绝编排。
 身份: release-V{yyMMdd} ← --release-date
 同身份目录已存在 → refresh=true（原 resume 行为）
 确认词后由 Agent 调 note-merge 写盘。`);
@@ -78,6 +89,42 @@ function runNode(script, args, cwd) {
     maxBuffer: 64 * 1024 * 1024,
   });
   return r;
+}
+
+function resolveSqlProfile(root, args) {
+  const indexPath = path.join(root, "docs", "releases", "releases.md");
+  let recorded = { sqlDir: null, sqlFormat: null, firstUse: true };
+  if (fs.existsSync(indexPath)) {
+    recorded = readSqlProfile(stripBom(fs.readFileSync(indexPath, "utf8")));
+  }
+  const sqlDir = args.sqlDir ? normalizeSqlDir(args.sqlDir) : recorded.sqlDir;
+  const sqlFormat = args.sqlFormat ? canonicalSqlFormat(args.sqlFormat) : recorded.sqlFormat;
+  if (!sqlDir || !sqlFormat) {
+    console.error(
+      JSON.stringify(
+        {
+          ok: false,
+          step: "sql-profile",
+          error: "sql_profile_unrecorded",
+          firstUse: true,
+          sqlDir: sqlDir || null,
+          sqlFormat: sqlFormat || null,
+          hint: "首次使用：回答 SQL 目录与格式后执行 release.mjs sql-profile -- --root . --set-dir <rel> --set-format <flyway|glob> --apply",
+        },
+        null,
+        2
+      )
+    );
+    process.exit(1);
+  }
+  const err = validateSqlDir(sqlDir) || validateSqlFormat(sqlFormat);
+  if (err) {
+    console.error(
+      JSON.stringify({ ok: false, step: "sql-profile", error: err, firstUse: true }, null, 2)
+    );
+    process.exit(1);
+  }
+  return { sqlDir: normalizeSqlDir(sqlDir), sqlFormat: canonicalSqlFormat(sqlFormat) };
 }
 
 function main() {
@@ -117,6 +164,7 @@ function main() {
     process.exit(1);
   }
 
+  const sqlProfile = resolveSqlProfile(root, args);
   const skillVersion = readSkillVersion(skillRoot);
   const snap = checkConsumerSnapshot(root, skillVersion);
   if (snap.exists && !snap.ok && !args.allowDrift) {
@@ -186,7 +234,8 @@ function main() {
   const freezeOut =
     args.out ||
     path.join(os.tmpdir(), `release-eng-freeze-${identity}-${Date.now()}.json`);
-  const freezeArgs = ["--root", root, "--format", "json", "--out", freezeOut];
+  const sqlFlags = ["--sql-dir", sqlProfile.sqlDir, "--sql-format", sqlProfile.sqlFormat];
+  const freezeArgs = ["--root", root, "--format", "json", "--out", freezeOut, ...sqlFlags];
   if (firstRelease) {
     freezeArgs.push("--first-release", "--head", headRef);
   } else {
@@ -219,6 +268,7 @@ function main() {
       root,
       "--format",
       "draft-md",
+      ...sqlFlags,
       ...(firstRelease
         ? ["--first-release", "--head", headRef]
         : ["--base", baseRef, "--head", headRef]),
@@ -267,9 +317,10 @@ function main() {
       "执行 WritePlan",
       "LGTM",
     ],
+    sqlProfile,
     nextNoteMerge: firstRelease
-      ? `node scripts/release-note-merge.mjs --root . --note ${path.relative(root, notePath).replace(/\\/g, "/")} --freeze-json ${freezeJsonPath} --first-release --head ${headRef} --identity ${identity} --release-date ${date} --release-branch ${releaseBranch}`
-      : `node scripts/release-note-merge.mjs --root . --note ${path.relative(root, notePath).replace(/\\/g, "/")} --freeze-json ${freezeJsonPath} --base ${baseRef} --head ${headRef} --baseline ${baseline} --identity ${identity} --release-date ${date} --release-branch ${releaseBranch}`,
+      ? `node scripts/release-note-merge.mjs --root . --note ${path.relative(root, notePath).replace(/\\/g, "/")} --freeze-json ${freezeJsonPath} --first-release --head ${headRef} --identity ${identity} --release-date ${date} --release-branch ${releaseBranch} --sql-dir ${sqlProfile.sqlDir} --sql-format ${sqlProfile.sqlFormat}`
+      : `node scripts/release-note-merge.mjs --root . --note ${path.relative(root, notePath).replace(/\\/g, "/")} --freeze-json ${freezeJsonPath} --base ${baseRef} --head ${headRef} --baseline ${baseline} --identity ${identity} --release-date ${date} --release-branch ${releaseBranch} --sql-dir ${sqlProfile.sqlDir} --sql-format ${sqlProfile.sqlFormat}`,
   };
 
   if (args.format === "json") {

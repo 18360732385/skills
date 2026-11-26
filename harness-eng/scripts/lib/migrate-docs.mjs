@@ -21,6 +21,7 @@ import {
 import { loadDomainInventory } from "./inventory-paths.mjs";
 import { truthsPath, loadDomainRegistry } from "./domains.mjs";
 import { endpointToMarkdown } from "./fill-auto-api.mjs";
+import { textHasNeedle } from "./frontend-coverage.mjs";
 
 export const MIGRATE_REPORT_REL = path.join(
   "docs",
@@ -1054,7 +1055,7 @@ export function planCoverageAppend(opts = {}) {
     const dir = truthsPath(docsRoot, "api", reg);
     const files = listMdFiles(dir);
     const allText = files.map((f) => readText(f)).join("\n");
-    const missing = apiEps.filter((ep) => !allText.includes(ep.path));
+    const missing = apiEps.filter((ep) => !textHasNeedle(allText, ep.path));
     if (!missing.length) {
       /* already represented */
     } else if (files.some((f) => !isCoveragePlaceholder(readText(f)))) {
@@ -1167,7 +1168,7 @@ export function planCoverageAppend(opts = {}) {
     const dir = truthsPath(docsRoot, "redis", reg);
     const files = listMdFiles(dir);
     const allText = files.map((f) => readText(f)).join("\n");
-    const missing = redisPatterns.filter((p) => !allText.includes(p));
+    const missing = redisPatterns.filter((p) => !textHasNeedle(allText, p, ":"));
     if (missing.length) {
       if (files.some((f) => !isCoveragePlaceholder(readText(f)))) {
         skipped.push({
@@ -1210,7 +1211,7 @@ export function planCoverageAppend(opts = {}) {
     const dir = truthsPath(docsRoot, "func", reg);
     const files = listMdFiles(dir);
     const allText = files.map((f) => readText(f)).join("\n");
-    const missing = services.filter((n) => !allText.includes(n));
+    const missing = services.filter((n) => !textHasNeedle(allText, n));
     if (missing.length) {
       if (files.some((f) => !isCoveragePlaceholder(readText(f)))) {
         skipped.push({
@@ -1350,6 +1351,47 @@ function writeCoverageReport(absRoot, report) {
  * @param {string} root
  * @param {{ mode?: 'auto'|'off'|'dry-run', coverageMode?: 'off'|'append'|'dry-run', blockers?: string[], inventories?: object }} [opts]
  */
+/**
+ * 0.8.7: refresh migrate-docs-report.json when this upgrade did not enter planning.
+ * Does not call planMigrateDocs (empty blockers still scan db drift).
+ * @param {string} root
+ * @param {{ mode?: string, skillVersion?: string|null }} [opts]
+ */
+export function writeMigrateReportHeartbeat(root, opts = {}) {
+  const absRoot = path.resolve(root);
+  const mode = opts.mode || "dry-run";
+  const outAbs = path.join(absRoot, MIGRATE_REPORT_REL);
+  let prior = null;
+  if (fs.existsSync(outAbs)) {
+    try {
+      prior = JSON.parse(fs.readFileSync(outAbs, "utf8"));
+    } catch {
+      prior = null;
+    }
+  }
+  const keep = !!(prior && Array.isArray(prior.ops) && prior.ops.length > 0);
+  const report = {
+    ok: true,
+    dry_run: mode === "dry-run",
+    generated_at: new Date().toISOString(),
+    skill_version: opts.skillVersion || null,
+    ops: keep ? prior.ops : [],
+    applied: keep && Array.isArray(prior.applied) ? prior.applied : [],
+    skipped: keep
+      ? Array.isArray(prior.skipped)
+        ? prior.skipped
+        : []
+      : [{ reason: "本轮无升严 blocker，未规划补丁" }],
+    errors: keep && Array.isArray(prior.errors) ? prior.errors : [],
+    out_path: MIGRATE_REPORT_REL,
+    note: keep ? "未调用 planMigrateDocs；保留既有 ops" : "未调用 planMigrateDocs",
+    preserved_prior_plan: keep,
+  };
+  fs.mkdirSync(path.dirname(outAbs), { recursive: true });
+  fs.writeFileSync(outAbs, JSON.stringify(report, null, 2), "utf8");
+  return report;
+}
+
 export function runMigrateDocs(root, opts = {}) {
   const mode = opts.mode || "auto";
   const coverageMode = normalizeCoverageMode(opts.coverageMode);

@@ -57,11 +57,12 @@
 | **开干**（仓库开干） | 仅 `ai_coding_ready` | 建议可以 AI 改业务的唯一闸（仓库级；≠ feature 计划 Go） |
 
 技术字段（骨架/语义/Plan/gate/gold；`ready.ok` 已废弃）见 [fill-score.md](fill/fill-score.md)。  
-`gate_profile`：有 score-policy 未写则 **strict**；无文件则 **legacy**；显式 `legacy` 可回退；显式 **`gold`** 为高门槛档（覆盖 100% / 形态≥**95** / 完成度≥95 / TODO 扫面 B / warnings=0）；显式 **`mature_compat`**（0.7.48）= strict 形态地板 + gold 级 acceptance，**live drift 不阻断开干**、覆盖不强制 1.0（厚成熟仓【推荐】替代盲目降 legacy）。新仓【推荐】仍 **strict**（`Q_GATE_PROFILE`）。**0.7.0**：形态满分 100（探针+深度）；`morph_scale: "0.7"`；strict 形态地板 **75**。
+`gate_profile`：有 score-policy 未写则 **strict**；无文件则 **legacy**；显式 `legacy` 可回退；显式 **`gold`** 为高门槛档（判定时覆盖逐域 100% / 全仓与分域金标指数≥**98%** / 形态≥**95** / 完成度≥95 / TODO 扫面 B / 阻断与警告都为 0 / 覆盖真实性全部 pass）；显式 **`mature_compat`**（0.7.48）= strict 形态地板 + gold 级 acceptance，**live drift 不阻断开干**、覆盖不强制 1.0、不要求 98% 与真实性（厚成熟仓【推荐】替代盲目降 legacy）。新仓【推荐】仍 **strict**（`Q_GATE_PROFILE`）。**0.7.0**：形态满分 100（探针+深度）；`morph_scale: "0.7"`；strict 形态地板 **75**。
 
 ### 覆盖裁决（score-policy vs meta）
 
 **`coverage_ready` 以 `docs/harness-eng/score-policy.yaml` 为准**（有则）：按 `coverage_mode` + `coverage_targets`。  
+`gold` 判定时改用临时的 `all_domains` 与每域 1.0，不改写该文件。  
 域目标缺省 → 回退 `meta.ready_coverage` / CLI（默认 0.8）。无文件 → `overall` + `ready_coverage`。  
 大仓【推荐】`all_domains` + `strict`；贴顶后升 `gold`（[recommended-profile.md](modes/recommended-profile.md)）。详 [fill-score.md](fill/fill-score.md) / [fill-gate.md](fill/fill-gate.md)。
 
@@ -72,7 +73,7 @@
 | `morph_scale` | 形态尺度（`0.7`）；与旧 history 不可比 |
 | `run-latest.json` | `round`；fill-report-html 默认加载并写入 history |
 | `skill_version` | 技能号（manifest / meta；当前列车见 CHANGELOG） |
-| `report_schema` | **报告壳**投影 schema（现 **0.4.2**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；0.4.1 首屏人话化 + 宿主 `status_zh`；0.4.2 术语人话化 + 决策台总评模块；开干只看 `ai_coding_ready` |
+| `report_schema` | **报告壳**投影 schema（现 **0.4.3**）。对照报告时用 **`skill_version` + `report_schema`**；**报告壳 ≠ skill**。JSON 里 `ui.version` 只是同值兼容别名，人读忽略即可。0.4.0 起含 `go_nogo` / `tasks` / `ladder_progress` / `host_surface`；0.4.1 首屏人话化 + 宿主 `status_zh`；0.4.2 术语人话化 + 决策台总评模块；0.4.3 诊断台各域覆盖率、金标指数、真实性并列；开干只看 `ai_coding_ready` |
 
 ## 常用词
 

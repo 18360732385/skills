@@ -64,6 +64,18 @@ _Avoid_: 手工删文件夹, 当 archive 用
 目录包内与发版单同名的 `.html` 只读渲染（note-merge 定版/seal 自动重建，`note-html` 可补渲）；md 为唯一 SSOT，勾选/折叠不入档。
 _Avoid_: 发版单网页版（非镜像整站）, 手改 html
 
+**首次使用**:
+目标仓 `docs/releases/releases.md` 还没有同时记下 SQL 目录和 SQL 格式。与「首次发版」无关：首次发版指基线为「无」。
+_Avoid_: 首次发版, 第一次上线
+
+**SQL 目录**:
+版本 SQL 所在目录，相对仓库根，记在索引「SQL 扫描」。采集只看这个目录之下的文件。
+_Avoid_: db/migration（那只是未记录时的旧默认）, 包内 sql/
+
+**SQL 格式**:
+版本 SQL 的文件名规则，与 SQL 目录一起记录。`flyway` 表示 `V<数字>__.sql`；其它值是文件名 glob（如 `*.sql`）。
+_Avoid_: 文件编码, DDL/DML 侧（那是整理归类，不是扫描格式）
+
 **逾期未归档**:
 进行中目录包已定版且发版日期已过仍未 seal 的状态；对新 prepare 为硬闸。
 _Avoid_: 过期发版单, 忘了 archive

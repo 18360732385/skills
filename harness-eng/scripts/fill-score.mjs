@@ -41,9 +41,10 @@ import { spawnSync } from "child_process";
 import {
   applyStrictGateDefaults,
   applyGoldGateDefaults,
-  applyGoldCoverageDefaults,
+  evaluationCoveragePolicy,
   reapplyGateProfile,
   evaluateAiCodingGate,
+  countActionableHarnessTodos,
 } from "./lib/ai-coding-gate.mjs";
 import {
   loadDomainRegistry,
@@ -58,8 +59,9 @@ import {
 import {
   FRONTEND_COVERAGE_DOMAINS,
   inventoryScanDomains,
-  countFrontendTruths,
   buildFrontendCoverageRow,
+  countMappedAssets,
+  isFrontendTruthFile,
 } from "./lib/frontend-coverage.mjs";
 import { loadMorphRequired } from "./lib/morph-required.mjs";
 import { findHarnessMetaFile, findMcpUsageGuideFile } from "./lib/harness-meta.mjs";
@@ -67,6 +69,8 @@ import {
   runAcceptanceJson,
   shardsFromAcceptanceItems,
 } from "./lib/acceptance-report.mjs";
+import { inventoryUnitIds, citedUnitIds, newFuncClassRe } from "./lib/coverage-identity.mjs";
+import { validateAudit, loadAudit } from "./lib/coverage-audit.mjs";
 import {
   morphDepthBonus,
   hasRedisValueHeading,
@@ -84,14 +88,63 @@ const DOMAIN_REGISTRY = loadDomainRegistry();
 const KNOWN_DOMAINS = knownContractDomainIds(DOMAIN_REGISTRY);
 
 /** 0.7.58: 与 acceptance-check CLI 默认 --domain all 对齐（不再仅 api）。 */
-function runGoldAcceptance(root) {
-  const parsed = runAcceptanceJson(root, {});
+function buildCoverageAudit(root, domains, report, liveByDomain, inventory, gateProfile) {
+  const by_domain = {};
+  const gold = gateProfile === "gold";
+  for (const d of domains) {
+    const cov = report.coverage_by_domain?.[d];
+    const code = cov?.code || 0;
+    const inv = liveByDomain[d] || (d === "api" ? inventory : loadDomainInventory(root, d));
+    const ids = inventoryUnitIds(d, inv);
+    const loaded = loadAudit(root, d);
+    if (!gold) {
+      by_domain[d] = loaded.present
+        ? {
+            required: false,
+            status: "info",
+            present: true,
+            pass: validateAudit({ root, domain: d, unitIds: ids }).pass,
+            total: ids.length,
+          }
+        : { required: false, status: "unrequired", present: false, pass: 0, total: ids.length };
+      continue;
+    }
+    if (!(code > 0)) {
+      by_domain[d] = {
+        required: false,
+        status: "not_measured",
+        present: loaded.present,
+        pass: 0,
+        total: 0,
+      };
+      continue;
+    }
+    const v = validateAudit({ root, domain: d, unitIds: ids.length ? ids : [] });
+    const ok = ids.length > 0 && v.ok;
+    by_domain[d] = {
+      required: true,
+      status: ok ? "pass" : "gap",
+      present: loaded.present,
+      pass: v.pass,
+      total: ids.length || code,
+      reason: ids.length ? v.reason : "no-units",
+    };
+  }
+  return { by_domain };
+}
+
+function runGoldAcceptance(root, opts = {}) {
+  const parsed = runAcceptanceJson(root, {
+    gold: !!opts.gold,
+    ssotOnly: !!opts.ssotOnly,
+  });
   return {
     gold_pass_ratio: parsed.gold_pass_ratio,
     blockers: parsed.blockers.length,
     warnings: parsed.warnings.length,
     status: parsed.status,
-    scope: "all",
+    scope: opts.ssotOnly ? "ssot" : "all",
+    by_domain: parsed.raw?.by_domain || {},
     warning_shards: shardsFromAcceptanceItems(parsed.warnings, root),
     blocker_shards: shardsFromAcceptanceItems(parsed.blockers, root),
     blocker_items: parsed.blockers,
@@ -442,7 +495,7 @@ function buildChecks(text, domain, policy) {
     add("has-scheduler", /Scheduler|调度入口/i.test(raw));
     add("has-code-anchors", /##\s*代码锚点|Registry/i.test(raw));
   }
-  add("no-todo", !/TODO\(harness-eng\)/i.test(raw));
+  add("no-todo", countActionableHarnessTodos(raw) === 0);
   const tc = templateCompletenessForFile(raw, domain, policy);
   for (const c of tc.checks) add(c.id, c.ok);
   if (tc.missing.length) add("missing-req-section", false);
@@ -460,10 +513,10 @@ function scoreTruthFile(text, domain, policy) {
   const issues = [];
   const checks = buildChecks(raw, domain, policy);
 
-  if (/TODO\(harness-eng\)/i.test(raw)) {
-    const n = (raw.match(/TODO\(harness-eng\)/gi) || []).length;
-    score -= Math.min(40, n * 8);
-    issues.push(`TODO(harness-eng)×${n}`);
+  const todoN = countActionableHarnessTodos(raw);
+  if (todoN) {
+    score -= Math.min(40, todoN * 8);
+    issues.push(`TODO(harness-eng)×${todoN}`);
   }
   if (/占位接口/.test(raw) || /接口地址[：:]\s*TODO/i.test(raw)) {
     score -= 25;
@@ -543,7 +596,7 @@ function scoreTruthFile(text, domain, policy) {
     depth_parts: depth.parts,
     issues,
     checks,
-    shell: /TODO\(harness-eng\)/i.test(raw) && score < 40,
+    shell: countActionableHarnessTodos(raw) > 0 && score < 40,
     endpoints: domain === "api" ? countDocEndpoints(raw) : undefined,
   };
 }
@@ -627,14 +680,15 @@ function coverageFromInventory(inventory, docEndpointCount) {
  */
 export function collectFuncDocClassNames(root) {
   const names = new Set();
-  const CLASS_RE = /\b([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/g;
+  const CLASS_RE = newFuncClassRe();
   for (const f of domainFiles(root, "func")) {
     const text = fs.readFileSync(f, "utf8");
     for (const m of text.matchAll(/`([A-Za-z_][A-Za-z0-9_]*)`/g)) {
       names.add(m[1]);
     }
-    for (const m of text.matchAll(/^###\s+[^\n]*?([A-Z][A-Za-z0-9]+(?:Service|Component|Manager|Handler))\b/gm)) {
-      names.add(m[1]);
+    for (const m of text.matchAll(/^###\s+[^\n]+$/gm)) {
+      CLASS_RE.lastIndex = 0;
+      for (const c of m[0].matchAll(CLASS_RE)) names.add(c[1]);
     }
     for (const m of text.matchAll(/^\|[^\n]*$/gm)) {
       CLASS_RE.lastIndex = 0;
@@ -651,11 +705,7 @@ function countDocumentedRedisKeys(root) {
   let n = 0;
   for (const f of domainFiles(root, "redis")) {
     const text = fs.readFileSync(f, "utf8");
-    // Prefer section under "## Key 模式" until next ##
-    const sec = text.match(/##\s*Key 模式[\s\S]*?(?=\n##\s+|$)/i);
-    const body = sec ? sec[0] : text;
-    const rows = body.match(/^\|\s*`[^`]+`\s*\|/gm);
-    if (rows) n += rows.filter((r) => !/\|\s*`—`\s*\|/.test(r)).length;
+    n += citedUnitIds("redis", text).length;
   }
   return n;
 }
@@ -761,20 +811,36 @@ function coverageByDomain(root, apiCoverage, liveInv = {}) {
       out.jobs.raw_ratio = Math.round(ratio * 1000) / 1000;
     }
   }
-  // 0.8.1 patch: official coverage_by_domain includes frontend five domains.
-  // Gate ratio is domain-documented (truth pages exist), not 1:1 inventory assets.
+  // 0.8.1+/0.8.6: frontend five domains; gate ratio = mapped assets/assets.
   for (const d of FRONTEND_COVERAGE_DOMAINS) {
     const feInv = liveInv[d] || loadDomainInventory(root, d);
     if (!feInv || !Array.isArray(feInv.assets)) continue;
-    let assets = feInv.assets.length || feInv.stats?.assets || 0;
-    // 0.8.4: client-api coverage denominator excludes type_export (types noise);
-    // inventory JSON still keeps type_export in assets/stats for split reporting.
+    let assetList = feInv.assets;
+    let excludedTypeExports = 0;
     if (d === "client-api") {
-      assets = feInv.assets.filter((a) => a && a.kind !== "type_export").length;
+      excludedTypeExports = feInv.assets.filter((a) => a && a.kind === "type_export").length;
+      assetList = feInv.assets.filter((a) => a && a.kind !== "type_export");
     }
-    const truths = countFrontendTruths(domainFiles(root, d));
-    const row = buildFrontendCoverageRow({ truths, assets });
-    if (row) out[d] = row;
+    let assets = assetList.length;
+    if (!feInv.assets.length) assets = feInv.stats?.assets || 0;
+    const truthFiles = domainFiles(root, d).filter((f) => isFrontendTruthFile(f));
+    const truths = truthFiles.length;
+    let mapped;
+    if (feInv.assets.length) {
+      const texts = truthFiles.map((f) => {
+        try {
+          return fs.readFileSync(f, "utf8");
+        } catch {
+          return "";
+        }
+      });
+      mapped = countMappedAssets(assetList, texts).covered;
+    }
+    const row = buildFrontendCoverageRow({ truths, assets, mapped });
+    if (row) {
+      if (excludedTypeExports > 0) row.excluded_type_exports = excludedTypeExports;
+      out[d] = row;
+    }
   }
   return out;
 }
@@ -894,7 +960,11 @@ function loadScorePolicy(root) {
   const p = path.join(root, "docs", "harness-eng", "score-policy.yaml");
   const base = defaultScorePolicy();
   if (!fs.existsSync(p)) return { ...base, present: false, path: null };
-  const raw = fs.readFileSync(p, "utf8");
+  // 0.8.5: normalize CR/CRLF so /^…/m keys match after Windows writes
+  const raw = fs
+    .readFileSync(p, "utf8")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
   const mode = raw.match(/^\s*coverage_mode:\s*(\w+)/m);
   if (mode) base.coverage_mode = mode[1];
   for (const d of KNOWN_DOMAINS) {
@@ -1435,11 +1505,12 @@ function main() {
 
   const qOk = report.overall >= args.readyQuality;
   const covIncomplete = !report.coverage;
+  const covPolicy = evaluationCoveragePolicy(scorePolicy);
   const covEval = evaluateCoverageReady(
     report.coverage_by_domain,
     report.coverage,
     args.readyCoverage,
-    scorePolicy,
+    covPolicy,
     domains
   );
   // compat ready.ok still uses overall api coverage vs ready_coverage
@@ -1495,8 +1566,13 @@ function main() {
   const planClosed = plan.present ? !!plan.all_closed : false;
 
   // 0.2.18/0.2.29: gold before gate so strict/gold can require acceptance_*_max
-  const gold = runGoldAcceptance(root);
+  const gold = runGoldAcceptance(root, {
+    gold: gateProfile === "gold",
+    ssotOnly: gateProfile === "gold",
+  });
   report.gold_ratio = gold.gold_pass_ratio;
+  report.gold_by_domain = gold.by_domain || {};
+  report.coverage_audit = buildCoverageAudit(root, domains, report, liveByDomain, inventory, gateProfile);
   report.acceptance = {
     blockers: gold.blockers,
     warnings: gold.warnings,

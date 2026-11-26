@@ -4,7 +4,7 @@
 
 ## 步骤
 
-1. [gates-common.md](gates-common.md)（含首问 **`发版日期`**【推荐】≥提问日+2 的第一个周四 + 分支对）  
+1. [gates-common.md](gates-common.md)（含首问 **`发版日期`**【推荐】≥提问日+2 的第一个周四 + 分支对；首次使用另答 SQL 目录与格式并 `sql-profile --apply`）  
    - 若 git-gates **Done（中止）** → 本模式结束（勿继续下列步骤）  
 2. **版本身份** `<identity>` = **`release-V{yyMMdd}`** ← 已确认发版日期（见 [conventions.md](conventions.md)）。同日已有进行中包 → 先 seal / [取消发版](#取消发版) / 改日期。  
 3. **【推荐】半自动编排**（同会话直达 WritePlan 预览；**不写盘**；ai-track **默认跳过**）：
@@ -12,8 +12,10 @@
 ```bash
 node .cursor/skills/release-eng/scripts/release.mjs prepare -- \
   --root . --release-date YYYY-MM-DD --release-branch <发版分支> --baseline <基线|无> \
-  [--allow-drift] [--ai-track] [--out <freeze.json>]
+  [--allow-drift] [--ai-track] [--out <freeze.json>] \
+  [--sql-dir <rel> --sql-format <flyway|glob>]
 # 首次发版：--baseline 无 或加 --first-release
+# 未传 --sql-dir/--sql-format 时读取 releases.md；两项未记录则 exit 1（先走首问写入）
 ```
 
    等价逐步：push-gate → freeze（`--out`）→（可选 ai-track）→ `--format draft-md`。  
@@ -25,7 +27,8 @@ node .cursor/skills/release-eng/scripts/release.mjs prepare -- \
 node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . \
   --note docs/releases/<identity>/<identity>.md --freeze-json <freeze.json> \
   --identity <identity> --release-date YYYY-MM-DD --release-branch <发版分支> \
-  --baseline <基线|无> --owner <负责人>
+  --baseline <基线|无> --owner <负责人> \
+  --sql-dir <rel> --sql-format <flyway|glob>
 ```
 
    落盘同时生成目录包内同名只读渲染 `<identity>.html`（工单样式，可打印；`--no-html` 关闭；约定见 [conventions.md](conventions.md) ⑩）。

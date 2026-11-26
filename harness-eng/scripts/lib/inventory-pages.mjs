@@ -129,6 +129,19 @@ function readUtf8(p) {
   }
 }
 
+/** Page-convention files are one page_file asset; do not also extract routes from them. */
+function isPageFileCandidate(fRel, baseName) {
+  if (
+    !PAGE_DIR_RE.test(fRel) &&
+    !FEATURE_PAGES_RE.test(fRel) &&
+    !FEATURE_ROOT_PAGE_RE.test(fRel)
+  ) {
+    return false;
+  }
+  if (NOISE_PAGE_RE.test(baseName)) return false;
+  return true;
+}
+
 function shardAssets(assets, shardSize) {
   const shards = [];
   for (let i = 0; i < assets.length; i += shardSize) {
@@ -165,7 +178,8 @@ export function main(argv = process.argv) {
     const text = readUtf8(f);
     if (!text || !ROUTE_SIGNAL_RE.test(text)) continue;
     const fRel = rel(root, f);
-    // 目录约定已计的文件不重复抽 route
+    // 0.8.6: 页面约定文件只出 page_file，不再从同一源文件抽 route。
+    if (isPageFileCandidate(fRel, path.basename(f))) continue;
     routeSrcFiles++;
     ROUTE_PATH_RE.lastIndex = 0;
     for (const m of text.matchAll(ROUTE_PATH_RE)) {
@@ -190,15 +204,7 @@ export function main(argv = process.argv) {
   let pageFiles = 0;
   for (const f of codeFiles) {
     const fRel = rel(root, f);
-    if (
-      !PAGE_DIR_RE.test(fRel) &&
-      !FEATURE_PAGES_RE.test(fRel) &&
-      !FEATURE_ROOT_PAGE_RE.test(fRel)
-    ) {
-      continue;
-    }
-    if (NOISE_PAGE_RE.test(path.basename(f))) continue;
-    if (seenRouteIds.has(`route-${slugId(root, f, null)}`)) continue;
+    if (!isPageFileCandidate(fRel, path.basename(f))) continue;
     pageFiles++;
     assets.push({
       id: slugId(root, f, null),

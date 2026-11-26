@@ -100,6 +100,7 @@ const SCRIPTS = [
   "scripts/release-ai-track.mjs",
   "scripts/release-sql-classify.mjs",
   "scripts/release-sql-bundle.mjs",
+  "scripts/release-sql-profile.mjs",
   "scripts/release-sql-stats.mjs",
   "scripts/release-note-merge.mjs",
   "scripts/release-note-html.mjs",
@@ -3159,6 +3160,133 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     ),
     "043 样张 html fixture 存在"
   );
+}
+
+// --- 0.4.4：SQL 目录 + 格式；首次使用；按记录扫描 ---
+{
+  const {
+    isMigrationSql: matchSql,
+    readSqlProfile,
+    upsertSqlProfile,
+    recommendSqlFormat,
+    validateSqlDir,
+    validateSqlFormat,
+  } = format;
+
+  assert(
+    matchSql("sms-ai/db/migration/V0001__DDL__x.sql"),
+    "044 legacy isMigrationSql keeps db/migration"
+  );
+  assert(
+    !matchSql("custom/sql/V0001__DDL__x.sql"),
+    "044 legacy rejects sql outside db/migration"
+  );
+  const fly = { sqlDir: "custom/sql", sqlFormat: "flyway" };
+  const glob = { sqlDir: "custom/sql", sqlFormat: "R*.sql" };
+  assert(matchSql("custom/sql/V0001_0__DDL__x.sql", fly), "044 flyway hits under dir");
+  assert(!matchSql("custom/sql/notes.sql", fly), "044 flyway rejects plain name");
+  assert(!matchSql("other/V0001__DDL__x.sql", fly), "044 flyway rejects outside dir");
+  assert(matchSql("custom/sql/nested/R1.sql", glob), "044 glob hits nested basename");
+  assert(!matchSql("custom/sql/V1__a.sql", glob), "044 glob rejects other names");
+  assert(!matchSql("custom/sql/a.sql", { sqlDir: "custom/sql" }), "044 half profile misses");
+  assert(recommendSqlFormat(["V1__a.sql", "V2_1__b.sql"]) === "flyway", "044 recommend flyway");
+  assert(recommendSqlFormat(["a.sql"]) === "*.sql", "044 recommend *.sql");
+  assert(recommendSqlFormat(["V1__a.sql", "a.sql"]) == null, "044 mixed format no recommend");
+  assert(validateSqlDir("../secret"), "044 reject .. dir");
+  assert(validateSqlDir("D:/sql"), "044 reject absolute dir");
+  assert(!validateSqlDir("custom/sql"), "044 accept relative dir");
+  assert(validateSqlFormat("a/b.sql"), "044 reject format slash");
+  assert(validateSqlFormat("..sql"), "044 reject format dotdot");
+  assert(!validateSqlFormat("flyway") && !validateSqlFormat("*.sql"), "044 accept formats");
+
+  const fx = read("fixtures/docs/releases/releases.md") || "";
+  const fxProfile = readSqlProfile(fx);
+  assert(/## SQL 扫描/.test(fx), "044 fixture has SQL 扫描");
+  assert(fxProfile.firstUse, "044 fixture placeholder is first use");
+
+  const up = upsertSqlProfile(fx, { sqlDir: "custom/sql", sqlFormat: "Flyway" });
+  const saved = readSqlProfile(up.text);
+  assert(up.updated && !saved.firstUse, "044 upsert clears first use");
+  assert(saved.sqlDir === "custom/sql" && saved.sqlFormat === "flyway", "044 upsert canonical flyway");
+  assert(/## 进行中/.test(up.text), "044 upsert keeps 进行中");
+  const half = upsertSqlProfile(fx, { sqlDir: "custom/sql" });
+  assert(!half.updated && half.text === fx, "044 incomplete upsert does not write");
+
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-044-sql-"));
+  try {
+    const relDir = path.join("custom", "sql");
+    fs.mkdirSync(path.join(work, relDir), { recursive: true });
+    fs.mkdirSync(path.join(work, "docs", "releases"), { recursive: true });
+    fs.writeFileSync(path.join(work, "docs", "releases", "releases.md"), fx, "utf8");
+    const bin = path.join(skillRoot, "scripts/release-sql-profile.mjs");
+    const prep = path.join(skillRoot, "scripts/release-prepare.mjs");
+    const readOnly = spawnSync(process.execPath, [bin, "--root", work], { encoding: "utf8" });
+    assert(readOnly.status === 0, "044 sql-profile read exit 0");
+    const readJson = JSON.parse(readOnly.stdout || "{}");
+    assert(readJson.firstUse === true, "044 read reports firstUse");
+
+    const blocked = spawnSync(
+      process.execPath,
+      [
+        prep,
+        "--root",
+        work,
+        "--release-date",
+        "2026-11-26",
+        "--release-branch",
+        "release",
+        "--baseline",
+        "main",
+      ],
+      { encoding: "utf8" }
+    );
+    assert(blocked.status !== 0, "044 prepare without profile exits");
+    assert(
+      /sql_profile_unrecorded/.test(`${blocked.stderr || ""}${blocked.stdout || ""}`),
+      "044 prepare names sql_profile_unrecorded"
+    );
+
+    const bad = spawnSync(
+      process.execPath,
+      [bin, "--root", work, "--set-dir", "../x", "--set-format", "flyway", "--apply"],
+      { encoding: "utf8" }
+    );
+    assert(bad.status !== 0, "044 reject .. dir");
+    const badFmt = spawnSync(
+      process.execPath,
+      [bin, "--root", work, "--set-dir", "custom/sql", "--set-format", "a/b.sql", "--apply"],
+      { encoding: "utf8" }
+    );
+    assert(badFmt.status !== 0, "044 reject format with slash");
+    const one = spawnSync(
+      process.execPath,
+      [bin, "--root", work, "--set-dir", "custom/sql", "--apply"],
+      { encoding: "utf8" }
+    );
+    assert(one.status !== 0, "044 one field does not apply");
+    assert(readSqlProfile(fs.readFileSync(path.join(work, "docs/releases/releases.md"), "utf8")).firstUse, "044 index still first use");
+
+    const applied = spawnSync(
+      process.execPath,
+      [
+        bin,
+        "--root",
+        work,
+        "--set-dir",
+        "custom/sql",
+        "--set-format",
+        "*.sql",
+        "--apply",
+      ],
+      { encoding: "utf8" }
+    );
+    assert(applied.status === 0, "044 sql-profile --apply exit 0");
+    const after = readSqlProfile(fs.readFileSync(path.join(work, "docs/releases/releases.md"), "utf8"));
+    assert(!after.firstUse && after.sqlDir === "custom/sql" && after.sqlFormat === "*.sql", "044 index stores dir and format");
+    assert(/暂无符合格式/.test(applied.stdout || ""), "044 empty dir warns but records");
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
+  }
 }
 
 // --- report ---

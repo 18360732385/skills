@@ -21,8 +21,16 @@ import {
   defaultContractDomains,
   loadDomainRegistry,
 } from "./lib/domains.mjs";
+import { loadDomainInventory } from "./lib/inventory-paths.mjs";
+import {
+  collectIdentityBlockers,
+  citedUnitIds,
+  textMentionsUnits,
+} from "./lib/coverage-identity.mjs";
+import { readSkillVersion } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SKILL_ROOT = path.resolve(__dirname, "..");
 
 function parseArgs(argv) {
   const out = {
@@ -31,6 +39,8 @@ function parseArgs(argv) {
     workDir: null,
     files: [],
     gold: false,
+    ssotOnly: false,
+    units: null,
     help: false,
     jsonOut: null,
   };
@@ -45,6 +55,13 @@ function parseArgs(argv) {
         .map((s) => s.trim())
         .filter(Boolean);
     else if (a === "--gold") out.gold = true;
+    else if (a === "--ssot-only") out.ssotOnly = true;
+    else if (a === "--units") {
+      out.units = String(argv[++i] || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
     else if (a === "--json-out") out.jsonOut = argv[++i];
     else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
@@ -55,10 +72,11 @@ function parseArgs(argv) {
 function usage() {
   const ids = defaultContractDomains().join("|");
   console.log(`Usage:
-  node scripts/acceptance-check.mjs --root <TARGET> [--domain ${ids}|all] [--gold]
+  node scripts/acceptance-check.mjs --root <TARGET> [--domain ${ids}|all] [--gold] [--ssot-only] [--units a,b]
   node scripts/acceptance-check.mjs --work-dir <dir> [--gold]
   node scripts/acceptance-check.mjs --files a.md,b.md [--gold]
   Options: --json-out <path>
+  --ssot-only skips docs/<domain>/.fill-work. --units limits gold identity and section stats to those ids.
 Exit: 0 pass · 2 warnings-only · 1 blockers
 Domains: templates/_meta/domains.yaml (not hardcoded)`);
 }
@@ -337,12 +355,17 @@ function checkParamFieldTable(body, sectionTitle) {
   return out;
 }
 
-function checkApiFile(file, text, gold) {
+function checkApiFile(file, text, gold, units) {
   const blockers = [];
   const warnings = [];
   let sections = 0;
   let pass = 0;
+  const allow = units ? new Set(units) : null;
   for (const sec of splitApiSections(text)) {
+    if (allow) {
+      const ids = citedUnitIds("api", sec.startsWith("##") ? sec : "## x\n" + sec);
+      if (!ids.some((id) => allow.has(id))) continue;
+    }
     sections++;
     const r = checkApiSection(sec, file, gold);
     blockers.push(...r.blockers);
@@ -605,13 +628,17 @@ const ACCEPTANCE_BY_DOMAIN = {
   "client-api": checkClientApiFile,
 };
 
-export function runAcceptanceForDomain(domain, file, text, gold) {
+export function runAcceptanceForDomain(domain, file, text, gold, units, assets) {
   const fn = ACCEPTANCE_BY_DOMAIN[domain];
   // Known domains without a checker must not fall back to API semantics
   // (0.8.1 frontend templates are not api-no-evidence / 功能逻辑 docs).
   if (!fn) {
     return { blockers: [], warnings: [], sections: 0, pass: 0 };
   }
+  if (Array.isArray(units) && !textMentionsUnits(domain, text, units, assets)) {
+    return { blockers: [], warnings: [], sections: 0, pass: 0 };
+  }
+  if (domain === "api") return checkApiFile(file, text, gold, units);
   return fn(file, text, gold);
 }
 
@@ -639,7 +666,7 @@ function collectFiles(args) {
     args.domain === "all" ? knownContractDomainIds(registry) : [args.domain];
   for (const d of domains) {
     files.push(...walkMd(truthsPath(root, d, registry)));
-    if (registry[d]?.scan_fill_work) {
+    if (registry[d]?.scan_fill_work && !args.ssotOnly) {
       files.push(...walkMd(fillWorkPath(root, d)));
     }
   }
@@ -667,14 +694,31 @@ function main() {
   const files = collectFiles(args);
   const report = {
     ok: true,
-    version: "0.2.27",
+    version: readSkillVersion(SKILL_ROOT),
     gold: args.gold,
+    ssot_only: args.ssotOnly,
     files: files.length,
     sections: 0,
     pass_sections: 0,
     blockers: [],
     warnings: [],
     gold_pass_ratio: null,
+    by_domain: {},
+  };
+  const byDomain = {};
+  const slot = (d) => {
+    if (!byDomain[d]) byDomain[d] = { sections: 0, pass: 0, blockers: 0, warnings: 0 };
+    return byDomain[d];
+  };
+  const ssotTexts = [];
+  const unitList = args.units;
+  const assetCache = {};
+  const assetsFor = (domain) => {
+    if (!args.root) return [];
+    if (!assetCache[domain]) {
+      assetCache[domain] = loadDomainInventory(path.resolve(args.root), domain) || {};
+    }
+    return assetCache[domain].assets || [];
   };
 
   for (const f of files) {
@@ -684,17 +728,66 @@ function main() {
     }
     const text = fs.readFileSync(f, "utf8");
     const domain = detectDomain(f, args.domain);
-    const r = runAcceptanceForDomain(domain, f, text, args.gold);
+    const norm = f.replace(/\\/g, "/");
+    if (!/\/\.fill-work\//.test(norm)) {
+      ssotTexts.push({ domain, file: f, text });
+    }
+    const r = runAcceptanceForDomain(
+      domain,
+      f,
+      text,
+      args.gold,
+      unitList,
+      assetsFor(domain)
+    );
     report.blockers.push(...r.blockers);
     report.warnings.push(...r.warnings);
-    report.sections += r.sections;
-    report.pass_sections += r.pass;
+    const bucket = slot(domain);
+    bucket.sections += r.sections;
+    bucket.pass += r.pass;
+    bucket.blockers += r.blockers.length;
+    bucket.warnings += r.warnings.length;
   }
 
+  if (args.gold && args.root && !args.workDir) {
+    const registry = loadDomainRegistry();
+    const domains =
+      args.domain === "all" ? knownContractDomainIds(registry) : [args.domain];
+    for (const d of domains) {
+      const inv = loadDomainInventory(path.resolve(args.root), d);
+      const idBlocks = collectIdentityBlockers({
+        domain: d,
+        inventory: inv,
+        files: ssotTexts.filter((x) => x.domain === d),
+        units: unitList,
+      });
+      for (const b of idBlocks) {
+        report.blockers.push(b);
+        const bucket = slot(d);
+        bucket.sections += 1;
+        bucket.blockers += 1;
+      }
+    }
+  }
+
+  let sections = 0;
+  let pass = 0;
+  for (const [d, v] of Object.entries(byDomain)) {
+    sections += v.sections;
+    pass += v.pass;
+    report.by_domain[d] = {
+      sections: v.sections,
+      pass: v.pass,
+      blockers: v.blockers,
+      warnings: v.warnings,
+      gold_pass_ratio:
+        v.sections > 0 ? Math.round((1000 * v.pass) / v.sections) / 1000 : null,
+    };
+  }
+  report.sections = sections;
+  report.pass_sections = pass;
   report.gold_pass_ratio =
-    report.sections > 0
-      ? Math.round((1000 * report.pass_sections) / report.sections) / 1000
-      : null;
+    sections > 0 ? Math.round((1000 * pass) / sections) / 1000 : null;
   const hasBlockers = report.blockers.length > 0;
   const hasWarnings = report.warnings.length > 0;
   report.ok = !hasBlockers;

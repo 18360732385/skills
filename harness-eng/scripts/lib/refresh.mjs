@@ -214,6 +214,24 @@ export function runRefresh(root, opts = {}) {
         `跑 scripts/new_changelog_version.py 补号或手工补齐后再提交`
     );
   }
+  if (!dryRun && write && scoreReport && fs.existsSync(scoreOutAbs)) {
+    const hr = runNode(
+      "fill-report-html.mjs",
+      ["--root", absRoot, "--score", scoreOutAbs],
+      absRoot
+    );
+    steps.push({
+      step: "fill-report-html",
+      status: hr.status,
+      stderr_tail: (hr.stderr || "").slice(-400),
+    });
+    if (hr.status !== 0) {
+      hints.push(
+        "report-latest.html 未刷新：" +
+          (hr.stderr || hr.stdout || "fill-report-html failed").trim().slice(-200)
+      );
+    }
+  }
 
   const exitCode = dryRun ? 0 : ready ? 0 : 2;
   return {

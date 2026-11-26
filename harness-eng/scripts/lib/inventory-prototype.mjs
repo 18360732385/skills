@@ -186,6 +186,26 @@ function collectExternalLinks(root) {
   return links;
 }
 
+function uniquifyAssetIds(assets, report) {
+  const seen = new Map();
+  for (const asset of assets) {
+    const base = String(asset.id || "");
+    const n = seen.get(base) || 0;
+    if (n === 0) {
+      seen.set(base, 1);
+      continue;
+    }
+    const next = n + 1;
+    seen.set(base, next);
+    asset.id = `${base}-${next}`;
+    pushWarning(report, {
+      code: "id_collision",
+      message: `prototype id 碰撞，已改为 ${asset.id}`,
+      path: asset.path || asset.url || base,
+    });
+  }
+}
+
 function shardAssets(assets, shardSize) {
   const shards = [];
   for (let i = 0; i < assets.length; i += shardSize) {
@@ -238,13 +258,21 @@ export function main(argv = process.argv) {
       }
       if (!ASSET_FILE_RE.test(name)) continue;
       if (name.startsWith("_") && /\.(js|css)$/i.test(name)) continue; // 原型配套脚本/样式不入资产表
+      const fileRel = rel(root, p).replace(/\\/g, "/");
+      // 0.8.5: SSOT docs/prototype 下的 md 是真相/索引/模板，不是原型资产（防分母污染）
+      if (isSsotDir && /\.md$/i.test(name)) continue;
+      // 非 SSOT：仍可收 md 说明页，但排除 README 与 templates/
+      if (!isSsotDir && /\.md$/i.test(name)) {
+        if (/^README/i.test(name)) continue;
+        if (/\/templates\//i.test(fileRel)) continue;
+      }
       fileCount++;
       assets.push({
         id: slugId(root, p),
         kind: "prototype_file",
         runtime: false,
         dir: dirRel,
-        path: rel(root, p),
+        path: fileRel,
         archive_hint: isSsotDir
           ? "已在 docs/prototype/ SSOT 树内"
           : `非 SSOT 路径：经确认归档 docs/prototype/（upgrade 提示 rename/move，不擅删）`,
@@ -287,6 +315,7 @@ export function main(argv = process.argv) {
       message: "No prototype assets discovered (proto dirs / files / links)",
     });
   }
+  uniquifyAssetIds(assets, report);
 
   const shards = shardAssets(assets, args.shardSize);
   report.assets = assets;

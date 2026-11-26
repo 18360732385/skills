@@ -262,13 +262,16 @@ export function writeMysqlGuardServers(root, servers) {
   const found = findHarnessMetaFile(root);
   const dest = found || canonicalHarnessMetaPath(root);
   if (!fs.existsSync(dest.abs)) return;
-  let raw = fs.readFileSync(dest.abs, "utf8");
+  const before = fs.readFileSync(dest.abs, "utf8");
   const line = `mysql_guard_servers: ${JSON.stringify(String(servers).replace(/^\^|\$$/g, ""))}`;
+  let raw = before;
   if (/^mysql_guard_servers:\s*/m.test(raw)) {
     raw = raw.replace(/^mysql_guard_servers:\s*.*$/m, line);
   } else {
     raw = raw.replace(/\s*$/, "\n") + line + "\n";
   }
+  // 0.8.7: identical text must not touch mtime (dry-run and repeat upgrade).
+  if (raw === before) return;
   fs.writeFileSync(dest.abs, raw, "utf8");
 }
 

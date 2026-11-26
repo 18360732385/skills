@@ -12,7 +12,7 @@ const ACCEPTANCE = path.join(__dirname, "..", "acceptance-check.mjs");
 
 /**
  * @param {string} root
- * @param {{ domain?: string, gold?: boolean, workDir?: string }} [opts]
+ * @param {{ domain?: string, gold?: boolean, workDir?: string, ssotOnly?: boolean, units?: string[] }} [opts]
  * @returns {{ ok: boolean, blockers: object[], warnings: object[], gold_pass_ratio: number|null, status: number|null, raw?: object }}
  */
 export function runAcceptanceJson(root, opts = {}) {
@@ -24,6 +24,8 @@ export function runAcceptanceJson(root, opts = {}) {
     if (opts.domain) argv.push("--domain", opts.domain);
   }
   if (opts.gold) argv.push("--gold");
+  if (opts.ssotOnly) argv.push("--ssot-only");
+  if (Array.isArray(opts.units)) argv.push("--units", opts.units.join(","));
   const r = spawnSync(process.execPath, argv, {
     encoding: "utf8",
     maxBuffer: 20 * 1024 * 1024,

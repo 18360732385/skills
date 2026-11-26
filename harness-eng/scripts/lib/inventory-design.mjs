@@ -199,6 +199,16 @@ function collectUiLibDeps(root) {
   return out;
 }
 
+/** 0.8.6: SSOT tree and scaffold names are truths/templates, not coverage assets. */
+function isDesignDocExcluded(fileRel, name) {
+  const norm = String(fileRel || "").replace(/\\/g, "/");
+  const base = name || norm.split("/").pop() || "";
+  if (norm.startsWith("docs/design/")) return true;
+  if (/\/templates\//i.test(norm)) return true;
+  if (/^(?:.+-)?template\.md$/i.test(base)) return true;
+  return false;
+}
+
 function shardAssets(assets, shardSize) {
   const shards = [];
   for (let i = 0; i < assets.length; i += shardSize) {
@@ -245,21 +255,20 @@ export function main(argv = process.argv) {
   progress.step(1, 4, `tokens=${tokenFiles.length}`);
 
   // 2) 设计文档（非运行 → 归档提示）
-  const designDocs = walkFiles(root, root, [], (fileRel, name) =>
-    DESIGN_DOC_RE.test(fileRel) && /\.md$/i.test(name) ? { fileRel } : null
-  );
+  // 0.8.6: docs/design/（索引、templates、已归档真相）与 *-template.md 不进分母。
+  const designDocs = walkFiles(root, root, [], (fileRel, name) => {
+    if (!(DESIGN_DOC_RE.test(fileRel) && /\.md$/i.test(name))) return null;
+    if (isDesignDocExcluded(fileRel, name)) return null;
+    return { fileRel };
+  });
   for (const d of designDocs) {
-    // 0.8.2 patch (D13): docs already inside the SSOT tree must not be told to
-    // "move to docs/design/" again (false positive; aligns with prototype).
-    const inSsot = String(d.fileRel).replace(/\\/g, "/").startsWith("docs/design/");
     assets.push({
       id: slugId(root, path.join(root, d.fileRel), "design_doc"),
       kind: "design_doc",
       runtime: false,
       path: d.fileRel,
-      archive_hint: inSsot
-        ? "已在 docs/design/ SSOT 树内"
-        : "非运行文件：经确认归档 docs/design/（upgrade 提示 rename/move，不擅删）",
+      archive_hint:
+        "非运行文件：经确认归档 docs/design/（upgrade 提示 rename/move，不擅删）",
     });
   }
   progress.step(2, 4, `design_docs=${designDocs.length}`);
@@ -270,6 +279,7 @@ export function main(argv = process.argv) {
     assets.push({
       id: `ui-lib-${u.dep.replace(/[^a-zA-Z0-9_-]+/g, "-")}`,
       kind: "ui_lib_dep",
+      dep: u.dep,
       path: u.from,
       note: `依赖 ${u.dep}；是否禁库由 design 真相裁决（rule 102）`,
     });

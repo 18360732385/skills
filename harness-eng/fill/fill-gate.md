@@ -30,7 +30,7 @@
 | legacy | ready_coverage | — | — | — | — | 宽松（5/3/tc≥50）；drift 不阻断 |
 | strict【推荐】 | policy targets（常 0.8） | **75** | 可选 | truths | blockers≤0 | generic≤3 · unbound≤2 · tc≥70 |
 | mature_compat | 不强制 1.0 | **75** | 可选 | truths | blockers≤0 且 warnings≤0 | 同 gold 验收条；**live drift 不阻断**（厚成熟仓） |
-| gold | **1.0**（code>0 域） | **95** | **≥95** | **harness_docs** | blockers≤0 且 **warnings≤0** | generic/unbound=0 且 tc≥95；drift 阻断 |
+| gold | 判定强制 **all_domains / 1.0**（不改写策略文件） | **95** | **≥95** | **harness_docs** | blockers≤0、warnings≤0、全仓与分域指数 **≥98%**、真实性全部 pass | generic/unbound=0 且 tc≥95；drift 阻断；验收 `--gold --ssot-only` |
 
 阈值以目标仓 `score-policy.yaml` + `fill-score` 输出为准。
 

@@ -1,10 +1,21 @@
-# release-eng 验收记录（0.4.3）
+# release-eng 验收记录（0.4.4）
 
 > 静态对照 + `scripts/selfcheck.mjs`。**非 harness land**。历史见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/release-eng/`](../_log/release-eng/)。
 
 ## 版本
 
-当前 **0.4.3**（发版单同名 `.html` 只读渲染）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.4.4**（首次使用记录 SQL 目录与格式，之后按记录扫描）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+
+## 0.4.4 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+| `--layer unit` / `--layer contract` exit 0 | 有 |
+| `releases.md`「SQL 扫描」记目录 + 格式；缺一即首次使用 | 有 |
+| 首次使用首问必答；`sql-profile --apply` 才写入索引 | 有 |
+| 已记录后 `isMigrationSql` 按目录 + `flyway`/glob 扫描；不传则仍是 `db/migration` + Flyway | 有 |
+| 无完整记录时 prepare exit 1（`sql_profile_unrecorded`） | 有 |
 
 ## 0.4.3 增量验收
 

@@ -1,11 +1,11 @@
 /**
- * Frontend + inventory-scan domain helpers (0.8.1 patch).
+ * Frontend + inventory-scan domain helpers (0.8.0+).
  *
  * Official coverage_by_domain includes design/prototype/pages/components/client-api.
- * 0.8.1 frontend truths are domain-level pages (shell / core flows), not one
- * markdown file per inventory asset. The gold gate therefore uses a domain-
- * documented ratio (truths exist when assets exist). Asset counts stay on the
- * row as inventory_assets / truths / asset_ratio so the gap is visible.
+ * 0.8.5: gate ratio = truths/assets when `mapped` is omitted.
+ * 0.8.6: fill-score passes `mapped` (assets cited by a truth). Scaffold templates
+ * under /templates/ are excluded from the numerator; business filenames
+ * containing "template" still count.
  */
 export const FRONTEND_COVERAGE_DOMAINS = [
   "design",
@@ -34,12 +34,20 @@ export function isFrontendCoverageDomain(domain) {
   return FRONTEND_COVERAGE_DOMAINS.includes(domain);
 }
 
-/** Skip index-adjacent README and templates under docs/<domain>/modules/. */
+/**
+ * Truth files that count toward frontend coverage numerator.
+ * Skip README, docs/<domain>/templates/* scaffolds, and *-template.md scaffold names.
+ * Business names like 19-desc-template-import.md still count.
+ */
 export function isFrontendTruthFile(filePath) {
-  const base = String(filePath || "").replace(/\\/g, "/").split("/").pop() || "";
+  const norm = String(filePath || "").replace(/\\/g, "/");
+  const base = norm.split("/").pop() || "";
+  if (!/\.md$/i.test(base)) return false;
   if (/^README(?:\.[A-Za-z0-9]+)?\.md$/i.test(base)) return false;
-  if (/template/i.test(base)) return false;
-  return /\.md$/i.test(base);
+  if (/\/templates\//i.test(norm)) return false;
+  // scaffold basename only: template.md / foo-template.md (not mid-token business e.g. *-template-import.md)
+  if (/^(?:.+-)?template\.md$/i.test(base)) return false;
+  return true;
 }
 
 export function countFrontendTruths(files) {
@@ -47,25 +55,92 @@ export function countFrontendTruths(files) {
 }
 
 /**
- * @param {{ truths: number, assets: number }} input
+ * Drop H2 changelog sections only.
+ * `##` must not match `###` — a module that uses `### 变更记录` keeps its body (0.8.9).
+ */
+export function stripChangelogSections(text) {
+  const parts = String(text || "").split(/(?=^##(?!#)\s)/m);
+  return parts.filter((p) => !/^##(?!#)[^\n]*变更记录/m.test(p)).join("");
+}
+
+function escapeRe(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Boundary match so `/home` does not hit `/homepage` and `arco` does not hit `barcode`.
+ * `extraCont` adds continuation characters (redis keys pass `:` so `sms:code` does not hit `sms:code:phone`).
+ * The hyphen stays at the end of the class so it is literal.
+ */
+export function textHasNeedle(text, needle, extraCont = "") {
+  const n = String(needle || "").trim().replace(/\\/g, "/");
+  if (n.length < 2) return false;
+  const normText = String(text || "").replace(/\\/g, "/");
+  const extra = String(extraCont || "").replace(/[\]\\^-]/g, "");
+  const cont = `A-Za-z0-9_@./${extra}-`;
+  const re = new RegExp(`(^|[^${cont}])${escapeRe(n)}(?![${cont}])`);
+  return re.test(normText);
+}
+
+/** Needles a truth must cite for the asset to count as covered. */
+export function assetNeedles(asset) {
+  const a = asset || {};
+  const out = [];
+  if (a.path) out.push(String(a.path));
+  if (a.route) out.push(String(a.route));
+  if (a.url) out.push(String(a.url));
+  if (a.dep) out.push(String(a.dep));
+  return out.map((s) => s.trim()).filter((s) => s.length >= 2);
+}
+
+/**
+ * @param {object[]} assets
+ * @param {string[]} truthTexts
+ * @returns {{ covered: number, unmatched: string[] }}
+ */
+export function countMappedAssets(assets, truthTexts) {
+  const texts = (truthTexts || []).map((t) => stripChangelogSections(t));
+  let covered = 0;
+  const unmatched = [];
+  for (const asset of assets || []) {
+    const needles = assetNeedles(asset);
+    const hit = needles.some((n) => texts.some((t) => textHasNeedle(t, n)));
+    if (hit) covered++;
+    else if (asset && asset.id) unmatched.push(String(asset.id));
+  }
+  return { covered, unmatched };
+}
+
+/**
+ * @param {{ truths: number, assets: number, mapped?: number }} input
+ * `mapped` omitted → ratio is truths/assets (0.8.5). `mapped` set → mapped/assets (0.8.6).
  * @returns {object|null} coverage row, or null when the domain has no assets
  */
-export function buildFrontendCoverageRow({ truths, assets }) {
+export function buildFrontendCoverageRow({ truths, assets, mapped }) {
   const truthCount = Number(truths) || 0;
   const assetCount = Number(assets) || 0;
   if (!(assetCount > 0)) return null;
-  const covered = truthCount > 0 ? 1 : 0;
-  const assetRatio = assetCount ? truthCount / assetCount : 0;
-  return {
-    covered,
-    code: 1,
-    ratio: covered,
-    percent: covered * 100,
-    unit: "domain",
+  const useMapped = mapped != null && mapped !== "";
+  const coveredCount = useMapped ? Number(mapped) || 0 : truthCount;
+  const ratio = Math.min(coveredCount / assetCount, 1);
+  const rounded = Math.round(ratio * 1000) / 1000;
+  const row = {
+    covered: coveredCount,
+    code: assetCount,
+    ratio: rounded,
+    percent: Math.round(rounded * 100),
+    unit: "asset",
     truths: truthCount,
     inventory_assets: assetCount,
-    asset_ratio: Math.round(Math.min(assetRatio, 1) * 1000) / 1000,
-    source: "domain_documented",
-    note: "frontend coverage is domain-level truths, not 1:1 inventory assets",
+    asset_ratio: rounded,
+    source: useMapped ? "mapped_assets" : "asset_ratio",
+    note: useMapped
+      ? "frontend coverage is mapped assets/assets; a truth counts only when it cites the asset path, route, url, or dep"
+      : "frontend coverage is truths/assets; gold target 1.0 requires full asset docs",
   };
+  if (useMapped) {
+    row.mapped = coveredCount;
+    row.unmapped = Math.max(assetCount - coveredCount, 0);
+  }
+  return row;
 }

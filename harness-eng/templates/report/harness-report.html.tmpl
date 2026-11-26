@@ -155,12 +155,12 @@
     .btn.theme { min-width: 80px; }
 
     /* ============================================================
-       角标 mixin —— L 形制图角标，只用于 deck 与首屏横幅
+       角标 mixin —— L 形制图角标，只用于 deck 与横幅瓷砖
        ============================================================ */
-    .deck, .banner-card {
+    .deck, .banner-tile {
       position: relative;
     }
-    .deck::before, .banner-card::before {
+    .deck::before, .banner-tile::before {
       content: '';
       position: absolute;
       top: -1px; left: -1px;
@@ -170,7 +170,7 @@
       pointer-events: none;
       z-index: 2;
     }
-    .deck::after, .banner-card::after {
+    .deck::after, .banner-tile::after {
       content: '';
       position: absolute;
       bottom: -1px; right: -1px;
@@ -182,30 +182,42 @@
     }
 
     /* ============================================================
-       BANNER CARD（首屏总评横幅：Verdict 徽章 + 总评分 + 结论 + 分项）
+       BANNER（左小右大两块，中间留白；总宽与下方 deck 对齐）
        ============================================================ */
-    .banner-card {
+    .banner-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px 26px;
-      align-items: center;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 12px;
+      width: 100%;
       margin-bottom: 14px;
-      padding: 16px 20px;
+    }
+    .banner-tile {
       background:
         linear-gradient(var(--grid-line) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
         var(--panel);
       background-size: 24px 24px, 24px 24px, auto;
       border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
     .banner-score {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      min-width: 172px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 280px;
+      flex: 0 0 auto;
+      padding: 14px 18px;
+      text-align: center;
+      background-color: var(--panel2);
+    }
+    .banner-score .lab-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .banner-score .lab {
       color: var(--muted);
@@ -213,66 +225,207 @@
       font-weight: 600;
       letter-spacing: 0.02em;
     }
-    .banner-score .score-row {
-      display: flex;
-      align-items: baseline;
+    .banner-score .score-stage {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
       gap: 10px;
+      min-width: 7.5em;
+      min-height: 3.6em;
+      padding-right: 0.2em;
     }
     .banner-score .val {
       font-family: var(--mono);
-      font-size: 2.6rem;
+      font-size: 2.5rem;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
       line-height: 1;
       color: var(--accent);
+      position: relative;
+      z-index: 0;
     }
-    .banner-score .grade {
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 2px;
-      border: 1px solid var(--border);
-      white-space: nowrap;
+    .banner-score .stamp:not(.circle) {
+      letter-spacing: 0.1em;
+      text-indent: 0.1em;
+      font-size: 0.78rem;
+      padding: 5px 10px;
     }
-    .banner-score .grade.ok { color: var(--ok); border-color: var(--accent); background: var(--accent-soft); }
-    .banner-score .grade.warn { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
-    .banner-score .grade.no { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
-    .banner-score .ref-tip {
+    .banner-score .stamp.circle {
+      position: static;
+      flex: 0 0 auto;
+      width: 5.2em;
+      height: 5.2em;
+      padding: 0;
+      margin: 0 0 0 2px;
+      border-radius: 50%;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      text-align: center;
       font-size: 0.68rem;
-      color: var(--muted);
-      border: 1px dashed var(--border);
-      padding: 2px 8px;
-      border-radius: 2px;
+      letter-spacing: 0.06em;
+      text-indent: 0;
+      line-height: 1.05;
       white-space: nowrap;
+      transform: rotate(-14deg);
+      background: var(--danger-soft);
+      box-shadow:
+        inset 0 0 0 2px var(--panel),
+        inset 0 0 0 3px currentColor;
+      animation: stamp-circle-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both;
+      pointer-events: none;
+    }
+    .banner-score .stamp.circle::before { content: none; }
+    .banner-score .stamp.circle .mark {
+      font-size: 0.95em;
+      letter-spacing: 0;
+      line-height: 1;
+      font-weight: 800;
+    }
+    .banner-score .stamp.circle .txt {
+      letter-spacing: 0.08em;
+    }
+    .banner-score .stamp.circle::after {
+      border-radius: 50%;
+      inset: -3px;
+      animation: stamp-circle-ring 0.8s ease-out 0.55s;
+    }
+    @keyframes stamp-circle-in {
+      0% { opacity: 0; transform: rotate(-14deg) scale(1.7); }
+      55% { opacity: 1; transform: rotate(-14deg) scale(0.94); }
+      100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+    }
+    @keyframes stamp-circle-ring {
+      0% { opacity: 0.4; transform: scale(0.96); }
+      100% { opacity: 0; transform: scale(1.28); }
+    }
+    .parts-hint {
+      position: relative;
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      padding: 0;
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1;
       cursor: help;
-      align-self: flex-start;
     }
-    .banner-side { flex: 1 1 280px; min-width: 0; padding-left: 26px; border-left: 1px dashed var(--border); }
-    @media (max-width: 720px) {
-      .banner-side { padding-left: 0; border-left: none; }
+    .parts-hint:hover,
+    .parts-hint:focus-visible {
+      color: var(--accent);
+      border-color: var(--accent);
     }
-    .banner-side .one-line {
-      margin: 0 0 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      line-height: 1.6;
+    .parts-hint[hidden] { display: none !important; }
+    .parts-tip {
+      position: absolute;
+      left: 0;
+      top: calc(100% + 8px);
+      z-index: 5;
+      min-width: 168px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      text-align: left;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.12s ease;
     }
-    .banner-side .parts {
+    .parts-hint:hover .parts-tip,
+    .parts-hint:focus-visible .parts-tip {
+      opacity: 1;
+      visibility: visible;
+    }
+    .parts-tip .part {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .banner-side .part {
+      justify-content: space-between;
+      gap: 12px;
       font-size: 0.7rem;
       color: var(--muted);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      padding: 3px 8px;
       font-family: var(--mono);
+      line-height: 1.45;
       white-space: nowrap;
     }
-    .banner-side .part b { color: var(--text); font-weight: 700; }
+    .parts-tip .part b { color: var(--text); font-weight: 700; }
+    .banner-coding {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px 28px;
+      min-width: 0;
+      flex: 1 1 auto;
+      padding: 12px 20px 12px 28px;
+      border-left: 3px solid var(--accent);
+    }
+    .banner-coding .coding-main {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .banner-coding .coding-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px 14px;
+    }
+    .banner-coding .lab {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .banner-coding .one-line {
+      margin: 0;
+      max-width: 38em;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.45;
+      text-align: left;
+    }
+    .banner-coding .coding-lamps {
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      gap: 6px;
+      flex: 0 0 auto;
+      align-content: center;
+      justify-items: stretch;
+    }
+    .banner-coding .coding-lamp {
+      font-size: 0.7rem;
+      padding: 3px 7px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--panel2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .banner-coding .coding-lamp b {
+      margin-left: 4px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .banner-coding .coding-lamp.ok { border-color: var(--accent); color: var(--ok); }
+    .banner-coding .coding-lamp.ok b { color: var(--ok); }
+    .banner-coding .coding-lamp.warn { border-color: var(--warn); color: var(--warn); }
+    .banner-coding .coding-lamp.warn b { color: var(--warn); }
+    .banner-coding .coding-lamp.no { border-color: var(--danger); color: var(--danger); }
+    .banner-coding .coding-lamp.no b { color: var(--danger); }
 
     /* ---- 施工阶梯 + 开干清单 同组（决策台内，宽屏双列并排，卡间留白） ---- */
     .pipe-group {
@@ -396,7 +549,7 @@
       background: var(--warn-soft);
     }
     .diagnose-story {
-      margin: 0 0 16px;
+      margin: 0;
       padding: 0;
       list-style: none;
       display: grid;
@@ -580,10 +733,10 @@
     }
 
     /* ============================================================
-       VERDICT（验收印章 —— 横幅内唯一装饰性元素）
+       STAMP（验收印章 —— 总评分档 / 开干结论共用）
        双环边框 + 微旋转，像盖在验收单上的章。
        ============================================================ */
-    .verdict-badge {
+    .stamp {
       font-family: var(--font);
       font-size: 0.86rem;
       font-weight: 700;
@@ -596,12 +749,13 @@
       display: inline-block;
       position: relative;
       transform: rotate(-2deg);
+      background: transparent;
       box-shadow:
         inset 0 0 0 3px var(--panel),
         inset 0 0 0 4px currentColor;
       animation: stamp-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.15s both;
     }
-    .verdict-badge::after {
+    .stamp::after {
       content: '';
       position: absolute;
       inset: -3px;
@@ -620,16 +774,27 @@
       0% { opacity: 0.45; transform: scale(0.96); }
       100% { opacity: 0; transform: scale(1.3); }
     }
-    .verdict-badge.ok {
-      color: var(--ok);
-      background: transparent;
+    .stamp.ok { color: var(--ok); }
+    .stamp.ok::before { content: '\2713 '; }
+    .stamp.perfect {
+      color: var(--accent);
+      letter-spacing: 0.18em;
+      text-indent: 0.18em;
     }
-    .verdict-badge.ok::before { content: '\2713 '; }
-    .verdict-badge.no {
-      color: var(--danger);
-      background: transparent;
+    .stamp.perfect::before { content: '\2605 '; }
+    .stamp.warn { color: var(--warn); }
+    .stamp.warn::before { content: '\25C6 '; }
+    .stamp.no { color: var(--danger); }
+    .stamp.no::before { content: '\2717 '; }
+    .stamp.sm {
+      font-size: 0.72rem;
+      padding: 4px 9px;
+      letter-spacing: 0.1em;
+      text-indent: 0.1em;
+      box-shadow:
+        inset 0 0 0 2px var(--panel),
+        inset 0 0 0 3px currentColor;
     }
-    .verdict-badge.no::before { content: '\2717 '; }
     .gap-line {
       margin-top: 10px;
       padding: 10px 12px;
@@ -667,115 +832,144 @@
     .fold.hidden { display: none; }
 
     /* ============================================================
-       COVERAGE + MORPH STRIP（同一行）
+       COVERAGE + MORPH STRIP（右侧纵向一行行）
        ============================================================ */
     .diag-strips {
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: stretch;
-      gap: 10px;
-      margin-bottom: 14px;
+      display: grid;
+      gap: 8px;
+      margin: 0;
     }
-    .diag-strips .coverage-strip,
-    .diag-strips .morph-strip {
-      flex: 1 1 0;
-      margin-bottom: 0;
-      min-width: 0;
-    }
-    @media (max-width: 720px) {
-      .diag-strips { flex-wrap: wrap; }
-      .diag-strips .coverage-strip,
-      .diag-strips .morph-strip { flex: 1 1 100%; }
-    }
-    .morph-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      margin-bottom: 14px;
-      padding: 10px 14px;
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.8rem;
-      border-left: 3px solid var(--info);
-    }
-    .morph-strip .item { min-width: 0; }
-    .morph-strip .k {
-      color: var(--muted);
-      font-size: 0.7rem;
-      letter-spacing: 0.02em;
-    }
-    .morph-strip .v {
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      margin-right: 4px;
-      color: var(--accent);
-    }
-    .morph-strip .s { color: var(--muted); font-size: 0.72rem; }
+    .morph-strip,
     .coverage-strip {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      margin-bottom: 14px;
-      padding: 10px 14px;
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 10px 12px;
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       font-size: 0.8rem;
-      border-left: 3px solid var(--ok, #3dd68c);
     }
-    .coverage-strip .item { min-width: 0; }
+    .morph-strip { border-left: 3px solid var(--info); }
+    .coverage-strip { border-left: 3px solid var(--ok, #3dd68c); }
+    .morph-strip .item,
+    .coverage-strip .item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px 8px;
+      min-width: 0;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .morph-strip .item:last-child,
+    .coverage-strip .item:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .morph-strip .k,
     .coverage-strip .k {
       color: var(--muted);
       font-size: 0.7rem;
       letter-spacing: 0.02em;
+      min-width: 5.5em;
     }
+    .morph-strip .v,
     .coverage-strip .v {
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       margin-right: 4px;
       color: var(--accent);
     }
+    .morph-strip .s,
     .coverage-strip .s { color: var(--muted); font-size: 0.72rem; }
 
     /* ============================================================
-       DOMAIN SUMMARY（两域一行；不达标域名红字）
+       DOMAIN METRICS（点击「各项指标」：雷达右侧覆盖表）
+       质量/覆盖：100 绿；80–99 黄；80 以下红
+       金标：≥98 绿；80–97 黄；其余红
        ============================================================ */
-    .domain-summary {
-      margin-top: 12px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px 16px;
-      font-size: 0.82rem;
+    .domain-metrics-panel {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .domain-metrics-panel[hidden] { display: none !important; }
+    .domain-metrics-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+    .domain-metrics-table th,
+    .domain-metrics-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: baseline;
+    }
+    .domain-metrics-table th {
       color: var(--muted);
-      line-height: 1.5;
+      font-weight: 600;
+      font-size: 0.72rem;
+      border-bottom-color: var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--panel2);
+      z-index: 1;
     }
-    @media (max-width: 640px) {
-      .domain-summary { grid-template-columns: 1fr; }
-    }
-    .domain-summary .dom-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 6px 8px;
-      padding: 4px 0;
-      border-bottom: 1px dashed var(--border);
-      min-width: 0;
-    }
-    .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: none; }
-    @media (max-width: 640px) {
-      .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: 1px dashed var(--border); }
-      .domain-summary .dom-row:last-child { border-bottom: none; }
-    }
-    .domain-summary .dom-name {
-      color: var(--accent);
+    .domain-metrics-table th:nth-child(1),
+    .domain-metrics-table td:nth-child(1) { width: 5.6em; }
+    .domain-metrics-table th:nth-child(2),
+    .domain-metrics-table td:nth-child(2),
+    .domain-metrics-table th:nth-child(3),
+    .domain-metrics-table td:nth-child(3),
+    .domain-metrics-table th:nth-child(4),
+    .domain-metrics-table td:nth-child(4) { width: 3.6em; }
+    .domain-metrics-table th:nth-child(5),
+    .domain-metrics-table td:nth-child(5) { width: 4.4em; }
+    .domain-metrics-table th:nth-child(6),
+    .domain-metrics-table td:nth-child(6) { width: 7.2em; }
+    .domain-metrics-table .num {
+      text-align: right;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
       font-weight: 700;
-      min-width: 4.5em;
+      white-space: nowrap;
     }
-    .domain-summary .dom-name.warn {
-      color: var(--danger);
+    .domain-metrics-table .dom-name {
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .domain-summary .dom-bits { color: var(--muted); }
+    .domain-metrics-table .note {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.72rem;
+      white-space: nowrap;
+      max-width: 8.5em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
+    }
+    .domain-metrics-table .note[title] { cursor: help; }
+    .domain-metrics-table tr.lag td {
+      background: var(--danger-soft);
+    }
+    .domain-metrics-table tr.lag .dom-name { color: var(--danger); }
+    .domain-metrics-table .ok { color: var(--accent); }
+    .domain-metrics-table .warn { color: var(--warn); }
+    .domain-metrics-table .low { color: var(--danger); }
+    .domain-metrics-table .na { color: var(--muted); font-weight: 500; }
 
     /* ============================================================
        ACTIONS
@@ -883,7 +1077,17 @@
       letter-spacing: 0.01em;
     }
     .chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       margin-bottom: 12px;
+      min-height: 28px;
+    }
+    .chart-head h3 {
+      margin: 0;
+      flex: 1 1 auto;
+      min-width: 0;
     }
     .radar-wrap {
       display: grid;
@@ -914,20 +1118,57 @@
       height: 0;
       width: 18px;
     }
+    .radar-detail {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 26px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .radar-detail:hover,
+    .radar-detail[aria-expanded="true"] {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
     .chart-svg {
       width: 100%;
-      max-width: 420px;
+      max-width: 480px;
       height: auto;
       display: block;
       margin: 0 auto;
       color: var(--text);
+      overflow: visible;
     }
+    .chart-svg .radar-score-ok { fill: var(--accent); font-weight: 600; }
+    .chart-svg .radar-score-warn { fill: var(--warn); font-weight: 700; }
+    .chart-svg .radar-score-low { fill: var(--danger); font-weight: 700; }
+    .chart-svg .radar-dot-ok { fill: var(--accent); }
+    .chart-svg .radar-dot-warn { fill: var(--warn); }
+    .chart-svg .radar-dot-low { fill: var(--danger); }
     .diag-side {
+      position: relative;
       display: grid;
-      gap: 14px;
+      gap: 10px;
       align-content: start;
+      min-width: 0;
+      min-height: 280px;
     }
-    .diag-side .fold { margin-top: 0; min-height: 120px; }
+    .diag-side .fold { margin-top: 0; }
+    .diag-side .diagnose-story li {
+      padding: 8px 10px;
+      font-size: 0.82rem;
+    }
 
     .hbar-row {
       display: grid;
@@ -1363,7 +1604,7 @@
     .err::before { content: '[ ERROR ] '; font-weight: 700; }
 
     /* SVG 内部文字发光（暗色主题增强） */
-    html[data-theme="dark"] .chart-svg text {
+    html[data-theme="dark"] .chart-svg text:not([class]) {
       filter: drop-shadow(0 0 2px var(--accent-glow));
     }
 
@@ -1413,19 +1654,29 @@
       </div>
     </div>
 
-    <section class="banner-card hidden" id="sec-banner">
-      <div class="verdict-badge" id="verdict-badge">—</div>
-      <div class="banner-score">
-        <span class="lab" id="overall-lab">总评分</span>
-        <span class="score-row">
+    <section class="banner-row hidden" id="sec-banner">
+      <div class="banner-tile banner-score">
+        <div class="lab-row">
+          <span class="lab" id="overall-lab">总评分</span>
+          <button type="button" class="parts-hint" id="parts-hint" hidden aria-label="查看总评分分项">
+            i
+            <span class="parts-tip" id="overall-parts" role="tooltip"></span>
+          </button>
+        </div>
+        <div class="score-stage">
           <span class="val" id="overall-val">—</span>
-          <span class="grade" id="overall-grade"></span>
-        </span>
-        <span class="ref-tip" id="overall-ref" title="">仅参考 · ≠开干</span>
+          <span class="stamp" id="overall-grade" hidden></span>
+        </div>
       </div>
-      <div class="banner-side">
-        <p class="one-line" id="headline"></p>
-        <div class="parts" id="overall-parts"></div>
+      <div class="banner-tile banner-coding">
+        <div class="coding-main">
+          <div class="coding-head">
+            <span class="lab">可 AI coding</span>
+            <div class="stamp verdict-badge" id="verdict-badge">—</div>
+          </div>
+          <p class="one-line" id="headline"></p>
+        </div>
+        <div class="coding-lamps" id="coding-lamps"></div>
       </div>
     </section>
 
@@ -1474,15 +1725,13 @@
       <section class="panel" id="panel-diagnose" data-panel="diagnose" role="tabpanel">
         <h2>诊断台</h2>
         <p class="lead" id="lagging-lead">哪一域拖后腿、缺口在哪、低分原因。</p>
-        <ul class="diagnose-story" id="diagnose-story"></ul>
-        <div class="diag-strips" id="diag-strips">
-          <div class="coverage-strip hidden" id="coverage-strip"></div>
-          <div class="morph-strip hidden" id="morph-strip"></div>
-        </div>
         <div class="diag-grid">
           <div class="chart-box" id="radar-box">
             <div class="chart-head">
               <h3>各域文档质量分 vs 上限</h3>
+              <button type="button" class="radar-detail" id="radar-detail" hidden aria-expanded="false" aria-controls="radar-coverage" aria-label="展开各域各项指标">
+                各项指标
+              </button>
             </div>
             <div class="radar-wrap">
               <div id="chart-domains"></div>
@@ -1493,10 +1742,26 @@
             </div>
           </div>
           <div class="diag-side">
-            <details class="fold" id="miss-fold">
-              <summary>常见缺口分布（明细）</summary>
-              <div class="fold-body" id="chart-miss"></div>
-            </details>
+            <div class="domain-metrics-panel" id="radar-coverage" hidden>
+              <table class="domain-metrics-table">
+                <thead>
+                  <tr>
+                    <th>域</th>
+                    <th class="num">质量</th>
+                    <th class="num">覆盖</th>
+                    <th class="num">金标</th>
+                    <th class="num">真实性</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody id="domain-summary"></tbody>
+              </table>
+            </div>
+            <ul class="diagnose-story" id="diagnose-story"></ul>
+            <div class="diag-strips" id="diag-strips">
+              <div class="coverage-strip hidden" id="coverage-strip"></div>
+              <div class="morph-strip hidden" id="morph-strip"></div>
+            </div>
             <details id="gaps-block" class="fold hidden">
               <summary>低分原因 Top（明细）</summary>
               <div class="fold-body">
@@ -1508,7 +1773,6 @@
             </details>
           </div>
         </div>
-        <div class="domain-summary" id="domain-summary"></div>
         <div class="stories hidden" id="stories"></div>
       </section>
 
@@ -1784,6 +2048,30 @@
   var RADAR_STYLE = "ghost";
   var _chartDomains = null;
 
+  function pctRounded(pct) {
+    return Math.round(Number(pct) * 10) / 10;
+  }
+  function pctBand(pct) {
+    if (typeof pct !== "number" || isNaN(pct)) return "na";
+    var n = pctRounded(pct);
+    if (n >= 100) return "ok";
+    if (n >= 80) return "warn";
+    return "low";
+  }
+  function formatPct(pct) {
+    if (typeof pct !== "number" || isNaN(pct)) return "—";
+    var n = pctRounded(pct);
+    if (Math.abs(n - Math.round(n)) < 0.001) return Math.round(n) + "%";
+    return n.toFixed(1) + "%";
+  }
+  /** 文档质量分 / 上限：0–100 分数，不带 % */
+  function formatScore(score) {
+    if (typeof score !== "number" || isNaN(score)) return "—";
+    var n = pctRounded(score);
+    if (Math.abs(n - Math.round(n)) < 0.001) return String(Math.round(n));
+    return n.toFixed(1);
+  }
+
   function domainRadar(chart, style) {
     var labels = (chart && (chart.labels_zh && chart.labels_zh.length ? chart.labels_zh : chart.labels)) || [];
     var quality = (chart && chart.quality) || [];
@@ -1792,11 +2080,11 @@
     if (!n) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无分域数据</p>";
     style = style || RADAR_STYLE;
 
-    var size = 420;
+    var size = 480;
     var cx = size / 2;
-    var cy = size / 2 + 4;
-    var rMax = Math.min(128, 52 + n * 8);
-    var labelR = rMax + 34;
+    var cy = size / 2;
+    var rMax = n > 8 ? 128 : 146;
+    var labelR = rMax + (n > 8 ? 32 : 34);
 
     function ang(i) { return -Math.PI / 2 + (i / n) * Math.PI * 2; }
     function xy(i, pct, radius) {
@@ -1810,13 +2098,8 @@
         return p.x.toFixed(1) + "," + p.y.toFixed(1);
       }).join(" ");
     }
-    function shortLab(s) {
-      var t = String(s || "");
-      return t.length > 6 ? t.slice(0, 6) : t;
-    }
-
     var rings = "";
-    var ringLevels = style === "dial" ? [25, 50, 75, 100] : [50, 100];
+    var ringLevels = style === "dial" ? [25, 50, 75, 100] : (style === "ghost" ? [50] : [50, 100]);
     ringLevels.forEach(function (lv) {
       var pts = [];
       for (var i = 0; i < n; i++) {
@@ -1850,8 +2133,8 @@
     var layers = "";
     if (style === "ghost") {
       layers +=
-        '<polygon points="' + poly(cVals) + '" fill="var(--warn-soft)" stroke="var(--cap)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.95"/>' +
-        '<polygon points="' + poly(qVals) + '" fill="var(--accent)" fill-opacity="0.22" stroke="var(--accent)" stroke-width="2"/>';
+        '<polygon points="' + poly(qVals) + '" fill="var(--accent)" fill-opacity="0.2" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/>' +
+        '<polygon points="' + poly(cVals) + '" fill="none" stroke="var(--cap)" stroke-width="1.6" stroke-dasharray="5 3.5" stroke-linejoin="round"/>';
     } else if (style === "dial") {
       layers +=
         '<polygon points="' + poly(cVals) + '" fill="none" stroke="var(--cap)" stroke-width="1.5" stroke-dasharray="5 4"/>' +
@@ -1866,28 +2149,32 @@
     var dots = "";
     for (var d = 0; d < n; d++) {
       var pq = xy(d, qVals[d]);
-      var rDot = style === "dial" ? 3.6 : 2.8;
+      var band = pctBand(qVals[d]);
       dots +=
-        '<circle cx="' + pq.x.toFixed(1) + '" cy="' + pq.y.toFixed(1) + '" r="' + rDot +
-        '" fill="var(--accent)" stroke="var(--panel)" stroke-width="1.5"/>';
-      if (style === "ghost") {
-        var pc = xy(d, cVals[d]);
-        dots +=
-          '<circle cx="' + pc.x.toFixed(1) + '" cy="' + pc.y.toFixed(1) +
-          '" r="2.2" fill="var(--cap)" opacity="0.85"/>';
-      }
+        '<circle class="radar-dot radar-dot-' + band + '" cx="' + pq.x.toFixed(1) +
+        '" cy="' + pq.y.toFixed(1) + '" r="3.4" stroke="var(--panel2)" stroke-width="1.6"/>';
     }
 
     var labs = "";
     for (var li = 0; li < n; li++) {
       var lp = xy(li, 100, labelR);
-      var anchor = Math.abs(lp.x - cx) < 8 ? "middle" : (lp.x > cx ? "start" : "end");
-      var dy = lp.y < cy - 8 ? -2 : (lp.y > cy + 8 ? 10 : 4);
+      var anchor = Math.abs(lp.x - cx) < 12 ? "middle" : (lp.x > cx ? "start" : "end");
+      var above = lp.y < cy - 10;
+      var below = lp.y > cy + 10;
+      var nameDy = above ? -13 : (below ? 5 : -6);
+      var scoreDy = above ? 3 : (below ? 21 : 10);
+      var qText = formatScore(qVals[li]);
+      var scoreCls = "radar-score-" + pctBand(qVals[li]);
+      var nameSize = String(labels[li] || "").length > 8 ? 11 : 12;
       labs +=
-        '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + dy).toFixed(1) +
-        '" text-anchor="' + anchor + '" fill="currentColor" font-size="11" font-family="var(--mono)">' +
-        "<title>" + esc(labels[li]) + " · 质量 " + qVals[li] + " · 上限 " + cVals[li] + "</title>" +
-        esc(shortLab(labels[li])) + "</text>";
+        '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + nameDy).toFixed(1) +
+        '" text-anchor="' + anchor + '" fill="currentColor" font-size="' + nameSize +
+        '" font-family="var(--font)">' +
+        "<title>" + esc(labels[li]) + " · 质量 " + qText + " · 上限 " + formatScore(cVals[li]) + "</title>" +
+        esc(labels[li]) + "</text>" +
+        '<text class="' + scoreCls + '" x="' + lp.x.toFixed(1) + '" y="' + (lp.y + scoreDy).toFixed(1) +
+        '" text-anchor="' + anchor + '" font-size="11" font-family="var(--mono)">' +
+        esc(qText) + "</text>";
     }
 
     return (
@@ -1922,18 +2209,6 @@
       }).join("") +
       "</ol>"
     );
-  }
-  function missBars(missTop) {
-    if (!missTop || !missTop.length) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无常见缺口数据</p>";
-    var max = Math.max.apply(null, missTop.map(function (m) { return m.count; })) || 1;
-    return missTop.map(function (m) {
-      var pct = Math.round((m.count / max) * 100);
-      return (
-        '<div class="hbar-row"><div class="mono" title="' + esc(m.id) + '">' + esc(m.label_zh || m.id) +
-        '</div><div class="hbar-track"><div class="hbar-fill" style="width:' + pct + '%"></div></div><div>' +
-        esc(m.count) + "</div></div>"
-      );
-    }).join("");
   }
   function trendLines(trend) {
     if (!trend || !trend.labels || trend.labels.length < 1) {
@@ -2100,9 +2375,28 @@
       if (e.target === bd) bd.classList.remove("open");
     });
   });
+  function setDomainMetricsOpen(open) {
+    var btn = $("radar-detail");
+    var panel = $("radar-coverage");
+    if (!btn || !panel) return;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.setAttribute("aria-label", open ? "收起各域各项指标" : "展开各域各项指标");
+    panel.hidden = !open;
+  }
+  var radarBtn = $("radar-detail");
+  if (radarBtn) {
+    radarBtn.addEventListener("click", function () {
+      setDomainMetricsOpen(radarBtn.getAttribute("aria-expanded") !== "true");
+    });
+  }
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       if (closeAnyModal()) {
+        e.preventDefault();
+        return;
+      }
+      if (radarBtn && radarBtn.getAttribute("aria-expanded") === "true") {
+        setDomainMetricsOpen(false);
         e.preventDefault();
         return;
       }
@@ -2157,14 +2451,37 @@
       $("overall-val").textContent = "—";
     }
     var gradeEl = $("overall-grade");
-    gradeEl.textContent = composite.grade_zh || "";
-    gradeEl.className = "grade " + (composite.grade_tone || "");
-    var refEl = $("overall-ref");
-    refEl.textContent = "仅参考 · ≠开干";
-    refEl.title = composite.tip || "";
-    $("overall-parts").innerHTML = (composite.parts || []).map(function (p) {
-      return '<span class="part">' + esc(p.label_zh || p.id) + " <b>" + esc(p.value) + "%</b></span>";
-    }).join("");
+    if (composite.grade_zh) {
+      gradeEl.hidden = false;
+      var failStamp = composite.grade_tone === "no" || composite.grade_zh === "不合格";
+      gradeEl.className = "stamp " + (failStamp ? "circle " : "") + (composite.grade_tone || "no");
+      gradeEl.title = composite.tip || "";
+      if (failStamp) {
+        gradeEl.innerHTML = '<span class="mark" aria-hidden="true">\u2717</span><span class="txt">' + esc(composite.grade_zh) + "</span>";
+      } else {
+        gradeEl.textContent = composite.grade_zh;
+      }
+    } else {
+      gradeEl.hidden = true;
+      gradeEl.textContent = "";
+      gradeEl.className = "stamp";
+    }
+    var partsHint = $("parts-hint");
+    var partsTip = $("overall-parts");
+    var parts = composite.parts || [];
+    if (partsHint && partsTip) {
+      if (parts.length) {
+        partsTip.innerHTML = parts.map(function (p) {
+          var isScore = p.id === "overall";
+          var unit = isScore ? "" : "%";
+          return '<span class="part"><span>' + esc(p.label_zh || p.id) + "</span><b>" + esc(p.value) + unit + "</b></span>";
+        }).join("");
+        partsHint.hidden = false;
+      } else {
+        partsTip.innerHTML = "";
+        partsHint.hidden = true;
+      }
+    }
 
     $("ladder-summary").textContent = ladderProg.summary || "施工阶梯";
     $("ladder-pct").textContent =
@@ -2214,9 +2531,29 @@
     var readyOk = go.ok != null ? !!go.ok : (!!verdict.ai_coding_ready || !!verdict.ready_ok);
     var badge = $("verdict-badge");
     badge.textContent = go.label_zh || verdict.ready_label || (readyOk ? "建议可以开干" : "建议暂缓");
-    badge.className = "verdict-badge " + (readyOk ? "ok" : "no");
+    badge.className = "stamp verdict-badge " + (readyOk ? "ok" : "no");
 
-    $("headline").innerHTML = linkTerms(ui.headline || score.suggest_next || "（无摘要）", termIndex);
+    var codingLamps = $("coding-lamps");
+    if (codingLamps) {
+      var lampIds = ["ai_coding_ready", "skeleton_ready", "coverage_ready", "semantic_ready", "fill_plan"];
+      var kpis = ui.decision_kpis || [];
+      var byLamp = {};
+      kpis.forEach(function (k) { if (k && k.id) byLamp[k.id] = k; });
+      codingLamps.innerHTML = lampIds.map(function (id) {
+        var k = byLamp[id];
+        if (!k) return "";
+        var tone = k.tone || "";
+        return (
+          '<span class="coding-lamp ' + esc(tone) + '">' +
+          esc(k.label_zh || k.id) + "<b>" + esc(k.value) + "</b></span>"
+        );
+      }).join("");
+    }
+
+    $("headline").innerHTML = linkTerms(
+      verdict.ready_hint || ui.headline || score.suggest_next || "（无摘要）",
+      termIndex
+    );
     var gap = ui.gap_to_ready || {};
     var gapHtml =
       "<strong>还差什么：</strong>" + linkTerms(gap.summary_zh || gap.summary || "—", termIndex) +
@@ -2265,10 +2602,15 @@
       }).join("");
     }
 
-    if (ui.lagging_domain && ui.lagging_domain.story) {
+    if (ui.lagging_domain && ui.lagging_domain.tone === "warn" && ui.lagging_domain.story) {
+      var ceilingGap = ui.lagging_domain.quality_at_ceiling &&
+        ui.lagging_domain.gold_gaps && ui.lagging_domain.gold_gaps.length;
+      var lead = ceilingGap ? "未过线优先看：" : "拖后腿优先看：";
       $("lagging-lead").innerHTML =
-        "拖后腿优先看：" + esc(ui.lagging_domain.name_zh || ui.lagging_domain.id) +
+        lead + esc(ui.lagging_domain.name_zh || ui.lagging_domain.id) +
         " — " + linkTerms(ui.lagging_domain.story, termIndex);
+    } else if ($("lagging-lead")) {
+      $("lagging-lead").textContent = "各域都已到理论上限。";
     }
 
     var covStrip = ui.coverage_strip || [];
@@ -2297,42 +2639,104 @@
 
     _chartDomains = ui.chart_domains || null;
     renderDomainChart(RADAR_STYLE);
-    $("chart-miss").innerHTML = missBars(ui.miss_top);
 
     var stories = ui.domain_stories || ui.domains || [];
-    if (stories.length) {
-      $("domain-summary").innerHTML = stories.map(function (d) {
-        var bits = [];
-        if (typeof d.score === "number") bits.push(d.score + "%");
-        if (d.cap != null) bits.push("上限≈" + d.cap);
-        if (d.room != null && d.room > 0) bits.push("距上限 " + d.room);
-        if (typeof d.coverage_percent === "number") bits.push("覆盖 " + d.coverage_percent + "%");
-        if (d.status_label) bits.push(d.status_label);
-        var warn = d.tone === "warn";
-        var mark = warn ? "⚠ " : "";
+    var detailBtn = $("radar-detail");
+    var summaryEl = $("domain-summary");
+    var coveragePanel = $("radar-coverage");
+    if (stories.length && summaryEl) {
+      var byId = {};
+      stories.forEach(function (d) {
+        if (d && d.id) byId[d.id] = d;
+      });
+      var ordered = [];
+      var seen = {};
+      var chartIds = (_chartDomains && _chartDomains.labels) || [];
+      chartIds.forEach(function (id) {
+        if (byId[id]) {
+          ordered.push(byId[id]);
+          seen[id] = true;
+        }
+      });
+      stories.forEach(function (d) {
+        if (!d || (d.id && seen[d.id])) return;
+        ordered.push(d);
+      });
+      var lagId = (ui.lagging_domain && ui.lagging_domain.id) ||
+        (ui.diagnose && ui.diagnose.lagging_domain && ui.diagnose.lagging_domain.id) ||
+        null;
+      function goldBand(label) {
+        if (label == null || label === "—" || label === "") return "na";
+        var n = parseFloat(String(label).replace("%", ""));
+        if (!isFinite(n)) return "na";
+        if (n >= 98) return "ok";
+        if (n >= 80) return "warn";
+        return "low";
+      }
+      function authenticityBand(label) {
+        if (label == null || label === "" || label === "未要求" || label === "—") return "na";
+        var m = String(label).match(/^(\d+)\s*\/\s*(\d+)$/);
+        if (!m) return "na";
+        var pass = +m[1];
+        var total = +m[2];
+        if (!total) return "na";
+        if (pass >= total) return "ok";
+        if (pass === 0) return "low";
+        return "warn";
+      }
+      function metricRow(d) {
+        var q = typeof d.score === "number" ? d.score : null;
+        var qBand = q == null ? "na" : pctBand(q);
+        var pct = typeof d.coverage_percent === "number" ? d.coverage_percent : null;
+        var cBand = d.coverage_band || (pct == null ? "na" : pctBand(pct));
+        var gold = d.gold_index_label || "—";
+        var auth = d.authenticity_label || "未要求";
+        var note =
+          typeof d.excluded_type_exports === "number" && d.excluded_type_exports > 0
+            ? d.excluded_type_exports + " 个 type_export 未计入覆盖"
+            : "";
+        var noteShort = note.length > 10 ? note.slice(0, 10) + "…" : note;
+        var noteTitle = note.length > 10 ? ' title="' + escAttr(note) + '"' : "";
+        var lag = lagId && d.id === lagId;
         return (
-          '<div class="dom-row">' +
-          '<span class="dom-name' + (warn ? " warn" : "") + '">' +
-          mark + esc(d.name_zh || d.id) + "</span>" +
-          '<span class="dom-bits">' + esc(bits.join(" · ")) + "</span></div>"
+          '<tr class="' + (lag ? "lag" : "") + '">' +
+          '<td class="dom-name">' + esc(d.name_zh || d.id) + "</td>" +
+          '<td class="num ' + qBand + '">' + (q == null ? "—" : esc(String(q))) + "</td>" +
+          '<td class="num ' + cBand + '">' + esc(formatPct(pct)) + "</td>" +
+          '<td class="num ' + goldBand(gold) + '">' + esc(gold) + "</td>" +
+          '<td class="num ' + authenticityBand(auth) + '">' + esc(auth) + "</td>" +
+          '<td class="note"' + noteTitle + ">" + esc(noteShort) + "</td></tr>"
         );
-      }).join("");
+      }
+      summaryEl.innerHTML = ordered.map(metricRow).join("");
+      if (detailBtn) {
+        detailBtn.hidden = false;
+        detailBtn.setAttribute("aria-expanded", "false");
+        detailBtn.setAttribute("aria-label", "展开各域各项指标");
+      }
+      if (coveragePanel) coveragePanel.hidden = true;
+    } else if (detailBtn) {
+      detailBtn.hidden = true;
+      if (summaryEl) summaryEl.innerHTML = "";
+      if (coveragePanel) coveragePanel.hidden = true;
     }
 
     if (ui.show_domain_cards && stories.length) {
       $("stories").innerHTML = stories.map(function (d) {
         var covLine = "";
         if (typeof d.coverage_percent === "number") covLine = "覆盖 " + d.coverage_percent + "%";
+        if (d.gold_index_label) covLine += (covLine ? " · " : "") + "金标指数 " + d.gold_index_label;
+        if (d.authenticity_label) covLine += (covLine ? " · " : "") + "真实性 " + d.authenticity_label;
         return (
           '<div class="story"><h3>' + esc(d.name_zh || d.id) +
           ' <span class="mono" style="font-weight:500;color:var(--muted)">' + esc(d.id) + "</span></h3>" +
-          '<div class="score">' + (typeof d.score === "number" ? d.score + "%" : "—") + "</div>" +
+          '<div class="score">' + (typeof d.score === "number" ? formatScore(d.score) : "—") + "</div>" +
           '<div class="meta">真相 ' + esc(d.truths != null ? d.truths : "—") +
           (d.cap != null ? " · 上限≈" + d.cap : "") +
           (d.room != null ? " · 距上限 " + d.room : "") +
           (covLine ? "<br>" + esc(covLine) : "") +
           (d.story ? "<br>" + esc(d.story) : "") +
-          '</div><span class="status ' + esc(d.tone || "warn") + '">' +
+          '</div><span class="stamp sm ' + esc(d.tone || "warn") + '">' +
           esc(d.status_label || "") + "</span></div>"
         );
       }).join("");

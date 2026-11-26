@@ -1,6 +1,6 @@
 # 约定 SSOT（release-eng conventions）
 
-本文件是 release-eng 全部「约定」的**唯一权威 SSOT**：发版日期算法、版本身份、目录包构成、Git 定版展示、目标 profile、SQL 序与整理、密文、repo-profile、逾期硬闸书面跳过、发版单 HTML 渲染。  
+本文件是 release-eng 全部「约定」的**唯一权威 SSOT**：发版日期算法、版本身份、目录包构成、Git 定版展示、目标 profile、SQL 序与整理、SQL 扫描（目录+格式）、密文、repo-profile、逾期硬闸书面跳过、发版单 HTML 渲染。  
 skill 侧其它文档（SKILL / README / QUICKSTART / AGENT-INDEX / modes/*）遇到上述约定**只引用本文件、不复述**；行为性内容（硬闸、Red Flags、借口表、步骤、出口、Done、确认词表、问卷题面、AskQuestion 形态）仍在各 mode 规格原位。  
 **例外**：fixtures 种子（`fixtures/docs/releases/templates/` 模板、`fixtures/docs/releases/releases.md`）随骨架落到目标仓后没有 skill 文档可引用，必须**自包含**，允许复述本文件约定；改约定时须同步改 fixtures 种子。
 
@@ -57,6 +57,22 @@ SQL / 配置 / 定时任务**一律目标 `prod`**。配置仅 `application-prod
 - 同时生成 `sql/README.md`：总览含**执行库 / 脱敏连接串**、DDL/DML 文件数与语句数、按提交人执行序；SQL 文件名链到整理文件 `#L<行号>`（勿手改）。
 - 发版单为 **10 章**（一～十）；**不再生成**「十一、附录：关联契约与规划」。
 
+## ⑤b SQL 扫描（目录 + 格式）
+
+仓级记录在目标仓 `docs/releases/releases.md` 的 **`## SQL 扫描`**（不进「进行中」表列，跨版本复用）。两项都有有效值才算已记录；缺节、空值、`（未记录）`、`—`，或只记下一项，都是 **首次使用**（与「首次发版 / 基线=`无`」无关）。
+
+| 项 | 值 |
+|---|---|
+| SQL 目录 | 相对仓库根的目录 |
+| SQL 格式 | `flyway` 或文件名 glob |
+
+- **`flyway`**：文件名 `/^V\d+(_\d+)?__.+\.sql$/i`（`V<数字>__.sql` / `V<数字>_<子号>__.sql`）。
+- **glob**：只匹配文件名。`*` 任意一段，`?` 一个字符，大小写不敏感。例：`*.sql`、`R*.sql`。不得含 `/`、`\`、`..`。
+- 已记录后，freeze / prepare / note-merge **只收录该目录之下且文件名符合该格式的文件**，不再额外要求路径含 `db/migration`。
+- 不传 `--sql-dir` / `--sql-format` 且索引未记录时，脚本仍按旧规则（路径含 `db/migration` 且 Flyway 文件名），避免旧调用被改写。prepare 在索引未记录且未传这两参时 **exit 1**。
+- 对得上 Flyway 文件名的，`SQL序` 与 DDL/DML 归类照旧。只符合自定义 glob、解析不出版本号的文件仍进入 SQL 候选，排序靠后，归类为「未分类」。
+- 首次使用的两题在 [gates-common.md](gates-common.md) 首问里答完，并用 `release.mjs sql-profile -- --set-dir … --set-format … --apply` 写入。只答一项不落盘。
+
 ## ⑥ 密文策略
 
 「配置项」章与 `artifacts.json` **允许密文值**；索引（`releases.md`）与白话摘要**只列密文键名，不展开密文正文**。
@@ -85,6 +101,7 @@ freeze `overdueHardGate=true`（进行中目录包已定版且发版日期已过
 
 ## 变更记录
 
+- 0.4.4 新增 ⑤b（SQL 扫描：目录 + 格式；首次使用写入索引，之后按记录扫描）。
 - 0.4.3 新增 ⑩（HTML 只读渲染；目录包含同名 `<identity>.html`）。
 - 0.4.0 版本身份改为 `release-V{yyMMdd}`；删除 notes/ 兼容读；仓内快照对账；取消发版命令。
 - 0.3.32 建立本 SSOT（复述自 SKILL / gates-common / README / QUICKSTART / freeze / idempotency / questions，收敛于此）。

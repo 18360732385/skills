@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>诊断台 · 雷达 + 各项指标</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #edf0e9;
+      --panel: #f7f9f4;
+      --panel2: #eff2ea;
+      --border: #c3ccbc;
+      --text: #212a22;
+      --muted: #5b6b5c;
+      --accent: #0e7a4e;
+      --accent-soft: rgba(14, 122, 78, 0.08);
+      --warn: #a37200;
+      --danger: #bc3f2b;
+      --danger-soft: rgba(188, 63, 43, 0.08);
+      --cap: #a37200;
+      --radius: 2px;
+      --font: "IBM Plex Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: "JetBrains Mono", Consolas, monospace;
+      --shadow: 0 1px 2px rgba(33, 42, 34, 0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .wrap { width: min(1080px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 48px; }
+    .note { margin: 0 0 14px; max-width: 68ch; color: var(--muted); font-size: 13px; }
+    .sheet {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+    .sheet::before, .sheet::after {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+    }
+    .sheet::before { top: -1px; left: -1px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+    .sheet::after { right: -1px; bottom: -1px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel2);
+      padding-right: 8px;
+    }
+    .tabs span { padding: 8px 14px; font-size: 13px; color: var(--muted); }
+    .tabs .on {
+      background: var(--panel);
+      color: var(--accent);
+      font-weight: 650;
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+    .tabs .grow { flex: 1; }
+    .body { padding: 14px 18px 16px; }
+    .body > h2 { margin: 0 0 6px; font-size: 18px; font-weight: 700; }
+    .lead { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+    .diag-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 860px) { .diag-grid { grid-template-columns: 1fr; } }
+    .chart-box, .diag-side {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      min-height: 100%;
+    }
+    .chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      min-height: 28px;
+    }
+    .chart-head h3 { margin: 0; font-size: 0.84rem; font-weight: 700; }
+    .radar-detail {
+      height: 26px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .radar-detail:hover,
+    .radar-detail[aria-expanded="true"] {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .radar-wrap { display: grid; justify-items: center; gap: 8px; }
+    .radar-wrap svg { width: 100%; max-width: 420px; height: auto; display: block; }
+    .radar-legend {
+      display: flex;
+      gap: 14px;
+      font-size: 0.74rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .radar-legend i {
+      display: inline-block;
+      width: 18px;
+      height: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .radar-legend .lg-q { background: var(--accent); }
+    .radar-legend .lg-c {
+      background: transparent;
+      border-top: 2px dashed var(--cap);
+      height: 0;
+    }
+    .diag-side {
+      position: relative;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      min-height: 320px;
+    }
+    .domain-metrics-panel {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .domain-metrics-panel[hidden] { display: none !important; }
+    .domain-metrics-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+    .domain-metrics-table th,
+    .domain-metrics-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid #dde3d6;
+      text-align: left;
+      vertical-align: baseline;
+    }
+    .domain-metrics-table th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.72rem;
+      border-bottom-color: var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--panel2);
+    }
+    .domain-metrics-table th:nth-child(1),
+    .domain-metrics-table td:nth-child(1) { width: 5.6em; }
+    .domain-metrics-table th:nth-child(2),
+    .domain-metrics-table td:nth-child(2),
+    .domain-metrics-table th:nth-child(3),
+    .domain-metrics-table td:nth-child(3),
+    .domain-metrics-table th:nth-child(4),
+    .domain-metrics-table td:nth-child(4) { width: 3.6em; }
+    .domain-metrics-table th:nth-child(5),
+    .domain-metrics-table td:nth-child(5) { width: 4.4em; }
+    .domain-metrics-table th:nth-child(6),
+    .domain-metrics-table td:nth-child(6) { width: 7.2em; }
+    .domain-metrics-table .num {
+      text-align: right;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .domain-metrics-table .dom-name {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .domain-metrics-table .note {
+      color: var(--muted);
+      font-size: 0.72rem;
+      white-space: nowrap;
+      max-width: 8.5em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
+    }
+    .domain-metrics-table .note[title] { cursor: help; }
+    .domain-metrics-table tr.lag td { background: var(--danger-soft); }
+    .domain-metrics-table tr.lag .dom-name { color: var(--danger); }
+    .ok { color: var(--accent); }
+    .warn { color: var(--warn); }
+    .low { color: var(--danger); }
+    .na { color: var(--muted); font-weight: 500; }
+    .story {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+    .story li {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--warn);
+      background: var(--panel);
+      font-size: 0.82rem;
+    }
+    .strip {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      background: var(--panel);
+      font-size: 0.8rem;
+    }
+    .strip .k { color: var(--muted); font-size: 0.7rem; }
+    .strip .v {
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="note">保留雷达图画质量分。按钮改为「各项指标」；点开后右侧覆盖展示各域表（质量 / 覆盖 / 金标 / 真实性）。Esc 或再点一次收起。这是交互草稿，报告模板已同步同款交互。</p>
+    <article class="sheet">
+      <div class="tabs" aria-hidden="true">
+        <span>决策台</span><span class="on">诊断台</span><span>任务台</span><span>趋势台</span><span>落地检查台</span><span class="grow"></span>
+      </div>
+      <div class="body">
+        <h2>诊断台</h2>
+        <p class="lead">拖后腿优先看：界面原型 — 代码覆盖仍可补；距上限约 85 分；覆盖 0%；金标指数 0%；真实性 0/45；覆盖未到 100%；金标指数未到 98%；真实性未齐</p>
+        <div class="diag-grid">
+          <div class="chart-box">
+            <div class="chart-head">
+              <h3>各域文档质量分 vs 上限</h3>
+              <button type="button" class="radar-detail" id="radar-detail" aria-expanded="false" aria-controls="radar-coverage" aria-label="展开各域各项指标">各项指标</button>
+            </div>
+            <div class="radar-wrap">
+              <div id="chart"></div>
+              <div class="radar-legend">
+                <span><i class="lg-q"></i>文档质量分</span>
+                <span><i class="lg-c"></i>理论上限</span>
+              </div>
+            </div>
+          </div>
+          <div class="diag-side">
+            <div class="domain-metrics-panel" id="radar-coverage" hidden>
+              <table class="domain-metrics-table">
+                <thead>
+                  <tr>
+                    <th>域</th>
+                    <th class="num">质量</th>
+                    <th class="num">覆盖</th>
+                    <th class="num">金标</th>
+                    <th class="num">真实性</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody id="domain-summary"></tbody>
+              </table>
+            </div>
+            <ul class="story">
+              <li>四态灯：骨架=YES · 覆盖=NO · 语义=YES · Plan=已关（不替代开干）</li>
+              <li>拖后腿：界面原型 — 代码覆盖仍可补；距上限约 85 分；覆盖 0%；金标指数 0%；真实性 0/45</li>
+              <li>常见缺口：缺 evidence×1、dens-examples×1、缺模板必填章×1</li>
+            </ul>
+            <div class="strip"><span class="k">代码覆盖率</span><span class="v">60%</span><span class="k">6 域满 · 4 域为零</span></div>
+            <div class="strip"><span class="k">文档质量分</span><span class="v">72</span><span class="k">上限约 100</span></div>
+            <div class="strip"><span class="k">模板完整度</span><span class="v">100%</span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+  <script>
+    var DOMAINS = [
+      { id: "func", name: "功能文档", q: 100, c: 100, g: "35.7%", a: "0/176" },
+      { id: "db", name: "库表文档", q: 100, c: 100, g: "97.4%", a: "0/38" },
+      { id: "jobs", name: "定时任务", q: 100, c: 100, g: "100%", a: "0/55" },
+      { id: "prototype", name: "界面原型", q: 15, c: 0, g: "0%", a: "0/45", lag: true },
+      { id: "components", name: "组件库", q: 15, c: 0, g: "0%", a: "0/79" },
+      { id: "api", name: "接口文档", q: 100, c: 100, g: "95.5%", a: "0/233" },
+      { id: "redis", name: "缓存文档", q: 100, c: 100, g: "37.5%", a: "0/18" },
+      { id: "design", name: "设计系统", q: 100, c: 100, g: "100%", a: "0/6" },
+      { id: "pages", name: "页面路由", q: 15, c: 0, g: "0%", a: "0/67" },
+      { id: "client-api", name: "契约消费层", q: 15, c: 0, g: "0%", a: "0/57", note: "154 个 type_export 未计入覆盖" }
+    ];
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function pctBand(v) {
+      if (v == null) return "na";
+      if (v >= 100) return "ok";
+      if (v >= 80) return "warn";
+      return "low";
+    }
+    function goldBand(label) {
+      var n = parseFloat(String(label).replace("%", ""));
+      if (!isFinite(n)) return "na";
+      if (n >= 98) return "ok";
+      if (n >= 80) return "warn";
+      return "low";
+    }
+    function authBand(label) {
+      var m = String(label).match(/^(\d+)\s*\/\s*(\d+)$/);
+      if (!m) return "na";
+      if (+m[2] === 0) return "na";
+      if (+m[1] >= +m[2]) return "ok";
+      if (+m[1] === 0) return "low";
+      return "warn";
+    }
+    function fmtPct(v) {
+      return (Math.round(v * 10) / 10) + "%";
+    }
+
+    function renderRadar() {
+      var n = DOMAINS.length;
+      var R = 120, cx = 180, cy = 155, W = 360, H = 320;
+      function pt(i, r) {
+        var a = (-Math.PI / 2) + (i / n) * Math.PI * 2;
+        return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+      }
+      var rings = [0.25, 0.5, 0.75, 1].map(function (f) {
+        var pts = [];
+        for (var i = 0; i < n; i++) {
+          var p = pt(i, R * f);
+          pts.push(p.x.toFixed(1) + "," + p.y.toFixed(1));
+        }
+        return '<polygon points="' + pts.join(" ") + '" fill="none" stroke="#c3ccbc" stroke-width="1"/>';
+      }).join("");
+      var axes = DOMAINS.map(function (_, i) {
+        var p = pt(i, R);
+        return '<line x1="' + cx + '" y1="' + cy + '" x2="' + p.x.toFixed(1) + '" y2="' + p.y.toFixed(1) + '" stroke="#c3ccbc" stroke-width="1"/>';
+      }).join("");
+      var qPts = [], cPts = [];
+      DOMAINS.forEach(function (d, i) {
+        qPts.push(pt(i, R * (d.q / 100)));
+        cPts.push(pt(i, R));
+      });
+      function poly(pts, fill, stroke, dash) {
+        var s = pts.map(function (p) { return p.x.toFixed(1) + "," + p.y.toFixed(1); }).join(" ");
+        return '<polygon points="' + s + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"' +
+          (dash ? ' stroke-dasharray="4 3"' : "") + "/>";
+      }
+      var labels = DOMAINS.map(function (d, i) {
+        var p = pt(i, R + 22);
+        var anchor = Math.abs(p.x - cx) < 8 ? "middle" : (p.x > cx ? "start" : "end");
+        return '<text x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '" text-anchor="' + anchor +
+          '" fill="' + (d.lag ? "#bc3f2b" : "#212a22") + '" font-size="11" font-weight="' + (d.lag ? "700" : "500") + '">' +
+          esc(d.name) + "</text>";
+      }).join("");
+      var dots = qPts.map(function (p, i) {
+        var band = pctBand(DOMAINS[i].q);
+        var fill = band === "ok" ? "#0e7a4e" : band === "warn" ? "#a37200" : "#bc3f2b";
+        return '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3.5" fill="' + fill + '"/>';
+      }).join("");
+      document.getElementById("chart").innerHTML =
+        '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="各域文档质量分雷达图">' +
+        rings + axes +
+        poly(cPts, "none", "#a37200", true) +
+        poly(qPts, "rgba(14,122,78,0.12)", "#0e7a4e", false) +
+        dots + labels + "</svg>";
+    }
+
+    function renderTable() {
+      document.getElementById("domain-summary").innerHTML = DOMAINS.map(function (d) {
+        return '<tr class="' + (d.lag ? "lag" : "") + '">' +
+          '<td class="dom-name">' + esc(d.name) + "</td>" +
+          '<td class="num ' + pctBand(d.q) + '">' + d.q + "</td>" +
+          '<td class="num ' + pctBand(d.c) + '">' + fmtPct(d.c) + "</td>" +
+          '<td class="num ' + goldBand(d.g) + '">' + esc(d.g) + "</td>" +
+          '<td class="num ' + authBand(d.a) + '">' + esc(d.a) + "</td>" +
+          (function () {
+            var note = d.note || "";
+            var short = note.length > 10 ? note.slice(0, 10) + "…" : note;
+            var title = note.length > 10 ? ' title="' + esc(note) + '"' : "";
+            return '<td class="note"' + title + ">" + esc(short) + "</td></tr>";
+          })();
+      }).join("");
+    }
+
+    function setOpen(open) {
+      var btn = document.getElementById("radar-detail");
+      var panel = document.getElementById("radar-coverage");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      btn.setAttribute("aria-label", open ? "收起各域各项指标" : "展开各域各项指标");
+      panel.hidden = !open;
+    }
+
+    renderRadar();
+    renderTable();
+    document.getElementById("radar-detail").addEventListener("click", function () {
+      setOpen(this.getAttribute("aria-expanded") !== "true");
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") setOpen(false);
+    });
+    if (new URLSearchParams(location.search).get("open") === "1") setOpen(true);
+  </script>
+</body>
+</html>

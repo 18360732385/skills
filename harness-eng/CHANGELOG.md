@@ -1,11 +1,16 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.8.4**。报告对照 **`skill_version` + `report_schema`**（**0.4.2**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.8.9**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.9 | 2026-11-26 | 0.8.8 sms-ai 实战解析：func 身份认出 `*ServiceImpl` · `### 变更记录` 不再整节丢掉 · acceptance 版本跟 manifest · 心跳保留既有 migrate ops · 形态到顶但金标未过改写「未过线」· API/类名/Redis 边界匹配不再把短前缀当成已覆盖 · 无表名的 `IF NOT EXISTS` 不记成表名 `IF` · Redis 覆盖与身份槽同一解析 · prototype id 碰撞消解 · jobs 真实性路径错误写明 `tasks/` · client-api 索引写明排除 `type_export` · refresh 写出报告 HTML |
+| 0.8.8 | 2026-11-26 | gold 开干追加四道：判定时分域覆盖 100%（不改写策略文件）、全仓与分域金标指数 ≥ 98%、正式真相身份双向一致、覆盖真实性记录全部未过期 pass。strict / mature_compat 门槛不变。诊断台并列三列（report_schema 0.4.3）。批次开工冻结 unit_ids，关批只核本批 |
+| 0.8.7 | 2026-11-26 | 0.8.6 sms-ai 实战待完善：dry-run 不再回写 harness-meta · upgrade 提示安装副本版本错位 · upgrade-diff 带覆盖口径 · 无 blocker 也刷新 migrate-docs 报告时间戳 · hook 预览内容相同记 unchanged · 满分不写拖后腿 · client-api 写明排除的 type_export |
+| 0.8.6 | 2026-11-26 | 0.8.5 sms-ai 实战总析仍存项：design inventory 排除 `docs/design/` 与脚手架 · pages 同一源文件不再 route+page_file 双计 · 前端覆盖改为被点名资产/资产（破坏性）· TODO 正文提及与代码块不计、真占位仍计 · `selfcheck --help` 不跑套件 · `reverse-changelog-tables` 改为 optional |
+| 0.8.5 | 2026-11-26 | 0.8.4 sms-ai 实战总析残留全修：score-policy CRLF 腐蚀修复 + gold 无变更不写盘 + 补齐前端 coverage_targets · 索引骨架去 `TODO(harness-eng)` · 前端覆盖改真实 `truths/assets`（不过不放宽）· `isFrontendTruthFile` 只排除 `/templates/` 与 `*-template.md` 脚手架 · prototype inventory 排除 SSOT 下 md · rule17 退役扫宿主 `.md` · TODO 扫描跳过变更记录节 |
 | 0.8.4 | 2026-11-26 | 0.8.3 实战总析残留收口：`GLOB_FRONTEND` 默认对齐 detect（禁裸 `**/src/**`）+ upgrade 继承 rule-17 globs · 17 退役多宿主/SSOT 命令 + 松 D11 金标文案 · 报告透出 `asset_ratio` 并提示偏低 · archive-docs 嵌套路径/`--dry-run`/拒绝运行时文件 · 对比句优先门禁 `coverage_all_percent`（缺历史不假 0）· func 类名放宽（标题/表）· acceptance evidence 等价（联调/Controller）· 落点 marker 错位人话 · migrate-docs dry-run/ops=0 刷新报告 · pages feature 根扫描 · client-api 覆盖分母排除 `type_export` |
 | 0.8.3 | 2026-11-25 | 报告缺陷修复列车（0.8.1 升级实战报告复核后的 D8–D16 残留）：migrate-docs 幂等治理（`api_rewrite_path` 未命中→`noop` 不再假 patched · `api_append_endpoints` 按 path+method 去重 · `api_append_fields` 字段级幂等 · jobs op 带 `resolved_from` 审计）· `params.rule101` 快捷布尔 + CLI `--rule101[=full|off]` 直接进写集（101 互斥保持，不再必须 include_optional）· 顶栏 coverage 切门禁口径（`coverage_ready.all_percent` + 顶层 `coverage_all_percent` 镜像 + diff/报告壳/CLI 摘要同步，legacy JSON 回退并标 `coverage_percent_source`）· `--migrate-docs` help 默认值改「厚仓 dry-run / 薄仓 auto」· selfcheck 入口隔离外部 `HARNESS_ENG_ROOT`（保存→删→exit 恢复）· design 侧 archive_hint 不再提示已在 `docs/design/` 内的文件（对齐 prototype）· 新增可逆归档 CLI `scripts/archive-docs.mjs`（--archive/--restore/--list；move+账本，不删文件）· selfcheck junction 落点健康检查（skills-manager 挖空形态人话 fail fast）· refresh 扫变更记录占位残留（表行 PLACEHOLDER / 字面 `v{ts}` → 非阻断 `changelog_placeholder_warnings`）· upgrade 收尾检测旧 rule 17 与 101 并存（只警告 + 退役命令，不自动删） |
 | 0.8.2 | 2026-11-25 | 报告页人话化（report_schema 0.4.2）：术语大白话（形态分→文档质量分 · 金标达标率→验收通过率 · 语义闸→语义抽检 · 残差→验收遗留项 · 宿主台→落地检查台）· **首屏总评横幅**（Verdict 徽章 + 总评分 0–100 + 等级 + 一句话结论 + 分项；沿用原仪表参考分公式；替代原施工阶梯位）· 施工阶梯并入决策台与开干清单同组 · 10 秒结论区精简 · 开干清单收编进决策台（KPI 灯组并入）· 诊断台缺口/低分明细折叠 · 赛博朋克装饰降噪（扫描线/glitch/Orbitron 移除）· 趋势台参考分块移除 · 视觉精修：工程图纸/夜班表盘双主题色板 · 验收印章式 Verdict 徽章 · 等宽字体仅作仪表读数 · 去 ALL-CAPS/辉光/箭头装饰 · 横幅分数纵排仪表面 + 方格纸底纹 · 「盖章时刻」入场编排（印章缩压/冲击环/分数滚动/进度条生长，reduced-motion 全闸）· 阶梯/清单宽屏双列并排 · 暗色表盘磷光微光 |

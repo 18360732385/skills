@@ -80,6 +80,55 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.8 → 0.8.9 迁移要点
+
+1. **meta**：`skill_version` → `0.8.9`
+2. **报告壳**：`report_schema` 仍 **0.4.3**（形态到顶但金标未过时写「未过线」，不再把「已达理论上限」叫拖后腿）
+3. **身份**：func 引用槽认出 `ServiceImpl` / `ComponentImpl` / `ManagerImpl` / `HandlerImpl`。变更记录只剥离 `##` 级标题，`### 变更记录` 留在正文
+4. **覆盖补页**：路径、类名、Redis 模式按边界判断是否已写入，短前缀不再算已覆盖。`CREATE TABLE IF NOT EXISTS` 后面没有表名时不再得到表名 `IF`
+5. **migrate-docs 报告**：本轮没有升严 blocker 时，若已有 `ops`，只刷新时间戳并保留原计划；没有旧计划才写空心跳
+6. **refresh**：打分成功后重建 `docs/harness-eng/report-latest.html`。失败只提示，不改变 refresh 退出码
+7. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.9`）后再 sync
+
+## 0.8.7 → 0.8.8 迁移要点
+
+1. **meta**：`skill_version` → `0.8.8`
+2. **报告壳**：`report_schema` → **0.4.3**（诊断台并列覆盖率、金标指数、真实性；0.4 族趋势仍可比）
+3. **gold 开干**：启用域覆盖率须逐个 100%（判定时强制，不改写 `score-policy.yaml`），全仓与分域金标指数 ≥ 98%，`--gold --ssot-only` 身份双向一致，`coverage-audit` 全部未过期 `pass`。strict / mature_compat 门槛不变
+4. **批次**：进入 `in_progress` 时冻结 `unit_ids`。gold 关批只核本批正式真相和核对记录，不再用 `.fill-work` 代替关批
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.8`）后再 sync
+
+## 0.8.6 → 0.8.7 迁移要点
+
+1. **meta**：`skill_version` → `0.8.7`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳；满分不再写拖后腿；client-api 行写明排除的 `type_export`；总评说明覆盖等于点名、不核字段）
+3. **dry-run**：不再把 `mysql_guard_servers` 回写进 `harness-meta.yaml`。文本相同的真写也不改 mtime
+4. **安装副本**：upgrade 开头若 `~/.cursor/skills/harness-eng` 与正在执行的技能版本不同，stderr 警告一行。以正在执行的那份为准
+5. **升严差分**：`upgrade-diff.json` 增加 `coverage_before` / `coverage_after` / `coverage_note_zh`。磁盘 `score-latest.json` 仍是升版前分数，对照口径看 `coverage_after`，refresh 之后再比磁盘文件
+6. **migrate-docs 报告**：本轮没有升严 blocker 时只刷新 `migrate-docs-report.json` 的时间戳（`ops: []`，未规划补丁），不扫库表漂移
+7. **hook 预览**：dry-run 内容与磁盘相同的 fix-hook 记 `unchanged`，不再预告 `replace`
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.7`）后再 sync
+
+## 0.8.5 → 0.8.6 迁移要点
+
+1. **meta**：`skill_version` → `0.8.6`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳；分域透出 `mapped` / `unmapped`）
+3. **前端覆盖口径变更（破坏性）**：`coverage_by_domain` 前端域 `ratio` = 被真相点名的资产 / 资产（路径、路由、url 或依赖名；变更记录节不算）。篇数凑齐但没点名资产时金标 1.0 会掉下来
+4. **重跑 inventory + 打分**：`fill-inventory`（design 不再把 `docs/design/` 与脚手架算进分母；pages 同一页面源文件不再既出 route 又出 page_file）→ `fill-score` → `fill-report-html`
+5. **倒排脚本**：`reverse-changelog-tables` 改为 optional，**0.8.6 起默认不进写集**。目标仓里已经有的 `scripts/reverse_changelog_tables.py` 保持不动。需要倒排旧表时把该 id 放进 `include_optional`，或对已有脚本跑 `--dry-run` 再 apply
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.6`）后再 sync
+
+## 0.8.4 → 0.8.5 迁移要点
+
+1. **meta**：`skill_version` → `0.8.5`
+2. **报告壳**：`report_schema` 仍 **0.4.2**（本版不升壳）
+3. **前端覆盖口径变更（破坏性）**：`coverage_by_domain` 前端域 `ratio` = `truths/assets`（不再「一篇过域」）；gold `coverage_targets`=1.0 时须按资产补齐真相，否则 `coverage_ready`/`ai_coding_ready` 不过
+4. **重跑 inventory + 打分**：尤其 `fill-inventory --domain prototype`（SSOT 下 md 不再进分母）→ `fill-score` → `fill-report-html`
+5. **score-policy**：若 Windows CRLF 曾被 gold apply 腐蚀，upgrade/resume 会 normalize 为 LF；已是 gold 且 targets 齐全时不再空写
+6. **索引骨架**：新渲 prototype/design 索引不再自带 `TODO(harness-eng)`；存量索引请手改占位或精填
+7. **rule 17**：退役警告现含宿主 `.md` 镜像；经确认后 `git mv` 归档（不自动删）
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.5`）后再 sync
+
 ## 0.8.3 → 0.8.4 迁移要点
 
 1. **meta**：`skill_version` → `0.8.4`
@@ -128,7 +177,7 @@
 ## 0.7.61 → 0.7.62 迁移要点
 
 1. **meta**：`skill_version` → `0.7.62`
-2. **L1 脚本**：刷新 `scripts/doc_versioning.py`、`new_changelog_version.py`、`reverse_changelog_tables.py`；rules `11`/`12`/`13`/`16`/`20` 与五域变更记录模板改 `v{ts}` 表顶插入（存量 `vX.Y` 双轨）
+2. **L1 脚本**：刷新 `scripts/doc_versioning.py`、`new_changelog_version.py`、`reverse_changelog_tables.py`（**0.8.6 起默认不进写集**，需要时 `include_optional`）；rules `11`/`12`/`13`/`16`/`20` 与五域变更记录模板改 `v{ts}` 表顶插入（存量 `vX.Y` 双轨）
 3. **L2**：刷新 `lint-pitfalls.mjs`（双轨倒序）+ 新增 `scripts/agent-kb/new-pitfall-id.mjs`；rule `19`/`00` / pitfalls 骨架 / delivery-checklist 对齐 `P{ts}`
 4. **存量仓**：可跑 `python scripts/reverse_changelog_tables.py --dry-run` 再 apply，将变更记录表倒排为新→旧
 5. **不动**：`NN-*` 文件名前缀、`Gn`、SQL 迁移发号（已时间戳）

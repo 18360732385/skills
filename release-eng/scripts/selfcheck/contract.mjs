@@ -33,6 +33,7 @@ export async function runContract(kit) {
     "modes/conventions.md",
     "scripts/release.mjs",
     "scripts/release-prepare.mjs",
+    "scripts/release-sql-profile.mjs",
     "scripts/lib/safe-out.mjs",
     "scripts/lib/freeze/paths.mjs",
     "scripts/lib/freeze/preview.mjs",
@@ -61,6 +62,7 @@ export async function runContract(kit) {
   const helpOut = `${help.stdout || ""}`;
   assert(/prepare/.test(helpOut) && /cancel/.test(helpOut), "help lists prepare/cancel");
   assert(/push-gate|freeze|seal-check/.test(helpOut), "help lists script subcommands");
+  assert(/sql-profile/.test(helpOut), "help lists sql-profile");
 
   const modes = spawnRelease(["modes"]);
   assert(modes.status === 0, "release.mjs modes exit 0");

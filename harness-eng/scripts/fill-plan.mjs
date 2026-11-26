@@ -15,6 +15,8 @@ import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { defaultContractDomains } from "./lib/domains.mjs";
 import { collectResidual } from "./lib/acceptance-report.mjs";
+import { listOrderedUnitIds } from "./lib/coverage-identity.mjs";
+import { validateAudit } from "./lib/coverage-audit.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -158,6 +160,9 @@ function toYaml(obj) {
     lines.push(`    status: ${b.status}`);
     if (b.tier) lines.push(`    tier: ${b.tier}`);
     lines.push(`    sample_n: ${b.sample_n == null ? "null" : b.sample_n}`);
+    if (Array.isArray(b.unit_ids)) {
+      lines.push(`    unit_ids: ${JSON.stringify(b.unit_ids)}`);
+    }
     lines.push("    acceptance:");
     for (const a of b.acceptance || []) lines.push(`      - ${JSON.stringify(a)}`);
   }
@@ -205,6 +210,7 @@ function parsePlanYaml(text) {
         acceptance: [],
         sample_n: null,
         tier: null,
+        unit_ids: null,
       };
       inAcceptance = false;
       continue;
@@ -227,6 +233,20 @@ function parsePlanYaml(text) {
     if (cur && /^\s*sample_n:/.test(line)) {
       const v = t.replace(/^sample_n:\s*/, "").trim();
       cur.sample_n = v === "null" ? null : Number(v);
+      inAcceptance = false;
+      continue;
+    }
+    if (cur && /^\s*unit_ids:/.test(line)) {
+      const v = t.replace(/^unit_ids:\s*/, "").trim();
+      if (v === "null" || v === "") cur.unit_ids = null;
+      else {
+        try {
+          const parsed = JSON.parse(v);
+          cur.unit_ids = Array.isArray(parsed) ? parsed.map((x) => String(x)) : null;
+        } catch {
+          cur.unit_ids = null;
+        }
+      }
       inAcceptance = false;
       continue;
     }
@@ -273,28 +293,75 @@ function summarize(plan) {
   };
 }
 
+function occupiedUnitIds(plan, exceptId) {
+  const set = new Set();
+  for (const b of plan.batches || []) {
+    if (b.id === exceptId) continue;
+    for (const id of b.unit_ids || []) set.add(id);
+  }
+  return set;
+}
+
+/** Freeze this batch's unit_ids and append open batches for the remainder. */
+function assignBatchUnits(plan, batch, orderedIds) {
+  if (Array.isArray(batch.unit_ids)) return false;
+  if (!Array.isArray(orderedIds)) return false;
+  const occupied = occupiedUnitIds(plan, batch.id);
+  const free = orderedIds.filter((id) => !occupied.has(id));
+  const cap = batch.sample_n == null ? free.length : Math.max(0, Number(batch.sample_n) || 0);
+  batch.unit_ids = free.slice(0, cap);
+  let rest = free.slice(batch.unit_ids.length);
+  let n = 1;
+  while (rest.length) {
+    const take = batch.sample_n == null ? rest : rest.slice(0, cap || rest.length);
+    rest = rest.slice(take.length);
+    plan.batches.push({
+      id: `${batch.id}-rest-${n++}`,
+      domain: batch.domain,
+      modules: batch.modules || [],
+      status: "open",
+      tier: batch.tier,
+      acceptance: batch.acceptance || [],
+      sample_n: batch.sample_n,
+      unit_ids: take,
+    });
+    if (batch.sample_n == null) break;
+  }
+  return true;
+}
+
+function tryAssignAll(root, plan) {
+  for (const b of [...plan.batches]) {
+    if (Array.isArray(b.unit_ids)) continue;
+    const ordered = listOrderedUnitIds(root, b.domain, b.modules);
+    if (!ordered) continue;
+    assignBatchUnits(plan, b, ordered);
+  }
+}
+
 function runAcceptanceForClose(root, batch, gold) {
   const script = path.join(__dirname, "acceptance-check.mjs");
   const domain = batch.domain || "api";
-  const workDir = path.join(root, "docs", domain, ".fill-work");
+  const isGold = gold || batch.tier === "gold";
   const argv = [script];
-  // 0.2.29 / P1: prefer work-dir for sample batches; whole-domain gold stays SSOT
-  const useWorkDir =
-    (batch.tier !== "gold" || batch.sample_n != null) &&
-    fs.existsSync(workDir) &&
-    (() => {
-      try {
-        return fs.readdirSync(workDir).some((n) => /\.md$/i.test(n));
-      } catch {
-        return false;
-      }
-    })();
-  if (useWorkDir) {
-    argv.push("--work-dir", workDir);
+  if (isGold) {
+    argv.push("--root", root, "--domain", domain, "--gold", "--ssot-only");
+    if (Array.isArray(batch.unit_ids)) argv.push("--units", batch.unit_ids.join(","));
   } else {
-    argv.push("--root", root, "--domain", domain);
+    const workDir = path.join(root, "docs", domain, ".fill-work");
+    const useWorkDir =
+      batch.sample_n != null &&
+      fs.existsSync(workDir) &&
+      (() => {
+        try {
+          return fs.readdirSync(workDir).some((n) => /\.md$/i.test(n));
+        } catch {
+          return false;
+        }
+      })();
+    if (useWorkDir) argv.push("--work-dir", workDir);
+    else argv.push("--root", root, "--domain", domain);
   }
-  if (gold || batch.tier === "gold") argv.push("--gold");
   const r = spawnSync(process.execPath, argv, { encoding: "utf8" });
   return r.status == null ? 1 : r.status;
 }
@@ -364,6 +431,7 @@ function main() {
       return;
     }
     const plan = buildInitial(args.domains, args.modules, args.gold, args.sampleN);
+    tryAssignAll(root, plan);
     fs.writeFileSync(p, toYaml(plan), "utf8");
     console.log(
       JSON.stringify(
@@ -450,9 +518,9 @@ function main() {
   if (args.close) {
     const b = plan.batches.find((x) => x.id === args.close);
     if (!b) throw new Error(`batch not found: ${args.close}`);
+    const isGold = args.gold || b.tier === "gold";
     if (!args.forceClose) {
-      const st = runAcceptanceForClose(root, b, args.gold);
-      if (st === 1) {
+      if (isGold && !Array.isArray(b.unit_ids)) {
         b.status = "blocked";
         fs.writeFileSync(p, toYaml(plan), "utf8");
         console.log(
@@ -461,7 +529,39 @@ function main() {
               ok: false,
               action: "close-blocked",
               id: args.close,
-              reason: "acceptance-check blockers; use --force-close to override",
+              reason: "unit_ids unset; set in_progress to freeze the batch list",
+              summary: summarize(plan),
+            },
+            null,
+            2
+          )
+        );
+        process.exitCode = 1;
+        return;
+      }
+      const st = runAcceptanceForClose(root, b, args.gold);
+      const acceptanceFail = isGold ? st !== 0 : st === 1;
+      let auditFail = null;
+      if (isGold && !acceptanceFail) {
+        const audit = validateAudit({
+          root,
+          domain: b.domain || "api",
+          unitIds: b.unit_ids || [],
+        });
+        if (!audit.ok) auditFail = audit.reason || "gap";
+      }
+      if (acceptanceFail || auditFail) {
+        b.status = "blocked";
+        fs.writeFileSync(p, toYaml(plan), "utf8");
+        console.log(
+          JSON.stringify(
+            {
+              ok: false,
+              action: "close-blocked",
+              id: args.close,
+              reason: auditFail
+                ? `coverage-audit ${auditFail}`
+                : "acceptance-check failed; use --force-close to override",
               summary: summarize(plan),
             },
             null,
@@ -472,7 +572,7 @@ function main() {
         return;
       }
     } else {
-      console.error("WARN: --force-close skips acceptance-check");
+      console.error("WARN: --force-close skips acceptance-check and coverage-audit; ai_coding_ready stays independent");
     }
     b.status = "closed";
     fs.writeFileSync(p, toYaml(plan), "utf8");
@@ -490,6 +590,10 @@ function main() {
       throw new Error(`bad status: ${st}`);
     }
     b.status = st;
+    if (st === "in_progress" && !Array.isArray(b.unit_ids)) {
+      const ordered = listOrderedUnitIds(root, b.domain, b.modules);
+      if (ordered) assignBatchUnits(plan, b, ordered);
+    }
     fs.writeFileSync(p, toYaml(plan), "utf8");
     console.log(
       JSON.stringify(

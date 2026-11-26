@@ -15,6 +15,7 @@ import {
   normalizeCoverageMode,
   runMigrateDocs,
   detectThickTruths,
+  writeMigrateReportHeartbeat,
 } from "./migrate-docs.mjs";
 import {
   scrapeHookPlaceholders,
@@ -159,6 +160,44 @@ export function buildReadyRegressionSummaryZh(payload) {
     "下一步：按 doc_todos / migrate-docs 预览补真相 → 重跑 fill-score；开干只看 ai_coding_ready"
   );
   return lines.slice(0, 8);
+}
+
+const COVERAGE_SNAP_KEYS = ["percent", "covered", "code", "source", "truths", "mapped"];
+
+/**
+ * Compact per-domain coverage for upgrade-diff (0.8.7).
+ * @param {object|null|undefined} report
+ * @returns {object|null}
+ */
+export function summarizeCoverage(report) {
+  if (!report || typeof report !== "object") return null;
+  const by = report.coverage_by_domain;
+  if (!by || typeof by !== "object") return null;
+  const domains = {};
+  for (const [id, row] of Object.entries(by)) {
+    if (!row || typeof row !== "object") continue;
+    const snap = {};
+    for (const k of COVERAGE_SNAP_KEYS) {
+      if (row[k] != null) snap[k] = row[k];
+    }
+    domains[id] = snap;
+  }
+  return {
+    coverage_source: report.coverage_source ?? null,
+    skill_version: report.skill_version ?? null,
+    domains,
+  };
+}
+
+/**
+ * @param {{ scoreError?: boolean }} [opts]
+ * @returns {string}
+ */
+export function coverageCompareNote(opts = {}) {
+  if (opts.scoreError) {
+    return "升版后覆盖没算出来；ready 行仍按开干闸。磁盘 score-latest.json 仍是升版前分数，refresh 之后再比。";
+  }
+  return "磁盘 score-latest.json 仍是升版前分数；口径对照看 coverage_after，refresh 之后再比磁盘文件。";
 }
 
 function loadScoreLatest(root) {
@@ -310,12 +349,17 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
   } else if (coverageMode === "dry-run") {
     payload.note += "；--migrate-coverage=dry-run 只写入 coverage_ops / coverage_skipped";
   }
+  payload.coverage_before = summarizeCoverage(beforeReport);
+  payload.coverage_after = null;
+  payload.coverage_note_zh = coverageCompareNote();
 
   // Backward-compat: opts.dryRun (no migrateDocs) skips fill-score entirely (selfcheck / harness).
   // Explicit migrateDocs='dry-run' still scores and plans patches without writing docs.
   if (opts.dryRun && opts.migrateDocs == null) {
     payload.ok = true;
     payload.note = "dry-run: skipped fill-score";
+    payload.coverage_note_zh =
+      "dry-run: skipped fill-score；磁盘 score-latest.json 仍是升版前分数。";
     return payload;
   }
 
@@ -323,9 +367,11 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
   if (!first.report) {
     payload.ok = false;
     payload.score_error = first.stderr.slice(0, 800) || "fill-score produced no JSON";
+    payload.coverage_note_zh = coverageCompareNote({ scoreError: true });
   } else {
     payload.after = collectScoreBlockers(first.report);
     payload.ready_after = first.report.ai_coding_ready?.ok ?? null;
+    payload.coverage_after = summarizeCoverage(first.report);
     const d = diffBlockers(before, payload.after);
     payload.added = d.added;
     payload.removed = d.removed;
@@ -378,6 +424,7 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
       if (second.report) {
         payload.after = collectScoreBlockers(second.report);
         payload.ready_after = second.report.ai_coding_ready?.ok ?? null;
+        payload.coverage_after = summarizeCoverage(second.report);
         const d2 = diffBlockers(before, payload.after);
         payload.added = d2.added;
         payload.removed = d2.removed;
@@ -390,6 +437,20 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
           `post-migrate fill-score: ${second.stderr.slice(0, 400)}`;
       }
     }
+  } else if (migrateMode !== "off") {
+    // 0.8.7: no blockers → do not planMigrateDocs (empty blockers still scan drift).
+    const beat = writeMigrateReportHeartbeat(absRoot, {
+      mode: migrateMode,
+      skillVersion: payload.skill_version,
+    });
+    payload.migrate_docs = {
+      mode: migrateMode,
+      applied: [],
+      skipped: beat.skipped,
+      ops: 0,
+      report_refreshed: true,
+      thick_truths: thick,
+    };
   }
 
   payload.doc_todos = buildDocTodos(payload.added);
@@ -426,6 +487,7 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
     `  ready ${payload.ready_before === true ? "YES" : payload.ready_before === false ? "NO" : "?"} → ${
       payload.ready_after === true ? "YES" : payload.ready_after === false ? "NO" : "?"
     }`,
+    payload.coverage_note_zh ? `  ${payload.coverage_note_zh}` : "",
     payload.added.length ? `  added: ${payload.added.join(" · ")}` : "  added: (none)",
     `  落盘 ${DIFF_REL}` +
       (migrateMode === "auto"
@@ -477,7 +539,7 @@ export function emitUpgradeStrictnessDiff(root, opts = {}) {
       "    若要吃模板占位：upgrade_fix_hooks=replace（会备份后覆盖）；或手改上述 hook / params。"
     );
   }
-  console.error(line.join("\n"));
+  console.error(line.filter(Boolean).join("\n"));
   console.error(JSON.stringify(payload));
   return payload;
 }

@@ -40,6 +40,12 @@ import {
   remoteHintLine,
   detectRemoteHost,
   upsertReleasesIndexRow,
+  upsertSqlProfile,
+  readSqlProfile,
+  canonicalSqlFormat,
+  normalizeSqlDir,
+  validateSqlDir,
+  validateSqlFormat,
   isMigrationSql,
   isProdConfigPath,
   formatMergeSourcesTableRows,
@@ -76,6 +82,8 @@ function parseArgs(argv) {
     skipAiClassify: false,
     overdueWaived: null,
     html: true,
+    sqlDir: null,
+    sqlFormat: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -104,6 +112,8 @@ function parseArgs(argv) {
     else if (a === "--overdue-waived") out.overdueWaived = argv[++i] || null;
     else if (a === "--no-html") out.html = false;
     else if (a === "--html") out.html = true;
+    else if (a === "--sql-dir") out.sqlDir = argv[++i] || "";
+    else if (a === "--sql-format") out.sqlFormat = argv[++i] || "";
     else if (a === "--help" || a === "-h") out.help = true;
   }
   if (out.base && ["none", "无", "-", "null"].includes(String(out.base).toLowerCase())) {
@@ -141,6 +151,9 @@ function loadFreeze(args) {
     "--root", args.root, "--head", args.head, "--prior", args.prior, "--format", "json", "--out", outPath,
   ];
   if (args.priorSince) cmd.push("--prior-since", args.priorSince);
+  if (args.sqlDir && args.sqlFormat) {
+    cmd.push("--sql-dir", args.sqlDir, "--sql-format", args.sqlFormat);
+  }
   if (args.firstRelease) cmd.push("--first-release");
   else {
     if (!args.base) throw new Error("require --base with --head (or --first-release)");
@@ -862,12 +875,12 @@ function uniqueDestName(destDir, baseName, used) {
  * - config：draft.config 且 变更=added 的 **prod** 来源文件
  * - jobs：不拷贝逐任务真相，改由 buildJobsSummaryMd 生成单文件汇总清单（jobs/README.md）
  */
-function collectDraftBundlePaths(freeze) {
+function collectDraftBundlePaths(freeze, sqlProfile = null) {
   const draft = freeze.draft || {};
   const sqlPaths = new Set();
   for (const r of draft.sql || []) {
     const p = r.路径 ? String(r.路径).replace(/\\/g, "/") : "";
-    if (p && isMigrationSql(p)) sqlPaths.add(p);
+    if (p && isMigrationSql(p, sqlProfile)) sqlPaths.add(p);
   }
 
   const configPaths = new Set();
@@ -988,7 +1001,7 @@ function resetBundleKindDirs(bundleDir) {
  * 从 head 拷贝本版新增制品：sql → sql/refs/；config → config/；
  * jobs/ 生成单文件汇总清单 `jobs/README.md`（← draft.jobs 全量任务）。
  */
-function copyBundleFiles(root, bundleDir, freeze, head) {
+function copyBundleFiles(root, bundleDir, freeze, head, sqlProfile = null) {
   const warnings = [];
   const copied = [];
   if (!head) {
@@ -998,7 +1011,7 @@ function copyBundleFiles(root, bundleDir, freeze, head) {
 
   resetBundleKindDirs(bundleDir);
 
-  const groups = Object.entries(collectDraftBundlePaths(freeze));
+  const groups = Object.entries(collectDraftBundlePaths(freeze, sqlProfile));
 
   for (const [kind, paths] of groups) {
     if (!paths.length) continue;
@@ -1112,7 +1125,7 @@ function main() {
   node release-note-merge.mjs --root <REPO> --note <path> --freeze-json <file> [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --base <ref> --head <ref> [--prior auto] [--dry-run]
   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
-Options: --identity --release-branch --baseline --release-date --owner --status --overdue-waived <书面说明> --no-bundle-files --no-update-index --no-html
+Options: --identity --release-branch --baseline --release-date --owner --status --overdue-waived <书面说明> --no-bundle-files --no-update-index --no-html --sql-dir <rel> --sql-format <flyway|glob>
 默认回写 docs/releases/releases.md 进行中表（--no-update-index 关闭）
 Note path: docs/releases/{identity}/{identity}.md（无 notes/；旧仓先 migrate-notes）
 定版同时生成同名只读渲染 {identity}.html（--no-html 关闭；md 为 SSOT，勿手改 html）
@@ -1150,6 +1163,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
   }
 
   const profile = loadRepoProfile(args.root);
+  const sqlProfile = attachSqlProfile(args);
   const freeze = loadFreeze(args);
   if (freeze.overdueHardGate && !args.overdueWaived) {
     console.error(
@@ -1203,7 +1217,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
     : null;
 
   if (args.dryRun) {
-    const planCopied = args.bundleFiles ? planBundleFiles(freeze) : [];
+    const planCopied = args.bundleFiles ? planBundleFiles(freeze, sqlProfile) : [];
     text = applyBundleSection(text, planCopied);
     let indexRow = null;
     if (indexPlan) {
@@ -1246,7 +1260,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
   let sqlBundleResult = null;
   if (args.bundleFiles) {
     fs.mkdirSync(bundle.bundleDir, { recursive: true });
-    bundleResult = copyBundleFiles(args.root, bundle.bundleDir, freeze, meta.head);
+    bundleResult = copyBundleFiles(args.root, bundle.bundleDir, freeze, meta.head, sqlProfile);
 
     const hasSqlRefs = (bundleResult.copied || []).some((c) => c.kind === "sql");
     if (hasSqlRefs) {
@@ -1271,6 +1285,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
         priorArtifactsPath: fs.existsSync(priorArt) ? priorArt : null,
         skipAiClassify: args.skipAiClassify,
         sourcePathByBasename,
+        sqlProfile,
       });
       for (const w of sqlBundleResult.warnings || []) bundleResult.warnings.push(w);
       if (!sqlBundleResult.ok) {
@@ -1341,8 +1356,12 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
     if (cur == null) {
       bundleResult.warnings.push("缺少 docs/releases/releases.md，跳过索引回写");
     } else {
-      const up = upsertReleasesIndexRow(cur, indexPlan);
-      fs.writeFileSync(indexPath, up.text, "utf8");
+      let nextIndex = upsertReleasesIndexRow(cur, indexPlan).text;
+      if (sqlProfile) {
+        const prof = upsertSqlProfile(nextIndex, sqlProfile);
+        if (prof.updated) nextIndex = prof.text;
+      }
+      fs.writeFileSync(indexPath, nextIndex, "utf8");
       indexUpdated = true;
       indexRow = up.row;
     }
@@ -1379,8 +1398,36 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
   );
 }
 
-function planBundleFiles(freeze) {
-  const groups = collectDraftBundlePaths(freeze);
+function attachSqlProfile(args) {
+  const hasDir = Boolean(args.sqlDir);
+  const hasFmt = Boolean(args.sqlFormat);
+  if (hasDir !== hasFmt) {
+    console.error("require both --sql-dir and --sql-format, or neither (then read releases.md)");
+    process.exit(1);
+  }
+  if (hasDir && hasFmt) {
+    const err = validateSqlDir(args.sqlDir) || validateSqlFormat(args.sqlFormat);
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    args.sqlDir = normalizeSqlDir(args.sqlDir);
+    args.sqlFormat = canonicalSqlFormat(args.sqlFormat);
+    return { sqlDir: args.sqlDir, sqlFormat: args.sqlFormat };
+  }
+  const indexPath = path.join(args.root, "docs", "releases", "releases.md");
+  const text = readText(indexPath);
+  const rec = text ? readSqlProfile(text) : { firstUse: true, sqlDir: null, sqlFormat: null };
+  if (!rec.firstUse) {
+    args.sqlDir = rec.sqlDir;
+    args.sqlFormat = rec.sqlFormat;
+    return { sqlDir: rec.sqlDir, sqlFormat: rec.sqlFormat };
+  }
+  return null;
+}
+
+function planBundleFiles(freeze, sqlProfile = null) {
+  const groups = collectDraftBundlePaths(freeze, sqlProfile);
   const out = [];
   for (const [kind, paths] of Object.entries(groups)) {
     for (const src of paths) {

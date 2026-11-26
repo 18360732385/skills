@@ -70,7 +70,7 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 
 **ai_coding_ready（开干闸）**：`skeleton_ready && coverage_ready && semantic_ready && fill_plan.all_closed`；若 `gate_profile=strict|gold` 再并入 `gate.*`。  
 - **strict**（有 score-policy 未写 profile 亦视为 strict）：缺省 `morph_floor=75` / `todo_scan=truths` / `acceptance_blockers_max=0`；另检 **entry_ready**（根/分册 AGENTS `## Commands`/`Critical` 不得仍含 `TODO(harness-eng)`，否则 blocker `entry_todo`）；前端无契约域时 `frontend_coverage: not_measured`（不阻断）；语义 `generic≤3 && unbound≤2 && tc≥70`。  
-- **gold**：覆盖目标强制 1.0；`morph_floor=95`；`template_completeness_min=95`；`todo_scan=harness_docs`；`acceptance_blockers_max=0`；`acceptance_warnings_max=0`；语义 `generic≤0 && unbound≤0 && tc≥95`；**live drift 阻断开干**。  
+- **gold**：判定时覆盖模式强制 `all_domains`、每个启用且 `code>0` 的域目标 1.0；全仓与分域金标指数都必须是数字且 ≥ 0.98；`morph_floor=95`；`template_completeness_min=95`；`todo_scan=harness_docs`；`acceptance_blockers_max=0` 与 `gold_ratio_min=0.98` 同时生效；`acceptance_warnings_max=0`；语义 `generic≤0 && unbound≤0 && tc≥95`；**live drift 阻断开干**；覆盖真实性记录须全部未过期 `pass`。验收带 `--gold --ssot-only`。  
 - **mature_compat**（0.7.48）：`morph_floor=75` + acceptance blockers/warnings=0（同 gold 验收条）；覆盖**不**强制 1.0；**live drift 只报告、不阻断** `ai_coding_ready`。厚成熟仓【推荐】，避免盲目降 `legacy`。  
 - **legacy**：语义保持 `generic≤5 && unbound≤3 && tc≥50`；drift 不阻断。  
 显式 `gate_profile: legacy` 可回退宽松语义。缺 fill-plan → `ai_coding_ready=false`。新仓【推荐】仍 strict。
@@ -88,7 +88,7 @@ audit 只读默认不写。对用户优先中文（**可 AI coding** / **金标�
 
 | 权威 | 规则 |
 |---|---|
-| **有 score-policy** | `coverage_ready` 按该文件 `coverage_mode` + `coverage_targets` |
+| **有 score-policy** | `coverage_ready` 按该文件 `coverage_mode` + `coverage_targets`。`gate_profile=gold` 时判定改用临时策略：`all_domains` 且每个启用域目标 1.0，不改写磁盘上的策略文件 |
 | **域目标缺省** | 回退 `meta.ready_coverage` 或 CLI `--ready-coverage`（默认 0.8） |
 | **无 score-policy** | `coverage_mode=overall`，阈值 = `ready_coverage` |
 | **形态 caps** | 不参与 `coverage_ready` |
@@ -157,7 +157,7 @@ Agent 必须把摘要展示给用户。
 | 域 | covered | code |
 |---|---|---|
 | redis | 真相中 `## Key 模式` 表内 `` `pattern` `` 行数 | inventory `keys`（redis≠false） |
-| func | 已写模块真相数 | func inventory `modules` 数 |
+| func | inventory 里的 Service 类名出现在真相的服务类表、`###` 标题或加粗类名中的个数 | func inventory 的 service 数 |
 
 ## 模块过滤
 
