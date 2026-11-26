@@ -2,7 +2,7 @@
 /**
  * release-eng selfcheck：静态断言 + 纯函数/形断言。版本 PIN 读自 `_meta/manifest.yaml`。
  *
- * 分层（0.4.1+）：
+ * 分层：
  *   --layer unit      纯函数（快）
  *   --layer contract  文件/CLI 契约（快）
  *   --layer e2e|all   完整回归（默认 all）
@@ -65,6 +65,36 @@ function exists(rel) {
 
 const PIN = readSkillVersion(skillRoot);
 const VER_RE = escapeSemverRe(PIN);
+
+// 临时目录：env → 系统 temp → 仓内 scripts/_tmp_selfcheck（受限沙箱仍可跑）；全不可写则 SKIP 而非抛栈
+function resolveTmpBase() {
+  const candidates = [
+    process.env.RELEASE_ENG_TMP,
+    os.tmpdir(),
+    path.join(skillRoot, "scripts", "_tmp_selfcheck"),
+  ].filter(Boolean);
+  for (const base of candidates) {
+    try {
+      fs.mkdirSync(base, { recursive: true });
+      const probe = fs.mkdtempSync(path.join(base, "_tmp_probe-"));
+      fs.rmSync(probe, { recursive: true, force: true });
+      return base;
+    } catch {
+      /* next candidate */
+    }
+  }
+  return null;
+}
+
+const TMP_BASE = resolveTmpBase();
+if (!TMP_BASE) {
+  console.error(
+    "[selfcheck] SKIP — 没有可写临时目录（EPERM/EACCES）。设置 RELEASE_ENG_TMP 指向可写目录后重试。"
+  );
+  process.exit(0);
+}
+// 各用例仍写 os.tmpdir()；重定向到实测可写的目录，避免逐个改 29 处
+os.tmpdir = () => TMP_BASE;
 
 const MODES = [
   "modes/prepare.md",
@@ -3182,6 +3212,38 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     assert(nm2.status === 0, "043 note-merge --no-html exit 0");
     assert(!fs.existsSync(nmHtmlPath), "043 --no-html 不落 html");
     assert(JSON.parse(nm2.stdout || "{}").html === null, "043 --no-html 报告 html=null");
+
+    // 043b: 索引已存在时默认回写（回归：up 未定义会在此崩溃）
+    fs.mkdirSync(path.join(nmRoot, "docs/releases"), { recursive: true });
+    fs.writeFileSync(
+      path.join(nmRoot, "docs/releases/releases.md"),
+      [
+        "# docs/releases",
+        "",
+        "## 进行中",
+        "",
+        "| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |",
+        "|---|---|---|---|---|---|",
+        "| — | （暂无） | — | — | — | — |",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const nmIdx = spawnSync(process.execPath, [nmBin, ...nmBase], {
+      encoding: "utf8",
+      maxBuffer: 4 * 1024 * 1024,
+    });
+    assert(nmIdx.status === 0, `043b index writeback exit 0（${nmIdx.stderr || ""}）`);
+    const nmIdxJson = JSON.parse(nmIdx.stdout || "{}");
+    assert(nmIdxJson.indexUpdated === true, "043b indexUpdated true");
+    assert(
+      typeof nmIdxJson.indexRow === "string" && nmIdxJson.indexRow.includes("release-V261125"),
+      "043b indexRow carries identity"
+    );
+    assert(
+      /release-V261125/.test(fs.readFileSync(path.join(nmRoot, "docs/releases/releases.md"), "utf8")),
+      "043b index file has row"
+    );
 
     // release.mjs 别名转发
     const alias = spawnSync(

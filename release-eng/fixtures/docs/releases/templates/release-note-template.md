@@ -1,13 +1,13 @@
 # 发版单模板
 
-> 路径：`docs/releases/<slug>/<slug>.md`（同名目录包，直接挂在 `docs/releases/` 下，**无 notes/ 中间层**；`<slug>` = **发版分支名归一化**：去 `origin/`、`/` → `-`；`发版日期` = gates-common 首问，【推荐】≥提问日+2 的第一个周四，为独立元信息字段、不拼入目录名）  
-> 同目录可含本版新增的 `sql/` / `config/`（定版时自 draft 拷贝；不含扫描涉及文件）与任务汇总 `jobs/README.md`；定版/归档时另生成同名 `<slug>.html` 只读渲染（md 为唯一 SSOT，html 勿手改；`note-merge --no-html` 可关闭）。  
+> 路径：`docs/releases/<identity>/<identity>.md`（同名目录包，直接挂在 `docs/releases/` 下，**无 notes/ 中间层**；`<identity>` = `release-V{yyMMdd}`（← 已确认发版日期）；`发版日期` = gates-common 首问，【推荐】≥提问日+2 的第一个周四，为独立元信息字段、不拼入目录名）  
+> 同目录可含本版新增的 `sql/` / `config/`（定版时自 draft 拷贝；不含扫描涉及文件）与任务汇总 `jobs/README.md`；定版/归档时另生成同名 `<identity>.html` 只读渲染（md 为唯一 SSOT，html 勿手改；`note-merge --no-html` 可关闭）。  
 > 由 `release-eng` 按此骨架生成/合并（**10 章**；已取消「附录：关联契约与规划」）。一级标题用「一、二、三…」；子节用「1、2、3…」。  
 > 时间一律 **Asia/Shanghai**。上线内容摘要（1～5 项，**分支级聚合**）并入元信息；提交列表 **`截断5`**（前 3 后 2，hash 前 8 位）；合并来源按分支去重全量（`origin/` 归一；「来源分支功能」一句话中文）；SQL / 配置 / 定时任务目标 profile = **`prod`**；yml 配置按 YAML 且注释在键上一行 `#`；SQL 明细引导至包内 `sql/README.md`（按 **`SQL序`**）。  
 > 自动段可由 `release-note-merge.mjs` 刷新（`<!-- auto:* -->` 标记内）；`manual` 段保留。  
 
 ```markdown
-# 发版单：<slug>
+# 发版单：<identity>
 
 > 状态：准备中 | 已定版 | 已上线 | 已取消  
 > 发版日期：YYYY-MM-DD  
@@ -20,7 +20,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本身份 | <slug> |
+| 版本身份 | <identity> |
 | 发版日期 | YYYY-MM-DD |
 | 发版分支 | |
 | 基线分支 | （首次发版填「无」） |
@@ -63,8 +63,7 @@
 
 | 服务/模块 | 是否涉及 | 说明 |
 |---|---|---|
-| sms-ai | | （← AGENTS/README 一句话） |
-| sms-ai-web | | |
+| （服务名） | | （← AGENTS/README 一句话） |
 | 其它 | | |
 
 ## 四、数据库与 SQL
@@ -86,8 +85,8 @@
 #### path/to/application-prod.yml
 
 ```yaml
-sms:
-  ai:
+app:
+  demo:
     # 示例配置说明
     example: value
 ```

@@ -76,6 +76,8 @@ function syncDoc(text, from, to, kind) {
       new RegExp(`版本：\\*\\*${fromRe}\\*\\*`),
       `版本：**${to}**`
     );
+  } else if (kind === "guide-html") {
+    out = out.replace(new RegExp(`\\bv${fromRe}\\b`, "g"), `v${to}`);
   }
   return out;
 }
@@ -112,6 +114,9 @@ function planUpdates(skillRoot, version) {
   );
   queue("guide/使用手册-摘要.md", path.join(skillRoot, "guide", "使用手册-摘要.md"), (t) =>
     syncDoc(t, prev, version, "guide")
+  );
+  queue("guide/使用手册.html", path.join(skillRoot, "guide", "使用手册.html"), (t) =>
+    syncDoc(t, prev, version, "guide-html")
   );
   // Repo-root row pin may lag SSOT badly (even when in-skill docs are synced,
   // because syncDoc short-circuits when prev === version). Replace whatever

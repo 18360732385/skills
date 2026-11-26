@@ -209,7 +209,7 @@ export function buildGitSection(freeze, { slugCn = DEFAULT_REPO_PROFILE.branchSl
   lines.push(`## ${H2.git}`);
   lines.push("");
   lines.push(
-    `> 提交列表遵循 \`截断5\`（≤5 全量；>5 前 3 + \`…\` + 后 2；hash 取前 8 位）。合并来源按分支去重全量（\`origin/\` 前缀归一；来源分支功能为一句话中文总结）。时区：${tz}`
+    `> 提交列表遵循 \`截断5\`（≤5 全量；>5 前 3 + \`…\` + 后 2；hash 取前 8 位）。合并来源只统计对比版本之后新增的 merge（按分支去重；\`origin/\` 前缀归一；来源分支功能为一句话中文总结）。时区：${tz}`
   );
   lines.push("");
   lines.push("<!-- auto:git:start -->");
@@ -627,7 +627,7 @@ function resolveReleaseDate(meta) {
   return nowChinaTime().slice(0, 10);
 }
 
-function skeletonNote(meta) {
+function skeletonNote(meta, { services = [] } = {}) {
   const id = meta.identity;
   const date = resolveReleaseDate(meta);
   const baseline = meta.baseline ?? "main";
@@ -635,6 +635,10 @@ function skeletonNote(meta) {
     baseline === "无" || meta.firstRelease
       ? `首次发版:${meta.head || "HEAD"}`
       : `origin/${meta.releaseBranch || "release"} .. origin/${baseline}`;
+  const svcRows = (Array.isArray(services) && services.length ? services : ["（服务名）"])
+    .map((svc) => `| ${svc} | | （← AGENTS/README 一句话） |`)
+    .concat("| 其它 | | |")
+    .join("\n");
   return `# 发版单：${id}
 
 > 状态：${meta.status}
@@ -667,7 +671,7 @@ function skeletonNote(meta) {
 
 ## ${H2.git}
 
-> 提交列表遵循 \`截断5\`（前 3 后 2；hash 取前 8 位）；合并来源按分支去重全量（\`origin/\` 归一；来源分支功能一句话）。时区：Asia/Shanghai
+> 提交列表遵循 \`截断5\`（前 3 后 2；hash 取前 8 位）；合并来源只统计对比版本之后新增的 merge（按分支去重；\`origin/\` 归一；来源分支功能一句话）。时区：Asia/Shanghai
 
 <!-- auto:git:start -->
 
@@ -677,9 +681,7 @@ function skeletonNote(meta) {
 
 | 服务/模块 | 是否涉及 | 说明 |
 |---|---|---|
-| sms-ai | | |
-| sms-ai-web | | |
-| 其它 | | |
+${svcRows}
 
 ## ${H2.sql}
 
@@ -1230,6 +1232,9 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
   }
 
   const profile = loadRepoProfile(args.root);
+  const hasRepoProfile = fs.existsSync(
+    path.join(args.root, "docs", "releases", "repo-profile.json")
+  );
   const sqlProfile = attachSqlProfile(args);
   const freeze = loadFreeze(args);
   if (freeze.overdueHardGate && !args.overdueWaived) {
@@ -1267,7 +1272,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
     }
   }
   if (!text) {
-    text = skeletonNote(meta);
+    text = skeletonNote(meta, { services: hasRepoProfile ? profile.knownServices : [] });
   }
 
   text = patchMeta(text, meta);
@@ -1423,7 +1428,8 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
     if (cur == null) {
       bundleResult.warnings.push("缺少 docs/releases/releases.md，跳过索引回写");
     } else {
-      let nextIndex = upsertReleasesIndexRow(cur, indexPlan).text;
+      const up = upsertReleasesIndexRow(cur, indexPlan);
+      let nextIndex = up.text;
       if (sqlProfile) {
         const prof = upsertSqlProfile(nextIndex, sqlProfile);
         if (prof.updated) nextIndex = prof.text;

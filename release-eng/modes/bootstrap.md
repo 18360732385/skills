@@ -1,6 +1,6 @@
 # 骨架 bootstrap（release-eng）
 
-`prepare` / `resume` / `seal` 开始时检查（`audit` 默认只报告缺失，不创建）。
+`prepare` / `seal` 开始时检查（`audit` 默认只报告缺失，不创建）。
 
 ## SSOT
 

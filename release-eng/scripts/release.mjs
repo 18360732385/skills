@@ -76,7 +76,7 @@ const DISPATCH = {
 };
 
 function printHelp() {
-  console.log(`release-eng CLI 0.4+ — 半自动发版仪式入口（非 harness land）
+  console.log(`release-eng CLI — 半自动发版仪式入口（非 harness land）
 
 Usage:
   node scripts/release.mjs --help | help

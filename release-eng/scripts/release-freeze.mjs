@@ -1119,7 +1119,7 @@ function main() {
     fallback: null,
   };
   if (firstRelease) {
-    const r = git(root, ["log", "--merges", "--format=%H|%an|%aI|%s", head]);
+    const r = git(args.root, ["log", "--merges", "--format=%H|%an|%aI|%s", head]);
     if (r.ok) mergeLogStdout = r.stdout;
   } else {
     const cmp = resolveMergeCompareLog(args.root, head, profile);
@@ -1131,7 +1131,7 @@ function main() {
     } else {
       mergeScope.fallback =
         "未找到可用的对比版本 ref（archive 发版单或本地 git 均不可解析），合并来源按定版范围统计";
-      const r = git(root, ["log", "--merges", "--format=%H|%an|%aI|%s", range]);
+      const r = git(args.root, ["log", "--merges", "--format=%H|%an|%aI|%s", range]);
       if (r.ok) mergeLogStdout = r.stdout;
     }
   }

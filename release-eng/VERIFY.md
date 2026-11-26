@@ -17,7 +17,11 @@
 | 「七、包内附属文件」逐项清单（SQL 原件 / 整理 / 配置 / 任务） | 有（`buildBundleSection`） |
 | 方括号文件名链接可渲染、新窗口打开 | 有（selfcheck 045 + 样张 HTML） |
 | 发版单 HTML 视觉更新（抬头 / 章节 / 表格 / 清单 / 响应式 / 打印） | 有（`release-note-sample.html` 重渲） |
-| `--layer unit` / `--layer contract` | unit 56/56；contract 与基线同源 6 项（受限沙箱本地 CLI）；full 卡既有 seal e2e（基线同样失败） |
+| `--layer unit` / `--layer contract` | unit 56/56；contract 除受限沙箱本地 CLI 6 项外全过 |
+| `note-merge` 索引已存在时默认回写（`up` 回归） | 有（selfcheck 043b） |
+| `freeze --first-release` 合并来源 `git log --merges` 取 `args.root` | 有（selfcheck 035） |
+| guide md/html：版本、`release-V{yyMMdd}`、无 resume / 旧 notes 口径 | 有（contract 守卫） |
+| 无系统 temp 时 selfcheck 回退仓内临时目录或 SKIP，不抛栈 | 有（`RELEASE_ENG_TMP` 可覆盖） |
 
 ## 0.4.4 增量验收
 
