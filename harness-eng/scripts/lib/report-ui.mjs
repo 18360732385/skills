@@ -35,6 +35,11 @@ const DOMAIN_ZH = {
   db: "库表文档",
   redis: "缓存文档",
   jobs: "定时任务",
+  design: "设计系统",
+  prototype: "界面原型",
+  pages: "页面路由",
+  components: "组件库",
+  "client-api": "契约消费层",
 };
 
 function domainDisplayName(d) {

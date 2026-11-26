@@ -720,43 +720,48 @@
     .coverage-strip .s { color: var(--muted); font-size: 0.72rem; }
 
     /* ============================================================
-       DOMAIN SUMMARY（悬浮明细：两域一行；不达标域名红字）
+       DOMAIN COVERAGE（点击展开：域名 + 覆盖率）
+       100 绿；80–99 黄；80 以下红
        ============================================================ */
+    .radar-coverage {
+      margin-top: 2px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
     .domain-summary {
       margin: 0;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px 16px;
-      font-size: 0.78rem;
-      color: var(--muted);
-      line-height: 1.5;
+      column-gap: 22px;
+      font-size: 0.8rem;
+      line-height: 1.4;
     }
     @media (max-width: 640px) {
       .domain-summary { grid-template-columns: 1fr; }
     }
     .domain-summary .dom-row {
       display: flex;
-      flex-wrap: wrap;
       align-items: baseline;
-      gap: 6px 8px;
+      justify-content: space-between;
+      gap: 12px;
       padding: 4px 0;
-      border-bottom: 1px dashed var(--border);
       min-width: 0;
     }
-    .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: none; }
-    @media (max-width: 640px) {
-      .domain-summary .dom-row:nth-last-child(-n+2) { border-bottom: 1px dashed var(--border); }
-      .domain-summary .dom-row:last-child { border-bottom: none; }
-    }
     .domain-summary .dom-name {
-      color: var(--accent);
+      color: var(--text);
+      font-weight: 600;
+      min-width: 0;
+    }
+    .domain-summary .dom-cov {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
       font-weight: 700;
-      min-width: 4.5em;
+      flex: 0 0 auto;
     }
-    .domain-summary .dom-name.warn {
-      color: var(--danger);
-    }
-    .domain-summary .dom-bits { color: var(--muted); }
+    .domain-summary .dom-cov.ok { color: var(--accent); }
+    .domain-summary .dom-cov.warn { color: var(--warn); }
+    .domain-summary .dom-cov.low { color: var(--danger); }
+    .domain-summary .dom-cov.na { color: var(--muted); font-weight: 500; }
 
     /* ============================================================
        ACTIONS
@@ -906,76 +911,42 @@
       width: 18px;
     }
     .radar-detail {
-      position: relative;
-      z-index: 3;
       flex: 0 0 auto;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
-      padding: 0;
+      height: 26px;
+      padding: 0 8px;
       border: 1px solid var(--border);
-      border-radius: 50%;
+      border-radius: var(--radius);
       background: var(--panel);
       color: var(--muted);
-      cursor: help;
-      font-family: var(--mono);
-      font-size: 0.82rem;
-      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: 600;
       line-height: 1;
     }
     .radar-detail:hover,
-    .radar-detail:focus-visible {
+    .radar-detail[aria-expanded="true"] {
       color: var(--accent);
       border-color: var(--accent);
       background: var(--accent-soft);
     }
-    .radar-detail-tip {
-      position: absolute;
-      right: 0;
-      top: calc(100% + 10px);
-      z-index: 20;
-      width: min(520px, 86vw);
-      max-height: min(360px, 55vh);
-      overflow: auto;
-      margin: 0;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 0.78rem;
-      font-weight: 400;
-      line-height: 1.55;
-      letter-spacing: 0;
-      white-space: normal;
-      text-align: left;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transform: translateY(-4px);
-      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
-    }
-    .radar-detail:hover .radar-detail-tip,
-    .radar-detail:focus-visible .radar-detail-tip {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
     .chart-svg {
       width: 100%;
-      max-width: 420px;
+      max-width: 480px;
       height: auto;
       display: block;
       margin: 0 auto;
       color: var(--text);
+      overflow: visible;
     }
-    .chart-svg .radar-score-low { fill: var(--danger); font-weight: 700; }
     .chart-svg .radar-score-ok { fill: var(--accent); font-weight: 600; }
+    .chart-svg .radar-score-warn { fill: var(--warn); font-weight: 700; }
+    .chart-svg .radar-score-low { fill: var(--danger); font-weight: 700; }
+    .chart-svg .radar-dot-ok { fill: var(--accent); }
+    .chart-svg .radar-dot-warn { fill: var(--warn); }
     .chart-svg .radar-dot-low { fill: var(--danger); }
     .diag-side {
       display: grid;
@@ -1423,7 +1394,7 @@
     .err::before { content: '[ ERROR ] '; font-weight: 700; }
 
     /* SVG 内部文字发光（暗色主题增强） */
-    html[data-theme="dark"] .chart-svg text {
+    html[data-theme="dark"] .chart-svg text:not([class]) {
       filter: drop-shadow(0 0 2px var(--accent-glow));
     }
 
@@ -1538,11 +1509,8 @@
           <div class="chart-box" id="radar-box">
             <div class="chart-head">
               <h3>各域文档质量分 vs 上限</h3>
-              <button type="button" class="radar-detail" id="radar-detail" hidden aria-label="各域分数明细" title="各域分数明细">
-                i
-                <div class="radar-detail-tip" role="tooltip">
-                  <div class="domain-summary" id="domain-summary"></div>
-                </div>
+              <button type="button" class="radar-detail" id="radar-detail" hidden aria-expanded="false" aria-controls="radar-coverage" aria-label="展开各域覆盖率">
+                覆盖率
               </button>
             </div>
             <div class="radar-wrap">
@@ -1551,6 +1519,9 @@
                 <span><i class="lg-q"></i>文档质量分</span>
                 <span><i class="lg-c"></i>理论上限</span>
               </div>
+            </div>
+            <div class="radar-coverage" id="radar-coverage" hidden>
+              <div class="domain-summary" id="domain-summary"></div>
             </div>
           </div>
           <div class="diag-side">
@@ -1845,6 +1816,23 @@
   var RADAR_STYLE = "ghost";
   var _chartDomains = null;
 
+  function pctRounded(pct) {
+    return Math.round(Number(pct) * 10) / 10;
+  }
+  function pctBand(pct) {
+    if (typeof pct !== "number" || isNaN(pct)) return "na";
+    var n = pctRounded(pct);
+    if (n >= 100) return "ok";
+    if (n >= 80) return "warn";
+    return "low";
+  }
+  function formatPct(pct) {
+    if (typeof pct !== "number" || isNaN(pct)) return "—";
+    var n = pctRounded(pct);
+    if (Math.abs(n - Math.round(n)) < 0.001) return Math.round(n) + "%";
+    return n.toFixed(1) + "%";
+  }
+
   function domainRadar(chart, style) {
     var labels = (chart && (chart.labels_zh && chart.labels_zh.length ? chart.labels_zh : chart.labels)) || [];
     var quality = (chart && chart.quality) || [];
@@ -1853,11 +1841,11 @@
     if (!n) return "<p style=\"color:var(--muted);font-size:0.82rem\">暂无分域数据</p>";
     style = style || RADAR_STYLE;
 
-    var size = 420;
+    var size = 480;
     var cx = size / 2;
-    var cy = size / 2 + 4;
-    var rMax = Math.min(122, 48 + n * 7.5);
-    var labelR = rMax + 40;
+    var cy = size / 2;
+    var rMax = n > 8 ? 128 : 146;
+    var labelR = rMax + (n > 8 ? 32 : 34);
 
     function ang(i) { return -Math.PI / 2 + (i / n) * Math.PI * 2; }
     function xy(i, pct, radius) {
@@ -1871,13 +1859,8 @@
         return p.x.toFixed(1) + "," + p.y.toFixed(1);
       }).join(" ");
     }
-    function shortLab(s) {
-      var t = String(s || "");
-      return t.length > 6 ? t.slice(0, 6) : t;
-    }
-
     var rings = "";
-    var ringLevels = style === "dial" ? [25, 50, 75, 100] : [50, 100];
+    var ringLevels = style === "dial" ? [25, 50, 75, 100] : (style === "ghost" ? [50] : [50, 100]);
     ringLevels.forEach(function (lv) {
       var pts = [];
       for (var i = 0; i < n; i++) {
@@ -1911,8 +1894,8 @@
     var layers = "";
     if (style === "ghost") {
       layers +=
-        '<polygon points="' + poly(cVals) + '" fill="var(--warn-soft)" stroke="var(--cap)" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.95"/>' +
-        '<polygon points="' + poly(qVals) + '" fill="var(--accent)" fill-opacity="0.22" stroke="var(--accent)" stroke-width="2"/>';
+        '<polygon points="' + poly(qVals) + '" fill="var(--accent)" fill-opacity="0.2" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/>' +
+        '<polygon points="' + poly(cVals) + '" fill="none" stroke="var(--cap)" stroke-width="1.6" stroke-dasharray="5 3.5" stroke-linejoin="round"/>';
     } else if (style === "dial") {
       layers +=
         '<polygon points="' + poly(cVals) + '" fill="none" stroke="var(--cap)" stroke-width="1.5" stroke-dasharray="5 4"/>' +
@@ -1927,39 +1910,32 @@
     var dots = "";
     for (var d = 0; d < n; d++) {
       var pq = xy(d, qVals[d]);
-      var rDot = style === "dial" ? 3.6 : 2.8;
-      var low = qVals[d] < 100;
+      var band = pctBand(qVals[d]);
       dots +=
-        '<circle class="' + (low ? "radar-dot-low" : "") + '" cx="' + pq.x.toFixed(1) +
-        '" cy="' + pq.y.toFixed(1) + '" r="' + (low ? rDot + 0.6 : rDot) +
-        '" fill="' + (low ? "var(--danger)" : "var(--accent)") +
-        '" stroke="var(--panel)" stroke-width="1.5"/>';
-      if (style === "ghost") {
-        var pc = xy(d, cVals[d]);
-        dots +=
-          '<circle cx="' + pc.x.toFixed(1) + '" cy="' + pc.y.toFixed(1) +
-          '" r="2.2" fill="var(--cap)" opacity="0.85"/>';
-      }
+        '<circle class="radar-dot radar-dot-' + band + '" cx="' + pq.x.toFixed(1) +
+        '" cy="' + pq.y.toFixed(1) + '" r="3.4" stroke="var(--panel2)" stroke-width="1.6"/>';
     }
 
     var labs = "";
     for (var li = 0; li < n; li++) {
       var lp = xy(li, 100, labelR);
-      var anchor = Math.abs(lp.x - cx) < 8 ? "middle" : (lp.x > cx ? "start" : "end");
-      var above = lp.y < cy - 8;
-      var below = lp.y > cy + 8;
-      var nameDy = above ? -10 : (below ? 4 : -2);
-      var scoreDy = above ? 4 : (below ? 18 : 12);
-      var qv = Math.round(qVals[li]);
-      var scoreCls = qv < 100 ? "radar-score-low" : "radar-score-ok";
+      var anchor = Math.abs(lp.x - cx) < 12 ? "middle" : (lp.x > cx ? "start" : "end");
+      var above = lp.y < cy - 10;
+      var below = lp.y > cy + 10;
+      var nameDy = above ? -13 : (below ? 5 : -6);
+      var scoreDy = above ? 3 : (below ? 21 : 10);
+      var qText = formatPct(qVals[li]);
+      var scoreCls = "radar-score-" + pctBand(qVals[li]);
+      var nameSize = String(labels[li] || "").length > 8 ? 11 : 12;
       labs +=
         '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + nameDy).toFixed(1) +
-        '" text-anchor="' + anchor + '" fill="currentColor" font-size="11" font-family="var(--mono)">' +
-        "<title>" + esc(labels[li]) + " · 质量 " + qv + "% · 上限 " + cVals[li] + "</title>" +
-        esc(shortLab(labels[li])) + "</text>" +
+        '" text-anchor="' + anchor + '" fill="currentColor" font-size="' + nameSize +
+        '" font-family="var(--font)">' +
+        "<title>" + esc(labels[li]) + " · 质量 " + qText + " · 上限 " + formatPct(cVals[li]) + "</title>" +
+        esc(labels[li]) + "</text>" +
         '<text class="' + scoreCls + '" x="' + lp.x.toFixed(1) + '" y="' + (lp.y + scoreDy).toFixed(1) +
-        '" text-anchor="' + anchor + '" font-size="10" font-family="var(--mono)">' +
-        qv + "%</text>";
+        '" text-anchor="' + anchor + '" font-size="11" font-family="var(--mono)">' +
+        esc(qText) + "</text>";
     }
 
     return (
@@ -2160,9 +2136,28 @@
       if (e.target === bd) bd.classList.remove("open");
     });
   });
+  function setRadarCoverageOpen(open) {
+    var btn = $("radar-detail");
+    var panel = $("radar-coverage");
+    if (!btn || !panel) return;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.setAttribute("aria-label", open ? "收起各域覆盖率" : "展开各域覆盖率");
+    panel.hidden = !open;
+  }
+  var radarBtn = $("radar-detail");
+  if (radarBtn) {
+    radarBtn.addEventListener("click", function () {
+      setRadarCoverageOpen(radarBtn.getAttribute("aria-expanded") !== "true");
+    });
+  }
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
       if (closeAnyModal()) {
+        e.preventDefault();
+        return;
+      }
+      if (radarBtn && radarBtn.getAttribute("aria-expanded") === "true") {
+        setRadarCoverageOpen(false);
         e.preventDefault();
         return;
       }
@@ -2361,27 +2356,44 @@
     var stories = ui.domain_stories || ui.domains || [];
     var detailBtn = $("radar-detail");
     var summaryEl = $("domain-summary");
+    var coveragePanel = $("radar-coverage");
     if (stories.length && summaryEl) {
-      summaryEl.innerHTML = stories.map(function (d) {
-        var bits = [];
-        if (typeof d.score === "number") bits.push(d.score + "%");
-        if (d.cap != null) bits.push("上限≈" + d.cap);
-        if (d.room != null && d.room > 0) bits.push("距上限 " + d.room);
-        if (typeof d.coverage_percent === "number") bits.push("覆盖 " + d.coverage_percent + "%");
-        if (d.status_label) bits.push(d.status_label);
-        var warn = d.tone === "warn" || (typeof d.score === "number" && d.score < 100);
-        var mark = warn ? "⚠ " : "";
+      var byId = {};
+      stories.forEach(function (d) {
+        if (d && d.id) byId[d.id] = d;
+      });
+      var ordered = [];
+      var seen = {};
+      var chartIds = (_chartDomains && _chartDomains.labels) || [];
+      chartIds.forEach(function (id) {
+        if (byId[id]) {
+          ordered.push(byId[id]);
+          seen[id] = true;
+        }
+      });
+      stories.forEach(function (d) {
+        if (!d || (d.id && seen[d.id])) return;
+        ordered.push(d);
+      });
+      summaryEl.innerHTML = ordered.map(function (d) {
+        var pct = typeof d.coverage_percent === "number" ? d.coverage_percent : null;
+        var band = pct == null ? "na" : pctBand(pct);
         return (
           '<div class="dom-row">' +
-          '<span class="dom-name' + (warn ? " warn" : "") + '">' +
-          mark + esc(d.name_zh || d.id) + "</span>" +
-          '<span class="dom-bits">' + esc(bits.join(" · ")) + "</span></div>"
+          '<span class="dom-name">' + esc(d.name_zh || d.id) + "</span>" +
+          '<span class="dom-cov ' + band + '">' + esc(formatPct(pct)) + "</span></div>"
         );
       }).join("");
-      if (detailBtn) detailBtn.hidden = false;
+      if (detailBtn) {
+        detailBtn.hidden = false;
+        detailBtn.setAttribute("aria-expanded", "false");
+        detailBtn.setAttribute("aria-label", "展开各域覆盖率");
+      }
+      if (coveragePanel) coveragePanel.hidden = true;
     } else if (detailBtn) {
       detailBtn.hidden = true;
       if (summaryEl) summaryEl.innerHTML = "";
+      if (coveragePanel) coveragePanel.hidden = true;
     }
 
     if (ui.show_domain_cards && stories.length) {
