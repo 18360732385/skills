@@ -1917,8 +1917,8 @@
     if (!parts.length) return "";
     return (
       '<ol>' +
-      parts.map(function (p, i) {
-        return "<li><span class=\"mono\">" + (i + 1) + ".</span> " + esc(p) + "</li>";
+      parts.map(function (p) {
+        return "<li>" + esc(p) + "</li>";
       }).join("") +
       "</ol>"
     );
