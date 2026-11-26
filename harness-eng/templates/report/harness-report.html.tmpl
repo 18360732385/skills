@@ -720,48 +720,89 @@
     .coverage-strip .s { color: var(--muted); font-size: 0.72rem; }
 
     /* ============================================================
-       DOMAIN COVERAGE（点击展开：域名 + 覆盖率）
-       100 绿；80–99 黄；80 以下红
+       DOMAIN METRICS（点击「各项指标」：雷达右侧覆盖表）
+       质量/覆盖：100 绿；80–99 黄；80 以下红
+       金标：≥98 绿；80–97 黄；其余红
        ============================================================ */
-    .radar-coverage {
-      margin-top: 2px;
-      padding-top: 10px;
-      border-top: 1px dashed var(--border);
+    .domain-metrics-panel {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
-    .domain-summary {
-      margin: 0;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      column-gap: 22px;
-      font-size: 0.8rem;
-      line-height: 1.4;
+    .domain-metrics-panel[hidden] { display: none !important; }
+    .domain-metrics-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      line-height: 1.35;
     }
-    @media (max-width: 640px) {
-      .domain-summary { grid-template-columns: 1fr; }
+    .domain-metrics-table th,
+    .domain-metrics-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: baseline;
     }
-    .domain-summary .dom-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 4px 0;
-      min-width: 0;
-    }
-    .domain-summary .dom-name {
-      color: var(--text);
+    .domain-metrics-table th {
+      color: var(--muted);
       font-weight: 600;
-      min-width: 0;
+      font-size: 0.72rem;
+      border-bottom-color: var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--panel2);
+      z-index: 1;
     }
-    .domain-summary .dom-cov {
+    .domain-metrics-table th:nth-child(1),
+    .domain-metrics-table td:nth-child(1) { width: 5.6em; }
+    .domain-metrics-table th:nth-child(2),
+    .domain-metrics-table td:nth-child(2),
+    .domain-metrics-table th:nth-child(3),
+    .domain-metrics-table td:nth-child(3),
+    .domain-metrics-table th:nth-child(4),
+    .domain-metrics-table td:nth-child(4) { width: 3.6em; }
+    .domain-metrics-table th:nth-child(5),
+    .domain-metrics-table td:nth-child(5) { width: 4.4em; }
+    .domain-metrics-table th:nth-child(6),
+    .domain-metrics-table td:nth-child(6) { width: auto; }
+    .domain-metrics-table .num {
+      text-align: right;
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
       font-weight: 700;
-      flex: 0 0 auto;
+      white-space: nowrap;
     }
-    .domain-summary .dom-cov.ok { color: var(--accent); }
-    .domain-summary .dom-cov.warn { color: var(--warn); }
-    .domain-summary .dom-cov.low { color: var(--danger); }
-    .domain-summary .dom-cov.na { color: var(--muted); font-weight: 500; }
+    .domain-metrics-table .dom-name {
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .domain-metrics-table .note {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.72rem;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.35;
+    }
+    .domain-metrics-table tr.lag td {
+      background: var(--danger-soft);
+    }
+    .domain-metrics-table tr.lag .dom-name { color: var(--danger); }
+    .domain-metrics-table .ok { color: var(--accent); }
+    .domain-metrics-table .warn { color: var(--warn); }
+    .domain-metrics-table .low { color: var(--danger); }
+    .domain-metrics-table .na { color: var(--muted); font-weight: 500; }
 
     /* ============================================================
        ACTIONS
@@ -949,10 +990,12 @@
     .chart-svg .radar-dot-warn { fill: var(--warn); }
     .chart-svg .radar-dot-low { fill: var(--danger); }
     .diag-side {
+      position: relative;
       display: grid;
       gap: 10px;
       align-content: start;
       min-width: 0;
+      min-height: 280px;
     }
     .diag-side .fold { margin-top: 0; }
     .diag-side .diagnose-story li {
@@ -1505,13 +1548,12 @@
       <section class="panel" id="panel-diagnose" data-panel="diagnose" role="tabpanel">
         <h2>诊断台</h2>
         <p class="lead" id="lagging-lead">哪一域拖后腿、缺口在哪、低分原因。</p>
-        <div class="domain-summary" id="domain-metrics"></div>
         <div class="diag-grid">
           <div class="chart-box" id="radar-box">
             <div class="chart-head">
               <h3>各域文档质量分 vs 上限</h3>
-              <button type="button" class="radar-detail" id="radar-detail" hidden aria-expanded="false" aria-controls="radar-coverage" aria-label="展开各域覆盖率">
-                覆盖率
+              <button type="button" class="radar-detail" id="radar-detail" hidden aria-expanded="false" aria-controls="radar-coverage" aria-label="展开各域各项指标">
+                各项指标
               </button>
             </div>
             <div class="radar-wrap">
@@ -1521,11 +1563,23 @@
                 <span><i class="lg-c"></i>理论上限</span>
               </div>
             </div>
-            <div class="radar-coverage" id="radar-coverage" hidden>
-              <div class="domain-summary" id="domain-summary"></div>
-            </div>
           </div>
           <div class="diag-side">
+            <div class="domain-metrics-panel" id="radar-coverage" hidden>
+              <table class="domain-metrics-table">
+                <thead>
+                  <tr>
+                    <th>域</th>
+                    <th class="num">质量</th>
+                    <th class="num">覆盖</th>
+                    <th class="num">金标</th>
+                    <th class="num">真实性</th>
+                    <th>备注</th>
+                  </tr>
+                </thead>
+                <tbody id="domain-summary"></tbody>
+              </table>
+            </div>
             <ul class="diagnose-story" id="diagnose-story"></ul>
             <div class="diag-strips" id="diag-strips">
               <div class="coverage-strip hidden" id="coverage-strip"></div>
@@ -1833,6 +1887,13 @@
     if (Math.abs(n - Math.round(n)) < 0.001) return Math.round(n) + "%";
     return n.toFixed(1) + "%";
   }
+  /** 文档质量分 / 上限：0–100 分数，不带 % */
+  function formatScore(score) {
+    if (typeof score !== "number" || isNaN(score)) return "—";
+    var n = pctRounded(score);
+    if (Math.abs(n - Math.round(n)) < 0.001) return String(Math.round(n));
+    return n.toFixed(1);
+  }
 
   function domainRadar(chart, style) {
     var labels = (chart && (chart.labels_zh && chart.labels_zh.length ? chart.labels_zh : chart.labels)) || [];
@@ -1925,14 +1986,14 @@
       var below = lp.y > cy + 10;
       var nameDy = above ? -13 : (below ? 5 : -6);
       var scoreDy = above ? 3 : (below ? 21 : 10);
-      var qText = formatPct(qVals[li]);
+      var qText = formatScore(qVals[li]);
       var scoreCls = "radar-score-" + pctBand(qVals[li]);
       var nameSize = String(labels[li] || "").length > 8 ? 11 : 12;
       labs +=
         '<text x="' + lp.x.toFixed(1) + '" y="' + (lp.y + nameDy).toFixed(1) +
         '" text-anchor="' + anchor + '" fill="currentColor" font-size="' + nameSize +
         '" font-family="var(--font)">' +
-        "<title>" + esc(labels[li]) + " · 质量 " + qText + " · 上限 " + formatPct(cVals[li]) + "</title>" +
+        "<title>" + esc(labels[li]) + " · 质量 " + qText + " · 上限 " + formatScore(cVals[li]) + "</title>" +
         esc(labels[li]) + "</text>" +
         '<text class="' + scoreCls + '" x="' + lp.x.toFixed(1) + '" y="' + (lp.y + scoreDy).toFixed(1) +
         '" text-anchor="' + anchor + '" font-size="11" font-family="var(--mono)">' +
@@ -2137,18 +2198,18 @@
       if (e.target === bd) bd.classList.remove("open");
     });
   });
-  function setRadarCoverageOpen(open) {
+  function setDomainMetricsOpen(open) {
     var btn = $("radar-detail");
     var panel = $("radar-coverage");
     if (!btn || !panel) return;
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.setAttribute("aria-label", open ? "收起各域覆盖率" : "展开各域覆盖率");
+    btn.setAttribute("aria-label", open ? "收起各域各项指标" : "展开各域各项指标");
     panel.hidden = !open;
   }
   var radarBtn = $("radar-detail");
   if (radarBtn) {
     radarBtn.addEventListener("click", function () {
-      setRadarCoverageOpen(radarBtn.getAttribute("aria-expanded") !== "true");
+      setDomainMetricsOpen(radarBtn.getAttribute("aria-expanded") !== "true");
     });
   }
   document.addEventListener("keydown", function (e) {
@@ -2158,7 +2219,7 @@
         return;
       }
       if (radarBtn && radarBtn.getAttribute("aria-expanded") === "true") {
-        setRadarCoverageOpen(false);
+        setDomainMetricsOpen(false);
         e.preventDefault();
         return;
       }
@@ -2378,35 +2439,60 @@
         if (!d || (d.id && seen[d.id])) return;
         ordered.push(d);
       });
+      var lagId = (ui.lagging_domain && ui.lagging_domain.id) ||
+        (ui.diagnose && ui.diagnose.lagging_domain && ui.diagnose.lagging_domain.id) ||
+        null;
+      function goldBand(label) {
+        if (label == null || label === "—" || label === "") return "na";
+        var n = parseFloat(String(label).replace("%", ""));
+        if (!isFinite(n)) return "na";
+        if (n >= 98) return "ok";
+        if (n >= 80) return "warn";
+        return "low";
+      }
+      function authenticityBand(label) {
+        if (label == null || label === "" || label === "未要求" || label === "—") return "na";
+        var m = String(label).match(/^(\d+)\s*\/\s*(\d+)$/);
+        if (!m) return "na";
+        var pass = +m[1];
+        var total = +m[2];
+        if (!total) return "na";
+        if (pass >= total) return "ok";
+        if (pass === 0) return "low";
+        return "warn";
+      }
       function metricRow(d) {
+        var q = typeof d.score === "number" ? d.score : null;
+        var qBand = q == null ? "na" : pctBand(q);
         var pct = typeof d.coverage_percent === "number" ? d.coverage_percent : null;
-        var band = d.coverage_band || (pct == null ? "na" : pctBand(pct));
-        var excluded =
+        var cBand = d.coverage_band || (pct == null ? "na" : pctBand(pct));
+        var gold = d.gold_index_label || "—";
+        var auth = d.authenticity_label || "未要求";
+        var note =
           typeof d.excluded_type_exports === "number" && d.excluded_type_exports > 0
-            ? " · 计分已排除 " + d.excluded_type_exports + " 个 type_export"
+            ? d.excluded_type_exports + " 个 type_export 未计入覆盖"
             : "";
+        var lag = lagId && d.id === lagId;
         return (
-          '<div class="dom-row">' +
-          '<span class="dom-name">' + esc(d.name_zh || d.id) + "</span>" +
-          '<span class="dom-cov ' + band + '">覆盖 ' + esc(formatPct(pct)) + esc(excluded) + "</span>" +
-          '<span class="dom-cov">金标 ' + esc(d.gold_index_label || "—") + "</span>" +
-          '<span class="dom-cov">真实性 ' + esc(d.authenticity_label || "未要求") + "</span></div>"
+          '<tr class="' + (lag ? "lag" : "") + '">' +
+          '<td class="dom-name">' + esc(d.name_zh || d.id) + "</td>" +
+          '<td class="num ' + qBand + '">' + (q == null ? "—" : esc(String(q))) + "</td>" +
+          '<td class="num ' + cBand + '">' + esc(formatPct(pct)) + "</td>" +
+          '<td class="num ' + goldBand(gold) + '">' + esc(gold) + "</td>" +
+          '<td class="num ' + authenticityBand(auth) + '">' + esc(auth) + "</td>" +
+          '<td class="note">' + esc(note) + "</td></tr>"
         );
       }
       summaryEl.innerHTML = ordered.map(metricRow).join("");
-      var metricsEl = $("domain-metrics");
-      if (metricsEl) metricsEl.innerHTML = ordered.map(metricRow).join("");
       if (detailBtn) {
         detailBtn.hidden = false;
         detailBtn.setAttribute("aria-expanded", "false");
-        detailBtn.setAttribute("aria-label", "展开各域覆盖率");
+        detailBtn.setAttribute("aria-label", "展开各域各项指标");
       }
       if (coveragePanel) coveragePanel.hidden = true;
     } else if (detailBtn) {
       detailBtn.hidden = true;
       if (summaryEl) summaryEl.innerHTML = "";
-      var metricsEmpty = $("domain-metrics");
-      if (metricsEmpty) metricsEmpty.innerHTML = "";
       if (coveragePanel) coveragePanel.hidden = true;
     }
 
@@ -2419,7 +2505,7 @@
         return (
           '<div class="story"><h3>' + esc(d.name_zh || d.id) +
           ' <span class="mono" style="font-weight:500;color:var(--muted)">' + esc(d.id) + "</span></h3>" +
-          '<div class="score">' + (typeof d.score === "number" ? d.score + "%" : "—") + "</div>" +
+          '<div class="score">' + (typeof d.score === "number" ? formatScore(d.score) : "—") + "</div>" +
           '<div class="meta">真相 ' + esc(d.truths != null ? d.truths : "—") +
           (d.cap != null ? " · 上限≈" + d.cap : "") +
           (d.room != null ? " · 距上限 " + d.room : "") +

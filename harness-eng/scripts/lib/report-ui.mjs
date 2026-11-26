@@ -625,15 +625,15 @@ function buildMorphStrip(score) {
     items.push({
       id: "quality",
       label_zh: "文档质量分",
-      value: overall + "%",
-      sub: ceil != null ? "上限约 " + ceil + "%" : "像不像模板",
+      value: String(overall),
+      sub: ceil != null ? "上限约 " + ceil : "像不像模板",
     });
   }
   if (ceil != null) {
     items.push({
       id: "ceiling",
       label_zh: "理论上限",
-      value: "~" + ceil + "%",
+      value: "~" + ceil,
       sub: "到顶后转 agents 精修",
     });
   }
