@@ -90,4 +90,54 @@ export async function runUnit(kit) {
     out: path.join(skillRoot, "scripts/_tmp_unit_out.json"),
   });
   assert(!resolvedExplicit.autoOut && resolvedExplicit.outPath, "resolveSafeOut explicit");
+
+  const fly = { sqlDir: "custom/sql", sqlFormat: "flyway" };
+  const glob = { sqlDir: "custom/sql", sqlFormat: "*.sql" };
+  assert(
+    format.isMigrationSql("sms-ai/src/main/resources/db/migration/V0001__DDL__x.sql"),
+    "legacy isMigrationSql still matches db/migration"
+  );
+  assert(
+    !format.isMigrationSql("custom/sql/V0001__DDL__x.sql"),
+    "legacy isMigrationSql rejects outside db/migration"
+  );
+  assert(
+    format.isMigrationSql("custom/sql/V0001__DDL__x.sql", fly),
+    "flyway profile matches under dir"
+  );
+  assert(
+    !format.isMigrationSql("custom/sql/notes.sql", fly),
+    "flyway profile rejects non-version name"
+  );
+  assert(
+    !format.isMigrationSql("other/sql/V0001__DDL__x.sql", fly),
+    "flyway profile rejects outside dir"
+  );
+  assert(format.isMigrationSql("custom/sql/notes.sql", glob), "glob profile matches *.sql");
+  assert(
+    format.isMigrationSql("custom/sql/nested/a.sql", glob),
+    "glob profile includes nested files"
+  );
+  assert(!format.isMigrationSql("custom/sql/a.sql", { sqlDir: "custom/sql" }), "half profile misses");
+  assert(format.recommendSqlFormat(["V1__a.sql"]) === "flyway", "recommend flyway");
+  assert(format.recommendSqlFormat(["a.sql", "b.sql"]) === "*.sql", "recommend *.sql");
+  assert(format.recommendSqlFormat(["V1__a.sql", "a.sql"]) == null, "mixed format no recommend");
+  assert(format.validateSqlDir("../x"), "reject parent sql dir");
+  assert(format.validateSqlDir("C:/sql"), "reject absolute sql dir");
+  assert(!format.validateSqlDir("custom/sql"), "accept relative sql dir");
+  assert(format.validateSqlFormat("a/b.sql"), "reject format with slash");
+  assert(!format.validateSqlFormat("flyway") && !format.validateSqlFormat("*.sql"), "accept formats");
+  const unread = format.readSqlProfile("# x\n\n## SQL 扫描\n\n| 项 | 值 |\n|---|---|\n| SQL 目录 | （未记录） |\n| SQL 格式 | （未记录） |\n");
+  assert(unread.firstUse && !unread.sqlDir && !unread.sqlFormat, "placeholder is first use");
+  const onlyDir = format.readSqlProfile(
+    "## SQL 扫描\n\n| 项 | 值 |\n|---|---|\n| SQL 目录 | `custom/sql` |\n| SQL 格式 | （未记录） |\n"
+  );
+  assert(onlyDir.firstUse && onlyDir.sqlDir === "custom/sql", "one cell is still first use");
+  const up = format.upsertSqlProfile("# idx\n\n## 进行中\n", {
+    sqlDir: "custom/sql",
+    sqlFormat: "flyway",
+  });
+  const again = format.readSqlProfile(up.text);
+  assert(up.updated && !again.firstUse && again.sqlFormat === "flyway", "upsert records both");
+  assert(/## 进行中/.test(up.text), "upsert keeps 进行中");
 }

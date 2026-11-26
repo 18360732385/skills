@@ -41,7 +41,7 @@
 目标 **profile 一律 `prod`**。  
 若首次 `inventory.layerEmpty` 非空：题面须明示空层及原因（如 prod 键=0 / SyncTaskCode=0），**勿**静默当成「无配置/无任务变更」。
 
-4. SQL / migration：增量优先用 freeze **`draft.sql`**（双源去重后；`priorOnly` 须人工确认）；**首次发版**用分层 draft + `inventory.migrationRange` 确认起迁。`draftSuppressed` 默认不落单。`aiSuggestSuppress` 项【推荐】默认不勾「已确认」。目标 profile=`prod`  
+4. SQL / migration：扫描范围以 gates-common 已写入的 **SQL 目录 + SQL 格式**为准，本问卷不重问。增量优先用 freeze **`draft.sql`**（双源去重后；`priorOnly` 须人工确认）；**首次发版**用分层 draft + `inventory.migrationRange` 确认起迁。对不上版本号的自定义格式文件归类为「未分类」，仍保留在候选里。`draftSuppressed` 默认不落单。`aiSuggestSuppress` 项【推荐】默认不勾「已确认」。目标 profile=`prod`  
 5. 配置项：优先 **`draft.config`**（仅叶子；含 **说明** / `confidence`）；「待补」须补全或标待定。目标 profile=`prod`；**允许密文值**；`aiNoise` 命中项默认不勾；`layerEmpty` 含 `config` 时明示空层  
 6. 定时任务：优先 **`draft.jobs`** / `jobsHits`（首次优先 docs-hit）；目标 profile=`prod`；同上尊重 AI 默认勾选；`layerEmpty` 含 `jobs` 时明示空层  
 7. 第三方与外部依赖  
@@ -54,7 +54,7 @@
 
 - [ ] 固定 1–3 均有答复（允许「待定」）；版本身份 = 发版分支名归一化，发版日期为 gates-common 已确认值  
 - [ ] 自适应 4–9 均已收敛：有答、或标「无」、或标「待定」  
-- [ ] SQL：增量已 `SQL序`；首次已确认起迁（或显式「无 SQL」）；目标 profile=`prod`；知悉包内整理文件 prod 先 DDL 后 DML  
+- [ ] SQL：目录与格式沿用索引记录，本问卷未重问；增量已 `SQL序`；首次发版已确认起迁（或显式「无 SQL」）；目标 profile=`prod`；知悉包内整理文件 prod 先 DDL 后 DML  
 - [ ] 配置：有值时每条含**说明**（落单写入 yml 键上一行 `#` 注释）、来源、目标 profile=`prod`；优先落了 `configKeys`  
 - [ ] 定时任务：有变更时目标 profile=`prod`；优先落了 `jobKeys`/`taskCodes`  
 - [ ] 若用户说了「全部推荐」：本轮未答项已按 [recommended.md](recommended.md) 填齐  

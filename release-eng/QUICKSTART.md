@@ -6,7 +6,7 @@
 ## 主循环
 
 ```text
-prepare（首问发版日期 + 分支 + 基线/首次发版）
+prepare（首问发版日期 + 分支 + 基线/首次发版；首次使用另答 SQL 目录与格式）
   → release.mjs prepare（push-gate → freeze → WritePlan 预览）
       → 确认词 → note-merge 写盘（md + artifacts + 同名 .html 只读渲染）
         → seal（seal-check → 归档，html 随包并按已上线重渲）
@@ -25,7 +25,7 @@ prepare（首问发版日期 + 分支 + 基线/首次发版）
 
 ## 三条硬规则
 
-1. **首问齐**——发版日期 + 发版分支 +（基线或首次发版=`无`）后才进 push-gate。
+1. **首问齐**——发版日期 + 发版分支 +（基线或首次发版=`无`）后才进 push-gate。索引未记录 SQL 目录与格式时，这两项也必须答完并写入 `releases.md`。
 2. **确认词才写盘**——「继续吧」等不算；预览只在会话；audit 永不写盘。
 3. **非 harness land**——跨仓靠整目录拷贝 + 点名仪式。
 

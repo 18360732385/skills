@@ -66,6 +66,7 @@ const DISPATCH = {
   "ai-track": "release-ai-track.mjs",
   "sql-classify": "release-sql-classify.mjs",
   "sql-bundle": "release-sql-bundle.mjs",
+  "sql-profile": "release-sql-profile.mjs",
   "sql-stats": "release-sql-stats.mjs",
   "note-merge": "release-note-merge.mjs",
   "note-html": "release-note-html.mjs",
@@ -96,7 +97,7 @@ Usage:
   migrate-notes  notes/ → docs/releases/<id>/
 
 可转发脚本:
-  push-gate | freeze | enrich | ai-track | note-merge | note-html | seal-check | seal | sql-bundle | …
+  push-gate | freeze | enrich | ai-track | note-merge | note-html | seal-check | seal | sql-bundle | sql-profile | …
 
 边界：确认词 / 问卷高风险打断仍由 Agent；note-merge / seal --apply / cancel --apply 仅确认词后。
 热路径：AGENT-INDEX.md · 烟测：node scripts/selfcheck.mjs
@@ -131,7 +132,7 @@ function printModeHelp(modeName) {
 相关脚本：${m.scripts.map((s) => `release.mjs ${s}`).join(" · ")}
 ${m.hint ? `提示：${m.hint}\n` : ""}
 硬闸提醒：
-  - 首问齐（发版日期 + 分支 + 基线/首次发版）后才 push-gate
+  - 首问齐（发版日期 + 分支 + 基线/首次发版；首次使用另答 SQL 目录与格式）后才 push-gate
   - 版本身份 = release-V{yyMMdd}（← 发版日期）
   - 确认词才写盘；audit 永不写盘；预览仅会话
   - seal 前先 seal-check；cancel ≠ seal

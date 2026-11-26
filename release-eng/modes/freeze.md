@@ -64,7 +64,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 
 | kind | 如何进候选 |
 |---|---|
-| **sql** | 仅 `**/db/migration/Vdddd__*.sql` 或现行 `Vdddd_d__*.sql`（SQL序=`migrationSortKey`）；另附 `docs/db/table/*_change.sql`（对照，非替代执行序） |
+| **sql** | 索引已记录时：仅 **SQL 目录之下**且文件名符合 **SQL 格式**（`flyway` 或 glob；约定 ⑤b）。未传 `--sql-dir`/`--sql-format` 时仍只收 `**/db/migration/Vdddd__*.sql` 或现行 `Vdddd_d__*.sql`。`SQL序`=`migrationSortKey`；解析不出版本号的记「未分类」并靠后。另附 `docs/db/table/*_change.sql`（对照，非替代执行序） |
 | **config** | **仅** `application-prod.yml` + `config/nacos/application-prod-nacos.yml` 键级 diff → draft；其它 `application*.yml` / `.env` / `*secret*` → `layerSuppressed`（`non-prod-layer`）；**说明**来自 README/AGENTS 表或 yml **键上一行 `#`（优先）/ 行尾 ` #`（兜底）；叶子无注释时回退继承最近父级 map 注释** |
 | **jobs** | `docs/jobs`、`*Scheduler.java`、`SyncTaskCode`、`SyncTaskMetadataRegistry`；或 yml 键名含 `cron`/`scheduling`；Java diff 抽 `taskCodes`；**交叉** `docs/jobs/tasks` → `jobsHits`；**仅** `docs/jobs` 路径变更（无 SyncTaskCode）也可 seed catalog → `draft.jobs` |
 | **third-party** | feign / 问学 / 乐享 / dashscope / mcp 路径关键词 |
@@ -86,7 +86,7 @@ audit【推荐】：`--format audit-json`。一屏摘要：`--format summary`。
 
 ## `首次发版-layered`
 
-- SQL：全量 `db/migration/V*__*.sql` 进 draft（SQL序）  
+- SQL：全量符合已记录目录+格式的脚本进 draft（SQL序）；未记录扫描规则时仍是全量 `db/migration/V*__*.sql`  
 - 配置：`application-prod.yml` 全键 **+ `config/nacos/application-prod-nacos.yml` overlay 键**（标 `source`）进 draft；`flattenYamlKeys` 标 `isLeaf`，**父级键不进 draft.config / changeObjects**，也不计「说明待补」；注释采集=键上一行 `#` 优先，行尾 ` #` 兜底  
 - 任务：仓内发现的 `SyncTaskCode.java` 枚举 task_code 进 draft（不强制 code 含 `:`）  
 - 其余 config/jobs 路径：`layerSuppressed` → `draftSuppressed`  
@@ -129,7 +129,7 @@ sql 候选按 migration **版本号数字升序**。
 ### 有基线
 
 1. `git log` / `git diff --name-only` / `git shortlog`  
-2. SQL：只收 `db/migration/V*__*.sql`，按 `SQL序`  
+2. SQL：按索引记录的目录 + 格式收录；未记录时只收 `db/migration/V*__*.sql`，按 `SQL序`  
 3. 配置/任务：对变更 yml 做键级对比（或注明「仅路径、待人工拆键」）  
 4. 展示 `截断5`（前3后2 + hash 前 8 位）+ `mergeSources` 全量（来源去 `origin/`）+ 远端 compare/commits 链接  
 

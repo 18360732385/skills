@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>release-eng 使用手册 · v0.4.3</title>
+  <title>release-eng 使用手册 · v0.4.4</title>
   <meta name="description" content="release-eng：把一次上线做成带 Git 证据的发版单（prepare / resume / audit / seal）的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -746,7 +746,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.4.3</div>
+    <div class="ver">v0.4.4</div>
   </header>
 
   <div class="shell document-shell">
@@ -786,7 +786,7 @@
             <ul class="pipe-chain">
               <li>prepare</li>
               <li class="sep">›</li>
-              <li class="gate">首问三项</li>
+              <li class="gate">首问</li>
               <li class="sep">›</li>
               <li class="gate">push-gate</li>
               <li class="sep">›</li>
@@ -890,7 +890,7 @@
           <div class="claim-card">
             <div class="n">RULE 01</div>
             <h4>首问齐才进 push-gate</h4>
-            <p>发版日期 + 发版分支 +（基线或 <code>首次发版</code>）三项确认过才往下走。领导口述也要回显一遍。</p>
+            <p>发版日期 + 发版分支 +（基线或 <code>首次发版</code>）确认过才往下走。首次使用还要答 SQL 目录与格式并写入索引。领导口述也要回显一遍。</p>
           </div>
           <div class="claim-card">
             <div class="n">RULE 02</div>
@@ -1010,7 +1010,7 @@ https://github.com/18360732385/skills/tree/main/release-eng
           </table>
         </div>
 
-        <h3>3.2 首问三项（第一道闸）</h3>
+        <h3>3.2 首问（第一道闸）</h3>
         <div class="table-wrap fact-table">
           <table>
             <thead>
@@ -1020,6 +1020,8 @@ https://github.com/18360732385/skills/tree/main/release-eng
               <tr><td><strong>发版日期</strong></td><td>≥ 提问日 + 2 天的<strong>第一个周四</strong></td><td>独立元信息字段，<strong>不拼进目录名</strong></td></tr>
               <tr><td>发版分支</td><td><code>release</code></td><td>可预填上次值或索引里的值</td></tr>
               <tr><td>基线分支</td><td><code>main</code></td><td>填 <strong><code>无</code></strong> 即 <code>首次发版</code></td></tr>
+              <tr><td>SQL 目录</td><td>唯一的 <code>.sql</code> 目录（没有则无推荐）</td><td><strong>仅首次使用</strong>：相对仓库根。已写入索引后不再问</td></tr>
+              <tr><td>SQL 格式</td><td><code>flyway</code> 或 <code>*.sql</code></td><td><strong>仅首次使用</strong>：与目录一起记入 <code>releases.md</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -1041,7 +1043,7 @@ https://github.com/18360732385/skills/tree/main/release-eng
 
         <div class="callout warn caveat-box">
           <div class="label">权威口述 ≠ 跳过首问</div>
-          领导说「别问了，release 对 main，日期写周四」，仍要把三项<strong>回显</strong>请他确认（或走 <code>全部推荐</code> 展示预填），然后才进 push-gate。禁止未回显就写 <code>docs/releases/&lt;slug&gt;/</code>。
+          领导说「别问了，release 对 main，日期写周四」，仍要把已问各项<strong>回显</strong>请他确认（或走 <code>全部推荐</code> 展示预填），然后才进 push-gate。首次使用时「默认 db/migration + Flyway」也不算已答。禁止未回显就写 <code>docs/releases/&lt;slug&gt;/</code>。
         </div>
 
         <p>版本身份 <code>&lt;slug&gt;</code> = <strong>发版分支名归一化</strong>（去 <code>origin/</code>、<code>refs/heads/</code>、<code>refs/remotes/</code> 前缀，<code>/</code> → <code>-</code>，连续 <code>-</code> 收敛）：<code>origin/release/V260827</code> → <code>release-V260827</code>。所以路径是 <code>docs/releases/release-V260827/release-V260827.md</code>。<strong>改发版日期不影响路径</strong>，只改元信息日期字段。</p>
@@ -1316,7 +1318,7 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
               <tr><th>闸</th><th>时机</th><th>不过会怎样</th></tr>
             </thead>
             <tbody>
-              <tr><td><strong>首问</strong></td><td>每次 prepare / resume 入口</td><td>不进 push-gate；三项没回显确认就不许写目录包</td></tr>
+              <tr><td><strong>首问</strong></td><td>每次 prepare / resume 入口</td><td>不进 push-gate；日期/分支/基线没回显确认就不许写目录包。首次使用还要先记下 SQL 目录与格式</td></tr>
               <tr><td><strong>逾期未归档</strong></td><td>gates-common 预检 + freeze 再拦一次</td><td><code>已定版</code> 且发版日期已过 → 硬闸中止（先 seal）；<code>准备中</code> → 软提醒</td></tr>
               <tr><td><strong>push-gate</strong></td><td>首问之后</td><td>未推送 ≠ 0 → 模式中止，不得落盘</td></tr>
               <tr><td><strong>WritePlan 确认词</strong></td><td>任何写盘前</td><td>非词表口语 → 再问一句；audit 永不写盘</td></tr>
@@ -1327,7 +1329,8 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
 
         <h3>7.2 Red Flags — 见到就停</h3>
         <ul>
-          <li>「别问日期/分支了，直接写」→ 仍回显首问三项并记确认，再 push-gate</li>
+          <li>「别问日期/分支了，直接写」→ 仍回显首问各项并记确认，再 push-gate</li>
+          <li>「别问 SQL 目录了，默认 db/migration」→ 索引未记录时仍要问目录和格式，写入后再继续</li>
           <li>「旧单以后再 archive」→ 逾期已定版是硬闸，先 seal（或你<strong>书面</strong>跳过）</li>
           <li>「先落盘给评审，push 稍后」→ push-gate 未过就别写 <code>docs/releases/&lt;slug&gt;/</code> 和 artifacts；聊天可以贴草稿</li>
           <li>「看着不错，继续吧」/ Slack 👍 → <strong>不是</strong>确认词</li>
@@ -1404,7 +1407,7 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
           </details>
           <details>
             <summary>Q2 首问能不能跳过？直接按 release 对 main 写？</summary>
-            <div class="ans"><p>不能。三项必须回显确认（或走 <code>全部推荐</code> 展示预填）。领导口述也一样。</p></div>
+            <div class="ans"><p>不能。日期、分支、基线必须回显确认（或走 <code>全部推荐</code> 展示预填）。首次使用还要答 SQL 目录与格式。领导口述也一样。</p></div>
           </details>
           <details>
             <summary>Q3 push-gate 一直说未推送？</summary>

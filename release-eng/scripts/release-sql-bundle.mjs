@@ -101,13 +101,18 @@ function loadAiByName(aiJsonPath) {
   return map;
 }
 
-function draftMigrationBasenames(freeze) {
+function draftMigrationBasenames(freeze, sqlProfile = null) {
   const set = new Set();
   for (const r of freeze?.draft?.sql || []) {
     const p = r.路径 || r.path || r.脚本 || "";
-    if (p && isMigrationSql(p)) set.add(baseName(p));
-    // 兜底分支：仅收 migration 命名 SQL；_change.sql 为变更清单附件，非 refs 待整理项（C1/D1）
-    else if (r.脚本 && /\.sql$/i.test(r.脚本) && !/_change\.sql$/i.test(r.脚本))
+    if (p && isMigrationSql(p, sqlProfile)) set.add(baseName(p));
+    // 未记录扫描规则时保留旧兜底：仅收 .sql 脚本名；_change.sql 不是 refs 待整理项
+    else if (
+      !sqlProfile &&
+      r.脚本 &&
+      /\.sql$/i.test(r.脚本) &&
+      !/_change\.sql$/i.test(r.脚本)
+    )
       set.add(baseName(r.脚本));
   }
   return set;
@@ -235,6 +240,7 @@ export function runSqlBundle({
   sourcePathByBasename = null,
   datasourceUrl = null,
   dbName = null,
+  sqlProfile = null,
 } = {}) {
   const errors = [];
   const warnings = [];
@@ -255,7 +261,7 @@ export function runSqlBundle({
   const files = listRefsDir(refsDir);
 
   if (freeze) {
-    const expected = draftMigrationBasenames(freeze);
+    const expected = draftMigrationBasenames(freeze, sqlProfile);
     const actual = new Set(files.map((f) => f.basename));
     for (const e of expected) {
       if (!actual.has(e)) errors.push(`refs 缺少 draft.sql migration: ${e}`);

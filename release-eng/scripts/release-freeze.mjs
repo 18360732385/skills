@@ -44,6 +44,10 @@ import {
   buildRemoteBrowseUrl,
   remoteHintLine,
   isMigrationSql,
+  canonicalSqlFormat,
+  normalizeSqlDir,
+  validateSqlDir,
+  validateSqlFormat,
   migrationVersion,
   migrationSortKey,
   migrationCanonicalId,
@@ -72,6 +76,8 @@ function parseArgs(argv) {
     prior: "auto",
     priorSince: null,
     out: null,
+    sqlDir: null,
+    sqlFormat: null,
     help: false,
   };
   for (let i = 2; i < argv.length; i++) {
@@ -84,6 +90,8 @@ function parseArgs(argv) {
     else if (a === "--prior") out.prior = argv[++i] || "auto";
     else if (a === "--prior-since") out.priorSince = argv[++i] || null;
     else if (a === "--out") out.out = argv[++i] || null;
+    else if (a === "--sql-dir") out.sqlDir = argv[++i] || "";
+    else if (a === "--sql-format") out.sqlFormat = argv[++i] || "";
     else if (a === "--help" || a === "-h") out.help = true;
   }
   if (isNoneBase(out.base)) out.firstRelease = true;
@@ -592,8 +600,9 @@ function mergeSourcesDisplayPayload(mergeSources) {
   };
 }
 
-function buildFirstReleaseInventory(files) {
-  const migrations = files.filter(isMigrationSql).sort((a, b) => {
+function buildFirstReleaseInventory(files, sqlProfile = null) {
+  const matchSql = (p) => isMigrationSql(p, sqlProfile);
+  const migrations = files.filter(matchSql).sort((a, b) => {
     return migrationSortKey(a) - migrationSortKey(b) || a.localeCompare(b);
   });
   const versions = migrations.map(migrationVersion).filter((v) => v != null);
@@ -612,7 +621,7 @@ function buildFirstReleaseInventory(files) {
 }
 
 /** 首次发版分层候选（Q11=C） */
-function buildFirstReleaseLayeredCandidates(root, head, files) {
+function buildFirstReleaseLayeredCandidates(root, head, files, sqlProfile = null) {
   const byPath = new Map();
   const configKeys = [];
   const jobKeys = [];
@@ -634,16 +643,18 @@ function buildFirstReleaseLayeredCandidates(root, head, files) {
     prev.taskCodes = [...new Set([...(prev.taskCodes || []), ...(cand.taskCodes || [])])];
   }
 
+  const matchSql = (p) => isMigrationSql(p, sqlProfile);
   for (const f of files) {
     const n = normPath(f);
-    if (isMigrationSql(n)) {
+    if (matchSql(n)) {
+      const ver = migrationVersion(n);
       upsert({
         kinds: ["sql"],
         kind: "sql",
         path: n,
         confidence: "path",
         keys: [],
-        detail: `V${migrationVersion(n)}`,
+        detail: ver != null ? `V${ver}` : "未分类",
         layerSuppressed: false,
       });
     } else if (isDbChangeSql(n)) {
@@ -754,11 +765,11 @@ function buildFirstReleaseLayeredCandidates(root, head, files) {
 }
 
 /** 列出 base ref 上全部 migration 路径（供 rename alias 命中） */
-function listMigrationsOnRef(root, ref) {
+function listMigrationsOnRef(root, ref, sqlProfile = null) {
   if (!ref) return [];
   const r = gitPaths(root, ["ls-tree", "-r", "--name-only", ref]);
   if (!r.ok || !r.paths.length) return [];
-  return r.paths.filter((p) => p && isMigrationSql(p));
+  return r.paths.filter((p) => p && isMigrationSql(p, sqlProfile));
 }
 
 /** 增量：基线树上是否已有该 migration/键/task（含 Vn__ ≡ Vn_0__ alias） */
@@ -766,18 +777,19 @@ function computeBaselinePresence(
   root,
   base,
   { candidates, configKeys, jobKeys, taskCodes },
-  profile = DEFAULT_REPO_PROFILE
+  profile = DEFAULT_REPO_PROFILE,
+  sqlProfile = null
 ) {
   const sqlScripts = [];
   const configKeyList = [];
   const jobIds = [];
-  const baseMigNames = listMigrationsOnRef(root, base).map(baseName);
+  const baseMigNames = listMigrationsOnRef(root, base, sqlProfile).map(baseName);
   const baseMigAlias = migrationAliasSet(baseMigNames);
   // 基线侧原始名全部入册（供 exact + alias 扩集）；head 同 path 可读时再记 head bn
   for (const bn of baseMigNames) sqlScripts.push(bn);
 
   for (const c of candidates || []) {
-    if (!c.kinds?.includes("sql") || !isMigrationSql(c.path)) continue;
+    if (!c.kinds?.includes("sql") || !isMigrationSql(c.path, sqlProfile)) continue;
     const bn = baseName(c.path);
     const text = gitShow(root, base, c.path);
     if (text != null) {
@@ -881,7 +893,7 @@ function enrichJavaJobsCandidate(root, base, head, filePath, syncEnumMap) {
   };
 }
 
-function buildIncrementalCandidates(root, base, head, files, profile = DEFAULT_REPO_PROFILE) {
+function buildIncrementalCandidates(root, base, head, files, profile = DEFAULT_REPO_PROFILE, sqlProfile = null) {
   const isThirdParty = buildThirdPartyMatcher(profile.thirdPartyKeywords);
   const byPath = new Map();
   const configKeys = [];
@@ -906,17 +918,19 @@ function buildIncrementalCandidates(root, base, head, files, profile = DEFAULT_R
     if (cand.detail) prev.detail = [prev.detail, cand.detail].filter(Boolean).join("; ");
   }
 
+  const matchSql = (p) => isMigrationSql(p, sqlProfile);
   for (const f of files) {
     const n = normPath(f);
 
-    if (isMigrationSql(n) || isDbChangeSql(n)) {
+    if (matchSql(n) || isDbChangeSql(n)) {
+      const ver = migrationVersion(n);
       upsert({
         kinds: ["sql"],
         kind: "sql",
         path: n,
         confidence: "path",
         keys: [],
-        detail: isMigrationSql(n) ? `V${migrationVersion(n)}` : "docs/_change.sql",
+        detail: matchSql(n) ? (ver != null ? `V${ver}` : "未分类") : "docs/_change.sql",
       });
     }
 
@@ -1003,6 +1017,8 @@ function main() {
   --prior        清单已收录：默认 auto（archive 全量并集，优先 artifacts.json）；none 关闭；或显式路径
   --prior-since  仅并入 identity/日期 ≥ 该前缀的 archive（与 --prior auto 合用）
   --format       json（默认）| md | draft-md（WritePlan 三章预览）| audit-json（audit 短摘要）| summary（一屏摘要，WritePlan 白话摘要主输入）
+  --sql-dir      版本 SQL 目录（相对仓库根）；须与 --sql-format 同传。不传则仍按 db/migration + Flyway
+  --sql-format   flyway 或文件名 glob
   --out <file>   落盘到文件；Win32 下 json/audit-json 未指定时默认写临时文件（规避 PowerShell > UTF-16）`);
     process.exit(0);
   }
@@ -1013,6 +1029,26 @@ function main() {
   if (!args.firstRelease && !args.base) {
     console.error("require --base and --head, or --first-release --head");
     process.exit(1);
+  }
+
+  const sqlFlagCount = (args.sqlDir ? 1 : 0) + (args.sqlFormat ? 1 : 0);
+  if (sqlFlagCount === 1) {
+    console.error("require both --sql-dir and --sql-format, or neither");
+    process.exit(1);
+  }
+  /** @type {{ sqlDir: string, sqlFormat: string } | null} */
+  let sqlProfile = null;
+  if (sqlFlagCount === 2) {
+    const dirErr = validateSqlDir(args.sqlDir);
+    const fmtErr = validateSqlFormat(args.sqlFormat);
+    if (dirErr || fmtErr) {
+      console.error(dirErr || fmtErr);
+      process.exit(1);
+    }
+    sqlProfile = {
+      sqlDir: normalizeSqlDir(args.sqlDir),
+      sqlFormat: canonicalSqlFormat(args.sqlFormat),
+    };
   }
 
   const head = args.head;
@@ -1079,8 +1115,8 @@ function main() {
 
   if (firstRelease) {
     candidatePolicy = "first-release-layered";
-    inventory = buildFirstReleaseInventory(files);
-    const layered = buildFirstReleaseLayeredCandidates(args.root, head, files);
+    inventory = buildFirstReleaseInventory(files, sqlProfile);
+    const layered = buildFirstReleaseLayeredCandidates(args.root, head, files, sqlProfile);
     candidates = layered.candidates;
     configKeys = layered.configKeys;
     jobKeys = layered.jobKeys;
@@ -1096,7 +1132,7 @@ function main() {
     );
     warnings.push(...layerObs.warnings);
   } else {
-    const built = buildIncrementalCandidates(args.root, args.base, head, files, profile);
+    const built = buildIncrementalCandidates(args.root, args.base, head, files, profile, sqlProfile);
     candidates = built.candidates;
     configKeys = built.configKeys;
     jobKeys = built.jobKeys;
@@ -1105,7 +1141,13 @@ function main() {
 
   const baselinePresence = firstRelease
     ? { sqlScripts: [], configKeys: [], jobIds: [] }
-    : computeBaselinePresence(args.root, args.base, { candidates, configKeys, jobKeys, taskCodes }, profile);
+    : computeBaselinePresence(
+        args.root,
+        args.base,
+        { candidates, configKeys, jobKeys, taskCodes },
+        profile,
+        sqlProfile
+      );
 
   const remoteHost = remoteHostOf(args.root);
   const gitlabUrl = buildGitlabUrl(args.root, {
@@ -1117,6 +1159,9 @@ function main() {
   if (!gitlabUrl) {
     warnings.push("未能从 origin 推导远端浏览 URL");
   }
+  if (sqlProfile) {
+    warnings.push(`SQL 扫描: 目录=${sqlProfile.sqlDir} 格式=${sqlProfile.sqlFormat}`);
+  }
 
   const dataRaw = {
     ok: true,
@@ -1126,6 +1171,7 @@ function main() {
     base: firstRelease ? null : args.base,
     head,
     range,
+    sqlProfile,
     gitlabUrl,
     remoteHost,
     commits,

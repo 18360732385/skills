@@ -595,14 +595,216 @@ function migrationBaseName(p) {
   return n.split("/").pop() || n;
 }
 
+const FLYWAY_SQL_NAME = /^V\d+(_\d+)?__.+\.sql$/i;
+
+/** 文件名是否为现行 Flyway：`V<数字>__.sql` / `V<数字>_<子号>__.sql` */
+export function isFlywaySqlName(nameOrPath) {
+  return FLYWAY_SQL_NAME.test(migrationBaseName(nameOrPath));
+}
+
 /**
- * SQL 收紧：migration `Vdddd__…` 或现行 `Vdddd_d__DDL|DML__…`；须在 db/migration 下。
+ * basename glob → 大小写不敏感正则。`*` 任意一段，`?` 一个字符。
+ * @param {string} glob
  */
-export function isMigrationSql(filePath) {
+export function sqlGlobToRegExp(glob) {
+  let re = "^";
+  for (const ch of String(glob || "")) {
+    if (ch === "*") re += ".*";
+    else if (ch === "?") re += ".";
+    else re += ch.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+  }
+  return new RegExp(`${re}$`, "i");
+}
+
+/**
+ * @param {string} nameOrPath
+ * @param {string} sqlFormat `flyway` 或 basename glob
+ */
+export function sqlBasenameMatchesFormat(nameOrPath, sqlFormat) {
+  const base = migrationBaseName(nameOrPath);
+  const fmt = String(sqlFormat || "").trim();
+  if (!fmt) return false;
+  if (fmt.toLowerCase() === "flyway") return isFlywaySqlName(base);
+  return sqlGlobToRegExp(fmt).test(base);
+}
+
+/** 抽样文件名 → 格式推荐：全 Flyway 为 `flyway`；全是 .sql 且无一 Flyway 为 `*.sql`；混杂为 null */
+export function recommendSqlFormat(basenames) {
+  const names = (basenames || []).map((n) => migrationBaseName(n)).filter(Boolean);
+  if (!names.length) return null;
+  const fly = names.filter((n) => isFlywaySqlName(n)).length;
+  if (fly === names.length) return "flyway";
+  if (fly === 0 && names.every((n) => /\.sql$/i.test(n))) return "*.sql";
+  return null;
+}
+
+/** 相对路径规范化：正斜杠、去掉首尾斜杠 */
+export function normalizeSqlDir(sqlDir) {
+  return String(sqlDir || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .replace(/^\/+|\/+$/g, "");
+}
+
+/** @returns {string|null} 错误信息；通过则 null */
+export function validateSqlDir(sqlDir) {
+  const raw = String(sqlDir || "").trim();
+  if (!raw) return "SQL 目录为空";
+  if (/^[a-zA-Z]:/.test(raw) || raw.startsWith("/") || raw.startsWith("\\")) {
+    return "SQL 目录须为相对仓库根的路径";
+  }
+  const norm = normalizeSqlDir(raw);
+  if (!norm) return "SQL 目录为空";
+  const parts = norm.split("/");
+  if (parts.some((p) => !p || p === "." || p === "..")) {
+    return "SQL 目录不得包含 . 或 ..";
+  }
+  return null;
+}
+
+/** @returns {string|null} 错误信息；通过则 null */
+export function validateSqlFormat(sqlFormat) {
+  const raw = String(sqlFormat || "").trim();
+  if (!raw) return "SQL 格式为空";
+  if (raw.toLowerCase() === "flyway") return null;
+  if (/[/\\]/.test(raw) || raw.includes("..")) {
+    return "SQL 格式只能是 flyway 或文件名 glob";
+  }
+  if (!/^[*?A-Za-z0-9._-]+$/.test(raw)) {
+    return "SQL 格式含非法字符";
+  }
+  return null;
+}
+
+/** 存储用格式：`flyway` 小写，glob 原样 trim */
+export function canonicalSqlFormat(sqlFormat) {
+  const raw = String(sqlFormat || "").trim();
+  return raw.toLowerCase() === "flyway" ? "flyway" : raw;
+}
+
+/** 路径是否位于 sqlDir 之下（含该目录内的嵌套文件） */
+export function pathUnderSqlDir(filePath, sqlDir) {
+  const n = normMigrationPath(filePath).replace(/^\/+/, "");
+  const dir = normalizeSqlDir(sqlDir);
+  if (!n || !dir) return false;
+  return n === dir || n.startsWith(`${dir}/`);
+}
+
+function sqlCellUnset(value) {
+  const s = String(value ?? "")
+    .trim()
+    .replace(/^`+|`+$/g, "");
+  return !s || s === "（未记录）" || s === "—" || s === "-" || s === "未记录";
+}
+
+/**
+ * 读 releases.md「SQL 扫描」两格。缺节、空值、占位符，或只记下一项 → firstUse。
+ * @returns {{ sqlDir: string|null, sqlFormat: string|null, firstUse: boolean }}
+ */
+export function readSqlProfile(indexText) {
+  const lines = String(indexText || "").split(/\r?\n/);
+  let inSection = false;
+  let sqlDir = null;
+  let sqlFormat = null;
+  for (const line of lines) {
+    const t = line.trim();
+    if (/^##\s+SQL 扫描\s*$/.test(t)) {
+      inSection = true;
+      continue;
+    }
+    if (inSection && /^##\s+/.test(t)) break;
+    if (!inSection || !t.startsWith("|")) continue;
+    if (/^\|[\s|:-]+$/.test(t)) continue;
+    const cells = t.split("|").map((c) => c.trim());
+    const key = (cells[1] || "").replace(/`/g, "");
+    const val = (cells[2] || "").replace(/^`+|`+$/g, "").trim();
+    if (key === "SQL 目录") sqlDir = sqlCellUnset(val) ? null : normalizeSqlDir(val);
+    else if (key === "SQL 格式") sqlFormat = sqlCellUnset(val) ? null : canonicalSqlFormat(val);
+  }
+  return { sqlDir, sqlFormat, firstUse: !sqlDir || !sqlFormat };
+}
+
+const SQL_SCAN_INTRO =
+  "本仓版本 SQL 的目录（相对仓库根）与文件名格式。两项都记下之后，采集只认「该目录之下、且文件名符合该格式」的文件。未记录前不得当作 `db/migration` + Flyway 已确认。";
+
+/**
+ * 写入「SQL 扫描」两格。目录或格式不合法时不改原文。
+ * @returns {{ text: string, updated: boolean, error?: string, sqlDir?: string, sqlFormat?: string }}
+ */
+export function upsertSqlProfile(indexText, { sqlDir, sqlFormat } = {}) {
+  const dirErr = validateSqlDir(sqlDir);
+  const fmtErr = validateSqlFormat(sqlFormat);
+  const text = String(indexText ?? "");
+  if (dirErr || fmtErr) {
+    return { text, updated: false, error: dirErr || fmtErr };
+  }
+  const dir = normalizeSqlDir(sqlDir);
+  const fmt = canonicalSqlFormat(sqlFormat);
+  const block = [
+    "## SQL 扫描",
+    "",
+    SQL_SCAN_INTRO,
+    "",
+    "| 项 | 值 |",
+    "|---|---|",
+    `| SQL 目录 | \`${dir}\` |`,
+    `| SQL 格式 | \`${fmt}\` |`,
+    "",
+  ];
+  const lines = text.split(/\r?\n/);
+  let start = -1;
+  let end = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    if (/^##\s+SQL 扫描\s*$/.test(lines[i].trim())) {
+      start = i;
+      break;
+    }
+  }
+  /** @type {string[]} */
+  let nextLines;
+  if (start >= 0) {
+    for (let i = start + 1; i < lines.length; i++) {
+      if (/^##\s+/.test(lines[i].trim())) {
+        end = i;
+        break;
+      }
+    }
+    nextLines = [...lines.slice(0, start), ...block, ...lines.slice(end)];
+  } else {
+    let insertAt = lines.length;
+    for (let i = 0; i < lines.length; i++) {
+      if (/^##\s+(进行中|变更记录)/.test(lines[i].trim())) {
+        insertAt = i;
+        break;
+      }
+    }
+    nextLines = [...lines.slice(0, insertAt), ...block, ...lines.slice(insertAt)];
+  }
+  return {
+    text: nextLines.join("\n").replace(/\n{3,}/g, "\n\n"),
+    updated: true,
+    sqlDir: dir,
+    sqlFormat: fmt,
+  };
+}
+
+/**
+ * SQL 收录。
+ * 不传 profile（或目录与格式都空）：路径含 `db/migration` 且文件名为 Flyway。
+ * 传入目录 + 格式：位于该目录之下，且文件名符合格式。只传一项则不命中。
+ * @param {string} filePath
+ * @param {{ sqlDir?: string, sqlFormat?: string } | null} [profile]
+ */
+export function isMigrationSql(filePath, profile) {
   const n = normMigrationPath(filePath);
   const base = migrationBaseName(n);
-  const nameOk = /^V\d+(_\d+)?__.+\.sql$/i.test(base);
-  return nameOk && n.includes("db/migration");
+  const sqlDir = profile && profile.sqlDir ? String(profile.sqlDir).trim() : "";
+  const sqlFormat = profile && profile.sqlFormat ? String(profile.sqlFormat).trim() : "";
+  if (!sqlDir && !sqlFormat) {
+    return isFlywaySqlName(base) && n.includes("db/migration");
+  }
+  if (!sqlDir || !sqlFormat) return false;
+  return pathUnderSqlDir(n, sqlDir) && sqlBasenameMatchesFormat(base, sqlFormat);
 }
 
 /** 主版本号（忽略子序号）；无法解析则 null */

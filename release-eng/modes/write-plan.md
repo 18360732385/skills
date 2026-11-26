@@ -44,7 +44,7 @@ freeze: --format draft-md（本轮预览来源）
 | `docs/releases/{id}/artifacts.json` | create / refresh | 发版制品清单 SSOT（含 aiTrack；允许密文） |
 | `docs/releases/{id}/sql/refs/` + `release-V*-DDL|DML.sql` + `README.md`（统计） / `config/` | create / refresh | 自 head 拷贝本版 **新增** 原件到 refs，并整理 DDL/DML 与统计文档（← draft；不含 candidates） |
 | `docs/releases/{id}/jobs/README.md` | create / refresh | 任务汇总清单（code/名称/cron/默认参数/引用链接；不再逐份拷贝真相） |
-| `docs/releases/releases.md` | merge | 索引行 |
+| `docs/releases/releases.md` | merge | 进行中索引行；SQL 目录与格式已在首问写入，本步再 upsert 同一格 |
 | `docs/releases/archive/{id}/` | git mv 整夹 | 仅 seal |
 
 ### 写盘（prepare/resume 确认后）
