@@ -37,7 +37,7 @@ skill 侧其它文档（SKILL / README / QUICKSTART / AGENT-INDEX / modes/*）�
 ## ③ Git 定版展示
 
 - **`截断5`**（提交列表写入发版单时强制）：≤5 条全量；>5 条展示**前 3 + 一行 `…`（省略 N 条）+ 后 2**；hash 列展示**前 8 位**（截断自 `git %H`，如 `0afa1ab7`）；JSON 可保留全量 hash。省略行下方补「完整记录请登录 GitLab|GitHub|远端仓库 查看：<url>」——**远端链接按 origin 宿主**（GitLab / GitHub；freeze 字段名仍可能叫 `gitlabUrl`）。
-- **`mergeSources`**（合并来源）：按推测来源分支**去重全量**，`origin/`、`refs/remotes/`、`refs/heads/` 前缀归一（如 `code-scaffold` ≡ `origin/code-scaffold`，计数合并）；空归「无/未识别」；JSON 全量保留；发版单表优先业务支，噪声（环境支/未识别/`merge/*`）折叠为「环境支/未识别（合计）」一行。
+- **`mergeSources`**（合并来源）：**只算对比版本之后新增的 merge 记录**——对比版本取 archive 最新已上线发版单「定版引用」的 head（本地可解析且为当前 head 祖先；否则回落定版范围并 warning）。按推测来源分支**去重**，`origin/`、`refs/remotes/`、`refs/heads/` 前缀归一（如 `code-scaffold` ≡ `origin/code-scaffold`，计数合并）；空归「无/未识别」；JSON 全量保留；发版单表优先业务支，噪声（环境支/未识别/`merge/*`）折叠为「环境支/未识别（合计）」一行。
 - **来源分支功能**：一句话中文，≤28 字；优先中文关键词映射分支名，其次以样例提交主题收成业务短句。
 - **时区**：定版时间与提交 `date` 列一律 **Asia/Shanghai**。
 - 发版单一级标题「一、二、三…」；上线内容摘要 1～5 项**分支级聚合**，并入元信息章内 `### 上线内容摘要`。
@@ -97,10 +97,12 @@ freeze `overdueHardGate=true`（进行中目录包已定版且发版日期已过
 - **生成时机**：note-merge 定版/刷新后自动重建（`--no-html` 关闭）；seal `--apply` 在归档侧按「已上线」状态重渲；也可手动 `node scripts/release.mjs note-html -- --root . --note <path>` 补渲（audit 亦可只报告缺失）。
 - **降级语义**：html 渲染失败**不阻断**定版/归档（降级为 warning）；缺 html 不影响 seal-check。
 - **会话级辅助不入档**：html 中的勾选（步骤/验收）与 YAML 折叠状态均为浏览器会话态，不写回 md / artifacts。
+- **包内附属逐项展示**：「七、包内附属文件」按类别逐行列出（SQL 原件 / 整理 DDL·DML / 配置快照 / 定时任务），每行带可点击链接（`target="_blank"`），文件名含 `[]` 也必须正常渲染。
 - fixtures 样张：`templates/release-note-sample.md` → `release-note-sample.html`（视觉样例；不参与 bootstrap 种子复制）。
 
 ## 变更记录
 
+- 0.4.5 合并来源改为「对比版本之后新增的 merge 记录」；SQL/定时任务章最多前 5 条；包内附属逐项清单；HTML 视觉与附件链接修复。
 - 0.4.4 新增 ⑤b（SQL 扫描：目录 + 格式；首次使用写入索引，之后按记录扫描）。
 - 0.4.3 新增 ⑩（HTML 只读渲染；目录包含同名 `<identity>.html`）。
 - 0.4.0 版本身份改为 `release-V{yyMMdd}`；删除 notes/ 兼容读；仓内快照对账；取消发版命令。

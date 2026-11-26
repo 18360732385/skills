@@ -296,14 +296,20 @@ export function inlineMd(src) {
     codes.push(c);
     return `\x00${codes.length - 1}\x00`;
   });
-  out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, t, u) => {
-    const isMdLink = /\.md(\s|$)/.test(u);
-    return `<a href="${u}"${isMdLink ? ' class="mdref"' : ""}>${t}</a>`;
+  // 允许链接文字含一层方括号（如 `[sms_db_prod]-V261130-DDL.sql`）
+  out = out.replace(/\[((?:[^\[\]]|\[[^\[\]]*\])*)\]\(([^)\s]+)\)/g, (_m, t, u) => {
+    const isRemote = /^https?:\/\//i.test(u);
+    const isMdLink = /\.md($|[?#])/i.test(u);
+    const cls = isMdLink ? ' class="mdref"' : isRemote ? "" : ' class="filelink"';
+    const attrs = isRemote
+      ? ' target="_blank" rel="noopener noreferrer"'
+      : ' target="_blank" rel="noopener"';
+    return `<a href="${u}"${cls}${attrs}>${t}</a>`;
   });
   out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   out = out.replace(
     /(^|[\s>（(【[])(https?:\/\/[^\s<>()（）【\]]+)/g,
-    (_m, pre, url) => `${pre}<a href="${url}">${url}</a>`
+    (_m, pre, url) => `${pre}<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
   );
   out = out.replace(
     /&lt;(gitlabUrl|slug|headRef)&gt;/g,
@@ -558,6 +564,21 @@ function tickHtml(checked = false) {
   }" tabindex="0" data-tick></span>`;
 }
 
+/** 包内附属：逐项清单（类别 chip + 内容 + 可直接打开的链接） */
+function manifestHtml(block) {
+  const items = block.items
+    .map((it) => {
+      const m = String(it.text).match(/^\*\*(.+?)\*\*\s*[：:]\s*(.*)$/);
+      const chip = m ? m[1] : "附属";
+      const body = m ? m[2] : it.text;
+      return `<li class="manifest-item"><span class="manifest-chip">${esc(
+        chip
+      )}</span><span class="manifest-body">${inlineMd(body)}</span></li>`;
+    })
+    .join("");
+  return `<ul class="manifest">${items}</ul>`;
+}
+
 function h3Html(text) {
   const m = text.match(/^(\d+)[、.]\s*(.*)$/);
   if (m) {
@@ -618,6 +639,8 @@ function chapterBlocksHtml(ch) {
               .map((it) => `<li>${inlineMd(it.text)}</li>`)
               .join("")}</ul>`
           );
+        } else if (ch.key === "bundle") {
+          out.push(manifestHtml(b));
         } else {
           out.push(listHtml(b, ch.key));
         }
@@ -769,22 +792,25 @@ function chromeHtml(model, status, chapters) {
 
 const CSS = `
 :root {
-  --desk: #E9EAE4;
-  --grid: rgba(47, 82, 122, 0.05);
-  --paper: #FDFDFB;
-  --ink: #22282D;
-  --ink-2: #59616B;
-  --ink-3: #878E96;
-  --hairline: #E0E4E1;
-  --rule: #C6CCC9;
-  --blue: #2E5C8F;
-  --blue-soft: rgba(46, 92, 143, 0.08);
-  --seal: #BE3A2B;
-  --seal-soft: rgba(190, 58, 43, 0.07);
-  --amber: #8A6D1F;
-  --amber-soft: rgba(138, 109, 31, 0.07);
-  --ok: #2F7D53;
-  --code-bg: #F5F6F3;
+  --desk: #E6E7E1;
+  --desk-deep: #DCDED7;
+  --grid: rgba(35, 78, 114, 0.045);
+  --paper: #FCFBF7;
+  --paper-2: #F5F4EE;
+  --ink: #1D2429;
+  --ink-2: #55606A;
+  --ink-3: #88919A;
+  --hairline: #E2E3DC;
+  --rule: #C6C9C2;
+  --blue: #245A85;
+  --blue-deep: #173F5F;
+  --blue-soft: rgba(36, 90, 133, 0.07);
+  --seal: #B23A2D;
+  --seal-soft: rgba(178, 58, 45, 0.06);
+  --amber: #8A6A1E;
+  --amber-soft: rgba(138, 106, 30, 0.08);
+  --ok: #2E7A52;
+  --code-bg: #F3F3EE;
   --serif: "Source Han Serif SC", "Noto Serif SC", "思源宋体", "STZhongsong", "SimSun", serif;
   --sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
   --mono: "Cascadia Code", ui-monospace, "Sarasa Mono SC", Consolas, "Courier New", monospace;
@@ -793,24 +819,25 @@ const CSS = `
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  padding: 26px 24px 60px;
+  padding: 30px 24px 64px;
   padding-left: calc(var(--toc-w) + 36px);
   background-color: var(--desk);
   background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.55), transparent 60%),
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-size: auto, 24px 24px, 24px 24px;
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 14.5px;
   line-height: 1.78;
-  --toc-w: 196px;
+  --toc-w: 202px;
   transition: padding-left 0.18s ease;
 }
 body.toc-collapsed { --toc-w: 44px; }
 a { color: var(--blue); text-decoration: none; border-bottom: 1px dotted var(--blue); }
 a:hover { border-bottom-style: solid; }
-a.mdref { font-family: var(--mono); font-size: 0.92em; }
+a.mdref { font-family: var(--mono); font-size: 0.94em; }
 code {
   font-family: var(--mono);
   font-size: 0.9em;
@@ -931,52 +958,94 @@ body.toc-collapsed .toc-panel { display: none; }
 
 /* 工单纸 */
 .sheet {
-  max-width: 940px;
+  max-width: 924px;
   margin: 0 auto;
   background: var(--paper);
-  border: 1px solid rgba(34, 40, 45, 0.14);
-  box-shadow: 0 1px 0 rgba(34, 40, 45, 0.04), 0 14px 34px rgba(31, 41, 51, 0.1);
-  padding: 44px 52px 40px;
+  border: 1px solid rgba(29, 36, 41, 0.16);
+  border-top: 4px solid var(--ink);
+  box-shadow: 0 1px 0 rgba(29, 36, 41, 0.04), 0 18px 44px rgba(31, 41, 51, 0.12);
+  padding: 42px 56px 44px;
 }
 
 /* 抬头 */
-.doc-head { position: relative; border-bottom: 3px double var(--ink); padding-bottom: 18px; }
+.doc-head { position: relative; border-bottom: 1px solid var(--ink); padding-bottom: 20px; }
+.doc-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.doc-brand { min-width: 0; }
+.doc-kicker {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--blue);
+}
 .doc-no {
   font-family: var(--mono);
   font-size: 12px;
   color: var(--ink-2);
   letter-spacing: 0.04em;
+  margin-top: 5px;
 }
 .doc-no b { color: var(--ink); font-weight: 600; }
 .doc-title {
   font-family: var(--serif);
-  font-size: 34px;
+  font-size: 33px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  margin: 2px 0 0;
-  line-height: 1.25;
+  letter-spacing: 0.1em;
+  margin: 6px 0 0;
+  line-height: 1.2;
 }
-.doc-sub { margin-top: 4px; color: var(--ink-2); font-size: 13px; }
+.doc-sub {
+  margin-top: 10px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
 .doc-sub code { background: none; border: none; padding: 0; }
-.stamp-zone {
-  position: absolute;
-  right: 0;
-  top: 22px;
-  text-align: center;
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 3px 9px;
+  background: var(--paper-2);
+  border: 1px solid var(--hairline);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
+.chip em {
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  flex: none;
+}
+.doc-ref { font-size: 11.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+.doc-ref code { font-size: 11px; color: var(--ink-2); }
+.stamp-zone { flex: none; text-align: center; padding-top: 4px; }
 .stamp {
   display: inline-block;
   font-family: var(--serif);
   font-weight: 700;
-  font-size: 24px;
-  letter-spacing: 0.32em;
-  padding: 8px 10px 8px 16px;
+  font-size: 23px;
+  letter-spacing: 0.3em;
+  padding: 8px 10px 8px 15px;
   color: var(--seal);
   border: 2px solid currentColor;
   outline: 1.5px solid currentColor;
   outline-offset: 3px;
   border-radius: 2px;
-  transform: rotate(-8deg);
+  transform: rotate(-7deg);
   opacity: 0.92;
   user-select: none;
 }
@@ -1006,82 +1075,97 @@ body.toc-collapsed .toc-panel { display: none; }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin: 16px 0 0;
+  margin: 18px 0 0;
   border: 1px solid var(--rule);
   border-right: none;
   border-bottom: none;
+  background: var(--paper);
 }
 .form-cell {
-  padding: 8px 14px;
+  padding: 9px 14px 10px;
   border-right: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
-.form-l { font-size: 11.5px; color: var(--ink-2); letter-spacing: 0.06em; }
-.form-v { font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+.form-l {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+}
+.form-v { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .form-v--ph { color: var(--ink-3); font-weight: 400; }
 
 /* 核对条 */
 .facts {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  margin: 18px 0 6px;
+  margin: 20px 0 4px;
   border: 1px solid var(--rule);
+  border-top: 3px solid var(--ink);
+  background: var(--paper-2);
 }
 .fact {
-  padding: 10px 14px 8px;
+  padding: 11px 14px 9px;
   border-right: 1px solid var(--hairline);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  gap: 1px;
 }
 .fact:last-child { border-right: none; }
 .fact-v {
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
+  color: var(--ink);
 }
-.fact-l { font-size: 11.5px; color: var(--ink-2); }
+.fact-l { font-size: 11px; color: var(--ink-2); letter-spacing: 0.03em; }
 .fact-extra { color: var(--amber); }
 
 /* 章节 */
-.chapter { margin-top: 34px; }
+.chapter { margin-top: 38px; }
 .ch-head {
   display: flex;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--ink);
-  padding-bottom: 8px;
+  padding-bottom: 9px;
 }
 .ch-no {
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   flex: none;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ink);
+  line-height: 1;
 }
-.ch-no::after { content: "、"; font-weight: 700; }
 .ch-head h2 {
   font-family: var(--serif);
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   margin: 0;
 }
 .ch-flag {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--ink-3);
   border: 1px solid var(--hairline);
   padding: 1px 8px;
-  border-radius: 2px;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 h3.sub {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   margin: 22px 0 8px;
   display: flex;
@@ -1090,18 +1174,18 @@ h3.sub {
 }
 .sub-no {
   font-family: var(--serif);
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--rule);
-  border-radius: 50%;
-  font-size: 12.5px;
+  border-radius: 2px;
+  font-size: 12px;
   color: var(--ink-2);
 }
-.summary-h { font-family: var(--serif); font-size: 17px; letter-spacing: 0.03em; }
+.summary-h { font-family: var(--serif); font-size: 16.5px; letter-spacing: 0.04em; }
 .summary-lines {
   list-style: none;
   margin: 10px 0 4px;
@@ -1110,7 +1194,7 @@ h3.sub {
 }
 .summary-lines li {
   font-family: var(--serif);
-  font-size: 16.5px;
+  font-size: 16px;
   line-height: 1.9;
   padding-left: 44px;
   position: relative;
@@ -1165,25 +1249,60 @@ h4.file-h code { background: none; border: none; padding: 0; }
 .tablewrap--warn { border: 1px solid rgba(138, 109, 31, 0.35); background: var(--amber-soft); padding: 2px; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 thead th {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--ink-2);
   text-align: left;
-  padding: 7px 10px 6px;
-  border-bottom: 3px double var(--ink);
+  letter-spacing: 0.05em;
+  padding: 8px 11px 7px;
+  border-bottom: 2px solid var(--ink);
   white-space: nowrap;
 }
 tbody td {
-  padding: 7px 10px;
+  padding: 8px 11px;
   border-bottom: 1px solid var(--hairline);
   vertical-align: top;
 }
-tbody tr:hover { background: rgba(46, 92, 143, 0.045); }
-td.mono, .tablewrap code { font-family: var(--mono); font-size: 12.5px; }
+tbody tr:hover { background: var(--blue-soft); }
+tbody tr:last-child td { border-bottom-color: var(--rule); }
+td.mono, .tablewrap code { font-family: var(--mono); font-size: 12px; }
 td.num { font-family: var(--mono); text-align: right; }
 .tr-omit td { color: var(--ink-3); border-bottom: 1px dashed var(--hairline); }
 .hit { color: var(--ok); font-weight: 700; }
 .miss { color: var(--ink-3); }
+
+/* 包内附属：逐项清单 */
+.manifest {
+  list-style: none;
+  margin: 12px 0 4px;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.manifest-item {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr);
+  gap: 16px;
+  align-items: baseline;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--hairline);
+}
+.manifest-chip {
+  justify-self: start;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--blue-deep);
+  background: var(--blue-soft);
+  border: 1px solid rgba(36, 90, 133, 0.18);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.manifest-body { min-width: 0; overflow-wrap: anywhere; font-size: 13.5px; }
+.manifest-body a, a.filelink {
+  font-family: var(--mono);
+  font-size: 0.94em;
+  border-bottom-style: solid;
+}
 
 /* 代码 */
 .code {
@@ -1328,13 +1447,15 @@ ul.plainlist li { margin: 4px 0; }
   .toc-nav a { border-left: none; border-bottom: 2px solid transparent; padding: 6px 8px; }
   .toc-nav a.is-active { border-bottom-color: var(--blue); background: transparent; }
   .print-fab { top: 8px; right: 8px; padding: 6px 12px; }
-  .sheet { padding: 26px 20px; }
+  .sheet { padding: 26px 20px 30px; border-top-width: 3px; }
+  .doc-topline { gap: 12px; }
   .form-grid { grid-template-columns: repeat(2, 1fr); }
   .facts { grid-template-columns: repeat(3, 1fr); }
   .fact:nth-child(3n) { border-right: none; }
   .fact:nth-child(-n+3) { border-bottom: 1px solid var(--hairline); }
-  .stamp-zone { position: static; margin-top: 10px; text-align: left; }
-  .doc-title { font-size: 27px; }
+  .stamp-zone { padding-top: 0; text-align: right; }
+  .doc-title { font-size: 27px; letter-spacing: 0.06em; }
+  .manifest-item { grid-template-columns: 1fr; gap: 6px; padding: 10px 2px; }
   .sign { grid-template-columns: 1fr; gap: 14px; }
 }
 
@@ -1347,7 +1468,7 @@ ul.plainlist li { margin: 4px 0; }
   .tickbox[aria-checked="true"] { background: var(--ok); }
   a { color: inherit; border-bottom: none; }
   .chapter { break-inside: auto; }
-  .ch-head, h3.sub, .sign, .facts, .note, .remote, .yamlbox, tr { break-inside: avoid; }
+  .ch-head, h3.sub, .sign, .facts, .note, .remote, .yamlbox, .manifest-item, tr { break-inside: avoid; }
   thead th { border-bottom: 2px solid var(--ink); }
   .stamp, .s-frozen, .s-online, .s-cancel, .fact-v, .draft-chip {
     -webkit-print-color-adjust: exact;
@@ -1418,7 +1539,9 @@ export function buildNoteHtml(mdText, opts = {}) {
   const status = statusInfo(model).normalized;
   const facts = collectFacts(model);
 
-  const metaRows = headMetaRows(model);
+  const metaRows = headMetaRows(model).filter(
+    (r) => !["发版分支", "基线分支", "定版引用"].includes(r.label)
+  );
   const formHtml = metaRows.length
     ? `<dl class="form-grid">${metaRows
         .map((r) => {
@@ -1441,9 +1564,19 @@ export function buildNoteHtml(mdText, opts = {}) {
   )
     .replace(/（[^（）]*）\s*$/, "")
     .trim();
-  const branchPair = [releaseBranch, baselineBranch ? `基线 ${baselineBranch}` : ""]
+  const branchChips = [
+    releaseBranch
+      ? `<span class="chip"><em>发版分支</em>${esc(releaseBranch)}</span>`
+      : "",
+    baselineBranch
+      ? `<span class="chip"><em>基线</em>${esc(baselineBranch)}</span>`
+      : "",
+  ]
     .filter(Boolean)
-    .join(" · ");
+    .join("");
+  const refLine = model.headerMeta["定版引用"]
+    ? `<span class="doc-ref">定版引用 <code>${esc(model.headerMeta["定版引用"])}</code></span>`
+    : "";
 
   const chaptersHtml = model.chapters
     .map((ch, idx) => {
@@ -1472,13 +1605,16 @@ export function buildNoteHtml(mdText, opts = {}) {
 ${chromeHtml(model, status, model.chapters)}
 <main class="sheet">
 <header class="doc-head">
-<div class="doc-no">编号 <b>${esc(identity)}</b> · 发版仪式</div>
-<h1 class="doc-title">${esc(title)}</h1>
-<p class="doc-sub">${inlineMd(branchPair)}${
-    model.headerMeta["定版引用"] ? ` · 定版引用 <code>${esc(model.headerMeta["定版引用"])}</code>` : ""
-  }</p>
-${formHtml}
+<div class="doc-topline">
+<div class="doc-brand">
+<div class="doc-kicker">发版仪式 · Release Dossier</div>
+<div class="doc-no">编号 <b>${esc(identity)}</b></div>
+</div>
 <div class="stamp-zone">${stampHtml(status)}</div>
+</div>
+<h1 class="doc-title">${esc(title)}</h1>
+<p class="doc-sub">${branchChips}${refLine}</p>
+${formHtml}
 </header>
 ${factsHtml(facts)}
 ${chaptersHtml}

@@ -23,6 +23,7 @@ import {
   enrichFreezePayload,
   extractTaskCodesFromJavaDiff as enrichExtractTaskCodes,
   loadSyncTaskCodeMap,
+  resolvePriorArtifactsBundle,
   toDraftPreviewMd,
   toAuditFreezeSummary,
   toFreezeSummary,
@@ -53,6 +54,7 @@ import {
   migrationCanonicalId,
   migrationAliasSet,
   isProdConfigPath,
+  parseNoteHeadRef,
 } from "./release-format.mjs";
 import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
 import { pathBucket, excludeReleasePackageFiles } from "./lib/freeze/paths.mjs";
@@ -183,6 +185,44 @@ function guessSourceBranch(subject) {
     subject.match(/Merge pull request #\d+ from ([^\s]+)/i) ||
     subject.match(/Merge branch '([^']+)'/i);
   return m ? m[1] : null;
+}
+
+function readTextFileSafe(p) {
+  try {
+    return fs.readFileSync(p, "utf8").replace(/^\uFEFF/, "");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 合并来源口径：只算「对比版本」（archive 里最新一份已上线发版单）之后新增的 merge 记录。
+ * 对比 ref 取其「定版引用」的 head；须在本地可解析且是当前 head 的祖先，否则返回 null（回落定版范围）。
+ */
+function resolveMergeCompareLog(root, head, profile) {
+  let bundle = null;
+  try {
+    bundle = resolvePriorArtifactsBundle(root, "auto", null, profile);
+  } catch {
+    return null;
+  }
+  for (const note of bundle.notes || []) {
+    const text = readTextFileSafe(path.join(root, note.path));
+    const ref = parseNoteHeadRef(text);
+    if (!ref) continue;
+    const rev = git(root, ["rev-parse", "--verify", `${ref}^{commit}`]);
+    if (!rev.ok) continue;
+    if (!git(root, ["merge-base", "--is-ancestor", rev.stdout, head]).ok) continue;
+    const log = git(root, [
+      "log",
+      "--merges",
+      "--format=%H|%an|%aI|%s",
+      `${rev.stdout}..${head}`,
+    ]);
+    if (!log.ok) continue;
+    return { ref, note: note.identity || note.path, stdout: log.stdout };
+  }
+  return null;
 }
 
 function normPath(p) {
@@ -1069,13 +1109,43 @@ function main() {
 
   const commits = parseLogLines(log.stdout);
 
-  const merges = commits
-    .filter((c) => /^Merge\b/i.test(c.subject) || guessSourceBranch(c.subject))
-    .map((c) => ({
-      hash: c.hash,
-      subject: c.subject,
-      source: guessSourceBranch(c.subject),
-    }));
+  // 合并来源：按对比版本（archive 最新发版单的 head）之后新增的 git merge 记录统计；
+  // 找不到可比 ref 时回落定版范围（base..head / 首次发版全历史）。
+  let mergeLogStdout = null;
+  const mergeScope = {
+    mode: firstRelease ? "first-release" : "base",
+    compareRef: null,
+    priorNote: null,
+    fallback: null,
+  };
+  if (firstRelease) {
+    const r = git(root, ["log", "--merges", "--format=%H|%an|%aI|%s", head]);
+    if (r.ok) mergeLogStdout = r.stdout;
+  } else {
+    const cmp = resolveMergeCompareLog(args.root, head, profile);
+    if (cmp) {
+      mergeLogStdout = cmp.stdout;
+      mergeScope.mode = "prior";
+      mergeScope.compareRef = cmp.ref;
+      mergeScope.priorNote = cmp.note;
+    } else {
+      mergeScope.fallback =
+        "未找到可用的对比版本 ref（archive 发版单或本地 git 均不可解析），合并来源按定版范围统计";
+      const r = git(root, ["log", "--merges", "--format=%H|%an|%aI|%s", range]);
+      if (r.ok) mergeLogStdout = r.stdout;
+    }
+  }
+
+  // git log --merges 不可用时退回「subject 像 merge」的提交
+  const mergeCommitList =
+    mergeLogStdout != null
+      ? parseLogLines(mergeLogStdout)
+      : commits.filter((c) => /^Merge\b/i.test(c.subject) || guessSourceBranch(c.subject));
+  const merges = mergeCommitList.map((c) => ({
+    hash: c.hash,
+    subject: c.subject,
+    source: guessSourceBranch(c.subject),
+  }));
   const mergeSources = buildMergeSources(merges, { slugCn: profile.branchSlugCn });
   const releaseSummaryLines = buildReleaseSummaryLines(commits, {
     recentFirst: firstRelease || !(mergeSources && mergeSources.length),
@@ -1106,6 +1176,10 @@ function main() {
     .sort((a, b) => b.commits - a.commits);
 
   const warnings = [];
+  if (mergeScope.fallback) warnings.push(`合并来源：${mergeScope.fallback}`);
+  if (mergeScope.mode === "prior") {
+    warnings.push(`合并来源口径：对比版本 ${mergeScope.priorNote} · ${mergeScope.compareRef}`);
+  }
   let candidates = [];
   let configKeys = [];
   let jobKeys = [];
@@ -1177,6 +1251,7 @@ function main() {
     commits,
     merges,
     mergeSources,
+    mergeScope,
     pathStats,
     authors,
     releaseSummaryLines,

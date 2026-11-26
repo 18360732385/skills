@@ -1,10 +1,23 @@
-# release-eng 验收记录（0.4.4）
+# release-eng 验收记录（0.4.5）
 
 > 静态对照 + `scripts/selfcheck.mjs`。**非 harness land**。历史见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/release-eng/`](../_log/release-eng/)。
 
 ## 版本
 
-当前 **0.4.4**（首次使用记录 SQL 目录与格式，之后按记录扫描）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.4.5**（合并来源按对比版本之后新增；SQL/定时任务章前 5 条；包内附属逐项清单；HTML 视觉与附件链接）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+
+## 0.4.5 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `parseNoteHeadRef` 解析 `a..b` / `首次发版:b` / 表格行 | 有（selfcheck） |
+| freeze 合并来源取 archive 最新发版单 head；不可解析时回落并 warning | 有（`mergeScope`） |
+| SQL 章 >5 条只展示 5 行，其余注明详见 `sql/README.md` | 有（selfcheck 045） |
+| 定时任务章 >5 条只展示 5 行，其余注明详见 `jobs/README.md` | 有（selfcheck 045） |
+| 「七、包内附属文件」逐项清单（SQL 原件 / 整理 / 配置 / 任务） | 有（`buildBundleSection`） |
+| 方括号文件名链接可渲染、新窗口打开 | 有（selfcheck 045 + 样张 HTML） |
+| 发版单 HTML 视觉更新（抬头 / 章节 / 表格 / 清单 / 响应式 / 打印） | 有（`release-note-sample.html` 重渲） |
+| `--layer unit` / `--layer contract` | unit 56/56；contract 与基线同源 6 项（受限沙箱本地 CLI）；full 卡既有 seal e2e（基线同样失败） |
 
 ## 0.4.4 增量验收
 

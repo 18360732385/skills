@@ -357,6 +357,7 @@ const {
   formatMergeSourcesTableRows,
   buildMergeSources,
   bundleSqlVolumeWarning,
+  parseNoteHeadRef,
   BUNDLE_SQL_WARN_COUNT,
   BUNDLE_SQL_ALERT_COUNT,
 } = format;
@@ -386,6 +387,21 @@ assert(typeof normalizeNoteStatus === "function", "export normalizeNoteStatus");
 assert(typeof isMergeSourceNoise === "function", "export isMergeSourceNoise");
 assert(typeof formatMergeSourcesTableRows === "function", "export formatMergeSourcesTableRows");
 assert(typeof bundleSqlVolumeWarning === "function", "export bundleSqlVolumeWarning");
+assert(typeof parseNoteHeadRef === "function", "export parseNoteHeadRef");
+
+// 合并来源口径：对比版本 ref 解析
+{
+  assert(
+    parseNoteHeadRef("> 定版引用：origin/main..origin/release/x · 负责人") === "origin/release/x",
+    "mergeScope a..b → b"
+  );
+  assert(
+    parseNoteHeadRef("> 定版引用：首次发版:origin/release/V260827") === "origin/release/V260827",
+    "mergeScope 首次发版 → head"
+  );
+  assert(parseNoteHeadRef("| 定版引用 | origin/main..origin/release/y |") === "origin/release/y", "mergeScope 表格行");
+  assert(parseNoteHeadRef("无") === null, "mergeScope 无定版引用 → null");
+}
 
 // P2：mergeSources noise + 摘要跳过环境支 + 体积闸
 {
@@ -2721,6 +2737,17 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   assert(/本版 SQL：\*\*2\*\* 条/.test(withSql), "037 有 SQL 写条数");
   assert(/\[sql\/README\.md\]\(\.\/sql\/README\.md\)/.test(withSql), "037 有 SQL 链到 sql/README.md");
   assert(!/\|\s*执行序\s*\|/.test(withSql), "037 有 SQL 不写执行序表");
+  assert(/\|\s*#\s*\|\s*脚本\s*\|\s*类型\s*\|\s*动作\s*\|/.test(withSql), "045 SQL 章展示前 5 条样表");
+
+  const manySql = merge.buildSqlSection({
+    sql: Array.from({ length: 8 }, (_, i) => ({
+      stableId: `V01${i}_0__DDL__t${i}.sql`,
+      action: "新增/变更",
+    })),
+  });
+  assert((manySql.match(/^\| \d+ \|/gm) || []).length === 5, "045 SQL 超 5 条只展示 5 行");
+  assert(/其余 3 条详见 \[sql\/README\.md\]/.test(manySql), "045 SQL 超出注明其余见 README");
+  assert(/V010_0__DDL__t0\.sql/.test(manySql) && !/V017_0__DDL__t7\.sql/.test(manySql), "045 SQL 取前 5 条");
 
   const tpl = fs.readFileSync(
     path.join(skillRoot, "fixtures/docs/releases/templates/release-note-template.md"),
@@ -2789,6 +2816,19 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   assert(/jobs\/README\.md/.test(jobsMd), "038 jobs 链 README");
   assert(!/\|\s*task \/ cron 键\s*\|/.test(jobsMd), "038 jobs 无变更表");
 
+  const manyJobs = merge.buildJobsSection({
+    draft: {
+      jobs: Array.from({ length: 7 }, (_, i) => ({
+        taskCode: `job:${i}`,
+        description: `任务${i}`,
+        cron: `0 0 ${i} * * ?`,
+      })),
+    },
+  });
+  assert((manyJobs.match(/^\| \d+ \|/gm) || []).length === 5, "045 jobs 超 5 条只展示 5 行");
+  assert(/其余 2 条详见 \[jobs\/README\.md\]/.test(manyJobs), "045 jobs 超出注明其余见 README");
+  assert(/`job:0`/.test(manyJobs) && !/`job:6`/.test(manyJobs), "045 jobs 取前 5 条");
+
   const bundleMd = merge.buildBundleSection([
     { kind: "sql", bundlePath: "sql/refs/a.sql", sourcePath: "x" },
     { kind: "config", bundlePath: "config/a.yml", sourcePath: "y" },
@@ -2796,8 +2836,12 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     { kind: "sql-stats", bundlePath: "sql/README.md", sourcePath: "←" },
     { kind: "jobs", bundlePath: "jobs/README.md", sourcePath: "←" },
   ]);
-  assert(/本版附属：/.test(bundleMd), "038 bundle 一行摘要");
-  assert(/sql×1/.test(bundleMd) && /config×1/.test(bundleMd), "038 bundle 计数");
+  assert(/本版附属：/.test(bundleMd), "038 bundle 摘要");
+  assert(/SQL 原件 1 份/.test(bundleMd) && /配置快照 1 份/.test(bundleMd), "038 bundle 计数");
+  assert(/^- \*\*SQL 原件\*\*/m.test(bundleMd), "045 bundle 逐项：SQL 原件");
+  assert(/^- \*\*整理 · DDL\*\*/m.test(bundleMd), "045 bundle 逐项：整理 DDL 链接");
+  assert(/\[\[sms_db_prod\]-V261126-DDL\.sql\]\(\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql\)/.test(bundleMd), "045 bundle 方括号文件名链接");
+  assert(/^- \*\*定时任务\*\*/m.test(bundleMd), "045 bundle 逐项：定时任务");
   assert(!/\|\s*类别\s*\|\s*包内路径/.test(bundleMd), "038 bundle 无文件表");
 
   const statsMd = statsMod.buildSqlStatsMarkdown({
@@ -3050,6 +3094,13 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   assert(!/<gitlabUrl>/.test(html), "043 占位符不裸露");
   assert(/class="sign"/.test(html), "043 签字栏");
   assert(/真相文件/.test(html), "043 colophon SSOT 声明");
+  assert(/class="manifest-item"/.test(html), "045 附属文件逐项渲染");
+  assert(
+    /href="\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql"[^>]*class="filelink"/.test(html) ||
+      /class="filelink"[^>]*href="\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql"/.test(html),
+    "045 方括号文件名链接可点击"
+  );
+  assert(/target="_blank"/.test(html), "045 附件链接新窗口打开");
 
   // CLI 渲染到临时目录
   const work = fs.mkdtempSync(path.join(os.tmpdir(), "re-043-html-"));

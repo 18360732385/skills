@@ -3,26 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="release-eng note-html 0.4.3">
+<meta name="generator" content="release-eng note-html 0.4.5">
 <title>发版单 · release-V261126</title>
 <style>
 :root {
-  --desk: #E9EAE4;
-  --grid: rgba(47, 82, 122, 0.05);
-  --paper: #FDFDFB;
-  --ink: #22282D;
-  --ink-2: #59616B;
-  --ink-3: #878E96;
-  --hairline: #E0E4E1;
-  --rule: #C6CCC9;
-  --blue: #2E5C8F;
-  --blue-soft: rgba(46, 92, 143, 0.08);
-  --seal: #BE3A2B;
-  --seal-soft: rgba(190, 58, 43, 0.07);
-  --amber: #8A6D1F;
-  --amber-soft: rgba(138, 109, 31, 0.07);
-  --ok: #2F7D53;
-  --code-bg: #F5F6F3;
+  --desk: #E6E7E1;
+  --desk-deep: #DCDED7;
+  --grid: rgba(35, 78, 114, 0.045);
+  --paper: #FCFBF7;
+  --paper-2: #F5F4EE;
+  --ink: #1D2429;
+  --ink-2: #55606A;
+  --ink-3: #88919A;
+  --hairline: #E2E3DC;
+  --rule: #C6C9C2;
+  --blue: #245A85;
+  --blue-deep: #173F5F;
+  --blue-soft: rgba(36, 90, 133, 0.07);
+  --seal: #B23A2D;
+  --seal-soft: rgba(178, 58, 45, 0.06);
+  --amber: #8A6A1E;
+  --amber-soft: rgba(138, 106, 30, 0.08);
+  --ok: #2E7A52;
+  --code-bg: #F3F3EE;
   --serif: "Source Han Serif SC", "Noto Serif SC", "思源宋体", "STZhongsong", "SimSun", serif;
   --sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
   --mono: "Cascadia Code", ui-monospace, "Sarasa Mono SC", Consolas, "Courier New", monospace;
@@ -31,24 +34,25 @@
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  padding: 26px 24px 60px;
+  padding: 30px 24px 64px;
   padding-left: calc(var(--toc-w) + 36px);
   background-color: var(--desk);
   background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.55), transparent 60%),
     linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-size: auto, 24px 24px, 24px 24px;
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 14.5px;
   line-height: 1.78;
-  --toc-w: 196px;
+  --toc-w: 202px;
   transition: padding-left 0.18s ease;
 }
 body.toc-collapsed { --toc-w: 44px; }
 a { color: var(--blue); text-decoration: none; border-bottom: 1px dotted var(--blue); }
 a:hover { border-bottom-style: solid; }
-a.mdref { font-family: var(--mono); font-size: 0.92em; }
+a.mdref { font-family: var(--mono); font-size: 0.94em; }
 code {
   font-family: var(--mono);
   font-size: 0.9em;
@@ -169,52 +173,94 @@ body.toc-collapsed .toc-panel { display: none; }
 
 /* 工单纸 */
 .sheet {
-  max-width: 940px;
+  max-width: 924px;
   margin: 0 auto;
   background: var(--paper);
-  border: 1px solid rgba(34, 40, 45, 0.14);
-  box-shadow: 0 1px 0 rgba(34, 40, 45, 0.04), 0 14px 34px rgba(31, 41, 51, 0.1);
-  padding: 44px 52px 40px;
+  border: 1px solid rgba(29, 36, 41, 0.16);
+  border-top: 4px solid var(--ink);
+  box-shadow: 0 1px 0 rgba(29, 36, 41, 0.04), 0 18px 44px rgba(31, 41, 51, 0.12);
+  padding: 42px 56px 44px;
 }
 
 /* 抬头 */
-.doc-head { position: relative; border-bottom: 3px double var(--ink); padding-bottom: 18px; }
+.doc-head { position: relative; border-bottom: 1px solid var(--ink); padding-bottom: 20px; }
+.doc-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.doc-brand { min-width: 0; }
+.doc-kicker {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--blue);
+}
 .doc-no {
   font-family: var(--mono);
   font-size: 12px;
   color: var(--ink-2);
   letter-spacing: 0.04em;
+  margin-top: 5px;
 }
 .doc-no b { color: var(--ink); font-weight: 600; }
 .doc-title {
   font-family: var(--serif);
-  font-size: 34px;
+  font-size: 33px;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  margin: 2px 0 0;
-  line-height: 1.25;
+  letter-spacing: 0.1em;
+  margin: 6px 0 0;
+  line-height: 1.2;
 }
-.doc-sub { margin-top: 4px; color: var(--ink-2); font-size: 13px; }
+.doc-sub {
+  margin-top: 10px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
 .doc-sub code { background: none; border: none; padding: 0; }
-.stamp-zone {
-  position: absolute;
-  right: 0;
-  top: 22px;
-  text-align: center;
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 3px 9px;
+  background: var(--paper-2);
+  border: 1px solid var(--hairline);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
+.chip em {
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  flex: none;
+}
+.doc-ref { font-size: 11.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+.doc-ref code { font-size: 11px; color: var(--ink-2); }
+.stamp-zone { flex: none; text-align: center; padding-top: 4px; }
 .stamp {
   display: inline-block;
   font-family: var(--serif);
   font-weight: 700;
-  font-size: 24px;
-  letter-spacing: 0.32em;
-  padding: 8px 10px 8px 16px;
+  font-size: 23px;
+  letter-spacing: 0.3em;
+  padding: 8px 10px 8px 15px;
   color: var(--seal);
   border: 2px solid currentColor;
   outline: 1.5px solid currentColor;
   outline-offset: 3px;
   border-radius: 2px;
-  transform: rotate(-8deg);
+  transform: rotate(-7deg);
   opacity: 0.92;
   user-select: none;
 }
@@ -244,82 +290,97 @@ body.toc-collapsed .toc-panel { display: none; }
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin: 16px 0 0;
+  margin: 18px 0 0;
   border: 1px solid var(--rule);
   border-right: none;
   border-bottom: none;
+  background: var(--paper);
 }
 .form-cell {
-  padding: 8px 14px;
+  padding: 9px 14px 10px;
   border-right: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
-.form-l { font-size: 11.5px; color: var(--ink-2); letter-spacing: 0.06em; }
-.form-v { font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+.form-l {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+}
+.form-v { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 .form-v--ph { color: var(--ink-3); font-weight: 400; }
 
 /* 核对条 */
 .facts {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  margin: 18px 0 6px;
+  margin: 20px 0 4px;
   border: 1px solid var(--rule);
+  border-top: 3px solid var(--ink);
+  background: var(--paper-2);
 }
 .fact {
-  padding: 10px 14px 8px;
+  padding: 11px 14px 9px;
   border-right: 1px solid var(--hairline);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  gap: 1px;
 }
 .fact:last-child { border-right: none; }
 .fact-v {
   font-family: var(--serif);
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
+  color: var(--ink);
 }
-.fact-l { font-size: 11.5px; color: var(--ink-2); }
+.fact-l { font-size: 11px; color: var(--ink-2); letter-spacing: 0.03em; }
 .fact-extra { color: var(--amber); }
 
 /* 章节 */
-.chapter { margin-top: 34px; }
+.chapter { margin-top: 38px; }
 .ch-head {
   display: flex;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--ink);
-  padding-bottom: 8px;
+  padding-bottom: 9px;
 }
 .ch-no {
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   flex: none;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ink);
+  line-height: 1;
 }
-.ch-no::after { content: "、"; font-weight: 700; }
 .ch-head h2 {
   font-family: var(--serif);
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   margin: 0;
 }
 .ch-flag {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--ink-3);
   border: 1px solid var(--hairline);
   padding: 1px 8px;
-  border-radius: 2px;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 h3.sub {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   margin: 22px 0 8px;
   display: flex;
@@ -328,18 +389,18 @@ h3.sub {
 }
 .sub-no {
   font-family: var(--serif);
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--rule);
-  border-radius: 50%;
-  font-size: 12.5px;
+  border-radius: 2px;
+  font-size: 12px;
   color: var(--ink-2);
 }
-.summary-h { font-family: var(--serif); font-size: 17px; letter-spacing: 0.03em; }
+.summary-h { font-family: var(--serif); font-size: 16.5px; letter-spacing: 0.04em; }
 .summary-lines {
   list-style: none;
   margin: 10px 0 4px;
@@ -348,7 +409,7 @@ h3.sub {
 }
 .summary-lines li {
   font-family: var(--serif);
-  font-size: 16.5px;
+  font-size: 16px;
   line-height: 1.9;
   padding-left: 44px;
   position: relative;
@@ -403,25 +464,60 @@ h4.file-h code { background: none; border: none; padding: 0; }
 .tablewrap--warn { border: 1px solid rgba(138, 109, 31, 0.35); background: var(--amber-soft); padding: 2px; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 thead th {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--ink-2);
   text-align: left;
-  padding: 7px 10px 6px;
-  border-bottom: 3px double var(--ink);
+  letter-spacing: 0.05em;
+  padding: 8px 11px 7px;
+  border-bottom: 2px solid var(--ink);
   white-space: nowrap;
 }
 tbody td {
-  padding: 7px 10px;
+  padding: 8px 11px;
   border-bottom: 1px solid var(--hairline);
   vertical-align: top;
 }
-tbody tr:hover { background: rgba(46, 92, 143, 0.045); }
-td.mono, .tablewrap code { font-family: var(--mono); font-size: 12.5px; }
+tbody tr:hover { background: var(--blue-soft); }
+tbody tr:last-child td { border-bottom-color: var(--rule); }
+td.mono, .tablewrap code { font-family: var(--mono); font-size: 12px; }
 td.num { font-family: var(--mono); text-align: right; }
 .tr-omit td { color: var(--ink-3); border-bottom: 1px dashed var(--hairline); }
 .hit { color: var(--ok); font-weight: 700; }
 .miss { color: var(--ink-3); }
+
+/* 包内附属：逐项清单 */
+.manifest {
+  list-style: none;
+  margin: 12px 0 4px;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.manifest-item {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr);
+  gap: 16px;
+  align-items: baseline;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--hairline);
+}
+.manifest-chip {
+  justify-self: start;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--blue-deep);
+  background: var(--blue-soft);
+  border: 1px solid rgba(36, 90, 133, 0.18);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.manifest-body { min-width: 0; overflow-wrap: anywhere; font-size: 13.5px; }
+.manifest-body a, a.filelink {
+  font-family: var(--mono);
+  font-size: 0.94em;
+  border-bottom-style: solid;
+}
 
 /* 代码 */
 .code {
@@ -566,13 +662,15 @@ ul.plainlist li { margin: 4px 0; }
   .toc-nav a { border-left: none; border-bottom: 2px solid transparent; padding: 6px 8px; }
   .toc-nav a.is-active { border-bottom-color: var(--blue); background: transparent; }
   .print-fab { top: 8px; right: 8px; padding: 6px 12px; }
-  .sheet { padding: 26px 20px; }
+  .sheet { padding: 26px 20px 30px; border-top-width: 3px; }
+  .doc-topline { gap: 12px; }
   .form-grid { grid-template-columns: repeat(2, 1fr); }
   .facts { grid-template-columns: repeat(3, 1fr); }
   .fact:nth-child(3n) { border-right: none; }
   .fact:nth-child(-n+3) { border-bottom: 1px solid var(--hairline); }
-  .stamp-zone { position: static; margin-top: 10px; text-align: left; }
-  .doc-title { font-size: 27px; }
+  .stamp-zone { padding-top: 0; text-align: right; }
+  .doc-title { font-size: 27px; letter-spacing: 0.06em; }
+  .manifest-item { grid-template-columns: 1fr; gap: 6px; padding: 10px 2px; }
   .sign { grid-template-columns: 1fr; gap: 14px; }
 }
 
@@ -585,7 +683,7 @@ ul.plainlist li { margin: 4px 0; }
   .tickbox[aria-checked="true"] { background: var(--ok); }
   a { color: inherit; border-bottom: none; }
   .chapter { break-inside: auto; }
-  .ch-head, h3.sub, .sign, .facts, .note, .remote, .yamlbox, tr { break-inside: avoid; }
+  .ch-head, h3.sub, .sign, .facts, .note, .remote, .yamlbox, .manifest-item, tr { break-inside: avoid; }
   thead th { border-bottom: 2px solid var(--ink); }
   .stamp, .s-frozen, .s-online, .s-cancel, .fact-v, .draft-chip {
     -webkit-print-color-adjust: exact;
@@ -609,11 +707,16 @@ ul.plainlist li { margin: 4px 0; }
 <button type="button" class="print-fab" data-print title="打印发版单">打印</button>
 <main class="sheet">
 <header class="doc-head">
-<div class="doc-no">编号 <b>release-V261126</b> · 发版仪式</div>
-<h1 class="doc-title">发版单</h1>
-<p class="doc-sub">release · 基线 main · 定版引用 <code>origin/main .. origin/release</code></p>
-<dl class="form-grid"><div class="form-cell"><span class="form-l">发版日期</span><span class="form-v">2026-11-26</span></div><div class="form-cell"><span class="form-l">发版分支</span><span class="form-v">release</span></div><div class="form-cell"><span class="form-l">基线分支</span><span class="form-v">main</span></div><div class="form-cell"><span class="form-l">定版时间</span><span class="form-v">2026-11-24 16:40:12</span></div><div class="form-cell"><span class="form-l">定版引用</span><span class="form-v">origin/main .. origin/release</span></div><div class="form-cell"><span class="form-l">负责人</span><span class="form-v">张三</span></div></dl>
+<div class="doc-topline">
+<div class="doc-brand">
+<div class="doc-kicker">发版仪式 · Release Dossier</div>
+<div class="doc-no">编号 <b>release-V261126</b></div>
+</div>
 <div class="stamp-zone"><span class="stamp s-frozen" aria-hidden="true">已定版</span></div>
+</div>
+<h1 class="doc-title">发版单</h1>
+<p class="doc-sub"><span class="chip"><em>发版分支</em>release</span><span class="chip"><em>基线</em>main</span><span class="doc-ref">定版引用 <code>origin/main .. origin/release</code></span></p>
+<dl class="form-grid"><div class="form-cell"><span class="form-l">发版日期</span><span class="form-v">2026-11-26</span></div><div class="form-cell"><span class="form-l">定版时间</span><span class="form-v">2026-11-24 16:40:12</span></div><div class="form-cell"><span class="form-l">负责人</span><span class="form-v">张三</span></div></dl>
 </header>
 <section class="facts" aria-label="本版核对条"><div class="fact"><span class="fact-v">5</span><span class="fact-l">提交<span class="fact-extra">（省略9）</span></span></div><div class="fact"><span class="fact-v">4</span><span class="fact-l">合并来源</span></div><div class="fact"><span class="fact-v">3</span><span class="fact-l">SQL</span></div><div class="fact"><span class="fact-v">6</span><span class="fact-l">配置键</span></div><div class="fact"><span class="fact-v">2</span><span class="fact-l">定时任务</span></div><div class="fact"><span class="fact-v">2</span><span class="fact-l">涉及服务</span></div></section>
 <section class="chapter" id="ch-1"><header class="ch-head"><span class="ch-no">一</span><h2>元信息</h2><span class="ch-flag">自动段</span></header><h3 class="sub summary-h">上线内容摘要</h3>
@@ -625,8 +728,9 @@ ul.plainlist li { margin: 4px 0; }
 <h3 class="sub"><span class="sub-no">2</span>合并来源（按分支去重全量）</h3>
 <div class="tablewrap"><table><thead><tr><th scope="col">推测来源分支</th><th scope="col">出现次数</th><th scope="col">来源分支功能</th></tr></thead><tbody><tr><td>feature/order-timeout-cancel</td><td class="num">6</td><td>订单超时取消与补偿</td></tr><tr><td>feature/recon-daily-export</td><td class="num">4</td><td>渠道对账按日汇总</td></tr><tr><td>hotfix/pagination-guard</td><td class="num">1</td><td>分页越界修复</td></tr><tr><td>环境支/未识别（合计）</td><td class="num">3</td><td>—</td></tr></tbody></table></div></section>
 <section class="chapter" id="ch-3"><header class="ch-head"><span class="ch-no">三</span><h2>涉及服务与模块</h2></header><div class="tablewrap"><table><thead><tr><th scope="col">服务/模块</th><th scope="col">是否涉及</th><th scope="col">说明</th></tr></thead><tbody><tr><td>sms-ai</td><td><span class="hit">是</span></td><td>订单任务与对账单后端</td></tr><tr><td>sms-ai-web</td><td><span class="hit">是</span></td><td>对账导出入口</td></tr><tr><td>其它</td><td><span class="miss">否</span></td><td>—</td></tr></tbody></table></div></section>
-<section class="chapter" id="ch-4"><header class="ch-head"><span class="ch-no">四</span><h2>数据库与 SQL</h2><span class="ch-flag">自动段</span></header><aside class="note">目标 profile = <code>prod</code>。<strong>prod 先 DDL 后 DML</strong>（各类内部按 <strong>SQL序</strong>）。执行序、按提交人统计与行内跳转见包内 <a href="./sql/README.md" class="mdref">sql/README.md</a>（定版有 SQL 时生成；无 SQL 则本段注明「无」）。</aside>
-<p class="body">本版 SQL：<strong>3</strong> 条 → 明细见 <a href="./sql/README.md" class="mdref">sql/README.md</a>（含 DDL/DML 条数、执行序、按提交人分组）。</p></section>
+<section class="chapter" id="ch-4"><header class="ch-head"><span class="ch-no">四</span><h2>数据库与 SQL</h2><span class="ch-flag">自动段</span></header><aside class="note">目标 profile = <code>prod</code>。<strong>prod 先 DDL 后 DML</strong>（各类内部按 <strong>SQL序</strong>）。执行序、按提交人统计与行内跳转见包内 <a href="./sql/README.md" class="mdref" target="_blank" rel="noopener">sql/README.md</a>（定版有 SQL 时生成；无 SQL 则本段注明「无」）。</aside>
+<p class="body">本版 SQL：<strong>3</strong> 条 → 明细见 <a href="./sql/README.md" class="mdref" target="_blank" rel="noopener">sql/README.md</a>（含 DDL/DML 条数、执行序、按提交人分组）。</p>
+<div class="tablewrap"><table><thead><tr><th scope="col">#</th><th scope="col">脚本</th><th scope="col">类型</th><th scope="col">动作</th></tr></thead><tbody><tr><td>1</td><td><code>V0113_0__DDL__order_timeout_cancel.sql</code></td><td>DDL</td><td>新增/变更</td></tr><tr><td>2</td><td><code>V0113_1__DML__order_timeout_cancel_seed.sql</code></td><td>DML</td><td>新增/变更</td></tr><tr><td>3</td><td><code>V0114_0__DDL__recon_daily_summary.sql</code></td><td>DDL</td><td>新增/变更</td></tr></tbody></table></div></section>
 <section class="chapter" id="ch-5"><header class="ch-head"><span class="ch-no">五</span><h2>配置项</h2><span class="ch-flag">自动段</span></header><aside class="note">允许含密文；来自 yml 的配置按 <strong>YAML</strong> 展示，键旁 <code>#</code> 为中文说明。目标 profile = <code>prod</code>。</aside>
 <details class="yamlbox" open><summary><code>sms-ai/src/main/resources/application-prod.yml</code><span class="yaml-n">12 行</span></summary><pre class="code yaml"><span class="c-key">sms</span>:
   <span class="c-key">ai</span>:
@@ -648,12 +752,14 @@ ul.plainlist li { margin: 4px 0; }
       <span class="c-key">password</span>:<span class="c-todo"> TODO_REPLACE_WITH_NACOS_CIPHER</span></pre></details>
 <aside class="note note--warn"><strong>上线前必办（TODO 占位 1）</strong>：下列键值为 <code>TODO_*</code> 占位，须替换为生产真实连接（密文，窄例外已授权）后再上线。</aside>
 <div class="tablewrap tablewrap--warn"><table><thead><tr><th scope="col">键</th><th scope="col">来源</th><th scope="col">值</th><th scope="col">说明</th></tr></thead><tbody><tr><td><code>sms.ai.datasource.password</code></td><td>config/nacos/application-prod-nacos.yml</td><td><code>TODO_REPLACE_WITH_NACOS_CIPHER</code></td><td>生产密码（密文）</td></tr></tbody></table></div></section>
-<section class="chapter" id="ch-6"><header class="ch-head"><span class="ch-no">六</span><h2>定时任务</h2><span class="ch-flag">自动段</span></header><aside class="note">目标 profile = <code>prod</code>。明细（code / 名称 / cron / 默认参数 / 引用）见包内 <a href="./jobs/README.md" class="mdref">jobs/README.md</a>。</aside>
-<p class="body">本版定时任务：<strong>2</strong> 条 → 明细见 <a href="./jobs/README.md" class="mdref">jobs/README.md</a>。</p>
+<section class="chapter" id="ch-6"><header class="ch-head"><span class="ch-no">六</span><h2>定时任务</h2><span class="ch-flag">自动段</span></header><aside class="note">目标 profile = <code>prod</code>。明细（code / 名称 / cron / 默认参数 / 引用）见包内 <a href="./jobs/README.md" class="mdref" target="_blank" rel="noopener">jobs/README.md</a>。</aside>
+<p class="body">本版定时任务：<strong>2</strong> 条 → 明细见 <a href="./jobs/README.md" class="mdref" target="_blank" rel="noopener">jobs/README.md</a>。</p>
+<div class="tablewrap tablewrap--warn"><table><thead><tr><th scope="col">#</th><th scope="col">taskCode</th><th scope="col">名称</th><th scope="col">cron</th></tr></thead><tbody><tr><td>1</td><td class="mono"><code>order:timeout:cancel</code></td><td>订单超时取消</td><td class="mono"><code>0 */1 * * * ?</code></td></tr><tr><td>2</td><td class="mono"><code>recon:daily:export</code></td><td>渠道对账按日汇总</td><td class="mono"><code>0 30 2 * * ?</code></td></tr></tbody></table></div>
 <aside class="note note--warn"><strong>jobs ↔ config 交叉（本版 draft：1 个任务缺 cron 表达式键）</strong>：下列任务的 cron 表达式键未在 prod 配置（application-prod.yml / Nacos overlay）中找到，可能由 Nacos DataId 提供，或本次未随 prod yml 上线；请勿手工编造键值。</aside>
 <div class="tablewrap tablewrap--warn"><table><thead><tr><th scope="col">taskCode</th><th scope="col">cron 键</th><th scope="col">真相</th><th scope="col">说明</th></tr></thead><tbody><tr><td class="mono">recon-daily-export</td><td class="mono"><code>sms.ai.recon.daily.cron</code></td><td>docs/jobs/tasks/02-recon-daily-export.md</td><td>渠道对账按日汇总</td></tr></tbody></table></div></section>
-<section class="chapter" id="ch-7"><header class="ch-head"><span class="ch-no">七</span><h2>包内附属文件</h2><span class="ch-flag">自动段</span></header><aside class="note">定版拷贝 <code>sql/refs/</code> / <code>config/</code>；整理文件 <code>[库名]-V{yyMMdd}-DDL|DML.sql</code>（缺侧不落盘；无库名回落 <code>release-V*</code>；prod 先 DDL 后 DML）；统计见 <a href="./sql/README.md" class="mdref">sql/README.md</a>；任务汇总见 <a href="./jobs/README.md" class="mdref">jobs/README.md</a>。</aside>
-<p class="body">本版附属：sql×3 · config×1 · jobs 见 <a href="./jobs/README.md" class="mdref">jobs/README.md</a> · 整理 [[sms_db_prod]-V261126-DDL.sql](./sql/[sms_db_prod]-V261126-DDL.sql) · [[sms_db_prod]-V261126-DML.sql](./sql/[sms_db_prod]-V261126-DML.sql) · 统计见 <a href="./sql/README.md" class="mdref">sql/README.md</a></p></section>
+<section class="chapter" id="ch-7"><header class="ch-head"><span class="ch-no">七</span><h2>包内附属文件</h2><span class="ch-flag">自动段</span></header><aside class="note">定版拷贝 <code>sql/refs/</code> / <code>config/</code>；整理文件 <code>[库名]-V{yyMMdd}-DDL|DML.sql</code>（缺侧不落盘；无库名回落 <code>release-V*</code>；prod 先 DDL 后 DML）；统计见 <a href="./sql/README.md" class="mdref" target="_blank" rel="noopener">sql/README.md</a>；任务汇总见 <a href="./jobs/README.md" class="mdref" target="_blank" rel="noopener">jobs/README.md</a>。</aside>
+<p class="body">本版附属：SQL 原件 3 份、整理文件 2 份、配置快照 1 份、定时任务清单。</p>
+<ul class="manifest"><li class="manifest-item"><span class="manifest-chip">SQL 原件</span><span class="manifest-body"><code>sql/refs/</code> 共 3 份 → <a href="./sql/README.md" class="mdref" target="_blank" rel="noopener">sql/README.md</a>（DDL/DML 统计与执行序）</span></li><li class="manifest-item"><span class="manifest-chip">整理 · DDL</span><span class="manifest-body"><a href="./sql/[sms_db_prod]-V261126-DDL.sql" class="filelink" target="_blank" rel="noopener">[sms_db_prod]-V261126-DDL.sql</a>（2 条）</span></li><li class="manifest-item"><span class="manifest-chip">整理 · DML</span><span class="manifest-body"><a href="./sql/[sms_db_prod]-V261126-DML.sql" class="filelink" target="_blank" rel="noopener">[sms_db_prod]-V261126-DML.sql</a>（1 条）</span></li><li class="manifest-item"><span class="manifest-chip">配置快照</span><span class="manifest-body"><code>config/</code> 共 1 份</span></li><li class="manifest-item"><span class="manifest-chip">定时任务</span><span class="manifest-body">2 项 · <a href="./jobs/README.md" class="mdref" target="_blank" rel="noopener">jobs/README.md</a>（code / 名称 / cron / 默认参数）</span></li></ul></section>
 <section class="chapter" id="ch-8"><header class="ch-head"><span class="ch-no">八</span><h2>第三方与外部依赖</h2></header><div class="tablewrap"><table><thead><tr><th scope="col">依赖</th><th scope="col">变更说明</th><th scope="col">已确认</th></tr></thead><tbody><tr><td>dashscope</td><td>对账摘要改走 dashscope 新版 SDK（同参数）</td><td>是</td></tr></tbody></table></div></section>
 <section class="chapter" id="ch-9"><header class="ch-head"><span class="ch-no">九</span><h2>上线步骤与回滚</h2><span class="ch-flag">人工段</span></header><h3 class="sub"><span class="sub-no">1</span>步骤</h3>
 <ol class="steps"><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">停调度（关 quartz 消费）并等待在跑任务收尾</span></li><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">prod 执行 DDL 整理文件，随后执行 DML 整理文件（内部均按 SQL序）</span></li><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">发布 sms-ai 与 sms-ai-web（滚动重启），核对 Nacos 密钥占位已替换</span></li><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">打开订单超时取消任务开关并观察首轮扫描日志</span></li></ol>
@@ -667,7 +773,7 @@ ul.plainlist li { margin: 4px 0; }
 <footer class="colophon">
 <span>真相文件：<code>fixtures/docs/releases/templates/release-note-sample.md</code>（发版单 SSOT）· 本页为只读渲染，勿手改</span>
 <span>勾选 / 折叠为会话级辅助，不入档</span>
-<span>生成：<code>2026-11-25 16:35:27</code>（Asia/Shanghai）· release-eng 0.4.3 · note-html</span>
+<span>生成：<code>2026-11-26 18:00:15</code>（Asia/Shanghai）· release-eng 0.4.5 · note-html</span>
 </footer>
 </main>
 <script>

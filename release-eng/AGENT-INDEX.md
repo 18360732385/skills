@@ -3,7 +3,7 @@
 开干先读本页，再按行 Read。**不要**扫根目录全部 md。  
 人读入口：[README.md](README.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。
 
-**拓扑（0.4.4）**：`modes/` · `scripts/release.mjs`（prepare 半自动）· `scripts/` 仪式脚本 · `fixtures/docs/releases/`；身份 `release-V{yyMMdd}`。  
+**拓扑（0.4.5）**：`modes/` · `scripts/release.mjs`（prepare 半自动）· `scripts/` 仪式脚本 · `fixtures/docs/releases/`；身份 `release-V{yyMMdd}`。  
 **发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs` → ③ [`../_log/release-eng/`](../_log/release-eng/) + [CHANGELOG.md](CHANGELOG.md) / [VERIFY.md](VERIFY.md) → ④ `node scripts/selfcheck.mjs`（快测：`--layer unit|contract`）。  
 **非 harness land**（`harness_land: false`）。
 
@@ -43,4 +43,4 @@ push-gate 通过后才 freeze / 问卷 / 定版 WritePlan；写盘当且仅当�
 
 ## Leading keywords
 
-`定版` · `发版单` · `发版日期` · `release-V{yyMMdd}` · `push-gate` · `WritePlan` · `seal` · `cancel` · `全部推荐` · `首次发版` · `首次使用` · `SQL目录` · `SQL格式` · `截断5` · `mergeSources` · `目录包` · `prod` · `SQL序` · `artifacts.json` · `note-merge` · `note-html` · `seal-check` · `逾期未归档` · `sync-scripts` · `migrate-notes` · `allow-drift`。
+`定版` · `发版单` · `发版日期` · `release-V{yyMMdd}` · `push-gate` · `WritePlan` · `seal` · `cancel` · `全部推荐` · `首次发版` · `首次使用` · `SQL目录` · `SQL格式` · `截断5` · `mergeSources` · `对比版本` · `前5` · `目录包` · `prod` · `SQL序` · `artifacts.json` · `note-merge` · `note-html` · `seal-check` · `逾期未归档` · `sync-scripts` · `migrate-notes` · `allow-drift`。

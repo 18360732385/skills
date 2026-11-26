@@ -8,10 +8,11 @@
  *   node release-note-merge.mjs --root <REPO> --note <path> --first-release --head <ref> [--dry-run]
  *
  * 刷新：Git 定版两表（提交截断5·hash 前 8 位 / 合并来源 origin 归一·一句话）、上线摘要（分支级聚合）、
- * 数据库与 SQL（正文精简：条数 + 链到 sql/README.md）、配置项（yml→YAML，注释在键上一行）、定时任务（← draft，不含 draftSuppressed）；
+ * 数据库与 SQL（最多前 5 条样表 + 其余见 sql/README.md）、配置项（yml→YAML，注释在键上一行）、
+ * 定时任务（最多前 5 条样表 + 其余见 jobs/README.md，← draft，不含 draftSuppressed）；
  * 目录包 jobs/ 生成单文件汇总清单（code/名称/cron/默认参数/引用链接），不再逐任务拷贝真相。
  * SQL 目录包生成 [库名]-V{yyMMdd}-DDL|DML.sql（无库名回落 release-V*）与 sql/README.md（执行库 + 条数 + 提交人执行序）。
- * 定时任务 / 包内附属正文精简为摘要+链接。新骨架 10 章。保留：manual 段人工正文。
+ * 定时任务 / 包内附属正文：任务摘要 + 前 5 条样表；包内附属逐项清单（每类一行，链接可打开）。新骨架 10 章。保留：manual 段人工正文。
  * 定版同时生成同名只读渲染 {identity}.html（release-note-html；--no-html 关闭；md 为 SSOT）。
  * Exit 0=ok 1=error
  */
@@ -49,6 +50,7 @@ import {
   isMigrationSql,
   isProdConfigPath,
   formatMergeSourcesTableRows,
+  classifyMigrationKindByFilename,
   bundleSqlVolumeWarning,
   stripBom,
 } from "./release-format.mjs";
@@ -58,6 +60,13 @@ import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
 import { writeNoteHtmlForNote, deriveHtmlPath } from "./release-note-html.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** 发版单正文 SQL / 定时任务章最多展示条数；超出部分只给计数并链到包内明细。 */
+export const SECTION_SAMPLE_MAX = 5;
+
+function basenameOf(p) {
+  return String(p || "").replace(/\\/g, "/").split("/").pop() || "";
+}
 
 function parseArgs(argv) {
   const out = {
@@ -275,6 +284,20 @@ export function buildSqlSection(draft) {
     lines.push(
       `本版 SQL：**${rows.length}** 条 → 明细见 [sql/README.md](./sql/README.md)（含 DDL/DML 条数、执行序、按提交人分组）。`
     );
+    const sample = rows.slice(0, SECTION_SAMPLE_MAX);
+    lines.push("");
+    lines.push("| # | 脚本 | 类型 | 动作 |");
+    lines.push("|---|---|---|---|");
+    sample.forEach((r, i) => {
+      const name = basenameOf(r.stableId || r.脚本 || r.path || r.script || "—") || "—";
+      const kind = classifyMigrationKindByFilename(name) || r.kind || "—";
+      const action = r.action || r.动作 || r.change || "—";
+      lines.push(`| ${i + 1} | \`${esc(name)}\` | ${esc(kind)} | ${esc(action)} |`);
+    });
+    if (rows.length > sample.length) {
+      lines.push("");
+      lines.push(`> 其余 ${rows.length - sample.length} 条详见 [sql/README.md](./sql/README.md)。`);
+    }
   }
   lines.push("");
   lines.push("<!-- auto:sql:end -->");
@@ -325,6 +348,23 @@ export function buildJobsSection(freeze) {
     lines.push(
       `本版定时任务：**${rows.length}** 条 → 明细见 [jobs/README.md](./jobs/README.md)。`
     );
+    const sample = rows.slice(0, SECTION_SAMPLE_MAX);
+    lines.push("");
+    lines.push("| # | taskCode | 名称 | cron |");
+    lines.push("|---|---|---|---|");
+    sample.forEach((r, i) => {
+      const code =
+        r.taskCode || r["task / cron 键"] || r.stableId || r.cronKey || "—";
+      const name = r.description || r.说明 || r.displayName || "—";
+      const cron = r.cron || r["默认表达式"] || "—";
+      lines.push(`| ${i + 1} | \`${esc(code)}\` | ${esc(name)} | \`${esc(cron)}\` |`);
+    });
+    if (rows.length > sample.length) {
+      lines.push("");
+      lines.push(
+        `> 其余 ${rows.length - sample.length} 条详见 [jobs/README.md](./jobs/README.md)（code / 名称 / cron / 默认参数 / 引用）。`
+      );
+    }
   }
   lines.push("");
   // jobs ↔ config 交叉：仅本版 draft 任务；全库附录不落正文
@@ -1076,17 +1116,44 @@ export function buildBundleSection(copied) {
     );
     const bundles = copied.filter((c) => c.kind === "sql-bundle");
     const hasStats = copied.some((c) => c.kind === "sql-stats");
-    const bundleLinks = bundles.length
-      ? bundles.map((c) => bundleLinkCell(c.bundlePath)).join(" · ")
-      : "无";
-    const parts = [
-      `sql×${sqlN}`,
-      `config×${configN}`,
-      hasJobs ? "jobs 见 [jobs/README.md](./jobs/README.md)" : "jobs 无",
-      `整理 ${bundleLinks}`,
-      hasStats ? "统计见 [sql/README.md](./sql/README.md)" : null,
+    const kinds = [
+      sqlN ? `SQL 原件 ${sqlN} 份` : null,
+      bundles.length ? `整理文件 ${bundles.length} 份` : null,
+      configN ? `配置快照 ${configN} 份` : null,
+      hasJobs ? "定时任务清单" : null,
     ].filter(Boolean);
-    lines.push(`本版附属：${parts.join(" · ")}`);
+    lines.push(`本版附属：${kinds.join("、")}。`);
+    lines.push("");
+
+    // 逐项清单：每类附属一行，链接可直接打开包内文件。
+    if (sqlN) {
+      lines.push(
+        `- **SQL 原件**：\`sql/refs/\` 共 ${sqlN} 份 → [sql/README.md](./sql/README.md)（DDL/DML 统计与执行序）`
+      );
+    }
+    for (const b of bundles) {
+      const kind = (String(b.bundlePath || "").match(/-(DDL|DML)\.sql$/i) || [])[1];
+      const sourceN = (String(b.sourcePath || "").match(/×\s*(\d+)/) || [])[1];
+      lines.push(
+        `- **整理 · ${(kind || "SQL").toUpperCase()}**：${bundleLinkCell(b.bundlePath)}${
+          sourceN ? `（${sourceN} 条）` : ""
+        }`
+      );
+    }
+    if (configN) {
+      lines.push(`- **配置快照**：\`config/\` 共 ${configN} 份`);
+    }
+    if (hasJobs) {
+      const jobEntry = copied.find(
+        (c) => c.kind === "jobs" || /jobs\/README\.md/i.test(c.bundlePath || "")
+      );
+      const jobN = (String(jobEntry?.sourcePath || "").match(/(\d+)\s*项/) || [])[1];
+      lines.push(
+        `- **定时任务**：${jobN ? `${jobN} 项 · ` : ""}[jobs/README.md](./jobs/README.md)（code / 名称 / cron / 默认参数）`
+      );
+    } else if (hasStats) {
+      lines.push(`- **SQL 统计**：[sql/README.md](./sql/README.md)`);
+    }
   }
   lines.push("");
   lines.push("<!-- auto:bundle:end -->");

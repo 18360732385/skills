@@ -140,4 +140,80 @@ export async function runUnit(kit) {
   const again = format.readSqlProfile(up.text);
   assert(up.updated && !again.firstUse && again.sqlFormat === "flyway", "upsert records both");
   assert(/## 进行中/.test(up.text), "upsert keeps 进行中");
+
+  // 0.4.5：对比版本 merge 口径 / 前 5 条样表 / 附属逐项 / HTML 链接
+  assert(
+    format.parseNoteHeadRef("> 定版引用：origin/main..origin/release/x · 负责人") ===
+      "origin/release/x",
+    "parseNoteHeadRef a..b"
+  );
+  assert(
+    format.parseNoteHeadRef("> 定版引用：首次发版:origin/release/V260827") ===
+      "origin/release/V260827",
+    "parseNoteHeadRef first release"
+  );
+  assert(
+    format.parseNoteHeadRef("| 定版引用 | origin/main..origin/release/y |") ===
+      "origin/release/y",
+    "parseNoteHeadRef table row"
+  );
+
+  const merge = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-note-merge.mjs")).href
+  );
+  const html = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-note-html.mjs")).href
+  );
+  const manySql = merge.buildSqlSection({
+    sql: Array.from({ length: 8 }, (_, i) => ({
+      stableId: `V01${i}_0__DDL__t${i}.sql`,
+      action: "新增",
+    })),
+  });
+  assert((manySql.match(/^\| \d+ \|/gm) || []).length === 5, "sql sample max 5");
+  assert(/其余 3 条详见 \[sql\/README\.md\]/.test(manySql), "sql rest links README");
+  const manyJobs = merge.buildJobsSection({
+    draft: {
+      jobs: Array.from({ length: 7 }, (_, i) => ({
+        taskCode: `job:${i}`,
+        description: `任务${i}`,
+        cron: `0 0 ${i} * * ?`,
+      })),
+    },
+  });
+  assert((manyJobs.match(/^\| \d+ \|/gm) || []).length === 5, "jobs sample max 5");
+  assert(/其余 2 条详见 \[jobs\/README\.md\]/.test(manyJobs), "jobs rest links README");
+  const bundle = merge.buildBundleSection([
+    { kind: "sql", bundlePath: "sql/refs/a.sql", sourcePath: "x" },
+    {
+      kind: "sql-bundle",
+      bundlePath: "sql/[sms_db_prod]-V261126-DDL.sql",
+      sourcePath: "← sql/refs/ × 2（DDL）",
+    },
+    { kind: "jobs", bundlePath: "jobs/README.md", sourcePath: "（汇总 9 项）" },
+  ]);
+  assert(/^- \*\*SQL 原件\*\*/m.test(bundle), "bundle item sql");
+  assert(/^- \*\*整理 · DDL\*\*/m.test(bundle), "bundle item ddl");
+  assert(/^- \*\*定时任务\*\*：9 项 ·/m.test(bundle), "bundle item jobs");
+
+  const noteMd = [
+    "# 发版单：release-V261126",
+    "",
+    "## 七、包内附属文件",
+    "",
+    "<!-- auto:bundle:start -->",
+    "",
+    "本版附属：SQL 原件 1 份。",
+    "",
+    "- **整理 · DDL**：[[sms_db_prod]-V261126-DDL.sql](./sql/[sms_db_prod]-V261126-DDL.sql)（1 条）",
+    "",
+    "<!-- auto:bundle:end -->",
+  ].join("\n");
+  const noteHtml = html.buildNoteHtml(noteMd);
+  assert(/class="manifest-item"/.test(noteHtml), "html manifest item");
+  assert(
+    /href="\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql"[^>]*class="filelink"/.test(noteHtml),
+    "html bracket filename link"
+  );
+  assert(/target="_blank"/.test(noteHtml), "html file link new tab");
 }

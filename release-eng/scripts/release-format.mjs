@@ -876,6 +876,24 @@ export function extractMigrationNames(text) {
   return out;
 }
 
+/**
+ * 从发版单正文抽取「定版引用」的对比版本 head ref。
+ * `origin/main..origin/release/x` → `origin/release/x`；`首次发版:origin/release/V260827` → 后者。
+ * 读不到返回 null。
+ */
+export function parseNoteHeadRef(text) {
+  const m = String(text || "").match(
+    /(?:\|\s*定版引用\s*\||定版引用[：:])\s*([^\n|]+)/
+  );
+  if (!m) return null;
+  const raw = m[1].trim().replace(/^首次发版\s*[:：]\s*/, "");
+  const tail = raw.includes("..") ? raw.split("..").pop() : raw;
+  const ref = String(tail || "")
+    .split(/[\s·（(，,。；;|]/)[0]
+    .trim();
+  return ref || null;
+}
+
 /** 发版日期 YYYY-MM-DD → yyMMdd；非法则 null */
 export function releaseDateToYyMmDd(releaseDate) {
   const m = String(releaseDate || "").match(/^(\d{4})-(\d{2})-(\d{2})/);

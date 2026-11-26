@@ -7,6 +7,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| [0.4.5](../_log/release-eng/0.4/0.4.5.md) | 2026-11-26 | 合并来源只算对比版本之后新增；SQL/定时任务章前 5 条；包内附属逐项清单；HTML 视觉与附件链接 |
 | [0.4.4](../_log/release-eng/0.4/0.4.4.md) | 2026-11-26 | 首次使用把 SQL 目录与格式写入 `releases.md`；之后 freeze 只按这两条扫描 |
 | [0.4.3](../_log/release-eng/0.4/0.4.3.md) | 2026-11-25 | 发版单同名 `.html` 只读渲染：`release-note-html.mjs` · note-merge/seal 自动重建 · `note-html` 别名 · fixtures 样张 |
 | [0.4.2](../_log/release-eng/0.4/0.4.2.md) | 2026-11-25 | enrich 外提 catalog/prior/change-objects；编排层 ~718 行 |

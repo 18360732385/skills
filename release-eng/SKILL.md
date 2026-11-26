@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 # release-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.4.4**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（**0.4.5**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。
 Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`。  
 CLI：`node scripts/release.mjs`（`prepare` 半自动编排 · `modes` · 脚本转发）。  
 命令前缀：文档示例统一写 `.cursor/skills/release-eng/scripts/`；在本仓自测时替换为 `release-eng/scripts/`，装到 `.agents/skills/` 等其它位置时按实际安装路径替换前缀。
@@ -16,7 +16,7 @@ CLI：`node scripts/release.mjs`（`prepare` 半自动编排 · `modes` · 脚�
 Skill = **发版仪式**（半自动编排到 WritePlan）。真相在 `docs/releases/`（过程域）。对用户优先中文。  
 拓扑：`modes/` · `scripts/release.mjs` · `fixtures/docs/releases/`。  
 约定 SSOT：[modes/conventions.md](modes/conventions.md)。术语：[GLOSSARY.md](GLOSSARY.md)。  
-Leading：`定版` · `发版单` · `发版日期` · `release-V{yyMMdd}` · `push-gate` · `WritePlan` · `seal` · `cancel` · `首次发版` · `首次使用` · `SQL目录` · `SQL格式` · `截断5` · `artifacts.json` · `note-merge` · `seal-check` · `逾期未归档`。
+Leading：`定版` · `发版单` · `发版日期` · `release-V{yyMMdd}` · `push-gate` · `WritePlan` · `seal` · `cancel` · `首次发版` · `首次使用` · `SQL目录` · `SQL格式` · `截断5` · `前5` · `对比版本` · `artifacts.json` · `note-merge` · `seal-check` · `逾期未归档`。
 
 ## 模式分流
 
