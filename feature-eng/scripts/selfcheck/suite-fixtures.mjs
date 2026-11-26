@@ -1,3 +1,5 @@
+import { stripYamlInlineComment } from "../lib/progress-shape.mjs";
+
 export function run(ctx) {
   const {
     assert, read, exists, skillRoot, PIN, VER_RE,
@@ -50,22 +52,24 @@ const ENUM_SETS = [
 ];
 
 function readScalar(text, key) {
-  const re = new RegExp(`^${key}:\\s*(.*)$`, "m");
+  const re = new RegExp(`^${key}\\s*:\\s*(.*)$`, "m");
   const m = text.match(re);
   if (!m) return undefined;
-  let v = m[1].trim();
+  let v = stripYamlInlineComment(m[1]).trim();
   if (
     (v.startsWith('"') && v.endsWith('"')) ||
     (v.startsWith("'") && v.endsWith("'"))
   ) {
     v = v.slice(1, -1);
   }
-  if (v === "null" || v === "~" || v === "") return null;
+  if (v === "null" || v === "~" || v === "" || v === "—") return null;
   return v;
 }
 
 function hasNestedKey(text, parentKey, childKey) {
-  const start = text.search(new RegExp(`^${parentKey}:\\s*$`, "m"));
+  const start = text.search(
+    new RegExp(`^${parentKey}\\s*:\\s*(?:#.*)?$`, "m")
+  );
   if (start < 0) return false;
   const from = text.slice(start);
   const firstNl = from.indexOf("\n");
@@ -306,6 +310,7 @@ assert(
   /gate-evidence/.test(helpOut) && /close-check/.test(helpOut),
   "feature.mjs --help lists gate-evidence/close-check"
 );
+assert(/contracts/.test(helpOut), "feature.mjs --help lists contracts");
 assert(/调度员不进厨房/.test(helpOut), "feature.mjs --help keeps 调度员不进厨房");
 const featModes = spawnSync(process.execPath, [path.join(skillRoot, "scripts/feature.mjs"), "modes"], {
   cwd: skillRoot,
@@ -358,14 +363,14 @@ function nestedScalar(text, parentKey, childKey) {
   const block = nextTop < 0 ? body : body.slice(0, nextTop);
   const m = block.match(new RegExp(`^\\s+${childKey}\\s*:\\s*(.*)$`, "m"));
   if (!m) return undefined;
-  let v = m[1].trim();
+  let v = stripYamlInlineComment(m[1]).trim();
   if (
     (v.startsWith('"') && v.endsWith('"')) ||
     (v.startsWith("'") && v.endsWith("'"))
   ) {
     v = v.slice(1, -1);
   }
-  if (v === "null" || v === "~" || v === "") return null;
+  if (v === "null" || v === "~" || v === "" || v === "—") return null;
   return v;
 }
 

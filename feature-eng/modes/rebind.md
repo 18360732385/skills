@@ -1,4 +1,4 @@
-﻿# rebind — 修改环节绑定
+# rebind — 修改环节绑定
 
 改目标仓 **`docs/runs/stage-bindings.yaml`** 的映射；**不跑**业务流程、**不动**各主题 `runs/.../progress.yaml`。推荐包种子：[`config/stage-bindings.example.yaml`](../config/stage-bindings.example.yaml)；「推荐 ≠ 强制」见 [flow.md](specs/flow.md)。
 

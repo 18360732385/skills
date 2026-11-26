@@ -8,7 +8,7 @@
 | `progress-bad/` | 缺关键字段的 progress，供负例（形状契约） |
 | `advance-gate/` | plan 环末、gates 时间戳 + L1 产物已填 + 硬闸授权 + L2 审核文件、即将 advance |
 | `bindings-bad/` | 破损 stage-bindings 样本（null skill / 缺键），供绑定校验拒绝 |
-| `close-ready/` | close 后 archive 形状（`stage=done` + `gates.close` + 授权/审核证据；含 `审核-implement.md`） |
+| `close-ready/` | close 后 archive 形状（`stage=done` + `gates.close` + 授权/审核证据；含 `审核-implement.md`、`门禁清单.md`） |
 | `gate-theater-bad/` | 闸门演戏负例（ISO gates + 假 transcript / 缺审核）→ gate-evidence FAIL |
 | `gate-l2-fail-bad/` | L2 `result: fail` 仍写 ISO 推进闸 → gate-evidence FAIL |
 | `midstage-l2-bad/` | 中途环 L2 负例（`path=full`、`stage=implement` 越过 spec/testdesign 环但缺对应审核文件）→ gate-evidence FAIL |
@@ -17,6 +17,10 @@
 | `monorepo-layout-shape/` | M1 `layout`/`packages`/`docs_root` 金标 + 冲突负例 |
 
 勿把本目录当真实主题 resume/close；`bindings-bad/` / `gate-theater-bad/` / `gate-l2-fail-bad/` / `midstage-l2-bad/` 更勿拷进消费仓当正式过程态。
+
+## 0.2.28+ 机检加固
+
+`selfcheck` 新增五组回归：审核模板逐字拷贝必须 FAIL；`gates: # comment` 必须继续解析；`stage=smoke` 不得绕过 `审核-implement.md`；`artifacts.spec` 行内注释不得误报 dangling；`controller_proxy` 缺仪式三行必须 FAIL。另测 Full 缺 `go/pre_impl/gate/verify` 必须报 `required gate`。
 
 ## 0.2.26 字段
 

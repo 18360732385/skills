@@ -1,12 +1,12 @@
-﻿# feature-eng
+# feature-eng
 
 用户点名的开发流程控制器（`disable-model-invocation: true`，**须点名**，不自动加载）。与 [`release-eng`](../release-eng/) 同级、互不替代。
 
 入口与仪式：[SKILL.md](SKILL.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
 
-验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
+验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check / contracts）。闸门证据：`node scripts/gate-evidence.mjs`；契约单源校验：`node scripts/check-contracts.mjs`。
 
-0.2.28 要点：selfcheck 主题拆分（harness/context/suite-*）；`_log` 早期 0.2 归档至 `_archive/0.2-early`；RETAINED=CHANGELOG 近期索引；`--verbose`/`--no-log`/`--strict-log`。历史版本见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/feature-eng/`](../_log/feature-eng/)。
+0.2.28 要点：close 权威路径对齐 `docs/superpowers/archive/ARCHIVE.md`（遗留根级仅兼容读）；`close-check` 双路径读；ARCHIVE「Commit」列钉死。**本轮机检加固**：YAML 行内注释剥离、`result`/`reviewer` 精确匹配、proxy 仪式三行具体值、path-aware 必过闸、`smoke` 不再绕过中途 L2、安装态 selfcheck/sync 可用。历史版本见 [CHANGELOG.md](CHANGELOG.md)；仓库内明细见仓库级档案（安装包不含）。
 
 ## 可移植性
 
@@ -30,4 +30,4 @@
 | `审核-<stage>.md` | L2 审核结论（stage 为英文键） |
 | `交接.md` | 交接 |
 
-脚本与夹具须 **UTF-8**；跑 selfcheck / 跨平台工具时建议 `LC_ALL=C.UTF-8`（或等价 UTF-8 locale）。Windows：Node 不依赖 LC_ALL，PowerShell 默认 UTF-8 即可。
+运行前提：**Node.js ≥ 18**（脚本使用 `fs.cpSync`）。脚本与夹具须 **UTF-8**；跑 selfcheck / 跨平台工具时建议 `LC_ALL=C.UTF-8`（或等价 UTF-8 locale）。Windows：Node 内部按 UTF-8 读写；Windows PowerShell 5.1 默认非 UTF-8，读写中文文件请显式 `-Encoding UTF8` 或使用 PowerShell 7。受限沙箱若禁止子进程，`selfcheck` 会以 exit 2 提示，请在允许子进程的终端运行。

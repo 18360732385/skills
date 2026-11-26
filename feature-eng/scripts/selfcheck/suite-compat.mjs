@@ -48,6 +48,17 @@ export function run(ctx) {
   const isIsoTimestamp = ctx.isIsoTimestamp;
   const validateBindingsIntegrity = ctx.validateBindingsIntegrity;
 
+  function makeTempDir(prefix) {
+    try {
+      return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+    } catch (e) {
+      console.warn(
+        `warn: skip temp-dir test ${prefix} (${e.code || e.message || e})`
+      );
+      return null;
+    }
+  }
+
 // 0.2.11-dev：P1
 assert(/result:\s*pass|result: pass/.test(gatesCommon + skill), "0.2.11 gates require result: pass");
 assert(
@@ -300,8 +311,8 @@ assert(
   "rebind.md forbids target-repo sync.mjs by path"
 );
 {
-  const deadDir = fs.mkdtempSync(path.join(os.tmpdir(), "feature-e11-dead-"));
-  try {
+  const deadDir = makeTempDir("feature-e11-dead-");
+  if (deadDir) try {
     const slugDead = CLOSE_SLUG;
     const archRel = path.join("docs", "runs", "archive", slugDead);
     fs.mkdirSync(path.join(deadDir, archRel), { recursive: true });
@@ -336,8 +347,8 @@ assert(
   }
 }
 {
-  const warnDir = fs.mkdtempSync(path.join(os.tmpdir(), "feature-e13-warn-"));
-  try {
+  const warnDir = makeTempDir("feature-e13-warn-");
+  if (warnDir) try {
     const slugW = CLOSE_SLUG;
     fs.cpSync(path.join(skillRoot, FIX_CLOSE), warnDir, { recursive: true });
     fs.mkdirSync(path.join(warnDir, "docs", "superpowers", "archive"), {
@@ -362,6 +373,161 @@ assert(
     );
   } finally {
     fs.rmSync(warnDir, { recursive: true, force: true });
+  }
+}
+// 0.2.28+ 机检加固回归（模板占位 / 行内注释 / smoke 绕过 / artifacts 注释）
+{
+  const d = makeTempDir("feature-hard-review-");
+  if (d) try {
+    fs.cpSync(path.join(skillRoot, FIX_ADV), d, { recursive: true });
+    const rd = path.join(d, "docs", "runs", "active", ADV_SLUG);
+    fs.writeFileSync(
+      path.join(rd, "审核-design.md"),
+      read("templates/审核-stage.md.tmpl") || "",
+      "utf8"
+    );
+    const r = spawnSync(
+      process.execPath,
+      [gateEvBin, "--cwd", d, "--slug", ADV_SLUG],
+      { encoding: "utf8" }
+    );
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(r.status !== 0, "hardening: verbatim review template FAILs");
+    assert(
+      /invalid result|missing\/invalid reviewer/.test(out),
+      "hardening: report invalid result/reviewer"
+    );
+  } finally {
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+}
+{
+  const d = makeTempDir("feature-hard-comment-");
+  if (d) try {
+    fs.cpSync(path.join(skillRoot, FIX_CLOSE), d, { recursive: true });
+    const pf = path.join(d, "docs", "runs", "archive", CLOSE_SLUG, "progress.yaml");
+    fs.writeFileSync(
+      pf,
+      fs.readFileSync(pf, "utf8").replace(/^gates:$/m, "gates:  # timestamps"),
+      "utf8"
+    );
+    const r = spawnSync(
+      process.execPath,
+      [gateEvBin, "--cwd", d, "--slug", CLOSE_SLUG],
+      { encoding: "utf8" }
+    );
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(r.status === 0, "hardening: gates: # comment still parsed");
+    assert(/gates\.go is ISO/.test(out), "hardening: gates after comment are checked");
+  } finally {
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+}
+{
+  const d = makeTempDir("feature-hard-smoke-");
+  if (d) try {
+    fs.cpSync(path.join(skillRoot, FIX_CLOSE), d, { recursive: true });
+    const rd = path.join(d, "docs", "runs", "archive", CLOSE_SLUG);
+    const pf = path.join(rd, "progress.yaml");
+    fs.writeFileSync(
+      pf,
+      fs.readFileSync(pf, "utf8").replace(/^stage: done$/m, "stage: smoke"),
+      "utf8"
+    );
+    fs.rmSync(path.join(rd, "审核-implement.md"));
+    const r = spawnSync(
+      process.execPath,
+      [gateEvBin, "--cwd", d, "--slug", CLOSE_SLUG],
+      { encoding: "utf8" }
+    );
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(r.status !== 0, "hardening: stage=smoke does not bypass implement L2");
+    assert(/审核-implement/.test(out), "hardening: smoke reports missing 审核-implement");
+  } finally {
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+}
+{
+  const d = makeTempDir("feature-hard-required-");
+  if (d) try {
+    fs.cpSync(path.join(skillRoot, FIX_CLOSE), d, { recursive: true });
+    const rd = path.join(d, "docs", "runs", "archive", CLOSE_SLUG);
+    const pf = path.join(rd, "progress.yaml");
+    let t = fs.readFileSync(pf, "utf8").replace(/^path: bounded$/m, "path: full");
+    for (const g of ["go", "pre_impl", "gate", "verify"]) {
+      t = t.replace(new RegExp(`^  ${g}: .*$`, "m"), `  ${g}: null`);
+    }
+    fs.writeFileSync(pf, t, "utf8");
+    const hf = path.join(rd, "回链.md");
+    let h = fs.readFileSync(hf, "utf8");
+    for (const g of ["go", "pre_impl", "gate", "verify"]) {
+      h = h.replace(new RegExp(`^\\| ${g} \\|.*$`, "m"), `| ${g} | — | — | — |`);
+    }
+    fs.writeFileSync(hf, h, "utf8");
+    for (const s of ["spec", "testdesign"]) {
+      fs.writeFileSync(
+        path.join(rd, `审核-${s}.md`),
+        `# L2 ${s}\n\n- result: pass\n- reviewer: inline_session\n- summary: x\n- defects:\n`,
+        "utf8"
+      );
+    }
+    const r = spawnSync(
+      process.execPath,
+      [gateEvBin, "--cwd", d, "--slug", CLOSE_SLUG],
+      { encoding: "utf8" }
+    );
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(r.status !== 0, "hardening: full path missing mandatory gates FAILs");
+    assert(/required gate (go|pre_impl|gate|verify) missing/.test(out), "hardening: reports required gate");
+  } finally {
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+}
+{
+  const d = makeTempDir("feature-hard-proxy-");
+  if (d) try {
+    fs.cpSync(path.join(skillRoot, FIX_CLOSE), d, { recursive: true });
+    const pf = path.join(d, "docs", "runs", "archive", CLOSE_SLUG, "progress.yaml");
+    fs.writeFileSync(
+      pf,
+      fs.readFileSync(pf, "utf8").replace(/^chef_mode: bound$/m, "chef_mode: controller_proxy"),
+      "utf8"
+    );
+    const r = spawnSync(
+      process.execPath,
+      [gateEvBin, "--cwd", d, "--slug", CLOSE_SLUG],
+      { encoding: "utf8" }
+    );
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(r.status !== 0, "hardening: controller_proxy requires filled ritual values");
+    assert(/仪式与降级/.test(out), "hardening: proxy reports ritual evidence");
+  } finally {
+    fs.rmSync(d, { recursive: true, force: true });
+  }
+}
+{
+  const d = makeTempDir("feature-hard-artifact-");
+  if (d) try {
+    fs.cpSync(path.join(skillRoot, FIX_CLOSE), d, { recursive: true });
+    const pf = path.join(d, "docs", "runs", "archive", CLOSE_SLUG, "progress.yaml");
+    fs.writeFileSync(
+      pf,
+      fs.readFileSync(pf, "utf8").replace(
+        /(  spec: "[^"]+")/,
+        '$1   # docs/superpowers/archive/specs/...'
+      ),
+      "utf8"
+    );
+    const r = spawnSync(
+      process.execPath,
+      [closeCheckBin, "--cwd", d, "--slug", CLOSE_SLUG],
+      { encoding: "utf8" }
+    );
+    const out = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(r.status === 0, "hardening: artifacts inline comment does not false-dangle");
+    assert(!/dangling after archive/.test(out), "hardening: no dangling false positive");
+  } finally {
+    fs.rmSync(d, { recursive: true, force: true });
   }
 }
 assert(/可选接力（工程化仓）/.test(skill || ""), "SKILL has optional handoff section");

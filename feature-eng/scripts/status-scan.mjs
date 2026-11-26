@@ -10,6 +10,7 @@
  */
 import fs from "fs";
 import path from "path";
+import { stripYamlInlineComment } from "./lib/progress-shape.mjs";
 
 function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
@@ -29,17 +30,17 @@ function findRunsRoot(start) {
 }
 
 function readField(text, key) {
-  const re = new RegExp(`^${key}:\\s*(.+)$`, "m");
+  const re = new RegExp(`^${key}\\s*:\\s*(.+)$`, "m");
   const m = text.match(re);
   if (!m) return null;
-  let v = m[1].trim();
+  let v = stripYamlInlineComment(m[1]).trim();
   if (
     (v.startsWith('"') && v.endsWith('"')) ||
     (v.startsWith("'") && v.endsWith("'"))
   ) {
     v = v.slice(1, -1);
   }
-  if (v === "null" || v === "~" || v === "") return null;
+  if (v === "null" || v === "~" || v === "" || v === "—") return null;
   return v;
 }
 

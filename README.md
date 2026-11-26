@@ -61,7 +61,8 @@ skills/
 ├── feature-eng/
 │   ├── _meta/
 │   ├── config/
-│   ├── conventions/
+│   ├── guide/
+│   ├── modes/
 │   ├── scripts/
 │   ├── templates/
 │   ├── CHANGELOG.md

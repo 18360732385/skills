@@ -1,5 +1,8 @@
 import fs from "fs";
 import path from "path";
+import { BINDING_KEYS } from "../lib/progress-shape.mjs";
+
+export { BINDING_KEYS };
 
 export const MODES = [
   "modes/init.md", "modes/rebind.md", "modes/start.md", "modes/resume.md",
@@ -18,10 +21,6 @@ export const ROOT_MODE_LEAKS = [
   "init.md", "rebind.md", "start.md", "resume.md", "status.md", "advance.md", "close.md",
   "binding.md", "stages.md", "artifacts.md", "gates-common.md", "gates-review.md",
   "domain-bridge.md", "proto-bridge.md", "handoff.md",
-];
-export const BINDING_KEYS = [
-  "grill", "design", "domain", "spec", "plan", "proto",
-  "testdesign", "implement", "review", "verify", "diagnose",
 ];
 export const TEMPLATES = [
   "templates/progress.yaml.tmpl", "templates/回链.md.tmpl",
@@ -65,18 +64,13 @@ export const L2FAIL_SLUG = "2026-09-27-gate-l2-fail-bad";
 export const FIX_MID = "scripts/fixtures/midstage-l2-bad";
 export const MID_SLUG = "2026-09-29-midstage-l2-bad";
 
-export function changelogIndexed(PIN) {
-  const recent = [
-    PIN,
-    "0.2.26",
-    "0.2.25",
-    "0.2.24",
-    "0.2.23-dev",
-    "0.2.22",
-    "0.2.21",
-    "0.2.20-dev",
-  ];
-  return [...new Set(recent)];
+export function changelogIndexed(PIN, text = "") {
+  const versions = [];
+  for (const line of String(text).split(/\r?\n/)) {
+    const m = line.match(/^\|\s*\[?(\d+\.\d+\.\d+(?:-dev)?)\]?\s*\|/);
+    if (m) versions.push(m[1]);
+  }
+  return [...new Set([PIN, ...versions])];
 }
 
 export function attachLogHelpers(ctx) {
@@ -130,7 +124,8 @@ export function attachLogHelpers(ctx) {
     return out;
   }
 
-  const CHANGELOG_INDEXED = changelogIndexed(PIN);
+  const changelogIndex = read("CHANGELOG.md");
+  const CHANGELOG_INDEXED = changelogIndexed(PIN, changelogIndex || "");
   const RETAINED_LOGS = [...CHANGELOG_INDEXED];
   const checkLogs = !noLog && (logRootPresent || strictLog);
   const logCorpusAvailable = logRootPresent && !noLog;
@@ -148,7 +143,7 @@ export function attachLogHelpers(ctx) {
   Object.assign(ctx, {
     logRoot, logRootPresent, logFile, logExists, readLog, listVersionLogFiles,
     CHANGELOG_INDEXED, RETAINED_LOGS, checkLogs, logCorpusAvailable,
-    changelogIndex: read("CHANGELOG.md"),
+    changelogIndex,
     changelog: logCorpusAvailable
       ? listVersionLogFiles(logRoot).map((p) => fs.readFileSync(p, "utf8")).join("\n")
       : "",

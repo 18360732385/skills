@@ -11,7 +11,10 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
-import { ARTIFACT_KEYS } from "./lib/progress-shape.mjs";
+import {
+  ARTIFACT_KEYS,
+  stripYamlInlineComment,
+} from "./lib/progress-shape.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,10 +24,13 @@ function arg(name, fallback = null) {
   return fallback;
 }
 
+const expectFail = process.argv.includes("--expect-fail");
 const cwd = path.resolve(arg("--cwd", process.cwd()));
 const slug = arg("--slug");
 if (!slug) {
-  console.error("usage: node scripts/close-check.mjs --cwd <dir> --slug <slug>");
+  console.error(
+    "usage: node scripts/close-check.mjs --cwd <dir> --slug <slug> [--expect-fail]"
+  );
   process.exit(2);
 }
 
@@ -70,27 +76,34 @@ function looksLikeCommitCol(val) {
   if (!v || v === "—" || v === "-" || v === "–") return { ok: false, empty: true };
   if (/^https?:\/\//i.test(v)) return { ok: true };
   if (/^pr:\d+/i.test(v)) return { ok: true };
-  if (/^[0-9a-f]{40}$/i.test(v)) return { ok: true };
-  if (/^[0-9a-f]{7,12}$/i.test(v)) return { ok: true };
+  if (/^[0-9a-f]{7,40}$/i.test(v)) return { ok: true };
   return { ok: false, empty: false };
 }
-function readScalar(text, key) {
-  if (!text) return undefined;
-  const m = text.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
-  if (!m) return undefined;
-  let v = m[1].trim();
+function isIsoTs(v) {
+  return v != null && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(v));
+}
+function normalizeScalar(raw) {
+  let v = stripYamlInlineComment(raw).trim();
   if (
     (v.startsWith('"') && v.endsWith('"')) ||
     (v.startsWith("'") && v.endsWith("'"))
   ) {
     v = v.slice(1, -1);
   }
-  if (v === "null" || v === "~" || v === "") return null;
+  if (v === "null" || v === "~" || v === "" || v === "—") return null;
   return v;
+}
+function readScalar(text, key) {
+  if (!text) return undefined;
+  const m = text.match(new RegExp(`^${key}\\s*:\\s*(.*)$`, "m"));
+  if (!m) return undefined;
+  return normalizeScalar(m[1]);
 }
 function nestedScalar(text, parentKey, childKey) {
   if (!text) return undefined;
-  const start = text.search(new RegExp(`^${parentKey}:\\s*$`, "m"));
+  const start = text.search(
+    new RegExp(`^${parentKey}\\s*:\\s*(?:#.*)?$`, "m")
+  );
   if (start < 0) return undefined;
   const from = text.slice(start);
   const firstNl = from.indexOf("\n");
@@ -99,15 +112,7 @@ function nestedScalar(text, parentKey, childKey) {
   const block = nextTop < 0 ? body : body.slice(0, nextTop);
   const m = block.match(new RegExp(`^\\s+${childKey}\\s*:\\s*(.*)$`, "m"));
   if (!m) return undefined;
-  let v = m[1].trim();
-  if (
-    (v.startsWith('"') && v.endsWith('"')) ||
-    (v.startsWith("'") && v.endsWith("'"))
-  ) {
-    v = v.slice(1, -1);
-  }
-  if (v === "null" || v === "~" || v === "") return null;
-  return v;
+  return normalizeScalar(m[1]);
 }
 
 const activeRel = `docs/runs/active/${slug}`;
@@ -138,7 +143,7 @@ if (!progress) {
     ok.push("stage=done");
   }
   const closeTs = nestedScalar(progress, "gates", "close");
-  if (!closeTs || !/^\d{4}-\d{2}-\d{2}T/.test(String(closeTs))) {
+  if (!isIsoTs(closeTs)) {
     issues.push("gates.close missing or not ISO timestamp");
   } else {
     ok.push("gates.close ISO");
@@ -148,6 +153,32 @@ if (!progress) {
     issues.push(`progress.slug mismatch (${slugField})`);
   } else {
     ok.push("progress.slug matches");
+  }
+
+  const pathVal = readScalar(progress, "path");
+  if (pathVal == null) {
+    issues.push("progress.path missing/null");
+  } else if (pathVal === "full") {
+    for (const key of ["spec", "testcases", "test_report"]) {
+      if (!nestedScalar(progress, "artifacts", key)) {
+        issues.push(`full path close requires artifacts.${key}`);
+      }
+    }
+    if (!isIsoTs(nestedScalar(progress, "gates", "verify"))) {
+      issues.push("full path close requires ISO gates.verify");
+    }
+    const reportRel = nestedScalar(progress, "artifacts", "test_report");
+    if (reportRel) {
+      const abs = path.isAbsolute(reportRel)
+        ? reportRel
+        : path.join(cwd, reportRel);
+      if (fs.existsSync(abs)) {
+        const body = fs.readFileSync(abs, "utf8");
+        if (/\|\s*TC-\d+\s*\|\s*pass\s*\/\s*fail\s*\/\s*blocked\s*\|/i.test(body)) {
+          issues.push(`test report still template placeholder: ${reportRel}`);
+        }
+      }
+    }
   }
 
   // D6-①：close 归档态下 spec/plan 应指向 docs/superpowers/…/archive/，不得残留未归档路径
@@ -227,13 +258,25 @@ const archiveMd =
   read("docs/superpowers/archive/ARCHIVE.md") ||
   read("docs/superpowers/ARCHIVE.md");
 if (archiveMd) {
-  const rows = archiveMd.split(/\r?\n/).filter((l) => /^\|/.test(l) && l.includes(slug));
+  const lines = archiveMd.split(/\r?\n/);
+  const header = lines.find((l) => /^\|/.test(l) && /commit/i.test(l));
+  if (!header) warnings.push("ARCHIVE header missing Commit column");
+  const rows = lines.filter((l) => /^\|/.test(l) && l.includes(slug));
   if (rows.length) {
     for (const row of rows) {
-      // table: | 日期 | [用户] | 主题 | Spec | Plan | Commit |
-      const parts = row.split("|").map((c) => c.trim()).filter((c) => c !== "");
-      if (parts.length < 5) continue;
-      const commitCell = parts[parts.length - 1];
+      // table: | 日期 | 用户 | 主题 | Spec | Plan | Commit |
+      // 保留空单元格，避免 Commit 为空时把 Plan 当成 Commit。
+      const raw = row.split("|");
+      if (raw.length && raw[0].trim() === "") raw.shift();
+      if (raw.length && raw[raw.length - 1].trim() === "") raw.pop();
+      const cells = raw.map((c) => c.trim());
+      if (cells.length !== 6) {
+        warnings.push(
+          `ARCHIVE row has ${cells.length} columns (expect 6): ${row.trim()}`
+        );
+        continue;
+      }
+      const commitCell = cells[5];
       const check = looksLikeCommitCol(commitCell);
       if (check.ok) {
         ok.push("ARCHIVE Commit column ok");
@@ -245,6 +288,8 @@ if (archiveMd) {
         );
       }
     }
+  } else if (header) {
+    issues.push(`ARCHIVE missing row for slug=${slug}`);
   } else {
     ok.push("ARCHIVE present but no slug row (skip Commit check)");
   }
@@ -252,7 +297,32 @@ if (archiveMd) {
   ok.push("no ARCHIVE.md (skip Commit check)");
 }
 
+// 索引表仍挂进行中行 → warn（L1 可指认，不阻断独立仓）
+for (const rel of ["docs/runs/README.md", "docs/superpowers/README.md"]) {
+  const text = read(rel);
+  if (!text) continue;
+  const line = text
+    .split(/\r?\n/)
+    .find((l) => l.includes(slug) && !l.includes("/archive/"));
+  if (line) warnings.push(`${rel} still references slug: ${line.trim()}`);
+}
+if (
+  !exists(`${archiveRel}/门禁清单.md`) &&
+  !/门禁清单/.test(read(`${archiveRel}/回链.md`) || "")
+) {
+  issues.push("门禁清单.md missing and 回链 does not reference it");
+}
+
 if (issues.length) {
+  if (expectFail) {
+    console.log(
+      `close-check EXPECT-FAIL OK slug=${slug} (${issues.length} issue(s))`
+    );
+    for (const i of issues) console.log("  ✗", i);
+    for (const w of warnings) console.warn("  !", w);
+    for (const o of ok) console.log("  ✓", o);
+    process.exit(0);
+  }
   console.error(`close-check FAIL ${issues.length} issue(s) slug=${slug}`);
   for (const i of issues) console.error("  ✗", i);
   for (const w of warnings) console.warn("  !", w);
@@ -268,12 +338,28 @@ const ge = spawnSync(
 );
 const geOut = `${ge.stdout || ""}${ge.stderr || ""}`;
 if (ge.status !== 0) {
+  if (expectFail) {
+    console.log(
+      `close-check EXPECT-FAIL OK slug=${slug} (gate-evidence exit ${ge.status})`
+    );
+    process.stdout.write(geOut);
+    for (const w of warnings) console.warn("  ! WARNING", w);
+    for (const o of ok) console.log("  ✓", o);
+    process.exit(0);
+  }
   console.error(`close-check FAIL: gate-evidence exit ${ge.status}`);
   process.stdout.write(geOut);
   for (const o of ok) console.log("  ✓", o);
   process.exit(ge.status == null ? 1 : ge.status);
 }
 ok.push("gate-evidence PASS");
+if (expectFail) {
+  console.error(
+    `close-check EXPECT-FAIL but PASSED slug=${slug} (${ok.length} checks)`
+  );
+  for (const o of ok) console.log("  ✓", o);
+  process.exit(1);
+}
 console.log(`close-check PASS slug=${slug} (${ok.length} checks)`);
 for (const o of ok) console.log("  ✓", o);
 for (const w of warnings) console.warn("  ! WARNING", w);

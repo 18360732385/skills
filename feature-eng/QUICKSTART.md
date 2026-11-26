@@ -7,7 +7,7 @@
 ## 主循环
 
 ```text
-init（首次绑 11 环；可选推荐包 / minimal）
+init（首次绑 11 个可绑环节；可选推荐包 / minimal）
   → start（分诊 S/B/F · 建 docs/runs/active/<slug>/）
     → 子 skill 干活（lookup / 指针卡片）
       → advance（L1→L2→写盘→按 handoff_policy 调下一环）
@@ -16,7 +16,7 @@ init（首次绑 11 环；可选推荐包 / minimal）
 ```
 
 续跑：`resume`。只看进度：`status`（`node scripts/feature.mjs status`）。改绑：`rebind`。列模式：`node scripts/feature.mjs modes`。  
-闸检：`node scripts/feature.mjs gate-evidence --cwd <仓根> --slug <slug>`。收口检查：`node scripts/feature.mjs close-check …`。
+闸检：`node scripts/feature.mjs gate-evidence --cwd <仓根> --slug <slug>`。收口检查：`node scripts/feature.mjs close-check …`。契约单源：`node scripts/feature.mjs contracts`。
 
 ## 路径一句话
 
@@ -32,7 +32,7 @@ init（首次绑 11 环；可选推荐包 / minimal）
 2. **progress / 回链 仅控制器写**——厨师只回报产物路径列表。
 3. **自动调起 ≠ 替用户 yes 硬闸**。
 
-**证据条**：写 `gates.*` 前须合法 `authorized_by`（禁 fixture/auto 占位）+ 适用环 `审核-<stage>.md` 且 **`result: pass`**（proxy 不豁免；proxy 须「仪式与降级」非空）。`proto=entered` 须 ISO `gates.proto_confirmed`。可选产物指针：`artifacts.implement` / `artifacts.pr_url`。
+**证据条**：写 `gates.*` 前须合法 `authorized_by`（禁 fixture/auto 占位）+ 时间同 ISO 时刻 + 适用环 `审核-<stage>.md` 且 `result` **恰为** `pass`、`reviewer` 合法（proxy 不豁免；proxy 须「仪式与降级」三行具体值）。`gate-evidence` 还会按 `path`/`stage` 检查必过闸。`proto=entered` 须 ISO `gates.proto_confirmed`。可选产物指针：`artifacts.implement` / `artifacts.pr_url`。
 
 详情：[SKILL.md](SKILL.md) · [flow.md](modes/specs/flow.md) · [gates.md](modes/specs/gates.md)
 
@@ -40,7 +40,7 @@ init（首次绑 11 环；可选推荐包 / minimal）
 
 宿主未装 `stage-bindings` 所指厨师时，`start` 会强制 `chef_mode: controller_proxy`（须警告，勿静默）。也可 init 时选 **minimal** 绑定包。最小可跑完 Full：
 
-1. **绑定文件在**：目标仓 `docs/runs/stage-bindings.yaml`（或先 `init`；可回退技能包 `config/`）；关键环非 null（F：`spec`/`plan`/`testdesign`/`implement`/`verify` 等）——否则 proxy。
+1. **绑定文件在**：目标仓 `docs/runs/stage-bindings.yaml`（或先 `init`；可回退技能包 `config/`）；关键环非 null（B：`implement`/`review`；F 另加 `spec`/`plan`/`testdesign`/`verify`）——否则 proxy。
 2. **过程态**：`docs/runs/active/<slug>/{progress.yaml,回链.md}`；`chef_mode: controller_proxy` 已写入回链「仪式与降级」。
 3. **硬闸授权**：用真实 `user_task_<id>` 或 `user_chat`——**禁止伪造聊天笔录与 fixture/auto 占位**。批跑用 `run_mode: unattended` + `user_task_<id>`。
 4. **环间**：控制器戴厨师帽按 [gates.md](modes/specs/gates.md) L1 落盘领域产物；仍走 advance L1/L2；`review_policy` 无 Task 则显式降为 `inline`；`invoke` 无 Task / CloudAgent·executor 则显式降为 `inline`（O5b，禁止静默）。
@@ -80,7 +80,7 @@ PowerShell 等价（Windows 宿主）：
 # Vite 示例（按需改 template）
 $tmp = New-Item -ItemType Directory -Path (Join-Path $env:TEMP ("scaffold-" + [guid]::NewGuid().ToString("N").Substring(0,8)))
 npm create vite@latest $tmp.FullName -- --template react-ts
-Copy-Item -Path (Join-Path $tmp.FullName '*') -Destination . -Recurse -Force
+Get-ChildItem -LiteralPath $tmp.FullName -Force | Copy-Item -Destination . -Recurse -Force
 Remove-Item -Recurse -Force $tmp
 # 保留远程已有 LICENSE/.gitignore；冲突时人工合并后再 commit + push
 ```
