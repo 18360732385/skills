@@ -3,6 +3,7 @@
  * Authority: `_meta/manifest.yaml` → `version`.
  */
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { parse as parseYaml } from "./yaml.mjs";
 
@@ -97,6 +98,41 @@ export function installSkewWarning(runningRoot, installRoot) {
     `harness: 安装副本版本与正在执行的技能不一致（执行 ${runningVer} rev ${runningRev} @ ${runReal}；` +
     `安装 ${installVer} rev ${installRev} @ ${instReal}）。upgrade 以正在执行的这份为准。`
   );
+}
+
+export const DEFAULT_INSTALL_HOSTS = [
+  ".cursor",
+  ".trae",
+  ".claude",
+  ".codex",
+  ".qoder",
+  ".codebuddy",
+  ".workbuddy",
+];
+
+export function defaultInstallRoots(home = os.homedir()) {
+  return DEFAULT_INSTALL_HOSTS.map((host) =>
+    path.join(home, host, "skills", "harness-eng")
+  );
+}
+
+export function envInstallRoots() {
+  const raw = String(process.env.HARNESS_INSTALL_ROOTS || "").trim();
+  if (!raw) return [];
+  return raw
+    .split(path.delimiter)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** 0.8.13: warn for every installed copy, not only ~/.cursor. */
+export function installSkewWarnings(runningRoot, installRoots = defaultInstallRoots()) {
+  const out = [];
+  for (const root of installRoots || []) {
+    const msg = installSkewWarning(runningRoot, root);
+    if (msg && !out.includes(msg)) out.push(msg);
+  }
+  return out;
 }
 
 function readManifestVersionAt(manifestPath) {

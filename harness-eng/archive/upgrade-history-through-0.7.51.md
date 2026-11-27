@@ -1,0 +1,555 @@
+# upgrade.md history through 0.7.51 (archived)
+
+## 0.7.45 → 0.7.46 迁移要点
+
+1. **meta**：`skill_version` → `0.7.46`
+2. **口径**：文首「旗标消歧」表；`last_mode` 跨 mode 为 **accepted residual**（CI `--check-meta-stable`）
+3. **历史**：0.7.41「不自动改用户文档」标注为当时行为；当前默认见 0.7.44 migrate-docs
+4. **热路径**：AGENT-INDEX / glossary / QUICKSTART / fill-score 交叉引用
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.46`）后再 sync
+
+## 0.7.44 → 0.7.45 迁移要点
+
+1. **meta**：`skill_version` → `0.7.45`
+2. **last_mode CI**：`harness --check-meta-stable --root <T> [--baseline <file>]` 默认忽略 `last_mode`；共享 `scripts/lib/meta-stable.mjs`
+3. **wrappers UX**：【旧仓升级】stderr 含可复制 `--retire-wrappers` 命令；`HARNESS_RETIRE_WRAPPERS=1` 等价；**勿删** `scripts/agent-kb/refresh-score.mjs`
+4. **calibrate**：纯 charset/width/unsigned 风格差 → `db_style_warn`（不 exit2）；列集合/类型族差仍 exit2
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.45`）后再 sync
+
+## 0.7.43 → 0.7.44 迁移要点
+
+1. **meta**：`skill_version` → `0.7.44`
+2. **migrate-docs（当时默认 AUTO）**：upgrade 升严后自动对齐 path / field / task / schedule / key；落盘 `migrate-docs-report.json`；迁移后重跑 fill-score。**0.7.48 起厚仓默认改为 dry-run**，见上节
+3. **退出**：`--no-migrate-docs` 或 `--migrate-docs=off` → 仅 `doc_todos` 移交（0.7.41 行为）；`--migrate-docs=dry-run` 只预览
+4. **边界**：不覆写业务说明；`coverage` / `covered_gt` 不自动灌水/删文档；`--migrate-policy`（score-policy 字段）≠ `--migrate-docs`（真相文档）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.44`）后再 sync
+
+## 0.7.42 → 0.7.43 迁移要点
+
+1. **meta**：`skill_version` → `0.7.43`
+2. **last_mode**：二次同 mode upgrade meta 零内容 diff；resume↔upgrade 会改 `last_mode`（CI 可忽略该行）
+3. **obsolete wrappers**：含 `fill-score-ready` / `cold-bootstrap*` 的旧仓 upgrade stderr 打 **【旧仓升级】**；`refresh-score.mjs` 标准入口不自动删
+4. **多批**：`(score → resume → upgrade)×2` 排除 `last_mode` 后内容 hash 稳定
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.43`）后再 sync
+
+## 0.7.41 → 0.7.42 迁移要点
+
+1. **meta**：`skill_version` → `0.7.42`
+2. **skill_root**：仓外 skill 写 `env:HARNESS_ENG_ROOT`（不再写本机绝对路径）；解析优先 `HARNESS_ENG_ROOT`；值未变跳过写盘
+3. **calibrate**：`normalizeDdlForCompare` 忽略 `int(11)` / `varchar(n)` 等类型宽度风格差
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.42`）后再 sync
+
+## 0.7.40 → 0.7.41 迁移要点
+
+1. **meta**：`skill_version` → `0.7.41`
+2. **upgrade-diff**：`skill_version` 读 manifest SSOT（不再钉死 0.7.38）
+3. **升严移交（当时行为）**：`upgrade-diff.json` 含 `doc_todos` / `ready_regressed`；stderr 打印文档迁移 TODO；当时**不**自动改用户文档。**0.7.44+ 默认 `migrate-docs=auto`；本条为历史口径，现行为见上文旗标消歧与 0.7.43→0.7.44**
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.41`）后再 sync
+
+## 0.7.39 → 0.7.40 迁移要点
+
+1. **meta**：`skill_version` → `0.7.40`
+2. **last_mode 空写**：yaml-keys merge 结果与原文相同则不写盘（二次同 mode upgrade 零内容 diff）
+3. **db.md**：upgrade 若缺「维护约定」则 merge 追加该节，不再每次只提醒
+4. **MCP example**：upgrade 对照 example / live / `fill_mcp_profile` 打差分，不改真密
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.40`）后再 sync
+
+## 0.7.38 → 0.7.39 迁移要点
+
+1. **meta**：`skill_version` → `0.7.39`
+2. **obsolete wrappers**：upgrade/refresh 对 `fill-score-ready` / `cold-bootstrap*` 默认 warn；`--retire-wrappers` 移 `_obsolete/`；不删 `refresh-score.mjs`
+3. **fill-score**：无 `--output` 默认写 `score-latest.json`；`--no-write` 不落盘（upgrade-diff 用此避免覆盖）
+4. **skill_root**：仓内写相对路径；解析优先 `HARNESS_ENG_ROOT`；refresh-score 相对路径按仓根 resolve
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.39`）后再 sync
+
+## 0.7.37 → 0.7.38 迁移要点
+
+1. **meta**：`skill_version` → `0.7.38`
+2. **冷 clone API memory**：`scanApiInventoryMemory` 保留 `git_head`；live 扫描成功且 stamp 匹配则不再记该域 `inventory_stale`
+3. **db field drift**：`detectDbFieldDrift` 优先 live inventory（改 migration 不 refresh 也会出 `doc_field_drift`）
+4. **upgrade 升严差分**：成功收尾写 `docs/harness-eng/upgrade-diff.json`（stderr 摘要）；**不自动改用户文档**
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.38`）后再 sync
+
+## 0.7.36 → 0.7.37 迁移要点
+
+1. **meta**：`skill_version` → `0.7.37`
+2. **api path drift**：`collectDocApiPaths` 兼容 `**接口地址：**`（粗体内冒号）；改 Controller path 须出 `doc_path_drift`
+3. **冷 clone**：`.fill-work` 仍 gitignore；`fill-score` 在 live 扫描成功时不再因 `missing_inventory` 单独卡死；建议新 clone 仍跑 `harness --mode refresh` 落盘
+4. **根 AGENTS Commands**：Maven 预填走 `mavenCmdsForModule`（`-f backend/pom.xml -pl … -am`；无 Boot 勿 `spring-boot:run`）
+5. **func inventory / soft-gate**：不再把 `/service/` 下任意 `.java` 当服务；hook 收窄为 `Service.java`
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.37`）后再 sync
+
+## 0.7.35 → 0.7.36 迁移要点
+
+1. **meta**：`skill_version` → `0.7.36`
+2. **api inventory**：多模块 merge 保留一致 `git_head`；勿再依赖仓内 wrapper 绕过 `inventory_stale:api`
+3. **fill-score live**：自动回放 meta `sql_root` / `controller_root` / func `--modules`（可去掉 db 浅 symlink 依赖）
+4. **漂移**：改 api path / redis KEY / `@Scheduled` 默认值后，不 refresh 也会 blocker（`doc_path_drift` / redis key / `doc_schedule_drift`）
+5. **mysql-guard**：缺省/`mcp=mysql` 同时覆盖 `mysql-local` 与 `mysql-dev`
+6. **api `--modules`**：无 Controller 模块 skip，不再漏扫其它模块
+7. **AGENTS Maven**：裸模块名也会解析到嵌套 reactor `-f backend/pom.xml -pl …`
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.36`）后再 sync
+
+## 0.7.34 → 0.7.35 迁移要点
+
+1. **meta**：`skill_version` → `0.7.35`；land/upgrade 回写 `skill_root`（refresh-score 候选）
+2. **upgrade**：内容相同的 fix-hook 不再生成 `.bak-harness-*`；建议 gitignore 已含该模式
+3. **hooks**：宿主 hooks 目录脚本 chmod 0755（含 sync）
+4. **backfill**：`harness.mjs --mode backfill --findings <path>` 出 WritePlan，不写盘
+5. **func 覆盖**：`docs/func/frontend/` / `*-frontend*.md` 不计 covered
+6. **merge**：db 表文档旁 `_change.sql` stub；索引序跟 inventory
+7. **gold**：resume/upgrade `gate_profile=gold` 会改写 score-policy
+8. **Codex**：commit soft-gate 提醒同时在 stdout JSON `agent_message`
+9. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.35`）后再 sync
+
+## 0.7.33 → 0.7.34 迁移要点
+
+1. **meta**：`skill_version` → `0.7.34`
+2. **inventory 新鲜度**：各域 inventory 带 `git_head`；改代码后须 refresh，否则 `fill-score` → `inventory_stale` / `ai_coding_ready=false`
+3. **覆盖分母**：api/func/db/redis/jobs 以 live 重扫 code 为准；redis/jobs `docs>code` 记 `covered_gt_code`（不再 `Math.min` 假绿）
+4. **漂移**：未文档化的 redis key / jobs task 进入 `field_drift` blockers
+5. **AGENTS Maven**：嵌套 reactor 用 `-f <聚合>/pom.xml -pl <子模块>`；勿再裸 `-f backend/<mod>/pom.xml`
+6. **hooks**：`JOBS_YML_RE` 已反转义；upgrade 后重渲 hooks 即可
+7. **问答**：仅有 `@Scheduled` 源码也会 `S_JOBS`；L5 推荐 `Q_AGENT_CONFIG`
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.34`）后再 sync
+
+## 0.7.32 → 0.7.33 迁移要点
+
+1. **meta**：`skill_version` → `0.7.33`
+2. **func inventory**：`--modules` 会写入 `inventory.func.modules`；新 clone / refresh 自动回放（嵌套 `backend/` reactor 也会发现）
+3. **mysql-guard**：land 不再因 Codex 条目重复中断；`mcp: mysql` 渲染为 `mysql-local`（非法 `mysql-` 直接报错）；`mysql_guard_servers` 写入 meta
+4. **jobs**：`*Job.java` 等带 `@Scheduled` 的类计入 inventory；inventory 为 0 时 merge 拒写空 SSOT
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.33`）后再 sync
+
+## 0.7.31 → 0.7.32 迁移要点
+
+1. **meta**：`skill_version` → `0.7.32`
+2. **AGENTS**：重渲根 AGENTS 后 docs/skills 列表随 domains；未启用 redis/jobs 不再出现对应 skill
+3. **迁移头**：默认不再检查「时间/撰写/目的/类型」；需要时设 `migration_header_keys` / `MIGRATION_HEADER_KEYS`
+4. **mysql-guard**：默认认 `mysql-local`；upgrade 会 backup 后 replace fix-hook（`upgrade_fix_hooks:false` 可关）
+5. **calibrate**：无 inventory 时勿再指望 `--write-ddl` 从文档反推；先跑 db inventory
+6. **Codex L3/L4**：未选 mysql MCP 时 hooks.json 不再挂悬空 mysql-guard
+7. **仍须手 replace（若旧仓）**：rule 13 / db.md「维护约定」/ 旧 score-policy — CLI/`--check-freshness` 会启发式提示
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.32`）后再 sync
+
+## 0.7.30 → 0.7.31 迁移要点
+
+1. **meta**：`skill_version` → `0.7.31`
+2. **评分**：缺磁盘 inventory 时优先 `harness --mode refresh`；0.7.37+ live 扫描成功可不记 `missing_inventory`
+3. **refresh `--no-write`**：确认只读（不落 inventory/meta/score）
+4. **calibrate**：compare 有 DDL drift 时 exit 2；`--write-ddl` 会改写「与 Flyway 一致」说明
+5. **L5+codex**：刷新 `sync.mjs`（tmpl id `0.7.31`）——悬空 hook bare 名检测生效
+6. **resume**：勿再传 land 的 `on_exists:fail`（会自动改 skip）
+
+## 0.7.29 → 0.7.30 迁移要点
+
+1. **meta**：`skill_version` → `0.7.30`
+2. **inventory meta**：若 `module_roots` 曾出现多层引号，跑一次 inventory/`--mode refresh` 会规范化；YAML 非法时先手清键名
+3. **评分**：`--gate-profile gold` 现与改 `score-policy` 的 gold 同逻辑；`score-latest.json` 的 `root` 为 `"."`（换机零 diff）
+4. **L5+codex**：刷新 soft-gate（`--codex` → stderr 提醒）与 `sync.mjs`（tmpl id `0.7.30`）后再 sync
+5. **AGENTS**：frontend 分册「常用命令」预填不再踩 api-client 表；若上轮已写坏可重渲或手修
+
+## 0.7.28 → 0.7.29 迁移要点
+
+1. **meta**：`skill_version` → `0.7.29`
+2. **calibrate**：空 `inventory.json`（`tables:[]`）不再假 ready；compare 默认打印 DDL diff；`--write-ddl` 保留建表说明行
+3. **merge**：`--update-index` 失败（缺索引）会 exit 1；表顺序跟发现序（不再字母排序）
+4. **render**：未解析 `{{…}}` 占位不再半写文件；meta YAML 布尔保持 boolean
+5. **score / inventory**：`fill-score --gate-profile`；inventory `--out` 相对 `--root`；report 对已是 `score-latest` 的输入不回写
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.29`）后再 sync
+
+## 0.7.27 → 0.7.28 迁移要点
+
+1. **meta**：`skill_version` → `0.7.28`
+2. **发版（维护本 skill）**：只改 `_meta/manifest.yaml` 的 `version`，再跑 `node scripts/sync-skill-version.mjs`；CHANGELOG / upgrade / VERIFY 增量仍手写
+3. **upgrade hooks**：默认自动 **replace** soft-gate / after-edit / commit-gate / mysql-guard / stop-checklist（含 L5 SSOT 与各宿主 hooks）。关闭：`params.upgrade_fix_hooks: false`
+4. **仍须手 replace（防覆盖用户正文）**：rule 13（`13-db-doc-sync`）、`docs/db/db.md` 维护约定节——若旧仓仍是源仓命名/缺约定，请显式 replace 或手合并
+5. **目标仓**：land/resume/upgrade 写出的 `harness-meta.skill_version` 由 render 从技能包 SSOT 注入
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.28`）后再 sync
+
+## 0.7.26 → 0.7.27 迁移要点
+
+1. **meta**：`skill_version` → `0.7.27`
+2. **阻断**：分册 + Spring + db 域时 land/resume/upgrade 不再 ReferenceError（`buildSpringDbBlock`）
+3. **L5+codex**：刷新 `sync.mjs`（tmpl id `0.7.27`）后再 sync——hooks.json 按 SSOT 接线 soft-gate；无 mysql-guard 脚本时不写 mysql matcher
+4. **评分**：`fill-score` 的 `report.root` 为绝对路径（strict 入口 TODO 不跟 CWD）；中文 AGENTS「常用命令」节可被门禁扫描
+5. **hooks**：`DB_MIGRATION_DIR` 必带尾斜杠（after-edit 迁移提醒恢复）
+
+## 0.7.25 → 0.7.26 迁移要点
+
+1. **meta**：`skill_version` → `0.7.26`；resume/upgrade 默认 `on_exists=skip`（可显式覆盖）
+2. **报告**：建议 gitignore `report-latest.html` / `run-latest.json` / `score-history.jsonl`；score JSON 不再被 report 写入 diff
+3. **fill-merge**：db 可用 `--target-dir` + `--split-by table`；func 覆盖按 Service
+4. **MCP 命名**：profile 与引擎同名时用 `{engine}-local`（避免 `mysql-mysql`）
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.26`）后再 sync
+
+## 0.7.24 → 0.7.25 迁移要点
+
+1. **meta**：`skill_version` → `0.7.25`
+2. **评分 / 漂移**：strict 下字段级 `doc_field_drift`；空壳 db 字段说明不过闸；`score-policy` 的 `morph_floor`/`todo_scan` 为 null（随 `gate_profile`）
+3. **分册 / seed**：前后端 monorepo 按目录选模板；`Q_SEED` 预填 Commands
+4. **迁移约定**：默认 Flyway `V{n}__snake.sql`；命名 SSOT 在 `docs/db/db.md`；rule 13 / hooks 只指针
+5. **问答**：`remaining`/`truncated`；land 会问 `Q_GATE_PROFILE`
+6. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.25`）后再 sync
+
+## 0.7.23 → 0.7.24 迁移要点
+
+1. **meta**：`skill_version` → `0.7.24`；可选回填 `inventory.api.controller_root` / `inventory.db.sql_root`（下次 fill-inventory 也会写）
+2. **L5+codex**：确认 `docs/agent-config/hooks/` 含 `codex-adapter.js` / `codex-stop-checklist.js` / `codex-hook.cmd`；`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.24`）后再 sync；`sync --check` 会验 hooks 引用完整性
+3. **calibrate**：勿再裸跑默认写盘；对比用默认/`--dry-run`，写 DDL 用 `--write-ddl`
+4. **hooks glob**：若自定 `**/…/*X.java`，升级后门禁应能命中（此前 `**/*` 转换错误）
+
+## 0.7.22 → 0.7.23 迁移要点
+
+1. **meta**：`skill_version` → `0.7.23`
+2. **checklist**：§2 只写 `eng_snapshot`（读侧兼容旧 `harness_snapshot`；不再要求双写）
+3. **hooks**：soft-gate 函数名 `listActiveTopicRuns`（去 Feature 品牌）
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.23`）后再 sync
+
+## 0.7.21 → 0.7.22 迁移要点
+
+1. **meta**：`skill_version` → `0.7.22`
+2. **L2**：land/resume 补渲 `scripts/agent-kb/refresh-score.mjs`（中性 refresh 入口）；`delivery-checklist` §2 改调该脚本；回链可用 `eng_snapshot`（兼容 `harness_snapshot`）
+3. **话术**：收口 / 移交继续以「宣称交付 / 主题收口」为准；主题流程控制器仅为可选别名
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.22`）后再 sync
+
+## 0.7.20 → 0.7.21 迁移要点
+
+1. **meta**：`skill_version` → `0.7.21`（docs-only：协议解耦文案；模式 / 阶梯 / 闸门语义不变）
+2. **话术**：收口时机 / hooks / 移交以「宣称交付 / 主题收口」为准；feature-eng 仅为可选别名
+3. **移交**：P1 主题流程控制器改为可选（有则用；无则本 skill Done 即可）
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.21`）后再 sync（与往期相同）
+
+## 0.7.19 → 0.7.20 迁移要点
+
+1. **meta**：`skill_version` → `0.7.20`
+2. **detect**：monorepo 一层子目录可命中 `S_STACK`；留意新信号 `S_SPRING`/`S_FRONTEND`/`S_SP`/`S_RUNS`（后两者不单独判 PARTIAL）
+3. **strict**：开干前 AGENTS Commands/Critical 须消掉 `TODO(harness-eng)`（`entry_todo`）
+4. **hooks / sp**：契约 hook 并上用户 GLOB；已有 runs 或主题表时不 H2 补齐 superpowers 索引
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.20`）后再 sync
+
+## 0.7.18 → 0.7.19 迁移要点
+
+1. **meta**：`skill_version` → `0.7.19`
+2. **L2**：land/resume 补渲 `docs/agent-kb/delivery-checklist.md`；rule 00/18/19、AGENTS 改指针
+3. **行为**：`harness.mjs --mode refresh --root .` 可重建 inventory/score；主题收口可选代跑
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.19`）后再 sync
+
+## 0.7.17 → 0.7.18 迁移要点
+
+1. **meta**：`skill_version` → `0.7.18`
+2. **L5**：刷新 `sync.mjs`（tmpl id `0.7.18`）后再 sync——skills 目录改清单 prune；项目级第三方 skill 不再被删
+3. **fill-score**：缺 inventory 会内存重扫；`--output` 相对路径相对目标仓根
+4. **不必**：重填契约（除非 coverage 仍缺口）
+
+## 0.7.16 → 0.7.17 迁移要点
+
+1. **meta**：`skill_version` → `0.7.17`；确认 `docs/harness-eng/score-policy.yaml` 存在（缺则 land/resume 补渲或手补 strict）
+2. **行为**：questions-next 对 L5 正确吐 hooks/MCP 批；merge 认全角 evidence；新渲 `.githooks` 带可执行位；Spring 分册无根聚合 pom 时用 `mvn -f`
+3. **不必**：重扫 inventory（除非另有缺口）
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.17`）后再 sync；存量 hook 若 git 忽略：`git update-index --chmod=+x .githooks/pre-commit`
+
+## 0.7.15 → 0.7.16 迁移要点
+
+1. **meta**：`skill_version` → `0.7.16`（docs/templates：`docs/runs` 入图 + rule 18 中途 commit；模式 / 阶梯 / 闸门语义不变）
+2. **AGENTS / rule 00**：承认 `docs/runs` 过程态指针；交付收口含 runs active→archive（若有）
+3. **rule 18**：进行中主题可中途 commit；宣称交付时 superpowers + runs 双归档
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.16`）后再 sync（与往期相同）
+
+## 0.7.14 → 0.7.15 迁移要点
+
+1. **meta**：`skill_version` → `0.7.15`（docs-only：与主题流程消歧 / 移交指针；模式 / 阶梯 / 闸门语义不变）
+2. **术语**：对外「仓库开干」= `ai_coding_ready`；勿与主题环「计划 Go 闸」混用
+3. **移交**：land/resume/upgrade Done 打印 P1 主题流程指针（0.7.21 起改为可选）
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.15`）后再 sync（与往期相同）
+
+## 0.7.13 → 0.7.14 迁移要点
+
+1. **报告壳**：`report_schema` **0.4.0**（与 skill **0.7.14** 同发；报告壳 ≠ skill）
+2. **五台 HTML**：新增 **宿主台**；默认仍进决策台；双轴进度（施工阶梯 L0–L5 + 开干闸路径）
+3. **宿主面**：读 `session-live` + 磁盘探测；磁盘有 ≠ 生效；**不**改变 `ai_coding_ready`
+4. **历史**：旧 `score-history` 点若无 `report_schema≥0.4` / morph 不符 → 灰显不连线（不可比）
+5. **会话仪表盘**：同 `buildReportUi`；可选宿主面一行；SHOW/HIDE 策略不变
+6. 升版后建议重跑 `fill-score` + `fill-report-html`；手册 §6 改为五台读法
+
+## 0.7.12 → 0.7.13 迁移要点
+
+1. **meta**：`skill_version` → `0.7.13`（手册文案对齐四支/三档；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：`guide/使用手册` 已重写；人读入口仍 `guide/`
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.13`）后再 sync（与往期相同）
+
+## 0.7.11 → 0.7.12 迁移要点
+
+1. **meta**：`skill_version` → `0.7.12`（人读手册路径变更；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：手册在 `guide/`（`使用手册.md` / `.html` / 摘要）；根目录不再放手册
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.12`）后再 sync（与往期相同）
+
+## 0.7.10 → 0.7.11 迁移要点
+
+1. **meta**：`skill_version` → `0.7.11`（入口双写去重；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：QUICKSTART / glossary / pipeline* 以旁路规格为 SSOT；Windows JSON 示例只在 write-plan
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.11`）后再 sync（与往期相同）
+
+## 0.7.9 → 0.7.10 迁移要点
+
+1. **meta**：`skill_version` → `0.7.10`（纯编排；模式 / 阶梯 / 闸门语义不变）
+2. **文档**：入口改用对外四支 / 三档；细阶与内部模式 ID 仍见 `ladder.md` / `glossary.md`
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.10`）后再 sync（与往期相同）
+
+## 0.7.8 → 0.7.9 迁移要点
+
+1. **meta**：`skill_version` → `0.7.9`；需要 NL deny 时设 `rulehook: true` 或保留已有 `.rulehook/`
+2. **可选**：勾选 Q_RULEHOOK → 落盘种子；本机 `pip install` rulehook；`/hooks` trust
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.9`）；有 `.rulehook/rulehook.toml` 时 sync 会合并 rulehook hooks
+
+## 0.7.7 → 0.7.8 迁移要点
+
+1. **meta**：`skill_version` → `0.7.8`
+2. **Codex-only 仓**：`fill-calibrate-live` 可读 `.codex/config.toml` / example；确保 `MYSQL_*` / `REDIS_URL` 在本机环境，或 toml 内联 env
+3. **L5**：若刷新过 sync tmpl，`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.8`）后再 sync
+
+## 0.7.6 → 0.7.7 迁移要点
+
+1. **meta**：`skill_version` → `0.7.7`
+2. **L5**：确认 `docs/agent-config/mcp/policy.json`；缺则从技能模板补齐；按仓调整 `servers.*` / heuristics
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.7`）后再 `node scripts/agent-config/sync.mjs`
+4. Codex：审阅 `.codex/config.toml.example` 中各 server 的 `enabled`；本机 `config.toml` 可再覆盖
+
+## 0.7.5 → 0.7.6 迁移要点
+
+1. **meta**：`skill_version` → `0.7.6`
+2. **L5**：确认 `docs/agent-config/skills/` 另有 `redis-doc-sync` / `jobs-doc-sync` / `frontend-web`；缺则从技能模板补齐
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.6`）后再 `node scripts/agent-config/sync.mjs`
+4. Codex：AGENTS「Rules 索引」应点名上述 skills；人验 `/skills`
+
+## 0.7.4 → 0.7.5 迁移要点
+
+1. **meta**：`skill_version` → `0.7.5`
+2. **L5**：确认 `docs/agent-config/skills/` 有 `contract-sync` / `api-doc-sync` / `db-doc-sync`；缺则从技能模板补齐
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.5`）后再 `node scripts/agent-config/sync.mjs`（应出现 `.agents/skills/*/SKILL.md`）
+4. Codex：AGENTS「Rules 索引」应点名 skills；人验 `/skills`
+
+## 0.7.3 → 0.7.4 迁移要点
+
+1. **meta**：`skill_version` → `0.7.4`
+2. **Codex**：刷新 `.codex/hooks.json`（`commandWindows` 改走 `codex-hook.cmd`；新增 `mcp__mysql`）、`codex-hook.cmd`、`mcp-mysql-guard.js`、`codex-adapter.js`（`mcp-guard`）；扩充 `repository.rules`
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.4`）后再 `node scripts/agent-config/sync.mjs`
+
+## 0.7.2 → 0.7.3 迁移要点
+
+1. **meta**：`skill_version` → `0.7.3`
+2. **Codex（若 `ai_tools` 含 codex）**：刷新 `.codex/hooks.json`（须含 `commandWindows`）与 `codex-stop-checklist.js`；确认 `.gitignore` 有 `.codex/config.toml`；人验 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.3`）后再 `node scripts/agent-config/sync.mjs`
+4. **装/升 URL** 仍用 **`main`**
+
+## 0.7.1 → 0.7.2 迁移要点
+
+1. **meta**：`skill_version` → `0.7.2`
+2. **写盘**：只认 `node scripts/harness.mjs`（`[--mode land]`）；**删除** `scripts/land.mjs`
+3. **填充 CLI**：只认 `fill-inventory.mjs --domain <id>` / `fill-merge.mjs --domain <id>`；**删除** `fill-inventory-{api,func,db,redis,jobs}.mjs` 与 `fill-merge-{…}.mjs`
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.2`）
+5. **装/升 URL** 仍用 **`main`**
+
+| 旧命令 | 新命令 |
+|---|---|
+| `node scripts/land.mjs …` | `node scripts/harness.mjs …`（可选 `--mode land`） |
+| `node scripts/fill-inventory-<id>.mjs …` | `node scripts/fill-inventory.mjs --domain <id> …` |
+| `node scripts/fill-merge-<id>.mjs …` | `node scripts/fill-merge.mjs --domain <id> …` |
+
+## 0.7.0 → 0.7.1 迁移要点
+
+1. **meta**：`skill_version` → `0.7.1`（文档/发包；无行为 breaking）
+2. **热路径**：根 stub / host TRAE evidence stub 已删；链 `modes/` · `CODEX-MANUAL` · 仓库级档案（`使用手册.html` 于 **0.7.2** 还原）
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.1`）
+4. **装/升 URL** 仍用 **`main`**
+
+## 0.6.9 → 0.7.0 迁移要点
+
+1. **meta**：`skill_version` → `0.7.0`
+2. **score-policy（字段级，不整文件覆盖）**：`morph_floor: 60`→`75`；若 `gate_profile=gold` 且 `morph_floor: 90`→`95`。由 `harness.mjs` resume/upgrade/land 或 `fill-score --migrate-policy` 执行
+3. **形态尺度**：overall 与 0.6.x **不可比**；报告 `report_schema=0.4.0`（0.7.0 起引入 `0.3.0` 壳，现随 skill 升至 **0.4.0**）+ `morph_scale=0.7`。history 不换算
+4. **开干**：strict 形态地板 75、semantic 收紧；gold 双 95。`ready.ok` 对外废弃
+5. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.7.0`）
+6. **装/升 URL** 仍用 **`main`**
+
+## 0.6.8-dev → 0.6.9 迁移要点
+
+1. **meta**：`skill_version` → `0.6.9`
+2. **Codex（若 `ai_tools` 含 codex）**：确认 `.codex/config.toml.example`、`.codex/rules/`、hooks+adapter、`Stop`；人验 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.6.9`）；skills 全量到 `.agents/skills/`
+4. **装/升 URL** 仍用 **`main`**
+
+## 0.6.7 → 0.6.8-dev 迁移要点
+
+1. **meta**：`skill_version` → `0.6.8-dev`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Codex（若 `ai_tools` 含 codex）**：确认 `.codex/config.toml.example` 与 hooks matcher `^Bash$`；人验 [CODEX-MANUAL.md](../host/CODEX-MANUAL.md)（trust · `/hooks` · `/mcp`）
+3. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.6.8-dev`）；Codex P0 轻指针（0.6.9 起改为全量 skills）
+4. 生产装/升仍用 **`main`**；本号为开发分支增量
+
+## 0.6.6 → 0.6.7 迁移要点
+
+1. **meta**：`skill_version` → `0.6.7`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Pn 回流**：新 land 根 AGENTS 含「踩坑回流」；pitfalls 路径速查骨架加厚。**已有 `pitfalls.md` / AGENTS `on_exists=skip` 不覆盖**；可人工合并速查骨架与 Never do↔Pn 纪律
+3. **前后端契约门禁**：api 域 `hook_code` 对 nested `packages/api-client|types|queries` 改 regex；`S_FRONTEND`+api 时【推荐】刷新 `GLOB_API`（追加前端契约包）并重渲 rule 12 / soft-gate
+4. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness
+5. **0.6.6 OpenAPI / 分册厚**：无强制回退
+
+## 0.6.5 → 0.6.6 迁移要点
+
+1. **meta**：`skill_version` → `0.6.6`（resume / upgrade 写 meta 时对齐 manifest）
+2. **OpenAPI / Apifox 可选桥**：`Q_APIFOX=yes` 时 land/upgrade 写入 `scripts/apifox/` + `docs/api/generated/`；契约 SSOT 仍为 `docs/api/modules`。消费仓须自设 `APIFOX_PROJECT_ID`（见 `.apifox.env.example`）
+3. **分册 AGENTS 厚 SSOT**：新 land 使用加厚的 module / spring / **frontend** 模板；根 AGENTS 含「分册真相」声明。**已有分册 `on_exists=skip` 不覆盖用户正文**；仅新 land 或用户点名 replace 才换厚模板
+4. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness
+5. **CodeBuddy / Trae / 0.6.5 API 7 列**：无强制回退；沿用既有钉号
+
+## 0.6.4 → 0.6.5 迁移要点
+
+1. **meta**：`skill_version` → `0.6.5`（resume / upgrade 写 meta 时对齐 manifest）
+2. **API 契约**：新建/大改接口字段表改用 7 列（说明 / 枚举 / 备注 / 示例值分列）；旧 5 列仍可过 acceptance，但金标会拦空说明/套话。精填走 agents；`fill-auto-api` 仅为 heuristic 骨架
+3. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness（本版 sync `--check` 已 EOL-agnostic，减少假漂移）
+4. **CodeBuddy / Trae**：无强制迁移；沿用 0.6.4 / 0.6.1 钉号
+
+## 0.6.3 → 0.6.4 迁移要点
+
+1. **meta**：`skill_version` → `0.6.4`（resume / upgrade 写 meta 时对齐 manifest）
+2. **CodeBuddy rules**：由 `.codebuddy/rules/<name>/RULE.mdc` 改为扁平 `.codebuddy/rules/<stem>.md`，**保留** alwaysApply / globs / description frontmatter（与 Trae 同策略）。升级后须刷新 `sync.mjs` 再跑 sync；旧 RULE.mdc 目录会被托管前缀 prune
+3. **hooks**：改 `.codebuddy/settings.json` 后须在 IDE **`/hooks` 面板**确认应用（仅保存文件 ≠ 热生效）；matcher 仍为 Claude 系 **Bash**；命令可用 `$CODEBUDDY_PROJECT_DIR`
+4. **MCP / permissions**：根 `.mcp.json`；首次连接需审批；优先级 local > project > user；密钥用 `${VAR}`。settings 优先级：CLI > `settings.local.json` > `settings.json` > `~/.codebuddy/settings.json`。**不**生成 `settings.local.json`；`.codebuddy/agents/` 非目标
+5. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness  
+6. **文档**：[CODEBUDDY-PARITY.md](../host/CODEBUDDY-PARITY.md) · [CODEBUDDY-P0-MANUAL.md](../host/CODEBUDDY-P0-MANUAL.md)
+
+## 0.6.2 → 0.6.3 迁移要点
+
+1. **meta**：`skill_version` → `0.6.3`（resume / upgrade 写 meta 时对齐 manifest）
+2. **升级三步**（生产 / L5 消费仓必做）  
+   1) 从 **`main`** 装或更新 skill（勿用 `V0.6.X` 装生产）  
+   2) `node scripts/harness.mjs --check-freshness --root <TARGET>`  
+   3) 若落后：land/upgrade 重渲 `agent-config-sync` → `node scripts/agent-config/sync.mjs` → 再跑 freshness  
+3. **报告壳**：页脚与文档只认 `skill_version` + `report_schema`（`ui.version` 兼容别名，勿当 skill）
+4. **Trae**：升 skill 后仍须刷新实例化 `sync.mjs`（见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md) §0）
+
+
+## 0.6.1 → 0.6.2 迁移要点
+
+1. **meta**：`skill_version` → `0.6.2`（resume / upgrade 写 meta 时对齐 manifest）
+2. **会话仪表盘**：工程轮 footer 去掉 mermaid `quadrantChart`（Trae 等宿主 Syntax Error）；有 score 时改一行纯文本施工态势。规格 [session-dashboard.md](session-dashboard.md)
+3. **0.6.1 Trae 高钉号不回退**
+
+## 0.6.1-dev → 0.6.1 迁移要点（历史）
+
+1. **meta**：`skill_version` → `0.6.1`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Trae 高**：官方实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**（MCP 走 `.trae/mcp.json` + Settings 开关）
+3. **0.6.0 列车不重开**；人验 hooks/MCP 见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md)
+
+## 0.6.0 → 0.6.1-dev 迁移要点（历史）
+
+1. **meta**：`skill_version` → `0.6.1`（本版已钉号；中间号曾是 `0.6.1-dev`）
+2. **Trae P0**：官方实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）；镜像保留 `.trae/rules` frontmatter。矩阵 Trae **高**
+3. **0.6.0 列车不重开**；人验 hooks/MCP 见 [TRAE-P0-MANUAL.md](../host/TRAE-P0-MANUAL.md)
+
+## 0.5.10 → 0.6.0 迁移要点（历史）
+
+1. **meta**：`skill_version` → `0.6.0`（resume / upgrade 写 meta 时对齐 manifest）
+2. **写盘入口**：Agent 优先 `scripts/harness.mjs`（`--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill`）；`land.mjs` 为薄别名。勿把 `render.mjs` 当主路径
+3. **文档搬家**：规格在 `modes/` · `fill/` · `host/`（0.7.1 起根目录不再留旧路径 stub）
+4. **Codex（当时）**：0.6.0 列车曾 **冻结 P2**；**0.6.9+ 已升「高 · 纪律 B」**，勿当现行矩阵（历史路线见仓库级档案 `ROADMAP-0.6.0.md`）
+5. **pipeline**：骨架战役用 `--mode pipeline-skeleton`（不跑 fill-*）
+6. **填充 CLI**：只认 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（api `--enrich-dto` 挂统一入口；0.7.2 起域 shim 已删）
+7. **发包**：默认安装 **不含** `archive/selfcheck/legacy` 体积（热树只留 INDEX）；开发全仓可读仓库级档案（selfcheck-legacy）或 git 历史。`fill-truths-auto` 仍见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
+
+## 0.5.9 → 0.5.10 迁移要点
+
+1. **meta**：`skill_version` → `0.5.10`（resume / upgrade 写 meta 时对齐 manifest）
+2. **Codex**：矩阵 **高**（推荐纪律 B；仅 `.codex/` 探测或显式勾选进「全部推荐」）
+3. **皆无探测**：`ai_tools` 为空，追问一次；不默认 Cursor、不因此只写 `.cursor/` 适配
+4. **报告叙事**：人读/页脚只认 `skill_version` + `report_schema`（`ui.version` = 兼容别名，勿当 skill）
+5. **legacy**：`fill-truths-auto` 见 `archive/fill-truths-auto/`（仅脚本、对话不推荐）
+
+## 0.5.8 → 0.5.9 迁移要点
+
+1. **meta**：`skill_version` → `0.5.9`（resume / upgrade 写 meta 时对齐 manifest）
+2. **写盘入口**：Agent 优先 `scripts/land.mjs`；L5/`agent_config` **拒绝**直渲 `.cursor/rules` 等生成宿主路径，改走 `sync.mjs`
+3. **填充 CLI**：inventory / merge 优先 `fill-inventory.mjs --domain` / `fill-merge.mjs --domain`（域脚本是别名）
+4. **热路径**：先读 [AGENT-INDEX.md](../AGENT-INDEX.md) 与 [fill/README.md](../fill/README.md)
+
+## 0.5.7 → 0.5.8 迁移要点
+
+1. **meta**：`skill_version` → `0.5.8`（resume / upgrade 写 meta 时对齐 manifest）
+2. **detect**：`S_RULES` / `S_HOOKS` / `MATURE` 按多宿主计（非仅 Cursor）；仅 Claude/Qoder/Trae/CodeBuddy 仓可判 MATURE
+3. **selfcheck**：热路径改为 `scripts/selfcheck.mjs`（旧名 `selfcheck-0.5.2.mjs` 已弃用）
+4. **Codex + L5**：须明示 **高（纪律 B）**；sync 发出原生 rules/hooks/MCP/skills（不做 `.mdc` 镜像）
+
+## 0.5.6 → 0.5.7 迁移要点
+
+1. **meta**：`skill_version` → `0.5.7`（resume / upgrade 写 meta 时对齐 manifest）
+2. **契约 sync 指针**：L3+ / L5 全量镜像宿主不再强制写 `1x-contract-sync`；已有文件 resume `skip`、不自动删。Codex 仍写 `.codex/contract-sync.md`
+3. **文档**：对齐矩阵（Cursor/Claude/Qoder/Trae/WorkBuddy/Codex 均为 **高**；Codex 纪律 B）；模板不再把 `.cursor/rules/11|12|13|16` 当作全宿主唯一权威
+
+## 0.5.5 → 0.5.6 迁移要点
+
+1. **meta**：`skill_version` → `0.5.6`；写入改到 `docs/harness-eng/harness-meta.yaml`。若仅有遗留 `.cursor/harness-meta.yaml`（或 `.yml`），resume / upgrade **迁到新路径**（键级合并），旧文件不自动删（遗留只读）
+2. **mcp-usage-guide**：新默认 `docs/harness-eng/mcp-usage-guide.md`；读侧仍认 `.cursor/mcp-usage-guide.md` / 旧中文名
+3. **行为**：`.cursor/mcp.json` 等工具运行时路径不变；L0 自检不再要求 meta **只能**在 `.cursor/`
+
+## 0.5.4 → 0.5.5 迁移要点
+
+1. **meta**：`skill_version` → `0.5.5`（resume / upgrade 写 meta 时对齐 manifest）
+2. **文档**：安装路径改为「当前 Agent 宿主的用户 skills 目录」；Cursor / Claude 等只作示例。脚手架与目标仓 `.cursor/` 产物路径不变
+3. **行为**：无施工协议变更
+
+## 0.5.3 → 0.5.4 迁移要点
+
+1. **meta**：`skill_version` → `0.5.4`（resume / upgrade 写 meta 时对齐 manifest）
+2. **行为**：会话仪表盘仅**本轮里程碑**（实质产出 / 闸门决策 / 显式读数）附末尾；提问批次 / 定根前 / 等确认空轮 / 纯 meta / 版本 / 手册 / 跑题省略整块（见 [session-dashboard.md](session-dashboard.md)）
+3. **可选**：`node scripts/session-dash.mjs --root <TARGET> --intent engineering` 核对读数与 `report-latest.html` 一致
+
+## 0.5.2 → 0.5.3 迁移要点
+
+1. **meta**：`skill_version` → `0.5.3`（resume / upgrade 写 meta 时对齐 manifest）
+2. **行为**：引入会话仪表盘（四句块 +「详情请查询仪表盘」链）；0.5.4 起改为仅工程轮 SHOW
+3. **可选**：`node scripts/session-dash.mjs --root <TARGET>` 核对读数与 `report-latest.html` 一致
+
+## 0.5.1 → 0.5.2 迁移要点
+
+1. **meta**：`skill_version` → `0.5.2`
+2. **fill-mcp**：按 `ai_tools` 写入 `.cursor/mcp.json` 与/或根 `.mcp.json` 与/或 `.trae/mcp.json`（内容一致）
+3. **CodeBuddy**：resume 后应有全家桶 hooks（非仅基础 gate）；确认根 `.mcp.json.example`
+4. **Claude**：出现 `.claude/rules/*.md` 全量镜像属预期
+
+## 0.5.0 → 0.5.1 迁移要点
+
+1. **meta**：`skill_version` → `0.5.1`（再升 0.5.2 见上）
+2. **Qoder**：若曾有 Cursor 式 `.qoder/hooks.json`，改由 `.qoder/settings.json` hooks 接管；L5 仓跑 `sync.mjs` 后可删过期 `hooks.json`（sync 会清 stale）
+3. **MCP**：Qoder 真密/example 改用根 `.mcp.json`（勿再依赖 `.qoder/mcp.json`）
+4. **Trae**：确认 `Q_AI_TOOL` 含 trae 后 resume/upgrade 补 hooks + mcp example
+5. **rules**：非 L5 仓 resume 会镜像全量 `.md` 到 `.qoder/rules` / `.trae/rules`
+
+## 0.4.0 → 0.5.0 迁移要点
+
+1. **meta**：`skill_version` → `0.5.0`（再升 0.5.1 见上）；启用 L5 的仓补 `agent_config: true`（yaml-keys merge 受管键）。
+2. **L2 pitfalls 工程化**：`pitfalls.md` 模板升 7 列（+状态 / +触发路径 / +路径速查 / +已根治留档区）；老仓升级时把旧 5 列行人工补列；新增 `scripts/agent-kb/lint-pitfalls.mjs`，改台账后必跑。
+3. **hooks 家族**：`Q_HOOKS_FAMILY` 选装；选 `commit-gate-extended` 后基础门禁不再重复渲染（互斥）。契约提醒路径由 `domains.yaml` 各域 `hook:` 段驱动，按本仓栈调整 `hook_code` globs。
+4. **MATURE 仓 adopt L5（配置 SSOT 管线）**：
+   - 反向拷贝：`.cursor/rules/*.mdc` → `docs/agent-config/rules/`；现有 hooks 脚本 → `docs/agent-config/hooks/` 并登记 `hooks.config.json`；`.cursor/mcp.json`（若 vendored_shared）→ `docs/agent-config/mcp/servers.json`
+   - render L5 包（`on_exists=skip` 不覆盖已有 SSOT）
+   - `node scripts/agent-config/sync.mjs` → 立即 `--check` 应无漂移；有漂移说明反向拷贝漏了内容
+   - 此后手改只发生在 `docs/agent-config/`；CI 加 `sync.mjs --check`
+   - 校验：生成物带 GENERATED 标记；`git status` 无意外删除（stale 清理会先列在 sync 输出）
+
+## 正目标
+
+- 只装升阶缺口；已有同名章节正文保留（merge 只追加缺节）
+- `.cursor/mcp.json`：非 fill-mcp 保留原文件
+- 写盘：过 [write-plan.md](write-plan.md) 闸门（或已预授权）

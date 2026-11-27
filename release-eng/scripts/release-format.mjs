@@ -583,12 +583,40 @@ function oneSentence(s) {
   return t;
 }
 
+/**
+ * CommonMark 链接文字：转义 `\` `[` `]`。
+ * 整理文件名 `[库名]-V{yyMMdd}-DDL.sql` 若不转义，会写成 `[[库名]…](…)`，
+ * 第一个 `]` 被当成链接文字结束，预览里文件名或链接被截断。
+ */
+export function escapeMdLinkLabel(text) {
+  return String(text ?? "").replace(/[\\\[\]]/g, (ch) => `\\${ch}`);
+}
+
+/**
+ * 链接目标中的方括号写成 `%5B` / `%5D`，保留 `#fragment`。
+ * 已是百分号编码的地址没有裸方括号，不会二次编码。
+ * 浏览器解析相对 href 时会解码，从而打开磁盘上带方括号的文件。
+ */
+export function encodeMdLinkDest(href) {
+  const s = String(href ?? "");
+  const hash = s.indexOf("#");
+  const pathPart = hash >= 0 ? s.slice(0, hash) : s;
+  const frag = hash >= 0 ? s.slice(hash) : "";
+  const enc = (part) => part.replace(/\[/g, "%5B").replace(/\]/g, "%5D");
+  return enc(pathPart) + enc(frag);
+}
+
+/** 文件链接：文字反斜杠转义，URL 百分号编码。 */
+export function mdFileLink(label, href) {
+  return `[${escapeMdLinkLabel(label)}](${encodeMdLinkDest(href)})`;
+}
+
 /** 包内附属：相对发版单 md 的可点击链接 */
 export function bundleLinkCell(bundlePath) {
   const rel = String(bundlePath || "").replace(/\\/g, "/");
   if (!rel || rel === "无") return "无";
   const name = rel.split("/").pop() || rel;
-  return `[${name}](./${rel})`;
+  return mdFileLink(name, `./${rel}`);
 }
 
 function normMigrationPath(p) {

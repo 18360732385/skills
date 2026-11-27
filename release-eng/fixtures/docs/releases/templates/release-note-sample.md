@@ -157,8 +157,8 @@ sms:
 本版附属：SQL 原件 3 份、整理文件 2 份、配置快照 1 份、定时任务清单。
 
 - **SQL 原件**：`sql/refs/` 共 3 份 → [sql/README.md](./sql/README.md)（DDL/DML 统计与执行序）
-- **整理 · DDL**：[[sms_db_prod]-V261126-DDL.sql](./sql/[sms_db_prod]-V261126-DDL.sql)（2 条）
-- **整理 · DML**：[[sms_db_prod]-V261126-DML.sql](./sql/[sms_db_prod]-V261126-DML.sql)（1 条）
+- **整理 · DDL**：[\[sms_db_prod\]-V261126-DDL.sql](./sql/%5Bsms_db_prod%5D-V261126-DDL.sql)（2 条）
+- **整理 · DML**：[\[sms_db_prod\]-V261126-DML.sql](./sql/%5Bsms_db_prod%5D-V261126-DML.sql)（1 条）
 - **配置快照**：`config/` 共 1 份
 - **定时任务**：2 项 · [jobs/README.md](./jobs/README.md)（code / 名称 / cron / 默认参数）
 

@@ -32,6 +32,7 @@ import {
   formatConfigAsYamlMd,
   loadModuleBlurb,
   bundleLinkCell,
+  mdFileLink,
   matchH2,
   COMMIT_DISPLAY_MAX,
   COMMIT_DISPLAY_HEAD,
@@ -977,7 +978,7 @@ function jobTruthLink(jobsDirAbs, root, truth) {
     : `../../../${truth.replace(/^docs\//, "")}`;
   rel = rel.replace(/\\/g, "/");
   if (!rel.startsWith(".")) rel = `./${rel}`;
-  return `[${path.basename(truth)}](${rel})`;
+  return mdFileLink(path.basename(truth), rel);
 }
 
 /**

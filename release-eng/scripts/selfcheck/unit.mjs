@@ -207,6 +207,24 @@ export async function runUnit(kit) {
   assert(/^- \*\*整理 · DDL\*\*/m.test(bundle), "bundle item ddl");
   assert(/^- \*\*定时任务\*\*：9 项 ·/m.test(bundle), "bundle item jobs");
 
+  const bracketLink = format.mdFileLink(
+    "[sms_db_prod]-V261126-DDL.sql",
+    "./sql/[sms_db_prod]-V261126-DDL.sql"
+  );
+  assert(
+    bracketLink ===
+      "[\\[sms_db_prod\\]-V261126-DDL.sql](./sql/%5Bsms_db_prod%5D-V261126-DDL.sql)",
+    "mdFileLink escapes label and encodes href"
+  );
+  assert(
+    format.encodeMdLinkDest("./a.sql#L12") === "./a.sql#L12",
+    "encodeMdLinkDest keeps plain href"
+  );
+  assert(
+    format.encodeMdLinkDest("./[db]-V1.sql#L12") === "./%5Bdb%5D-V1.sql#L12",
+    "encodeMdLinkDest encodes brackets and keeps fragment"
+  );
+
   const noteMd = [
     "# 发版单：release-V261126",
     "",
@@ -216,15 +234,25 @@ export async function runUnit(kit) {
     "",
     "本版附属：SQL 原件 1 份。",
     "",
-    "- **整理 · DDL**：[[sms_db_prod]-V261126-DDL.sql](./sql/[sms_db_prod]-V261126-DDL.sql)（1 条）",
+    "- **整理 · DDL**：[\\[sms_db_prod\\]-V261126-DDL.sql](./sql/%5Bsms_db_prod%5D-V261126-DDL.sql)（1 条）",
     "",
     "<!-- auto:bundle:end -->",
   ].join("\n");
   const noteHtml = html.buildNoteHtml(noteMd);
   assert(/class="manifest-item"/.test(noteHtml), "html manifest item");
   assert(
-    /href="\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql"[^>]*class="filelink"/.test(noteHtml),
+    /href="\.\/sql\/%5Bsms_db_prod%5D-V261126-DDL\.sql"[^>]*class="filelink"/.test(noteHtml),
     "html bracket filename link"
+  );
+  assert(
+    />\[sms_db_prod\]-V261126-DDL\.sql<\/a>/.test(noteHtml),
+    "html bracket label text"
+  );
+  assert(
+    /href="\.\/sql\/%5Bsms_db_prod%5D-V261126-DDL\.sql"/.test(
+      html.inlineMd("[[sms_db_prod]-V261126-DDL.sql](./sql/[sms_db_prod]-V261126-DDL.sql)")
+    ),
+    "inlineMd legacy raw bracket link"
   );
   assert(/target="_blank"/.test(noteHtml), "html file link new tab");
 

@@ -9,7 +9,9 @@
 | 路径 | 说明 |
 |---|---|
 | [fill-truths-auto/INDEX.md](fill-truths-auto/INDEX.md) | 自动填充指针（已归档：脚本 0.7.50 已删除、对话不推荐） |
+| [upgrade-history-through-0.7.51.md](upgrade-history-through-0.7.51.md) | 0.6.x–0.7.51 迁移要点（随包，安装态 selfcheck 仍全量校验） |
 | [upgrade-history-through-0.7.62.md](upgrade-history-through-0.7.62.md) | 0.7.28–0.7.62 迁移要点（从 modes/upgrade.md 迁出，仅供追溯） |
+| [VERIFY-history-through-0.7.51.md](VERIFY-history-through-0.7.51.md) | 0.6.x–0.7.51 验收历史（随包，安装态 selfcheck 仍全量校验） |
 | [selfcheck/](selfcheck/) | 旧 selfcheck 指针（legacy 仅 INDEX） |
 
 ## 已迁出热树（仓库级档案；不随安装分发）

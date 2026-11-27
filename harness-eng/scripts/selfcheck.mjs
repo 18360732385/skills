@@ -141,6 +141,7 @@ import {
   writeSkillRoot,
   readSkillRoot,
   resolveSkillRoot,
+  writeLastMode,
   SKILL_ROOT_ENV_SENTINEL,
 } from "./lib/inventory-meta.mjs";
 import {
@@ -182,7 +183,7 @@ import {
 } from "./lib/doc-paths.mjs";
 import { runChecks05 } from "./lib/selfcheck/checks-0.5.mjs";
 import { runChecks06 } from "./lib/selfcheck/checks-0.6.mjs";
-import { readSkillVersion, readSkillRev, escapeSemverRe, installSkewWarning } from "./lib/skill-version.mjs";
+import { readSkillVersion, readSkillRev, escapeSemverRe, installSkewWarning, installSkewWarnings } from "./lib/skill-version.mjs";
 import { decodeJsonBuffer, parseJsonText, readTextFile } from "./lib/json-read.mjs";
 import { decideWriteAuth, readPreauth } from "./lib/write-confirm.mjs";
 import { archiveOne, restoreOne } from "./archive-docs.mjs";
@@ -478,8 +479,14 @@ function logExists(ver) {
 }
 function upgradeCorpus() {
   let text = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
-  const localHist = path.join(skillRoot, "archive/upgrade-history-through-0.7.62.md");
-  if (fs.existsSync(localHist)) text += "\n" + fs.readFileSync(localHist, "utf8");
+  // 0.8.13: packaged history keeps install/pin selfcheck at full strength.
+  for (const rel of [
+    "archive/upgrade-history-through-0.7.51.md",
+    "archive/upgrade-history-through-0.7.62.md",
+  ]) {
+    const p = path.join(skillRoot, rel);
+    if (fs.existsSync(p)) text += "\n" + fs.readFileSync(p, "utf8");
+  }
   if (hasLogRoot) {
     const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/upgrade-history-through-0.7.51.md");
     if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
@@ -488,6 +495,8 @@ function upgradeCorpus() {
 }
 function verifyCorpus() {
   let text = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+  const packaged = path.join(skillRoot, "archive/VERIFY-history-through-0.7.51.md");
+  if (fs.existsSync(packaged)) text += "\n" + fs.readFileSync(packaged, "utf8");
   if (hasLogRoot) {
     const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.7.51.md");
     if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
@@ -9210,6 +9219,129 @@ console.log("theme-gate-smoke-ok");
   assert(/metrics-open/.test(reportTmpl812) && /note-ico/.test(reportTmpl812), "0.8.12 metrics panel + note icon");
   assert(/class="note-h">注</.test(reportTmpl812), "0.8.12 note column header shortened");
   assert(/align-items:\s*stretch/.test(reportTmpl812), "0.8.12 diagnose grid stretches with radar");
+}
+
+// --- 0.8.13: install-mode corpus · audit EOL · preauth cancel · id collision · refresh meta ---
+{
+  const upHist = path.join(skillRoot, "archive/upgrade-history-through-0.7.51.md");
+  const verifyHist = path.join(skillRoot, "archive/VERIFY-history-through-0.7.51.md");
+  assert(fs.existsSync(upHist), "0.8.13 packaged upgrade history");
+  assert(fs.existsSync(verifyHist), "0.8.13 packaged verify history");
+  assert(/0\.7\.28 → 0\.7\.29/.test(fs.readFileSync(upHist, "utf8")), "0.8.13 packaged upgrade history body");
+  assert(/会话仪表盘/.test(fs.readFileSync(verifyHist, "utf8")), "0.8.13 packaged verify history body");
+
+  const eolRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0813-audit-"));
+  try {
+    const truthRel = "docs/api/modules/a.md";
+    const evidenceRel = "src/A.java";
+    fs.mkdirSync(path.join(eolRoot, "docs/api/modules"), { recursive: true });
+    fs.mkdirSync(path.join(eolRoot, "src"), { recursive: true });
+    fs.mkdirSync(path.join(eolRoot, "docs/harness-eng/coverage-audit"), { recursive: true });
+    fs.writeFileSync(path.join(eolRoot, truthRel), "# a\r\n", "utf8");
+    fs.writeFileSync(path.join(eolRoot, evidenceRel), "class A {}\r\n", "utf8");
+    const rawHash = (rel) =>
+      createHash("sha256").update(fs.readFileSync(path.join(eolRoot, rel))).digest("hex");
+    const row = {
+      unit_id: "GET /a",
+      truth_path: truthRel,
+      evidence_path: evidenceRel,
+      verdict: "pass",
+      reason: "地址与类一致",
+      truth_sha256: rawHash(truthRel),
+      evidence_sha256: rawHash(evidenceRel),
+    };
+    const auditFile = path.join(eolRoot, "docs/harness-eng/coverage-audit/api.json");
+    fs.writeFileSync(auditFile, JSON.stringify({ units: [row] }), "utf8");
+    const legacy = validateAudit({ root: eolRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(legacy.ok, "0.8.13 legacy raw-byte audit passes");
+    fs.writeFileSync(path.join(eolRoot, truthRel), "# a\n", "utf8");
+    const flipped = validateAudit({ root: eolRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(flipped.ok, "0.8.13 CRLF→LF flip keeps audit fresh");
+    const dupIds = validateAudit({ root: eolRoot, domain: "api", unitIds: ["GET /a", "GET /a"] });
+    assert(dupIds.ok && dupIds.total === 1 && dupIds.pass === 1, "0.8.13 duplicate unit ids counted once");
+    fs.writeFileSync(auditFile, JSON.stringify({ units: [row, { ...row, unit_id: "GET /old" }] }), "utf8");
+    const orphan = validateAudit({ root: eolRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(orphan.ok && orphan.orphan_count === 1 && orphan.orphans.includes("GET /old"), "0.8.13 orphan audit ids surfaced");
+    fs.writeFileSync(auditFile, "\uFEFF" + JSON.stringify({ units: [row, { ...row, unit_id: "GET /old" }] }), "utf8");
+    const bomAudit = validateAudit({ root: eolRoot, domain: "api", unitIds: ["GET /a"] });
+    assert(bomAudit.ok && bomAudit.orphan_count === 1, "0.8.13 BOM audit still parses");
+  } finally {
+    fs.rmSync(eolRoot, { recursive: true, force: true });
+  }
+
+  const protoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0813-proto-"));
+  try {
+    fs.mkdirSync(path.join(protoRoot, "docs/prototype"), { recursive: true });
+    for (const n of ["x a 2.html", "x a.html", "x-a.html", "x_a.html"]) {
+      fs.writeFileSync(path.join(protoRoot, "docs/prototype", n), "<html>x</html>", "utf8");
+    }
+    const inv = runNode([
+      path.join(skillRoot, "scripts/fill-inventory.mjs"),
+      "--domain",
+      "prototype",
+      "--root",
+      protoRoot,
+      "--no-write",
+      "--quiet",
+    ]);
+    const parsed = JSON.parse(inv.stdout);
+    const ids = parsed.assets.map((a) => a.id);
+    assert(new Set(ids).size === ids.length, "0.8.13 prototype ids stay globally unique");
+  } finally {
+    fs.rmSync(protoRoot, { recursive: true, force: true });
+  }
+
+  const authRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0813-auth-"));
+  try {
+    fs.mkdirSync(path.join(authRoot, "docs/harness-eng"), { recursive: true });
+    const authFile = path.join(authRoot, "docs/harness-eng/write-auth.yaml");
+    fs.writeFileSync(authFile, "preauth: true\n", "utf8");
+    const cancel = runNode([
+      path.join(skillRoot, "scripts/harness.mjs"),
+      "--root",
+      authRoot,
+      "--confirm",
+      "取消预授权",
+    ]);
+    assert(cancel.status === 0, `0.8.13 cancel without mode exits 0 (got ${cancel.status})`);
+    assert(/preauth:\s*false/.test(fs.readFileSync(authFile, "utf8")), "0.8.13 cancel without mode clears preauth");
+  } finally {
+    fs.rmSync(authRoot, { recursive: true, force: true });
+  }
+
+  const skewRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0813-skew-"));
+  try {
+    const run = path.join(skewRoot, "run");
+    const inst = path.join(skewRoot, "inst");
+    for (const dir of [run, inst]) fs.mkdirSync(path.join(dir, "_meta"), { recursive: true });
+    fs.writeFileSync(path.join(run, "_meta/manifest.yaml"), 'version: "0.8.13"\nrev: 0\n', "utf8");
+    fs.writeFileSync(path.join(inst, "_meta/manifest.yaml"), 'version: "0.8.12"\nrev: 0\n', "utf8");
+    assert(installSkewWarnings(run, [inst, inst]).length === 1, "0.8.13 install skew dedupes roots");
+  } finally {
+    fs.rmSync(skewRoot, { recursive: true, force: true });
+  }
+
+  const metaRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0813-meta-"));
+  try {
+    fs.mkdirSync(path.join(metaRoot, "docs/harness-eng"), { recursive: true });
+    const metaFile = path.join(metaRoot, "docs/harness-eng/harness-meta.yaml");
+    fs.writeFileSync(metaFile, 'skill_version: "0.8.13"\nlast_mode: "upgrade"\n', "utf8");
+    assert(writeLastMode(metaRoot, "refresh") === true, "0.8.13 writeLastMode writes");
+    assert(/last_mode:\s*"refresh"/.test(fs.readFileSync(metaFile, "utf8")), "0.8.13 last_mode refresh");
+    assert(writeLastMode(metaRoot, "refresh") === false, "0.8.13 writeLastMode no churn");
+  } finally {
+    fs.rmSync(metaRoot, { recursive: true, force: true });
+  }
+  const refreshSrc813 = fs.readFileSync(path.join(skillRoot, "scripts/lib/refresh.mjs"), "utf8");
+  assert(/writeLastMode\(absRoot,\s*"refresh"\)/.test(refreshSrc813), "0.8.13 refresh writes last_mode");
+  const harnessSrc813 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  assert(/modeEarly === "refresh"[\s\S]{0,220}warnInstallSkew/.test(harnessSrc813), "0.8.13 refresh warns install skew");
+  assert(/auth-only confirm words/.test(harnessSrc813), "0.8.13 auth-only confirms documented in code");
+
+  assert(/\| 0\.8\.13 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.13 CHANGELOG");
+  assert(/0\.8\.13 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.13 VERIFY.md");
+  assert(/0\.8\.12 → 0\.8\.13/.test(upgradeCorpus()), "0.8.13 upgrade.md");
+  assert(logExists("0.8.13"), "0.8.13 _log note exists");
 }
 
 console.log(`ok: ${ok.length}`);

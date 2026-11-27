@@ -367,3 +367,29 @@ export function writeSkillRoot(root, skillRoot) {
   }
   fs.writeFileSync(dest.abs, raw, "utf8");
 }
+
+/**
+ * 0.8.13: refresh runs are visible in harness-meta.last_mode.
+ * Writes only when a meta file exists and the value changes.
+ * @returns {boolean} whether the file changed
+ */
+export function writeLastMode(root, mode) {
+  if (!root || !mode) return false;
+  const found = findHarnessMetaFile(root);
+  if (!found || !fs.existsSync(found.abs)) return false;
+  let raw = fs.readFileSync(found.abs, "utf8");
+  const line = `last_mode: ${JSON.stringify(String(mode))}`;
+  if (/^last_mode:\s*.*$/m.test(raw)) {
+    const next = raw.replace(/^last_mode:\s*.*$/m, line);
+    if (next === raw) return false;
+    fs.writeFileSync(found.abs, next, "utf8");
+    return true;
+  }
+  if (/^skill_version:\s*.*$/m.test(raw)) {
+    raw = raw.replace(/^(skill_version:\s*.*)$/m, `$1\n${line}`);
+  } else {
+    raw = raw.replace(/\s*$/, "\n") + line + "\n";
+  }
+  fs.writeFileSync(found.abs, raw, "utf8");
+  return true;
+}

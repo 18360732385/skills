@@ -80,6 +80,16 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.12 → 0.8.13 迁移要点
+
+1. **meta**：`skill_version` → `0.8.13`
+2. **audit**：`truth_sha256` / `evidence_sha256` 按规范化内容计算（去 UTF-8 BOM、CRLF/CR 归一 LF；二进制仍按原字节）。旧「原始字节」记录与等价行尾变体仍可通过，无需批量重写；真实改文才会 stale
+3. **原型 id**：去重改为全局查重（预置 `x-2` 不再与补号撞车）；重跑 prototype inventory 即可
+4. **写盘**：`确认预授权` / `取消预授权` 可只带 `--root` 执行，不必再带 `--mode` / `--params`
+5. **selfcheck**：安装/钉住副本改为使用随包 `archive/` 历史语料，不再出现 59 条历史断言红
+6. **refresh**：会提示安装副本错位（覆盖常见宿主目录，`HARNESS_INSTALL_ROOTS` 可追加），并回写 `harness-meta.last_mode: "refresh"`；audit 孤儿 `unit_id` 进 hints
+7. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.13`）后再 sync
+
 ## 0.8.11 → 0.8.12 迁移要点
 
 1. **meta**：`skill_version` → `0.8.12`

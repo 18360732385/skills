@@ -98,15 +98,22 @@ function buildCoverageAudit(root, domains, report, liveByDomain, inventory, gate
     const ids = inventoryUnitIds(d, inv);
     const loaded = loadAudit(root, d);
     if (!gold) {
+      const v = loaded.present
+        ? validateAudit({ root, domain: d, unitIds: ids })
+        : null;
       by_domain[d] = loaded.present
         ? {
             required: false,
             status: "info",
             present: true,
-            pass: validateAudit({ root, domain: d, unitIds: ids }).pass,
+            pass: v.pass,
             total: ids.length,
           }
         : { required: false, status: "unrequired", present: false, pass: 0, total: ids.length };
+      if (v && v.orphan_count) {
+        by_domain[d].orphan_count = v.orphan_count;
+        by_domain[d].orphan_units = v.orphans;
+      }
       continue;
     }
     if (!(code > 0)) {
@@ -129,6 +136,10 @@ function buildCoverageAudit(root, domains, report, liveByDomain, inventory, gate
       total: ids.length || code,
       reason: ids.length ? v.reason : "no-units",
     };
+    if (v.orphan_count) {
+      by_domain[d].orphan_count = v.orphan_count;
+      by_domain[d].orphan_units = v.orphans;
+    }
   }
   return { by_domain };
 }

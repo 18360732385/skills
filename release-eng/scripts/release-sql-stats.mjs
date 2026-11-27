@@ -10,7 +10,9 @@
  * - 提交人 = 该源文件最后一次 Git 改动的作者；取不到则「未识别」。
  * - 执行顺序与整理文件一致：先 DDL，再 DML；各类内部按 SQL序。
  * - SQL 文件名链接到对应整理文件的起始行 `#L<行号>`（GitHub/编辑器通用锚点）。
+ * - 整理文件名含 `[]` 时，链接文字反斜杠转义、URL 百分号编码（见 mdFileLink）。
  */
+import { mdFileLink } from "./release-format.mjs";
 
 function escCell(v) {
   return String(v == null ? "" : v)
@@ -89,7 +91,7 @@ export function buildSqlStatsMarkdown({
     totalFiles += files;
     totalStatements += statements;
     if (files) anySource = true;
-    const cell = files ? `[${b.fileName}](./${b.fileName})` : "—";
+    const cell = files ? escCell(mdFileLink(b.fileName, `./${b.fileName}`)) : "—";
     lines.push(`| ${kind} | ${files} | ${statements} | ${cell} |`);
   }
   lines.push(`| **合计** | **${totalFiles}** | **${totalStatements}** | — |`);
@@ -138,7 +140,7 @@ export function buildSqlStatsMarkdown({
     for (const e of list) {
       lines.push(
         `| ${e.kind} | ${e.order ?? "—"} | ${e.globalOrder ?? "—"} | ` +
-          `[${escCell(e.basename)}](${entryHref(e)}) | ${positionCell(e)} |`
+          `${escCell(mdFileLink(e.basename, entryHref(e)))} | ${positionCell(e)} |`
       );
     }
     lines.push("");

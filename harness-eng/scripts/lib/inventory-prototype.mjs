@@ -187,17 +187,19 @@ function collectExternalLinks(root) {
 }
 
 function uniquifyAssetIds(assets, report) {
-  const seen = new Map();
+  const used = new Set();
   for (const asset of assets) {
     const base = String(asset.id || "");
-    const n = seen.get(base) || 0;
-    if (n === 0) {
-      seen.set(base, 1);
-      continue;
+    let id = base;
+    let n = 1;
+    // 0.8.13: suffix until globally free — a pre-existing `x-2` must not be re-used.
+    while (used.has(id)) {
+      n += 1;
+      id = `${base}-${n}`;
     }
-    const next = n + 1;
-    seen.set(base, next);
-    asset.id = `${base}-${next}`;
+    used.add(id);
+    if (id === base) continue;
+    asset.id = id;
     pushWarning(report, {
       code: "id_collision",
       message: `prototype id 碰撞，已改为 ${asset.id}`,
