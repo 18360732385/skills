@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="release-eng note-html 0.4.5">
+<meta name="generator" content="release-eng note-html 0.4.8">
 <title>发版单 · release-V261126</title>
 <style>
 :root {
@@ -759,7 +759,7 @@ ul.plainlist li { margin: 4px 0; }
 <div class="tablewrap tablewrap--warn"><table><thead><tr><th scope="col">taskCode</th><th scope="col">cron 键</th><th scope="col">真相</th><th scope="col">说明</th></tr></thead><tbody><tr><td class="mono">recon-daily-export</td><td class="mono"><code>sms.ai.recon.daily.cron</code></td><td>docs/jobs/tasks/02-recon-daily-export.md</td><td>渠道对账按日汇总</td></tr></tbody></table></div></section>
 <section class="chapter" id="ch-7"><header class="ch-head"><span class="ch-no">七</span><h2>包内附属文件</h2><span class="ch-flag">自动段</span></header><aside class="note">定版拷贝 <code>sql/refs/</code> / <code>config/</code>；整理文件 <code>[库名]-V{yyMMdd}-DDL|DML.sql</code>（缺侧不落盘；无库名回落 <code>release-V*</code>；prod 先 DDL 后 DML）；统计见 <a href="./sql/README.md" class="mdref" target="_blank" rel="noopener">sql/README.md</a>；任务汇总见 <a href="./jobs/README.md" class="mdref" target="_blank" rel="noopener">jobs/README.md</a>。</aside>
 <p class="body">本版附属：SQL 原件 3 份、整理文件 2 份、配置快照 1 份、定时任务清单。</p>
-<ul class="manifest"><li class="manifest-item"><span class="manifest-chip">SQL 原件</span><span class="manifest-body"><code>sql/refs/</code> 共 3 份 → <a href="./sql/README.md" class="mdref" target="_blank" rel="noopener">sql/README.md</a>（DDL/DML 统计与执行序）</span></li><li class="manifest-item"><span class="manifest-chip">整理 · DDL</span><span class="manifest-body"><a href="./sql/[sms_db_prod]-V261126-DDL.sql" class="filelink" target="_blank" rel="noopener">[sms_db_prod]-V261126-DDL.sql</a>（2 条）</span></li><li class="manifest-item"><span class="manifest-chip">整理 · DML</span><span class="manifest-body"><a href="./sql/[sms_db_prod]-V261126-DML.sql" class="filelink" target="_blank" rel="noopener">[sms_db_prod]-V261126-DML.sql</a>（1 条）</span></li><li class="manifest-item"><span class="manifest-chip">配置快照</span><span class="manifest-body"><code>config/</code> 共 1 份</span></li><li class="manifest-item"><span class="manifest-chip">定时任务</span><span class="manifest-body">2 项 · <a href="./jobs/README.md" class="mdref" target="_blank" rel="noopener">jobs/README.md</a>（code / 名称 / cron / 默认参数）</span></li></ul></section>
+<ul class="manifest"><li class="manifest-item"><span class="manifest-chip">SQL 原件</span><span class="manifest-body"><code>sql/refs/</code> 共 3 份 → <a href="./sql/README.md" class="mdref" target="_blank" rel="noopener">sql/README.md</a>（DDL/DML 统计与执行序）</span></li><li class="manifest-item"><span class="manifest-chip">整理 · DDL</span><span class="manifest-body"><a href="./sql/%5Bsms_db_prod%5D-V261126-DDL.sql" class="filelink" target="_blank" rel="noopener">[sms_db_prod]-V261126-DDL.sql</a>（2 条）</span></li><li class="manifest-item"><span class="manifest-chip">整理 · DML</span><span class="manifest-body"><a href="./sql/%5Bsms_db_prod%5D-V261126-DML.sql" class="filelink" target="_blank" rel="noopener">[sms_db_prod]-V261126-DML.sql</a>（1 条）</span></li><li class="manifest-item"><span class="manifest-chip">配置快照</span><span class="manifest-body"><code>config/</code> 共 1 份</span></li><li class="manifest-item"><span class="manifest-chip">定时任务</span><span class="manifest-body">2 项 · <a href="./jobs/README.md" class="mdref" target="_blank" rel="noopener">jobs/README.md</a>（code / 名称 / cron / 默认参数）</span></li></ul></section>
 <section class="chapter" id="ch-8"><header class="ch-head"><span class="ch-no">八</span><h2>第三方与外部依赖</h2></header><div class="tablewrap"><table><thead><tr><th scope="col">依赖</th><th scope="col">变更说明</th><th scope="col">已确认</th></tr></thead><tbody><tr><td>dashscope</td><td>对账摘要改走 dashscope 新版 SDK（同参数）</td><td>是</td></tr></tbody></table></div></section>
 <section class="chapter" id="ch-9"><header class="ch-head"><span class="ch-no">九</span><h2>上线步骤与回滚</h2><span class="ch-flag">人工段</span></header><h3 class="sub"><span class="sub-no">1</span>步骤</h3>
 <ol class="steps"><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">停调度（关 quartz 消费）并等待在跑任务收尾</span></li><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">prod 执行 DDL 整理文件，随后执行 DML 整理文件（内部均按 SQL序）</span></li><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">发布 sms-ai 与 sms-ai-web（滚动重启），核对 Nacos 密钥占位已替换</span></li><li><span class="tickbox" role="checkbox" aria-checked="false" tabindex="0" data-tick></span><span class="step-text">打开订单超时取消任务开关并观察首轮扫描日志</span></li></ol>
@@ -773,7 +773,7 @@ ul.plainlist li { margin: 4px 0; }
 <footer class="colophon">
 <span>真相文件：<code>fixtures/docs/releases/templates/release-note-sample.md</code>（发版单 SSOT）· 本页为只读渲染，勿手改</span>
 <span>勾选 / 折叠为会话级辅助，不入档</span>
-<span>生成：<code>2026-11-26 18:00:15</code>（Asia/Shanghai）· release-eng 0.4.5 · note-html</span>
+<span>生成：<code>2026-11-27 12:20:13</code>（Asia/Shanghai）· release-eng 0.4.8 · note-html</span>
 </footer>
 </main>
 <script>

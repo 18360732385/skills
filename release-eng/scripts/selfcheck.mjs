@@ -2879,7 +2879,7 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   assert(/SQL 原件 1 份/.test(bundleMd) && /配置快照 1 份/.test(bundleMd), "038 bundle 计数");
   assert(/^- \*\*SQL 原件\*\*/m.test(bundleMd), "045 bundle 逐项：SQL 原件");
   assert(/^- \*\*整理 · DDL\*\*/m.test(bundleMd), "045 bundle 逐项：整理 DDL 链接");
-  assert(/\[\[sms_db_prod\]-V261126-DDL\.sql\]\(\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql\)/.test(bundleMd), "045 bundle 方括号文件名链接");
+  assert(/\[\\\[sms_db_prod\\\]-V261126-DDL\.sql\]\(\.\/sql\/%5Bsms_db_prod%5D-V261126-DDL\.sql\)/.test(bundleMd), "045 bundle 方括号文件名链接");
   assert(/^- \*\*定时任务\*\*/m.test(bundleMd), "045 bundle 逐项：定时任务");
   assert(!/\|\s*类别\s*\|\s*包内路径/.test(bundleMd), "038 bundle 无文件表");
 
@@ -3135,8 +3135,8 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
   assert(/真相文件/.test(html), "043 colophon SSOT 声明");
   assert(/class="manifest-item"/.test(html), "045 附属文件逐项渲染");
   assert(
-    /href="\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql"[^>]*class="filelink"/.test(html) ||
-      /class="filelink"[^>]*href="\.\/sql\/\[sms_db_prod\]-V261126-DDL\.sql"/.test(html),
+    /href="\.\/sql\/%5Bsms_db_prod%5D-V261126-DDL\.sql"[^>]*class="filelink"/.test(html) ||
+      /class="filelink"[^>]*href="\.\/sql\/%5Bsms_db_prod%5D-V261126-DDL\.sql"/.test(html),
     "045 方括号文件名链接可点击"
   );
   assert(/target="_blank"/.test(html), "045 附件链接新窗口打开");

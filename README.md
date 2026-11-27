@@ -133,7 +133,7 @@ _log/
 | [feature-eng/guide/使用手册.html](feature-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
 | [feature-eng/guide/使用手册-摘要.md](feature-eng/guide/使用手册-摘要.md) | feature-eng 一分钟导读 |
 | [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / audit / seal / cancel |
-| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.4.7） |
+| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.4.8） |
 | [release-eng/guide/使用手册.md](release-eng/guide/使用手册.md) | release-eng 完整使用手册（8 章：定位 / 安装骨架 / 主流程 / 四模式 / 约定 SSOT / 发版单 / 硬闸 / FAQ） |
 | [release-eng/guide/使用手册.html](release-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
 | [release-eng/guide/使用手册-摘要.md](release-eng/guide/使用手册-摘要.md) | release-eng 一分钟导读 |

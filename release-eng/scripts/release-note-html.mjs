@@ -14,7 +14,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { normalizeNoteStatus, nowChinaTime } from "./release-format.mjs";
+import { encodeMdLinkDest, normalizeNoteStatus, nowChinaTime } from "./release-format.mjs";
 import { readTextFile } from "./lib/text-encoding.mjs";
 import { readSkillVersion } from "./lib/skill-version.mjs";
 
@@ -297,15 +297,18 @@ export function inlineMd(src) {
     codes.push(c);
     return `\x00${codes.length - 1}\x00`;
   });
-  // 允许链接文字含一层方括号（如 `[sms_db_prod]-V261130-DDL.sql`）
+  // 链接文字可含一层方括号，或写成 `\[` `\]`（整理文件名 `[库名]-V…`）。
+  // href 里的方括号百分号编码，浏览器解码后打开原文件。
   out = out.replace(/\[((?:[^\[\]]|\[[^\[\]]*\])*)\]\(([^)\s]+)\)/g, (_m, t, u) => {
-    const isRemote = /^https?:\/\//i.test(u);
-    const isMdLink = /\.md($|[?#])/i.test(u);
+    const label = t.replace(/\\([\\\[\]])/g, "$1");
+    const href = encodeMdLinkDest(u);
+    const isRemote = /^https?:\/\//i.test(href);
+    const isMdLink = /\.md($|[?#])/i.test(href);
     const cls = isMdLink ? ' class="mdref"' : isRemote ? "" : ' class="filelink"';
     const attrs = isRemote
       ? ' target="_blank" rel="noopener noreferrer"'
       : ' target="_blank" rel="noopener"';
-    return `<a href="${u}"${cls}${attrs}>${t}</a>`;
+    return `<a href="${href}"${cls}${attrs}>${label}</a>`;
   });
   out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   out = out.replace(

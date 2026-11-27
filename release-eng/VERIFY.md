@@ -1,10 +1,19 @@
-# release-eng 验收记录（0.4.7）
+# release-eng 验收记录（0.4.8）
 
 > 静态对照 + `scripts/selfcheck.mjs`。**非 harness land**。历史见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/release-eng/`](../_log/release-eng/)。
 
 ## 版本
 
-当前 **0.4.7**（Spring JDBC 占位、任务候选、已归档身份、经典 Flyway 启发式与说明口径；其下 0.4.6 读取端接受 UTF-16）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.4.8**（方括号文件名链接转义与 HTML 还原；其下 0.4.7 收口定版缺口，0.4.6 读取端接受 UTF-16）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+
+## 0.4.8 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+| 整理文件名链接文字转义 `\[` `\]`、链接目标编码 `%5B`/`%5D`（`mdFileLink`） | 有（unit） |
+| 发版单 HTML 还原链接文字，href 指向原文件且新窗口打开 | 有（unit + 样张 HTML） |
+| 旧的无转义 `[[库名]-V…](…)` 链接仍可渲染 | 有（unit） |
 
 ## 0.4.7 增量验收
 
