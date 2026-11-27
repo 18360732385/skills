@@ -17,6 +17,7 @@ import {
   isUserTaskPlaceholder,
   isLegalAuthorizedBy,
 } from "./lib/auth.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import {
   GATE_KEYS,
   L2_FOR_GATE,
@@ -91,7 +92,7 @@ function exists(rel) {
 function read(rel) {
   const p = path.join(cwd, rel);
   if (!fs.existsSync(p)) return null;
-  return fs.readFileSync(p, "utf8");
+  return readTextFile(p);
 }
 
 function normalizeScalar(raw) {

@@ -1,4 +1,4 @@
-# fill-truths-auto（已归档 · 仅脚本、对话不推荐）
+# fill-truths-auto（已归档 · 脚本已删除、对话不推荐）
 
 **0.7.50 起热树不再保留脚本**：`scripts/fill-truths-auto.mjs` 已删除（更早的转发 stub 指向仓库级档案且缺 lib 依赖，自 0.5.10 起实际不可运行）。
 

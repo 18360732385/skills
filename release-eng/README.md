@@ -4,7 +4,7 @@
 
 ## 版本
 
-权威号只认 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（当前 **0.4.5**）。  
+权威号只认 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（当前 **0.4.6**）。  
 [CHANGELOG.md](CHANGELOG.md) 为历史；[`docs/releases/releases.md`](../../../docs/releases/releases.md) 过程索引只**引用** manifest，不另钉号。  
 `0.4.x`：次版本起身份 `release-V{yyMMdd}`、半自动 prepare、取消 notes/ 兼容。
 
@@ -26,7 +26,7 @@ node scripts/release.mjs --help
 node scripts/release.mjs modes
 ```
 
-须 `PASS … (release-eng 0.4.5)` 且 exit 0。分层：`--layer unit|contract`（快）· 默认全量。覆盖：manifest · `identityFromReleaseDate` · prepare/cancel · safe-out · freeze/lib · 截断5 / artifacts · note-html 渲染。
+须 `PASS … (release-eng 0.4.6)` 且 exit 0。分层：`--layer unit|contract`（快）· 默认全量。覆盖：manifest · `identityFromReleaseDate` · prepare/cancel · safe-out · freeze/lib · 截断5 / artifacts · note-html 渲染。
 
 ## 可移植性
 

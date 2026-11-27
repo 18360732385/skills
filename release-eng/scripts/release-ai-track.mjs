@@ -13,13 +13,13 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { stripBom } from "./release-format.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import { resolveSafeOut, emitText } from "./lib/safe-out.mjs";
 
 const NEED_AI_CONF = new Set(["path"]);
 
 function readJsonFile(filePath) {
-  return JSON.parse(stripBom(fs.readFileSync(filePath, "utf8")));
+  return JSON.parse(readTextFile(filePath));
 }
 
 function parseArgs(argv) {

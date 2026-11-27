@@ -28,7 +28,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 | **审计 / 自证** | **审计** / **会话自证** | 对照 **L0–L5** 缺口或核验当前宿主；默认不写盘（audit） |
 | **填充** | **填充** / fill-plan / agents / **打分** | MCP 过闸 → Plan → agents → acceptance → merge → score |
 
-含 Cron/Scheduler：域含 **jobs** → `fill-inventory.mjs --domain jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT）。自动填充已归档（仅脚本薄草稿、对话不推荐；0.7.50 脚本下线）：[archive/fill-truths-auto](archive/fill-truths-auto/INDEX.md)。
+含 Cron/Scheduler：域含 **jobs** → `fill-inventory.mjs --domain jobs` → `.fill-work` → acceptance → `fill-merge.mjs --domain jobs`（heuristic 不得误标升 SSOT）。自动填充已归档（脚本已于 0.7.50 删除、对话不推荐）：[archive/fill-truths-auto](archive/fill-truths-auto/INDEX.md)。
 
 ## 能否 AI Coding（10 秒）
 
@@ -44,7 +44,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 
 ## 写盘闸门（必记）
 
-确认 / 预授权：[write-plan.md](modes/write-plan.md)。「全部推荐」：[recommended-profile.md](modes/recommended-profile.md)。最短路径：全部推荐 → 确认预授权 → 确认。
+确认 / 预授权：[write-plan.md](modes/write-plan.md)。「全部推荐」：[recommended-profile.md](modes/recommended-profile.md)。最短路径：全部推荐 → 确认预授权 → 确认写入。
 
 需 db·redis 实据时过 **填充 MCP 闸**：**过闸后再** inventory / agents；未过则停留骨架。细则 SSOT：[fill-mcp.md](fill/fill-mcp.md)。
 
@@ -52,7 +52,7 @@ L5 仓升级 skill 后一行：`node scripts/harness.mjs --check-freshness --roo
 
 ```text
 1. 点名 harness-eng → 流水线（目标 L4 · fill_engine=agents · gold）
-2. 全部推荐 → 确认预授权 → 确认
+2. 全部推荐 → 确认预授权 → 确认写入
 3. 骨架战役（audit→L4→fill-mcp）过闸后 → 填充战役见 modes/pipeline-fill.md
 4. acceptance → fill-merge → 打开 report-latest.html，看 ai_coding_ready
 5. Plan 未关或金标低 → 继续 agents；早停看 Plan 关闭 + ai_coding_ready
@@ -95,9 +95,9 @@ fill 家族 CLI（inventory / merge / plan / score / report）见 [fill/README.m
 
 ### Windows 传参（醒目）
 
-PowerShell **勿**用 `>` 重定向写 JSON（易 UTF-16）。写 **UTF-8 无 BOM** 文件再传路径。完整示例 SSOT：[write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
+JSON 用 Node `writeFileSync` 写文件再传路径。读取端接受 UTF-8 / UTF-16。写盘命令加 `--confirm 确认写入`。完整示例 SSOT：[write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
 
 **冷 clone**：`docs/**/.fill-work/` 默认 gitignore。新 clone 建议 `node scripts/harness.mjs --mode refresh --root <TARGET>` 落盘 inventory；0.7.37+ 若 live 扫描成功，fill-score 不再仅因缺磁盘 inventory 记 `missing_inventory`。
 
 多宿主对齐（含 **Trae 高**）见 [ai-tools.md](host/ai-tools.md)。热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。  
-版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.8.9**）。
+版本见 [CHANGELOG.md](CHANGELOG.md)（当前 **0.8.11**）。

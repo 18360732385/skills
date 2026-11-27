@@ -37,8 +37,8 @@
 闸门词表 / 预授权语义 SSOT：[write-plan.md](write-plan.md)。
 
 1. **首轮**：完整 WritePlan 须同时声明骨架战役 + 填充战役范围（即使填充细节在过闸后再 Read）
-2. **预授权**（`Q_PREAUTH`）：过闸后同会话后续 resume / fill **自动写盘**
-3. 未预授权：每轮 fill 仍须确认
+2. **预授权**：只认口说词 `确认预授权` / `预授权后续写盘`，并落盘 `docs/harness-eng/write-auth.yaml`。`Q_PREAUTH` 只是计划里要不要请求它，【推荐】否，`全部推荐` 不会把它收成已授权
+3. 未落盘预授权：每轮 fill 仍须 `--confirm 确认写入`
 4. Windows JSON 传参：见 [write-plan.md](write-plan.md#windows-json-传参gotcha-ssot)
 
 ## 交接

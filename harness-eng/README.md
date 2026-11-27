@@ -2,7 +2,7 @@
 
 将「索引+真相 / AGENTS / path-scoped rules / agent-kb」等 Agent Harness 工程化能力，以去域化模板落地到目标仓库。
 
-**当前版本：0.8.9**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
+**当前版本：0.8.11**（见 [CHANGELOG.md](CHANGELOG.md)、[QUICKSTART.md](QUICKSTART.md)；权威号：`_meta/manifest.yaml`（技能包）· `templates/_meta/manifest.yaml`（落地模板；version 须一致））
 
 **一页纸入口**：[QUICKSTART.md](QUICKSTART.md)  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md) · 填充索引：[fill/README.md](fill/README.md)  
@@ -69,12 +69,14 @@ cp -R harness-eng <host-skills-dir>/harness-eng
 
 ```bash
 node scripts/selfcheck.mjs
+node scripts/pack-check.mjs
 node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land
 node scripts/fill-report-html.mjs --root <TARGET> --score docs/harness-eng/score-latest.json
+# refresh 未开干默认 exit 2；CI 可加 --exit-zero 视为成功
 ```
 
 仅保留当前 selfcheck；近期归档见 `archive/selfcheck/`。0.2.x–0.3.x 体积不在热树，见 [archive/selfcheck/legacy/INDEX.md](archive/selfcheck/legacy/INDEX.md)。**安装 ≠ 全仓。**
 
 ## 版本
 
-技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` 须一致，以 manifest 为准）。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。
+技能包权威：`_meta/manifest.yaml`；落地模板权威：`templates/_meta/manifest.yaml`（两边 `version` / `rev` 须一致，以 manifest 为准）。**版本身份**：行为变更优先升 `version`；同一 `version` 内追加修复必须升 `rev`。报告对照 **`skill_version` + `report_schema`**（**报告壳 ≠ skill**；`ui.version` 仅为兼容别名，见 glossary）。

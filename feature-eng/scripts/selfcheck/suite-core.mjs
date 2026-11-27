@@ -1,4 +1,5 @@
 import { checkContracts } from "../check-contracts.mjs";
+import { decodeTextBuffer } from "../lib/text-encoding.mjs";
 
 export function run(ctx) {
   const {
@@ -401,6 +402,14 @@ assert(
     }
   }
   walk(skillRoot);
+  const utf16Progress = Buffer.concat([
+    Buffer.from([0xff, 0xfe]),
+    Buffer.from("slug: demo\nstage: spec\n", "utf16le"),
+  ]);
+  assert(
+    /slug: demo/.test(decodeTextBuffer(utf16Progress)),
+    "UTF-16 LE progress text decodes"
+  );
   assert(
     hits.length === 0,
     hits.length === 0

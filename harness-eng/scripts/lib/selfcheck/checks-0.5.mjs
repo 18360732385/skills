@@ -342,6 +342,8 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
     );
     const r = runNode([
       path.join(skillRoot, "scripts/render.mjs"),
+      "--confirm",
+      "确认写入",
       "--root",
       tmpA,
       "--params",
@@ -556,6 +558,8 @@ export function runChecks05({ skillRoot, docPath, readDoc, assert, runNode }) {
     );
     const r = runNode([
       path.join(skillRoot, "scripts/render.mjs"),
+      "--confirm",
+      "确认写入",
       "--root",
       tmpB,
       "--params",
@@ -965,6 +969,8 @@ assert(
     );
     const r = runNode([
       path.join(skillRoot, "scripts/render.mjs"),
+      "--confirm",
+      "确认写入",
       "--root",
       tmpR,
       "--params",
@@ -1621,6 +1627,8 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
     );
     const rRefuse = runNode([
       path.join(skillRoot, "scripts/harness.mjs"),
+      "--confirm",
+      "确认写入",
       "--root",
       tmpL5,
       "--params",
@@ -1657,6 +1665,8 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
     );
     const rMeta = runNode([
       path.join(skillRoot, "scripts/harness.mjs"),
+      "--confirm",
+      "确认写入",
       "--root",
       tmpL5,
       "--params",
@@ -1683,6 +1693,8 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
       );
       const rExp = runNode([
         path.join(skillRoot, "scripts/harness.mjs"),
+        "--confirm",
+        "确认写入",
         "--root",
         tmpExpand,
         "--params",
@@ -1893,6 +1905,8 @@ assert(!/四台摘要 \+ mermaid/.test(quickstartMd) && !/四台 \+ mermaid/.tes
   try {
     const rEmpty = runNode([
       path.join(skillRoot, "scripts/render.mjs"),
+      "--confirm",
+      "确认写入",
       "--root",
       tmpEmpty,
       "--params",

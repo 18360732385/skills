@@ -19,6 +19,7 @@ import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import {
   enrichFreezePayload,
   extractTaskCodesFromJavaDiff as enrichExtractTaskCodes,
@@ -189,7 +190,7 @@ function guessSourceBranch(subject) {
 
 function readTextFileSafe(p) {
   try {
-    return fs.readFileSync(p, "utf8").replace(/^\uFEFF/, "");
+    return readTextFile(p);
   } catch {
     return null;
   }

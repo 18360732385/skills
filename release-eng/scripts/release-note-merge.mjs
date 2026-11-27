@@ -52,8 +52,8 @@ import {
   formatMergeSourcesTableRows,
   classifyMigrationKindByFilename,
   bundleSqlVolumeWarning,
-  stripBom,
 } from "./release-format.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import { buildArtifactsJson, loadJobsCatalog } from "./release-freeze-enrich.mjs";
 import { runSqlBundle } from "./release-sql-bundle.mjs";
 import { DEFAULT_REPO_PROFILE, loadRepoProfile } from "./lib/repo-profile.mjs";
@@ -133,7 +133,7 @@ function parseArgs(argv) {
 
 function readText(p) {
   try {
-    return stripBom(fs.readFileSync(p, "utf8"));
+    return readTextFile(p);
   } catch {
     return null;
   }

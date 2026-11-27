@@ -9,7 +9,7 @@
 5. 再跑 fill-score → fill-report-html
 
 主 Agent 编排 + 多会话 worker 对照**目标仓 templates 完整档**写真相。  
-**0.2.17+ 默认填充路径**；`fill-truths-auto` 为 legacy。  
+**0.2.17+ 默认填充路径**；`fill-truths-auto` 已归档（脚本已删除，对话不推荐）。  
 **0.2.18+**：须过 [truth-quality.md](../modes/truth-quality.md) / `acceptance-check` 才可 promote SSOT。  
 须配合 [fill-plan.md](fill-plan.md) 批次关闭；执行契约见 [fill-workers.md](fill-workers.md)。
 

@@ -5,6 +5,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { readTextFile } from "./text-encoding.mjs";
 
 /**
  * @param {{ format?: string, out?: string|null, prefix?: string, forceTemp?: boolean }} opts
@@ -54,9 +55,9 @@ export function emitText(text, resolved = {}) {
   return null;
 }
 
-/** 读 JSON 文件（strip BOM） */
+/** 读 JSON 文件。接受 UTF-8 / UTF-16（含 BOM）。 */
 export function readJsonFileSafe(filePath, stripBom) {
-  const raw = fs.readFileSync(filePath, "utf8");
-  const text = typeof stripBom === "function" ? stripBom(raw) : raw.replace(/^\uFEFF/, "");
+  const raw = readTextFile(filePath);
+  const text = typeof stripBom === "function" ? stripBom(raw) : raw;
   return JSON.parse(text);
 }

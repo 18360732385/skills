@@ -4,8 +4,8 @@
 人读一页纸：[QUICKSTART.md](QUICKSTART.md)。闸门词表：[write-plan.md](modes/write-plan.md)。
 
 **拓扑**：`modes/` · `fill/` · `host/`。对外四支 / 三档见 [SKILL.md](SKILL.md)；细阶仍 L0–L5。  
-**manifest 双写 / 权威**：发版只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（skill 版本 SSOT）；[`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml) 与 `SKILL.md` frontmatter 由 `sync-skill-version.mjs` 机械同步（**勿手改副本当权威**；两边 `version` 须一致）。  
-**发版**：① 只改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version` → ② `node scripts/sync-skill-version.mjs`（机械副本 + 文档钉头 + 仓根 README 行）→ ③ 更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [modes/upgrade.md](modes/upgrade.md) / [VERIFY.md](VERIFY.md) 增量；版本要点写**仓库级版本档案**（流程见仓库根 `README.md`「仓库级档案与发版」节）→ ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。
+**manifest 双写 / 权威**：发版优先改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`；同一 version 内追加修复改 `rev`。[`templates/_meta/manifest.yaml`](templates/_meta/manifest.yaml)、`questions.yaml` 与 `SKILL.md` 正文版本钉由 `sync-skill-version.mjs` 机械同步（**勿手改副本当权威**；两边 `version` / `rev` 须一致；SKILL frontmatter 无 `version` 字段）。  
+**发版**：① 改 [`_meta/manifest.yaml`](_meta/manifest.yaml) 的 `version`（同版补丁改 `rev`）→ ② `node scripts/sync-skill-version.mjs`（机械副本 + SKILL/doc 钉头 + 仓根 README 行）→ ③ 更新 [CHANGELOG.md](CHANGELOG.md) 索引一行 / [modes/upgrade.md](modes/upgrade.md) / [VERIFY.md](VERIFY.md) 增量；版本要点写**仓库级版本档案**（流程见仓库根 `README.md`「仓库级档案与发版」节）→ ④ `node scripts/selfcheck.mjs`（含 `sync-skill-version --check`）。
 
 ## 必读（写盘前）≤8
 
@@ -25,7 +25,7 @@
 | 何时 | Read |
 |---|---|
 | 续跑工程化 | [modes/resume.md](modes/resume.md)（≠ feature 续跑主题） |
-| 升阶 / 升严 | [modes/upgrade.md](modes/upgrade.md)（旗标消歧：`--migrate-docs` ≠ `--migrate-policy` ≠ `--migrate-coverage`；`migrate-coverage` 默认 off；CI `--check-meta-stable`；wrappers `--retire-wrappers`） |
+| 升阶 / 升严 | [modes/upgrade.md](modes/upgrade.md)（只留 0.8.x + 0.7.63 桥接；历史 0.7.28–0.7.62 见 [archive/upgrade-history-through-0.7.62.md](archive/upgrade-history-through-0.7.62.md)）。旗标消歧：`--migrate-docs` ≠ `--migrate-policy` ≠ `--migrate-coverage`；`migrate-coverage` 默认 off；CI `--check-meta-stable`；wrappers `--retire-wrappers` |
 | 补空壳真相 | [modes/seed-truths.md](modes/seed-truths.md) |
 
 ### 流水线
@@ -66,7 +66,7 @@
 
 ## 写盘纪律（一行）
 
-确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> [--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill]`。  
+确认闸门之后：优先 `scripts/harness.mjs --root <TARGET> --params <params.json> --confirm 确认写入 [--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill]`。已落盘 `write-auth.yaml` 的后续轮次可省略 `--confirm`。  
 非 L5 委托 `render.mjs`；`agent_config: true` 只渲 SSOT，生成物由目标仓 `node scripts/agent-config/sync.mjs` 发出。  
 **升级 L5**：刷新 `scripts/agent-config/sync.mjs`；`node scripts/harness.mjs --check-freshness --root <TARGET>`。  
-**升严常用**：`harness --mode upgrade`（薄仓默认 migrate-docs=auto；**厚仓默认 dry-run**，显式 `--migrate-docs=auto` 才写真相）· `--migrate-coverage` 默认 **off** · `--check-meta-stable --baseline <meta>` · `--retire-wrappers` / `HARNESS_RETIRE_WRAPPERS=1`。厚仓开干档可 `mature_compat`（drift 不阻断）。
+**升严常用**：`harness --mode upgrade`（薄仓默认 migrate-docs=auto；**厚仓默认 dry-run**，显式 `--migrate-docs=auto` 才写真相）· `--migrate-coverage` 默认 **off** · `--check-meta-stable --baseline <meta>` · `--retire-wrappers` / `HARNESS_RETIRE_WRAPPERS=1`。厚仓开干档可 `mature_compat`（drift 不阻断）。`--params -` 读 stdin；`--mode refresh --exit-zero` 把「未开干(2)」视为成功。

@@ -11,6 +11,7 @@
 import fs from "fs";
 import path from "path";
 import { stripYamlInlineComment } from "./lib/progress-shape.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 
 function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
@@ -83,7 +84,7 @@ for (const slugDir of entries) {
     });
     continue;
   }
-  const text = fs.readFileSync(progressPath, "utf8");
+  const text = readTextFile(progressPath);
   const stageVal = readField(text, "stage");
   rows.push({
     slug: readField(text, "slug") || slugDir,

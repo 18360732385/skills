@@ -1,6 +1,6 @@
 # 会话仪表盘（工程轮回复末尾）
 
-> SSOT：仅当**本轮**有目标仓 harness **实质施工产出**、**闸门决策点**、或用户**显式要读数**时，对用户可见回复的**固定结尾**。默认 **HIDE**。提问批次 / 定根前 / 等确认空轮 / 改 skill / 纯 meta **整块省略**。与 `docs/harness-eng/report-latest.html`（施工 HTML 五台 · `report_schema` 0.4.0）互补：HTML 是持久产物；本节是**会话内**快照。
+> SSOT：仅当**本轮**有目标仓 harness **实质施工产出**、**闸门决策点**、或用户**显式要读数**时，对用户可见回复的**固定结尾**。默认 **HIDE**。提问批次 / 定根前 / 等确认空轮 / 改 skill / 纯 meta **整块省略**。与 `docs/harness-eng/report-latest.html`（施工 HTML 五台；`report_schema` 版本以 [glossary.md](../glossary.md) 为准）互补：HTML 是持久产物；本节是**会话内**快照。
 
 ## Done
 
@@ -133,7 +133,7 @@ Agent 每轮先判定 SHOW / HIDE，再决定是否附仪表盘。脚本只负�
 会话字段：
 - **模式**：以本轮 intent / CLI `--mode` 为准（fill-score、audit、pipeline…）；**勿**默认钉死 `meta.last_mode`
 - `meta.last_mode` 仅作脚注（与本轮模式不同时括号注明）
-- 阶段 / 预授权由 Agent 从当轮上下文填入；脚本 `--phase` / `--preauth` 可覆盖
+- 阶段由 Agent 从当轮上下文填入。预授权默认读目标仓 `docs/harness-eng/write-auth.yaml`；`--phase` / `--preauth` 可覆盖
 
 ## 脚本
 

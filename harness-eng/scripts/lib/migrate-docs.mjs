@@ -22,6 +22,7 @@ import { loadDomainInventory } from "./inventory-paths.mjs";
 import { truthsPath, loadDomainRegistry } from "./domains.mjs";
 import { endpointToMarkdown } from "./fill-auto-api.mjs";
 import { textHasNeedle } from "./frontend-coverage.mjs";
+import { readTextFile } from "./json-read.mjs";
 
 export const MIGRATE_REPORT_REL = path.join(
   "docs",
@@ -1005,7 +1006,7 @@ ${sections}`;
 
 function readText(abs) {
   try {
-    return fs.readFileSync(abs, "utf8");
+    return readTextFile(abs);
   } catch {
     return "";
   }

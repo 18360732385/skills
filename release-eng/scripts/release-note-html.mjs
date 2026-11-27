@@ -14,7 +14,8 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { stripBom, normalizeNoteStatus, nowChinaTime } from "./release-format.mjs";
+import { normalizeNoteStatus, nowChinaTime } from "./release-format.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import { readSkillVersion } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1648,7 +1649,7 @@ export function writeNoteHtmlForNote({
   generatedAt = nowChinaTime(),
 } = {}) {
   const absNote = path.isAbsolute(notePath) ? notePath : path.join(root, notePath);
-  const md = stripBom(fs.readFileSync(absNote, "utf8"));
+  const md = readTextFile(absNote);
   const html = buildNoteHtml(md, {
     generatedAt,
     noteRel: path.relative(root, absNote).replace(/\\/g, "/"),
@@ -1702,7 +1703,7 @@ function main() {
   const absNote = path.isAbsolute(args.note) ? args.note : path.join(args.root, args.note);
   let md;
   try {
-    md = stripBom(fs.readFileSync(absNote, "utf8"));
+    md = readTextFile(absNote);
   } catch (e) {
     console.error(`cannot read note ${absNote}: ${e.message || e}`);
     process.exit(1);

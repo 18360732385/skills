@@ -15,6 +15,7 @@ import {
   ARTIFACT_KEYS,
   stripYamlInlineComment,
 } from "./lib/progress-shape.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -44,7 +45,7 @@ function exists(rel) {
 function read(rel) {
   const p = path.join(cwd, rel);
   if (!fs.existsSync(p)) return null;
-  return fs.readFileSync(p, "utf8");
+  return readTextFile(p);
 }
 function walkFiles(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
@@ -173,7 +174,7 @@ if (!progress) {
         ? reportRel
         : path.join(cwd, reportRel);
       if (fs.existsSync(abs)) {
-        const body = fs.readFileSync(abs, "utf8");
+        const body = readTextFile(abs);
         if (/\|\s*TC-\d+\s*\|\s*pass\s*\/\s*fail\s*\/\s*blocked\s*\|/i.test(body)) {
           issues.push(`test report still template placeholder: ${reportRel}`);
         }
@@ -239,7 +240,7 @@ for (const abs of scanFiles) {
   seenScan.add(norm);
   let text = "";
   try {
-    text = fs.readFileSync(abs, "utf8");
+    text = readTextFile(abs);
   } catch {
     continue;
   }

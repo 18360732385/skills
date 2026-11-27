@@ -1,9 +1,8 @@
-import fs from "fs";
-import { stripBom } from "../../release-format.mjs";
+import { readTextFile } from "../text-encoding.mjs";
 
 export function readText(filePath) {
   try {
-    return stripBom(fs.readFileSync(filePath, "utf8"));
+    return readTextFile(filePath);
   } catch {
     return null;
   }

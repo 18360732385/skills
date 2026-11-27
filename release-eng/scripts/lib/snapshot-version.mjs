@@ -3,7 +3,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { stripBom } from "../release-format.mjs";
+import { readTextFile } from "./text-encoding.mjs";
 
 /**
  * @param {string} repoRoot
@@ -19,7 +19,7 @@ export function checkConsumerSnapshot(repoRoot, skillVersion) {
   if (!fs.existsSync(versionPath)) {
     return { exists: true, ok: false, version: null, path: versionPath };
   }
-  const version = stripBom(fs.readFileSync(versionPath, "utf8")).trim();
+  const version = readTextFile(versionPath).trim();
   return {
     exists: true,
     ok: version === String(skillVersion).trim(),

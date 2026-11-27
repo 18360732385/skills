@@ -4,6 +4,7 @@
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.2.29 | 2026-11-27 | 读取目标仓 progress / 回链 / 测试报告时接受 UTF-8 与 UTF-16（PowerShell `>` / Out-File 的 BOM） |
 | 0.2.28 | 2026-10-29 | close ARCHIVE 权威路径对齐 archive/ARCHIVE.md（harness 0.7.55 / sms-ai） |
 | 0.2.27 | 2026-10-29 | selfcheck 主题拆分 · `_log` 0.2-early 归档 · RETAINED=近期索引 |
 | 0.2.26 | 2026-10-29 | 批修复：死链清零 · 枚举单源 · 中途环 L2 机检 · needs-close · 门禁清单模板 · reviewer 字段 |

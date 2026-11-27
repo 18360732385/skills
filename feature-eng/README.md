@@ -6,7 +6,7 @@
 
 验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check / contracts）。闸门证据：`node scripts/gate-evidence.mjs`；契约单源校验：`node scripts/check-contracts.mjs`。
 
-0.2.28 要点：close 权威路径对齐 `docs/superpowers/archive/ARCHIVE.md`（遗留根级仅兼容读）；`close-check` 双路径读；ARCHIVE「Commit」列钉死。**本轮机检加固**：YAML 行内注释剥离、`result`/`reviewer` 精确匹配、proxy 仪式三行具体值、path-aware 必过闸、`smoke` 不再绕过中途 L2、安装态 selfcheck/sync 可用。历史版本见 [CHANGELOG.md](CHANGELOG.md)；仓库内明细见仓库级档案（安装包不含）。
+0.2.29 要点：gate-evidence / close-check / status-scan 读取目标仓文本时接受 UTF-8 与 UTF-16（PowerShell 写出的 BOM）。历史版本见 [CHANGELOG.md](CHANGELOG.md)；仓库内明细见仓库级档案（安装包不含）。
 
 ## 可移植性
 

@@ -41,6 +41,15 @@ export async function runUnit(kit) {
   assert(format.shortCommitHash("abcdef012345") === "abcdef01", "shortCommitHash");
   assert(format.COMMIT_DISPLAY_MAX === 5, "COMMIT_DISPLAY_MAX");
   assert(format.stripBom("\uFEFFabc") === "abc", "stripBom");
+  assert(format.stripBom("\uFEFF\uFEFFabc") === "abc", "stripBom strips every leading FEFF");
+  const textEnc = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/lib/text-encoding.mjs")).href
+  );
+  const utf16Json = Buffer.concat([
+    Buffer.from([0xff, 0xfe]),
+    Buffer.from('{"ok":true}', "utf16le"),
+  ]);
+  assert(textEnc.decodeTextBuffer(utf16Json) === '{"ok":true}', "UTF-16 LE JSON decodes");
 
   const thu = format.recommendedReleaseThursday(
     new Date(Date.UTC(2026, 10, 24, 12))

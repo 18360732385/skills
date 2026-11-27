@@ -36,7 +36,7 @@
 | **补空壳真相** | `seed-truths` | 索引表加导航行 + `01-*.md` 空壳（**无**字段级契约） |
 | **填充计划** | `fill-plan` | 目标/批次/Done；进度 SSOT（`docs/harness-eng/fill-plan.yaml`） |
 | **多 Agent 精填** | `fill-truths-agents` | 按 Plan 批次 + 模板完整档写深度真相【推荐】 |
-| **自动填充** | `fill-truths-auto` | **已归档**：仅脚本、对话不推荐；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
+| **自动填充** | `fill-truths-auto` | **已归档**：脚本已于 0.7.50 删除、对话不推荐；见 [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md) |
 | **填充引擎** | `Q_FILL_ENGINE` | `agents`【推荐】/ `hybrid`（可选）/ `auto`（已归档移除） |
 | **inventory 默认路径** | — | `docs/<domain>/.fill-work/inventory*.json`（fill-score 可自动发现） |
 | **续跑工程化** | `resume` | 已有一半 harness：读 meta/指纹，**只补缺口**（幂等）。**≠** 主题环续跑主题（`docs/runs/active`） |
@@ -124,7 +124,7 @@
 | **报告字段** | `gap_to_ready` / `domain_stories` / `diff` / `suggest_upgrade` 等 → [fill-score.md](fill/fill-score.md)「报告字段速查」 |
 | **安全预填** | `Q_SEED`：用无密可推断信息填 Commands/技术栈；不确定仍 TODO |
 | **确认闸门** | 写盘前必须用户明确确认；词表 SSOT：[write-plan.md](modes/write-plan.md) |
-| **预授权** | 须显式回复「确认预授权」/「预授权后续写盘」（普通「确认」≠预授权）；此后同会话后续 fill/resume 可自动写盘；词表与细则：[write-plan.md](modes/write-plan.md) |
+| **预授权** | 须显式回复「确认预授权」/「预授权后续写盘」，并写入目标仓 `docs/harness-eng/write-auth.yaml`（普通「确认」和 `Q_PREAUTH=true` 都不算）。只授权后续轮次，本轮仍须「确认写入」。`取消预授权` 把文件写成 `preauth: false`。词表：[write-plan.md](modes/write-plan.md) |
 | **RecommendedProfile** | 探测后自动给出的推荐包；不懂选项时可「全部推荐」 |
 | **WritePlan** | 写入前计划表 + 渲染预览；确认后才写盘 |
 | **AI 工具面** | `Q_AI_TOOL`：Cursor / Claude / Codex / Qoder / Trae / WorkBuddy；可自定义入口。适配层非 SSOT，见 [ai-tools.md](host/ai-tools.md) |

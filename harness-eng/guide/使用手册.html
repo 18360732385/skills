@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>harness-eng 使用手册 · v0.8.9</title>
+  <title>harness-eng 使用手册 · v0.8.11</title>
   <meta name="description" content="harness-eng：把 AI 编程脚手架工程化落地到目标仓库的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -587,7 +587,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.8.9</div>
+    <div class="ver">v0.8.11</div>
   </header>
 
   <div class="shell">
@@ -795,14 +795,14 @@ cp -R &lt;源&gt;/harness-eng &lt;host-skills-dir&gt;/harness-eng</code></pre>
         <div class="callout warn">
           <div class="label">确认闸门</div>
           在回复下列<strong>任一</strong>之前，Agent <strong>不应</strong>往目标仓写 harness 文件：
-          <code>确认</code> · <code>确认写入</code> · <code>按计划执行</code> · <code>执行 WritePlan</code> · <code>LGTM</code>
+          <code>确认写入</code> · <code>按计划执行</code> · <code>执行 WritePlan</code> · <code>LGTM</code>
         </div>
-        <p>也可子集确认，例如：<code>只执行 L0</code>、<code>去掉 14 后执行</code>。若首轮同意 <strong>预授权</strong>，同会话后续的 resume / fill 可自动写盘。</p>
+        <p>裸「确认」只在紧接 WritePlan 展示的下一轮、且没有其他待答问题时才算等价。也可子集确认，例如：<code>只执行 L0</code>、<code>去掉 14 后执行</code>。若首轮同意 <strong>预授权</strong>，同会话后续的 resume / fill 可自动写盘；<strong>预授权不授权本轮</strong>，本轮仍须 <code>确认写入</code>。</p>
 
         <h3>3.4 推荐最短路径（大仓）</h3>
         <ol>
           <li>「点名 harness-eng，跑流水线，目标 L4，填充用 agents，金标批次。」</li>
-          <li>「全部推荐 → 确认预授权 → 确认。」</li>
+          <li>「全部推荐 → 确认预授权 → 确认写入。」</li>
           <li>骨架与 MCP 闸过完后，继续填充战役；验收合并后打开 <code>docs/harness-eng/report-latest.html</code>。</li>
           <li>看报告上的 <strong>开干（ai_coding_ready）</strong> 与 <strong>金标达标率（gold_ratio）</strong>；启发式草稿只留在 <code>.fill-work</code>，不要当 SSOT。</li>
         </ol>
@@ -1109,7 +1109,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q2：Agent 一直出计划不写文件？</summary>
-          <div class="ans"><p>这是设计如此。须回复确认闸门等价词。若希望同会话连续填充，首轮一并<strong>确认预授权</strong>。</p></div>
+          <div class="ans"><p>这是设计如此。须回复确认闸门等价词。若希望同会话连续填充，首轮一并<strong>确认预授权</strong>（只授权后续轮次；本轮仍须 <code>确认写入</code>）。</p></div>
         </details>
         <details>
           <summary>Q3：会不会覆盖我手写的 AGENTS Never do？</summary>
@@ -1149,7 +1149,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
         </details>
         <details>
           <summary>Q12：版本以谁为准？</summary>
-          <div class="ans"><p>技能版本看文首版本钉与 <code>_meta/manifest.yaml</code> 的 <code>version</code>（SSOT；<code>templates/_meta</code> 为 sync 副本），以及目标仓 <code>skill_version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
+          <div class="ans"><p>技能版本看文首版本钉与 <code>_meta/manifest.yaml</code> 的 <code>version</code> / <code>rev</code>（SSOT；<code>templates/_meta</code> 为 sync 副本），以及目标仓 <code>skill_version</code>。同版补丁看 <code>rev</code>；行为变更优先升 <code>version</code>。报告对照 <strong>skill_version + report_schema</strong>（<strong>报告壳 ≠ skill</strong>）。</p></div>
         </details>
         <details>
           <summary>Q13：只想审计、怕写错兄弟仓？</summary>
@@ -1194,7 +1194,7 @@ node scripts/fill-report-html.mjs --root &lt;目标仓&gt; --score docs/harness-
 
         <div class="footer">
           本手册描述技能用法与仓库侧约定；具体 WritePlan 以当次探测与确认结果为准。<br />
-          HTML 与 Markdown 双维护，改内容须同步 · harness-eng v0.8.9
+          HTML 与 Markdown 双维护，改内容须同步 · harness-eng v0.8.11
         </div>
       </section>
     </main>

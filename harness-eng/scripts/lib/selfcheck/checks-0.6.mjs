@@ -251,6 +251,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
     );
     const rRefuse = runNode([
       path.join(skillRoot, "scripts/harness.mjs"),
+      "--confirm",
+      "确认写入",
       "--root",
       tmpSkel,
       "--params",

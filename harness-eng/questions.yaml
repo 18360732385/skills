@@ -1,7 +1,7 @@
 # questions.yaml — machine-readable question tree (harness-eng 0.2.5+)
 # Agent: prefer `node scripts/questions-next.mjs --answers <json>`; fallback Read questions.md
 
-version: "0.8.9"
+version: "0.8.11"
 
 all_recommend_phrases:
   - 全部推荐
@@ -415,10 +415,10 @@ batches:
         type: text
         recommended_from: fingerprint.module_dirs
       - id: Q_PREAUTH
-        text: 是否预授权后续轮次自动写盘？（首轮仍确认 WritePlan）
+        text: 计划里是否请求后续轮次预授权？（全部推荐保持否；生效只认「确认预授权」，并写入 write-auth.yaml）
         type: boolean
         when_mode: [pipeline, fill-truths, fill-truths-agents, fill-mcp]
-        recommended: true
+        recommended: false
       - id: Q_FILL_MCP_FIRST
         text: 是否先装配 MCP（mysql/redis）再 fill-truths？
         type: boolean

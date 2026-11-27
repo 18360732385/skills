@@ -15,6 +15,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import { spawnSync } from "child_process";
 import {
   identityFromReleaseDate,
@@ -95,7 +96,7 @@ function resolveSqlProfile(root, args) {
   const indexPath = path.join(root, "docs", "releases", "releases.md");
   let recorded = { sqlDir: null, sqlFormat: null, firstUse: true };
   if (fs.existsSync(indexPath)) {
-    recorded = readSqlProfile(stripBom(fs.readFileSync(indexPath, "utf8")));
+    recorded = readSqlProfile(readTextFile(indexPath));
   }
   const sqlDir = args.sqlDir ? normalizeSqlDir(args.sqlDir) : recorded.sqlDir;
   const sqlFormat = args.sqlFormat ? canonicalSqlFormat(args.sqlFormat) : recorded.sqlFormat;

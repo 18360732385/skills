@@ -28,8 +28,8 @@ import {
   sanitizeJdbcUrl,
   sanitizeDbNameForFile,
   sha256Hex,
-  stripBom,
 } from "./release-format.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import {
   buildClassifyPromptMd,
   classifyRefs,
@@ -72,7 +72,7 @@ function baseName(p) {
 
 function loadJson(p) {
   if (!p || !fs.existsSync(p)) return null;
-  return JSON.parse(stripBom(fs.readFileSync(p, "utf8")));
+  return JSON.parse(readTextFile(p));
 }
 
 function loadPriorBySha(artifactsPath) {
@@ -165,7 +165,7 @@ function collectProdYmlTexts(root, freeze, bundleDir) {
     if (seen.has(key) || !fs.existsSync(key)) return;
     seen.add(key);
     try {
-      out.push({ text: stripBom(fs.readFileSync(key, "utf8")), source });
+      out.push({ text: readTextFile(key), source });
     } catch {
       /* skip */
     }

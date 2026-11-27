@@ -15,6 +15,7 @@ import { spawnSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import {
   stripBom,
   identityFromBranch,
@@ -57,7 +58,7 @@ function parseArgs(argv) {
 
 function readText(p) {
   try {
-    return stripBom(fs.readFileSync(p, "utf8"));
+    return readTextFile(p);
   } catch {
     return null;
   }

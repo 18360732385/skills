@@ -1,10 +1,18 @@
-# release-eng 验收记录（0.4.5）
+# release-eng 验收记录（0.4.6）
 
 > 静态对照 + `scripts/selfcheck.mjs`。**非 harness land**。历史见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/release-eng/`](../_log/release-eng/)。
 
 ## 版本
 
-当前 **0.4.5**（合并来源按对比版本之后新增；SQL/定时任务章前 5 条；包内附属逐项清单；HTML 视觉与附件链接）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.4.6**（读取发版单与 JSON 接受 UTF-8 与 UTF-16；其下 0.4.5 合并来源、样表与 HTML）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+
+## 0.4.6 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+| UTF-16 LE JSON 能解码；`stripBom` 去掉连续的 U+FEFF | 有（unit） |
+| 发版单、索引、artifacts、repo-profile 的读取走同一套解码 | 有 |
 
 ## 0.4.5 增量验收
 

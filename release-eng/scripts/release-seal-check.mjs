@@ -23,6 +23,7 @@ import {
   extractMigrationNames,
 } from "./release-format.mjs";
 import { verifySqlBundlesOnDisk } from "./release-sql-bundle.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -45,7 +46,7 @@ function parseArgs(argv) {
 
 function readText(p) {
   try {
-    return fs.readFileSync(p, "utf8");
+    return readTextFile(p);
   } catch {
     return null;
   }
@@ -167,7 +168,7 @@ function main() {
       errors.push("目录包缺少 artifacts.json（发版制品清单 SSOT；请用 note-merge 重写）");
     } else {
       try {
-        artifacts = JSON.parse(stripBom(fs.readFileSync(artifactsPath, "utf8")));
+        artifacts = JSON.parse(readTextFile(artifactsPath));
       } catch (e) {
         errors.push(`artifacts.json 无法解析: ${e.message || e}`);
       }
@@ -180,7 +181,7 @@ function main() {
       let sqlNameCorpus = sqlSec || "";
       if (fs.existsSync(sqlReadmePath)) {
         try {
-          sqlNameCorpus = stripBom(fs.readFileSync(sqlReadmePath, "utf8"));
+          sqlNameCorpus = readTextFile(sqlReadmePath);
         } catch {
           /* keep sqlSec */
         }

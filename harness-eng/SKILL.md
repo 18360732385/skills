@@ -1,16 +1,15 @@
 ---
 name: harness-eng
 description: >-
-  用户点名 harness-eng，或说落地/land、续跑/resume、升阶/upgrade、流水线/pipeline、
-  审计/audit、填充/fill、打分/score、形态/morph、贴顶/覆盖/gate、会话自证/session-live、开干，
-  或要对目标仓做 Agent Harness 工程化时使用；
-  也在涉及 Cron/Scheduler/jobs 契约工作时使用。
-  本 description 仅作触发——行动前先读 SKILL.md 正文。
+  用户点名 harness-eng，或在目标仓做 Agent Harness 工程化时使用：落地/land、续跑/resume、
+  升阶/upgrade、流水线/pipeline、审计/audit、填充/fill、打分/score、形态/morph、
+  闸门/gate、会话自证/session-live，或目标仓涉及 Cron/Scheduler/jobs 契约。
+  泛化的文章写作、代码审计、评分请求勿触发。本 description 仅作触发——行动前先读 SKILL.md 正文。
 ---
 
 # harness-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.8.9**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。报告对照 `skill_version` + `report_schema`（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.8.11**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。报告对照 `skill_version` + `report_schema`（版本以 [glossary.md](glossary.md) 为准；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 
 Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持久约束。  
 旁路规格只在需要时 Read。对用户优先中文；术语见 [glossary.md](glossary.md)。  
@@ -36,7 +35,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 3. `MATURE` 默认 **audit**；写盘须点名 land / upgrade / resume / pipeline / fill-*。写盘入口优先 `scripts/harness.mjs`（0.7.2 起无 `land.mjs`）。
 4. 每批提问展示【推荐】；`全部推荐` 只收齐答题（[recommended-profile.md](modes/recommended-profile.md)）。
 5. Windows JSON 传参：见 [write-plan.md](modes/write-plan.md#windows-json-传参gotcha-ssot)。
-6. 会话仪表盘：先按 [session-dashboard.md](modes/session-dashboard.md) 判定 **SHOW|HIDE**，**仅 SHOW 时**附四边框块（【阶段】【现状】【工作】【下一步建议】；现状仅 AI coding 可否）。可观察 SHOW 例：本轮完整出示 WritePlan（闸门决策点，**不必等确认/写盘**）；实质产出结论；用户显式读数。有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。判定按**本轮**里程碑，不按「会话曾点名」。HTML 五台（`report_schema` 0.4.1）另见手册。
+6. 会话仪表盘：先按 [session-dashboard.md](modes/session-dashboard.md) 判定 **SHOW|HIDE**，**仅 SHOW 时**附四边框块（【阶段】【现状】【工作】【下一步建议】；现状仅 AI coding 可否）。可观察 SHOW 例：本轮完整出示 WritePlan（闸门决策点，**不必等确认/写盘**）；实质产出结论；用户显式读数。有目标根时优先 `node scripts/session-dash.mjs --root <TARGET> --intent engineering`。判定按**本轮**里程碑，不按「会话曾点名」。HTML 五台另见手册（`report_schema` 版本以 [glossary.md](glossary.md) 为准）。
 
 ## 模式分流（对外四支）
 
@@ -47,7 +46,7 @@ Skill = **施工仪式**；目标仓 `AGENTS` / `.cursor/rules` / `docs` = 持�
 | **审计 / 自证** | `audit` · `session-live` | [audit-report.md](modes/audit-report.md) · [ladder.md](modes/ladder.md) · [session-live.md](modes/session-live.md) |
 | **填充** | `fill-score` / `fill-morph` / `fill-gate` · `fill-plan` · `fill-truths-agents` · `fill-truths` · `fill-mcp` | [fill/README.md](fill/README.md) · [fill-score.md](fill/fill-score.md) |
 
-legacy / 脚本：`fill-truths-auto`（**已归档**：仅脚本、对话不推荐 → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见 [AGENT-INDEX.md](AGENT-INDEX.md) 与 [fill/README.md](fill/README.md)。
+legacy / 脚本：`fill-truths-auto`（**已归档**：脚本已于 0.7.50 删除、对话不推荐 → [archive/fill-truths-auto/](archive/fill-truths-auto/INDEX.md)）· `fill-calibrate-live` · `fill-report-html` → 见 [AGENT-INDEX.md](AGENT-INDEX.md) 与 [fill/README.md](fill/README.md)。
 
 未指定：`MATURE`→audit；`PARTIAL`/已有 meta 未满阶→**resume**；**大仓首次**→**pipeline**（L4，`fill_engine=agents`）；否则→land（大仓默认 L4）。  
 **对外三档**阶梯：**协作入口**(L0) · **契约与回流**(L1–L2) · **门禁·工具·SSOT**(L3–L5)；细阶 L0–L5 见 [glossary.md](glossary.md) / [ladder.md](modes/ladder.md)。
@@ -67,7 +66,7 @@ legacy / 脚本：`fill-truths-auto`（**已归档**：仅脚本、对话不推�
 - [ ] 2 判定类型；输出 RecommendedProfile（recommended-profile.md）
 - [ ] 3 条件提问（优先 questions-next.mjs + questions.yaml；失败再 Read questions.md；每批≤5；可「全部推荐」）
 - [ ] 4 WritePlan（白话摘要 + 预览）— 等待确认（闸门见 write-plan.md）
-- [ ] 5 确认后 `scripts/harness.mjs`（`--mode land`；L5/`agent_config` 走 sync，勿直渲生成宿主路径；非 L5 委托 render）；空仓 on_exists=fail；半成品改 resume 语义 on_exists=skip
+- [ ] 5 确认后 `scripts/harness.mjs --confirm 确认写入`（`--mode land`；L5/`agent_config` 走 sync，勿直渲生成宿主路径；非 L5 委托 render）。已落盘预授权的后续轮次可省略 `--confirm`。空仓 on_exists=fail；半成品改 resume 语义 on_exists=skip
 - [ ] 6 ladder 自检；写/合并 harness-meta（skill_version 与 manifest 一致）
 - [ ] 7 分级移交 TODO（P1：若团队有主题流程控制器 → 新会话其 init/start（别名如 feature-eng），否则本 skill Done 即可；P1：精填分册 AGENTS；P1：Pn 回流 / 路径速查 / Never do↔Pn；若 Q_APIFOX：设 APIFOX_PROJECT_ID）
 ```

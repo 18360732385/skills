@@ -13,6 +13,7 @@ import fs from "fs";
 import path from "path";
 import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
+import { readTextFile } from "./lib/text-encoding.mjs";
 import {
   canonicalSqlFormat,
   normalizeSqlDir,
@@ -20,7 +21,6 @@ import {
   readSqlProfile,
   recommendSqlFormat,
   sqlBasenameMatchesFormat,
-  stripBom,
   upsertSqlProfile,
   validateSqlDir,
   validateSqlFormat,
@@ -126,7 +126,7 @@ function main() {
   const root = args.root;
   const indexPath = path.join(root, "docs", "releases", "releases.md");
   const indexExists = fs.existsSync(indexPath);
-  const indexText = indexExists ? stripBom(fs.readFileSync(indexPath, "utf8")) : "";
+  const indexText = indexExists ? readTextFile(indexPath) : "";
   const recorded = readSqlProfile(indexText);
   const files = listRepoSqlFiles(root);
   const rec = buildRecommendation(files, recorded.sqlDir);
