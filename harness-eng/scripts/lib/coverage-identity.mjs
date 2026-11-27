@@ -256,6 +256,24 @@ export function inventoryUnitIds(domain, inv) {
   return uniqueIds(inventoryUnitRows(domain, inv));
 }
 
+/** Map unit_id → inventory evidence path when the domain has a stable file path. */
+export function inventoryExpectedEvidence(domain, inv) {
+  const out = {};
+  if (!inv || typeof inv !== "object") return out;
+  if (isFrontendCoverageDomain(domain) && Array.isArray(inv.assets)) {
+    let assets = inv.assets;
+    if (domain === "client-api") {
+      assets = assets.filter((a) => a && a.kind !== "type_export");
+    }
+    for (const a of assets) {
+      if (!a || !a.id || !a.path) continue;
+      const id = String(a.id);
+      if (!out[id]) out[id] = String(a.path).replace(/\\/g, "/").replace(/^\.\//, "");
+    }
+  }
+  return out;
+}
+
 export function listOrderedUnitIds(root, domain, modules) {
   const inv = loadDomainInventory(root, domain);
   if (!inv) return null;

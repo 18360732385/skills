@@ -12,6 +12,7 @@ import { parseMetaDomains, defaultContractDomains } from "./domains.mjs";
 import { readInventoryMeta, writeLastMode } from "./inventory-meta.mjs";
 import { inventoryScanDomains } from "./frontend-coverage.mjs";
 import { parseFillScoreJson } from "./json-read.mjs";
+import { mergeTypeExportNote } from "./merge-type-export-note.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SKILL_SCRIPTS = path.resolve(__dirname, "..");
@@ -197,7 +198,18 @@ export function runRefresh(root, opts = {}) {
     steps.push({ step: "fill-score", skipped: "dry-run" });
   }
 
-  const ready = !!(scoreReport && scoreReport.ai_coding_ready && scoreReport.ai_coding_ready.ok);
+  let scoreSource = scoreReport ? "scored" : null;
+  if (dryRun && !scoreReport && fs.existsSync(scoreOutAbs)) {
+    try {
+      scoreReport = JSON.parse(fs.readFileSync(scoreOutAbs, "utf8"));
+      scoreSource = "disk";
+    } catch {
+      /* keep null */
+    }
+  }
+  const ready = scoreReport
+    ? !!(scoreReport.ai_coding_ready && scoreReport.ai_coding_ready.ok)
+    : null;
   const blockers = scoreReport?.ai_coding_ready?.blockers || [];
   const fillPlanPath = path.join(absRoot, "docs", "harness-eng", "fill-plan.yaml");
   const hints = [];
@@ -207,13 +219,23 @@ export function runRefresh(root, opts = {}) {
   if (orphanDomains.length) {
     hints.push(
       `coverage-audit 有旧 unit_id 不在当前清单（文件可能改名）：${orphanDomains.join("、")}；` +
-        "请人工对账后重写对应行（refresh 不会自动搬移 audit 条目）"
+        "请用 scripts/reconcile-audit.mjs 按 evidence_path 对账（默认 dry-run，加 --write 才迁 id；refresh 不会自动搬移）"
     );
   }
-  if (!ready && fs.existsSync(fillPlanPath)) {
+  if (dryRun) {
+    hints.push("未计分 / dry-run 未跑门禁（跳过 inventory、acceptance、fill-score）");
+    if (scoreSource === "disk") {
+      hints.push("ai_coding_ready 回读自磁盘 score-latest.json，不代表本轮门禁结果");
+    }
+  }
+  if (!dryRun && ready === false && fs.existsSync(fillPlanPath)) {
     hints.push(
       "覆盖/语义未就绪：检查 docs/harness-eng/fill-plan.yaml；必要时 fill-plan --init 或补开放批次后 fill-merge"
     );
+  }
+  const typeExport = mergeTypeExportNote(absRoot, { write: false });
+  if (typeExport.action === "would_merge") {
+    hints.push(typeExport.note || "索引缺失 type_export 说明");
   }
   // 0.8.2 patch (D14): changelog placeholder residue is non-blocking, but visible.
   const placeholderWarns = scanChangelogPlaceholders(absRoot, domains);
@@ -249,11 +271,14 @@ export function runRefresh(root, opts = {}) {
   return {
     exitCode,
     report: {
-      ok: ready,
+      ok: dryRun ? true : !!ready,
       mode: "refresh",
       root: absRoot,
       domains: inventoryDomains,
+      dry_run: dryRun,
+      scored: !dryRun,
       ai_coding_ready: ready,
+      ai_coding_ready_source: dryRun ? scoreSource || "none" : "scored",
       blockers,
       coverage_source: scoreReport?.coverage_source ?? null,
       score_path: write ? scoreOutRel : null,

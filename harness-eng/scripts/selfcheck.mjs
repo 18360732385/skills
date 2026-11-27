@@ -131,7 +131,7 @@ import {
 import { updateDomainIndex, extractInventoryEvidence } from "./lib/merge-domain.mjs";
 import { applyCommandsPrefill, collectCommandPrefill } from "./lib/prefill-commands.mjs";
 import { resolveInventoryOutPath, mergeApiInventories } from "./lib/inventory-paths.mjs";
-import { inventoryArgv, scanChangelogPlaceholders } from "./lib/refresh.mjs";
+import { inventoryArgv, scanChangelogPlaceholders, runRefresh } from "./lib/refresh.mjs";
 import {
   writeInventoryMeta,
   readInventoryMeta,
@@ -164,8 +164,10 @@ import {
 } from "./render.mjs";
 import { hasApiEvidence } from "./acceptance-check.mjs";
 import { collectFuncDocClassNames } from "./fill-score.mjs";
-import { collectIdentityBlockers, citedUnitIds } from "./lib/coverage-identity.mjs";
+import { collectIdentityBlockers, citedUnitIds, inventoryExpectedEvidence } from "./lib/coverage-identity.mjs";
 import { validateAudit, sha256File } from "./lib/coverage-audit.mjs";
+import { reconcileAudit } from "./lib/reconcile-audit.mjs";
+import { mergeTypeExportNote } from "./lib/merge-type-export-note.mjs";
 import {
   ensureDbMdMaintenance,
   detectDbMigrationMode,
@@ -183,7 +185,7 @@ import {
 } from "./lib/doc-paths.mjs";
 import { runChecks05 } from "./lib/selfcheck/checks-0.5.mjs";
 import { runChecks06 } from "./lib/selfcheck/checks-0.6.mjs";
-import { readSkillVersion, readSkillRev, escapeSemverRe, installSkewWarning, installSkewWarnings } from "./lib/skill-version.mjs";
+import { readSkillVersion, readSkillRev, escapeSemverRe, installSkewWarning, installSkewWarnings, defaultInstallRoots } from "./lib/skill-version.mjs";
 import { decodeJsonBuffer, parseJsonText, readTextFile } from "./lib/json-read.mjs";
 import { decideWriteAuth, readPreauth } from "./lib/write-confirm.mjs";
 import { archiveOne, restoreOne } from "./archive-docs.mjs";
@@ -9343,6 +9345,232 @@ console.log("theme-gate-smoke-ok");
   assert(/0\.8\.12 → 0\.8\.13/.test(upgradeCorpus()), "0.8.13 upgrade.md");
   assert(logExists("0.8.13"), "0.8.13 _log note exists");
 }
+
+// --- 0.8.14: path binding · reconcile · install skew mode · dry-run ready · type_export snippet ---
+{
+  const harnessSrc814 = fs.readFileSync(path.join(skillRoot, "scripts/harness.mjs"), "utf8");
+  const plan814 = fs.readFileSync(path.join(skillRoot, "modes/write-plan.md"), "utf8");
+  assert(!/清除该文件/.test(harnessSrc814), "0.8.14 Usage drops 清除该文件");
+  assert(
+    /把该文件写成 preauth:\s*false/.test(harnessSrc814) && /不删除已跟踪文件/.test(harnessSrc814),
+    "0.8.14 Usage keeps preauth file as false"
+  );
+  assert(/preauth:\s*false/.test(plan814) && !/清除该文件/.test(plan814), "0.8.14 write-plan matches Usage");
+
+  const shiftRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0814-shift-"));
+  try {
+    const files = [
+      { id: "screen-clinical-calm-2", path: "apps/web/a.html", body: "AAA\n" },
+      { id: "screen-clinical-calm-3", path: "apps/web/b.html", body: "BBB\n" },
+      { id: "screen-clinical-calm-4", path: "apps/web/c.html", body: "CCC\n" },
+    ];
+    for (const f of files) {
+      fs.mkdirSync(path.join(shiftRoot, path.dirname(f.path)), { recursive: true });
+      fs.writeFileSync(path.join(shiftRoot, f.path), f.body, "utf8");
+      const truth = `docs/prototype/modules/${path.basename(f.path, ".html")}.md`;
+      fs.mkdirSync(path.join(shiftRoot, path.dirname(truth)), { recursive: true });
+      fs.writeFileSync(path.join(shiftRoot, truth), `# ${f.id}\n`, "utf8");
+      f.truth = truth;
+    }
+    fs.mkdirSync(path.join(shiftRoot, "docs/harness-eng/coverage-audit"), { recursive: true });
+    const shifted = [
+      {
+        unit_id: "screen-clinical-calm-2",
+        truth_path: files[1].truth,
+        evidence_path: files[1].path,
+        verdict: "pass",
+        reason: "路径错位但仍哈希匹配",
+        truth_sha256: sha256File(path.join(shiftRoot, files[1].truth)),
+        evidence_sha256: sha256File(path.join(shiftRoot, files[1].path)),
+      },
+      {
+        unit_id: "screen-clinical-calm-3",
+        truth_path: files[2].truth,
+        evidence_path: files[2].path,
+        verdict: "pass",
+        reason: "路径错位但仍哈希匹配",
+        truth_sha256: sha256File(path.join(shiftRoot, files[2].truth)),
+        evidence_sha256: sha256File(path.join(shiftRoot, files[2].path)),
+      },
+    ];
+    const auditFile = path.join(shiftRoot, "docs/harness-eng/coverage-audit/prototype.json");
+    fs.writeFileSync(auditFile, JSON.stringify({ units: shifted }, null, 2), "utf8");
+    const inv = { assets: files.map((f) => ({ id: f.id, path: f.path })) };
+    const expectedEvidence = inventoryExpectedEvidence("prototype", inv);
+    const unitIds = files.map((f) => f.id);
+    const v = validateAudit({ root: shiftRoot, domain: "prototype", unitIds, expectedEvidence });
+    const mismatch = (v.problems || []).filter((p) => p.kind === "evidence");
+    assert(
+      v.pass === 0 && !v.ok && mismatch.length >= 2,
+      "0.8.14 shifted evidence_path does not pass"
+    );
+    const dry = reconcileAudit({ root: shiftRoot, domain: "prototype", inventory: inv, write: false });
+    assert(
+      dry.ok && dry.written === false && dry.changes.length === 2 &&
+        /screen-clinical-calm-2/.test(fs.readFileSync(auditFile, "utf8")),
+      "0.8.14 reconcile dry-run lists migrations and does not write"
+    );
+    const written = reconcileAudit({ root: shiftRoot, domain: "prototype", inventory: inv, write: true });
+    assert(written.ok && written.written && written.changes.length === 2, "0.8.14 reconcile write migrates ids");
+    const after = JSON.parse(fs.readFileSync(auditFile, "utf8"));
+    const byId = Object.fromEntries((after.units || []).map((u) => [u.unit_id, u]));
+    assert(
+      byId["screen-clinical-calm-3"]?.evidence_path === "apps/web/b.html" &&
+        byId["screen-clinical-calm-3"]?.evidence_sha256 === shifted[0].evidence_sha256 &&
+        byId["screen-clinical-calm-3"]?.verdict === "pass",
+      "0.8.14 reconcile keeps hashes and verdicts"
+    );
+    const aligned = validateAudit({
+      root: shiftRoot,
+      domain: "prototype",
+      unitIds: ["screen-clinical-calm-3", "screen-clinical-calm-4"],
+      expectedEvidence,
+    });
+    assert(aligned.ok && aligned.pass === 2, "0.8.14 path-aligned reconciled rows pass");
+  } finally {
+    fs.rmSync(shiftRoot, { recursive: true, force: true });
+  }
+
+  const run814 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0814-run-"));
+  const inst814 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0814-inst-"));
+  const tgt814 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0814-tgt-"));
+  try {
+    fs.mkdirSync(path.join(run814, "_meta"), { recursive: true });
+    fs.mkdirSync(path.join(inst814, "_meta"), { recursive: true });
+    fs.writeFileSync(path.join(run814, "_meta/manifest.yaml"), 'version: "0.8.14"\nrev: 0\n', "utf8");
+    fs.writeFileSync(path.join(inst814, "_meta/manifest.yaml"), 'version: "0.8.5"\nrev: 0\n', "utf8");
+    const refreshMsg = installSkewWarning(run814, inst814, { mode: "refresh" });
+    assert(
+      refreshMsg && /refresh 以正在执行的这份为准/.test(refreshMsg) && !/upgrade 以正在执行的这份为准/.test(refreshMsg),
+      "0.8.14 refresh skew wording follows mode"
+    );
+    const upgradeMsg = installSkewWarning(run814, inst814, { mode: "upgrade" });
+    assert(upgradeMsg && /upgrade 以正在执行的这份为准/.test(upgradeMsg), "0.8.14 upgrade skew wording stays upgrade");
+    assert(
+      defaultInstallRoots().some((r) => /skills-manager-data[\\/]+skills[\\/]+harness-eng$/i.test(r)),
+      "0.8.14 defaultInstallRoots includes skills-manager-data"
+    );
+    fs.mkdirSync(path.join(tgt814, "docs/harness-eng"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tgt814, "docs/harness-eng/harness-meta.yaml"),
+      `skill_version: "${EXPECTED}"\ndomains: [api]\n`,
+      "utf8"
+    );
+    const skewEnv = { ...process.env, HARNESS_INSTALL_ROOTS: inst814 };
+    const dryRefresh814 = runNode(
+      [path.join(skillRoot, "scripts/harness.mjs"), "--mode", "refresh", "--root", tgt814, "--dry-run"],
+      { env: skewEnv }
+    );
+    assert(dryRefresh814.status === 0, "0.8.14 refresh --dry-run exits 0 with install fixture");
+    assert(
+      /安装副本版本与正在执行的技能不一致/.test(dryRefresh814.stderr || "") &&
+        /refresh 以正在执行的这份为准/.test(dryRefresh814.stderr || "") &&
+        !/upgrade 以正在执行的这份为准/.test(dryRefresh814.stderr || ""),
+      "0.8.14 refresh --dry-run prints mode-aware install skew"
+    );
+    const params814 = path.join(tgt814, "params.json");
+    fs.writeFileSync(params814, JSON.stringify({ ladder: "L0", on_exists: "skip" }), "utf8");
+    const dryUp814 = runNode(
+      [path.join(skillRoot, "scripts/harness.mjs"), "--mode", "upgrade", "--root", tgt814, "--params", params814, "--dry-run"],
+      { env: skewEnv }
+    );
+    assert(
+      /安装副本版本与正在执行的技能不一致/.test(dryUp814.stderr || "") &&
+        /upgrade 以正在执行的这份为准/.test(dryUp814.stderr || ""),
+      "0.8.14 upgrade --dry-run prints mode-aware install skew"
+    );
+  } finally {
+    fs.rmSync(run814, { recursive: true, force: true });
+    fs.rmSync(inst814, { recursive: true, force: true });
+    fs.rmSync(tgt814, { recursive: true, force: true });
+  }
+
+  const dryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0814-dry-"));
+  try {
+    fs.mkdirSync(path.join(dryRoot, "docs/harness-eng"), { recursive: true });
+    fs.writeFileSync(
+      path.join(dryRoot, "docs/harness-eng/harness-meta.yaml"),
+      `skill_version: "${EXPECTED}"\ndomains: [api]\n`,
+      "utf8"
+    );
+    fs.writeFileSync(path.join(dryRoot, "docs/harness-eng/fill-plan.yaml"), "batches: []\n", "utf8");
+    fs.writeFileSync(
+      path.join(dryRoot, "docs/harness-eng/score-latest.json"),
+      JSON.stringify({ ai_coding_ready: { ok: true, blockers: [] }, coverage_audit: { by_domain: {} } }),
+      "utf8"
+    );
+    const { exitCode, report } = runRefresh(dryRoot, { write: false, dryRun: true });
+    const hints = report.hints || [];
+    assert(exitCode === 0, "0.8.14 refresh dry-run on green disk exits 0");
+    assert(
+      report.dry_run === true && report.scored === false && hints.some((h) => /未计分/.test(h) && /dry-run 未跑门禁/.test(h)),
+      "0.8.14 refresh dry-run marks unscored"
+    );
+    assert(
+      report.ai_coding_ready === true &&
+        report.ai_coding_ready_source === "disk" &&
+        !hints.some((h) => /覆盖\/语义未就绪/.test(h)),
+      "0.8.14 refresh dry-run does not fake not-ready over disk green"
+    );
+  } finally {
+    fs.rmSync(dryRoot, { recursive: true, force: true });
+  }
+
+  const snippet814 = path.join(skillRoot, "templates/docs/client-api/type-export-note.snippet");
+  assert(
+    fs.existsSync(snippet814) && /type_export/.test(fs.readFileSync(snippet814, "utf8")),
+    "0.8.14 type_export snippet exists"
+  );
+  const teRoot = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0814-te-"));
+  try {
+    const idx = path.join(teRoot, "docs/client-api/client-api.md");
+    fs.mkdirSync(path.dirname(idx), { recursive: true });
+    const original = "# Client API 索引\n\n> 本文件是索引，不是 SSOT。\n\n## 读文档说明\n\n- **索引**：本文件\n";
+    fs.writeFileSync(idx, original, "utf8");
+    const teDry = mergeTypeExportNote(teRoot, { write: false, skillRoot });
+    assert(teDry.action === "would_merge" && fs.readFileSync(idx, "utf8") === original, "0.8.14 type_export dry-run does not write");
+    const teWrote = mergeTypeExportNote(teRoot, { write: true, skillRoot });
+    const afterTe = fs.readFileSync(idx, "utf8");
+    assert(
+      teWrote.action === "merged" && afterTe.startsWith(original.trim()) && /type_export/.test(afterTe),
+      "0.8.14 type_export write appends without replacing body"
+    );
+    const teAgain = mergeTypeExportNote(teRoot, { write: true, skillRoot });
+    assert(teAgain.action === "present" && afterTe === fs.readFileSync(idx, "utf8"), "0.8.14 type_export does not duplicate");
+  } finally {
+    fs.rmSync(teRoot, { recursive: true, force: true });
+  }
+
+  const rule17Src = fs.readFileSync(path.join(skillRoot, "scripts/lib/sync-freshness.mjs"), "utf8");
+  assert(
+    /git mv/.test(rule17Src) && /不自动删/.test(rule17Src) && !/fs\.(renameSync|rmSync|unlinkSync)\(.*17-frontend/.test(rule17Src),
+    "0.8.14 rule 17 still warn + git mv only"
+  );
+  const r17 = fs.mkdtempSync(path.join(os.tmpdir(), "harness-0814-r17-"));
+  try {
+    const dir = path.join(r17, ".cursor", "rules");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "17-frontend-web.mdc"), "# 17\n", "utf8");
+    fs.writeFileSync(path.join(dir, "101-frontend-web.mdc"), "# 101\n", "utf8");
+    let msg = "";
+    const warned = warnRetiredRule17Coexistence(r17, { error: (m) => { msg += String(m); } });
+    assert(
+      warned.warned === true && /git mv/.test(msg) &&
+        fs.existsSync(path.join(dir, "17-frontend-web.mdc")) &&
+        fs.existsSync(path.join(dir, "101-frontend-web.mdc")),
+      "0.8.14 rule 17 coexistence remains warn-only"
+    );
+  } finally {
+    fs.rmSync(r17, { recursive: true, force: true });
+  }
+
+  assert(fs.existsSync(path.join(skillRoot, "scripts/reconcile-audit.mjs")), "0.8.14 reconcile-audit CLI exists");
+  assert(/\| 0\.8\.14 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.14 CHANGELOG");
+  assert(/0\.8\.14 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.14 VERIFY.md");
+  assert(/0\.8\.13 → 0\.8\.14/.test(upgradeCorpus()), "0.8.14 upgrade.md");
+  assert(logExists("0.8.14"), "0.8.14 _log note exists");
+}
+
 
 console.log(`ok: ${ok.length}`);
 for (const m of ok) console.log(`  ✓ ${m}`);

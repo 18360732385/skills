@@ -69,7 +69,7 @@ export function escapeSemverRe(v) {
  * @param {string} installRoot
  * @returns {string|null}
  */
-export function installSkewWarning(runningRoot, installRoot) {
+export function installSkewWarning(runningRoot, installRoot, opts = {}) {
   if (!runningRoot || !installRoot) return null;
   const installManifest = path.join(installRoot, "_meta", "manifest.yaml");
   if (!fs.existsSync(installManifest)) return null;
@@ -96,7 +96,8 @@ export function installSkewWarning(runningRoot, installRoot) {
   if (installVer === runningVer && installRev === runningRev) return null;
   return (
     `harness: 安装副本版本与正在执行的技能不一致（执行 ${runningVer} rev ${runningRev} @ ${runReal}；` +
-    `安装 ${installVer} rev ${installRev} @ ${instReal}）。upgrade 以正在执行的这份为准。`
+    `安装 ${installVer} rev ${installRev} @ ${instReal}）。` +
+    `${opts && opts.mode ? String(opts.mode) : "本次调用"} 以正在执行的这份为准。`
   );
 }
 
@@ -110,10 +111,28 @@ export const DEFAULT_INSTALL_HOSTS = [
   ".workbuddy",
 ];
 
+export function managerDataInstallRoots(home = os.homedir()) {
+  const out = [];
+  for (const key of ["SKILLS_MANAGER_DATA", "SKILLS_MANAGER_ROOT"]) {
+    const v = String(process.env[key] || "").trim();
+    if (v) out.push(path.join(v, "skills", "harness-eng"));
+  }
+  out.push(path.join(home, "skills-manager-data", "skills", "harness-eng"));
+  if (process.platform === "win32") {
+    for (const base of ["D:\\software", "C:\\software", "C:\\ProgramData"]) {
+      out.push(path.join(base, "skills-manager-data", "skills", "harness-eng"));
+    }
+  }
+  return out;
+}
+
 export function defaultInstallRoots(home = os.homedir()) {
-  return DEFAULT_INSTALL_HOSTS.map((host) =>
-    path.join(home, host, "skills", "harness-eng")
-  );
+  return [...new Set([
+    ...DEFAULT_INSTALL_HOSTS.map((host) =>
+      path.join(home, host, "skills", "harness-eng")
+    ),
+    ...managerDataInstallRoots(home),
+  ])];
 }
 
 export function envInstallRoots() {
@@ -126,10 +145,10 @@ export function envInstallRoots() {
 }
 
 /** 0.8.13: warn for every installed copy, not only ~/.cursor. */
-export function installSkewWarnings(runningRoot, installRoots = defaultInstallRoots()) {
+export function installSkewWarnings(runningRoot, installRoots = defaultInstallRoots(), opts = {}) {
   const out = [];
   for (const root of installRoots || []) {
-    const msg = installSkewWarning(runningRoot, root);
+    const msg = installSkewWarning(runningRoot, root, opts);
     if (msg && !out.includes(msg)) out.push(msg);
   }
   return out;

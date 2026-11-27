@@ -15,7 +15,8 @@ import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { defaultContractDomains } from "./lib/domains.mjs";
 import { collectResidual } from "./lib/acceptance-report.mjs";
-import { listOrderedUnitIds } from "./lib/coverage-identity.mjs";
+import { listOrderedUnitIds, inventoryExpectedEvidence } from "./lib/coverage-identity.mjs";
+import { loadDomainInventory } from "./lib/inventory-paths.mjs";
 import { validateAudit } from "./lib/coverage-audit.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -543,10 +544,12 @@ function main() {
       const acceptanceFail = isGold ? st !== 0 : st === 1;
       let auditFail = null;
       if (isGold && !acceptanceFail) {
+        const closeDomain = b.domain || "api";
         const audit = validateAudit({
           root,
-          domain: b.domain || "api",
+          domain: closeDomain,
           unitIds: b.unit_ids || [],
+          expectedEvidence: inventoryExpectedEvidence(closeDomain, loadDomainInventory(root, closeDomain)),
         });
         if (!audit.ok) auditFail = audit.reason || "gap";
       }

@@ -1,10 +1,24 @@
-﻿# harness-eng 验收记录（0.8.13）
+﻿# harness-eng 验收记录（0.8.14）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.13**（升级路径 audit 抗行尾 · 原型 id 全局唯一 · 预授权可单独取消 · 安装态 selfcheck 全量 · refresh 告警与 last_mode；其下 0.8.12 报告三件套可入库 + 诊断台指标 · 0.8.11 确认令牌 + rev 新鲜度 + 预授权落盘 + UTF-16 JSON · 0.8.10 闸门与一致性 · 0.8.9 实战解析 · 0.8.8 gold 四道 · 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.14**（audit 路径绑定与官方对账 · 安装告警跟 mode · dry-run 未计分标明 · type_export 片段可单独合并 · 取消预授权文案对齐；其下 0.8.13 audit 抗行尾 · 原型 id 全局唯一 · 预授权可单独取消 · 安装态 selfcheck 全量 · refresh 告警与 last_mode；再下 0.8.12 报告三件套可入库 + 诊断台指标 · 0.8.11 确认令牌 + rev 新鲜度 + 预授权落盘 + UTF-16 JSON · 0.8.10 闸门与一致性 · 0.8.9 实战解析 · 0.8.8 gold 四道 · 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.14 增量验收（实战总析仍待完善项收口）
+
+| 项 | 期望 |
+|---|---|
+| manifest `0.8.14` / `rev` 0；`report_schema` 仍 **0.4.3** | 有 |
+| Usage / write-plan：取消预授权写成 `preauth: false`，不删除已跟踪文件；不再写「清除该文件」 | 有 |
+| `validateAudit` 在提供库存路径时绑定 `evidence_path`；后缀连环平移错位不得 pass | 有 |
+| `reconcile-audit.mjs` 按路径迁移 `unit_id`（默认 dry-run，`--write` 才落盘；不改哈希/verdict） | 有 |
+| 安装副本告警文案跟 mode；默认扫描含 skills-manager-data 惯例路径；upgrade/refresh 含 dry-run 均打印 | 有 |
+| refresh `--dry-run` 标明未计分；回读磁盘已绿 ready，不误报「覆盖/语义未就绪」 | 有 |
+| 厚仓已有 `client-api.md` 缺 `type_export` 时只追加片段，不整文覆盖 | 有 |
+| 规则 17 与 101 并存仍只告警 + `git mv`，不静默改名 | 有 |
+| upgrade `## 0.8.13 → 0.8.14`；CHANGELOG 0.8.14 | 有 |
 
 ## 0.8.13 增量验收（实战报告缺陷收口）
 

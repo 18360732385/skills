@@ -59,6 +59,10 @@ import {
   envInstallRoots,
   installSkewWarnings,
 } from "./lib/skill-version.mjs";
+import {
+  mergeTypeExportNote,
+  formatTypeExportHint,
+} from "./lib/merge-type-export-note.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
@@ -268,7 +272,7 @@ Canonical Agent write entry (0.6.0+).
   --params -: 从 stdin 读 JSON（UTF-8 或 UTF-16，可带 BOM；不再强制落地 params 文件）。
   --confirm <词>: 写盘令牌。接受 确认写入 / 按计划执行 / 执行 WritePlan / LGTM /
     只执行 L0…L5 / 去掉 14 后执行。确认预授权、预授权后续写盘 只写入
-    docs/harness-eng/write-auth.yaml，不授权本轮。取消预授权 清除该文件。
+    docs/harness-eng/write-auth.yaml，不授权本轮。取消预授权 把该文件写成 preauth: false，不删除已跟踪文件。
     已落盘 preauth: true 时后续写盘可省略 --confirm。--dry-run / 只读模式不需要。
     确认预授权 / 取消预授权 只需 --root，不必带 --mode / --params。
     裸「确认」不接受。
@@ -450,10 +454,21 @@ function forward(r, { stdoutToStderr = false } = {}) {
   return r.status === null ? 1 : r.status;
 }
 
-/** 0.8.7: upgrade 开头提示 ~/.cursor/skills 安装副本与正在执行的技能版本不一致。 */
-function warnInstallSkew(skillRoot) {
+/** 0.8.7: upgrade 开头提示安装副本与正在执行的技能版本不一致。0.8.14: 文案跟 mode，refresh 同样调用。 */
+function warnInstallSkew(skillRoot, mode) {
   const roots = [...new Set([...defaultInstallRoots(), ...envInstallRoots()])];
-  for (const msg of installSkewWarnings(skillRoot, roots)) console.error(msg);
+  for (const msg of installSkewWarnings(skillRoot, roots, { mode })) console.error(msg);
+}
+
+function maybeMergeTypeExportNote(root, mode, dryRun, skillRoot) {
+  if (mode !== "upgrade" || !root) return;
+  const result = mergeTypeExportNote(root, { write: !dryRun, skillRoot });
+  if (result.action === "merged") {
+    console.error(`harness: 已向 ${result.path} 追加 type_export 计分说明（未整文覆盖）。`);
+  } else {
+    const hint = formatTypeExportHint(result);
+    if (hint) console.error(hint);
+  }
 }
 
 function announceMode(mode) {
@@ -548,7 +563,7 @@ export function main(argv = process.argv) {
       process.exit(1);
     }
     announceMode("refresh");
-    warnInstallSkew(skillRoot);
+    warnInstallSkew(skillRoot, "refresh");
     enforceWriteAuth(args, !args.noWrite);
     const { exitCode, report } = runRefresh(args.root, {
       write: !args.noWrite,
@@ -593,7 +608,10 @@ export function main(argv = process.argv) {
   const agentConfig = resolveLandAgentConfig(params, meta);
 
   announceMode(mode);
-  if (mode === "upgrade") warnInstallSkew(skillRoot);
+  if (mode === "upgrade") {
+    warnInstallSkew(skillRoot, "upgrade");
+    maybeMergeTypeExportNote(args.root, mode, !!args.dryRun, skillRoot);
+  }
   if (applied.tmp && (mode === "resume" || mode === "upgrade")) {
     console.error(`harness: on_exists=${params.on_exists}（mode=${mode} 默认 skip）`);
   }

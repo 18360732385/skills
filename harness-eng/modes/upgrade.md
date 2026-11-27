@@ -80,6 +80,17 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.13 → 0.8.14 迁移要点
+
+1. **meta**：`skill_version` → `0.8.14`
+2. **audit**：`validateAudit` 会核对 `evidence_path` 与当前库存资产路径；错位不再记 pass。可用 `node scripts/reconcile-audit.mjs --root <TARGET> --domain prototype` 先 dry-run，确认后加 `--write` 按路径迁移 `unit_id`（不改哈希，refresh 不会自动搬移）
+3. **写盘文案**：`取消预授权` 把 `write-auth.yaml` 写成 `preauth: false`，不删除已跟踪文件
+4. **安装副本**：upgrade / refresh（含 `--dry-run`）提示错位，文案跟当前 mode；除宿主 skills 目录外，还会看 skills-manager-data 惯例路径（`HARNESS_INSTALL_ROOTS` / `SKILLS_MANAGER_DATA` 仍可追加）
+5. **refresh `--dry-run`**：不跑 inventory/打分门禁，输出标明「未计分」；磁盘已有绿灯时回读 ready，不再用「未就绪」覆盖
+6. **client-api**：厚仓 `on_exists=skip` 时，若索引缺少 `type_export` 计分说明，upgrade 真写只追加片段，不整文覆盖。也可单独合并 `templates/docs/client-api/type-export-note.snippet`
+7. **rule 17**：仍只提示确认后的 `git mv`，不静默改名
+8. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.14`）后再 sync
+
 ## 0.8.12 → 0.8.13 迁移要点
 
 1. **meta**：`skill_version` → `0.8.13`

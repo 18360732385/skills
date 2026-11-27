@@ -83,11 +83,29 @@ function normRel(p) {
   return String(p || "").replace(/\\/g, "/").replace(/^\.\//, "");
 }
 
+function normalizeExpectedEvidence(raw) {
+  if (!raw) return null;
+  if (Array.isArray(raw)) {
+    const out = {};
+    for (const row of raw) {
+      if (!row) continue;
+      const id =
+        row.unit_id != null ? String(row.unit_id) : row.id != null ? String(row.id) : "";
+      const p = row.evidence_path || row.path;
+      if (id && p) out[id] = p;
+    }
+    return Object.keys(out).length ? out : null;
+  }
+  if (typeof raw === "object") return raw;
+  return null;
+}
+
 /**
- * @param {{ root: string, domain: string, unitIds: string[] }} input
+ * @param {{ root: string, domain: string, unitIds: string[], expectedEvidence?: object }} input
  */
 export function validateAudit(input) {
   const { root, domain, unitIds } = input;
+  const expectedMap = normalizeExpectedEvidence(input.expectedEvidence);
   const ids = [...new Set((unitIds || []).map((id) => String(id)))];
   const loaded = loadAudit(root, domain);
   const total = ids.length;
@@ -161,6 +179,19 @@ export function validateAudit(input) {
     const evidenceAbs = path.join(root, evidenceRel);
     if (!evidenceRel || !fs.existsSync(truthAbs) || !fs.existsSync(evidenceAbs)) {
       problems.push({ unit_id: id, kind: "path" });
+      continue;
+    }
+    const expectedRel =
+      expectedMap && Object.prototype.hasOwnProperty.call(expectedMap, id)
+        ? normRel(expectedMap[id])
+        : "";
+    if (expectedRel && evidenceRel !== expectedRel) {
+      problems.push({
+        unit_id: id,
+        kind: "evidence",
+        expected: expectedRel,
+        actual: evidenceRel,
+      });
       continue;
     }
     let truthHashes;

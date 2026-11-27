@@ -69,7 +69,7 @@ import {
   runAcceptanceJson,
   shardsFromAcceptanceItems,
 } from "./lib/acceptance-report.mjs";
-import { inventoryUnitIds, citedUnitIds, newFuncClassRe } from "./lib/coverage-identity.mjs";
+import { inventoryUnitIds, inventoryExpectedEvidence, citedUnitIds, newFuncClassRe } from "./lib/coverage-identity.mjs";
 import { validateAudit, loadAudit } from "./lib/coverage-audit.mjs";
 import {
   morphDepthBonus,
@@ -99,7 +99,7 @@ function buildCoverageAudit(root, domains, report, liveByDomain, inventory, gate
     const loaded = loadAudit(root, d);
     if (!gold) {
       const v = loaded.present
-        ? validateAudit({ root, domain: d, unitIds: ids })
+        ? validateAudit({ root, domain: d, unitIds: ids, expectedEvidence: inventoryExpectedEvidence(d, inv) })
         : null;
       by_domain[d] = loaded.present
         ? {
@@ -126,7 +126,7 @@ function buildCoverageAudit(root, domains, report, liveByDomain, inventory, gate
       };
       continue;
     }
-    const v = validateAudit({ root, domain: d, unitIds: ids.length ? ids : [] });
+    const v = validateAudit({ root, domain: d, unitIds: ids.length ? ids : [], expectedEvidence: inventoryExpectedEvidence(d, inv) });
     const ok = ids.length > 0 && v.ok;
     by_domain[d] = {
       required: true,
