@@ -1,13 +1,14 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.8.12**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.8.13**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。  
 **版本身份**：行为变更优先升 `version`；同一 `version` 内追加修复必须升 `_meta/manifest.yaml` 的 `rev`（新 version 从 0 起）。0.8.1 的三条历史补丁行未升 manifest，仅作记录，不是现行范例。  
-当前包：**0.8.12**（施工报告三件套可入库 + 诊断台各项指标默认展开）。
+当前包：**0.8.13**（升级路径 audit 抗行尾 · 原型 id 全局唯一 · 预授权可单独取消 · 安装态 selfcheck 全量 · refresh 告警与 last_mode）。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.13 | 2026-11-27 | 0.8.11 实战报告缺陷收口：覆盖真实性记录改为规范化内容哈希（去 BOM、CRLF/CR 归一 LF；二进制按原字节），校验同时接受旧原始字节与等价行尾变体，Windows `autocrlf` 不再把 audit 判 stale · 原型 id 去重改为全局查重，预置 `x-2` 不会与补号撞车 · 重复 `unit_id` 只计一次，不再虚高审计通过数 · `确认预授权`/`取消预授权` 只需 `--root`，不再因缺 `--mode` 只打 Usage · 历史迁移与验收语料随包进 `archive/`，安装/钉住副本 selfcheck 不再 59 条红 · refresh 也提示安装副本错位，并覆盖 `.cursor/.trae/.claude/.codex/.qoder/.codebuddy/.workbuddy`（可用 `HARNESS_INSTALL_ROOTS` 追加）· refresh 写 `harness-meta.last_mode` · audit 孤儿 `unit_id` 在 score 与 refresh hint 中可见（不自动搬移） |
 | 0.8.12 | 2026-11-27 | L4 gitignore snippet 不再忽略 `docs/harness-eng/report-latest.html`、`run-latest.json`、`score-history.jsonl`（可入库；render 只追加、不删目标仓里已有的这三行）。诊断台「各项指标」默认展开并与雷达等高；按钮切诊断摘要；备注改图标悬停；列头布局收紧 |
 | 0.8.11 | 2026-11-27 | 写盘确认令牌 `--confirm`（`render.mjs` 真写同样认；禁止手工 Write 绕过）· 预授权只落盘 `write-auth.yaml`，`Q_PREAUTH` 推荐改为否 · `rev` 进入安装副本告警、L5 `HARNESS_ENG_REV` 新鲜度、`harness-meta.skill_rev` · JSON 与目标仓文本（render / migrate-docs / write-auth）接受 UTF-16 · CI 增加 windows-latest |
 | 0.8.10 | 2026-11-27 | 闸门与一致性独立成版（原 0.8.9 rev 1，rev 归零）：裸「确认」只在紧接 WritePlan 的下一轮有效，预授权只授权后续轮次 · manifest `rev` 与 sync 正文钉 · `report_schema` 改指 glossary · CHANGELOG 坏链与根 README · upgrade 0.7.28–0.7.62 历史进 archive · 三份 sync.mjs 对齐 · pack-check 与 CI · `--params -` / `refresh --exit-zero` · 触发词收窄 · 仓库根 MIT LICENSE |

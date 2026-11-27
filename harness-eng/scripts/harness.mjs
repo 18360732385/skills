@@ -53,8 +53,12 @@ import {
 } from "./lib/obsolete-wrappers.mjs";
 import { runMetaStableCheck } from "./lib/meta-stable.mjs";
 import { decodeJsonBuffer, parseJsonText, readJsonFile } from "./lib/json-read.mjs";
-import { applyPreauth, decideWriteAuth } from "./lib/write-confirm.mjs";
-import { installSkewWarning } from "./lib/skill-version.mjs";
+import { applyPreauth, confirmKind, decideWriteAuth } from "./lib/write-confirm.mjs";
+import {
+  defaultInstallRoots,
+  envInstallRoots,
+  installSkewWarnings,
+} from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const RENDER = path.join(__dirname, "render.mjs");
@@ -266,6 +270,7 @@ Canonical Agent write entry (0.6.0+).
     只执行 L0…L5 / 去掉 14 后执行。确认预授权、预授权后续写盘 只写入
     docs/harness-eng/write-auth.yaml，不授权本轮。取消预授权 清除该文件。
     已落盘 preauth: true 时后续写盘可省略 --confirm。--dry-run / 只读模式不需要。
+    确认预授权 / 取消预授权 只需 --root，不必带 --mode / --params。
     裸「确认」不接受。
   backfill: 读探针 findings → stdout WritePlan（不写盘）；见 modes/backfill.md。
   --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与 HARNESS_ENG_REV
@@ -447,9 +452,8 @@ function forward(r, { stdoutToStderr = false } = {}) {
 
 /** 0.8.7: upgrade 开头提示 ~/.cursor/skills 安装副本与正在执行的技能版本不一致。 */
 function warnInstallSkew(skillRoot) {
-  const installRoot = path.join(os.homedir(), ".cursor", "skills", "harness-eng");
-  const msg = installSkewWarning(skillRoot, installRoot);
-  if (msg) console.error(msg);
+  const roots = [...new Set([...defaultInstallRoots(), ...envInstallRoots()])];
+  for (const msg of installSkewWarnings(skillRoot, roots)) console.error(msg);
 }
 
 function announceMode(mode) {
@@ -521,6 +525,22 @@ export function main(argv = process.argv) {
     process.exit(status);
   }
 
+  // 0.8.13: auth-only confirm words work without --mode / --params.
+  if (!args.params && args.root && (args.confirm || []).length) {
+    const kinds = args.confirm.map((p) => confirmKind(p));
+    if (kinds.every((k) => k === "cancel" || k === "preauth")) {
+      const decision = decideWriteAuth({
+        confirms: args.confirm,
+        root: args.root,
+        dryRun: !!args.dryRun,
+        writes: true,
+      });
+      if (decision.message) console.error(decision.message);
+      if (decision.mutate) applyPreauth(args.root, decision.mutate);
+      process.exit(decision.exitCode ?? (decision.ok ? 0 : 1));
+    }
+  }
+
   const modeEarly = String(args.mode || "land").toLowerCase();
   if (modeEarly === "refresh") {
     if (!args.root) {
@@ -528,6 +548,7 @@ export function main(argv = process.argv) {
       process.exit(1);
     }
     announceMode("refresh");
+    warnInstallSkew(skillRoot);
     enforceWriteAuth(args, !args.noWrite);
     const { exitCode, report } = runRefresh(args.root, {
       write: !args.noWrite,

@@ -62,14 +62,16 @@ inventory → docs/<domain>/.fill-work/   # draft（agents | heuristic）
       "evidence_path": "src/DemoController.java",
       "verdict": "pass",
       "reason": "接口地址与 Controller 映射一致，逻辑步骤能改对这段代码",
-      "truth_sha256": "<原始字节 SHA-256>",
-      "evidence_sha256": "<原始字节 SHA-256>"
+      "truth_sha256": "<规范化内容 SHA-256>",
+      "evidence_sha256": "<规范化内容 SHA-256>"
     }
   ]
 }
 ```
 
 `pass` 表示标识与代码是同一个单位，文档不是空壳或套话，读完能改对这段代码。张冠李戴、只点了名字没有正文，记 `fail`。真相或证据内容变了，该条过期，gold 开干为 NO，直到 Agent 重写这条。
+
+SHA-256 口径（0.8.13+）：按规范化内容计算——去掉 UTF-8 BOM、`CRLF`/`CR` 归一为 `LF`；二进制文件仍按原字节。校验同时接受旧「原始字节」记录与等价行尾变体，因此 Windows `core.autocrlf` 的 checkout 行尾不会让 audit 过期；只有正文真的改了才需要重写。
 
 ## 机器反例（acceptance-check）
 

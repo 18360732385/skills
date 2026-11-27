@@ -125,7 +125,7 @@ _log/
 |----------|-------------|
 | [harness-eng/SKILL.md](harness-eng/SKILL.md) | 施工仪式入口：落地 / 续跑 / 流水线 / 审计 / 填充 |
 | [harness-eng/QUICKSTART.md](harness-eng/QUICKSTART.md) | harness-eng 一页纸 |
-| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.8.12） |
+| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.8.13） |
 | [feature-eng/SKILL.md](feature-eng/SKILL.md) | 开发流程入口：init / rebind / start / resume / status / advance / close |
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
 | [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.29）；须点名加载 |

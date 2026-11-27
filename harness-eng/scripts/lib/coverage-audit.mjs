@@ -6,6 +6,7 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { truthsSubdir, loadDomainRegistry } from "./domains.mjs";
+import { readTextFile } from "./json-read.mjs";
 
 export function auditRel(domain) {
   return `docs/harness-eng/coverage-audit/${domain}.json`;
@@ -15,9 +16,50 @@ export function auditAbs(root, domain) {
   return path.join(root, "docs", "harness-eng", "coverage-audit", `${domain}.json`);
 }
 
-export function sha256File(abs) {
-  const buf = fs.readFileSync(abs);
+const UTF8_BOM = [0xef, 0xbb, 0xbf];
+
+function hashBytes(buf) {
   return crypto.createHash("sha256").update(buf).digest("hex");
+}
+
+function isBinary(buf) {
+  return buf.includes(0);
+}
+
+/** 0.8.13: canonical text bytes — strip UTF-8 BOM, normalize CRLF/CR to LF; binary unchanged. */
+function canonicalBytes(buf) {
+  if (isBinary(buf)) return buf;
+  let body = buf;
+  if (
+    body.length >= 3 &&
+    body[0] === UTF8_BOM[0] &&
+    body[1] === UTF8_BOM[1] &&
+    body[2] === UTF8_BOM[2]
+  ) {
+    body = body.subarray(3);
+  }
+  return Buffer.from(body.toString("utf8").replace(/\r\n?/g, "\n"), "utf8");
+}
+
+/** Canonical content hash (line-ending stable). */
+export function sha256File(abs) {
+  return hashBytes(canonicalBytes(fs.readFileSync(abs)));
+}
+
+/**
+ * Accepted hashes for one file: canonical + raw bytes + CRLF variant.
+ * Legacy audit rows hashed raw bytes on a Windows checkout still match.
+ */
+export function sha256Candidates(abs) {
+  const buf = fs.readFileSync(abs);
+  if (isBinary(buf)) return new Set([hashBytes(buf)]);
+  const canonical = canonicalBytes(buf);
+  const lf = canonical.toString("utf8");
+  return new Set([
+    hashBytes(buf),
+    hashBytes(canonical),
+    hashBytes(Buffer.from(lf.replace(/\n/g, "\r\n"), "utf8")),
+  ]);
 }
 
 export function loadAudit(root, domain) {
@@ -28,7 +70,8 @@ export function loadAudit(root, domain) {
   }
   let json;
   try {
-    json = JSON.parse(fs.readFileSync(abs, "utf8"));
+    // 0.8.13: accept UTF-8 BOM / UTF-16 (Windows editors write BOM).
+    json = JSON.parse(readTextFile(abs));
   } catch {
     return { present: true, path: rel, units: [], parse_error: true };
   }
@@ -45,7 +88,7 @@ function normRel(p) {
  */
 export function validateAudit(input) {
   const { root, domain, unitIds } = input;
-  const ids = (unitIds || []).map((id) => String(id));
+  const ids = [...new Set((unitIds || []).map((id) => String(id)))];
   const loaded = loadAudit(root, domain);
   const total = ids.length;
   if (loaded.parse_error) {
@@ -56,6 +99,8 @@ export function validateAudit(input) {
       present: true,
       reason: "parse",
       problems: [{ kind: "parse" }],
+      orphans: [],
+      orphan_count: 0,
     };
   }
   if (!loaded.present) {
@@ -66,8 +111,17 @@ export function validateAudit(input) {
       present: false,
       reason: "absent",
       problems: ids.map((id) => ({ unit_id: id, kind: "missing" })),
+      orphans: [],
+      orphan_count: 0,
     };
   }
+  const idSet = new Set(ids);
+  const orphanSet = new Set();
+  for (const row of loaded.units) {
+    const oid = row && row.unit_id != null ? String(row.unit_id) : "";
+    if (oid && !idSet.has(oid)) orphanSet.add(oid);
+  }
+  const orphans = [...orphanSet].slice(0, 50);
   const grouped = new Map();
   for (const row of loaded.units) {
     const id = row && row.unit_id != null ? String(row.unit_id) : "";
@@ -109,16 +163,19 @@ export function validateAudit(input) {
       problems.push({ unit_id: id, kind: "path" });
       continue;
     }
-    let truthHash = "";
-    let evidenceHash = "";
+    let truthHashes;
+    let evidenceHashes;
     try {
-      truthHash = sha256File(truthAbs);
-      evidenceHash = sha256File(evidenceAbs);
+      truthHashes = sha256Candidates(truthAbs);
+      evidenceHashes = sha256Candidates(evidenceAbs);
     } catch {
       problems.push({ unit_id: id, kind: "path" });
       continue;
     }
-    if (row.truth_sha256 !== truthHash || row.evidence_sha256 !== evidenceHash) {
+    if (
+      !truthHashes.has(String(row.truth_sha256 || "")) ||
+      !evidenceHashes.has(String(row.evidence_sha256 || ""))
+    ) {
       problems.push({ unit_id: id, kind: "stale" });
       continue;
     }
@@ -135,5 +192,7 @@ export function validateAudit(input) {
     present: true,
     reason,
     problems,
+    orphans,
+    orphan_count: orphanSet.size,
   };
 }

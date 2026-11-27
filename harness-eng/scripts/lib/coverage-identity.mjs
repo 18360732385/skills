@@ -240,14 +240,26 @@ export function inventoryUnitRows(domain, inv) {
   return [];
 }
 
+function uniqueIds(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const r of rows || []) {
+    const id = String(r && r.id != null ? r.id : "");
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
 export function inventoryUnitIds(domain, inv) {
-  return inventoryUnitRows(domain, inv).map((r) => r.id);
+  return uniqueIds(inventoryUnitRows(domain, inv));
 }
 
 export function listOrderedUnitIds(root, domain, modules) {
   const inv = loadDomainInventory(root, domain);
   if (!inv) return null;
-  return filterUnitRows(inventoryUnitRows(domain, inv), modules).map((r) => r.id);
+  return uniqueIds(filterUnitRows(inventoryUnitRows(domain, inv), modules));
 }
 
 export function filterUnitRows(rows, modules) {

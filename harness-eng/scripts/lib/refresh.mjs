@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import { findHarnessMetaFile } from "./harness-meta.mjs";
 import { parseMetaDomains, defaultContractDomains } from "./domains.mjs";
-import { readInventoryMeta } from "./inventory-meta.mjs";
+import { readInventoryMeta, writeLastMode } from "./inventory-meta.mjs";
 import { inventoryScanDomains } from "./frontend-coverage.mjs";
 import { parseFillScoreJson } from "./json-read.mjs";
 
@@ -201,6 +201,15 @@ export function runRefresh(root, opts = {}) {
   const blockers = scoreReport?.ai_coding_ready?.blockers || [];
   const fillPlanPath = path.join(absRoot, "docs", "harness-eng", "fill-plan.yaml");
   const hints = [];
+  const orphanDomains = Object.entries(scoreReport?.coverage_audit?.by_domain || {})
+    .filter(([, row]) => row && row.orphan_count > 0)
+    .map(([d, row]) => `${d}:${row.orphan_count}`);
+  if (orphanDomains.length) {
+    hints.push(
+      `coverage-audit 有旧 unit_id 不在当前清单（文件可能改名）：${orphanDomains.join("、")}；` +
+        "请人工对账后重写对应行（refresh 不会自动搬移 audit 条目）"
+    );
+  }
   if (!ready && fs.existsSync(fillPlanPath)) {
     hints.push(
       "覆盖/语义未就绪：检查 docs/harness-eng/fill-plan.yaml；必要时 fill-plan --init 或补开放批次后 fill-merge"
@@ -232,6 +241,9 @@ export function runRefresh(root, opts = {}) {
       );
     }
   }
+
+  // 0.8.13: refresh is a mode change too; keep harness-meta.last_mode honest.
+  if (!dryRun && write) writeLastMode(absRoot, "refresh");
 
   const exitCode = dryRun ? 0 : ready ? 0 : 2;
   return {

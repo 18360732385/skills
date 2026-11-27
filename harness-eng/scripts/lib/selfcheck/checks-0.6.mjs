@@ -32,6 +32,14 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   const hasLog = fs.existsSync(logRoot);
   const upgradeCorpus = () => {
     let text = fs.readFileSync(path.join(skillRoot, "modes/upgrade.md"), "utf8");
+    // 0.8.13: packaged history keeps install-mode checks at full strength.
+    for (const rel of [
+      "archive/upgrade-history-through-0.7.51.md",
+      "archive/upgrade-history-through-0.7.62.md",
+    ]) {
+      const p = path.join(skillRoot, rel);
+      if (fs.existsSync(p)) text += "\n" + fs.readFileSync(p, "utf8");
+    }
     if (hasLog) {
       const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/upgrade-history-through-0.7.51.md");
       if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");
@@ -40,6 +48,8 @@ export function runChecks06({ skillRoot, docPath, readDoc, assert, runNode }) {
   };
   const verifyCorpus = () => {
     let text = fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8");
+    const packaged = path.join(skillRoot, "archive/VERIFY-history-through-0.7.51.md");
+    if (fs.existsSync(packaged)) text += "\n" + fs.readFileSync(packaged, "utf8");
     if (hasLog) {
       const hist = path.resolve(skillRoot, "../_log/harness-eng/docs/VERIFY-history-through-0.7.51.md");
       if (fs.existsSync(hist)) text += "\n" + fs.readFileSync(hist, "utf8");

@@ -5,7 +5,7 @@
 # - 落地模板权威 = `templates/_meta/manifest.yaml`（files / placeholders / when）
 # - 两边 version / rev 必须一致
 
-version: "0.8.12"
+version: "0.8.13"
 # rev: 同一 version 内追加修复的构建号；行为变更优先升 version。新 version 从 0 起。
 rev: 0
 source_repo: ""
