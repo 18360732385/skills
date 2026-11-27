@@ -1,13 +1,14 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.8.11**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+**列车**：当前 **0.8.12**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
 版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。  
 **版本身份**：行为变更优先升 `version`；同一 `version` 内追加修复必须升 `_meta/manifest.yaml` 的 `rev`（新 version 从 0 起）。0.8.1 的三条历史补丁行未升 manifest，仅作记录，不是现行范例。  
-当前包：**0.8.11**（确认令牌、rev 新鲜度、预授权落盘、UTF-16 JSON）。
+当前包：**0.8.12**（施工报告三件套可入库 + 诊断台各项指标默认展开）。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.12 | 2026-11-27 | L4 gitignore snippet 不再忽略 `docs/harness-eng/report-latest.html`、`run-latest.json`、`score-history.jsonl`（可入库；render 只追加、不删目标仓里已有的这三行）。诊断台「各项指标」默认展开并与雷达等高；按钮切诊断摘要；备注改图标悬停；列头布局收紧 |
 | 0.8.11 | 2026-11-27 | 写盘确认令牌 `--confirm`（`render.mjs` 真写同样认；禁止手工 Write 绕过）· 预授权只落盘 `write-auth.yaml`，`Q_PREAUTH` 推荐改为否 · `rev` 进入安装副本告警、L5 `HARNESS_ENG_REV` 新鲜度、`harness-meta.skill_rev` · JSON 与目标仓文本（render / migrate-docs / write-auth）接受 UTF-16 · CI 增加 windows-latest |
 | 0.8.10 | 2026-11-27 | 闸门与一致性独立成版（原 0.8.9 rev 1，rev 归零）：裸「确认」只在紧接 WritePlan 的下一轮有效，预授权只授权后续轮次 · manifest `rev` 与 sync 正文钉 · `report_schema` 改指 glossary · CHANGELOG 坏链与根 README · upgrade 0.7.28–0.7.62 历史进 archive · 三份 sync.mjs 对齐 · pack-check 与 CI · `--params -` / `refresh --exit-zero` · 触发词收窄 · 仓库根 MIT LICENSE |
 | 0.8.9 | 2026-11-26 | 0.8.8 sms-ai 实战解析：func 身份认出 `*ServiceImpl` · `### 变更记录` 不再整节丢掉 · acceptance 版本跟 manifest · 心跳保留既有 migrate ops · 形态到顶但金标未过改写「未过线」· API/类名/Redis 边界匹配不再把短前缀当成已覆盖 · 无表名的 `IF NOT EXISTS` 不记成表名 `IF` · Redis 覆盖与身份槽同一解析 · prototype id 碰撞消解 · jobs 真实性路径错误写明 `tasks/` · client-api 索引写明排除 `type_export` · refresh 写出报告 HTML |

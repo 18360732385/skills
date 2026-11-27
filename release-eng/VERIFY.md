@@ -1,10 +1,22 @@
-# release-eng 验收记录（0.4.6）
+# release-eng 验收记录（0.4.7）
 
 > 静态对照 + `scripts/selfcheck.mjs`。**非 harness land**。历史见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/release-eng/`](../_log/release-eng/)。
 
 ## 版本
 
-当前 **0.4.6**（读取发版单与 JSON 接受 UTF-8 与 UTF-16；其下 0.4.5 合并来源、样表与 HTML）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+当前 **0.4.7**（Spring JDBC 占位、任务候选、已归档身份、经典 Flyway 启发式与说明口径；其下 0.4.6 读取端接受 UTF-16）。权威号见 [`_meta/manifest.yaml`](_meta/manifest.yaml)。
+
+## 0.4.7 增量验收
+
+| 检查 | 结果 |
+|---|---|
+| `node scripts/selfcheck.mjs` exit 0 | 有 |
+| `${VAR:jdbc:…}` 抽出 mariadb / postgres 库名 | 有（unit） |
+| 父级 `scheduling`、时区键不进 `draft.jobs`；无文档枚举码进 draft 并写「建议人工确认」 | 有（unit） |
+| 文件头注释不越过无注释的中间级；draft-md 行尾是说明 | 有（unit） |
+| 经典 `CREATE` 不需 `--sql-ai-json`；样表类型为 DDL；`SELECT` 仍要 AI | 有（selfcheck 047 / 028） |
+| 已归档身份 prepare exit 2；seal 拒绝覆盖已有归档目录；归类失败不留空目录 | 有（selfcheck 047 / 033 F） |
+| 问卷 / WritePlan 身份为 `release-V{yyMMdd}` | 有 |
 
 ## 0.4.6 增量验收
 

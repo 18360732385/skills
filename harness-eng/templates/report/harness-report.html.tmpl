@@ -885,7 +885,7 @@
     .coverage-strip .s { color: var(--muted); font-size: 0.72rem; }
 
     /* ============================================================
-       DOMAIN METRICS（点击「各项指标」：雷达右侧覆盖表）
+       DOMAIN METRICS（默认展开；点按钮切换诊断摘要）
        质量/覆盖：100 绿；80–99 黄；80 以下红
        金标：≥98 绿；80–97 黄；其余红
        ============================================================ */
@@ -893,16 +893,20 @@
       position: absolute;
       inset: 0;
       z-index: 3;
+      display: flex;
+      flex-direction: column;
       overflow: auto;
-      padding: 12px;
+      padding: 10px 12px 12px;
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      min-height: 100%;
     }
     .domain-metrics-panel[hidden] { display: none !important; }
     .domain-metrics-table {
       width: 100%;
+      height: 100%;
       table-layout: fixed;
       border-collapse: collapse;
       font-size: 0.78rem;
@@ -910,39 +914,47 @@
     }
     .domain-metrics-table th,
     .domain-metrics-table td {
-      padding: 5px 6px;
+      padding: 6px 5px;
       border-bottom: 1px solid var(--border);
       text-align: left;
-      vertical-align: baseline;
+      vertical-align: middle;
     }
     .domain-metrics-table th {
       color: var(--muted);
       font-weight: 600;
-      font-size: 0.72rem;
-      border-bottom-color: var(--border);
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--accent);
       position: sticky;
       top: 0;
       background: var(--panel2);
       z-index: 1;
+      white-space: nowrap;
     }
-    .domain-metrics-table th:nth-child(1),
-    .domain-metrics-table td:nth-child(1) { width: 5.6em; }
-    .domain-metrics-table th:nth-child(2),
-    .domain-metrics-table td:nth-child(2),
-    .domain-metrics-table th:nth-child(3),
-    .domain-metrics-table td:nth-child(3),
-    .domain-metrics-table th:nth-child(4),
-    .domain-metrics-table td:nth-child(4) { width: 3.6em; }
-    .domain-metrics-table th:nth-child(5),
-    .domain-metrics-table td:nth-child(5) { width: 4.4em; }
-    .domain-metrics-table th:nth-child(6),
-    .domain-metrics-table td:nth-child(6) { width: 7.2em; }
+    .domain-metrics-table th.num {
+      text-align: right;
+      padding-right: 6px;
+    }
+    .domain-metrics-table th.note-h,
+    .domain-metrics-table td.note {
+      width: 2.4em;
+      text-align: center;
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+    .domain-metrics-table col.col-dom { width: 26%; }
+    .domain-metrics-table col.col-q,
+    .domain-metrics-table col.col-c,
+    .domain-metrics-table col.col-g { width: 13%; }
+    .domain-metrics-table col.col-a { width: 18%; }
+    .domain-metrics-table col.col-n { width: 2.4em; }
     .domain-metrics-table .num {
       text-align: right;
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
       font-weight: 700;
       white-space: nowrap;
+      padding-right: 6px;
     }
     .domain-metrics-table .dom-name {
       color: var(--text);
@@ -950,18 +962,69 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-right: 8px;
     }
     .domain-metrics-table .note {
       color: var(--muted);
       font-weight: 500;
-      font-size: 0.72rem;
-      white-space: nowrap;
-      max-width: 8.5em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: default;
     }
-    .domain-metrics-table .note[title] { cursor: help; }
+    .domain-metrics-table .note-ico {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--muted);
+      cursor: help;
+    }
+    .domain-metrics-table .note-ico svg {
+      width: 12px;
+      height: 12px;
+      display: block;
+    }
+    .domain-metrics-table .note-ico:hover,
+    .domain-metrics-table .note-ico:focus-visible {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      outline: none;
+    }
+    .domain-metrics-table .note-ico::after {
+      content: attr(data-tip);
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 6px);
+      z-index: 5;
+      width: max-content;
+      max-width: min(240px, 56vw);
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 500;
+      line-height: 1.35;
+      letter-spacing: 0;
+      text-align: left;
+      white-space: normal;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(2px);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+    }
+    .domain-metrics-table .note-ico:hover::after,
+    .domain-metrics-table .note-ico:focus-visible::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
     .domain-metrics-table tr.lag td {
       background: var(--danger-soft);
     }
@@ -1057,7 +1120,7 @@
       display: grid;
       grid-template-columns: 1.15fr 0.85fr;
       gap: 18px;
-      align-items: start;
+      align-items: stretch;
       margin-top: 4px;
     }
     @media (max-width: 860px) { .diag-grid { grid-template-columns: 1fr; } }
@@ -1068,6 +1131,8 @@
       padding: 16px;
       border: 1px solid var(--border);
       min-height: 100%;
+      display: flex;
+      flex-direction: column;
     }
     .chart-box h3 {
       margin: 0;
@@ -1092,7 +1157,10 @@
     .radar-wrap {
       display: grid;
       justify-items: center;
+      align-content: center;
       gap: 10px;
+      flex: 1 1 auto;
+      min-height: 0;
     }
     .radar-legend {
       display: flex;
@@ -1162,7 +1230,11 @@
       gap: 10px;
       align-content: start;
       min-width: 0;
-      min-height: 280px;
+      min-height: 100%;
+      height: 100%;
+    }
+    .diag-side.metrics-open > :not(#radar-coverage) {
+      visibility: hidden;
     }
     .diag-side .fold { margin-top: 0; }
     .diag-side .diagnose-story li {
@@ -1729,8 +1801,8 @@
           <div class="chart-box" id="radar-box">
             <div class="chart-head">
               <h3>各域文档质量分 vs 上限</h3>
-              <button type="button" class="radar-detail" id="radar-detail" hidden aria-expanded="false" aria-controls="radar-coverage" aria-label="展开各域各项指标">
-                各项指标
+              <button type="button" class="radar-detail" id="radar-detail" hidden aria-expanded="true" aria-controls="radar-coverage" aria-label="切换为诊断摘要">
+                诊断摘要
               </button>
             </div>
             <div class="radar-wrap">
@@ -1741,17 +1813,25 @@
               </div>
             </div>
           </div>
-          <div class="diag-side">
-            <div class="domain-metrics-panel" id="radar-coverage" hidden>
+          <div class="diag-side metrics-open" id="diag-side">
+            <div class="domain-metrics-panel" id="radar-coverage">
               <table class="domain-metrics-table">
+                <colgroup>
+                  <col class="col-dom" />
+                  <col class="col-q" />
+                  <col class="col-c" />
+                  <col class="col-g" />
+                  <col class="col-a" />
+                  <col class="col-n" />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>域</th>
-                    <th class="num">质量</th>
-                    <th class="num">覆盖</th>
-                    <th class="num">金标</th>
-                    <th class="num">真实性</th>
-                    <th>备注</th>
+                    <th scope="col">域</th>
+                    <th scope="col" class="num">质量</th>
+                    <th scope="col" class="num">覆盖</th>
+                    <th scope="col" class="num">金标</th>
+                    <th scope="col" class="num">真实性</th>
+                    <th scope="col" class="note-h">注</th>
                   </tr>
                 </thead>
                 <tbody id="domain-summary"></tbody>
@@ -2378,10 +2458,16 @@
   function setDomainMetricsOpen(open) {
     var btn = $("radar-detail");
     var panel = $("radar-coverage");
+    var side = $("diag-side");
     if (!btn || !panel) return;
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.setAttribute("aria-label", open ? "收起各域各项指标" : "展开各域各项指标");
+    btn.setAttribute("aria-label", open ? "切换为诊断摘要" : "切换为各项指标");
+    btn.textContent = open ? "诊断摘要" : "各项指标";
     panel.hidden = !open;
+    if (side) {
+      if (open) side.classList.add("metrics-open");
+      else side.classList.remove("metrics-open");
+    }
   }
   var radarBtn = $("radar-detail");
   if (radarBtn) {
@@ -2684,6 +2770,19 @@
         if (pass === 0) return "low";
         return "warn";
       }
+      function noteCell(note) {
+        if (!note) return '<td class="note"></td>';
+        return (
+          '<td class="note">' +
+          '<span class="note-ico" tabindex="0" role="img" data-tip="' + escAttr(note) +
+          '" aria-label="' + escAttr(note) + '">' +
+          '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+          '<path fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" d="M4 2.75h5.25L12 5.5v7.75H4z"/>' +
+          '<path fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" d="M9.25 2.75V5.5H12"/>' +
+          '<path fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" d="M6 8.25h4M6 10.75h2.75"/>' +
+          "</svg></span></td>"
+        );
+      }
       function metricRow(d) {
         var q = typeof d.score === "number" ? d.score : null;
         var qBand = q == null ? "na" : pctBand(q);
@@ -2695,8 +2794,6 @@
           typeof d.excluded_type_exports === "number" && d.excluded_type_exports > 0
             ? d.excluded_type_exports + " 个 type_export 未计入覆盖"
             : "";
-        var noteShort = note.length > 10 ? note.slice(0, 10) + "…" : note;
-        var noteTitle = note.length > 10 ? ' title="' + escAttr(note) + '"' : "";
         var lag = lagId && d.id === lagId;
         return (
           '<tr class="' + (lag ? "lag" : "") + '">' +
@@ -2705,20 +2802,20 @@
           '<td class="num ' + cBand + '">' + esc(formatPct(pct)) + "</td>" +
           '<td class="num ' + goldBand(gold) + '">' + esc(gold) + "</td>" +
           '<td class="num ' + authenticityBand(auth) + '">' + esc(auth) + "</td>" +
-          '<td class="note"' + noteTitle + ">" + esc(noteShort) + "</td></tr>"
+          noteCell(note) + "</tr>"
         );
       }
       summaryEl.innerHTML = ordered.map(metricRow).join("");
       if (detailBtn) {
         detailBtn.hidden = false;
-        detailBtn.setAttribute("aria-expanded", "false");
-        detailBtn.setAttribute("aria-label", "展开各域各项指标");
+        setDomainMetricsOpen(true);
       }
-      if (coveragePanel) coveragePanel.hidden = true;
     } else if (detailBtn) {
       detailBtn.hidden = true;
       if (summaryEl) summaryEl.innerHTML = "";
       if (coveragePanel) coveragePanel.hidden = true;
+      var sideEl = $("diag-side");
+      if (sideEl) sideEl.classList.remove("metrics-open");
     }
 
     if (ui.show_domain_cards && stories.length) {

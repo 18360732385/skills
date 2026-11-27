@@ -44,7 +44,7 @@ skill 侧其它文档（SKILL / README / QUICKSTART / AGENT-INDEX / modes/*）�
 
 ## ④ 目标 profile = prod
 
-SQL / 配置 / 定时任务**一律目标 `prod`**。配置仅 `application-prod.yml` 与 nacos prod overlay（`config/nacos/application-prod-nacos.yml`；包内拍平文件名 `application-prod-nacos.yml` 亦视为 prod 层）进 draft / 发版单；其余 config 层（非 prod 的 `application*.yml`、`.env`、`*secret*` 等）→ `layerSuppressed`（`non-prod-layer`）。yml 配置按 YAML 展示，注释写在**键上一行 `#`**（采集亦可来自行尾 ` #`）。
+SQL / 配置 / 定时任务**一律目标 `prod`**。配置仅 `application-prod.yml` 与 nacos prod overlay（`config/nacos/application-prod-nacos.yml`；包内拍平文件名 `application-prod-nacos.yml` 亦视为 prod 层）进 draft / 发版单；其余 config 层（非 prod 的 `application*.yml`、`.env`、`*secret*` 等）→ `layerSuppressed`（`non-prod-layer`）。yml 配置按 YAML 展示，注释写在**键上一行 `#`**（采集亦可来自行尾 ` #`）。叶子没有本行注释时，只继承**直接父级** map 的注释；文件头和不带注释的中间级不往下传。
 
 ## ⑤ SQL序与整理
 
@@ -52,7 +52,7 @@ SQL / 配置 / 定时任务**一律目标 `prod`**。配置仅 `application-prod
 - 发版单「数据库与 SQL」章**精简**：正文只写条数摘要 + 链接到包内 `sql/README.md`；**不**再展开执行序表。
 - 「定时任务」章同样精简为条数 + 链 `jobs/README.md`；「包内附属」收成一行摘要（sql×N · config×M · …）。
 - `docs/db/table/*_change.sql` **仅作对照**，不进 `sql/refs/` 与整理文件。
-- 整理文件命名：`[库名]-V{yyMMdd}-DDL|DML.sql`（库名从 prod `spring.datasource.url` 解析；抽不到回落 `release-V{yyMMdd}-*`）；按 `__DDL__`/`__DML__`（或新轨 `V{ts}_{0|1}__`）双轨归类，**缺侧不落盘**。
+- 整理文件命名：`[库名]-V{yyMMdd}-DDL|DML.sql`（库名从 prod `spring.datasource.url` 解析，含 Spring 占位默认值 `${VAR:jdbc:…}`；抽不到回落 `release-V{yyMMdd}-*`）；按 `__DDL__`/`__DML__`（或新轨 `V{ts}_{0|1}__`）归类；经典 `V1__…` 若正文只有 DDL 或只有 DML 动词，用该启发式归类，`--sql-ai-json` 可覆写；混合或无法判断仍要 AI JSON。**缺侧不落盘**。
 - **prod 执行顺序：先 DDL 整理文件，再 DML**（各类内部仍按 SQL序）。
 - 同时生成 `sql/README.md`：总览含**执行库 / 脱敏连接串**、DDL/DML 文件数与语句数、按提交人执行序；SQL 文件名链到整理文件 `#L<行号>`（勿手改）。
 - 发版单为 **10 章**（一～十）；**不再生成**「十一、附录：关联契约与规划」。

@@ -134,6 +134,18 @@ function metaFromNote(text) {
   return { branch, baseline, date, owner, identity };
 }
 
+/** 归档目标只要已经存在（文件或目录，空目录也算），rename 就会撞车。 */
+function archiveDestOccupied(destDir) {
+  if (!destDir || !fs.existsSync(destDir)) return null;
+  try {
+    const st = fs.statSync(destDir);
+    if (!st.isDirectory()) return { kind: "file" };
+    return { kind: "dir" };
+  } catch (e) {
+    return { kind: "unreadable", error: String(e?.message || e) };
+  }
+}
+
 export function gitMv(root, fromAbs, toAbs) {
   fs.mkdirSync(path.dirname(toAbs), { recursive: true });
   const relFrom = path.relative(root, fromAbs).replace(/\\/g, "/");
@@ -228,6 +240,26 @@ function main() {
     meta.baseline && meta.baseline !== "无"
       ? `${meta.branch || "—"} vs ${meta.baseline}`
       : `${meta.branch || identity}（首次）`;
+
+  const destOccupied = archiveDestOccupied(bundle.destDir);
+  if (destOccupied) {
+    const destRel = path.relative(args.root, bundle.destDir).replace(/\\/g, "/");
+    console.log(
+      JSON.stringify(
+        {
+          ok: false,
+          error: "archive dest exists",
+          identity,
+          dest: destRel,
+          destKind: destOccupied.kind,
+          hint: `归档目标已存在：${destRel}。拒绝覆盖。请改发版日期，或先移走该目录后再 seal`,
+        },
+        null,
+        2
+      )
+    );
+    process.exit(1);
+  }
 
   const plan = {
     ok: true,

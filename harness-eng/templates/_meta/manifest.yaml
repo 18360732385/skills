@@ -1,6 +1,6 @@
 # 落地模板权威（files / placeholders / when）。
 # 技能包权威 = 根 `_meta/manifest.yaml`；两边 version / rev 必须一致。
-version: "0.8.11"
+version: "0.8.12"
 # 同步自 `_meta/manifest.yaml`；同一 version 内追加修复时 rev 递增。
 rev: 0
 source_repo: ""

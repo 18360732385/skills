@@ -95,15 +95,35 @@ export function toDraftPreviewMd(data) {
           lines.push("```yaml");
           for (const r of slice) {
             const v = r.值 === "" || r.值 == null ? '""' : String(r.值);
-            // 行尾注释透明化推荐来源：confidence · 采集源（问卷预填时须能追溯）
-            const tag = [r.confidence, r.source].filter(Boolean).join(" · ");
-            lines.push(`${r.键}: ${v}${tag ? `  # ${tag}` : ""}`);
+            const note = r.说明 && r.说明 !== "待补" ? String(r.说明).replace(/\s+/g, " ") : "";
+            lines.push(`${r.键}: ${v}${note ? `  # ${note}` : ""}`);
           }
           lines.push("```");
+          const traced = slice.filter((r) => r.confidence || r.source);
+          if (traced.length) {
+            lines.push("");
+            lines.push("| 键 | confidence | source |");
+            lines.push("|---|---|---|");
+            for (const r of traced) {
+              lines.push(
+                `| \`${escCell(r.键)}\` | ${escCell(r.confidence || "—")} | ${escCell(r.source || "—")} |`
+              );
+            }
+          }
         } else {
           for (const r of slice) {
-            const tag = [r.confidence, r.source].filter(Boolean).join(" · ");
-            lines.push(`- \`${r.键}\` = ${escCell(r.值)} （${escCell(r.说明 || "待补")}）${tag ? ` — ${tag}` : ""}`);
+            lines.push(`- \`${r.键}\` = ${escCell(r.值)} （${escCell(r.说明 || "待补")}）`);
+          }
+          const traced = slice.filter((r) => r.confidence || r.source);
+          if (traced.length) {
+            lines.push("");
+            lines.push("| 键 | confidence | source |");
+            lines.push("|---|---|---|");
+            for (const r of traced) {
+              lines.push(
+                `| \`${escCell(r.键)}\` | ${escCell(r.confidence || "—")} | ${escCell(r.source || "—")} |`
+              );
+            }
           }
         }
         lines.push("");

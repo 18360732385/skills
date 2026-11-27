@@ -9,7 +9,7 @@
  * Usage:
  *   node release-prepare.mjs --root <REPO> --release-date YYYY-MM-DD \
  *     --release-branch <branch> --baseline <branch|无> [--first-release] \
- *     [--allow-drift] [--ai-track] [--out <freeze.json>] [--format json|summary]
+ *     [--allow-drift] [--allow-archived] [--ai-track] [--out <freeze.json>] [--format json|summary]
  */
 import fs from "fs";
 import os from "os";
@@ -19,6 +19,7 @@ import { readTextFile } from "./lib/text-encoding.mjs";
 import { spawnSync } from "child_process";
 import {
   identityFromReleaseDate,
+  findArchivedIdentity,
   recommendedReleaseThursday,
   stripBom,
   readSqlProfile,
@@ -41,6 +42,7 @@ function parseArgs(argv) {
     baseline: null,
     firstRelease: false,
     allowDrift: false,
+    allowArchived: false,
     aiTrack: false,
     out: null,
     format: "summary",
@@ -57,6 +59,7 @@ function parseArgs(argv) {
     else if (a === "--baseline") out.baseline = argv[++i];
     else if (a === "--first-release") out.firstRelease = true;
     else if (a === "--allow-drift") out.allowDrift = true;
+    else if (a === "--allow-archived") out.allowArchived = true;
     else if (a === "--ai-track") out.aiTrack = true;
     else if (a === "--out") out.out = argv[++i];
     else if (a === "--format") out.format = argv[++i];
@@ -72,11 +75,12 @@ function printHelp() {
 Usage:
   node release-prepare.mjs --root <REPO> --release-date YYYY-MM-DD \\
     --release-branch <branch> (--baseline <branch> | --first-release) \\
-    [--allow-drift] [--ai-track] [--out <freeze.json>] [--format summary|json] \\
+    [--allow-drift] [--allow-archived] [--ai-track] [--out <freeze.json>] [--format summary|json] \\
     [--sql-dir <rel> --sql-format <flyway|glob>]
 
 步骤: SQL 扫描记录（缺则 exit 1）→ sync-check → push-gate → freeze →（可选 ai-track）→ draft-md
 未传 --sql-dir/--sql-format 时读取 docs/releases/releases.md。两项缺一即首次使用，拒绝编排。
+同日身份已在 archive/ 或 ARCHIVE.md：默认 exit 2。确认重建才加 --allow-archived。
 身份: release-V{yyMMdd} ← --release-date
 同身份目录已存在 → refresh=true（原 resume 行为）
 确认词后由 Agent 调 note-merge 写盘。`);
@@ -153,6 +157,27 @@ function main() {
   if (!releaseBranch) {
     console.error("missing --release-branch");
     process.exit(1);
+  }
+
+  const archived = findArchivedIdentity(root, identity);
+  if (archived && !args.allowArchived) {
+    console.log(
+      JSON.stringify(
+        {
+          ok: false,
+          step: "archived-identity",
+          identity,
+          releaseDate: date,
+          refresh: false,
+          archived,
+          warning: `身份 ${identity} 已归档（${archived.path}）。同日一包请改发版日期；确认重建才加 --allow-archived`,
+          next: "改 --release-date，或显式 --allow-archived。seal 仍会拒绝覆盖已存在的归档目录",
+        },
+        null,
+        2
+      )
+    );
+    process.exit(2);
   }
 
   const firstRelease =
@@ -286,6 +311,10 @@ function main() {
     baseline: firstRelease ? "无" : baseline,
     firstRelease,
     refresh,
+    archived: archived || null,
+    archivedWarning: archived
+      ? `身份 ${identity} 已归档（${archived.path}），本次为 --allow-archived 重建预览。seal 不会覆盖已有归档目录`
+      : null,
     notePath: path.relative(root, notePath).replace(/\\/g, "/"),
     pushGate: {
       ok: true,
@@ -328,7 +357,7 @@ function main() {
     console.log(JSON.stringify(result, null, 2));
   } else {
     console.log(`# WritePlan 预览包（未写盘）
-身份: ${identity}  发版日期: ${date}  刷新: ${refresh}
+身份: ${identity}  发版日期: ${date}  刷新: ${refresh}${archived ? "  已归档身份: 是（--allow-archived）" : ""}
 分支对: ${firstRelease ? `(首次) ${headRef}` : `${baseRef}..${headRef}`}
 push-gate: 通过
 ai-track: ${result.aiTrack}

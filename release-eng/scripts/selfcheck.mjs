@@ -578,10 +578,18 @@ assert(typeof parseNoteHeadRef === "function", "export parseNoteHeadRef");
   );
 
   const needs = classifyRefs(
+    [{ basename: "V99__mystery__x.sql", content: "SELECT 1;\n" }],
+    {}
+  );
+  assert(needs.needsAi.length === 1 && !needs.ok, "028 ambiguous sql still needs ai-json");
+  const heurOnly = classifyRefs(
     [{ basename: "V99__mystery__x.sql", content: "INSERT INTO t VALUES (1);\n" }],
     {}
   );
-  assert(needs.needsAi.length === 1 && !needs.ok, "028 needsAi without ai-json");
+  assert(
+    heurOnly.ok && heurOnly.resolved[0]?.kind === "DML" && heurOnly.resolved[0]?.classifySource === "heuristic",
+    "028 clear DML verb does not need ai-json"
+  );
 
   const withAi = classifyRefs(
     [{ basename: "V99__mystery__x.sql", content: "INSERT INTO t VALUES (1);\n" }],
@@ -2426,6 +2434,7 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     const bundleDir = path.join(work, "docs/releases/release-RB");
     assert(!fs.existsSync(path.join(bundleDir, "sql")), "033 F 失败后 sql/ 已回滚");
     assert(!fs.existsSync(path.join(bundleDir, "config")), "033 F 失败后 config/ 已回滚");
+    assert(!fs.existsSync(bundleDir), "033 F 失败后不留空身份目录");
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
   }
@@ -3399,6 +3408,160 @@ function runSealCheckBin(root, noteRel, extraArgs = []) {
     assert(/暂无符合格式/.test(applied.stdout || ""), "044 empty dir warns but records");
   } finally {
     fs.rmSync(work, { recursive: true, force: true });
+  }
+}
+
+// --- 0.4.7：已归档身份 / seal 目标已存在 / 经典 Flyway 启发式 ---
+{
+  const prep = path.join(skillRoot, "scripts/release-prepare.mjs");
+  const sealBin = path.join(skillRoot, "scripts/release-seal.mjs");
+  const mergeBin = path.join(skillRoot, "scripts/release-note-merge.mjs");
+
+  const archWork = fs.mkdtempSync(path.join(os.tmpdir(), "re-047-arch-"));
+  try {
+    const id = "release-V261203";
+    fs.mkdirSync(path.join(archWork, "docs", "releases", "archive", id), { recursive: true });
+    fs.writeFileSync(
+      path.join(archWork, "docs", "releases", "archive", id, `${id}.md`),
+      "# archived\n",
+      "utf8"
+    );
+    const blocked = spawnSync(
+      process.execPath,
+      [
+        prep,
+        "--root",
+        archWork,
+        "--release-date",
+        "2026-12-03",
+        "--release-branch",
+        "release/x",
+        "--first-release",
+        "--format",
+        "json",
+      ],
+      { encoding: "utf8" }
+    );
+    assert(blocked.status === 2, "047 prepare archived identity exits 2");
+    const blockedJson = JSON.parse(blocked.stdout || "{}");
+    assert(blockedJson.step === "archived-identity", "047 prepare names archived-identity");
+    assert(/改发版日期/.test(blockedJson.warning || ""), "047 prepare tells to change the date");
+  } finally {
+    fs.rmSync(archWork, { recursive: true, force: true });
+  }
+
+  const sealWork = fs.mkdtempSync(path.join(os.tmpdir(), "re-047-seal-"));
+  try {
+    const id = "release-V261203";
+    writeSealCheckFixture(sealWork, id);
+    const dest = path.join(sealWork, "docs", "releases", "archive", id);
+    fs.mkdirSync(dest, { recursive: true });
+    fs.writeFileSync(path.join(dest, `${id}.md`), "# already\n", "utf8");
+    const r = spawnSync(
+      process.execPath,
+      [
+        sealBin,
+        "--root",
+        sealWork,
+        "--note",
+        `docs/releases/${id}/${id}.md`,
+        "--online-date",
+        "2026-12-04",
+        "--executor",
+        "tester",
+        "--dry-run",
+      ],
+      { encoding: "utf8" }
+    );
+    assert(r.status === 1, "047 seal refuses existing archive dest");
+    const body = `${r.stdout || ""}${r.stderr || ""}`;
+    assert(/archive dest exists/.test(body), "047 seal names archive dest exists");
+    assert(
+      fs.existsSync(path.join(sealWork, "docs", "releases", id, `${id}.md`)),
+      "047 seal dry-run leaves the in-progress note"
+    );
+  } finally {
+    fs.rmSync(sealWork, { recursive: true, force: true });
+  }
+
+  const sqlWork = fs.mkdtempSync(path.join(os.tmpdir(), "re-047-sql-"));
+  try {
+    gitIn(sqlWork, ["init"]);
+    gitIn(sqlWork, ["config", "user.email", "selfcheck@test"]);
+    gitIn(sqlWork, ["config", "user.name", "selfcheck"]);
+    const migRel = "db/migration/V1__create_order.sql";
+    fs.mkdirSync(path.join(sqlWork, "db/migration"), { recursive: true });
+    fs.writeFileSync(path.join(sqlWork, migRel), "CREATE TABLE t(id INT);\n", "utf8");
+    fs.mkdirSync(path.join(sqlWork, "docs/releases"), { recursive: true });
+    fs.writeFileSync(
+      path.join(sqlWork, "docs/releases/releases.md"),
+      "# idx\n\n## 进行中\n\n| 日期 | 版本身份 | 分支对 | 状态 | 发版单 | 负责人 |\n|---|---|---|---|---|---|\n",
+      "utf8"
+    );
+    gitIn(sqlWork, ["add", "."]);
+    gitIn(sqlWork, ["commit", "-m", "init"]);
+    const id = "release-V261203";
+    const freezePath = path.join(sqlWork, "freeze.json");
+    fs.writeFileSync(
+      freezePath,
+      JSON.stringify({
+        ok: true,
+        firstRelease: true,
+        head: "HEAD",
+        draft: {
+          sql: [
+            {
+              执行序: 1,
+              脚本: "V1__create_order.sql",
+              路径: migRel,
+              动作: "新增/变更",
+              "目标 profile": "prod",
+              已确认: "是",
+            },
+          ],
+          config: [],
+          jobs: [],
+        },
+        changeObjects: [],
+        commits: [],
+        mergeSources: [],
+        releaseSummaryLines: [],
+      }),
+      "utf8"
+    );
+    const r = spawnSync(
+      process.execPath,
+      [
+        mergeBin,
+        "--root",
+        sqlWork,
+        "--note",
+        `docs/releases/${id}/${id}.md`,
+        "--freeze-json",
+        freezePath,
+        "--identity",
+        id,
+        "--release-date",
+        "2026-12-03",
+        "--release-branch",
+        "release/V261203",
+        "--owner",
+        "tester",
+        "--head",
+        "HEAD",
+        "--first-release",
+      ],
+      { encoding: "utf8" }
+    );
+    assert(r.status === 0, "047 classic CREATE note-merge exits 0 without sql-ai-json");
+    const note = fs.readFileSync(path.join(sqlWork, "docs", "releases", id, `${id}.md`), "utf8");
+    assert(/V1__create_order\.sql` \| DDL \|/.test(note), "047 sql sample type is DDL");
+    assert(
+      fs.existsSync(path.join(sqlWork, "docs", "releases", id, "sql", "release-V261203-DDL.sql")),
+      "047 heuristic writes DDL bundle"
+    );
+  } finally {
+    fs.rmSync(sqlWork, { recursive: true, force: true });
   }
 }
 

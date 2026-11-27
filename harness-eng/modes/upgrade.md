@@ -80,6 +80,13 @@
 5. **rule 104/105/106**：正文「0.8.0 索引壳」字样已升「0.8.1 起计分」；upgrade 后**replace** 刷新（规则正文非 AGENTS，无用户正文风险）
 6. **L5**：`check-freshness` → 刷新域包规则与 `sync.mjs`（tmpl id `0.8.1`）后再 sync
 
+## 0.8.11 → 0.8.12 迁移要点
+
+1. **meta**：`skill_version` → `0.8.12`
+2. **报告壳**：`report_schema` 仍 **0.4.3**；诊断台「各项指标」默认展开（按钮切诊断摘要），备注改图标悬停——重新 `fill-report-html` 即可
+3. **gitignore**：snippet 不再追加 `docs/harness-eng/report-latest.html`、`run-latest.json`、`score-history.jsonl`。这三份施工产物默认可入库。目标仓 `.gitignore` 里若已有这三行（及注释 `# harness report churn…`），升级时删掉，否则文件仍被忽略。render 只追加缺失行，不会自动删旧行
+4. **L5**：`check-freshness` → 刷新 `sync.mjs`（tmpl id `0.8.12`）后再 sync
+
 ## 0.8.10 → 0.8.11 迁移要点
 
 1. **meta**：`skill_version` → `0.8.11`，并写入 `skill_rev`（与 manifest `rev` 一致；缺省按 0）

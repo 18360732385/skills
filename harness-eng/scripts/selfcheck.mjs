@@ -1427,6 +1427,9 @@ if (fs.existsSync(fixture)) {
     assert(!/^\.cursor\/mcp\.json$/m.test(gi), "vendored_shared does not append .cursor/mcp.json");
     assert(!/^\.mcp\.json$/m.test(gi), "vendored_shared does not append .mcp.json");
     assert(/\.fill-work\//.test(gi), "vendored_shared still appends fill-work ignore");
+    assert(!/report-latest\.html/.test(gi), "vendored_shared does not ignore report-latest.html");
+    assert(!/run-latest\.json/.test(gi), "vendored_shared does not ignore run-latest.json");
+    assert(!/score-history\.jsonl/.test(gi), "vendored_shared does not ignore score-history.jsonl");
   } finally {
     try {
       fs.rmSync(tmpVend, { recursive: true, force: true });
@@ -1468,6 +1471,9 @@ if (fs.existsSync(fixture)) {
     assert(rEx.status === 0, "example_only gitignore render exits 0");
     const giEx = fs.readFileSync(path.join(tmpEx, ".gitignore"), "utf8");
     assert(/^\.cursor\/mcp\.json$/m.test(giEx), "example_only appends .cursor/mcp.json");
+    assert(!/report-latest\.html/.test(giEx), "example_only does not ignore report-latest.html");
+    assert(!/run-latest\.json/.test(giEx), "example_only does not ignore run-latest.json");
+    assert(!/score-history\.jsonl/.test(giEx), "example_only does not ignore score-history.jsonl");
   } finally {
     try {
       fs.rmSync(tmpEx, { recursive: true, force: true });
@@ -7110,7 +7116,7 @@ console.log("theme-gate-smoke-ok");
   assert(!/id="kpis"/.test(tmpl82), "0.8.2 kpi strip folded into 开干清单");
   assert(
     /id="diagnose-story"/.test(tmpl82) &&
-      /class="diag-side"/.test(tmpl82) &&
+      /class="diag-side[\w\s-]*"/.test(tmpl82) &&
       /低分原因 Top（明细）/.test(tmpl82),
     "diagnose story beside radar + gaps fold"
   );
@@ -9180,6 +9186,30 @@ console.log("theme-gate-smoke-ok");
   assert(/0\.8\.11 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.11 VERIFY.md");
   assert(/0\.8\.10 → 0\.8\.11/.test(upgradeCorpus()), "0.8.11 upgrade.md");
   assert(logExists("0.8.11"), "0.8.11 _log note exists");
+}
+
+// --- 0.8.12: report artifacts stay committable ---
+{
+  const gi812 = fs.readFileSync(
+    path.join(skillRoot, "templates/gitignore/harness.gitignore.snippet"),
+    "utf8"
+  );
+  assert(!/report-latest\.html/.test(gi812), "0.8.12 snippet omits report-latest.html");
+  assert(!/run-latest\.json/.test(gi812), "0.8.12 snippet omits run-latest.json");
+  assert(!/score-history\.jsonl/.test(gi812), "0.8.12 snippet omits score-history.jsonl");
+  assert(/\.cursor\/mcp\.json/.test(gi812) && /\.fill-work\//.test(gi812), "0.8.12 snippet still ignores mcp and fill-work");
+  assert(/\| 0\.8\.12 \|/.test(fs.readFileSync(path.join(skillRoot, "CHANGELOG.md"), "utf8")), "0.8.12 CHANGELOG");
+  assert(/0\.8\.12 增量验收/.test(fs.readFileSync(path.join(skillRoot, "VERIFY.md"), "utf8")), "0.8.12 VERIFY.md");
+  assert(/0\.8\.11 → 0\.8\.12/.test(upgradeCorpus()), "0.8.12 upgrade.md");
+  assert(logExists("0.8.12"), "0.8.12 _log note exists");
+  const reportTmpl812 = fs.readFileSync(
+    path.join(skillRoot, "templates/report/harness-report.html.tmpl"),
+    "utf8"
+  );
+  assert(/setDomainMetricsOpen\(true\)/.test(reportTmpl812), "0.8.12 domain metrics default open");
+  assert(/metrics-open/.test(reportTmpl812) && /note-ico/.test(reportTmpl812), "0.8.12 metrics panel + note icon");
+  assert(/class="note-h">注</.test(reportTmpl812), "0.8.12 note column header shortened");
+  assert(/align-items:\s*stretch/.test(reportTmpl812), "0.8.12 diagnose grid stretches with radar");
 }
 
 console.log(`ok: ${ok.length}`);

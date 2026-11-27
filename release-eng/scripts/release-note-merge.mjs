@@ -267,7 +267,7 @@ function truncateCommits(rows) {
   return truncateDisplay(rows, COMMIT_DISPLAY_MAX, COMMIT_DISPLAY_HEAD, COMMIT_DISPLAY_TAIL);
 }
 
-export function buildSqlSection(draft) {
+export function buildSqlSection(draft, kindByBasename = null) {
   const rows = draft?.sql || [];
   const lines = [];
   lines.push(`## ${H2.sql}`);
@@ -290,7 +290,11 @@ export function buildSqlSection(draft) {
     lines.push("|---|---|---|---|");
     sample.forEach((r, i) => {
       const name = basenameOf(r.stableId || r.脚本 || r.path || r.script || "—") || "—";
-      const kind = classifyMigrationKindByFilename(name) || r.kind || "—";
+      const kind =
+        kindByBasename?.get?.(name) ||
+        classifyMigrationKindByFilename(name) ||
+        r.kind ||
+        "—";
       const action = r.action || r.动作 || r.change || "—";
       lines.push(`| ${i + 1} | \`${esc(name)}\` | ${esc(kind)} | ${esc(action)} |`);
     });
@@ -1030,6 +1034,38 @@ export function buildJobsSummaryMd(root, freeze, head, bundleDir = null) {
   return lines.join("\n");
 }
 
+/** 归类成功后，用整理结果回写样表「类型」列（经典 V1__ 文件名本身没有 DDL/DML）。 */
+function applySqlKindSection(text, draft, sqlBundles) {
+  const kindByBasename = new Map();
+  for (const b of sqlBundles || []) {
+    for (const s of b.sources || []) {
+      const bn = path.basename(String(s.stableId || ""));
+      const kind = s.kind || b.kind;
+      if (bn && kind) kindByBasename.set(bn, kind);
+    }
+  }
+  if (!kindByBasename.size) return text;
+  const sqlFull = buildSqlSection(draft, kindByBasename);
+  const sqlInner = sqlFull
+    .replace(/^[\s\S]*?<!-- auto:sql:start -->\n*/, "")
+    .replace(/\n*<!-- auto:sql:end -->[\s\S]*$/, "");
+  const marked = replaceMarked(text, "sql", sqlInner);
+  if (marked != null) return marked;
+  return replaceHeadingSection(text, "数据库与 SQL", sqlFull) || text;
+}
+
+/** 首次定版失败且目录里已经没有发版单时，删掉空的身份目录。 */
+function removeEmptyBundleDir(bundleDir) {
+  if (!bundleDir || !fs.existsSync(bundleDir)) return;
+  let left = [];
+  try {
+    left = fs.readdirSync(bundleDir).filter((n) => n !== ".gitkeep" && n !== ".DS_Store");
+  } catch {
+    return;
+  }
+  if (left.length === 0) fs.rmSync(bundleDir, { recursive: true, force: true });
+}
+
 /** 刷新前清空 sql/config/jobs（含 sql/refs 与旧整理文件），避免上次污染残留 */
 function resetBundleKindDirs(bundleDir) {
   for (const kind of ["sql", "config", "jobs"]) {
@@ -1330,6 +1366,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
   }
 
   let sqlBundleResult = null;
+  const noteExistedBefore = fs.existsSync(notePath);
   if (args.bundleFiles) {
     fs.mkdirSync(bundle.bundleDir, { recursive: true });
     bundleResult = copyBundleFiles(args.root, bundle.bundleDir, freeze, meta.head, sqlProfile);
@@ -1361,8 +1398,10 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
       });
       for (const w of sqlBundleResult.warnings || []) bundleResult.warnings.push(w);
       if (!sqlBundleResult.ok) {
-        // 失败回滚已写附属，避免半成品污染下一轮 freeze / seal-check
+        // 失败回滚已写附属，避免半成品污染下一轮 freeze / seal-check。
+        // 本轮才建的空身份目录一并删掉，不把「SQL 归类未闭环」留成空包。
         resetBundleKindDirs(bundle.bundleDir);
+        if (!noteExistedBefore) removeEmptyBundleDir(bundle.bundleDir);
         if (sqlBundleResult.promptMd) {
           console.error("--- sql-classify prompt-md ---");
           console.error(sqlBundleResult.promptMd);
@@ -1387,6 +1426,7 @@ identity 约定（0.4+）：release-V{yyMMdd} ← --release-date；勿用分支�
           sourcePath: "← 本版 SQL 统计（DDL/DML 条数 + 提交人执行序）",
         });
       }
+      text = applySqlKindSection(text, freeze.draft, sqlBundleResult.sqlBundles);
     }
 
     text = applyBundleSection(text, bundleResult.copied);
