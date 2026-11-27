@@ -1,12 +1,12 @@
-﻿# feature-eng
+# feature-eng
 
 用户点名的开发流程控制器（`disable-model-invocation: true`，**须点名**，不自动加载）。与 [`release-eng`](../release-eng/) 同级、互不替代。
 
 入口与仪式：[SKILL.md](SKILL.md)。一页纸：[QUICKSTART.md](QUICKSTART.md)。Agent 热路径：[AGENT-INDEX.md](AGENT-INDEX.md)。版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)。变更：[CHANGELOG.md](CHANGELOG.md)。
 
-验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check）。闸门证据：`node scripts/gate-evidence.mjs`。
+验收：[VERIFY.md](VERIFY.md)。烟测：`node scripts/selfcheck.mjs`（须 PASS）。薄 CLI：`node scripts/feature.mjs`（modes / status / gate-evidence / close-check / contracts）。闸门证据：`node scripts/gate-evidence.mjs`；契约单源校验：`node scripts/check-contracts.mjs`。
 
-0.2.28 要点：selfcheck 主题拆分（harness/context/suite-*）；`_log` 早期 0.2 归档至 `_archive/0.2-early`；RETAINED=CHANGELOG 近期索引；`--verbose`/`--no-log`/`--strict-log`。历史版本见 [CHANGELOG.md](CHANGELOG.md) / [`../_log/feature-eng/`](../_log/feature-eng/)。
+0.2.29 要点：gate-evidence / close-check / status-scan 读取目标仓文本时接受 UTF-8 与 UTF-16（PowerShell 写出的 BOM）。历史版本见 [CHANGELOG.md](CHANGELOG.md)；仓库内明细见仓库级档案（安装包不含）。
 
 ## 可移植性
 
@@ -30,4 +30,4 @@
 | `审核-<stage>.md` | L2 审核结论（stage 为英文键） |
 | `交接.md` | 交接 |
 
-脚本与夹具须 **UTF-8**；跑 selfcheck / 跨平台工具时建议 `LC_ALL=C.UTF-8`（或等价 UTF-8 locale）。Windows：Node 不依赖 LC_ALL，PowerShell 默认 UTF-8 即可。
+运行前提：**Node.js ≥ 18**（脚本使用 `fs.cpSync`）。脚本与夹具须 **UTF-8**；跑 selfcheck / 跨平台工具时建议 `LC_ALL=C.UTF-8`（或等价 UTF-8 locale）。Windows：Node 内部按 UTF-8 读写；Windows PowerShell 5.1 默认非 UTF-8，读写中文文件请显式 `-Encoding UTF8` 或使用 PowerShell 7。受限沙箱若禁止子进程，`selfcheck` 会以 exit 2 提示，请在允许子进程的终端运行。

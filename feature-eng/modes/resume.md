@@ -1,4 +1,4 @@
-﻿# resume — 续跑主题（进行中）
+# resume — 续跑主题（进行中）
 
 本模式 = **续跑主题**（`docs/runs/active`）。**≠** 工程化仓续跑（补缺口；常见实现别名如 harness-eng `resume`）。
 

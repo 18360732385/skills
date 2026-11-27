@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 # feature-eng
 
-版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.28**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
+版本：[`_meta/manifest.yaml`](_meta/manifest.yaml)（当前 **0.2.29**；变更见 [CHANGELOG.md](CHANGELOG.md)；可移植性见 [README.md](README.md)）。  
 **Agent 热路径**：[AGENT-INDEX.md](AGENT-INDEX.md)（先索引再 Read，勿扫根目录全部 md）。一页纸：[QUICKSTART.md](QUICKSTART.md)。验收：[VERIFY.md](VERIFY.md)；烟测：`node scripts/selfcheck.mjs`。薄 CLI：`node scripts/feature.mjs`（`modes` / `status` / `gate-evidence` / `close-check`）。闸门证据：`node scripts/gate-evidence.mjs`。
 
 Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disable-model-invocation: true`，不自动加载）。流程与绑定见 [flow.md](modes/specs/flow.md)；L1/L2/硬闸见 [gates.md](modes/specs/gates.md)；桥见 [bridges.md](modes/specs/bridges.md)；**运行时绑定 SSOT** = 目标仓 `docs/runs/stage-bindings.yaml`（init/rebind 写入；技能包 `config/` 为种子/回退；**禁止**代跑 harness sync）。过程态在 `docs/runs/{active|archive}/<slug>/`（与 `docs/superpowers/` 平级；非契约 SSOT）。对用户优先中文。  
@@ -35,9 +35,9 @@ Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disabl
 
 写任何 `gates.*` ISO 时间戳之前须同时成立：
 
-1. 回链「硬闸授权」表有对应行，且 `authorized_by` 仅为 `user_chat` | `user_task_<id>` | `policy_exception`（禁止 `user_task_fixture|auto|todo|…` 占位）
-2. 适用环已落盘 `审核-<stage>.md` 且含 **`result: pass`**（映射见 [gates.md](modes/specs/gates.md) / `scripts/gate-evidence.mjs`）
-3. `chef_mode=controller_proxy` 时回链「仪式与降级」非空
+1. 回链「硬闸授权」表有对应行，且 `authorized_by` 仅为 `user_chat` | `user_task_<id>` | `policy_exception`（禁止 `user_task_fixture|auto|todo|…` 占位）；时间与 progress ISO 同一时刻
+2. 适用环已落盘 `审核-<stage>.md`，`result` 字段**恰为** `pass`（`pass | fail` 占位不合格），且 `reviewer` 为 `bound_subagent|inline_session|self(controller_proxy)`（映射见 [gates.md](modes/specs/gates.md) / `scripts/gate-evidence.mjs`）
+3. `chef_mode=controller_proxy` 时回链「仪式与降级」的 `chef_mode`/`invoke`/`review_policy` 三行均为具体值
 
 `chef_mode=controller_proxy` **不豁免**上述证据条——与 `bound` 同级。机检：`node scripts/gate-evidence.mjs --cwd <仓根> --slug <slug>`（或 `node scripts/feature.mjs gate-evidence …`）。
 
@@ -57,7 +57,7 @@ Skill = **开发流程仪式（控制器）**。须**点名**本 skill（`disabl
 
 | 借口 | 现实 |
 |---|---|
-| 「赶时间，L2 以后补」 | 无 `审核-<stage>.md` + `result: pass` 不得写推进闸时间戳 |
+| 「赶时间，L2 以后补」 | 无 `审核-<stage>.md` + `result` 恰为 `pass` 不得写推进闸时间戳；path 必过闸也不得为空 |
 | 「用户肯定会同意，先填确认」 | 假 transcript 非法；等真实短确认或真实 `user_task_<id>` |
 | 「fixture/auto 先顶上」 | 占位 task id 非法；须用户或跑批真实 id |
 | 「proxy 模式我兼代厨师，闸也可以省」 | proxy 只改厨师帽；证据条与 bound 相同 |

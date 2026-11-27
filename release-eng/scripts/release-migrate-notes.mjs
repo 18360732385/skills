@@ -7,7 +7,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { stripBom } from "./release-format.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 
 function parseArgs(argv) {
   const out = { root: ".", apply: false, help: false };
@@ -83,7 +83,7 @@ Usage: node release-migrate-notes.mjs --root . [--dry-run|--apply]
   // 更新索引中 ./notes/ 链接
   const indexPath = path.join(root, "docs", "releases", "releases.md");
   if (fs.existsSync(indexPath)) {
-    let text = stripBom(fs.readFileSync(indexPath, "utf8"));
+    let text = readTextFile(indexPath);
     text = text.replace(/\]\(\.\/notes\//g, "](./");
     text = text.replace(/\]\(notes\//g, "](");
     fs.writeFileSync(indexPath, text, "utf8");

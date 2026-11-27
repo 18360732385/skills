@@ -1,4 +1,4 @@
-﻿# gates — 环间 L1 / L2 / 硬闸
+# gates — 环间 L1 / L2 / 硬闸
 
 环间 **L1（形状）** + **L2（语义）** + 硬闸（原 artifacts + gates-review + gates-common）。环节/绑定见 [flow.md](flow.md)。  
 **消歧**：此处 L1/L2 **≠** 工程化仓阶梯 L1/L2（契约骨架 / 知识回流）。环 5「计划 Go 闸」**≠** 仓库开干（`ai_coding_ready`）。
@@ -71,7 +71,7 @@
   - [ ] `## API`（或等价「后端 / 接口」）— 含后端路径或声明（如 `backend/src/...`）
   - [ ] `## UI`（或等价「前端 / 页面」）— 含前端路径或声明（如 `frontend/src/...`）
   - [ ] `## 测试矩阵` — 两侧验收/用例映射可指认
-  - L1：两侧路径**或**声明至少各一；缺一侧 → 不过 design_confirmed / 不得宣称 Spec 完备
+  - L1：两侧路径**或**声明至少各一；缺一侧 → 不得宣称 Spec 完备 / 不得写 `gates.pre_impl`
 - [ ] **web+auth（O13）**：若 Spec 含登录/鉴权/会话 → 必填会话存储枚举一行：`memory | sessionStorage | localStorage(+风险注)`（默认可建议 `memory` 或 `sessionStorage`；`localStorage` 须风险注）
 
 ## plan（环 5）
@@ -150,7 +150,7 @@
 - [ ] **F 路径**：环境证据改在 **verify** 环强制（见下节）
 - [ ] 前端：推荐在实现期就把 `api_base_mode` / `pinned_deps` 写入 `env_notes`（verify 再核）
 
-## handoff（环 8b，旁路）
+## handoff（旁路动作，非 stage）
 
 - [ ] `交接.md` 存在且含 path / stage / 已完成 / 未决 / 下一步 / 产物指针（见 [handoff.md](handoff.md)）
 
@@ -383,7 +383,7 @@
 **禁止**：把「看起来像对话」的假 transcript / 占位笔录（含伪造的「用户：确认」多轮对话）写入授权证据。校验器 / selfcheck / `scripts/gate-evidence.mjs` 拒绝此类占位。  
 **禁止自造** `user_task_fixture|auto|todo|placeholder|test|dummy` 等占位 id；`user_task_<id>` 须来自用户或任务跑批真实 id。
 
-**证据机检（0.2.11 / 0.2.24）**：凡 `progress.gates.<name>` 为 ISO，回链本表须有对应行且 `authorized_by` 合法；下列闸另须主题根存在审核文件且含 **`result: pass`**（`fail` 不得推进）——`shared_understanding`→`审核-grill.md`，`design_confirmed`→`审核-design.md`，`go`→`审核-plan.md`，`gate`→`审核-gate.md`，`verify`→`审核-verify.md`。`triage` / `proto_confirmed` / `pre_impl` / `close` 不要求完整 L2 文件，但仍要合法授权。另：`progress.proto=entered` 时 **必须**有 ISO `gates.proto_confirmed`（`skipped*` 时保持 null）。`policy_exception` 不豁免 L2 pass。`controller_proxy` 不豁免；proxy 且存在任一 ISO gate 时回链「仪式与降级」须非空。
+**证据机检（现行）**：凡 `progress.gates.<name>` 为 ISO，回链本表须有对应行且 `authorized_by` 合法；时间列须与 progress 的 ISO 表示**同一时刻**（允许不同时区写法）；`policy_exception` 须在备注写明依据。下列闸另须主题根存在审核文件，且 `result` 字段恰为 `pass`（`fail` / 占位 `pass | fail` 均不得推进），`reviewer` 须为 `bound_subagent` / `inline_session` / `self(controller_proxy)`——`shared_understanding`→`审核-grill.md`，`design_confirmed`→`审核-design.md`，`go`→`审核-plan.md`，`gate`→`审核-gate.md`，`verify`→`审核-verify.md`。`triage` / `proto_confirmed` / `pre_impl` / `close` 不要求完整 L2 文件，但仍要合法授权。另：`progress.proto=entered` 时 **必须**有 ISO `gates.proto_confirmed`（`skipped*` 时保持 null）。`policy_exception` 不豁免 L2 pass。`controller_proxy` 不豁免；proxy 且存在任一 ISO gate 时回链「仪式与降级」的 `chef_mode` / `invoke` / `review_policy` 三行须填具体值。机检同时按 `path` / `stage` 检查**必过闸**，只写 `gates.close` 不再能通过。
 
 ## review_policy 降级备注（O5 / F-07）
 
@@ -403,7 +403,7 @@
 - **M1**：`packages` 已填；`docs_root` 默认 `docs/`；**禁止** `sibling_repos` 指向与 `packages[].path` 同仓同路径。
 - **M3**：单 Spec 含可指认 `## API` / `## UI` / `## 测试矩阵`（或等价标题）；两侧路径或声明至少各一。
 - **通过**：上述 L1 勾选成立（见上文 Part A spec 节）。
-- **失败**：缺章节或仅一侧 → 不得写 `gates.design_confirmed` 完备宣称；F 路径不得进 Pre-Impl 假装双端已设计。
+- **失败**：缺章节或仅一侧 → 不得宣称 Spec 完备 / 不得写 `gates.pre_impl`；F 路径不得进 Pre-Impl 假装双端已设计。
 
 ## 联调矩阵 CORS / Dev Proxy（O9）
 
@@ -451,7 +451,7 @@
 ## 计划 Go 闸（环 5 末，计划侧）
 
 - 通过：L1+L2（离开 plan）过；三问语义成立：①任务依赖无环 ②契约变更已列入首批 ③每任务有可测验收；用户短确认（若尚未在 plan 审中显式 yes）。写 `gates.go`。
-- **B 无独立 plan 文件**：三问针对短设计 / 内联 checklist 语义成立即可（见 [bridges.md](bridges.md)）；写 `gates.go` 后**立即**进 Proto 桥，禁止空等「环 5 结束」。
+- **B 无独立 plan 文件**：三问针对短设计 / 内联 checklist 语义成立即可（见 [bridges.md](bridges.md)）；L2 审核该 checklist 并落 `审核-plan.md`，再写 `gates.go`，随后**立即**进 Proto 桥，禁止空等「环 5 结束」。
 - 失败：补 plan / checklist；不得进 Proto 桥。
 - **≠** 仓库开干（`ai_coding_ready`；工程化仓口径）。
 

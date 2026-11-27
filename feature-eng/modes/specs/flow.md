@@ -1,4 +1,4 @@
-﻿# flow — 环节表与绑定
+# flow — 环节表与绑定
 
 环节表 + 绑定 lookup SSOT（原 stages.md + binding.md）。产物/闸门见 [gates.md](gates.md)；桥见 [bridges.md](bridges.md)。
 
@@ -28,6 +28,8 @@ docs/superpowers/           # Spec/Plan 语料 + README/ARCHIVE（不变）
 主题目录内常用文件：`progress.yaml`（机读 SSOT）、`回链.md`、`测试用例.md`、`测试报告.md`、`交接.md`、`术语增量.md`、`设计笔记.md`、`门禁清单.md`、`审核-<stage>.md`（stage 为英文键）。
 
 ## 可绑环节中文名与产物一句话（init / rebind / status SSOT）
+
+> 本表共 **11 个可绑环节**（含 `diagnose` / 10b），**不含**控制器自有的 close（环 11）；勿把两个“11”混为一谈。
 
 | 环 | 中文名 | 键名 | 主要产物（一句话） |
 |---|---|---|---|
@@ -59,7 +61,7 @@ docs/superpowers/           # Spec/Plan 语料 + README/ARCHIVE（不变）
 | 7 | 测试设计 | `testdesign` | 绑定 skill | **仅 F** | `测试用例.md` | runs active |
 | 7b | 实现前闸 | `pre-impl` | 控制器 | B/F | `stage=implement` | runs |
 | 8 | 实现 | `implement` | 绑定 skill（+可选子代理） | B/F；S 仅 throwaway | 代码 + 单测 | 业务树 |
-| 8b | 交接 | `handoff` | 旁路 | 按需 | `交接.md` | runs |
+| 8b | 交接 | `handoff` | 旁路（非 stage） | 按需 | `交接.md` | runs |
 | 9 | 门禁 | `gate` | 仓库 hooks + 绑定 review | B/F | `门禁清单.md` | runs |
 | 10 | 验证 | `verify` | 绑定 skill | **仅 F** | `测试报告.md` | runs |
 | 10′ | 冒烟 | `smoke` | 可选 | B 建议、不强制 | 可选记录 | runs |
@@ -88,7 +90,7 @@ docs/superpowers/           # Spec/Plan 语料 + README/ARCHIVE（不变）
 
 F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **spec**。
 
-**B 无独立 plan**：短设计确认后走「Go 等价三问」→ 写 `gates.go` → **立即**进 proto-bridge（见 [bridges.md](bridges.md)）；禁止空等「环 5 结束」。
+**B 无独立 plan**：短设计确认后走「Go 等价三问」→ 由 L2 审核该 checklist 并落 `审核-plan.md` → 写 `gates.go` → **立即**进 proto-bridge（见 [bridges.md](bridges.md)）；禁止空等「环 5 结束」。
 
 ## progress.yaml 字段
 
@@ -112,7 +114,8 @@ F 默认链路：design 确认 → **domain-bridge**（多数 `skipped`）→ **
 
 `grill` · `design` · `domain` · `spec` · `plan` · `proto` · `testdesign` · `implement` · `review` · `verify` · `diagnose`
 
-控制器自有环节（不绑子 skill）：`triage` · `domain-bridge` · `proto-bridge` · `go` · `pre-impl` · `handoff` · `advance` · `close`。  
+控制器自有环节（不绑子 skill）：`triage` · `domain-bridge` · `proto-bridge` · `go` · `pre-impl` · `handoff`（旁路） · `advance` · `close`；旁态 `smoke` 由控制器记录，不绑 skill，也不是独立推进环。
+
 说明：`advance` 内含 L1/L2 调度与按 `handoff_policy` 主动调起（不单独绑审核 skill；见 [gates.md](gates.md)）。
 
 ## 宿主调起策略 `invoke`

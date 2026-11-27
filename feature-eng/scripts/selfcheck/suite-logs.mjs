@@ -28,8 +28,8 @@ assert(
 );
 for (const ver of CHANGELOG_INDEXED) {
   assert(
-    changelogIndex != null && changelogIndex.includes(`${ver}.md`),
-    `CHANGELOG index links ${ver}`
+    changelogIndex != null && changelogIndex.includes(ver),
+    `CHANGELOG index mentions ${ver}`
   );
 }
 if (checkLogs && logRootPresent) {

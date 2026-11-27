@@ -1,6 +1,6 @@
 # fill 索引
 
-填充家族的**先读页**。总则仍是 [fill.md](fill.md)；不要从 SKILL 直接跳进某一份 fill-*.md。  
+填充家族的**先读页**。总则仍是 [fill.md](fill.md)；不确定顺序时先读本页，已知只做打分/形态/开闸时可按 SKILL 高频指针直达对应规格。  
 骨架（land / resume / seed-truths）完成后再填。目标：`ai_coding_ready`。
 
 ## 规格
@@ -18,7 +18,7 @@
 | 深真全 | [truth-quality.md](../modes/truth-quality.md) | draft vs SSOT |
 | MCP 装配 | [fill-mcp.md](fill-mcp.md) | 填充硬前置（需 db·redis） |
 | 流水线填充战役 | [pipeline-fill.md](../modes/pipeline-fill.md) | 骨架 Done 之后 |
-| 自动填充 | [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) | **已归档**：仅脚本、对话不推荐 |
+| 自动填充 | [archive/fill-truths-auto/](../archive/fill-truths-auto/INDEX.md) | **已归档**：脚本已于 0.7.50 删除、对话不推荐 |
 
 ## 脚本（规范入口）
 

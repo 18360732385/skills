@@ -6,8 +6,8 @@
 
 ## 前置闸
 
-- F：`测试报告.md` 无 `fail`，或用户显式接受残留（progress 记 `accepted_residual`）。
-- B：Gate 已过；冒烟为建议项，不强制。
+- F：`测试报告.md` 无未接受的 `fail` / `blocked`（或 progress 记 `accepted_residual`）；`gates.verify` 为 ISO；`artifacts.spec` / `testcases` / `test_report` 齐。
+- B：`gates.gate` 已过；冒烟为建议项，不强制。
 - S：只记结论，不走本页 superpowers 归档；若有 `docs/runs/active/<slug>/` 可直接移入 archive 或删除（与用户确认）。
 
 ## 步骤（B/F）

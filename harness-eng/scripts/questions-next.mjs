@@ -20,7 +20,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { parse as parseYaml } from "./lib/yaml.mjs";
 import { isCliMain } from "./lib/cli-main.mjs";
-import { parseJsonText, readJsonFile } from "./lib/json-read.mjs";
+import { decodeJsonBuffer, parseJsonText, readJsonFile, stripBom } from "./lib/json-read.mjs";
 import { findHarnessMetaFile } from "./lib/harness-meta.mjs";
 import { parseMetaDomains } from "./lib/domains.mjs";
 
@@ -41,7 +41,10 @@ function parseArgs(argv) {
 
 function loadAnswers(raw) {
   if (!raw) return {};
-  const stripped = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
+  if (raw === "-") {
+    return parseJsonText(decodeJsonBuffer(fs.readFileSync(0)), "--answers");
+  }
+  const stripped = stripBom(raw);
   if (stripped.trim().startsWith("{")) return parseJsonText(stripped, "--answers");
   return readJsonFile(path.resolve(raw), "--answers");
 }

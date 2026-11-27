@@ -60,8 +60,9 @@ import {
   migrateSuperpowersArchiveIfNeeded,
 } from "./lib/harness-meta.mjs";
 import { applyCommandsPrefill } from "./lib/prefill-commands.mjs";
-import { readSkillVersion } from "./lib/skill-version.mjs";
-import { readJsonFile } from "./lib/json-read.mjs";
+import { readSkillRev, readSkillVersion } from "./lib/skill-version.mjs";
+import { applyPreauth, decideWriteAuth } from "./lib/write-confirm.mjs";
+import { readJsonFile, readTextFile } from "./lib/json-read.mjs";
 
 /** Map short variant name → template path. */
 function moduleAgentsTmplPath(v) {
@@ -112,6 +113,7 @@ const LADDER_ORD = { L0: 0, L1: 1, L2: 2, L3: 3, L4: 4, L5: 5 };
 const YAML_MANAGED_KEYS = new Set([
   "skill",
   "skill_version",
+  "skill_rev",
   "ladder",
   "domains",
   "agents_variant",
@@ -238,7 +240,16 @@ Public entry:
 }
 
 function parseArgs(argv) {
-  const out = { dryRun: false, root: null, params: null, manifest: null, backup: false, help: false, rule101: undefined };
+  const out = {
+    dryRun: false,
+    root: null,
+    params: null,
+    manifest: null,
+    backup: false,
+    help: false,
+    rule101: undefined,
+    confirm: [],
+  };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--dry-run") out.dryRun = true;
@@ -255,7 +266,13 @@ function parseArgs(argv) {
       else if (v === "off" || v === "false" || v === "none") out.rule101 = "off";
       else throw new Error(`Unknown --rule101 value: ${v} (use full|off)`);
     }
-    else if (a === "--help" || a === "-h") out.help = true;
+    else if (a === "--confirm") {
+      const v = argv[++i];
+      if (v == null || v === "" || String(v).startsWith("--")) {
+        throw new Error("--confirm 需要闸门词，例如 --confirm 确认写入");
+      }
+      out.confirm.push(String(v));
+    } else if (a === "--help" || a === "-h") out.help = true;
     else throw new Error(`Unknown arg: ${a}`);
   }
   if (out.help) return out;
@@ -479,7 +496,7 @@ export function readLegacyFrontendGlobs(root) {
     if (!fs.existsSync(abs)) continue;
     let text;
     try {
-      text = fs.readFileSync(abs, "utf8");
+      text = readTextFile(abs);
     } catch {
       continue;
     }
@@ -1639,12 +1656,18 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   // Force skill_version from SSOT so a stale tmpl cannot land an old pin.
   if (item.id === "harness-meta") {
     const sv = readSkillVersion(SKILL_ROOT);
+    const sr = readSkillRev(SKILL_ROOT);
     rendered = rendered.replace(
       /^skill_version:\s*"[^"]*"/m,
       `skill_version: "${sv}"`
     );
     if (!/^skill_version:\s*/m.test(rendered)) {
       rendered = `skill_version: "${sv}"\n` + rendered;
+    }
+    if (/^skill_rev:\s*\d+/m.test(rendered)) {
+      rendered = rendered.replace(/^skill_rev:\s*\d+/m, `skill_rev: ${sr}`);
+    } else {
+      rendered = rendered.replace(/^(skill_version:.*)$/m, `$1\nskill_rev: ${sr}`);
     }
   }
   if (item.contentTransform === "mdc-to-host-md") {
@@ -1690,7 +1713,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
   let disk = "";
   if (exists && (isFixHook || action === "replace")) {
     try {
-      disk = fs.readFileSync(abs, "utf8");
+      disk = readTextFile(abs);
     } catch {
       disk = "";
     }
@@ -1775,7 +1798,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
     };
     if (action === "merge" && exists && isMarkdownMergeTarget(targetRel, item)) {
       entry.mergePreview = previewMarkdownMerge(
-        fs.readFileSync(abs, "utf8"),
+        readTextFile(abs),
         rendered,
         /\.mdc$/i.test(targetRel) || targetRel.endsWith(".md")
       );
@@ -1908,7 +1931,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       return;
     }
     if (targetRel.replace(/\\/g, "/").endsWith(".gitignore") || item.mergeMode === "append-lines") {
-      const cur = fs.readFileSync(abs, "utf8");
+      const cur = readTextFile(abs);
       const lines = rendered.split(/\r?\n/).filter((l) => l.trim() && !cur.includes(l));
       if (lines.length) {
         const next = cur.replace(/\s*$/, "") + "\n\n" + lines.join("\n") + "\n";
@@ -1919,7 +1942,7 @@ function applyOne(root, item, placeholders, dryRun, log, opts = {}) {
       }
       return;
     }
-    const cur = fs.readFileSync(abs, "utf8");
+    const cur = readTextFile(abs);
     let merged;
     if (item.mergeMode === "json-hooks") {
       merged = mergeJsonHooks(cur, rendered);
@@ -1967,6 +1990,17 @@ function main() {
     process.exit(0);
   }
   const root = path.resolve(args.root);
+  if (!args.dryRun) {
+    const decision = decideWriteAuth({
+      confirms: args.confirm || [],
+      root,
+      dryRun: false,
+      writes: true,
+    });
+    if (decision.message) console.error(decision.message);
+    if (decision.mutate) applyPreauth(root, decision.mutate);
+    if (!decision.ok) process.exit(decision.exitCode ?? 1);
+  }
   const params = readJsonFile(path.resolve(args.params), "--params");
   // 0.8.2 patch (D10): CLI --rule101 quick boolean overlays params.rule101.
   if (args.rule101 !== undefined) params.rule101 = args.rule101;
@@ -2086,7 +2120,7 @@ function main() {
       const abs = path.join(root, item.target);
       if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) continue;
       try {
-        const content = fs.readFileSync(abs, "utf8");
+        const content = readTextFile(abs);
         const matches = findUnresolvedPlaceholders(content);
         if (matches.length) unresolved.push({ target: item.target, placeholders: matches });
       } catch {

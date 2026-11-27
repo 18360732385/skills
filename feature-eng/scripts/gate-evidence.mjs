@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * feature-eng 闸门证据廉价校验（0.2.15-dev）。
- * 不写盘：ISO gates.* 须有合法 authorized_by；适用环须有 审核-<stage>.md 且 result: pass。
- * controller_proxy + 任一 ISO gate → 回链「仪式与降级」节非空。
+ * feature-eng 闸门证据校验（0.2.28+）。
+ * 不写盘：ISO gates.* 须有合法 authorized_by；适用环须有 审核-<stage>.md 且 result/reviewer 合法。
+ * controller_proxy + 任一 ISO gate → 回链「仪式与降级」三行须填具体值。
+ * 同时做 path-aware 必过闸检查，避免「只写 gates.close 就 PASS」。
  *
  * Usage:
  *   node scripts/gate-evidence.mjs --cwd <仓根> --slug <slug>
@@ -16,7 +17,16 @@ import {
   isUserTaskPlaceholder,
   isLegalAuthorizedBy,
 } from "./lib/auth.mjs";
-import { GATE_KEYS, L2_FOR_GATE } from "./lib/progress-shape.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
+import {
+  GATE_KEYS,
+  L2_FOR_GATE,
+  STAGE_ENUM,
+  PATH_ENUM,
+  CHEF_ENUM,
+  DOMAIN_PROTO_ENUM,
+  stripYamlInlineComment,
+} from "./lib/progress-shape.mjs";
 
 function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
@@ -34,7 +44,7 @@ if (!slug) {
   process.exit(2);
 }
 
-/** 主链 stage 顺序（smoke/diagnose 为旁态，不参与中途环推断） */
+/** 主链 stage 顺序（smoke 在 gate 之后、verify 之前；diagnose 为旁态不参与推断） */
 const STAGE_ORDER = [
   "triage",
   "grill",
@@ -49,17 +59,29 @@ const STAGE_ORDER = [
   "pre-impl",
   "implement",
   "gate",
+  "smoke",
   "verify",
   "close",
   "done",
 ];
 
-/** stage 是否已越过主链上 target 环（任一不在主链内则视为未越过） */
 function passedStage(stage, target) {
   const a = STAGE_ORDER.indexOf(String(stage));
   const b = STAGE_ORDER.indexOf(target);
   return a >= 0 && b >= 0 && a > b;
 }
+
+const REVIEWERS = new Set([
+  "bound_subagent",
+  "inline_session",
+  "self(controller_proxy)",
+]);
+
+const RITUAL_VALUES = {
+  chef_mode: ["bound", "controller_proxy"],
+  invoke: ["strict", "inline"],
+  review_policy: ["subagent", "inline"],
+};
 
 const issues = [];
 const ok = [];
@@ -70,11 +92,26 @@ function exists(rel) {
 function read(rel) {
   const p = path.join(cwd, rel);
   if (!fs.existsSync(p)) return null;
-  return fs.readFileSync(p, "utf8");
+  return readTextFile(p);
 }
+
+function normalizeScalar(raw) {
+  let v = stripYamlInlineComment(raw).trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1);
+  }
+  if (v === "null" || v === "~" || v === "" || v === "—") return null;
+  return v;
+}
+
 function nestedScalar(text, parentKey, childKey) {
   if (!text) return undefined;
-  const start = text.search(new RegExp(`^${parentKey}:\\s*$`, "m"));
+  const start = text.search(
+    new RegExp(`^${parentKey}\\s*:\\s*(?:#.*)?$`, "m")
+  );
   if (start < 0) return undefined;
   const from = text.slice(start);
   const firstNl = from.indexOf("\n");
@@ -83,71 +120,133 @@ function nestedScalar(text, parentKey, childKey) {
   const block = nextTop < 0 ? body : body.slice(0, nextTop);
   const m = block.match(new RegExp(`^\\s+${childKey}\\s*:\\s*(.*)$`, "m"));
   if (!m) return undefined;
-  let v = m[1].trim();
-  if (
-    (v.startsWith('"') && v.endsWith('"')) ||
-    (v.startsWith("'") && v.endsWith("'"))
-  ) {
-    v = v.slice(1, -1);
-  }
-  if (v === "null" || v === "~" || v === "") return null;
-  return v;
+  return normalizeScalar(m[1]);
 }
+
 function readScalar(text, key) {
   if (!text) return undefined;
-  const m = text.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
+  const m = text.match(new RegExp(`^${key}\\s*:\\s*(.*)$`, "m"));
   if (!m) return undefined;
-  let v = m[1].trim();
-  if (
-    (v.startsWith('"') && v.endsWith('"')) ||
-    (v.startsWith("'") && v.endsWith("'"))
-  ) {
-    v = v.slice(1, -1);
-  }
-  if (v === "null" || v === "~" || v === "") return null;
-  return v;
+  return normalizeScalar(m[1]);
 }
 
 function isIsoGate(v) {
-  return v != null && /^\d{4}-\d{2}-\d{2}T/.test(String(v));
+  return v != null && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(v));
 }
 
-/**
- * Parse 硬闸授权 markdown table rows:
- * | triage | 2026-... | user_chat | ... |
- */
+/** | gate | time | authorized_by | note | */
 function parseAuthTable(huilian) {
   const map = {};
   if (!huilian) return map;
-  const section = huilian.match(
-    /##\s*硬闸授权[\s\S]*?(?=\n##\s|\n*$)/
-  );
+  const section = huilian.match(/##\s*硬闸授权[\s\S]*?(?=\n##\s|\n*$)/);
   const block = section ? section[0] : huilian;
   for (const line of block.split(/\r?\n/)) {
     const m = line.match(
-      /^\|\s*([a-z_][a-z0-9_]*)\s*\|\s*([^|]*)\|\s*([^|]*)\|/
+      /^\|\s*([a-z_][a-z0-9_]*)\s*\|\s*([^|]*)\|\s*([^|]*)\|\s*([^|]*)\|?/
     );
     if (!m) continue;
     const gate = m[1].trim();
     if (gate === "闸" || gate === "---" || !GATE_KEYS.includes(gate)) continue;
     map[gate] = {
-      time: m[2].trim(),
-      authorized_by: m[3].trim(),
+      time: normalizeScalar(m[2]) ?? "",
+      authorized_by: normalizeScalar(m[3]) ?? "",
+      note: normalizeScalar(m[4]) ?? "",
     };
   }
   return map;
 }
 
-/** 「仪式与降级」节存在且有实质行（非空、非纯 —） */
+/**
+ * 「仪式与降级」须三行都填具体枚举值；模板占位（含 `|` 或纯 `—`）不算。
+ */
 function ritualSectionOk(huilian) {
-  if (!huilian || !/##\s*仪式与降级/.test(huilian)) return false;
-  const m = huilian.match(/##\s*仪式与降级\s*\n([\s\S]*?)(?=\n##\s|\n*$)/);
-  if (!m) return false;
-  const meaningful = (m[1] || "")
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l && l !== "—" && !/^[-*]\s*—\s*$/.test(l));
-  return meaningful.length > 0;
+  if (!huilian) return false;
+  const section = huilian.match(
+    /##\s*仪式与降级[\s\S]*?(?=\n##\s|\n*$)/
+  );
+  if (!section) return false;
+  const lines = section[0].split(/\r?\n/);
+  for (const [key, allowed] of Object.entries(RITUAL_VALUES)) {
+    const line = lines.find((l) =>
+      new RegExp(`^[-*]?\\s*${key}\\s*[:：]`).test(l.trim())
+    );
+    if (!line) return false;
+    const raw = line
+      .trim()
+      .replace(new RegExp(`^[-*]?\\s*${key}\\s*[:：]\\s*`), "");
+    const value = stripYamlInlineComment(raw)
+      .replace(/`/g, "")
+      .replace(/^["']|["']$/g, "")
+      .trim();
+    if (!value || value === "—" || value.includes("|")) return false;
+    const token = value.split(/[\s（(—]/)[0];
+    if (!allowed.includes(token)) return false;
+  }
+  return true;
+}
+
+function parseReviewResult(body) {
+  const results = [];
+  let reviewer = null;
+  for (const line of body.split(/\r?\n/)) {
+    const rm = line.match(/^\s*[-*]?\s*result\s*:\s*(.*)$/i);
+    if (rm) {
+      results.push(stripYamlInlineComment(rm[1]).trim().toLowerCase());
+    }
+    const vm = line.match(/^\s*[-*]?\s*reviewer\s*:\s*(.*)$/i);
+    if (vm) {
+      reviewer = stripYamlInlineComment(vm[1])
+        .replace(/`/g, "")
+        .replace(/^["']|["']$/g, "")
+        .trim();
+    }
+  }
+  let status = "invalid";
+  if (results.length === 0) status = "missing";
+  else if (results.some((v) => v === "fail")) status = "fail";
+  else if (results.every((v) => v === "pass")) status = "pass";
+  return { status, value: results.join(" | "), reviewer };
+}
+
+function checkReview(reviewRel, label) {
+  const body = read(reviewRel);
+  if (!body) {
+    issues.push(`${label}: missing ${reviewRel}`);
+    return;
+  }
+  const rr = parseReviewResult(body);
+  if (rr.status === "pass") {
+    ok.push(`${reviewRel} result: pass`);
+  } else if (rr.status === "fail") {
+    issues.push(`${reviewRel} result: fail (${label} requires result: pass)`);
+  } else if (rr.status === "missing") {
+    issues.push(`${reviewRel} missing result: pass`);
+  } else {
+    issues.push(
+      `${reviewRel} invalid result ${JSON.stringify(rr.value)} (expected exactly pass|fail)`
+    );
+  }
+  if (!REVIEWERS.has(rr.reviewer)) {
+    issues.push(
+      `${reviewRel} missing/invalid reviewer (bound_subagent|inline_session|self(controller_proxy))`
+    );
+  }
+}
+
+function requiredGatesFor(pathVal, stageVal) {
+  if (!pathVal || pathVal === "spike") return [];
+  if (stageVal === "diagnose") return [];
+  const s = stageVal === "smoke" ? "smoke" : stageVal;
+  const req = [];
+  if (passedStage(s, "triage")) req.push("triage");
+  if (passedStage(s, "grill")) req.push("shared_understanding");
+  if (passedStage(s, "design")) req.push("design_confirmed");
+  if (passedStage(s, "plan")) req.push("go");
+  if (passedStage(s, "pre-impl")) req.push("pre_impl");
+  if (passedStage(s, "gate")) req.push("gate");
+  if (pathVal === "full" && passedStage(s, "verify")) req.push("verify");
+  if (s === "done") req.push("close");
+  return req;
 }
 
 const activeRel = `docs/runs/active/${slug}`;
@@ -177,15 +276,26 @@ const authMap = parseAuthTable(huilian || "");
 
 let anyIsoGate = false;
 if (progress) {
-  // D4：内联 gates 映射（gates: {...}）块状解析器读不到，显式拒绝，杜绝静默漏检
-  if (/^gates:\s*\{/m.test(progress)) {
-    issues.push("inline gates mapping not supported; use block style");
+  const gatesLine = progress.match(/^gates\s*:\s*(.*)$/m);
+  if (!gatesLine) {
+    issues.push("missing block-style gates: in progress.yaml");
+  } else {
+    const tail = stripYamlInlineComment(gatesLine[1]).trim();
+    if (tail.startsWith("{")) {
+      issues.push("inline gates mapping not supported; use block style");
+    } else if (tail === "null" || tail === "~") {
+      issues.push("gates block is null; use block style with gate keys");
+    }
   }
+
   for (const gate of GATE_KEYS) {
     const ts = nestedScalar(progress, "gates", gate);
-    if (!isIsoGate(ts)) continue;
+    if (ts == null) continue;
+    if (!isIsoGate(ts)) {
+      issues.push(`gates.${gate} not ISO timestamp: ${JSON.stringify(ts)}`);
+      continue;
+    }
     anyIsoGate = true;
-
     ok.push(`gates.${gate} is ISO`);
 
     const row = authMap[gate];
@@ -197,7 +307,9 @@ if (progress) {
     }
     const auth = row.authorized_by;
     if (auth === "—" || auth === "" || auth == null) {
-      issues.push(`gates.${gate}: authorized_by empty (got ${JSON.stringify(auth)})`);
+      issues.push(
+        `gates.${gate}: authorized_by empty (got ${JSON.stringify(auth)})`
+      );
     } else if (isFakeChatTranscriptPlaceholder(auth)) {
       issues.push(`gates.${gate}: fake transcript in authorized_by`);
     } else if (isUserTaskPlaceholder(auth)) {
@@ -211,51 +323,70 @@ if (progress) {
     } else {
       ok.push(`gates.${gate} authorized_by=${auth}`);
     }
+    if (
+      auth === "policy_exception" &&
+      (!row.note || row.note === "—")
+    ) {
+      issues.push(`gates.${gate}: policy_exception requires 备注`);
+    }
 
-    // D5：授权表 time 列 ↔ progress gates ISO 时间一致性（双非空且字符串不等 → issue）
-    if (row.time && row.time !== "—") {
-      if (String(ts) !== row.time) {
+    if (!row.time || row.time === "—") {
+      issues.push(`gates.${gate}: auth table time empty`);
+    } else {
+      const progressTime = Date.parse(String(ts));
+      const tableTime = Date.parse(row.time);
+      const same =
+        Number.isFinite(progressTime) && Number.isFinite(tableTime)
+          ? progressTime === tableTime
+          : String(ts) === row.time;
+      if (same) {
+        ok.push(`gates.${gate} auth table time matches`);
+      } else {
         issues.push(
           `gates.${gate} auth table time mismatch (progress=${String(ts)} table=${row.time})`
         );
-      } else {
-        ok.push(`gates.${gate} auth table time matches`);
       }
     }
 
     const reviewFile = L2_FOR_GATE[gate];
     if (reviewFile) {
-      const reviewRel = `${runRel}/${reviewFile}`;
-      const body = read(reviewRel);
-      if (!body) {
-        issues.push(`gates.${gate} set but missing ${reviewRel}`);
-      } else if (!/result:\s*pass\b/i.test(body)) {
-        if (/result:\s*fail\b/i.test(body)) {
-          issues.push(
-            `${reviewRel} result: fail (ISO gates.${gate} requires result: pass)`
-          );
-        } else {
-          issues.push(`${reviewRel} missing result: pass`);
-        }
-      } else {
-        ok.push(`${reviewFile} result: pass`);
-      }
+      checkReview(`${runRel}/${reviewFile}`, `gates.${gate}`);
     }
   }
 
   const chefMode = readScalar(progress, "chef_mode");
+  const protoVal = readScalar(progress, "proto");
+  const stageVal = readScalar(progress, "stage");
+  const pathVal = readScalar(progress, "path");
+  const domainVal = readScalar(progress, "domain");
+
+  if (pathVal != null && !PATH_ENUM.has(pathVal)) {
+    issues.push(`path illegal: ${JSON.stringify(pathVal)}`);
+  }
+  if (chefMode != null && !CHEF_ENUM.has(chefMode)) {
+    issues.push(`chef_mode illegal: ${JSON.stringify(chefMode)}`);
+  }
+  if (protoVal != null && !DOMAIN_PROTO_ENUM.has(protoVal)) {
+    issues.push(`proto illegal: ${JSON.stringify(protoVal)}`);
+  }
+  if (stageVal != null && !STAGE_ENUM.has(stageVal)) {
+    issues.push(`stage illegal: ${JSON.stringify(stageVal)}`);
+  }
+  if (pathVal == null && stageVal !== "triage") {
+    issues.push("progress.path missing/null");
+  }
+
   if (chefMode === "controller_proxy" && anyIsoGate) {
     if (!ritualSectionOk(huilian)) {
       issues.push(
-        "chef_mode=controller_proxy with ISO gates requires non-empty 回链「仪式与降级」"
+        "chef_mode=controller_proxy with ISO gates requires 回链「仪式与降级」chef_mode/invoke/review_policy 三行具体值"
       );
     } else {
-      ok.push("controller_proxy 仪式与降级 present");
+      ok.push("controller_proxy 仪式与降级 filled");
     }
   }
 
   // F-04: proto=entered requires ISO gates.proto_confirmed
-  const protoVal = readScalar(progress, "proto");
   if (protoVal === "entered") {
     const pc = nestedScalar(progress, "gates", "proto_confirmed");
     if (!isIsoGate(pc)) {
@@ -267,44 +398,37 @@ if (progress) {
     }
   }
 
-  // D2：中途环 L2 阶段推断 —— stage 越过环 X 时须有 审核-X.md 且 result: pass
-  // spec / testdesign 仅 path=full 检查（B 路径无独立 spec/testdesign 环，勿误伤）；
-  // smoke / diagnose 为旁态，跳过本检查。
-  const stageVal = readScalar(progress, "stage");
-  const pathVal = readScalar(progress, "path");
-  const domainVal = readScalar(progress, "domain");
-  if (stageVal !== "smoke" && stageVal !== "diagnose" && runRel) {
+  // path-aware 必过闸：只校验“已声明”的闸会漏掉整段跳闸。
+  for (const gate of requiredGatesFor(pathVal, stageVal)) {
+    const v = nestedScalar(progress, "gates", gate);
+    if (v == null) {
+      issues.push(
+        `required gate ${gate} missing (path=${pathVal}, stage=${stageVal})`
+      );
+    }
+  }
+
+  // 中途环 L2：stage 越过环 X 时须有 审核-X.md；diagnose 可出现在任意时点，跳过。
+  const inferredStage = stageVal === "smoke" ? "smoke" : stageVal;
+  if (stageVal !== "diagnose" && runRel) {
     const midReqs = [];
-    if (pathVal === "full" && passedStage(stageVal, "spec")) {
+    if (pathVal === "full" && passedStage(inferredStage, "spec")) {
       midReqs.push(["spec", "审核-spec.md"]);
     }
-    if (pathVal === "full" && passedStage(stageVal, "testdesign")) {
+    if (pathVal === "full" && passedStage(inferredStage, "testdesign")) {
       midReqs.push(["testdesign", "审核-testdesign.md"]);
     }
-    if (passedStage(stageVal, "implement")) {
+    if (passedStage(inferredStage, "implement")) {
       midReqs.push(["implement", "审核-implement.md"]);
     }
-    if (domainVal === "entered" && passedStage(stageVal, "domain")) {
+    if (domainVal === "entered" && passedStage(inferredStage, "domain")) {
       midReqs.push(["domain", "审核-domain.md"]);
     }
     for (const [ring, reviewFile] of midReqs) {
-      const reviewRel = `${runRel}/${reviewFile}`;
-      const body = read(reviewRel);
-      if (!body) {
-        issues.push(
-          `stage=${stageVal} passed ring ${ring} but missing ${reviewRel}`
-        );
-      } else if (!/result:\s*pass\b/i.test(body)) {
-        if (/result:\s*fail\b/i.test(body)) {
-          issues.push(
-            `${reviewRel} result: fail (stage=${stageVal} passed ring ${ring} requires result: pass)`
-          );
-        } else {
-          issues.push(`${reviewRel} missing result: pass`);
-        }
-      } else {
-        ok.push(`${reviewFile} result: pass (stage=${stageVal} passed ring ${ring})`);
-      }
+      checkReview(
+        `${runRel}/${reviewFile}`,
+        `stage=${stageVal} passed ring ${ring}`
+      );
     }
   }
 }

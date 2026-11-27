@@ -52,7 +52,8 @@ import {
   retireObsoleteWrappers,
 } from "./lib/obsolete-wrappers.mjs";
 import { runMetaStableCheck } from "./lib/meta-stable.mjs";
-import { readJsonFile } from "./lib/json-read.mjs";
+import { decodeJsonBuffer, parseJsonText, readJsonFile } from "./lib/json-read.mjs";
+import { applyPreauth, decideWriteAuth } from "./lib/write-confirm.mjs";
 import { installSkewWarning } from "./lib/skill-version.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -160,12 +161,14 @@ function parseArgs(argv) {
     mode: "land",
     noSync: false,
     noWrite: false,
+    exitZero: false,
     help: false,
     checkFreshness: false,
     checkMetaStable: false,
     baseline: null,
     findings: null,
     retireWrappers: false,
+    confirm: [],
     /**
      * null = unset（0.7.48：厚仓默认 dry-run，薄仓默认 auto）
      * @type {'auto'|'off'|'dry-run'|null}
@@ -185,10 +188,18 @@ function parseArgs(argv) {
     else if (a === "--findings") out.findings = argv[++i];
     else if (a === "--no-sync") out.noSync = true;
     else if (a === "--no-write") out.noWrite = true;
+    else if (a === "--exit-zero") out.exitZero = true;
     else if (a === "--check-freshness") out.checkFreshness = true;
     else if (a === "--check-meta-stable") out.checkMetaStable = true;
     else if (a === "--baseline") out.baseline = argv[++i];
     else if (a === "--retire-wrappers") out.retireWrappers = true;
+    else if (a === "--confirm") {
+      const v = argv[++i];
+      if (v == null || v === "" || String(v).startsWith("--")) {
+        throw new Error("--confirm 需要闸门词，例如 --confirm 确认写入");
+      }
+      out.confirm.push(String(v));
+    }
     else if (a === "--no-migrate-docs") out.migrateDocs = "off";
     else if (a === "--migrate-docs" || a.startsWith("--migrate-docs=")) {
       let v = "auto";
@@ -233,10 +244,10 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage:
-  node scripts/harness.mjs --root <TARGET> --params <params.json>
+  node scripts/harness.mjs --root <TARGET> --params <params.json|->
       [--mode land|resume|upgrade|pipeline-skeleton|refresh|backfill]
-      [--dry-run] [--manifest <path>] [--backup] [--no-sync]
-  node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write] [--retire-wrappers]
+      [--confirm <闸门词>] [--dry-run] [--manifest <path>] [--backup] [--no-sync]
+  node scripts/harness.mjs --mode refresh --root <TARGET> [--dry-run] [--no-write] [--exit-zero] [--retire-wrappers] [--confirm <闸门词>]
   node scripts/harness.mjs --mode backfill --root <TARGET> --findings <file|dir>
   node scripts/harness.mjs --check-freshness --root <TARGET>
   node scripts/harness.mjs --check-meta-stable --root <TARGET> [--baseline <file>]
@@ -248,10 +259,17 @@ Canonical Agent write entry (0.6.0+).
     in the target (unless --no-sync or --dry-run).
   pipeline-skeleton: skeleton campaign write only — 不跑 fill-* / pipeline-fill.
   refresh: 重建 inventory → acceptance → fill-score（写 score-latest.json）；
-    exit 0=ai_coding_ready · 2=未开干(warn) · 1=脚本失败；--no-write 不落盘 score。
+    exit 0=ai_coding_ready · 2=未开干(warn) · 1=脚本失败；--no-write 不落盘 score；
+    --exit-zero 把 2 视为 0（CI 不想把「未开干」当失败时用）。
+  --params -: 从 stdin 读 JSON（UTF-8 或 UTF-16，可带 BOM；不再强制落地 params 文件）。
+  --confirm <词>: 写盘令牌。接受 确认写入 / 按计划执行 / 执行 WritePlan / LGTM /
+    只执行 L0…L5 / 去掉 14 后执行。确认预授权、预授权后续写盘 只写入
+    docs/harness-eng/write-auth.yaml，不授权本轮。取消预授权 清除该文件。
+    已落盘 preauth: true 时后续写盘可省略 --confirm。--dry-run / 只读模式不需要。
+    裸「确认」不接受。
   backfill: 读探针 findings → stdout WritePlan（不写盘）；见 modes/backfill.md。
-  --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与目标仓
-    scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
+  --check-freshness: 对照 skill tmpl 的 HARNESS_SYNC_TMPL_ID 与 HARNESS_ENG_REV
+    和目标仓 scripts/agent-config/sync.mjs；无该文件则 skip（exit 0）；落后则打印刷新步骤并 exit 1。
     与 --params 同传时：非 L5 仅跑 freshness（短路、不渲染）；L5 仍 render+sync，再校验 freshness。
   --check-meta-stable: harness-meta 内容 hash（默认忽略 last_mode）；可选 --baseline 比对。
     仅 last_mode 差 → exit 0；其它内容差 → exit 1。供 CI 跨 mode 稳态检查。
@@ -271,7 +289,28 @@ Canonical Agent write entry (0.6.0+).
 }
 
 function loadParams(paramsPath) {
+  if (paramsPath === "-") {
+    try {
+      return parseJsonText(decodeJsonBuffer(fs.readFileSync(0)), "--params");
+    } catch (err) {
+      console.error(`harness: --params - JSON 解析失败: ${err.message}`);
+      process.exit(1);
+    }
+  }
   return readJsonFile(paramsPath, "--params");
+}
+
+function enforceWriteAuth(args, writes) {
+  if (!writes || args.dryRun) return;
+  const decision = decideWriteAuth({
+    confirms: args.confirm || [],
+    root: args.root,
+    dryRun: false,
+    writes: true,
+  });
+  if (decision.message) console.error(decision.message);
+  if (decision.mutate && args.root) applyPreauth(args.root, decision.mutate);
+  if (!decision.ok) process.exit(decision.exitCode ?? 1);
 }
 
 /**
@@ -361,6 +400,7 @@ function refuseGeneratedFiles(params) {
 
 function runRender(args) {
   const argv = [RENDER, "--root", args.root, "--params", args.params];
+  for (const phrase of args.confirm || []) argv.push("--confirm", phrase);
   if (args.dryRun) argv.push("--dry-run");
   if (args.backup) argv.push("--backup");
   if (args.manifest) argv.push("--manifest", args.manifest);
@@ -488,6 +528,7 @@ export function main(argv = process.argv) {
       process.exit(1);
     }
     announceMode("refresh");
+    enforceWriteAuth(args, !args.noWrite);
     const { exitCode, report } = runRefresh(args.root, {
       write: !args.noWrite,
       dryRun: args.dryRun,
@@ -497,7 +538,7 @@ export function main(argv = process.argv) {
       for (const h of report.hints) console.error(`harness refresh: ${h}`);
     }
     if (!args.dryRun) maybeHandleObsoleteWrappers(args.root, args.retireWrappers);
-    process.exit(exitCode);
+    process.exit(args.exitZero && exitCode === 2 ? 0 : exitCode);
   }
   if (modeEarly === "backfill") {
     if (!args.root || !args.findings) {
@@ -523,6 +564,7 @@ export function main(argv = process.argv) {
   }
 
   const loaded = loadParams(args.params);
+  enforceWriteAuth(args, true);
   const applied = applyModeDefaults(loaded, mode, args.params);
   const params = applied.params;
   args.params = applied.paramsPath;
@@ -593,7 +635,10 @@ export function main(argv = process.argv) {
     process.exit(1);
   }
   if (args.checkFreshness && afterFresh.status === "fresh") {
-    console.error(`harness: sync.mjs freshness OK（HARNESS_SYNC_TMPL_ID=${afterFresh.skillId}）。`);
+    console.error(
+      `harness: sync.mjs freshness OK（HARNESS_SYNC_TMPL_ID=${afterFresh.skillId}` +
+        `${afterFresh.skillRev != null ? ` HARNESS_ENG_REV=${afterFresh.skillRev}` : ""}）。`
+    );
   }
 
   if (args.dryRun) {

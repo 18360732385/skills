@@ -1,4 +1,4 @@
-﻿# advance — 环末推进
+# advance — 环末推进
 
 当前环声称完成时运行。`start`/`resume` 之后用户说本环做完即走本页，不必点名 `advance`。
 

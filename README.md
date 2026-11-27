@@ -51,7 +51,10 @@ skills/
 ├── harness-eng/
 │   ├── _meta/
 │   ├── archive/
-│   ├── docs/
+│   ├── fill/
+│   ├── guide/
+│   ├── host/
+│   ├── modes/
 │   ├── scripts/
 │   ├── templates/
 │   ├── CHANGELOG.md
@@ -61,7 +64,8 @@ skills/
 ├── feature-eng/
 │   ├── _meta/
 │   ├── config/
-│   ├── conventions/
+│   ├── guide/
+│   ├── modes/
 │   ├── scripts/
 │   ├── templates/
 │   ├── CHANGELOG.md
@@ -78,7 +82,10 @@ skills/
 │   └── SKILL.md
 ├── release-eng/
 │   ├── _meta/
+│   ├── docs/
 │   ├── fixtures/
+│   ├── guide/
+│   ├── modes/
 │   ├── scripts/
 │   ├── CHANGELOG.md
 │   ├── README.md
@@ -118,15 +125,15 @@ _log/
 |----------|-------------|
 | [harness-eng/SKILL.md](harness-eng/SKILL.md) | 施工仪式入口：落地 / 续跑 / 流水线 / 审计 / 填充 |
 | [harness-eng/QUICKSTART.md](harness-eng/QUICKSTART.md) | harness-eng 一页纸 |
-| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.8.9） |
+| [harness-eng/README.md](harness-eng/README.md) | harness-eng 安装与版本（当前 0.8.11） |
 | [feature-eng/SKILL.md](feature-eng/SKILL.md) | 开发流程入口：init / rebind / start / resume / status / advance / close |
 | [feature-eng/QUICKSTART.md](feature-eng/QUICKSTART.md) | feature-eng 一页纸 |
-| [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.28）；须点名加载 |
+| [feature-eng/README.md](feature-eng/README.md) | feature-eng 可移植性与版本（当前 0.2.29）；须点名加载 |
 | [feature-eng/guide/使用手册.md](feature-eng/guide/使用手册.md) | feature-eng 完整使用手册（8 章：定位 / 绑定 / 主流程 / 11 环 / 闸门 / 过程态 / 专项 / FAQ） |
 | [feature-eng/guide/使用手册.html](feature-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
 | [feature-eng/guide/使用手册-摘要.md](feature-eng/guide/使用手册-摘要.md) | feature-eng 一分钟导读 |
 | [release-eng/SKILL.md](release-eng/SKILL.md) | 发版仪式入口：prepare / audit / seal / cancel |
-| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.4.4） |
+| [release-eng/README.md](release-eng/README.md) | release-eng 可移植性与版本（当前 0.4.6） |
 | [release-eng/guide/使用手册.md](release-eng/guide/使用手册.md) | release-eng 完整使用手册（8 章：定位 / 安装骨架 / 主流程 / 四模式 / 约定 SSOT / 发版单 / 硬闸 / FAQ） |
 | [release-eng/guide/使用手册.html](release-eng/guide/使用手册.html) | 同一手册的浏览器可读版（目录 / 搜索） |
 | [release-eng/guide/使用手册-摘要.md](release-eng/guide/使用手册-摘要.md) | release-eng 一分钟导读 |
@@ -136,6 +143,10 @@ _log/
 ## Contributing
 
 新增 skill：在仓库根目录建同名文件夹，放入 `SKILL.md`（含 `name` / `description` frontmatter），再按本仓现有 skill 的结构补文档与资源。
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 <a href="https://github.com/18360732385/skills/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=18360732385/skills" />

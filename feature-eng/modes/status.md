@@ -1,4 +1,4 @@
-﻿# status — 只读看进度
+# status — 只读看进度
 
 未指定且已有未完成 `docs/runs/active/` 时默认走本页。输出：
 

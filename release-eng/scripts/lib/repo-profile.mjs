@@ -9,6 +9,7 @@
  * 自包含：不 import release-format（避免环依赖）；stripBom 本地实现。
  */
 import fs from "fs";
+import { readTextFile } from "./text-encoding.mjs";
 import path from "path";
 
 /** 分支 slug → 中文业务短语（原 release-format.mjs BRANCH_SLUG_CN） */
@@ -97,7 +98,7 @@ export function loadRepoProfile(root) {
   try {
     const p = path.join(root, "docs", "releases", "repo-profile.json");
     if (!fs.existsSync(p)) return fallback;
-    const text = stripBom(fs.readFileSync(p, "utf8"));
+    const text = readTextFile(p);
     const override = JSON.parse(text);
     if (!isPlainObject(override)) return fallback;
     return deepMergeTables(DEFAULT_REPO_PROFILE, override);

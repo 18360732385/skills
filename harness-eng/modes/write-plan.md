@@ -61,7 +61,9 @@ Q_SEED: 是
 
 在用户明确回复下列**任一**之前不写盘（正目标：先过闸门词表）：
 
-`按计划执行` · `确认` · `确认写入` · `执行 WritePlan` · `LGTM`
+`按计划执行` · `确认写入` · `执行 WritePlan` · `LGTM`
+
+裸「确认」只在**紧接 WritePlan 展示的下一轮**、且没有其他待答问题时才算等价；用户回答路径 / 选项 / 事实的「确认」不算写盘授权。拿不准时追问一句：请回复「确认写入」。
 
 子集：`只执行 L0` / `只执行 L1` … · `去掉 14 后执行`
 
@@ -69,16 +71,28 @@ Q_SEED: 是
 
 用户回复 **`确认预授权`** 或 **`预授权后续写盘`**：
 
-1. 本轮 WritePlan **仍须**完整确认后写盘
-2. 同会话后续 `resume` / `fill-*` / pipeline 轮次：**自动写盘**，无需再等闸门
-3. WritePlan 技术摘要标注：`预授权: 是`
-4. 用户可随时说「取消预授权」恢复逐轮确认
+1. 本轮 WritePlan **仍须** `--confirm 确认写入` 后写盘
+2. `--confirm 确认预授权` 写入 `write-auth.yaml` 之后，后续 `resume` / `fill-*` / pipeline 轮次可省略 `--confirm`
+3. WritePlan 技术摘要标注：`预授权: 是`（只在用户说了预授权词时；`Q_PREAUTH` 不算）
+4. 用户说「取消预授权」→ `--confirm 取消预授权`，文件改为 `preauth: false`
+
+**预授权 ≠ 本轮写盘**：`确认预授权` 只授权后续轮次；本轮仍须 `确认写入`。生效记录在目标仓 `docs/harness-eng/write-auth.yaml`（`preauth: true`）。`取消预授权` 把该文件写成 `preauth: false`。`Q_PREAUTH` 只表示计划里要不要请求预授权，【推荐】为否；`全部推荐` 不会把它收成已授权。
+
+写盘命令：
+
+```bash
+node scripts/harness.mjs --root <TARGET> --params <params.json> --mode land --confirm 确认写入
+node scripts/harness.mjs --root <TARGET> --params <params.json> --confirm 确认预授权 --confirm 确认写入
+node scripts/harness.mjs --root <TARGET> --confirm 取消预授权
+```
+
+`--confirm` 只接受闸门词（`确认写入` / `按计划执行` / `执行 WritePlan` / `LGTM` / `只执行 L0`…`L5` / `去掉 14 后执行` / `确认预授权` / `预授权后续写盘` / `取消预授权`）。裸「确认」不接受；紧接 WritePlan 的下一轮若用户只说了「确认」，Agent 传 `--confirm 确认写入`。已落盘 `preauth: true` 时，后续写盘可省略 `--confirm`。`--dry-run`、backfill、只读检查不需要确认词。`render.mjs` 真写同样认这套词。
 
 展示 WritePlan 末尾固定提示：
 
-> 请回复 **确认**（或 按计划执行 / LGTM）后开始写入。多轮可回复 **确认预授权**。`全部推荐` 只收齐答题；写盘仍须本确认。
+> 请回复 **确认写入**（或 按计划执行 / LGTM）后开始写入。多轮可回复 **确认预授权**（只授权后续轮次，本轮仍需 **确认写入**）。`全部推荐` 只收齐答题；写盘仍须本确认。
 
-- **硬闸**：确认前（及未预授权时）先过本文件闸门词表，再 Write / StrReplace / 删除目标仓 harness 文件
+- **硬闸**：没有写盘词、也没有落盘预授权时，不跑会写盘的 `harness.mjs` / `render.mjs`。不要手工 Write / StrReplace / 删除目标仓 harness 文件来绕过
 - audit：只输出报告
 - 写入仅限已确认的 `Q_TARGET_ROOT`
 - `resume` / 半成品：`params.on_exists=skip`（见 [resume.md](resume.md)）
@@ -86,19 +100,21 @@ Q_SEED: 是
 
 ## Windows JSON 传参（gotcha SSOT）
 
-`questions-next` / answers / score / harness params 等：写 **UTF-8 无 BOM** JSON 文件，再把**路径**传给 node。
+`questions-next` / answers / score / harness params 等：用 Node `writeFileSync(..., 'utf8')` 写 **UTF-8 无 BOM** JSON 文件，再把**路径**传给 node。
 
-**禁止**：PowerShell `>` / `Out-File` 重定向（易 UTF-16）；把大段 JSON 塞进命令行参数。  
-**推荐**：用 Node `writeFileSync(..., 'utf8')` 写文件，再 `--params <path>`。
+读取端同时接受 **UTF-16 LE/BE**（带 BOM；UTF-16 LE 的 ASCII JSON 无 BOM 也可）。PowerShell `>` / `Out-File` 写出的 UTF-16 可以被读入。仍不要把大段 JSON 塞进命令行参数。  
+**stdin**：`--params -` / `questions-next --answers -` 用同一套解码。CI 跑 `--mode refresh` 时可用 `--exit-zero` 把「未开干(2)」视为成功。
+
+写盘还要带确认词，见上一节。`--dry-run` 不需要 `--confirm`。
 
 ```bash
 # land（空仓 / 强制新建）：on_exists=fail
 node -e "require('fs').writeFileSync('params-land.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{REPO_NAME:'x',REPO_DESC:'x',CODE_PREFIXES:'src/',DATE:'2026-09-28'},on_exists:'fail'}), 'utf8')"
-node scripts/harness.mjs --root <TARGET> --params params-land.json --mode land
+node scripts/harness.mjs --root <TARGET> --params params-land.json --mode land --confirm 确认写入
 
 # resume / upgrade（已有产物）：on_exists=skip（勿照抄 land 的 fail）
 node -e "require('fs').writeFileSync('params-resume.json', JSON.stringify({ladder:'L4',domains:['api'],expandFromManifest:true,placeholders:{REPO_NAME:'x',REPO_DESC:'x',CODE_PREFIXES:'src/',DATE:'2026-09-28'},on_exists:'skip'}), 'utf8')"
-node scripts/harness.mjs --root <TARGET> --params params-resume.json --mode resume
+node scripts/harness.mjs --root <TARGET> --params params-resume.json --mode resume --confirm 确认写入
 ```
 
 冲突动作含 **`replace`**（覆盖已有目标）；`create` 冲突时报错也会提示 `merge/skip/backup-create/replace`。
@@ -117,7 +133,7 @@ node scripts/harness.mjs --root <TARGET> --params params-resume.json --mode resu
 - WritePlan 白话摘要须回显 `gate_profile`（`Q_GATE_PROFILE` / score-policy）
 - 动作语义：[conflict-policy.md](conflict-policy.md)；`.cursor/mcp.json`：非 fill-mcp **保留**已有文件
 - merge 的 Markdown/MDC 为 H2 章节级合并；WritePlan 文件表对 `action=merge` 的 md/mdc 须列「将追加章节」（取 `--dry-run` 日志 `mergePreview`，0.4.0+）
-- 脚本失败 → 可手工 Write，移交注明原因
+- 脚本失败 → 停止写盘，把 stderr 交给用户。不要改用手工 Write / StrReplace 把同一计划写入目标仓
 
 ## 占位符渲染
 

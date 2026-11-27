@@ -3,6 +3,7 @@
  * 中文一句话（origin/ 前缀归一去重）、提交 hash 短码、yml 上一行中文注释、章节编号。
  */
 import fs from "fs";
+import { readTextFile, stripBom as stripLeadingBom } from "./lib/text-encoding.mjs";
 import path from "path";
 import { createHash } from "crypto";
 import { DEFAULT_REPO_PROFILE } from "./lib/repo-profile.mjs";
@@ -22,10 +23,9 @@ export function shortCommitHash(hash) {
   return h.length > COMMIT_HASH_DISPLAY_LEN ? h.slice(0, COMMIT_HASH_DISPLAY_LEN) : h;
 }
 
-/** 去掉 UTF-8 BOM（PowerShell 重定向 / 部分编辑器易引入） */
+/** 去掉开头的 U+FEFF（一枚或多枚）。文件字节解码用 readTextFile。 */
 export function stripBom(text) {
-  const s = String(text ?? "");
-  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
+  return stripLeadingBom(text);
 }
 
 /**
@@ -550,7 +550,7 @@ export function loadModuleBlurb(root, moduleKey, moduleBlurbs = DEFAULT_REPO_PRO
     const full = path.join(root, rel);
     let text;
     try {
-      text = stripBom(fs.readFileSync(full, "utf8"));
+      text = readTextFile(full);
     } catch {
       continue;
     }
@@ -874,6 +874,24 @@ export function extractMigrationNames(text) {
   const re = /\b(V\d+(?:_\d+)?__[^\s|`"'\\]+?\.sql)\b/gi;
   for (const m of String(text || "").matchAll(re)) out.push(m[1]);
   return out;
+}
+
+/**
+ * 从发版单正文抽取「定版引用」的对比版本 head ref。
+ * `origin/main..origin/release/x` → `origin/release/x`；`首次发版:origin/release/V260827` → 后者。
+ * 读不到返回 null。
+ */
+export function parseNoteHeadRef(text) {
+  const m = String(text || "").match(
+    /(?:\|\s*定版引用\s*\||定版引用[：:])\s*([^\n|]+)/
+  );
+  if (!m) return null;
+  const raw = m[1].trim().replace(/^首次发版\s*[:：]\s*/, "");
+  const tail = raw.includes("..") ? raw.split("..").pop() : raw;
+  const ref = String(tail || "")
+    .split(/[\s·（(，,。；;|]/)[0]
+    .trim();
+  return ref || null;
 }
 
 /** 发版日期 YYYY-MM-DD → yyMMdd；非法则 null */

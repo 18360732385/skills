@@ -19,6 +19,7 @@
  * 无 score 且诊断空时默认精简（未打分 + 下一动作 + 报告脚注）；--json 仍输出完整结构。
  */
 import { buildSessionDashboard, renderSessionDashboardMarkdown } from "./lib/session-dashboard.mjs";
+import { readPreauth } from "./lib/write-confirm.mjs";
 
 const HELP = `session-dash — harness-eng 会话仪表盘（本轮里程碑末尾：阶段/现状/工作/下一步）
 
@@ -72,6 +73,10 @@ function main() {
   if (args.help) {
     process.stdout.write(HELP);
     return;
+  }
+  if (args.preauth === undefined && args.root) {
+    const saved = readPreauth(args.root);
+    if (saved.present) args.preauth = saved.on;
   }
   if (args.intent === "meta") {
     if (args.json) {

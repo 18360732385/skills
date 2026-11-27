@@ -1,4 +1,4 @@
-﻿# bridges — 定稿桥与 Proto 桥
+# bridges — 定稿桥与 Proto 桥
 
 定稿桥 + Proto 桥（原 domain-bridge.md + proto-bridge.md）。绑定 lookup 见 [flow.md](flow.md)；校验见 [gates.md](gates.md)。
 
@@ -59,7 +59,7 @@
 **触发钉死**：
 
 - **F**，或 **B 且有**独立 plan / checklist 文件：Plan（或 checklist）过计划 Go 闸 → 进本桥。
-- **B 且无**独立 plan 文件：短设计确认后 → 控制器出「Go 等价三问」checklist（可内联回链）→ 写 `gates.go` + 授权 → **立即**进本桥；**禁止**空等「环 5 结束」。
+- **B 且无**独立 plan 文件：短设计确认后 → 控制器出「Go 等价三问」checklist（可内联回链）→ L2 审核该 checklist 并落 `审核-plan.md` → 写 `gates.go` + 授权 → **立即**进本桥；**禁止**空等「环 5 结束」。
 
 ## 步骤
 

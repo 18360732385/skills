@@ -59,16 +59,26 @@ domain: null
 proto: null
 
 artifacts:
-  adr: []            # docs/adr/NNNN-*.md 路径列表
-  spec: null         # docs/superpowers/specs/...
-  plan: null         # docs/superpowers/plans/...
-  proto: null        # 原型目录或文件（或 proxy 降级：设计笔记.md）
-  context_delta: null # docs/runs/active|archive/<slug>/术语增量.md
-  testcases: null    # …/测试用例.md（仅 F）
-  test_report: null  # …/测试报告.md（仅 F）
-  qa_report: null    # 外部 QA 报告路径（可选）
-  implement: null    # 实现交付说明或 diff 摘要路径（可选）
-  pr_url: null       # PR/MR URL（可选；close ARCHIVE「Commit」列可同源）
+  # docs/adr/NNNN-*.md 路径列表
+  adr: []
+  # docs/superpowers/specs/...
+  spec: null
+  # docs/superpowers/plans/...
+  plan: null
+  # 原型目录或文件（或 proxy 降级：设计笔记.md）
+  proto: null
+  # docs/runs/active|archive/<slug>/术语增量.md
+  context_delta: null
+  # …/测试用例.md（仅 F）
+  testcases: null
+  # …/测试报告.md（仅 F）
+  test_report: null
+  # 外部 QA 报告路径（可选）
+  qa_report: null
+  # 实现交付说明或 diff 摘要路径（可选）
+  implement: null
+  # PR/MR URL（可选；close ARCHIVE「Commit」列可同源）
+  pr_url: null
 
 # 来自 plan 的任务拆分；depends_on 为任务 id 列表
 tasks: []
@@ -80,10 +90,13 @@ tasks: []
 # 各闸通过时间（ISO）；无时间戳 = 未过（通过条件见 modes/specs/gates.md Part C）
 gates:
   triage: null
-  shared_understanding: null   # 用户显式确认可进设计
-  design_confirmed: null       # B: 短设计 yes；F: 整体或每段 yes；express: 可与上一闸同一次总 yes
+  # 用户显式确认可进设计
+  shared_understanding: null
+  # B: 短设计 yes；F: 整体或每段 yes；express: 可与上一闸同一次总 yes
+  design_confirmed: null
   go: null
-  proto_confirmed: null        # 仅 proto=entered：用户原型确认 ISO；skipped* 保持 null
+  # 仅 proto=entered：用户原型确认 ISO；skipped* 保持 null
+  proto_confirmed: null
   pre_impl: null
   gate: null
   verify: null

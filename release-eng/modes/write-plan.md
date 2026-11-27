@@ -15,7 +15,7 @@
 - 分支对: <发版> vs <基线|无（首次发版）>（origin 优先）
 - 版本身份: <identity>（= release-V{yyMMdd} ← 发版日期）
 - 本轮: 新建 | 合并刷新自动段 | 归档 | 取消
-- Git 表: 提交截断5（前3后2、hash 前 8 位）；合并来源按分支去重（origin/ 归一）、来源分支功能一句话（完整见 GitLab|GitHub 链接，按 origin）；时区 Asia/Shanghai
+- Git 表: 提交截断5（前3后2、hash 前 8 位）；合并来源只算对比版本之后新增（`origin/` 归一）、来源分支功能一句话（完整见 GitLab|GitHub 链接，按 origin）；时区 Asia/Shanghai
 - 摘要: 元信息内 1～5 项（分支级聚合）；配置 yml 键上一行 `#`（采集亦可来自行尾）
 - 目录包: docs/releases/{identity}/（md + sql/refs 原件 + [库名]-V*-DDL|DML 整理 + config + jobs/README.md；附属为相对 md 链接；无 notes/）
 - 目标 profile: prod（SQL / 配置 / 定时任务）；yml 配置按 YAML

@@ -29,6 +29,17 @@ if (flags.help) {
 }
 
 const ctx = createHarness(skillRoot, flags);
+const spawnProbe = ctx.spawnSync(
+  process.execPath,
+  ["-e", "process.exit(0)"],
+  { encoding: "utf8" }
+);
+if (spawnProbe.error || spawnProbe.status !== 0) {
+  console.error(
+    "selfcheck requires child_process; current environment blocks it (sandbox?). Re-run in a normal shell or with sandbox disabled."
+  );
+  process.exit(2);
+}
 Object.assign(ctx, {
   MODES, MODE_EXTRAS, FLAT_SPEC_LEAKS, ROOT_MODE_LEAKS, BINDING_KEYS, TEMPLATES, stageSkillMap,
   FIX_GOOD, FIX_BAD, FIX_SLUG, FIX_ADV, ADV_SLUG, FIX_CLOSE, CLOSE_SLUG,

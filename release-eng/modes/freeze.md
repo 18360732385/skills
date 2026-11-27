@@ -17,7 +17,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --base <base
 node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-release --head <headRef> --format json
 ```
 
-> **PowerShell 落盘**：避免 `> file` 写成 UTF-16 LE BOM。Win32 下 `json|audit-json` 未指定 `--out` 时**默认写临时文件**（stderr 提示路径）；仍推荐显式 `--out`：
+> **PowerShell 落盘**：读取端能解码 UTF-16 LE BOM。写出仍用 UTF-8。Win32 下 `json|audit-json` 未指定 `--out` 时**默认写临时文件**（stderr 提示路径）；仍推荐显式 `--out`：
 > ```powershell
 > node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --first-release --head HEAD --format json --out .cursor/skills/release-eng/scripts/_freeze.json
 > # 一屏摘要（WritePlan 白话摘要主输入）
@@ -58,7 +58,7 @@ JSON `aiTrack.status=stub`：规则轨 `draft`/`changeObjects` 为召回底线�
 
 ## `逾期未归档`
 
-进行中目录包（`docs/releases/<slug>/`，兼容旧 `notes/`）发版日期 < 运行日（Asia/Shanghai）：`已定版` → 硬闸（freeze `ok=false` / exit 1）；`准备中` → soft warning。须先 seal，或用户**书面跳过**：落盘时 note-merge 须带 `--overdue-waived "<书面说明>"`（跳过记录写入 `artifacts.json.overdueWaived{reason,date}`；freeze JSON 含 `overdueHardGate` 而未传该参数 → note-merge 拒绝写盘、exit 1）。约定见 [conventions.md](conventions.md)。
+进行中目录包（`docs/releases/<identity>/`；0.4 起不扫 `notes/`）发版日期 < 运行日（Asia/Shanghai）：`已定版` → 硬闸（freeze `ok=false` / exit 1）；`准备中` → soft warning。须先 seal，或用户**书面跳过**：落盘时 note-merge 须带 `--overdue-waived "<书面说明>"`（跳过记录写入 `artifacts.json.overdueWaived{reason,date}`；freeze JSON 含 `overdueHardGate` 而未传该参数 → note-merge 拒绝写盘、exit 1）。约定见 [conventions.md](conventions.md)。
 
 ## 候选规则（增量）
 
@@ -100,7 +100,9 @@ audit【推荐】：`--format audit-json`。一屏摘要：`--format summary`。
 提交列表按 **`截断5`**（≤5 全量；>5 前 3 + 一行 `…`（省略 N 条）+ 后 2；hash 列前 8 位）；省略行下方补远端完整记录链接（按 freeze `remoteHost` / origin；字段名仍可能叫 `gitlabUrl`）。形与示例见 [conventions.md](conventions.md)。  
 JSON 可保留全量 hash；写入发版单用 `commitsDisplay` 或 md。
 
-## `mergeSources`（合并来源去重全量）
+## `mergeSources`（对比版本之后新增）
+
+**口径**：只统计**对比版本之后新增**的 git merge 记录。对比版本 = `docs/releases/archive/` 里最新一份已上线发版单，取其「定版引用」的 head（`a..b` 取 `b`）；该 ref 须能在本地解析且是当前 head 的祖先，否则回落定版范围（`base..head`；首次发版为全历史）并在 `warnings` 写明。JSON 附 `mergeScope { mode, compareRef, priorNote }` 便于核对。
 
 按 `guessSourceBranch` 推测来源分支去重、`origin/` 等前缀归一（去重/归一细则见 [conventions.md](conventions.md)）；空归「无/未识别」。  
 产出 `mergeSources: [{ source, count, branchFeatures[], branchSummary, noise }]`（`branchSummary` 为一句话中文总结；`noise`=环境支/未识别/`merge/*`）。JSON **全量保留**；发版单表优先业务支，噪声折叠为「环境支/未识别（合计）」一行；`releaseSummaryLines` 跳过 noise。  
@@ -119,7 +121,7 @@ note-merge 写入元信息章内 `### 上线内容摘要` 的 `<!-- auto:summary
 
 sql 候选按 migration **版本号数字升序**。  
 无版本号的 `_change.sql` 置后，问卷确认是否仅对照、是否需执行。  
-落单「数据库与 SQL」只写条数摘要并链接包内 `sql/README.md`（执行序明细在 README，不在发版单展开）；目标 profile=`prod`。WritePlan / `draft-md` 预览仍可展示完整候选表供确认。
+落单「数据库与 SQL」最多展示前 **5** 条样表（`# / 脚本 / 类型 / 动作`），其余只给条数并注明详见包内 `sql/README.md`；执行序明细在 README，不在发版单展开；目标 profile=`prod`。定时任务章同理：最多前 **5** 条（`taskCode / 名称 / cron`），其余见 `jobs/README.md`。WritePlan / `draft-md` 预览仍可展示完整候选表供确认。
 
 定版落盘后（note-merge）：原件进 `sql/refs/`；按文件名双轨（`__DDL__`/`__DML__` 或新轨 `V{ts}_{0|1}__`）归类，失败则 AI JSON（`--sql-ai-json`，不问用户）生成 `sql/release-V{yyMMdd}-DDL|DML.sql`。`_change.sql` 仅对照、不进 refs 与整理文件；整理文件缺侧不落盘；**prod 执行先 DDL 整理文件再 DML**（各类内部仍 SQL序）——约定全文见 [conventions.md](conventions.md)。同时生成 `sql/README.md`（本版 SQL 统计：DDL/DML 条数、按提交人执行序、文件名跳转整理文件对应行）；发版单 SQL 章引导阅读该 README。  
 > **警示**：note-merge 刷新会**先清空包内 `sql/` / `config/` / `jobs/` 三个目录再重建**（← `draft`）；手工放入这三个目录的文件会被清除。
@@ -135,7 +137,7 @@ sql 候选按 migration **版本号数字升序**。
 
 ### `首次发版`
 
-1. Git 二表全量（提交展示截断5 前3后2 + hash 前 8 位；合并来源按分支去重全量、来源分支功能一句话）  
+1. Git 二表全量（提交展示截断5 前3后2 + hash 前 8 位；合并来源只算对比版本之后新增、按分支去重、来源分支功能一句话）  
 2. 候选章标「无（首次发版-manual）」+ 写出 migration 版本区间提示  
 3. 问卷人工收齐 SQL/配置/任务  
 

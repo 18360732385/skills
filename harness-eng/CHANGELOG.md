@@ -1,11 +1,15 @@
 # harness-eng CHANGELOG
 
 版本策略（自 **0.1.2** 起）：对外 `manifest.version` / `harness-meta.skill_version` 使用本组号。  
-**列车**：当前 **0.8.9**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
-版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。
+**列车**：当前 **0.8.11**。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**；`ui.version` 兼容别名）。
+版本明细与历史档案为**仓库级档案**：随全仓 git 可见，`npx skills add` 安装**不含**；布局见仓库根 `README.md`「仓库级档案与发版」节。本表为索引。  
+**版本身份**：行为变更优先升 `version`；同一 `version` 内追加修复必须升 `_meta/manifest.yaml` 的 `rev`（新 version 从 0 起）。0.8.1 的三条历史补丁行未升 manifest，仅作记录，不是现行范例。  
+当前包：**0.8.11**（确认令牌、rev 新鲜度、预授权落盘、UTF-16 JSON）。
 
 | 版本 | 日期 | 说明 |
 |---|---|---|
+| 0.8.11 | 2026-11-27 | 写盘确认令牌 `--confirm`（`render.mjs` 真写同样认；禁止手工 Write 绕过）· 预授权只落盘 `write-auth.yaml`，`Q_PREAUTH` 推荐改为否 · `rev` 进入安装副本告警、L5 `HARNESS_ENG_REV` 新鲜度、`harness-meta.skill_rev` · JSON 与目标仓文本（render / migrate-docs / write-auth）接受 UTF-16 · CI 增加 windows-latest |
+| 0.8.10 | 2026-11-27 | 闸门与一致性独立成版（原 0.8.9 rev 1，rev 归零）：裸「确认」只在紧接 WritePlan 的下一轮有效，预授权只授权后续轮次 · manifest `rev` 与 sync 正文钉 · `report_schema` 改指 glossary · CHANGELOG 坏链与根 README · upgrade 0.7.28–0.7.62 历史进 archive · 三份 sync.mjs 对齐 · pack-check 与 CI · `--params -` / `refresh --exit-zero` · 触发词收窄 · 仓库根 MIT LICENSE |
 | 0.8.9 | 2026-11-26 | 0.8.8 sms-ai 实战解析：func 身份认出 `*ServiceImpl` · `### 变更记录` 不再整节丢掉 · acceptance 版本跟 manifest · 心跳保留既有 migrate ops · 形态到顶但金标未过改写「未过线」· API/类名/Redis 边界匹配不再把短前缀当成已覆盖 · 无表名的 `IF NOT EXISTS` 不记成表名 `IF` · Redis 覆盖与身份槽同一解析 · prototype id 碰撞消解 · jobs 真实性路径错误写明 `tasks/` · client-api 索引写明排除 `type_export` · refresh 写出报告 HTML |
 | 0.8.8 | 2026-11-26 | gold 开干追加四道：判定时分域覆盖 100%（不改写策略文件）、全仓与分域金标指数 ≥ 98%、正式真相身份双向一致、覆盖真实性记录全部未过期 pass。strict / mature_compat 门槛不变。诊断台并列三列（report_schema 0.4.3）。批次开工冻结 unit_ids，关批只核本批 |
 | 0.8.7 | 2026-11-26 | 0.8.6 sms-ai 实战待完善：dry-run 不再回写 harness-meta · upgrade 提示安装副本版本错位 · upgrade-diff 带覆盖口径 · 无 blocker 也刷新 migrate-docs 报告时间戳 · hook 预览内容相同记 unchanged · 满分不写拖后腿 · client-api 写明排除的 type_export |
@@ -124,10 +128,10 @@
 | 0.2.24 | 2026-08-10 | 报告 UX · 指挥台升级 |
 | 0.2.23 | 2026-08-10 | 报告 UX · ui 投影 |
 | 0.2.22 | 2026-08-10 | 不把 L4 并入 L0；阶梯语义不变 |
-| 0.2.21 | 2026-08-10 | 新增 [upgrade.md](upgrade.md)（Done + 与 land/resume 边界） |
-| 0.2.20 | 2026-08-10 | W0：SKILL frontmatter；瘦身脚本墙；确认闸门 / 预授权词表 SSOT → [write-plan.md](write-plan.md) |
+| 0.2.21 | 2026-08-10 | 新增 [upgrade.md](modes/upgrade.md)（Done + 与 land/resume 边界） |
+| 0.2.20 | 2026-08-10 | W0：SKILL frontmatter；瘦身脚本墙；确认闸门 / 预授权词表 SSOT → [write-plan.md](modes/write-plan.md) |
 | 0.2.19 | 2026-08-07 | P0 修复 fill-merge-api 多模块合并阻断：新增 --module 参数；自动按 inventory 证据集过滤 work-dir fragmen |
-| 0.2.18 | 2026-08-07 | 新增 [truth-quality.md](truth-quality.md)：深/真/全操作定义、反例表、.fill-work draft vs docs/  |
+| 0.2.18 | 2026-08-07 | 新增 [truth-quality.md](modes/truth-quality.md)：深/真/全操作定义、反例表、.fill-work draft vs docs/  |
 | 0.2.17 | 2026-08-07 | 大仓 / pipeline 默认目标阶 = L4；推荐包不再默认停 L2（L2 仅「只要协作+索引、明确不深填」子集） |
 | 0.2.16 | 2026-08-07 | 默认填充引擎 hybrid：inventory / calibrate / dto 仍用脚本；真相完整档走 fill-truths-agents（多会话按模板精 |
 | 0.2.15 | 2026-08-06 | QUICKSTART.md：一页纸入口（场景表 + 写盘闸门 + 最短路径） |
@@ -138,12 +142,12 @@
 | 0.2.10 | 2026-08-06 | P0 fill-inventory-redis：默认扫描全部 */src/main/java；REDIS_* / SMS: / dict/captcha 可 p |
 | 0.2.9 | 2026-08-06 | P1 fill-truths-auto --merge：增量合并真相；输出 stats.written/merged/unchanged；pipeline 第二 |
 | 0.2.8 | 2026-08-05 | P0 fill-inventory-func.mjs：Service/Component inventory → func 真相可系统化填充 |
-| 0.2.7 | 2026-08-05 | P0 fill-truths-auto.mjs + [fill-truths-auto.md](fill-truths-auto.md)：四域从 invento |
+| 0.2.7 | 2026-08-05 | P0 fill-truths-auto.mjs + [fill-truths-auto](archive/fill-truths-auto/INDEX.md)：四域从 invento |
 | 0.2.6 | 2026-08-05 | 新增 scripts/lib/yaml.mjs（vendored，无 npm）；render.mjs / questions-next.mjs 改用标准解析（报 |
 | 0.2.5 | 2026-08-05 | fill-score.mjs：db/redis 不按模块名过滤；有索引时域分 Math.max(15, avg) 保底（避免 seed 空壳后分数反降） |
-| 0.2.4 | 2026-08-05 | 重写 [fill-workers.md](fill-workers.md)：默认串行；并行仅为可选适配表（Cursor / Claude / Codex / Q |
+| 0.2.4 | 2026-08-05 | 重写 [fill-workers.md](fill/fill-workers.md)：默认串行；并行仅为可选适配表（Cursor / Claude / Codex / Q |
 | 0.2.3 | 2026-08-05 | 新增 scripts/fill-merge-api.mjs（--check / --write；missing/dup 门禁）+ merge fixture |
 | 0.2.2 | 2026-08-05 | 推荐序：fill-score → fill-mcp（mysql/redis） → fill-truths → 再 score；跳过 MCP 不硬拦但须声明 |
 | 0.2.1 | 2026-08-05 | 版本递进约定：自 0.2.1 起按 0.2.1 → 0.2.2 → … → 0.3.0 补丁推进（本版为 fill 首发） |
-| 0.2.0 | 2026-08-05 | 新增 [ai-tools.md](ai-tools.md)：Cursor / Claude / Codex / Qoder / Trae / WorkBuddy |
+| 0.2.0 | 2026-08-05 | 新增 [ai-tools.md](host/ai-tools.md)：Cursor / Claude / Codex / Qoder / Trae / WorkBuddy |
 | 0.1.2 | 2026-08-05 | 新增 [glossary.md](glossary.md)：阶梯 L0–L4、模式、常用词中文说明 |

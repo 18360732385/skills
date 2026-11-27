@@ -10,9 +10,12 @@ detect 后先展示 [RecommendedProfile](recommended-profile.md)；引导「不�
 - 下一批驱动：
 
 ```bash
-node scripts/questions-next.mjs --answers '{"type":"NEW_CODE_NO_HARNESS","mode":"pipeline","ladder":"L4","large_repo":true}'
-# 答完后把 answered / answered_batches 写回 answers 再跑，直到 done=true
+node -e "require('fs').writeFileSync('answers.json', JSON.stringify({type:'NEW_CODE_NO_HARNESS',mode:'pipeline',ladder:'L4',large_repo:true}), 'utf8')"
+node scripts/questions-next.mjs --answers answers.json
+# 答完后把 answered / answered_batches 写回 answers.json 再跑，直到 done=true
 ```
+
+Windows 不要把 JSON 直接放进命令行，也不要用 PowerShell `>` / `Out-File` 写这个文件。读取端接受 UTF-8 与 UTF-16（含 BOM）。细节见 [write-plan.md](write-plan.md#windows-json-传参gotcha-ssot)。
 
 Agent **优先**跑脚本展示本批题目；脚本失败时再读本文件摘要。
 

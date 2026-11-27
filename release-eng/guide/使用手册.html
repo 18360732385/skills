@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" data-ha-style="document">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>release-eng 使用手册 · v0.4.4</title>
-  <meta name="description" content="release-eng：把一次上线做成带 Git 证据的发版单（prepare / resume / audit / seal）的使用手册。" />
+  <title>release-eng 使用手册 · v0.4.6</title>
+  <meta name="description" content="release-eng：把一次上线做成带 Git 证据的发版单（prepare / audit / seal）的使用手册。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet" />
@@ -746,7 +746,7 @@
     <div class="search">
       <input id="q" type="search" placeholder="搜索手册内容…" autocomplete="off" />
     </div>
-    <div class="ver">v0.4.4</div>
+    <div class="ver">v0.4.6</div>
   </header>
 
   <div class="shell document-shell">
@@ -779,7 +779,7 @@
 
         <div class="pipeline" aria-label="发版主循环示意">
           <div class="pipe-head">
-            <span>主循环 · docs/releases/&lt;slug&gt;/</span>
+            <span>主循环 · docs/releases/&lt;identity&gt;/</span>
             <span>prepare → push-gate → freeze → WritePlan → note-merge → seal</span>
           </div>
           <div class="pipe-body">
@@ -800,7 +800,7 @@
               <li class="sep">›</li>
               <li>note-merge</li>
               <li class="sep">›</li>
-              <li>resume…</li>
+              <li>同身份刷新</li>
               <li class="sep">›</li>
               <li class="gate">seal-check</li>
               <li class="sep">›</li>
@@ -817,12 +817,12 @@
                 </ul>
               </div>
               <div class="pipe-col">
-                <h4>resume</h4>
-                <p class="sub">同身份续跑</p>
+                <h4>cancel</h4>
+                <p class="sub">取消进行中包</p>
                 <ul>
-                  <li>日期沿用既有值</li>
-                  <li>on_exists 默认 merge</li>
-                  <li>人工段不覆盖</li>
+                  <li>删包 + 清索引</li>
+                  <li>≠ seal</li>
+                  <li>先 --dry-run</li>
                 </ul>
               </div>
               <div class="pipe-col">
@@ -877,13 +877,13 @@
             </thead>
             <tbody>
               <tr><td><strong>prepare</strong></td><td>新建一份发版单</td><td>首问 → push-gate → freeze → 问卷 → WritePlan</td></tr>
-              <tr><td><strong>resume</strong></td><td>同一版本身份接着干</td><td>刷新自动段 / 补问卷 / 再定版</td></tr>
+              <tr><td><strong>cancel</strong></td><td>已确定不发这版了</td><td>删进行中目录包 + 清索引（<strong>≠ seal</strong>）</td></tr>
               <tr><td><strong>audit</strong></td><td>只想体检，不想动文件</td><td>只读看 prior·freeze·缺章，<strong>永不写盘</strong></td></tr>
               <tr><td><strong>seal</strong></td><td>已经上线了</td><td>seal-check 通过后 进行中目录 → <code>archive/</code></td></tr>
             </tbody>
           </table>
         </div>
-        <p><strong>未指定时怎么判</strong>：说「继续 / 刷新」→ resume；「检查 / 审计 / 看看」→ audit；「上线了 / 归档」→ seal；其余（「准备发版单」「下个版」）→ prepare。</p>
+        <p><strong>未指定时怎么判</strong>：说「继续 / 刷新」→ prepare（同身份刷新）；「检查 / 审计 / 看看」→ audit；「上线了 / 归档」→ seal；其余（「准备发版单」「下个版」）→ prepare。</p>
 
         <h3>1.2 三条硬规则</h3>
         <div class="claim-grid">
@@ -964,7 +964,7 @@ https://github.com/18360732385/skills/tree/main/release-eng
         </ul>
 
         <h3>2.4 骨架 bootstrap</h3>
-        <p><code>prepare</code> / <code>resume</code> / <code>seal</code> 开头都会检查这四个路径，<code>audit</code> 默认<strong>只报告缺失、不创建</strong>：</p>
+        <p><code>prepare</code> / <code>seal</code> 开头都会检查这四个路径，<code>audit</code> 默认<strong>只报告缺失、不创建</strong>：</p>
         <div class="table-wrap fact-table">
           <table>
             <thead>
@@ -980,7 +980,7 @@ https://github.com/18360732385/skills/tree/main/release-eng
         </div>
         <p>来源优先级：<strong>已有 → skip</strong>（保留你的正文）；<strong>缺失 → 从 <code>fixtures/docs/releases/</code> 复制</strong>。骨架创建本身<strong>不经 WritePlan</strong>，完成后打印 <code>bootstrap: 已创建 …</code> 或 <code>bootstrap: 已齐全，跳过</code>。</p>
         <div class="evidence-margin">
-          <p><code>docs/releases/notes/</code> 是旧路径：<strong>0.3.27 起不再新建</strong>，脚本仍兼容读（计划 0.4 移除）。老仓建议先迁到 <code>docs/releases/&lt;slug&gt;/</code>。</p>
+          <p><code>docs/releases/notes/</code> 是旧路径：<strong>0.4 起禁止读写</strong>，老仓先跑 <code>migrate-notes -- --apply</code> 迁到 <code>docs/releases/&lt;identity&gt;/</code>。</p>
         </div>
 
         <h3>2.5 可选的 repo-profile</h3>
@@ -1000,7 +1000,7 @@ https://github.com/18360732385/skills/tree/main/release-eng
             </thead>
             <tbody>
               <tr><td>「准备发版单」/「下个版」</td><td><code>prepare</code></td><td>首问 + push-gate + freeze + 问卷 + WritePlan</td></tr>
-              <tr><td>「继续上次的发版单」/「刷新一下」</td><td><code>resume</code></td><td>同版本身份续跑，刷新自动段</td></tr>
+              <tr><td>「继续上次的发版单」/「刷新一下」</td><td><code>prepare</code>（同身份刷新）</td><td>沿用既有发版日期，刷新自动段</td></tr>
               <tr><td>「审计一下」/「体检」</td><td><code>audit</code></td><td>只读报告，<strong>不写盘</strong></td></tr>
               <tr><td>「已经上线了」/「归档」</td><td><code>seal</code></td><td>seal-check → 整夹移入 <code>archive/</code></td></tr>
               <tr><td>「全部推荐」</td><td>问卷 / 首问</td><td>采用本轮所有【推荐】预填（<strong>不等于</strong>写盘许可）</td></tr>
@@ -1043,10 +1043,10 @@ https://github.com/18360732385/skills/tree/main/release-eng
 
         <div class="callout warn caveat-box">
           <div class="label">权威口述 ≠ 跳过首问</div>
-          领导说「别问了，release 对 main，日期写周四」，仍要把已问各项<strong>回显</strong>请他确认（或走 <code>全部推荐</code> 展示预填），然后才进 push-gate。首次使用时「默认 db/migration + Flyway」也不算已答。禁止未回显就写 <code>docs/releases/&lt;slug&gt;/</code>。
+          领导说「别问了，release 对 main，日期写周四」，仍要把已问各项<strong>回显</strong>请他确认（或走 <code>全部推荐</code> 展示预填），然后才进 push-gate。首次使用时「默认 db/migration + Flyway」也不算已答。禁止未回显就写 <code>docs/releases/&lt;identity&gt;/</code>。
         </div>
 
-        <p>版本身份 <code>&lt;slug&gt;</code> = <strong>发版分支名归一化</strong>（去 <code>origin/</code>、<code>refs/heads/</code>、<code>refs/remotes/</code> 前缀，<code>/</code> → <code>-</code>，连续 <code>-</code> 收敛）：<code>origin/release/V260827</code> → <code>release-V260827</code>。所以路径是 <code>docs/releases/release-V260827/release-V260827.md</code>。<strong>改发版日期不影响路径</strong>，只改元信息日期字段。</p>
+        <p>版本身份 <code>&lt;identity&gt;</code> = <code>release-V{yyMMdd}</code>（← 已确认发版日期；与发版分支名解耦）：发版日期 <code>2026-11-26</code> → <code>release-V261126</code>。所以路径是 <code>docs/releases/release-V261126/release-V261126.md</code>。<strong>改已确认的发版日期 = 改身份与路径</strong>（未定版可迁，已定版须确认）。</p>
 
         <h3>3.3 push-gate（第二道闸）</h3>
         <pre><code># 增量发版（有基线）
@@ -1069,7 +1069,7 @@ node release-eng/scripts/release.mjs push-gate -- --root . --release release --b
 
         <div class="callout warn caveat-box">
           <div class="label">中止时不许「落盘给评审」</div>
-          「先把发版单落盘，push 我稍后」「别堵着大家」都不改变结论。草稿可以贴聊天或 gist，但<strong>不要</strong>写 <code>docs/releases/&lt;slug&gt;/**</code>、<strong>不要</strong>写 <code>artifacts.json</code>、<strong>不要</strong>出可执行的定版 WritePlan。unpushed 不是「只挡上线、不挡写盘」。
+          「先把发版单落盘，push 我稍后」「别堵着大家」都不改变结论。草稿可以贴聊天或 gist，但<strong>不要</strong>写 <code>docs/releases/&lt;identity&gt;/**</code>、<strong>不要</strong>写 <code>artifacts.json</code>、<strong>不要</strong>出可执行的定版 WritePlan。unpushed 不是「只挡上线、不挡写盘」。
         </div>
         <p><code>--no-fetch</code> 只给排障 / 只读检查（audit、离线）用；默认会 <code>git fetch --prune</code>。</p>
 
@@ -1125,7 +1125,7 @@ node release-eng/scripts/release.mjs ai-track -- --root . --freeze-json /tmp/fre
               <tr><th>类型</th><th>题目</th></tr>
             </thead>
             <tbody>
-              <tr><td><strong>固定三题</strong></td><td>版本身份 slug（= 分支名归一化）、上线内容摘要（1～5 项业务短句）、发版负责人</td></tr>
+              <tr><td><strong>固定三题</strong></td><td>版本身份（<code>release-V{yyMMdd}</code> ← 发版日期）、上线内容摘要（1～5 项业务短句）、发版负责人</td></tr>
               <tr><td><strong>自适应六题</strong></td><td>数据库与 SQL、配置项、定时任务、第三方与外部依赖、上线步骤与回滚、风险与验收（有候选或首次 inventory 才深问，否则该章记「无」）</td></tr>
             </tbody>
           </table>
@@ -1144,15 +1144,15 @@ node release-eng/scripts/release.mjs ai-track -- --root . --freeze-json /tmp/fre
 
         <p><strong>写盘当且仅当你回复下列任一</strong>：<code>确认</code> · <code>确认写入</code> · <code>按计划执行</code> · <code>执行 WritePlan</code> · <code>LGTM</code></p>
         <p><strong>不算确认</strong>（须再问一句）：<code>看着不错</code> · <code>继续吧</code> · <code>继续</code> · <code>好的</code> · <code>可以</code> · <code>👍</code> · Slack reaction ·「按你说的办」而未含上列词。</p>
-        <p>回复 <code>确认预授权</code> 后：本轮仍要完整确认一次；同会话后续 <code>resume</code> / 同 slug 刷新自动写盘；说「取消预授权」恢复逐轮确认。</p>
+        <p>回复 <code>确认预授权</code> 后：本轮仍要完整确认一次；同会话后续同身份 prepare 刷新自动写盘；说「取消预授权」恢复逐轮确认。</p>
 
         <h3>3.8 note-merge（落盘）</h3>
         <pre><code>node release-eng/scripts/release.mjs note-merge -- --root . \
-  --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md \
+  --note docs/releases/&lt;identity&gt;/&lt;identity&gt;.md \
   --freeze-json /tmp/freeze-with-ai.json \
-  --baseline main --identity &lt;slug&gt; \
+  --baseline main --identity &lt;identity&gt; \
   --release-date 2026-11-19 --release-branch release --owner &lt;负责人&gt;</code></pre>
-        <p>它做五件事：写发版单<strong>自动段</strong>、生成 <strong><code>artifacts.json</code></strong>、把本版新增原件拷进 <code>sql/refs/</code> <code>config/</code> <code>jobs/</code>、按需生成 <code>sql/release-V{yyMMdd}-DDL|DML.sql</code> 与统计文档 <code>sql/README.md</code>（DDL/DML 条数 + 按提交人执行序 + 行内跳转），并默认回写 <code>releases.md</code>（<code>--no-update-index</code> 可关）；落盘同时生成目录包内<strong>同名 <code>&lt;slug&gt;.html</code> 只读渲染</strong>（工单样式、可打印勾选；<code>--no-html</code> 关闭；md 为唯一 SSOT，勾选/折叠不入档）。<code>--dry-run</code> 只看「将写多少字节、draft/bundle 各几行」。</p>
+        <p>它做五件事：写发版单<strong>自动段</strong>、生成 <strong><code>artifacts.json</code></strong>、把本版新增原件拷进 <code>sql/refs/</code> <code>config/</code> <code>jobs/</code>、按需生成 <code>sql/release-V{yyMMdd}-DDL|DML.sql</code> 与统计文档 <code>sql/README.md</code>（DDL/DML 条数 + 按提交人执行序 + 行内跳转），并默认回写 <code>releases.md</code>（<code>--no-update-index</code> 可关）；落盘同时生成目录包内<strong>同名 <code>&lt;identity&gt;.html</code> 只读渲染</strong>（工单样式、可打印勾选；<code>--no-html</code> 关闭；md 为唯一 SSOT，勾选/折叠不入档）。<code>--dry-run</code> 只看「将写多少字节、draft/bundle 各几行」。</p>
         <div class="callout warn caveat-box">
           <div class="label">警示</div>
           note-merge 刷新会<strong>先清空包内 <code>sql/</code> / <code>config/</code> / <code>jobs/</code> 三个目录再重建</strong>（内容来自 <code>draft</code>）。手工放进这三个目录的文件会被清掉——别往里存手工产物。
@@ -1167,10 +1167,10 @@ node release-eng/scripts/release.mjs ai-track -- --root . --freeze-json /tmp/fre
         <p>步骤：<code>gates-common</code>（bootstrap + 逾期预检 + 首问）→ <code>git-gates</code>（push-gate）→ <code>freeze</code> → <code>ai-track</code>（可选）→ 定身份 → <code>questions</code> → <code>write-plan</code>（draft-md 预览 + 确认）→ <code>note-merge</code>。</p>
         <p>Done 要点：发版单存在且 Git 二表完整（截断5 + mergeSources）；元信息有 1～5 项上线内容摘要和已确认的发版日期；目录包含 <code>sql/refs/</code> <code>config/</code> <code>jobs/README.md</code> <code>artifacts.json</code>；<code>releases.md</code> 有对应行；<code>draftSuppressed</code> 没被误写进正文。</p>
 
-        <h3>4.2 resume（同版本身份续跑）</h3>
+        <h3>4.2 prepare 刷新（同版本身份续跑）</h3>
         <ul>
           <li><strong>发版日期沿用既有值</strong>（别擅自改成「新的推荐周四」）。</li>
-          <li>定位发版单：给 slug，或进行中只有一行，或多行要你选。</li>
+          <li>定位发版单：给身份（<code>release-V{yyMMdd}</code>），或进行中只有一行，或多行要你选。</li>
           <li><code>on_exists</code> 默认 <strong>merge</strong>：刷新自动段、保留人工段、刷新包内附属拷贝。</li>
           <li><code>&lt;!-- manual:start --&gt;</code> … <code>&lt;!-- manual:end --&gt;</code> 内的正文<strong>不会被覆盖</strong>（你没要求覆盖时）。</li>
         </ul>
@@ -1183,14 +1183,14 @@ node release-eng/scripts/release.mjs ai-track -- --root . --freeze-json /tmp/fre
         <h3>4.4 seal（已上线归档）</h3>
         <p>前置：状态为 <strong><code>已定版</code></strong>（或你书面要求「强制 seal」并记入变更说明）；已拿到实际上线日期与执行人。</p>
         <pre><code># 先体检
-node release-eng/scripts/release.mjs seal-check -- --root . --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md
+node release-eng/scripts/release.mjs seal-check -- --root . --note docs/releases/&lt;identity&gt;/&lt;identity&gt;.md
 
 # 看计划（默认 dry-run）
-node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md \
+node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;identity&gt;/&lt;identity&gt;.md \
   --online-date 2026-11-19 --executor 张三 --dry-run
 
 # 确认词之后写盘
-node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md \
+node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;identity&gt;/&lt;identity&gt;.md \
   --online-date 2026-11-19 --executor 张三 --apply</code></pre>
         <p>seal-check 有 error 就<strong>中止</strong>（除非你明示强制并加 <code>--force</code>）；warning 可继续，但要在 WritePlan 白话摘要里列出。检查项包括：<code>artifacts.json</code> 与 md 的 SQL 主键是否对齐、<code>sql/refs/</code> 存在时是否带 <code>sqlBundles</code> 且与整理文件哈希一致、密文（<strong>不因密文失败</strong>）。</p>
         <p><code>--apply</code> 一次做五件事：状态 → <code>已上线</code>、填上线日期 / 执行人、整夹 <code>mv</code> 到 <code>archive/&lt;identity&gt;/</code>、进行中表删行 + <code>ARCHIVE.md</code> 追加、归档侧按「已上线」重渲同名 <code>&lt;identity&gt;.html</code>。脚本不可用时按同样五步手工做。</p>
@@ -1206,12 +1206,12 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
             </thead>
             <tbody>
               <tr><td>①</td><td><strong>发版日期算法</strong></td><td>第一个满足 <code>日期 ≥ 提问日 + 2 天</code> 的周四；独立字段，不进目录名</td></tr>
-              <tr><td>②</td><td><strong>版本身份与目录包</strong></td><td>slug = 分支名归一化；<code>docs/releases/&lt;slug&gt;/</code> 六件套，<strong>无 notes/ 中间层</strong></td></tr>
+              <tr><td>②</td><td><strong>版本身份与目录包</strong></td><td>identity = <code>release-V{yyMMdd}</code>；<code>docs/releases/&lt;identity&gt;/</code> 六件套，<strong>无 notes/ 中间层</strong></td></tr>
               <tr><td>③</td><td><strong>Git 定版展示</strong></td><td><code>截断5</code>、hash 前 8 位、<code>mergeSources</code> 去重全量、来源分支功能 ≤28 字、<strong>Asia/Shanghai</strong></td></tr>
               <tr><td>④</td><td><strong>目标 profile</strong></td><td>SQL / 配置 / 任务<strong>一律 <code>prod</code></strong>；配置只收 <code>application-prod.yml</code> + nacos prod overlay</td></tr>
               <tr><td>⑤</td><td><strong>SQL 序与整理</strong></td><td>版本号数字升序；<code>*_change.sql</code> <strong>仅对照</strong>；DDL/DML 双轨、缺侧不落盘；<strong>先 DDL 后 DML</strong></td></tr>
               <tr><td>⑥</td><td><strong>密文策略</strong></td><td>配置章与 <code>artifacts.json</code> <strong>允许密文</strong>；索引与白话摘要<strong>只列键名</strong></td></tr>
-              <tr><td>⑦</td><td><strong>notes/ 兼容</strong></td><td>旧路径只读兼容，0.3.27 起不再新建</td></tr>
+              <tr><td>⑦</td><td><strong>notes/ 已移除</strong></td><td>0.4 起不读不写；旧仓先 <code>migrate-notes -- --apply</code></td></tr>
               <tr><td>⑧</td><td><strong>repo-profile</strong></td><td>见 §2.5，深合并、缺失回退</td></tr>
               <tr><td>⑨</td><td><strong>逾期书面跳过</strong></td><td>只有<strong>书面</strong>说明 + <code>--overdue-waived "&lt;说明&gt;"</code> 才放行；口头豁免无效</td></tr>
               <tr><td>⑩</td><td><strong>发版单 HTML 渲染</strong></td><td>目录包含同名 <code>&lt;identity&gt;.html</code> 只读渲染（note-merge/seal 自动重建，<code>note-html</code> 补渲）；md 为唯一 SSOT，勾选/折叠不入档</td></tr>
@@ -1262,10 +1262,10 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
               <tr><td>一、元信息</td><td>版本身份 / 分支对 / 发版日期 / 定版时间 / 负责人 / <strong>上线内容摘要（1～5 项）</strong></td><td>自动 + 人工</td></tr>
               <tr><td>二、Git 定版</td><td>① 提交列表（截断5）② 合并来源（去重全量 + 来源分支功能）</td><td><strong>自动</strong></td></tr>
               <tr><td>三、涉及服务与模块</td><td>来自 AGENTS / README 的一句话</td><td>自动 + 人工</td></tr>
-              <tr><td>四、数据库与 SQL</td><td>条数摘要 + 链到 <code>sql/README.md</code>（执行序不在正文展开），目标 profile=<code>prod</code></td><td><strong>自动</strong></td></tr>
+              <tr><td>四、数据库与 SQL</td><td>前 5 条样表（# / 脚本 / 类型 / 动作）+ 条数 + 链到 <code>sql/README.md</code>（执行序不在正文展开），目标 profile=<code>prod</code></td><td><strong>自动</strong></td></tr>
               <tr><td>五、配置项</td><td>yml 键 + 说明（写键上一行 <code>#</code>），允许密文</td><td><strong>自动</strong></td></tr>
-              <tr><td>六、定时任务</td><td>条数摘要 + 链到 <code>jobs/README.md</code></td><td><strong>自动</strong></td></tr>
-              <tr><td>七、包内附属文件</td><td>一行摘要（sql×N · config×M · 整理文件…）</td><td><strong>自动</strong></td></tr>
+              <tr><td>六、定时任务</td><td>前 5 条样表（taskCode / 名称 / cron）+ 条数 + 链到 <code>jobs/README.md</code></td><td><strong>自动</strong></td></tr>
+              <tr><td>七、包内附属文件</td><td>逐项清单：SQL 原件 / 整理 DDL·DML / 配置快照 / 定时任务，每项带可打开链接</td><td><strong>自动</strong></td></tr>
               <tr><td>八、第三方与外部依赖</td><td>feign / dashscope / mcp 等</td><td>自动 + 人工</td></tr>
               <tr><td>九、上线步骤与回滚</td><td>步骤 / 回滚</td><td><strong>人工</strong></td></tr>
               <tr><td>十、风险与验收</td><td>风险 / 验收</td><td><strong>人工</strong></td></tr>
@@ -1275,9 +1275,9 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
         <p><strong>自动段</strong>由 <code>&lt;!-- auto:* --&gt;</code> 包裹，note-merge 可刷新；<strong>人工段</strong>在 <code>&lt;!-- manual:start --&gt;</code> … <code>&lt;!-- manual:end --&gt;</code> 之间（或「上线步骤与回滚 / 风险与验收」已有非空正文），默认保留。</p>
 
         <h3>6.2 目录包</h3>
-        <pre><code>docs/releases/&lt;slug&gt;/
-  &lt;slug&gt;.md                    # 发版单（10 章）
-  &lt;slug&gt;.html                   # 同名只读渲染（工单样式；勿手改，md 为 SSOT）
+        <pre><code>docs/releases/&lt;identity&gt;/
+  &lt;identity&gt;.md                    # 发版单（10 章）
+  &lt;identity&gt;.html                   # 同名只读渲染（工单样式；勿手改，md 为 SSOT）
   artifacts.json               # 制品清单 SSOT（sqlBundles / aiTrack / overdueWaived）
   sql/
     refs/                      # 本版新增 SQL 原件
@@ -1296,8 +1296,8 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
               <tr><th>状态</th><th>含义</th><th>存放</th></tr>
             </thead>
             <tbody>
-              <tr><td>准备中</td><td>问卷未完或未定版</td><td><code>docs/releases/&lt;slug&gt;/</code></td></tr>
-              <tr><td>已定版</td><td>已冻结 Git 定版段，待上线</td><td><code>docs/releases/&lt;slug&gt;/</code></td></tr>
+              <tr><td>准备中</td><td>问卷未完或未定版</td><td><code>docs/releases/&lt;identity&gt;/</code></td></tr>
+              <tr><td>已定版</td><td>已冻结 Git 定版段，待上线</td><td><code>docs/releases/&lt;identity&gt;/</code></td></tr>
               <tr><td>已上线</td><td>seal 完成</td><td><code>archive/</code></td></tr>
               <tr><td>已取消</td><td>终止本版</td><td>原位或 archive（注明）</td></tr>
             </tbody>
@@ -1318,11 +1318,11 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
               <tr><th>闸</th><th>时机</th><th>不过会怎样</th></tr>
             </thead>
             <tbody>
-              <tr><td><strong>首问</strong></td><td>每次 prepare / resume 入口</td><td>不进 push-gate；日期/分支/基线没回显确认就不许写目录包。首次使用还要先记下 SQL 目录与格式</td></tr>
+              <tr><td><strong>首问</strong></td><td>每次 prepare 入口</td><td>不进 push-gate；日期/分支/基线没回显确认就不许写目录包。首次使用还要先记下 SQL 目录与格式</td></tr>
               <tr><td><strong>逾期未归档</strong></td><td>gates-common 预检 + freeze 再拦一次</td><td><code>已定版</code> 且发版日期已过 → 硬闸中止（先 seal）；<code>准备中</code> → 软提醒</td></tr>
               <tr><td><strong>push-gate</strong></td><td>首问之后</td><td>未推送 ≠ 0 → 模式中止，不得落盘</td></tr>
               <tr><td><strong>WritePlan 确认词</strong></td><td>任何写盘前</td><td>非词表口语 → 再问一句；audit 永不写盘</td></tr>
-              <tr><td><strong>骨架</strong></td><td>prepare / resume / seal 开头</td><td>缺失从 fixtures 建；fixture 自身缺失就停下说明，别拿空文件冒充模板</td></tr>
+              <tr><td><strong>骨架</strong></td><td>prepare / seal 开头</td><td>缺失从 fixtures 建；fixture 自身缺失就停下说明，别拿空文件冒充模板</td></tr>
             </tbody>
           </table>
         </div>
@@ -1332,7 +1332,7 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
           <li>「别问日期/分支了，直接写」→ 仍回显首问各项并记确认，再 push-gate</li>
           <li>「别问 SQL 目录了，默认 db/migration」→ 索引未记录时仍要问目录和格式，写入后再继续</li>
           <li>「旧单以后再 archive」→ 逾期已定版是硬闸，先 seal（或你<strong>书面</strong>跳过）</li>
-          <li>「先落盘给评审，push 稍后」→ push-gate 未过就别写 <code>docs/releases/&lt;slug&gt;/</code> 和 artifacts；聊天可以贴草稿</li>
+          <li>「先落盘给评审，push 稍后」→ push-gate 未过就别写 <code>docs/releases/&lt;identity&gt;/</code> 和 artifacts；聊天可以贴草稿</li>
           <li>「看着不错，继续吧」/ Slack 👍 → <strong>不是</strong>确认词</li>
           <li>「archive 只是 housekeeping / 硬闸只管 optics」→ 假；逾期硬闸挡的是并发定版混乱</li>
         </ul>
@@ -1358,14 +1358,14 @@ node release-eng/scripts/release.mjs seal -- --root . --note docs/releases/&lt;s
 
         <h3>7.4 逾期硬闸怎么放行</h3>
         <p>freeze JSON 里 <code>overdueHardGate=true</code> 时，note-merge 必须带书面说明：</p>
-        <pre><code>node release-eng/scripts/release.mjs note-merge -- --root . --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md \
+        <pre><code>node release-eng/scripts/release.mjs note-merge -- --root . --note docs/releases/&lt;identity&gt;/&lt;identity&gt;.md \
   --freeze-json /tmp/freeze.json --overdue-waived "11-20 大促后统一归档，已与发布经理确认"</code></pre>
         <p>跳过记录会写进 <code>artifacts.json.overdueWaived{reason,date}</code>。<strong>不传这个参数 → 直接拒绝写盘（exit 1）</strong>。</p>
 
         <h3>7.5 机检命令</h3>
         <pre><code>node release-eng/scripts/release.mjs modes          # 四个模式 + 脚本别名表
 node release-eng/scripts/release.mjs push-gate -- --root . --release release --baseline main
-node release-eng/scripts/release.mjs seal-check -- --root . --note docs/releases/&lt;slug&gt;/&lt;slug&gt;.md
+node release-eng/scripts/release.mjs seal-check -- --root . --note docs/releases/&lt;identity&gt;/&lt;identity&gt;.md
 node release-eng/scripts/selfcheck.mjs              # 技能包自身烟测</code></pre>
       </section>
 
@@ -1419,7 +1419,7 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
           </details>
           <details>
             <summary>Q5 发版日期和目录名是什么关系？</summary>
-            <div class="ans"><p>没关系。目录名是分支名归一化；发版日期只是元信息字段，改了也不动路径。</p></div>
+            <div class="ans"><p>有。目录名由发版日期导出（<code>release-V{yyMMdd}</code>）；改已确认的发版日期 = 改身份与路径（未定版可迁，已定版须确认）。</p></div>
           </details>
           <details>
             <summary>Q6 首次发版的基线怎么填？</summary>
@@ -1439,7 +1439,7 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
           </details>
           <details>
             <summary>Q10 manual 段会被覆盖吗？</summary>
-            <div class="ans"><p><code>resume</code> 默认不覆盖（除非你要求）。自动段刷新只动 <code>&lt;!-- auto:* --&gt;</code> 包起来的部分。</p></div>
+            <div class="ans"><p><code>prepare</code> 同身份刷新默认不覆盖（除非你要求）。自动段刷新只动 <code>&lt;!-- auto:* --&gt;</code> 包起来的部分。</p></div>
           </details>
           <details>
             <summary>Q11 版本以谁为准？</summary>
@@ -1463,13 +1463,13 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
               <tr><td><a href="../QUICKSTART.md">QUICKSTART.md</a></td><td>一页纸 · 主循环与三规则</td></tr>
               <tr><td><a href="../AGENT-INDEX.md">AGENT-INDEX.md</a></td><td>Agent 热路径（必读 + 按需两张表）</td></tr>
               <tr><td><a href="../SKILL.md">SKILL.md</a></td><td>入口 · 模式分流 · 硬闸 · 红旗</td></tr>
-              <tr><td><a href="../modes/README.md">modes/README.md</a></td><td>15 份规格索引</td></tr>
+              <tr><td><a href="../modes/README.md">modes/README.md</a></td><td>14 份规格索引</td></tr>
               <tr><td><a href="../modes/conventions.md">modes/conventions.md</a></td><td><strong>约定 SSOT</strong>（十条）</td></tr>
               <tr><td><a href="../modes/gates-common.md">gates-common.md</a> · <a href="../modes/git-gates.md">git-gates.md</a></td><td>共享前缀 · 首问 · push-gate</td></tr>
               <tr><td><a href="../modes/freeze.md">freeze.md</a> · <a href="../modes/ai-track.md">ai-track.md</a></td><td>定版采集 · 双轨研判</td></tr>
               <tr><td><a href="../modes/questions.md">questions.md</a> · <a href="../modes/recommended.md">recommended.md</a></td><td>问卷 · 全部推荐</td></tr>
               <tr><td><a href="../modes/write-plan.md">write-plan.md</a></td><td>WritePlan 五段 · 确认词表 · 预授权</td></tr>
-              <tr><td><a href="../modes/prepare.md">prepare.md</a> · <a href="../modes/resume.md">resume.md</a> · <a href="../modes/audit.md">audit.md</a> · <a href="../modes/seal.md">seal.md</a></td><td>四个模式</td></tr>
+              <tr><td><a href="../modes/prepare.md">prepare.md</a>（含 cancel） · <a href="../modes/audit.md">audit.md</a> · <a href="../modes/seal.md">seal.md</a></td><td>四个模式（prepare / audit / seal / cancel）</td></tr>
               <tr><td><a href="../modes/idempotency.md">idempotency.md</a> · <a href="../modes/bootstrap.md">bootstrap.md</a></td><td>幂等 · 骨架种子</td></tr>
               <tr><td><a href="../fixtures/docs/releases/templates/release-note-template.md">fixtures/.../release-note-template.md</a></td><td>发版单模板（10 章）</td></tr>
               <tr><td><a href="../VERIFY.md">VERIFY.md</a></td><td><strong>维护者验收</strong>（非上手教程）</td></tr>
@@ -1479,8 +1479,8 @@ node release-eng/scripts/release.mjs freeze -- --root . --base main --head HEAD 
         </div>
 
         <div class="footer">
-          本手册描述仪式用法；具体清单以当次 <code>docs/releases/&lt;slug&gt;/&lt;slug&gt;.md</code> 与 <code>artifacts.json</code> 为准。<br />
-          HTML 与 Markdown 双维护，改内容须同步 · release-eng v0.3.34
+          本手册描述仪式用法；具体清单以当次 <code>docs/releases/&lt;identity&gt;/&lt;identity&gt;.md</code> 与 <code>artifacts.json</code> 为准。<br />
+          HTML 与 Markdown 双维护；版本 / 身份 / 旧模式 / notes 由 <code>selfcheck --layer contract</code> 守卫 · release-eng v0.4.6
         </div>
       </section>
     </main>

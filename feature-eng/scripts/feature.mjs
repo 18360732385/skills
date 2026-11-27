@@ -9,7 +9,7 @@
  *   node scripts/feature.mjs status [--cwd <dir>]
  *   node scripts/feature.mjs status-scan   # alias of status
  *   node scripts/feature.mjs gate-evidence --cwd <dir> --slug <slug> [--expect-fail]
- *   node scripts/feature.mjs close-check --cwd <dir> --slug <slug>
+ *   node scripts/feature.mjs close-check --cwd <dir> --slug <slug> [--expect-fail]
  *
  * 只做：列出 modes/、转发 status-scan / gate-evidence / close-check。不写 progress、不调子 skill、不跑硬闸。
  */
@@ -24,9 +24,10 @@ const modesDir = path.join(skillRoot, "modes");
 const statusScan = path.join(__dirname, "status-scan.mjs");
 const gateEvidence = path.join(__dirname, "gate-evidence.mjs");
 const closeCheck = path.join(__dirname, "close-check.mjs");
+const contractsCheck = path.join(__dirname, "check-contracts.mjs");
 
 const MODE_HELP = [
-  ["init", "首次绑定 11 环"],
+  ["init", "首次绑定 11 个可绑环节"],
   ["rebind", "改环节↔skill 映射"],
   ["start", "新主题开工（分诊 S/B/F）"],
   ["resume", "续跑进行中主题"],
@@ -51,7 +52,8 @@ Usage:
   node scripts/feature.mjs status [--cwd <dir>]
   node scripts/feature.mjs status-scan [--cwd <dir>]
   node scripts/feature.mjs gate-evidence --cwd <dir> --slug <slug> [--expect-fail]
-  node scripts/feature.mjs close-check --cwd <dir> --slug <slug>
+  node scripts/feature.mjs close-check --cwd <dir> --slug <slug> [--expect-fail]
+  node scripts/feature.mjs contracts [--cwd <skill-root>]
 
 Subcommands:
   help           本页
@@ -60,6 +62,7 @@ Subcommands:
   status-scan    status 别名
   gate-evidence  转发 scripts/gate-evidence.mjs（闸门证据）
   close-check    转发 scripts/close-check.mjs（含 gate-evidence）
+  contracts      转发 scripts/check-contracts.mjs（docs/templates/config 单源校验）
 
 边界：本 CLI 不写 progress.yaml / 回链.md，不调起子 skill，不代答硬闸。
 热路径：AGENT-INDEX.md · 模式正文：modes/ · 烟测：node scripts/selfcheck.mjs
@@ -157,6 +160,10 @@ if (cmd === "gate-evidence") {
 
 if (cmd === "close-check") {
   forwardScript(closeCheck, args.slice(1));
+}
+
+if (cmd === "contracts" || cmd === "check-contracts") {
+  forwardScript(contractsCheck, args.slice(1));
 }
 
 console.error(`Unknown subcommand: ${cmd}`);

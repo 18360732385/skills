@@ -1,4 +1,4 @@
-﻿# start — 新主题开工
+# start — 新主题开工
 
 ## 前置
 
@@ -25,7 +25,7 @@
      - 提示：NO/未知时可先工程化打分（fill-score / refresh-score），或继续本主题（独立模式）
      ```
    - 结论写入 `回链.md`「仪式与降级」一行：`eng_probe: meta=有 · ai_coding_ready=…`（无 meta 时不写）。读侧：无 `eng_probe` 时可认旧键 `harness_probe`。
-2. **绑定就绪检查 + chef_mode 探测**：按解析序读绑定（优先目标仓 `docs/runs/stage-bindings.yaml`）。按即将分诊的路径，标出关键环若为 `null` 的缺口（见下表）。有缺口 → **红字提示**（失败文案见 [flow.md](specs/flow.md)「绑定 skill 可调起」预检 A/B），建议先 `rebind`/`init`；用户坚持继续则仅能跑到第一个未绑环前。首个执行环调起前再跑完整预检 A–E。
+2. **绑定就绪检查 + chef_mode 探测**：按解析序读绑定（优先目标仓 `docs/runs/stage-bindings.yaml`）。按即将分诊的路径，标出关键环若为 `null` 的缺口（见下表）。有缺口 → **红字提示**（失败文案见 [flow.md](specs/flow.md)「绑定 skill 可调起」预检 A/B），建议先 `rebind`/`init`；用户坚持继续时，`null` 绑定视同“不可调起”，按下方 chef_mode 规则**显式降为 `controller_proxy`** 并警告；仅当用户**拒绝 proxy**时才停在未绑环前。首个执行环调起前再跑完整预检 A–E。
    - 任意路径常用：`grill` / `design`（按需）  
    - B/F：`implement`、`review`；条件 `proto` / `domain`（仅 entered 时才调起）  
    - **仅 F**：`spec`、`plan`、`testdesign`、`verify` 不应为 null（否则 Full 跑不通）

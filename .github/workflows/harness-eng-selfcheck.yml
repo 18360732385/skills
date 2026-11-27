@@ -1,0 +1,41 @@
+name: harness-eng selfcheck
+
+on:
+  push:
+    paths:
+      - "harness-eng/**"
+      - ".github/workflows/harness-eng-selfcheck.yml"
+  pull_request:
+    paths:
+      - "harness-eng/**"
+      - ".github/workflows/harness-eng-selfcheck.yml"
+  workflow_dispatch:
+
+jobs:
+  selfcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Version sync drift
+        run: node harness-eng/scripts/sync-skill-version.mjs --check
+      - name: Selfcheck
+        run: node harness-eng/scripts/selfcheck.mjs
+      - name: Install payload
+        run: node harness-eng/scripts/pack-check.mjs
+
+  selfcheck-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Version sync drift
+        run: node harness-eng/scripts/sync-skill-version.mjs --check
+      - name: Selfcheck
+        run: node harness-eng/scripts/selfcheck.mjs
+      - name: Install payload
+        run: node harness-eng/scripts/pack-check.mjs

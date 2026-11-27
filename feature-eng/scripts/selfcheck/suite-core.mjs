@@ -1,3 +1,6 @@
+import { checkContracts } from "../check-contracts.mjs";
+import { decodeTextBuffer } from "../lib/text-encoding.mjs";
+
 export function run(ctx) {
   const {
     assert, read, exists, skillRoot, PIN, VER_RE,
@@ -297,19 +300,42 @@ assert(/双维护/.test(handbookMd), "guide/使用手册.md states md/html 双�
 assert(/id="s6"/.test(handbookHtml), "guide/使用手册.html has #s6 anchor");
 assert(/data-ha-style="document"/.test(handbookHtml), "guide/使用手册.html declares data-ha-style");
 assert(/调度员不进厨房/.test(handbookMd), "guide/使用手册.md keeps core rule wording");
+for (const marker of [
+  "1.1 主循环",
+  "3.3 advance",
+  "3.4 resume / status",
+  "3.5 close",
+  "4.4 express",
+  "archive/ARCHIVE.md",
+]) {
+  assert(
+    handbookMd.includes(marker) && handbookHtml.includes(marker),
+    `guide md/html parity: ${marker}`
+  );
+}
 
 // P0：仓根 README 钉号 + VERIFY 继承不冒充现行钉 + sync 条件化
 const repoRootReadmePath = path.join(skillRoot, "..", "README.md");
 const repoRootReadme = fs.existsSync(repoRootReadmePath)
   ? fs.readFileSync(repoRootReadmePath, "utf8")
   : null;
-assert(repoRootReadme != null, "repo root README.md exists (../README.md)");
-assert(
-  new RegExp(
-    String.raw`feature-eng/README\.md[^\n]*` + PIN.replace(/\./g, "\\.")
-  ).test(repoRootReadme || ""),
-  `repo root README feature-eng row pins ${PIN}`
-);
+if (repoRootReadme != null) {
+  assert(true, "repo root README.md exists (../README.md)");
+  assert(
+    new RegExp(
+      String.raw`feature-eng/README\.md[^\n]*` + PIN.replace(/\./g, "\\.")
+    ).test(repoRootReadme),
+    `repo root README feature-eng row pins ${PIN}`
+  );
+} else {
+  console.log("note: install mode — skip repo root README assertions");
+}
+for (const f of ["README.md", "CHANGELOG.md", "AGENT-INDEX.md", "VERIFY.md"]) {
+  assert(
+    !(read(f) || "").includes("](../_log"),
+    `${f} has no ../_log links (install-safe)`
+  );
+}
 assert(
   !/钉\s*\*\*0\.2\.8-dev\*\*/.test(verify),
   "VERIFY must not claim current pin is 0.2.8-dev"
@@ -352,5 +378,51 @@ const bindingsYamlHdr = (read("config/stage-bindings.yaml") || "").slice(0, 400)
 assert(
   /种子|回退/.test(bindingsYamlHdr) && /禁止.*sync|sync\.mjs/.test(bindingsYamlHdr),
   "stage-bindings.yaml header: seed/fallback + no sync"
+);
+
+// 文本卫生：UTF-8 无 BOM + LF（.gitattributes 亦固定 eol=lf）
+{
+  const exts = /\.(md|mjs|ya?ml|tmpl|html|txt|json)$/i;
+  const hits = [];
+  function walk(dir) {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (ent.name === ".git" || ent.name === "node_modules") continue;
+      const abs = path.join(dir, ent.name);
+      if (ent.isDirectory()) walk(abs);
+      else if (exts.test(ent.name)) {
+        const buf = fs.readFileSync(abs);
+        if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
+          hits.push(`${path.relative(skillRoot, abs)}: BOM`);
+        }
+        const text = buf.toString("utf8");
+        if (/\r\n|\r/.test(text)) {
+          hits.push(`${path.relative(skillRoot, abs)}: CRLF`);
+        }
+      }
+    }
+  }
+  walk(skillRoot);
+  const utf16Progress = Buffer.concat([
+    Buffer.from([0xff, 0xfe]),
+    Buffer.from("slug: demo\nstage: spec\n", "utf16le"),
+  ]);
+  assert(
+    /slug: demo/.test(decodeTextBuffer(utf16Progress)),
+    "UTF-16 LE progress text decodes"
+  );
+  assert(
+    hits.length === 0,
+    hits.length === 0
+      ? "text files are UTF-8 no BOM + LF"
+      : `text hygiene: ${hits[0]}`
+  );
+}
+
+const contractIssues = checkContracts(skillRoot);
+assert(
+  contractIssues.length === 0,
+  contractIssues.length === 0
+    ? "docs/templates/config align with lib contracts"
+    : `contract drift: ${contractIssues[0]}`
 );
 }

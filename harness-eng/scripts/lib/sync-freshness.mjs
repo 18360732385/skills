@@ -15,6 +15,7 @@ export const CONSUMER_SYNC_REL = "scripts/agent-config/sync.mjs";
 
 export const SYNC_TMPL_ID_RE = /HARNESS_SYNC_TMPL_ID:\s*(\S+)/;
 export const HARNESS_ENG_VERSION_RE = /HARNESS_ENG_VERSION:\s*(\S+)/;
+export const HARNESS_ENG_REV_RE = /HARNESS_ENG_REV:\s*(\d+)/;
 
 export function readMarker(text, re = SYNC_TMPL_ID_RE) {
   const m = String(text || "").match(re);
@@ -53,6 +54,8 @@ export function compareSyncFreshness(targetRoot, skillRoot = DEFAULT_SKILL_ROOT)
   const consumerId = readMarker(consumerText);
   const skillVer = readMarker(tmplText, HARNESS_ENG_VERSION_RE);
   const consumerVer = readMarker(consumerText, HARNESS_ENG_VERSION_RE);
+  const skillRev = readMarker(tmplText, HARNESS_ENG_REV_RE);
+  const consumerRev = readMarker(consumerText, HARNESS_ENG_REV_RE);
   if (!skillId) {
     return {
       status: "error",
@@ -63,6 +66,8 @@ export function compareSyncFreshness(targetRoot, skillRoot = DEFAULT_SKILL_ROOT)
       consumerId,
       skillVer,
       consumerVer,
+      skillRev,
+      consumerRev,
     };
   }
   if (!consumerId || consumerId !== skillId) {
@@ -75,6 +80,22 @@ export function compareSyncFreshness(targetRoot, skillRoot = DEFAULT_SKILL_ROOT)
       consumerId,
       skillVer,
       consumerVer,
+      skillRev,
+      consumerRev,
+    };
+  }
+  if (skillRev != null && String(consumerRev ?? "") !== String(skillRev)) {
+    return {
+      status: "stale",
+      reason: "rev-mismatch",
+      tmplPath,
+      consumerPath,
+      skillId,
+      consumerId,
+      skillVer,
+      consumerVer,
+      skillRev,
+      consumerRev,
     };
   }
   return {
@@ -86,6 +107,8 @@ export function compareSyncFreshness(targetRoot, skillRoot = DEFAULT_SKILL_ROOT)
     consumerId,
     skillVer,
     consumerVer,
+    skillRev,
+    consumerRev,
   };
 }
 
@@ -99,8 +122,12 @@ export function formatFreshnessMessage(report, targetRoot) {
   if (report.status === "error" && report.reason === "tmpl-missing-marker") {
     return "harness: skill templates/agent-config/sync.mjs.tmpl 缺少 HARNESS_SYNC_TMPL_ID 标记。\n";
   }
+  const revNote =
+    report.reason === "rev-mismatch"
+      ? ` HARNESS_ENG_REV 消费仓=${report.consumerRev || "(无)"}，skill tmpl=${report.skillRev}。`
+      : "";
   return [
-    `harness: scripts/agent-config/sync.mjs 落后于 skill 模板（消费仓 HARNESS_SYNC_TMPL_ID=${report.consumerId || "(无)"}，skill tmpl=${report.skillId || "(无)"}）。`,
+    `harness: scripts/agent-config/sync.mjs 落后于 skill 模板（消费仓 HARNESS_SYNC_TMPL_ID=${report.consumerId || "(无)"}，skill tmpl=${report.skillId || "(无)"}）。${revNote}`,
     "静默过期会导致 Trae FM strip 等旧行为。刷新步骤：",
     "  1. land / upgrade（L5）重渲 artifact `agent-config-sync`，或把 `templates/agent-config/sync.mjs.tmpl` 渲染/复制为 `scripts/agent-config/sync.mjs`",
     "  2. 在目标仓执行：node scripts/agent-config/sync.mjs",
@@ -441,7 +468,10 @@ export function runFreshnessCheck(targetRoot, skillRoot = DEFAULT_SKILL_ROOT, lo
     return 0;
   }
   if (report.status === "fresh") {
-    log.error(`harness: sync.mjs freshness OK（HARNESS_SYNC_TMPL_ID=${report.skillId}）。`);
+    log.error(
+      `harness: sync.mjs freshness OK（HARNESS_SYNC_TMPL_ID=${report.skillId}` +
+        `${report.skillRev != null ? ` HARNESS_ENG_REV=${report.skillRev}` : ""}）。`
+    );
     log.error(
       "harness: 模板漂移提醒：技能 API 模板 vs 仓内 docs/api 厚模板可能不一致；upgrade on_exists=skip 以仓为准。"
     );

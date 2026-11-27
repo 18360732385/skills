@@ -1,10 +1,32 @@
-﻿# harness-eng 验收记录（0.8.9）
+﻿# harness-eng 验收记录（0.8.11）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.9**（实战解析修复 + gold 开干四道 + 报告壳 0.4.3；其下 0.8.8 gold 四道 · 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.11**（确认令牌 + rev 新鲜度 + 预授权落盘 + UTF-16 JSON；其下 0.8.10 闸门与一致性 · 0.8.9 实战解析 · 0.8.8 gold 四道 · 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.11 增量验收（确认令牌与 rev）
+
+| 项 | 期望 |
+|---|---|
+| manifest `0.8.11` / `rev` 0；`harness-meta` 模板含 `skill_rev`；sync 标记含 `HARNESS_ENG_REV` | 有 |
+| 无 `--confirm` 且无落盘预授权时，`harness.mjs` / `render.mjs` 真写退出且不落文件 | 有 |
+| `--confirm 确认预授权` 只写 `write-auth.yaml`；之后省略 `--confirm` 可以写盘 | 有 |
+| 同 version 不同 `rev` 时安装副本告警；L5 freshness 在 rev 不一致时为 stale | 有 |
+| UTF-16 LE（有 BOM / 无 BOM）JSON 可解析；`Q_PREAUTH` 的 recommended 为 false | 有 |
+| upgrade `## 0.8.10 → 0.8.11`；CHANGELOG 0.8.11；CI 含 `windows-latest` | 有 |
+
+## 0.8.10 增量验收（闸门与一致性）
+
+| 项 | 期望 |
+|---|---|
+| `_meta/manifest.yaml` 为权威 `0.8.10`、`rev` 为 0；与 `templates/_meta` 的 version / rev 一致 | 有 |
+| 裸「确认」只在紧接 WritePlan 的下一轮有效；预授权只授权后续轮次 | 有 |
+| `sync-skill-version` 同步 SKILL 正文钉；`report_schema` 人读钉指向 glossary | 有 |
+| CHANGELOG 有 0.8.10 行；upgrade 有 `0.8.9 → 0.8.10` | 有 |
+| `scripts/pack-check.mjs` 通过；CI 跑 selfcheck + sync check + pack-check | 有 |
+| `--params -` 与 `refresh --exit-zero` 在 `harness --help` 可见 | 有 |
 
 ## 0.8.9 增量验收（实战解析）
 

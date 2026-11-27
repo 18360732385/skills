@@ -11,8 +11,8 @@ import path from "path";
 import {
   identityFromReleaseDate,
   removeReleasesIndexRow,
-  stripBom,
 } from "./release-format.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -90,7 +90,7 @@ Usage:
 
   const indexPath = path.join(root, "docs", "releases", "releases.md");
   let indexText = fs.existsSync(indexPath)
-    ? stripBom(fs.readFileSync(indexPath, "utf8"))
+    ? readTextFile(indexPath)
     : "";
   const plan = {
     ok: true,

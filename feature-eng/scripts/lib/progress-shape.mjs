@@ -16,6 +16,14 @@ export const DOMAIN_PROTO_ENUM = new Set([
 ]);
 export const LAYOUT_ENUM = new Set(["monorepo", "multi_repo", null]);
 export const PACKAGE_ROLES = new Set(["api", "web", "other"]);
+export const CLOSE_PITFALLS_ENUM = new Set(["off", "optional", "on", null]);
+export const ENV_VERIFIED_ENUM = new Set(["skipped", "verified", null]);
+export const INTEGRATION_READY_ENUM = new Set([
+  "cors_ready",
+  "proxy_ready",
+  "accepted_blocked",
+  null,
+]);
 
 /** stage 用连字符；gates.pre_impl 用下划线（见 progress.yaml.tmpl 别名表） */
 export const STAGE_ENUM = new Set([
@@ -39,6 +47,21 @@ export const STAGE_ENUM = new Set([
   "diagnose",
   null,
 ]);
+
+/** 可绑环节键（与 flow.md / stage-bindings*.yaml 单源） */
+export const BINDING_KEYS = [
+  "grill",
+  "design",
+  "domain",
+  "spec",
+  "plan",
+  "proto",
+  "testdesign",
+  "implement",
+  "review",
+  "verify",
+  "diagnose",
+];
 
 /**
  * progress.yaml 结构契约单一事实源（0.2.26 单源收敛）：
@@ -111,18 +134,42 @@ export const L2_FOR_GATE = {
   close: null,
 };
 
+/**
+ * YAML 行内注释剥离（引号内的 # 保留）。
+ * 机检脚本共用，避免 `design_confirmed: "…" # 注释` 被当成非 ISO 值静默跳过。
+ */
+export function stripYamlInlineComment(value) {
+  const s = String(value ?? "");
+  let quote = null;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (quote) {
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === "#" && (i === 0 || /\s/.test(s[i - 1]))) {
+      return s.slice(0, i).trimEnd();
+    }
+  }
+  return s.trimEnd();
+}
+
 export function parseScalar(text, key) {
   if (!text) return undefined;
-  const m = text.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
+  const m = text.match(new RegExp(`^${key}\\s*:\\s*(.*)$`, "m"));
   if (!m) return undefined;
-  let v = m[1].trim();
+  let v = stripYamlInlineComment(m[1]).trim();
   if (
     (v.startsWith('"') && v.endsWith('"')) ||
     (v.startsWith("'") && v.endsWith("'"))
   ) {
     v = v.slice(1, -1);
   }
-  if (v === "null" || v === "~" || v === "") return null;
+  if (v === "null" || v === "~" || v === "" || v === "—") return null;
   return v;
 }
 
@@ -132,7 +179,7 @@ export function parseScalar(text, key) {
  */
 export function parsePackagesRoles(text) {
   if (!text) return { ok: false, roles: [], empty: true };
-  const start = text.search(/^packages:\s*$/m);
+  const start = text.search(/^packages\s*:\s*(?:#.*)?$/m);
   if (start < 0) {
     // 无块状 packages: 键（含内联 packages: null / 整键缺失）一律视为 nullish
     // —— 原写法 `inlineNull || true` 恒真，语义即“缺失视为 null”，据此钉死。
@@ -148,9 +195,9 @@ export function parsePackagesRoles(text) {
   }
   const roles = [];
   for (const line of block.split(/\r?\n/)) {
-    const m = line.match(/^\s+-\s+role:\s*(\S+)/) || line.match(/^\s+role:\s*(\S+)/);
+    const m = line.match(/^\s+-\s+role\s*:\s*(\S+)/) || line.match(/^\s+role\s*:\s*(\S+)/);
     if (m) {
-      let r = m[1].trim().replace(/["']/g, "");
+      let r = stripYamlInlineComment(m[1]).trim().replace(/["']/g, "");
       if (r === "null" || r === "~") continue;
       roles.push(r);
     }
@@ -174,6 +221,9 @@ export function validateProgressEnums(text, { requireFilledEnums = false } = {})
     ["domain", DOMAIN_PROTO_ENUM],
     ["proto", DOMAIN_PROTO_ENUM],
     ["layout", LAYOUT_ENUM],
+    ["close_pitfalls", CLOSE_PITFALLS_ENUM],
+    ["env_verified", ENV_VERIFIED_ENUM],
+    ["integration_ready", INTEGRATION_READY_ENUM],
   ];
   for (const [key, set] of checks) {
     const v = parseScalar(text, key);

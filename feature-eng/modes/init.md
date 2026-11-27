@@ -1,4 +1,4 @@
-﻿# init — 初始化环节绑定
+# init — 初始化环节绑定
 
 首次使用 feature-eng、或目标仓绑定文件缺失时运行。目标：在**目标仓**产出可用的 `docs/runs/stage-bindings.yaml`。
 
@@ -43,6 +43,7 @@
 
 1. **扫描**：列出当前环境可调起的相关 skill（按能力粗分：澄清 / 设计 / 定稿 / 规格 / 计划 / 原型 / 测设 / 实现 / 评审 / 验证 / 排障）。宿主无法枚举时，允许用户手工填写 skill 名。
    - 推荐名与本机扫描命中不一致（如 grill-me vs grilling）时，以扫描命中为准并在首问表标注别名。
+   - `testdesign` 推荐名 `lynxce-test-cases` 为团队内部 skill；未装时按扫描候选改绑，或写 `null` + `controller_proxy`。
    - 完成标准：11 个可绑环节每个至少有 1 个候选，或显式标注「无候选」。
 2. **首问（推荐包表）**：Read `config/stage-bindings.example.yaml` 与 [flow.md](specs/flow.md)「可绑环节中文名与产物一句话」。**一键采用前也必须先展示下表**，再停下问用户：
 

@@ -15,6 +15,7 @@ import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 import {
   readSkillVersion,
+  readSkillRev,
   readTemplatesManifestVersion,
   escapeSemverRe,
 } from "./lib/skill-version.mjs";
@@ -34,13 +35,13 @@ function parseArgs(argv) {
 function printHelp() {
   console.log(`Usage: node scripts/sync-skill-version.mjs [--check] [--help]
 
-SSOT: _meta/manifest.yaml → version
-Syncs mechanical copies + known doc "current version" headers
-(+ repo root README harness-eng row).
+SSOT: _meta/manifest.yaml → version / rev
+Syncs mechanical copies + SKILL.md body version pin + known doc
+"current version" headers (+ repo root README harness-eng row).
 Does not edit CHANGELOG / upgrade.md / stale fixtures / schema versions.`);
 }
 
-function syncSyncMarkers(text, version) {
+function syncSyncMarkers(text, version, rev) {
   let out = text;
   out = out.replace(
     /HARNESS_SYNC_TMPL_ID:\s*\S+/g,
@@ -58,6 +59,22 @@ function syncSyncMarkers(text, version) {
     /const HARNESS_ENG_VERSION = "[^"]*"/g,
     `const HARNESS_ENG_VERSION = "${version}"`
   );
+  if (/HARNESS_ENG_REV:\s*\d+/.test(out)) {
+    out = out.replace(/HARNESS_ENG_REV:\s*\d+/g, `HARNESS_ENG_REV: ${rev}`);
+  } else {
+    out = out.replace(
+      /( \* HARNESS_ENG_VERSION:\s*\S+)/,
+      `$1\n * HARNESS_ENG_REV: ${rev}`
+    );
+  }
+  if (/const HARNESS_ENG_REV =/.test(out)) {
+    out = out.replace(/const HARNESS_ENG_REV = [^;]+;/, `const HARNESS_ENG_REV = ${rev};`);
+  } else {
+    out = out.replace(
+      /(const HARNESS_ENG_VERSION = "[^"]*";)/,
+      `$1\nconst HARNESS_ENG_REV = ${rev};`
+    );
+  }
   return out;
 }
 
@@ -124,7 +141,17 @@ function syncBodyVersionPins(text, version, kind) {
   return out;
 }
 
-function planUpdates(skillRoot, version) {
+function syncManifestRev(text, version, rev) {
+  let out = text.replace(/^version:\s*"[^"]*"/m, `version: "${version}"`);
+  if (/^rev:\s*\d+/m.test(out)) {
+    out = out.replace(/^rev:\s*\d+/m, `rev: ${rev}`);
+  } else {
+    out = out.replace(/^version:.*$/m, `$&\nrev: ${rev}`);
+  }
+  return out;
+}
+
+function planUpdates(skillRoot, version, rev) {
   const prev = readTemplatesManifestVersion(skillRoot) || version;
   /** @type {{ rel: string, next: string }[]} */
   const updates = [];
@@ -140,11 +167,20 @@ function planUpdates(skillRoot, version) {
   }
 
   touch("templates/_meta/manifest.yaml", (t) =>
-    t.replace(/^version:\s*"[^"]*"/m, `version: "${version}"`)
+    syncManifestRev(t, version, rev)
   );
-  touch("templates/meta/harness-meta.yaml.tmpl", (t) =>
-    t.replace(/^skill_version:\s*"[^"]*"/m, `skill_version: "${version}"`)
+  touch("SKILL.md", (t) =>
+    t.replace(/当前 \*\*\d+\.\d+\.\d+\*\*/, `当前 **${version}**`)
   );
+  touch("templates/meta/harness-meta.yaml.tmpl", (t) => {
+    let out = t.replace(/^skill_version:\s*"[^"]*"/m, `skill_version: "${version}"`);
+    if (/^skill_rev:\s*\d+/m.test(out)) {
+      out = out.replace(/^skill_rev:\s*\d+/m, `skill_rev: ${rev}`);
+    } else {
+      out = out.replace(/^(skill_version:.*)$/m, `$1\nskill_rev: ${rev}`);
+    }
+    return out;
+  });
   touch("questions.yaml", (t) =>
     t.replace(/^version:\s*"[^"]*"/m, `version: "${version}"`)
   );
@@ -155,7 +191,7 @@ function planUpdates(skillRoot, version) {
     "scripts/fixtures/l5-sync-golden/scripts/agent-config/sync.mjs",
   ];
   for (const rel of syncRelPaths) {
-    touch(rel, (t) => syncSyncMarkers(t, version));
+    touch(rel, (t) => syncSyncMarkers(t, version, rev));
   }
 
   touch("README.md", (t) =>
@@ -191,7 +227,7 @@ function planUpdates(skillRoot, version) {
     );
   }
 
-  return { version, prev, updates };
+  return { version, rev, prev, updates };
 }
 
 function main() {
@@ -202,15 +238,16 @@ function main() {
   }
 
   const version = readSkillVersion(SKILL_ROOT);
-  const { prev, updates } = planUpdates(SKILL_ROOT, version);
+  const rev = readSkillRev(SKILL_ROOT);
+  const { prev, updates } = planUpdates(SKILL_ROOT, version, rev);
 
   if (args.check) {
     if (updates.length === 0) {
-      console.log(`[sync-skill-version] ok — ${version} (no drift)`);
+      console.log(`[sync-skill-version] ok — ${version} rev ${rev} (no drift)`);
       process.exit(0);
     }
     console.error(
-      `[sync-skill-version] drift vs SSOT ${version} (templates was ${prev}):`
+      `[sync-skill-version] drift vs SSOT ${version} rev ${rev} (templates was ${prev}):`
     );
     for (const u of updates) console.error(`  - ${u.rel}`);
     console.error(`Run: node scripts/sync-skill-version.mjs`);
@@ -242,10 +279,10 @@ function main() {
   }
 
   if (updates.length === 0) {
-    console.log(`[sync-skill-version] already synced to ${version}`);
+    console.log(`[sync-skill-version] already synced to ${version} rev ${rev}`);
   } else {
     console.log(
-      `[sync-skill-version] synced ${updates.length} file(s) → ${version}`
+      `[sync-skill-version] synced ${updates.length} file(s) → ${version} rev ${rev}`
     );
   }
 }

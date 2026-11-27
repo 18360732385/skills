@@ -1,4 +1,4 @@
-# lib/freeze — 定版采集模块边界（0.4.2+）
+# lib/freeze — 定版采集模块边界（版本见 `_meta/manifest.yaml`）
 
 | 模块 | 职责 |
 |---|---|

@@ -29,6 +29,24 @@ export function readSkillVersion(skillRoot) {
 }
 
 /**
+ * Package build revision within a semver version.
+ * @param {string} skillRoot
+ * @returns {number}
+ */
+export function readSkillRev(skillRoot) {
+  const manifestPath = path.join(skillRoot, "_meta", "manifest.yaml");
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`skill rev SSOT missing: ${manifestPath}`);
+  }
+  const doc = parseYaml(fs.readFileSync(manifestPath, "utf8")) || {};
+  const raw = doc.rev != null ? String(doc.rev).trim() : "0";
+  if (!/^\d+$/.test(raw)) {
+    throw new Error(`invalid skill rev "${raw}" in ${manifestPath}`);
+  }
+  return Number(raw);
+}
+
+/**
  * Escape a semver string for use inside a RegExp source.
  * @param {string} v
  * @returns {string}
@@ -44,7 +62,8 @@ export function escapeSemverRe(v) {
  */
 /**
  * 0.8.7: running skill vs an install copy (typically ~/.cursor/skills/harness-eng).
- * Silent when the install dir is missing, unreadable, the same realpath, or the same version.
+ * Silent when the install dir is missing, unreadable, the same realpath, or the same version and rev.
+ * A missing `rev` counts as 0.
  * @param {string} runningRoot
  * @param {string} installRoot
  * @returns {string|null}
@@ -63,16 +82,20 @@ export function installSkewWarning(runningRoot, installRoot) {
   }
   if (runReal === instReal) return null;
   let runningVer;
+  let runningRev;
   try {
     runningVer = readSkillVersion(runReal);
+    runningRev = readSkillRev(runReal);
   } catch {
     return null;
   }
   const installVer = readManifestVersionAt(installManifest);
-  if (!installVer || installVer === runningVer) return null;
+  if (!installVer) return null;
+  const installRev = readManifestRevAt(installManifest);
+  if (installVer === runningVer && installRev === runningRev) return null;
   return (
-    `harness: 安装副本版本与正在执行的技能不一致（执行 ${runningVer} @ ${runReal}；` +
-    `安装 ${installVer} @ ${instReal}）。upgrade 以正在执行的这份为准。`
+    `harness: 安装副本版本与正在执行的技能不一致（执行 ${runningVer} rev ${runningRev} @ ${runReal}；` +
+    `安装 ${installVer} rev ${installRev} @ ${instReal}）。upgrade 以正在执行的这份为准。`
   );
 }
 
@@ -83,6 +106,17 @@ function readManifestVersionAt(manifestPath) {
     return version || null;
   } catch {
     return null;
+  }
+}
+
+function readManifestRevAt(manifestPath) {
+  try {
+    const doc = parseYaml(fs.readFileSync(manifestPath, "utf8")) || {};
+    if (doc.rev == null || String(doc.rev).trim() === "") return 0;
+    const n = Number(doc.rev);
+    return Number.isInteger(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
   }
 }
 

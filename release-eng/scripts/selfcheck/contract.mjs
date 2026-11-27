@@ -73,4 +73,17 @@ export async function runContract(kit) {
   assert(resume.status !== 0, "resume subcommand fails");
 
   assert(exists("scripts/lib/freeze/README.md"), "freeze module map README");
+
+  // guide 双份维护的事实漂移守卫（版本 / 身份 / resume / notes）
+  for (const rel of ["guide/使用手册.md", "guide/使用手册.html"]) {
+    const text = read(rel) || "";
+    assert(text.includes(PIN), `${rel} pins ${PIN}`);
+    assert(
+      /release-V\{yyMMdd\}/.test(text),
+      `${rel} states release-V{yyMMdd} identity`
+    );
+    assert(!/分支名归一化/.test(text), `${rel} drops branch-slug identity`);
+    assert(!/resume/i.test(text), `${rel} has no resume mode`);
+    assert(!/计划 0\.4 移除/.test(text), `${rel} notes/ removal is final`);
+  }
 }

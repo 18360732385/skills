@@ -29,9 +29,9 @@
 - 环境证据（verify）：—
 
 ## 仪式与降级
-- chef_mode：`bound | controller_proxy` — —
-- invoke：`strict | inline` — —（若 start 因无 Task / CloudAgent·executor 降级，写明「strict→inline + 原因」；见 O5b）
-- review_policy：`subagent | inline` — —（若 start 因无 Task 降级，写明「已降级 + 原因」；同会话审核帽可另写 `review_effective: inline`）
+- chef_mode：—（填 `bound` 或 `controller_proxy`；proxy 须写明降级与警告）
+- invoke：—（填 `strict` 或 `inline`；若 start 因无 Task / CloudAgent·executor 降级，写明「strict→inline + 原因」；见 O5b）
+- review_policy：—（填 `subagent` 或 `inline`；若 start 因无 Task 降级，写明「已降级 + 原因」；同会话审核帽可另写 `review_effective: inline`）
 - eng_probe：—（有 meta 时：`meta=有 · ai_coding_ready=YES|NO|未知`；无 meta 不写；读侧兼容旧 `harness_probe`）
 - close_pitfalls：`off | optional | on` — —（有 lint-pitfalls 且未显式指定时 start 写 `on`）
 
@@ -40,6 +40,7 @@
 > **禁止伪造聊天笔录**；批量/任务级授权用 `user_task_<id>`（如 `user_task_2026-09-21`）。  
 > **禁止**自造 `user_task_fixture|auto|todo|placeholder|test|dummy`；须用户或任务跑批真实 id。  
 > 不得把「看起来像对话」的假 transcript 当作授权证据。
+> 时间须与 `progress.gates` 的 ISO 表示同一时刻（允许不同时区写法）。
 
 | 闸 | 时间 | authorized_by | 备注 |
 |---|---|---|---|
@@ -74,6 +75,8 @@
 - env_verified：—
 - env_notes（runtime / target / mismatch_reason / api_base_mode / pinned_deps / verify_commands / workdir_policy）：—
 - integration_ready（O9：`cors_ready | proxy_ready | accepted_blocked`）：—
+- 契约同步：—（或 `pr_branch`）
+- eng_snapshot：—（读侧兼容旧 `harness_snapshot`）
 - L2 审核：`审核-<stage>.md` — —
 - pending_invoke：—
 - QA 报告：—

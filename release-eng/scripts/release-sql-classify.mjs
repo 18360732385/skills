@@ -15,8 +15,8 @@ import { fileURLToPath } from "url";
 import {
   classifyMigrationKindByFilename,
   sha256Hex,
-  stripBom,
 } from "./release-format.mjs";
+import { readTextFile } from "./lib/text-encoding.mjs";
 
 function parseArgs(argv) {
   const out = {
@@ -52,7 +52,7 @@ function loadPriorCache(artifactsPath) {
   const bySha = new Map();
   if (!artifactsPath || !fs.existsSync(artifactsPath)) return bySha;
   try {
-    const art = JSON.parse(stripBom(fs.readFileSync(artifactsPath, "utf8")));
+    const art = JSON.parse(readTextFile(artifactsPath));
     for (const b of art.sqlBundles || []) {
       for (const s of b.sources || []) {
         if (s.sha256 && (s.kind === "DDL" || s.kind === "DML" || b.kind)) {
@@ -74,7 +74,7 @@ function loadAiMap(aiJsonPath) {
   /** @type {Map<string, object>} */
   const map = new Map();
   if (!aiJsonPath || !fs.existsSync(aiJsonPath)) return map;
-  const raw = JSON.parse(fs.readFileSync(aiJsonPath, "utf8"));
+  const raw = JSON.parse(readTextFile(aiJsonPath));
   const list = Array.isArray(raw) ? raw : raw.classifications || raw.items || [];
   for (const row of list) {
     const key = baseName(row.path || row.stableId || row.basename || "");
@@ -215,7 +215,7 @@ export function listRefsDir(refsDir) {
         basename: n,
         path: n,
         absPath: abs,
-        content: fs.readFileSync(abs, "utf8"),
+        content: readTextFile(abs),
       };
     });
 }

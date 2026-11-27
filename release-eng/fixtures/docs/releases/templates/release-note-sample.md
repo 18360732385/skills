@@ -77,6 +77,12 @@
 
 本版 SQL：**3** 条 → 明细见 [sql/README.md](./sql/README.md)（含 DDL/DML 条数、执行序、按提交人分组）。
 
+| # | 脚本 | 类型 | 动作 |
+|---|---|---|---|
+| 1 | `V0113_0__DDL__order_timeout_cancel.sql` | DDL | 新增/变更 |
+| 2 | `V0113_1__DML__order_timeout_cancel_seed.sql` | DML | 新增/变更 |
+| 3 | `V0114_0__DDL__recon_daily_summary.sql` | DDL | 新增/变更 |
+
 <!-- auto:sql:end -->
 
 ## 五、配置项
@@ -129,6 +135,11 @@ sms:
 
 本版定时任务：**2** 条 → 明细见 [jobs/README.md](./jobs/README.md)。
 
+| # | taskCode | 名称 | cron |
+|---|---|---|---|
+| 1 | `order:timeout:cancel` | 订单超时取消 | `0 */1 * * * ?` |
+| 2 | `recon:daily:export` | 渠道对账按日汇总 | `0 30 2 * * ?` |
+
 > **jobs ↔ config 交叉（本版 draft：1 个任务缺 cron 表达式键）**：下列任务的 cron 表达式键未在 prod 配置（application-prod.yml / Nacos overlay）中找到，可能由 Nacos DataId 提供，或本次未随 prod yml 上线；请勿手工编造键值。
 
 | taskCode | cron 键 | 真相 | 说明 |
@@ -143,7 +154,13 @@ sms:
 
 <!-- auto:bundle:start -->
 
-本版附属：sql×3 · config×1 · jobs 见 [jobs/README.md](./jobs/README.md) · 整理 [[sms_db_prod]-V261126-DDL.sql](./sql/[sms_db_prod]-V261126-DDL.sql) · [[sms_db_prod]-V261126-DML.sql](./sql/[sms_db_prod]-V261126-DML.sql) · 统计见 [sql/README.md](./sql/README.md)
+本版附属：SQL 原件 3 份、整理文件 2 份、配置快照 1 份、定时任务清单。
+
+- **SQL 原件**：`sql/refs/` 共 3 份 → [sql/README.md](./sql/README.md)（DDL/DML 统计与执行序）
+- **整理 · DDL**：[[sms_db_prod]-V261126-DDL.sql](./sql/[sms_db_prod]-V261126-DDL.sql)（2 条）
+- **整理 · DML**：[[sms_db_prod]-V261126-DML.sql](./sql/[sms_db_prod]-V261126-DML.sql)（1 条）
+- **配置快照**：`config/` 共 1 份
+- **定时任务**：2 项 · [jobs/README.md](./jobs/README.md)（code / 名称 / cron / 默认参数）
 
 <!-- auto:bundle:end -->
 

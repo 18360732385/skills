@@ -80,6 +80,9 @@ function syncDoc(text, from, to, kind) {
       ),
       `$1${to}`
     );
+  } else if (kind === "html") {
+    // 使用手册.html 的钉号是 vX.Y.Z（title / header / footer 共 3 处）
+    out = out.replace(new RegExp(`v${fromRe}\\b`, "g"), `v${to}`);
   }
   return out;
 }
@@ -120,9 +123,18 @@ function planUpdates(skillRoot, version) {
   queue("guide/使用手册-摘要.md", path.join(skillRoot, "guide", "使用手册-摘要.md"), (t) =>
     syncDoc(t, prev, version, "quickstart")
   );
-  queue("../README.md", path.join(REPO_ROOT, "README.md"), (t) =>
-    syncDoc(t, prev, version, "repo-root")
+  queue("guide/使用手册.html", path.join(skillRoot, "guide", "使用手册.html"), (t) =>
+    syncDoc(t, prev, version, "html")
   );
+  // 安装态（用户级 skills 目录）没有仓根 README：跳过而不是抛错
+  const repoRootReadme = path.join(REPO_ROOT, "README.md");
+  if (fs.existsSync(repoRootReadme)) {
+    queue("../README.md", repoRootReadme, (t) =>
+      syncDoc(t, prev, version, "repo-root")
+    );
+  } else {
+    console.warn("[sync-skill-version] skip repo-root README (install mode)");
+  }
 
   return { version, prev, updates };
 }
