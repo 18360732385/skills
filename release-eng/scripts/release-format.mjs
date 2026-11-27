@@ -534,37 +534,40 @@ export function formatConfigAsYamlMd(configRows) {
 }
 
 /**
- * 从 AGENTS.md / README 抽一句话模块说明。
- * moduleKey 为目录名或「其它」；优先读该模块下文档，否则仓根。
- * moduleBlurbs：兜底文案表注入（缺省 DEFAULT_REPO_PROFILE.moduleBlurbs；目标仓 repo-profile.json 可覆盖）。
+ * 从该模块自己的 AGENTS.md / README.md 抽一句话。
+ * 不回落到仓根简介（否则每个桶都复制同一句）。
+ * 模块文档没有可用句子时用 moduleBlurbs；再没有则「（待补）」。
+ * moduleBlurbs 缺省 DEFAULT_REPO_PROFILE.moduleBlurbs；目标仓 repo-profile.json 可覆盖。
  */
 export function loadModuleBlurb(root, moduleKey, moduleBlurbs = DEFAULT_REPO_PROFILE.moduleBlurbs) {
   const key = String(moduleKey || "").replace(/\/$/, "");
-  const candidates = [];
-  if (key && key !== "其它" && key !== "docs") {
-    candidates.push(`${key}/AGENTS.md`, `${key}/README.md`);
-  }
-  candidates.push("AGENTS.md", "README.md");
-
-  for (const rel of candidates) {
-    const full = path.join(root, rel);
-    let text;
-    try {
-      text = readTextFile(full);
-    } catch {
-      continue;
-    }
-    const duty = text.match(/\|\s*职责\s*\|\s*([^|\n]+)\|/);
-    if (duty) return oneSentence(duty[1]);
-    const mono = text.match(/^Monorepo:\s*(.+)$/m);
-    if (mono) return oneSentence(mono[1]);
-    const first = text.match(/^#\s+.+\n+>\s*(.+)$/m) || text.match(/^#\s+.+\n\n([^\n#]+)/m);
-    if (first) return oneSentence(first[1]);
-  }
   const blurbs = moduleBlurbs || DEFAULT_REPO_PROFILE.moduleBlurbs;
+  if (key && key !== "其它" && key !== "docs") {
+    for (const rel of [`${key}/AGENTS.md`, `${key}/README.md`]) {
+      const sentence = moduleDocSentence(root, rel);
+      if (sentence) return sentence;
+    }
+  }
   if (key && blurbs[key]) return blurbs[key];
-  if (key === "其它" || !key) return blurbs["其它"] || "仓库其它路径（文档、脚手架、配置等）";
-  return `${key} 模块`;
+  if ((key === "其它" || !key) && blurbs["其它"]) return blurbs["其它"];
+  return "（待补）";
+}
+
+function moduleDocSentence(root, rel) {
+  const full = path.join(root, rel);
+  let text;
+  try {
+    text = readTextFile(full);
+  } catch {
+    return "";
+  }
+  const duty = text.match(/\|\s*职责\s*\|\s*([^|\n]+)\|/);
+  if (duty) return oneSentence(duty[1]);
+  const mono = text.match(/^Monorepo:\s*(.+)$/m);
+  if (mono) return oneSentence(mono[1]);
+  const first = text.match(/^#\s+.+\n+>\s*(.+)$/m) || text.match(/^#\s+.+\n\n([^\n#]+)/m);
+  if (first) return oneSentence(first[1]);
+  return "";
 }
 
 function oneSentence(s) {
@@ -573,8 +576,10 @@ function oneSentence(s) {
     .replace(/\s+/g, " ")
     .trim();
   const m = t.match(/^[^。；\n]{8,120}[。；]?/);
-  if (m) return m[0].replace(/[；]$/, "。");
-  if (t.length > 80) t = `${t.slice(0, 78)}…`;
+  if (m) t = m[0].replace(/[；]$/, "。");
+  else if (t.length > 80) t = `${t.slice(0, 78)}…`;
+  // 截在冒号上的仓简介（「……monorepo：」）不是模块说明
+  if (/[：:]$/.test(t)) return "";
   return t;
 }
 
@@ -949,6 +954,36 @@ const DATASOURCE_URL_KEY_RE =
   /(^|\.)((jdbc[_-]?url)|(datasource|data-source)\.(url|jdbc-url))$/i;
 
 /**
+ * 从配置值取出 JDBC URL。
+ * 接受裸 `jdbc:…`，以及 Spring 占位的默认值 `${VAR:jdbc:…}`（默认值里可以有冒号）。
+ * 没有 jdbc 默认值（纯 `${VAR}`、非 jdbc）返回 null。
+ */
+export function jdbcUrlFromValue(val) {
+  let s = String(val || "").trim();
+  if (!s) return null;
+  const hash = s.search(/\s+#/);
+  if (hash >= 0) s = s.slice(0, hash).trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  const ph = s.match(/^\$\{[A-Za-z_][A-Za-z0-9_.]*:([\s\S]*)\}$/);
+  if (ph) {
+    s = ph[1].trim();
+    if (
+      (s.startsWith('"') && s.endsWith('"')) ||
+      (s.startsWith("'") && s.endsWith("'"))
+    ) {
+      s = s.slice(1, -1).trim();
+    }
+  }
+  if (!s.toLowerCase().startsWith("jdbc:")) return null;
+  return s;
+}
+
+/**
  * 从 freeze.draft.config 或文本中抽取 prod 数据源 JDBC URL。
  * @returns {{ url: string, dbName: string|null, source: string }|null}
  */
@@ -956,19 +991,20 @@ export function resolveProdDatasource(freeze, { texts = [] } = {}) {
   const candidates = [];
   for (const r of freeze?.draft?.config || []) {
     const key = String(r.键 || r.key || r.stableId || "");
-    const val = String(r.值 || r.value || "").trim();
-    if (!val.toLowerCase().startsWith("jdbc:")) continue;
+    const url = jdbcUrlFromValue(r.值 || r.value || "");
+    if (!url) continue;
     if (DATASOURCE_URL_KEY_RE.test(key) || /datasource/i.test(key)) {
-      candidates.push({ url: val, source: `draft.config:${key || "jdbc"}` });
+      candidates.push({ url, source: `draft.config:${key || "jdbc"}` });
     }
   }
   for (const t of texts) {
     const text = String(t?.text || t || "");
     const src = t?.source || "yml";
-    const re = /(?:^|\n)\s*(?:jdbc[_-]?url|url)\s*:\s*["']?(jdbc:[^\s"'#]+)/gi;
+    const re = /(?:^|\n)\s*(?:jdbc[_-]?url|url)\s*:\s*(.+)/gi;
     let m;
     while ((m = re.exec(text))) {
-      candidates.push({ url: m[1], source: src });
+      const url = jdbcUrlFromValue(m[1]);
+      if (url) candidates.push({ url, source: src });
     }
   }
   const hit = candidates.find((c) => parseJdbcDatabaseName(c.url)) || candidates[0];
@@ -978,6 +1014,44 @@ export function resolveProdDatasource(freeze, { texts = [] } = {}) {
     dbName: parseJdbcDatabaseName(hit.url),
     source: hit.source,
   };
+}
+
+/**
+ * 同日身份是否已经归档。
+ * 看 `archive/<identity>/`、扁平 `archive/<identity>.md`，以及 ARCHIVE.md 里的身份记号。
+ * @returns {{ identity: string, path: string, via: string }|null}
+ */
+export function findArchivedIdentity(root, identity) {
+  const id = String(identity || "").trim();
+  if (!id || !root) return null;
+  const dirNote = path.join(root, "docs", "releases", "archive", id, `${id}.md`);
+  if (fs.existsSync(dirNote)) {
+    return {
+      identity: id,
+      path: `docs/releases/archive/${id}/${id}.md`,
+      via: "archive-dir",
+    };
+  }
+  const flat = path.join(root, "docs", "releases", "archive", `${id}.md`);
+  if (fs.existsSync(flat)) {
+    return {
+      identity: id,
+      path: `docs/releases/archive/${id}.md`,
+      via: "archive-flat",
+    };
+  }
+  const archiveMd = path.join(root, "docs", "releases", "ARCHIVE.md");
+  if (!fs.existsSync(archiveMd)) return null;
+  let text = "";
+  try {
+    text = readTextFile(archiveMd);
+  } catch {
+    return null;
+  }
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(?:^|[|\\s\`/(])${escaped}(?:[|\\s\`/)]|$)`, "m");
+  if (!re.test(text)) return null;
+  return { identity: id, path: "docs/releases/ARCHIVE.md", via: "ARCHIVE.md" };
 }
 
 /**
@@ -1137,6 +1211,19 @@ export function detectMixedDdlDml(src) {
     /\b(INSERT|UPDATE|DELETE|REPLACE|MERGE)\b/.test(stripped) ||
     /\b(LOAD\s+DATA)\b/.test(stripped);
   return { hasDdl, hasDml, mixed: hasDdl && hasDml };
+}
+
+/**
+ * 文件名归类不了时的保守启发式：只有 DDL 动词 → DDL，只有 DML 动词 → DML。
+ * 混合、都没有、或不确定 → null（仍走 --sql-ai-json）。
+ * @returns {{ kind: "DDL"|"DML", reason: string }|null}
+ */
+export function classifySqlByVerbs(src) {
+  const { hasDdl, hasDml, mixed } = detectMixedDdlDml(src);
+  if (mixed || (!hasDdl && !hasDml)) return null;
+  if (hasDdl) return { kind: "DDL", reason: "正文仅含 DDL 动词" };
+  if (hasDml) return { kind: "DML", reason: "正文仅含 DML 动词" };
+  return null;
 }
 
 /** 上线配置路径：application-prod.yml 或 nacos prod overlay（路径段或包内拍平 basename；撞名 __hex 后缀仍放行） */

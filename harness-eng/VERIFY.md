@@ -1,10 +1,20 @@
-﻿# harness-eng 验收记录（0.8.11）
+﻿# harness-eng 验收记录（0.8.12）
 
 > **维护者验收**（非上手教程）。静态对照 + 运行时 fixture。真实 land/resume/fill 仍须在目标仓由 Agent 执行并遵守确认闸门。上手见 [QUICKSTART.md](QUICKSTART.md) / [guide/使用手册.md](guide/使用手册.md)。
 
 ## 版本
 
-当前 **0.8.11**（确认令牌 + rev 新鲜度 + 预授权落盘 + UTF-16 JSON；其下 0.8.10 闸门与一致性 · 0.8.9 实战解析 · 0.8.8 gold 四道 · 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+当前 **0.8.12**（报告三件套可入库 + 诊断台各项指标默认展开；其下 0.8.11 确认令牌 + rev 新鲜度 + 预授权落盘 + UTF-16 JSON · 0.8.10 闸门与一致性 · 0.8.9 实战解析 · 0.8.8 gold 四道 · 0.8.7 实战待完善 · 0.8.6 实战总析仍存项 · 0.8.5 实战缺陷全修 · 0.8.4 实战收口 · 0.8.3 D8–D16 · 0.8.2 报告页人话化 · 0.8.1 三域满配 · 0.8.0 仓型三分 + 前端五域 + rules 101 族）。报告对照 **`skill_version` + `report_schema`**（**0.4.3**；**报告壳 ≠ skill**）。Trae 对齐见 [host/TRAE-PARITY.md](host/TRAE-PARITY.md)；Qoder 见 [host/QODER-PARITY.md](host/QODER-PARITY.md)；P0 实证全文为仓库级档案 `TRAE-P0-EVIDENCE.md`（不随安装分发）。
+
+## 0.8.12 增量验收（报告三件套可入库 + 诊断台指标）
+
+| 项 | 期望 |
+|---|---|
+| manifest `0.8.12`；`report_schema` 仍 **0.4.3** | 有 |
+| `harness.gitignore.snippet` 不含 `report-latest.html` / `run-latest.json` / `score-history.jsonl` | 有 |
+| example_only 与 vendored_shared 的 gitignore merge 都不追加这三行；MCP 真密行仍按跟踪策略处理 | 有 |
+| 报告壳：各项指标默认展开（`setDomainMetricsOpen(true)` / `metrics-open`）；备注 `note-ico`；列头「注」 | 有 |
+| upgrade `## 0.8.11 → 0.8.12`；CHANGELOG 0.8.12 | 有 |
 
 ## 0.8.11 增量验收（确认令牌与 rev）
 

@@ -32,7 +32,7 @@ node .cursor/skills/release-eng/scripts/release-seal.mjs --root . --note docs/re
 node .cursor/skills/release-eng/scripts/release-seal.mjs --root . --note docs/releases/<identity>/<identity>.md --online-date YYYY-MM-DD --executor <姓名> --apply
 ```
 
-   脚本会：状态→已上线、填上线日期/执行人、整夹 mv→`archive/<identity>/`、进行中表删行、`ARCHIVE.md` 追加、归档侧按「已上线」重渲同名 `<identity>.html`（约定 ⑩）。非已定版须加 `--force`（与 seal-check 一致）。  
+   脚本会：状态→已上线、填上线日期/执行人、整夹 mv→`archive/<identity>/`、进行中表删行、`ARCHIVE.md` 追加、归档侧按「已上线」重渲同名 `<identity>.html`（约定 ⑩）。`archive/<identity>/` 已存在时 dry-run 与 apply 都直接失败，说明改日期或先移走该目录，不覆盖。非已定版须加 `--force`（与 seal-check 一致）。  
 
 5. 回退（脚本不可用时手工）：文首状态改为 `已上线`；填写上线日期与执行人；`git mv` 整夹 `docs/releases/<identity>/` → `docs/releases/archive/<identity>/`；从 releases.md 进行中表移除该行；追加到 ARCHIVE.md；手工重渲/删除包内旧 `<identity>.html`（或事后补跑 `release.mjs note-html`）。  
 

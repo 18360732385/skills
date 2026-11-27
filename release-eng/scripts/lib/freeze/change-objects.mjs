@@ -56,6 +56,8 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
   const pushGap = (list, seen, hit) => {
     const cronKey = hit.cronKey || null;
     if (!cronKey) return;
+    if (/fixed[-_]?delay/i.test(String(cronKey))) return;
+    if (/(^|\.)zone$/i.test(String(cronKey))) return;
     const id = hit.taskCode || cronKey;
     if (seen.has(id)) return;
     if (keySet.has(cronKey)) return;
@@ -74,12 +76,11 @@ export function computeJobsConfigGaps({ draftJobs = [], jobsHitsMap, configKeySe
 
   for (const row of draftJobs) {
     const taskCode = row.taskCode || null;
+    const labeled = typeof row["task / cron 键"] === "string" ? row["task / cron 键"] : "";
     const cronKey =
       row.cronKey ||
       (taskCode && jobsHitsMap?.get?.(taskCode)?.cronKey) ||
-      (typeof row["task / cron 键"] === "string" && !String(row["task / cron 键"]).includes(":")
-        ? row["task / cron 键"]
-        : null) ||
+      (labeled && labeled !== taskCode && !labeled.includes(":") ? labeled : null) ||
       null;
     const hit =
       (taskCode && jobsHitsMap?.get?.(taskCode)) ||
@@ -159,6 +160,7 @@ export function buildChangeObjects({ candidates, configKeys, jobKeys, taskCodes,
     });
   }
   for (const k of jobKeys || []) {
+    if (k.isLeaf === false) continue;
     const id = k.job?.taskCode || k.job?.cronKey || k.key;
     push({
       kind: "jobs",

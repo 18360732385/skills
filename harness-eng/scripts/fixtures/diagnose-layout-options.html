@@ -74,15 +74,17 @@
       display: grid;
       grid-template-columns: 1.15fr 0.85fr;
       gap: 18px;
-      align-items: start;
+      align-items: stretch;
     }
     @media (max-width: 860px) { .diag-grid { grid-template-columns: 1fr; } }
-    .chart-box, .diag-side {
+    .chart-box {
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
       min-height: 100%;
+      display: flex;
+      flex-direction: column;
     }
     .chart-head {
       display: flex;
@@ -92,7 +94,7 @@
       margin-bottom: 10px;
       min-height: 28px;
     }
-    .chart-head h3 { margin: 0; font-size: 0.84rem; font-weight: 700; }
+    .chart-head h3 { margin: 0; font-size: 0.84rem; font-weight: 700; flex: 1; }
     .radar-detail {
       height: 26px;
       padding: 0 8px;
@@ -111,7 +113,13 @@
       border-color: var(--accent);
       background: var(--accent-soft);
     }
-    .radar-wrap { display: grid; justify-items: center; gap: 8px; }
+    .radar-wrap {
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 8px;
+      flex: 1 1 auto;
+    }
     .radar-wrap svg { width: 100%; max-width: 420px; height: auto; display: block; }
     .radar-legend {
       display: flex;
@@ -138,22 +146,28 @@
       display: grid;
       gap: 10px;
       align-content: start;
-      min-height: 320px;
+      min-height: 100%;
+      height: 100%;
     }
+    .diag-side.metrics-open > :not(#radar-coverage) { visibility: hidden; }
     .domain-metrics-panel {
       position: absolute;
       inset: 0;
       z-index: 3;
+      display: flex;
+      flex-direction: column;
       overflow: auto;
-      padding: 12px;
+      padding: 10px 12px 12px;
       background: var(--panel2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      min-height: 100%;
     }
     .domain-metrics-panel[hidden] { display: none !important; }
     .domain-metrics-table {
       width: 100%;
+      height: 100%;
       table-layout: fixed;
       border-collapse: collapse;
       font-size: 0.78rem;
@@ -161,55 +175,104 @@
     }
     .domain-metrics-table th,
     .domain-metrics-table td {
-      padding: 5px 6px;
+      padding: 6px 5px;
       border-bottom: 1px solid #dde3d6;
       text-align: left;
-      vertical-align: baseline;
+      vertical-align: middle;
     }
     .domain-metrics-table th {
       color: var(--muted);
       font-weight: 600;
-      font-size: 0.72rem;
-      border-bottom-color: var(--border);
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--accent);
       position: sticky;
       top: 0;
       background: var(--panel2);
+      white-space: nowrap;
     }
-    .domain-metrics-table th:nth-child(1),
-    .domain-metrics-table td:nth-child(1) { width: 5.6em; }
-    .domain-metrics-table th:nth-child(2),
-    .domain-metrics-table td:nth-child(2),
-    .domain-metrics-table th:nth-child(3),
-    .domain-metrics-table td:nth-child(3),
-    .domain-metrics-table th:nth-child(4),
-    .domain-metrics-table td:nth-child(4) { width: 3.6em; }
-    .domain-metrics-table th:nth-child(5),
-    .domain-metrics-table td:nth-child(5) { width: 4.4em; }
-    .domain-metrics-table th:nth-child(6),
-    .domain-metrics-table td:nth-child(6) { width: 7.2em; }
+    .domain-metrics-table th.num { text-align: right; padding-right: 6px; }
+    .domain-metrics-table th.note-h,
+    .domain-metrics-table td.note {
+      width: 2.4em;
+      text-align: center;
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+    .domain-metrics-table col.col-dom { width: 26%; }
+    .domain-metrics-table col.col-q,
+    .domain-metrics-table col.col-c,
+    .domain-metrics-table col.col-g { width: 13%; }
+    .domain-metrics-table col.col-a { width: 18%; }
+    .domain-metrics-table col.col-n { width: 2.4em; }
     .domain-metrics-table .num {
       text-align: right;
       font-family: var(--mono);
       font-variant-numeric: tabular-nums;
       font-weight: 700;
       white-space: nowrap;
+      padding-right: 6px;
     }
     .domain-metrics-table .dom-name {
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-right: 8px;
     }
-    .domain-metrics-table .note {
+    .domain-metrics-table .note-ico {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
       color: var(--muted);
-      font-size: 0.72rem;
-      white-space: nowrap;
-      max-width: 8.5em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: default;
+      cursor: help;
     }
-    .domain-metrics-table .note[title] { cursor: help; }
+    .domain-metrics-table .note-ico svg { width: 12px; height: 12px; display: block; }
+    .domain-metrics-table .note-ico:hover,
+    .domain-metrics-table .note-ico:focus-visible {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      outline: none;
+    }
+    .domain-metrics-table .note-ico::after {
+      content: attr(data-tip);
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 6px);
+      z-index: 5;
+      width: max-content;
+      max-width: min(240px, 56vw);
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.72rem;
+      font-weight: 500;
+      line-height: 1.35;
+      letter-spacing: 0;
+      text-align: left;
+      white-space: normal;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(2px);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+    }
+    .domain-metrics-table .note-ico:hover::after,
+    .domain-metrics-table .note-ico:focus-visible::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
     .domain-metrics-table tr.lag td { background: var(--danger-soft); }
     .domain-metrics-table tr.lag .dom-name { color: var(--danger); }
     .ok { color: var(--accent); }
@@ -248,19 +311,19 @@
 </head>
 <body>
   <div class="wrap">
-    <p class="note">保留雷达图画质量分。按钮改为「各项指标」；点开后右侧覆盖展示各域表（质量 / 覆盖 / 金标 / 真实性）。Esc 或再点一次收起。这是交互草稿，报告模板已同步同款交互。</p>
+    <p class="note">各项指标默认展开，与左侧雷达等高；按钮切到诊断摘要。备注仅在有内容时显示图标，悬停看全文。列头右对齐数字列，备注缩为「注」。</p>
     <article class="sheet">
       <div class="tabs" aria-hidden="true">
         <span>决策台</span><span class="on">诊断台</span><span>任务台</span><span>趋势台</span><span>落地检查台</span><span class="grow"></span>
       </div>
       <div class="body">
         <h2>诊断台</h2>
-        <p class="lead">拖后腿优先看：界面原型 — 代码覆盖仍可补；距上限约 85 分；覆盖 0%；金标指数 0%；真实性 0/45；覆盖未到 100%；金标指数未到 98%；真实性未齐</p>
+        <p class="lead">拖后腿优先看：接口文档 — 文档质量达标；距上限约 2 分；覆盖 100%；金标指数 100%；真实性 144/233；真实性未齐</p>
         <div class="diag-grid">
           <div class="chart-box">
             <div class="chart-head">
               <h3>各域文档质量分 vs 上限</h3>
-              <button type="button" class="radar-detail" id="radar-detail" aria-expanded="false" aria-controls="radar-coverage" aria-label="展开各域各项指标">各项指标</button>
+              <button type="button" class="radar-detail" id="radar-detail" aria-expanded="true" aria-controls="radar-coverage" aria-label="切换为诊断摘要">诊断摘要</button>
             </div>
             <div class="radar-wrap">
               <div id="chart"></div>
@@ -270,29 +333,37 @@
               </div>
             </div>
           </div>
-          <div class="diag-side">
-            <div class="domain-metrics-panel" id="radar-coverage" hidden>
+          <div class="diag-side metrics-open" id="diag-side">
+            <div class="domain-metrics-panel" id="radar-coverage">
               <table class="domain-metrics-table">
+                <colgroup>
+                  <col class="col-dom" />
+                  <col class="col-q" />
+                  <col class="col-c" />
+                  <col class="col-g" />
+                  <col class="col-a" />
+                  <col class="col-n" />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th>域</th>
-                    <th class="num">质量</th>
-                    <th class="num">覆盖</th>
-                    <th class="num">金标</th>
-                    <th class="num">真实性</th>
-                    <th>备注</th>
+                    <th scope="col">域</th>
+                    <th scope="col" class="num">质量</th>
+                    <th scope="col" class="num">覆盖</th>
+                    <th scope="col" class="num">金标</th>
+                    <th scope="col" class="num">真实性</th>
+                    <th scope="col" class="note-h">注</th>
                   </tr>
                 </thead>
                 <tbody id="domain-summary"></tbody>
               </table>
             </div>
             <ul class="story">
-              <li>四态灯：骨架=YES · 覆盖=NO · 语义=YES · Plan=已关（不替代开干）</li>
-              <li>拖后腿：界面原型 — 代码覆盖仍可补；距上限约 85 分；覆盖 0%；金标指数 0%；真实性 0/45</li>
-              <li>常见缺口：缺 evidence×1、dens-examples×1、缺模板必填章×1</li>
+              <li>四态灯：骨架=YES · 覆盖=YES · 语义=YES · Plan=已关（不替代开干）</li>
+              <li>拖后腿：接口文档 — 文档质量达标；距上限约 2 分；覆盖 100%；金标指数 100%；真实性 144/233</li>
+              <li>常见缺口：真实性未齐 · type_export 排除说明见契约消费层备注</li>
             </ul>
-            <div class="strip"><span class="k">代码覆盖率</span><span class="v">60%</span><span class="k">6 域满 · 4 域为零</span></div>
-            <div class="strip"><span class="k">文档质量分</span><span class="v">72</span><span class="k">上限约 100</span></div>
+            <div class="strip"><span class="k">代码覆盖率</span><span class="v">100%</span><span class="k">10 域满</span></div>
+            <div class="strip"><span class="k">文档质量分</span><span class="v">99</span><span class="k">上限约 100</span></div>
             <div class="strip"><span class="k">模板完整度</span><span class="v">100%</span></div>
           </div>
         </div>
@@ -301,21 +372,21 @@
   </div>
   <script>
     var DOMAINS = [
-      { id: "func", name: "功能文档", q: 100, c: 100, g: "35.7%", a: "0/176" },
-      { id: "db", name: "库表文档", q: 100, c: 100, g: "97.4%", a: "0/38" },
-      { id: "jobs", name: "定时任务", q: 100, c: 100, g: "100%", a: "0/55" },
-      { id: "prototype", name: "界面原型", q: 15, c: 0, g: "0%", a: "0/45", lag: true },
-      { id: "components", name: "组件库", q: 15, c: 0, g: "0%", a: "0/79" },
-      { id: "api", name: "接口文档", q: 100, c: 100, g: "95.5%", a: "0/233" },
-      { id: "redis", name: "缓存文档", q: 100, c: 100, g: "37.5%", a: "0/18" },
+      { id: "func", name: "功能文档", q: 100, c: 100, g: "100%", a: "53/176" },
+      { id: "api", name: "接口文档", q: 98, c: 100, g: "100%", a: "144/233", lag: true },
+      { id: "db", name: "库表文档", q: 100, c: 100, g: "100%", a: "38/38" },
+      { id: "redis", name: "缓存文档", q: 100, c: 100, g: "100%", a: "0/18" },
+      { id: "jobs", name: "定时任务", q: 99, c: 100, g: "100%", a: "0/55" },
       { id: "design", name: "设计系统", q: 100, c: 100, g: "100%", a: "0/6" },
-      { id: "pages", name: "页面路由", q: 15, c: 0, g: "0%", a: "0/67" },
-      { id: "client-api", name: "契约消费层", q: 15, c: 0, g: "0%", a: "0/57", note: "154 个 type_export 未计入覆盖" }
+      { id: "prototype", name: "界面原型", q: 100, c: 100, g: "100%", a: "0/45" },
+      { id: "pages", name: "页面路由", q: 100, c: 100, g: "100%", a: "0/67" },
+      { id: "components", name: "组件库", q: 100, c: 100, g: "100%", a: "0/79" },
+      { id: "client-api", name: "契约消费层", q: 100, c: 100, g: "100%", a: "0/57", note: "154 个 type_export 未计入覆盖" }
     ];
 
     function esc(s) {
       return String(s == null ? "" : s)
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
     function pctBand(v) {
       if (v == null) return "na";
@@ -391,6 +462,16 @@
         dots + labels + "</svg>";
     }
 
+    function noteCell(note) {
+      if (!note) return '<td class="note"></td>';
+      return '<td class="note"><span class="note-ico" tabindex="0" role="img" data-tip="' + esc(note) +
+        '" aria-label="' + esc(note) + '"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+        '<path fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" d="M4 2.75h5.25L12 5.5v7.75H4z"/>' +
+        '<path fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" d="M9.25 2.75V5.5H12"/>' +
+        '<path fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" d="M6 8.25h4M6 10.75h2.75"/>' +
+        "</svg></span></td>";
+    }
+
     function renderTable() {
       document.getElementById("domain-summary").innerHTML = DOMAINS.map(function (d) {
         return '<tr class="' + (d.lag ? "lag" : "") + '">' +
@@ -399,21 +480,20 @@
           '<td class="num ' + pctBand(d.c) + '">' + fmtPct(d.c) + "</td>" +
           '<td class="num ' + goldBand(d.g) + '">' + esc(d.g) + "</td>" +
           '<td class="num ' + authBand(d.a) + '">' + esc(d.a) + "</td>" +
-          (function () {
-            var note = d.note || "";
-            var short = note.length > 10 ? note.slice(0, 10) + "…" : note;
-            var title = note.length > 10 ? ' title="' + esc(note) + '"' : "";
-            return '<td class="note"' + title + ">" + esc(short) + "</td></tr>";
-          })();
+          noteCell(d.note || "") + "</tr>";
       }).join("");
     }
 
     function setOpen(open) {
       var btn = document.getElementById("radar-detail");
       var panel = document.getElementById("radar-coverage");
+      var side = document.getElementById("diag-side");
       btn.setAttribute("aria-expanded", open ? "true" : "false");
-      btn.setAttribute("aria-label", open ? "收起各域各项指标" : "展开各域各项指标");
+      btn.setAttribute("aria-label", open ? "切换为诊断摘要" : "切换为各项指标");
+      btn.textContent = open ? "诊断摘要" : "各项指标";
       panel.hidden = !open;
+      if (open) side.classList.add("metrics-open");
+      else side.classList.remove("metrics-open");
     }
 
     renderRadar();
@@ -424,7 +504,6 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") setOpen(false);
     });
-    if (new URLSearchParams(location.search).get("open") === "1") setOpen(true);
   </script>
 </body>
 </html>

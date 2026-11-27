@@ -277,15 +277,18 @@ function buildThirdPartyMatcher(keywords) {
   };
 }
 
-function isJobsKey(keyPath) {
+/** yml 任务键：只认 cron / fixedDelay。裸 scheduling、时区 .zone、父级 map 都不是任务。 */
+export function isJobsKey(keyPath) {
   const k = String(keyPath || "").toLowerCase();
-  return k.includes("cron") || k.includes("scheduling") || /\.zone$/.test(k) && k.includes("schedul");
+  if (k.includes("cron")) return true;
+  if (/fixed[-_]?delay/.test(k)) return true;
+  return false;
 }
 
 /**
  * 轻量 YAML 扁平化（无外部依赖）。
  * 说明注释：键上一行 `# …` 优先；否则同行行尾 ` # …`。空行清空上一行缓存（防跨键误挂）。
- * 叶子无注释时回退继承最近父级 map 注释。
+ * 叶子无注释时只继承直接父级 map 的注释，不越过无注释的中间级去套文件头。
  * 值存 `{ value, comment, isLeaf }`；多行 / 锚点不解析——漏检时仍保留 path 级候选。
  */
 export function flattenYamlKeys(text) {
@@ -337,17 +340,15 @@ export function flattenYamlKeys(text) {
       map.set(full, { value: val, comment, isLeaf: true });
     }
   }
-  // 叶子无注释 → 继承最近父级 map 注释（N1 边角）
+  // 叶子无注释 → 只继承直接父级 map 注释。
+  // 中间级没有注释就停，避免把文件头套到 username/password 这类叶子上。
   for (const [full, entry] of map.entries()) {
     if (!entry || entry.isLeaf === false || (entry.comment && String(entry.comment).trim())) continue;
     const parts = String(full).split(".");
-    for (let i = parts.length - 1; i >= 1; i--) {
-      const parentKey = parts.slice(0, i).join(".");
-      const parent = map.get(parentKey);
-      if (parent?.comment && String(parent.comment).trim()) {
-        entry.comment = parent.comment;
-        break;
-      }
+    if (parts.length < 2) continue;
+    const parent = map.get(parts.slice(0, -1).join("."));
+    if (parent?.isLeaf === false && parent.comment && String(parent.comment).trim()) {
+      entry.comment = parent.comment;
     }
   }
   return map;
@@ -725,11 +726,13 @@ function buildFirstReleaseLayeredCandidates(root, head, files, sqlProfile = null
           layerSuppressed: false,
         };
         keys.push(row);
-        if (row.jobs) jobKeys.push(row);
+        if (row.isLeaf === false) {
+          /* 父级 map 不进 draft.config / draft.jobs */
+        } else if (row.jobs) jobKeys.push(row);
         else configKeys.push(row);
       }
       upsert({
-        kinds: keys.some((k) => k.jobs) ? ["config", "jobs"] : ["config"],
+        kinds: keys.some((k) => k.jobs && k.isLeaf !== false) ? ["config", "jobs"] : ["config"],
         kind: "config",
         path: n,
         confidence: keys.length ? "key-diff" : "path",
@@ -755,11 +758,13 @@ function buildFirstReleaseLayeredCandidates(root, head, files, sqlProfile = null
           layerSuppressed: false,
         };
         keys.push(row);
-        if (row.jobs) jobKeys.push(row);
+        if (row.isLeaf === false) {
+          /* 父级 map 不进 draft.config / draft.jobs */
+        } else if (row.jobs) jobKeys.push(row);
         else configKeys.push(row);
       }
       upsert({
-        kinds: keys.some((k) => k.jobs) ? ["config", "jobs"] : ["config"],
+        kinds: keys.some((k) => k.jobs && k.isLeaf !== false) ? ["config", "jobs"] : ["config"],
         kind: "config",
         path: n,
         confidence: keys.length ? "key-diff" : "path",
@@ -992,6 +997,7 @@ function buildIncrementalCandidates(root, base, head, files, profile = DEFAULT_R
       upsert(enriched);
       for (const k of enriched.keys || []) {
         const row = { ...k, path: n, source: isNacosProdOverlay(n) ? "nacos-overlay" : "application-prod" };
+        if (k.isLeaf === false) continue;
         if (k.jobs) jobKeys.push(row);
         else configKeys.push(row);
       }

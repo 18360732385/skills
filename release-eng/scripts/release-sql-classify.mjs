@@ -14,6 +14,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import {
   classifyMigrationKindByFilename,
+  classifySqlByVerbs,
   sha256Hex,
 } from "./release-format.mjs";
 import { readTextFile } from "./lib/text-encoding.mjs";
@@ -177,6 +178,16 @@ export function classifyRefs(files, opts = {}) {
       row.classifySource = "ai";
       row.confidence = ai.confidence ?? null;
       row.reason = ai.reason ?? null;
+      resolved.push(row);
+      continue;
+    }
+
+    const heur = classifySqlByVerbs(content);
+    if (heur) {
+      row.kind = heur.kind;
+      row.classifySource = "heuristic";
+      row.confidence = "heuristic";
+      row.reason = heur.reason;
       resolved.push(row);
       continue;
     }

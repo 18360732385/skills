@@ -192,15 +192,31 @@ export function enrichFreezePayload(root, payload, options = {}) {
 
   const jobsHitsMap = new Map();
   for (const row of jobKeys) {
+    if (row.isLeaf === false) continue;
     if (row.job?.taskCode) jobsHitsMap.set(row.job.taskCode, { ...row.job, confidence: row.confidence });
   }
+  // 枚举 / diff 发现的 taskCode 全部进 jobsHits。docs 只抬高置信度；无文档仍进 draft，标建议人工确认。
   for (const t of taskCodes) {
-    if (t.docsHit) {
+    if (!t.taskCode) continue;
+    const prev = jobsHitsMap.get(t.taskCode);
+    if (prev && !t.docsHit) continue;
+    if (prev && t.docsHit) {
       jobsHitsMap.set(t.taskCode, {
+        ...prev,
         ...jobScheduleSlice(t),
-        confidence: t.confidence,
+        confidence: t.confidence || prev.confidence,
+        docsHit: true,
+        needsConfirm: false,
       });
+      continue;
     }
+    jobsHitsMap.set(t.taskCode, {
+      ...(jobScheduleSlice(t) || {}),
+      taskCode: t.taskCode,
+      confidence: t.docsHit ? t.confidence || "docs-hit" : "key-diff",
+      docsHit: Boolean(t.docsHit),
+      needsConfirm: !t.docsHit,
+    });
   }
   for (const c of candidates) {
     if (c.job?.taskCode) {
@@ -295,6 +311,10 @@ export function enrichFreezePayload(root, payload, options = {}) {
   const configKeySet = new Set();
   for (const k of marked.configKeys) {
     if (k.key && !k.alreadyReleased && !k.layerSuppressed) configKeySet.add(k.key);
+  }
+  // cron / fixedDelay 键在 jobKeys 里，不算「配置里找不到」
+  for (const k of marked.jobKeys || []) {
+    if (k.key && k.isLeaf !== false && k.change !== "removed") configKeySet.add(k.key);
   }
   const { jobsConfigGaps, jobsConfigGapsAppendix } = computeJobsConfigGaps({
     draftJobs: draftBundle.active?.jobs || [],
@@ -693,7 +713,9 @@ function buildDraftRows({ candidates, configKeys, jobKeys, jobsHits }) {
       已确认: "",
     }));
 
-  const jobsFromKeys = jobKeys.map((k) => {
+  const jobsFromKeys = jobKeys
+    .filter((k) => k.isLeaf !== false)
+    .map((k) => {
     const cronKey = k.job?.cronKey || k.key;
     const taskCode = k.job?.taskCode || "";
     const keyTail = String(cronKey || "")
@@ -727,7 +749,7 @@ function buildDraftRows({ candidates, configKeys, jobKeys, jobsHits }) {
           "task / cron 键": h.cronKey || h.taskCode,
           taskCode: h.taskCode,
           变更类型: "涉及（见候选）",
-          说明: h.displayName || "",
+          说明: h.displayName || (h.needsConfirm ? "建议人工确认" : ""),
           真相: h.truthPath || "",
           "目标 profile": "prod",
           confidence: h.confidence || "docs-hit",

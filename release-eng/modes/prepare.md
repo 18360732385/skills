@@ -6,7 +6,7 @@
 
 1. [gates-common.md](gates-common.md)（含首问 **`发版日期`**【推荐】≥提问日+2 的第一个周四 + 分支对；首次使用另答 SQL 目录与格式并 `sql-profile --apply`）  
    - 若 git-gates **Done（中止）** → 本模式结束（勿继续下列步骤）  
-2. **版本身份** `<identity>` = **`release-V{yyMMdd}`** ← 已确认发版日期（见 [conventions.md](conventions.md)）。同日已有进行中包 → 先 seal / [取消发版](#取消发版) / 改日期。  
+2. **版本身份** `<identity>` = **`release-V{yyMMdd}`** ← 已确认发版日期（见 [conventions.md](conventions.md)）。同日已有进行中包 → 先 seal / [取消发版](#取消发版) / 改日期。同日身份已在 `archive/` 或 `ARCHIVE.md` → prepare 默认 exit 2；确认重建才加 `--allow-archived`（seal 仍拒绝覆盖已有归档目录）。  
 3. **【推荐】半自动编排**（同会话直达 WritePlan 预览；**不写盘**；ai-track **默认跳过**）：
 
 ```bash

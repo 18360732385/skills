@@ -1,6 +1,8 @@
 /**
  * @layer unit — 纯函数（快）
  */
+import fs from "fs";
+import os from "os";
 import path from "path";
 import { pathToFileURL } from "url";
 
@@ -225,4 +227,246 @@ export async function runUnit(kit) {
     "html bracket filename link"
   );
   assert(/target="_blank"/.test(noteHtml), "html file link new tab");
+
+  const mariadb = format.jdbcUrlFromValue(
+    "${DB_URL:jdbc:mariadb://prod-db:3306/inventory_order}"
+  );
+  assert(
+    mariadb === "jdbc:mariadb://prod-db:3306/inventory_order",
+    "jdbc unwraps spring default"
+  );
+  assert(format.jdbcUrlFromValue("${DB_URL}") == null, "jdbc bare placeholder is not a url");
+  const dsSpring = format.resolveProdDatasource(
+    {
+      draft: {
+        config: [
+          {
+            键: "spring.datasource.url",
+            值: "${DB_URL:jdbc:mariadb://prod-db:3306/inventory_order}",
+          },
+        ],
+      },
+    },
+    {
+      texts: [
+        {
+          source: "application-prod.yml",
+          text: "url: ${PG_URL:jdbc:postgresql://db:5432/orders_pg}\n",
+        },
+      ],
+    }
+  );
+  assert(dsSpring?.dbName === "inventory_order", "spring mariadb default yields db name");
+  const dsPg = format.resolveProdDatasource(
+    { draft: { config: [] } },
+    {
+      texts: [
+        {
+          source: "application-prod.yml",
+          text: 'url: "${PG_URL:jdbc:postgresql://db:5432/orders_pg}"\n',
+        },
+      ],
+    }
+  );
+  assert(dsPg?.dbName === "orders_pg", "spring postgres default yields db name");
+  assert(
+    format.classifySqlByVerbs("CREATE TABLE t(id INT);").kind === "DDL",
+    "verb heuristic DDL"
+  );
+  assert(
+    format.classifySqlByVerbs("INSERT INTO t VALUES(1);").kind === "DML",
+    "verb heuristic DML"
+  );
+  assert(
+    format.classifySqlByVerbs("CREATE TABLE t(id INT);\nINSERT INTO t VALUES(1);") == null,
+    "verb heuristic mixed is null"
+  );
+
+  const blurbRoot = fs.mkdtempSync(path.join(os.tmpdir(), "re-blurb-"));
+  try {
+    fs.writeFileSync(
+      path.join(blurbRoot, "README.md"),
+      "# 仓\n\n> 库存与订单管理的小型全栈 monorepo：\n",
+      "utf8"
+    );
+    fs.mkdirSync(path.join(blurbRoot, "backend"), { recursive: true });
+    assert(
+      format.loadModuleBlurb(blurbRoot, "backend", {}) === "（待补）",
+      "module blurb does not copy repo intro"
+    );
+    assert(
+      format.loadModuleBlurb(blurbRoot, "sms-ai", { "sms-ai": "短信服务" }) === "短信服务",
+      "module blurb uses profile"
+    );
+  } finally {
+    fs.rmSync(blurbRoot, { recursive: true, force: true });
+  }
+
+  const archRoot = fs.mkdtempSync(path.join(os.tmpdir(), "re-arch-"));
+  try {
+    const id = "release-V261203";
+    fs.mkdirSync(path.join(archRoot, "docs", "releases", "archive", id), { recursive: true });
+    fs.writeFileSync(
+      path.join(archRoot, "docs", "releases", "archive", id, `${id}.md`),
+      "# archived\n",
+      "utf8"
+    );
+    const hit = format.findArchivedIdentity(archRoot, id);
+    assert(hit?.via === "archive-dir", "findArchivedIdentity sees archive dir");
+    assert(format.findArchivedIdentity(archRoot, "release-V990101") == null, "unknown identity not archived");
+  } finally {
+    fs.rmSync(archRoot, { recursive: true, force: true });
+  }
+
+  const freezeMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-freeze.mjs")).href
+  );
+  assert(freezeMod.isJobsKey("app.order.timeout.cron") === true, "jobs key cron");
+  assert(freezeMod.isJobsKey("app.order.fixed-delay") === true, "jobs key fixedDelay");
+  assert(freezeMod.isJobsKey("app.scheduling") === false, "scheduling parent is not a job key");
+  assert(freezeMod.isJobsKey("app.scheduling.zone") === false, "timezone is not a job key");
+  const yml = freezeMod.flattenYamlKeys(`# prod profile：生产环境连接与开关（首次发版验证素材）
+spring:
+  datasource:
+    url: jdbc:mariadb://prod-db:3306/inventory_order # 生产库
+    username: app
+    password: secret
+# 库存告警阈值
+stock-alert:
+  threshold: 20
+`);
+  assert(yml.get("spring.datasource.url")?.comment === "生产库", "leaf keeps own comment");
+  assert(yml.get("spring.datasource.username")?.comment === "", "file header does not cross empty parent");
+  assert(yml.get("spring.datasource.password")?.comment === "", "password does not inherit file header");
+  assert(yml.get("stock-alert.threshold")?.comment === "库存告警阈值", "immediate parent comment still inherits");
+
+  const previewMd = preview.toDraftPreviewMd({
+    draft: {
+      sql: [],
+      config: [
+        {
+          键: "app.order.unpaid-timeout-minutes",
+          值: "30",
+          说明: "未支付超时分钟",
+          来源: "application-prod.yml",
+          confidence: "key-diff",
+          source: "application-prod",
+          isLeaf: true,
+        },
+      ],
+      jobs: [],
+    },
+  });
+  assert(
+    /app\.order\.unpaid-timeout-minutes: 30\s+# 未支付超时分钟/.test(previewMd),
+    "draft-md line comment is the description"
+  );
+  assert(!/30\s+# key-diff/.test(previewMd), "draft-md line comment is not confidence");
+  assert(/\| `app\.order\.unpaid-timeout-minutes` \| key-diff \| application-prod \|/.test(previewMd), "confidence is a separate column");
+
+  const sqlSample = merge.buildSqlSection(
+    {
+      sql: [
+        { 脚本: "V1__create_order.sql", 动作: "新增/变更" },
+        { 脚本: "V2__seed.sql", 动作: "新增/变更" },
+      ],
+    },
+    new Map([
+      ["V1__create_order.sql", "DDL"],
+      ["V2__seed.sql", "DML"],
+    ])
+  );
+  assert(/V1__create_order\.sql` \| DDL \|/.test(sqlSample), "sql sample uses classify kind");
+  assert(/V2__seed\.sql` \| DML \|/.test(sqlSample), "sql sample DML kind");
+
+  const classifyMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-sql-classify.mjs")).href
+  );
+  const heur = classifyMod.classifyRefs([
+    { basename: "V1__create_order.sql", content: "CREATE TABLE t(id INT);\n" },
+  ]);
+  assert(heur.ok && heur.resolved[0]?.kind === "DDL", "classic flyway create is DDL without ai json");
+  assert(heur.needsAi.length === 0, "clear DDL does not need ai");
+  const overridden = classifyMod.classifyRefs(
+    [{ basename: "V1__create_order.sql", content: "CREATE TABLE t(id INT);\n" }],
+    { aiByName: new Map([["V1__create_order.sql", { kind: "DML", confidence: "high" }]]) }
+  );
+  assert(overridden.resolved[0]?.kind === "DML", "sql-ai-json overrides heuristic");
+  assert(overridden.resolved[0]?.classifySource === "ai", "override source is ai");
+
+  const enrichMod = await import(
+    pathToFileURL(path.join(skillRoot, "scripts/release-freeze-enrich.mjs")).href
+  );
+  const jobsWork = fs.mkdtempSync(path.join(os.tmpdir(), "re-jobs-"));
+  try {
+    const out = enrichMod.enrichFreezePayload(
+      jobsWork,
+      {
+        firstRelease: true,
+        candidates: [],
+        configKeys: [
+          {
+            key: "app.scheduling",
+            path: "application-prod.yml",
+            value: "",
+            isLeaf: false,
+            jobs: true,
+            change: "added",
+          },
+          {
+            key: "app.scheduling.zone",
+            path: "application-prod.yml",
+            value: "Asia/Shanghai",
+            isLeaf: true,
+            jobs: false,
+            change: "added",
+          },
+          {
+            key: "app.order.fixed-delay",
+            path: "application-prod.yml",
+            value: "60000",
+            isLeaf: true,
+            jobs: true,
+            change: "added",
+          },
+        ],
+        jobKeys: [
+          {
+            key: "app.scheduling",
+            path: "application-prod.yml",
+            value: "",
+            isLeaf: false,
+            jobs: true,
+            change: "added",
+          },
+          {
+            key: "app.order.fixed-delay",
+            path: "application-prod.yml",
+            value: "60000",
+            isLeaf: true,
+            jobs: true,
+            change: "added",
+          },
+        ],
+        taskCodes: ["order-timeout-cancel", "stock:alert-scan"],
+      },
+      { prior: "none" }
+    );
+    const codes = (out.draft?.jobs || []).map((j) => j.taskCode || j["task / cron 键"]);
+    assert(codes.includes("stock:alert-scan"), "enum without docs enters draft.jobs");
+    assert(codes.includes("order-timeout-cancel"), "enum with colon-less code enters draft.jobs");
+    assert(!codes.includes("app.scheduling"), "parent scheduling key stays out of draft.jobs");
+    assert(
+      !(out.draft?.jobs || []).some((j) => String(j["task / cron 键"] || "").endsWith(".zone")),
+      "timezone key stays out of draft.jobs"
+    );
+    const scan = (out.draft?.jobs || []).find((j) => j.taskCode === "stock:alert-scan");
+    assert(scan?.说明 === "建议人工确认", "undocumented enum asks for confirmation");
+    assert(
+      !(out.jobsConfigGaps || []).some((g) => /scheduling|\.zone$/.test(String(g.cronKey || ""))),
+      "zone and parent are not cron gaps"
+    );
+  } finally {
+    fs.rmSync(jobsWork, { recursive: true, force: true });
+  }
 }

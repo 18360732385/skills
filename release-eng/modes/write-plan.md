@@ -10,8 +10,8 @@
 
 ```text
 白话摘要:
-- 模式: prepare | resume | seal
-- 发版日期: YYYY-MM-DD（首问确认；独立日期字段，不拼入目录名）
+- 模式: prepare | seal | cancel
+- 发版日期: YYYY-MM-DD（首问确认；进入身份 release-V{yyMMdd}，改日期即改目录）
 - 分支对: <发版> vs <基线|无（首次发版）>（origin 优先）
 - 版本身份: <identity>（= release-V{yyMMdd} ← 发版日期）
 - 本轮: 新建 | 合并刷新自动段 | 归档 | 取消
@@ -47,19 +47,19 @@ freeze: --format draft-md（本轮预览来源）
 | `docs/releases/releases.md` | merge | 进行中索引行；SQL 目录与格式已在首问写入，本步再 upsert 同一格 |
 | `docs/releases/archive/{id}/` | git mv 整夹 | 仅 seal |
 
-### 写盘（prepare/resume 确认后）
+### 写盘（prepare 确认后）
 
 【推荐】：
 
 ```bash
-node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<slug>/<slug>.md --base <baseRef> --head <headRef> --baseline <基线分支|无> --identity <slug> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
+node .cursor/skills/release-eng/scripts/release-note-merge.mjs --root . --note docs/releases/<identity>/<identity>.md --base <baseRef> --head <headRef> --baseline <基线分支|无> --identity <identity> --release-date YYYY-MM-DD --release-branch <发版分支> --owner <负责人>
 ```
 
 `--dry-run` 只报告将写字节与 draft/bundle 行数（含将写的同名 `.html` 渲染路径）。手工落单须与 `draft-md` 预览一致。  
 定版/刷新会同步生成目录包内同名只读渲染 `{identity}.html`（`--no-html` 关闭；md 为 SSOT，见 [conventions.md](conventions.md) ⑩）。  
 **逾期硬闸书面跳过**：freeze JSON 含 `overdueHardGate` 且用户已书面跳过时，须加 `--overdue-waived "<书面说明>"` 才能写盘（跳过记录写入 `artifacts.json.overdueWaived{reason,date}`）；未传该参数 → note-merge 拒绝写盘（exit 1）。约定见 [conventions.md](conventions.md)。
 
-### `draft` 预览（强制 · prepare/resume）
+### `draft` 预览（强制 · prepare）
 
 【推荐】在展示 WritePlan 前跑（与本轮 freeze 相同 base/head/prior）：
 
@@ -99,7 +99,7 @@ node .cursor/skills/release-eng/scripts/release-freeze.mjs --root . --base <base
 用户回复 **`确认预授权`** 或 **`预授权后续写盘`**：
 
 1. 本轮 WritePlan 仍须完整确认后写盘  
-2. 同会话后续 `resume` / 同 slug 刷新：自动写盘  
+2. 同会话后续同身份刷新：自动写盘  
 3. 「取消预授权」后恢复逐轮确认  
 
 > 请回复 **确认**（或 按计划执行 / LGTM）后开始写入。多轮可回复 **确认预授权**。`全部推荐` 只收齐答题（[recommended.md](recommended.md)）。
